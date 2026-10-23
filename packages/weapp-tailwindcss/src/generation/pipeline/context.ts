@@ -2,6 +2,7 @@ import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GeneratorResult } from '../generation-helpers/results'
 import type { TailwindV4CssSource } from '../source-resolver/types'
 import type { GenerateCssByGeneratorOptions } from '../types'
+import type { FrameworkPolicy } from '@/compiler/framework-policy'
 import type { NormalizedWeappTailwindcssGeneratorOptions, TailwindResolvedSource } from '@/generator/index'
 import type { RuntimeBranch } from '@/runtime-branch'
 
@@ -23,6 +24,7 @@ export interface GeneratorPipelineExecutionContext {
   generatedUserCssRawSource: string
   generatorBranch: RuntimeBranch
   generatorOptions: NormalizedWeappTailwindcssGeneratorOptions
+  frameworkPolicy: FrameworkPolicy
   generatorRawSource: string
   getSourceCandidatesForEntries: GenerateCssByGeneratorOptions['getSourceCandidatesForEntries']
   hasDistinctUserRawSource: boolean

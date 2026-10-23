@@ -1,7 +1,8 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
+import type { FrameworkPolicy } from '@/compiler/framework-policy'
 import type { InternalUserDefinedOptions } from '@/types/index'
 import { finalizeMiniProgramCss } from '@weapp-tailwindcss/postcss/transform'
-import { isUniAppXEnabled } from '@/uni-app-x/options'
+import { resolveGeneratorConfiguration } from '@/generator/options'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
 
@@ -66,6 +67,7 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
   opts: InternalUserDefinedOptions,
   options: {
     cssHandlerOptions: IStyleHandlerOptions
+    frameworkPolicy?: FrameworkPolicy | undefined
     isolateCurrentCssCandidates: boolean
     localImports?: string | undefined
     primaryCssSource?: boolean | undefined
@@ -78,13 +80,19 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
       preserve: false,
     }
   }
-  if (options.cssHandlerOptions.uniAppX === true && options.cssHandlerOptions.uniAppXCssTarget === 'uvue') {
+  const policy = options.frameworkPolicy ?? resolveGeneratorConfiguration(opts.generator, {
+    appType: opts.appType,
+    uniAppX: opts.uniAppX,
+    nativeStyle: options.cssHandlerOptions.uniAppX === true,
+    styleTarget: options.cssHandlerOptions.uniAppXCssTarget,
+  }).frameworkPolicy
+  if (policy.preflight.suppress) {
     return {
       inject: false,
       preserve: false,
     }
   }
-  const shouldInjectUniAppXLocalImportPreflight = isUniAppXEnabled(opts.uniAppX) && Boolean(options.localImports?.trim())
+  const shouldInjectLocalImportPreflight = policy.preflight.localImports && Boolean(options.localImports?.trim())
   if (opts.cssPreflight === false) {
     return {
       inject: false,
@@ -111,8 +119,8 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
   }
   if (!options.cssHandlerOptions.isMainChunk && !options.primaryCssSource && !options.explicitCssSource) {
     return {
-      inject: shouldInjectUniAppXLocalImportPreflight,
-      preserve: shouldInjectUniAppXLocalImportPreflight,
+      inject: shouldInjectLocalImportPreflight,
+      preserve: shouldInjectLocalImportPreflight,
     }
   }
   if (!options.isolateCurrentCssCandidates) {
@@ -122,7 +130,7 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
     }
   }
   return {
-    inject: shouldInjectUniAppXLocalImportPreflight,
-    preserve: shouldInjectUniAppXLocalImportPreflight,
+    inject: shouldInjectLocalImportPreflight,
+    preserve: shouldInjectLocalImportPreflight,
   }
 }

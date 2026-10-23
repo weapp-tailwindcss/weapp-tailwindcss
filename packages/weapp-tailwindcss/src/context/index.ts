@@ -3,13 +3,11 @@ import { rm } from 'node:fs/promises'
 import { logger } from '@weapp-tailwindcss/logger'
 import { initializeCache } from '@/cache'
 import { getDefaultOptions, resolveDefaultCssPreflight } from '@/defaults'
-import { resolveMpxPlatform } from '@/framework'
-import { normalizeFrameworkStylePlatform } from '@/framework/platform'
+import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { invalidateRuntimeClassSet, refreshTailwindcssRuntimeSymbol } from '@/tailwindcss/runtime'
 import { logRuntimeTailwindcssVersion } from '@/tailwindcss/runtime-logs'
 import { logTailwindcssTarget } from '@/tailwindcss/targets'
 import { applyV4CssCalcDefaults, warnMissingCssEntries } from '@/tailwindcss/v4'
-import { resolveUniAppXOptions } from '@/uni-app-x/options'
 import { resolveUnocssBareArbitraryValues } from '@/unocss'
 import { defuOverrideArray } from '@/utils'
 import { withCompilerContextCache } from './compiler-context-cache'
@@ -25,25 +23,22 @@ interface ClearTailwindcssRuntimeCacheOptions {
 function resolveContextCssPreflight(opts: UserDefinedOptions | undefined, ctx: InternalUserDefinedOptions, majorVersion: number | undefined): CssPreflightOptions {
   const userCssPreflight = opts?.cssOptions?.cssPreflight ?? opts?.cssPreflight
   const cssPreflight = resolveDefaultCssPreflight(userCssPreflight, majorVersion)
-  const shouldUseUniAppXPreflight = ctx.appType === 'uni-app-x' || resolveUniAppXOptions(ctx.uniAppX).enabled
-  if (cssPreflight === false || !shouldUseUniAppXPreflight) {
+  const defaults = resolveFrameworkPolicy(ctx).preflight.defaults
+  if (cssPreflight === false || !defaults) {
     return cssPreflight
   }
   const userCssPreflightObject = userCssPreflight && typeof userCssPreflight === 'object'
     ? userCssPreflight
     : undefined
-  return {
-    ...cssPreflight,
-    'border-width': userCssPreflightObject && 'border-width' in userCssPreflightObject
-      ? (cssPreflight['border-width'] ?? false)
-      : '0',
-    'border-style': userCssPreflightObject && 'border-style' in userCssPreflightObject
-      ? (cssPreflight['border-style'] ?? false)
-      : false,
-    'border': userCssPreflightObject && 'border' in userCssPreflightObject
-      ? (cssPreflight['border'] ?? false)
-      : false,
-  }
+  return Object.fromEntries([
+    ...Object.entries(cssPreflight),
+    ...Object.entries(defaults).map(([property, value]) => [
+      property,
+      userCssPreflightObject && property in userCssPreflightObject
+        ? (cssPreflight[property] ?? false)
+        : value,
+    ]),
+  ])
 }
 
 function syncCssOptionsToLegacyFields(ctx: InternalUserDefinedOptions) {
@@ -101,13 +96,11 @@ function syncLegacyFieldsToCssOptions(ctx: InternalUserDefinedOptions) {
 }
 
 function applyFrameworkPlatformDefaults(ctx: InternalUserDefinedOptions) {
-  if (ctx.cssOptions?.platform || ctx.platform) {
-    ctx.platform = normalizeFrameworkStylePlatform(ctx.cssOptions?.platform ?? ctx.platform, ctx.appType) ?? ctx.platform
-    return
-  }
-  if (ctx.appType === 'mpx') {
-    ctx.platform = normalizeFrameworkStylePlatform(resolveMpxPlatform().normalized, ctx.appType) ?? ctx.platform
-  }
+  const policy = resolveFrameworkPolicy({
+    appType: ctx.appType,
+    platform: ctx.cssOptions?.platform ?? ctx.platform,
+  })
+  Object.assign(ctx, policy.contextDefaults)
 }
 
 export async function clearTailwindcssRuntimeCache(

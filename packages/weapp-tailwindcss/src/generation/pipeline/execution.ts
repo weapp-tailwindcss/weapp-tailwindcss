@@ -214,11 +214,12 @@ async function executeGeneratorPipelineWithOwner(
     }
     return filterApplyOnlyGeneratedCss(css, generatorRawSource, {
       preserveVariables: generated.target !== 'web',
-      preserveRuntimeProperties: generated.target === 'web' && opts.appType === 'uni-app-x',
+      preserveRuntimeProperties: generated.target === 'web' && context.frameworkPolicy.preserveWebRuntimeProperties,
     })
   }
   const preflightMode = resolveMiniProgramPreflightModeForGeneratorCss(opts, {
     cssHandlerOptions,
+    frameworkPolicy: context.frameworkPolicy,
     isolateCurrentCssCandidates,
     localImports,
     explicitCssSource: hasExplicitCssSource,

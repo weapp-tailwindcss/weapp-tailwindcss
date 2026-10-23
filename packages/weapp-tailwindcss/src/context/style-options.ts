@@ -1,10 +1,8 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { InternalUserDefinedOptions } from '@/types'
 import { isWechatAutoCssCalc } from '@weapp-tailwindcss/postcss/transform'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveGeneratorConfiguration } from '@/generator/options'
 import { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
-import { shouldUseUniAppWebRpxCompatibility } from '@/runtime-branch/generator-target-env'
-import { resolveUniAppXOptions } from '@/uni-app-x/options'
 
 export type ResolvedStyleOptions = Partial<IStyleHandlerOptions> & {
   appType?: InternalUserDefinedOptions['appType'] | undefined
@@ -22,22 +20,21 @@ export function resolveStyleOptionsFromContext(
   // Vite 适配可能通过 getter 提供配置，同次解析只读取一次，避免重复解析及混用不同快照。
   const inputCssOptions = ctx.cssOptions
   const configuredPlatform = inputCssOptions?.platform ?? ctx.platform ?? platformFallback
-  const resolvedUniAppXOptions = resolveUniAppXOptions(ctx.uniAppX)
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(ctx.generator, {
+  const { options: generatorOptions, frameworkPolicy } = resolveGeneratorConfiguration(ctx.generator, {
     appType: ctx.appType,
     platform: configuredPlatform,
     tailwindcssMajorVersion,
-    uniAppX: resolvedUniAppXOptions,
+    uniAppX: ctx.uniAppX,
   })
   const branch = resolveGeneratorRuntimeBranch(generatorOptions, {
     appType: ctx.appType,
     platform: configuredPlatform,
     tailwindcssMajorVersion,
-    uniAppX: resolvedUniAppXOptions,
+    uniAppX: ctx.uniAppX,
   })
   const hasCssOptions = inputCssOptions !== undefined
   const configuredRem2rpx = inputCssOptions?.rem2rpx ?? ctx.rem2rpx
-  const rem2rpx = branch.isWeb && shouldUseUniAppWebRpxCompatibility(ctx.appType)
+  const rem2rpx = branch.isWeb && frameworkPolicy.disableWebRemToRpx
     ? false
     : configuredRem2rpx
   const platform = branch.platform ?? configuredPlatform
@@ -90,6 +87,7 @@ export function resolveStyleOptionsFromContext(
     autoprefixer: cssOptions.autoprefixer,
     cssCalc: cssOptions.cssCalc,
     uniAppX: branch.isNativeApp,
+    uniAppXUnsupported: frameworkPolicy.unsupportedNativeCss,
     platform: cssOptions.platform,
     px2rpx: cssOptions.px2rpx,
     unitsToPx: cssOptions.unitsToPx,

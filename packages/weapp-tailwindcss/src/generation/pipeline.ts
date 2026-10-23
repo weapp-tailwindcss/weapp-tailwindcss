@@ -1,6 +1,6 @@
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './types'
 import { postcss, removeUnsupportedMiniProgramAtRules } from '@weapp-tailwindcss/postcss/transform'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator/index'
+import { resolveGeneratorConfiguration } from '@/generator/options'
 import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { hasTailwindApplyDirective, hasTailwindSourceDirectives, normalizeTailwindSourceDirectives } from './directives'
 import { deduplicateGeneratedCssRules, finalizeMiniProgramGeneratorCss, shouldUseGeneratorForCurrentCss } from './generation-helpers'
@@ -77,13 +77,16 @@ export async function generateCssByGenerator(
     debug,
   } = options
   const platform = generatorPlatform ?? opts.cssOptions?.platform ?? opts.platform
+  const { options: normalizedGeneratorOptions, frameworkPolicy } = resolveGeneratorConfiguration(opts.generator, {
+    appType: opts.appType,
+    platform,
+    tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
+    uniAppX: opts.uniAppX,
+    nativeStyle: cssHandlerOptions.uniAppX === true,
+    styleTarget: cssHandlerOptions.uniAppXCssTarget,
+  })
   const generatorOptions = {
-    ...normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
-      appType: opts.appType,
-      platform,
-      tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-      uniAppX: opts.uniAppX,
-    }),
+    ...normalizedGeneratorOptions,
     bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
   }
   const generatorBranch = resolveGeneratorRuntimeBranch(generatorOptions, {
@@ -283,6 +286,7 @@ export async function generateCssByGenerator(
       generatedUserCssRawSource,
       generatorBranch,
       generatorOptions,
+      frameworkPolicy,
       generatorRawSource,
       getSourceCandidatesForEntries,
       hasDistinctUserRawSource,

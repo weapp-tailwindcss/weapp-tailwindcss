@@ -1,9 +1,10 @@
 import type { IStyleHandlerOptions, WebCssCompatUserOptions } from '@weapp-tailwindcss/postcss/types'
 import type { WeappTailwindcssGeneratorTarget } from './types'
+import type { FrameworkPolicy } from '@/compiler/framework-policy'
 import type { RuntimeBranch, RuntimeBranchContext } from '@/runtime-branch'
 import type { IArbitraryValues } from '@/types/shared'
+import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { resolveRuntimeBranch } from '@/runtime-branch'
-import { inferGeneratorTargetFromEnv, shouldUseUniAppViteWebViewGeneratorTarget } from '@/runtime-branch/generator-target-env'
 
 export interface WeappTailwindcssGeneratorOptions {
   /**
@@ -82,48 +83,59 @@ export interface NormalizedWeappTailwindcssGeneratorOptions {
   bareArbitraryValues?: IArbitraryValues['bareArbitraryValues'] | undefined
 }
 
-export function normalizeWeappTailwindcssGeneratorOptions(
+export function resolveGeneratorConfiguration(
   options: WeappTailwindcssGeneratorUserOptions | undefined,
-  context: Omit<RuntimeBranchContext, 'generatorTarget'> = {},
-): NormalizedWeappTailwindcssGeneratorOptions {
+  context: Omit<RuntimeBranchContext, 'generatorTarget'> & { nativeStyle?: boolean | undefined, styleTarget?: string | undefined } = {},
+): { options: NormalizedWeappTailwindcssGeneratorOptions, frameworkPolicy: FrameworkPolicy } {
   const enabled = options !== false
   const objectOptions = enabled ? options : undefined
-  const target = objectOptions?.target
-    ?? (shouldUseUniAppViteWebViewGeneratorTarget(context.appType, context.platform)
-      ? 'web'
-      : inferGeneratorTargetFromEnv())
+  const frameworkPolicy = resolveFrameworkPolicy(context)
+  const target = objectOptions?.target ?? frameworkPolicy.defaultGeneratorTarget
   const branch = resolveRuntimeBranch({
     ...context,
     generatorTarget: target,
-  })
+  }, frameworkPolicy)
   const hasExplicitTarget = objectOptions !== undefined && Object.hasOwn(objectOptions, 'target')
   const webCompat = objectOptions?.webCompat ?? (!hasExplicitTarget && branch.isWeb ? true : undefined)
 
   if (objectOptions == null) {
     return {
-      enabled,
-      target,
-      branch,
-      webCompat,
-      hmr: {
-        preserveDeletedCss: true,
+      frameworkPolicy,
+      options: {
+        enabled,
+        target,
+        branch,
+        webCompat,
+        hmr: {
+          preserveDeletedCss: true,
+        },
+        importFallback: false,
+        bareArbitraryValues: undefined,
       },
-      importFallback: false,
-      bareArbitraryValues: undefined,
     }
   }
 
   return {
-    enabled,
-    target,
-    branch,
-    config: objectOptions.config,
-    styleOptions: objectOptions.styleOptions,
-    webCompat,
-    hmr: {
-      preserveDeletedCss: objectOptions.hmr?.preserveDeletedCss ?? true,
+    frameworkPolicy,
+    options: {
+      enabled,
+      target,
+      branch,
+      config: objectOptions.config,
+      styleOptions: objectOptions.styleOptions,
+      webCompat,
+      hmr: {
+        preserveDeletedCss: objectOptions.hmr?.preserveDeletedCss ?? true,
+      },
+      importFallback: objectOptions.importFallback ?? false,
+      bareArbitraryValues: objectOptions.bareArbitraryValues,
     },
-    importFallback: objectOptions.importFallback ?? false,
-    bareArbitraryValues: objectOptions.bareArbitraryValues,
   }
+}
+
+export function normalizeWeappTailwindcssGeneratorOptions(
+  options: WeappTailwindcssGeneratorUserOptions | undefined,
+  context: Omit<RuntimeBranchContext, 'generatorTarget'> = {},
+): NormalizedWeappTailwindcssGeneratorOptions {
+  return resolveGeneratorConfiguration(options, context).options
 }
