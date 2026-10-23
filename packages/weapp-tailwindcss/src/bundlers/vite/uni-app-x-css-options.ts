@@ -1,10 +1,10 @@
-import type { InternalUserDefinedOptions, IStyleHandlerOptions } from '@/types'
+import type { IStyleHandlerOptions, UserDefinedOptions } from '@/types'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { shouldUseNativeAppCssBranch } from '@/runtime-branch'
 import { isUniAppXEnabled, resolveUniAppXOptions } from '@/uni-app-x/options'
 
 export function resolveUniAppXNativeCssHandlerOptions(
-  opts: Pick<InternalUserDefinedOptions, 'appType' | 'generator' | 'platform' | 'cssOptions' | 'uniAppX'>,
+  opts: Pick<UserDefinedOptions, 'appType' | 'generator' | 'platform' | 'cssOptions' | 'uniAppX'>,
 ): Partial<IStyleHandlerOptions> {
   const runtimeBranch = resolveContextGeneratorConfiguration(opts, {
     uniAppX: resolveUniAppXOptions(opts.uniAppX),

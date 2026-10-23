@@ -49,7 +49,7 @@ function isUniAppXFramework(appType: AppType | DetectableAppType | undefined, un
 export function resolveViteFrameworkProfile(options: ResolveBundlerFrameworkOptions): ViteFrameworkProfile {
   const appType = resolveBundlerAppType(options)
   if (isUniAppXFramework(appType, options.uniAppX)) {
-    return { appType, frameworkName: 'uni-app-x' }
+    return { appType: appType ?? 'uni-app-x', frameworkName: 'uni-app-x' }
   }
   const frameworkName = normalizeFrameworkName(appType)
   return { appType, frameworkName: isSupportedFramework('vite', frameworkName) ? frameworkName : 'generic' }

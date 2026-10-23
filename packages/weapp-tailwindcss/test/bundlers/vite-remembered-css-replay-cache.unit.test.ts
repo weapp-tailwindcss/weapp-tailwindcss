@@ -8,8 +8,8 @@ const { annotateCssSourceTrace, generateTailwindV4Css, getCompilationScopeDepend
   getCompilationScopeDependencyRevision: vi.fn(() => 0),
 }))
 
-vi.mock('@/generation/service', async importOriginal => ({
-  ...await importOriginal<typeof import('@/generation/service')>(),
+vi.mock('@/context/generation', async importOriginal => ({
+  ...await importOriginal<typeof import('@/context/generation')>(),
   generateTailwindV4Css,
 }))
 vi.mock('@/bundlers/shared/css-source-trace', async importOriginal => ({

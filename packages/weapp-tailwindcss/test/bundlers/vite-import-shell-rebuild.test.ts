@@ -6,8 +6,8 @@ import { createGenerateBundleHook } from '@/bundlers/vite/generate-bundle'
 import { createViteSourceOutputRelationOwner, withViteSourceOutputRelationOwner } from '@/bundlers/vite/source-output-relations'
 import { createContext } from './vite-plugin.testkit'
 
-vi.mock('@/generation/service', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/generation/service')>()
+vi.mock('@/context/generation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/context/generation')>()
   return {
     ...actual,
     generateTailwindV4Css: vi.fn(async (options: { frameworkProcessedUserCss?: string }) => ({

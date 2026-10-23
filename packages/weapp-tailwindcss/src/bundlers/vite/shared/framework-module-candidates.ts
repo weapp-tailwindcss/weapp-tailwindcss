@@ -1,5 +1,5 @@
 import type { SourceCandidateStore } from '@/project-sources/candidates/types-and-cache'
-import { validateCandidatesByGenerator } from '@/generation/index'
+import { validateCandidatesByGenerator } from '@/context/generation'
 import { cleanUrl } from '../utils'
 
 type ValidateCandidatesByGeneratorOptions = Parameters<typeof validateCandidatesByGenerator>[0]

@@ -131,11 +131,7 @@ export async function processViteCssBundleEntry(options: any) {
     rootImportShellOutputFile,
     rootImportShellTarget: rootImportShellPlan.isCurrentImportShell ? rootImportShellPlan.targetToRemember : rootImportShellPlan.reusableTarget,
     shouldPreserveAppCssExtension,
-    shouldReuseRootImportShell: () => shouldKeepRootMiniProgramStyleAsImportShell(context.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-      ...cssPipelineContext2,
-      css: rawSource,
-      file: rootImportShellOutputFile,
-    })),
+    shouldReuseRootImportShell: () => shouldKeepRootMiniProgramStyleAsImportShell((context.cssPipelineStrategy?.styles?.rootImportShell !== undefined)),
   })
   let outputFile = cssAssetOutputPlan.outputFile
   const resolveMatchedOutputFileForCurrentAsset = (sourceFile: string) => {
@@ -270,15 +266,8 @@ export async function processViteCssBundleEntry(options: any) {
     resolvedFromTemporarySource: resolvedFromTemporaryCssAsset,
     rootImportShellOutputFile,
     shouldKeepImportedCssShell: isCssImportOnlyBundleAsset(bundle, file, rawSource),
-    shouldKeepRootImportShell: shouldKeepRootMiniProgramStyleAsImportShell(context.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-      ...cssPipelineContext2,
-      css: rawSource,
-      file: rootImportShellOutputFile,
-    })),
-    shouldMoveRootImportShellToOrigin: shouldMoveRootMiniProgramStyleToImportShellOrigin(context.cssPipelineStrategy?.shouldMoveRootMiniProgramStyleToImportShellOrigin?.({
-      ...cssPipelineContext2,
-      file: rootImportShellOutputFile,
-    })),
+    shouldKeepRootImportShell: shouldKeepRootMiniProgramStyleAsImportShell((context.cssPipelineStrategy?.styles?.rootImportShell !== undefined)),
+    shouldMoveRootImportShellToOrigin: shouldMoveRootMiniProgramStyleToImportShellOrigin((context.cssPipelineStrategy?.styles?.rootImportShell === 'extract')),
     shouldSkipRememberedSource: (remembered: RememberedCssSource) => {
       const shouldSkip = shouldSkipRawRememberedCssSource(remembered.rawSource, remembered.sourceFile)
       if (shouldSkip) {

@@ -4,13 +4,14 @@ import type { ViteFrameworkCssPipelineContext } from '../shared/framework-strate
 import type { CssFinalizerContext, CssFinalizerThis } from './options'
 import path from 'node:path'
 import process from 'node:process'
-import { AssetEmissionPlan, finalizeCompilerShadowRun } from '@/compiler'
+import { AssetEmissionPlan } from '@/compiler'
+import { generateTailwindV4Css } from '@/context/generation'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { normalizeMiniProgramGeneratorCssSource } from '../../../generation/output-import-shell'
-import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/css-source-trace'
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { resolveMiniProgramStyleOutputExtension, resolveViteCssPipelineOutputFile } from '../generate-bundle'
@@ -20,6 +21,7 @@ import { linkEntryChunkStyles } from '../generate-bundle/entry-style-graph'
 import { normalizeRootMiniProgramImportShellAssets } from '../generate-bundle/finalize'
 import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramImportShellAssets } from '../generate-bundle/root-style-output'
 import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets } from '../processed-css-assets'
+import { createFrameworkCssContext } from '../shared/framework-css-context'
 import { createFrameworkStyleAssetContext } from '../shared/framework-style-assets'
 import { isHTMLRequest } from '../utils'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
@@ -66,7 +68,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }).options
         const generatorBranch = generatorOptions.branch
         const isWebGeneratorTarget = generatorBranch.isWeb
-        const createCssPipelineContext = (_file: string): ViteFrameworkCssPipelineContext => ({
+        const createCssPipelineContext = (_file: string): ViteFrameworkCssPipelineContext => createFrameworkCssContext({
           bundle,
           currentGeneratorBranch: generatorBranch,
           currentGeneratorOptions: generatorOptions,
@@ -93,8 +95,8 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           recordTiming('finalizeWebCss', startedAt)
           return finalized
         }
-        const isHarmonyAppStyleTarget = cssPipelineStrategy?.isHarmonyAppStyleTarget?.(createCssPipelineContext('')) === true
-        const isNativeAppStyleTarget = cssPipelineStrategy?.isNativeAppStyleTarget?.(createCssPipelineContext('')) === true
+        const isHarmonyAppStyleTarget = cssPipelineStrategy?.generation?.isHarmonyAppStyleTarget?.(createCssPipelineContext('')) === true
+        const isNativeAppStyleTarget = cssPipelineStrategy?.generation?.isNativeAppStyleTarget?.(createCssPipelineContext('')) === true
         if (resolvedConfig?.command !== 'build' && !isNativeAppStyleTarget) {
           return
         }
@@ -148,11 +150,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           matchesCss: opts.cssMatcher,
           onUpdate: trackFinalCssAssetUpdate,
           recordCssAssetResult,
-          shouldKeep: (file, css) => cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-            ...createCssPipelineContext(file),
-            css,
-            file,
-          }),
+          shouldKeep: () => (cssPipelineStrategy?.styles?.rootImportShell !== undefined),
           targetByFile: frameworkRootImportShellTargetByFile ?? new Map(),
         })
         if (!isWebGeneratorTarget) {
@@ -220,7 +218,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
               runtimeState.tailwindRuntime.majorVersion,
               file,
               outDir,
-              cssPipelineStrategy?.getCssHandlerExtraOptions?.({ ...createCssPipelineContext(file), file }) ?? {},
+              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({ ...createCssPipelineContext(file), file }) ?? {},
             ),
             getSourceCandidateSourcesForEntries,
             getSourceCandidatesForEntries,
@@ -260,7 +258,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           normalizeRootMiniProgramImportShellAssets(bundle, {
             cssMatcher: opts.cssMatcher,
             debug,
-            enabled: cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(createCssPipelineContext('')) === true,
+            enabled: (cssPipelineStrategy?.styles?.rootImportShell === 'extract') === true,
             onUpdate: trackFinalCssAssetUpdate,
             recordCssAssetResult,
           })
@@ -297,7 +295,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
               runtimeState.tailwindRuntime.majorVersion,
               file,
               outDir,
-              cssPipelineStrategy?.getCssHandlerExtraOptions?.({
+              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
                 ...createCssPipelineContext(file),
                 file,
               }) ?? {},
@@ -316,7 +314,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
             runtimeState.tailwindRuntime.majorVersion,
             file,
             outDir,
-            cssPipelineStrategy?.getCssHandlerExtraOptions?.({
+            cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
               ...createCssPipelineContext(file),
               file,
             }) ?? {},
@@ -349,7 +347,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
                 runtimeState.tailwindRuntime.majorVersion,
                 generatorSourceFile,
                 outDir,
-                cssPipelineStrategy?.getCssHandlerExtraOptions?.({
+                cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
                   ...createCssPipelineContext(generatorSourceFile),
                   file: generatorSourceFile,
                 }) ?? {},
@@ -421,7 +419,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         normalizeRootMiniProgramImportShellAssets(bundle, {
           cssMatcher: opts.cssMatcher,
           debug,
-          enabled: cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(createCssPipelineContext('')) === true,
+          enabled: (cssPipelineStrategy?.styles?.rootImportShell === 'extract') === true,
           onUpdate: trackFinalCssAssetUpdate,
           recordCssAssetResult,
         })

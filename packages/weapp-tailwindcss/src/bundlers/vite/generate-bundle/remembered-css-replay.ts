@@ -4,9 +4,9 @@ import type { BundleMetrics } from './metrics'
 import type { GenerateBundleContext, PendingRememberedCssReplayUpdate, RememberedCssSource } from './types'
 import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
 import { AssetEmissionPlan, getCompilationScopeDependencyRevision } from '@/compiler'
+import { generateTailwindV4Css } from '@/context/generation'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { normalizeMiniProgramGeneratorCssSource, normalizeMiniProgramImportShell } from '../../../generation/output-import-shell'
-import { generateTailwindV4Css } from '../../../generation/service'
 import { isSourcePreprocessorRequest } from '../../../generation/style-requests'
 import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
@@ -157,7 +157,6 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     createScopedSourceCandidateGetter,
     createScopedSourceCandidateSourceGetter,
     cssTaskFactories,
-    cssPipelineContext,
     cssPipelineStrategy,
     debug,
     defaultStyleOutputExtension,
@@ -360,11 +359,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       file: outputFile,
       isWebGeneratorTarget,
       matchesCss: opts.cssMatcher(outputFile),
-      shouldKeep: () => cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-        ...cssPipelineContext,
-        css: rawSource,
-        file: outputFile,
-      }),
+      shouldKeep: () => (cssPipelineStrategy?.styles?.rootImportShell !== undefined),
     })
     const shouldPreserveLocalImportWrapper = shouldPreserveFrameworkRootImportShell
       || (!isRootMiniProgramStyleOutputFile(outputFile) && !isWebGeneratorTarget && isPureLocalCssImportWrapper(rawSource))

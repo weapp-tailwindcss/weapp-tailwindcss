@@ -7,8 +7,8 @@ import { createViteCssMemory } from '@/bundlers/vite/css-memory'
 import { resolveAssetSourceFile } from '@/bundlers/vite/generate-bundle/css-assets'
 import { createViteRuntimeClassSet } from '@/bundlers/vite/runtime-class-set'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
-import { generateTailwindV4Css } from '@/generation/service'
+import { createCompilerContext } from '@/context'
+import { generateTailwindV4Css } from '@/context/generation'
 
 function asset(originalFileNames: string[]): OutputAsset {
   return { type: 'asset', fileName: 'assets/card-12345678.css', names: ['card.css'], originalFileNames, source: '.probe{color:red}' }
@@ -41,7 +41,7 @@ describe('Vite CSS 资产的项目来源身份', () => {
     await fs.mkdir(path.dirname(sourceFile))
     await fs.writeFile(sourceFile, source)
     await fs.writeFile(entry, '@import "tailwindcss" source(none); @theme { --color-brand: #123456; }')
-    const ctx = getCompilerContext({ tailwindcssBasedir: root, cssEntries: [entry], generator: { target: 'web' } })
+    const ctx = createCompilerContext({ tailwindcssBasedir: root, cssEntries: [entry], generator: { target: 'web' } })
     const manager = createViteRuntimeClassSet({
       opts: ctx,
       initialTailwindRuntime: ctx.tailwindRuntime,

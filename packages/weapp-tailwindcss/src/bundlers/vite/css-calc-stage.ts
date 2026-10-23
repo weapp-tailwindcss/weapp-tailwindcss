@@ -1,8 +1,7 @@
 import type { IStyleHandlerOptions, StyleHandler } from '@weapp-tailwindcss/postcss/types'
 import type { InternalUserDefinedOptions } from '@/types'
+import { resolveContextStylesEmbeddedInScript } from '@/context/compilation-profile'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
-import { resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
-import { resolveUniUtsPlatform } from '@/utils'
 
 const deferredKeys = ['cssCalc', 'rem2rpx', 'px2rpx', 'unitsToPx', 'unitConversion'] as const
 const deferredKeySet = new Set<PropertyKey>(deferredKeys)
@@ -32,8 +31,7 @@ export function createViteCssCalcStage(
     const finalOptions = resolveFinalOptions()
     // 原生样式可能嵌入 JS/UTS，不能延迟到只处理 CSS 资产的阶段。
     return Boolean(finalOptions.cssCalc)
-      && finalOptions.uniAppX !== true
-      && !(finalOptions.platform ? resolveUniUtsPlatform(finalOptions.platform) : resolveFrameworkEnvironment(original).uniUtsPlatform).isApp
+      && !resolveContextStylesEmbeddedInScript(original, getPlatform())
   }
   const defer = (options?: Partial<IStyleHandlerOptions>): Partial<IStyleHandlerOptions> | undefined => shouldDefer()
     ? { ...options, ...deferredOptions, cssOptions: { ...options?.cssOptions, ...deferredOptions } }

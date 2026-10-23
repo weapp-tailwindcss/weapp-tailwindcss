@@ -3,8 +3,10 @@ import type { WebpackCssHandlerOptions } from './v5-assets/pipeline-helpers'
 import path from 'node:path'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { LRUCache } from 'lru-cache'
-import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
+import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
+import { ensureCompilerOwnerActive, runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { pluginName } from '@/constants'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
@@ -82,6 +84,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   const processedCssAssetSkipDecisionCache = new LRUCache<string, boolean>({ max: 256 })
 
   compiler.hooks.compilation.tap(pluginName, (compilation) => {
+    ensureCompilerOwnerActive(runtimeState)
     compilation.hooks.processAssets.tapPromise(
       {
         name: pluginName,
@@ -90,7 +93,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           ? Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE
           : Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
       },
-      async (assets) => {
+      assets => runCompilerOwnerActivity(runtimeState, async () => {
         const entries = Object.entries(assets)
         if (entries.length === 0) {
           return
@@ -394,7 +397,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           target: Array<() => Promise<void>>,
           phase: string,
         ) => {
-          const timedFactory = async () => {
+          const timedFactory = () => runCompilerOwnerActivity(runtimeState, async () => {
             const startedAt = performance.now()
             try {
               await factory()
@@ -402,7 +405,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
             finally {
               recordTimingDetail(phase, startedAt)
             }
-          }
+          })
           if (watchMode) {
             await timedFactory()
             return
@@ -471,10 +474,22 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           webpackSourceCandidateScanCache,
         })
         finalizeCompilerShadowRun(runtimeState)
-      },
+      }),
     )
     if (!isWebGeneratorTarget) {
       setupWebpackMiniCssAssetFinalizer({ compilation, compiler, compilerOptions, debug, runtimeState })
     }
   })
+  return async () => {
+    try {
+      await bundleRuntimeClassSetManager.reset()
+    }
+    finally {
+      cssHandlerOptionsCache.clear()
+      cssUserHandlerOptionsCache.clear()
+      webpackSourceCandidateScanCache.clear()
+      resetRuntimeCompilationBuildState(bundleBuildState)
+      processedCssAssetSkipDecisionCache.clear()
+    }
+  }
 }

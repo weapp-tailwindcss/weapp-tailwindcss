@@ -1,8 +1,6 @@
-import type { OutputAsset, OutputChunk } from 'rollup'
 import type { ViteFrameworkStyleAssetContext } from '../../shared/framework-asset-strategy'
-import { AssetEmissionPlan } from '@/compiler'
+import type { FrameworkAssets } from '../../shared/framework-assets'
 import { collectUniAppXHarmonyApplyStyleSources, collectUniAppXHarmonyApplyUtilities, createUniAppXBundleAssetSourceGetter, createUniAppXHarmonyApplyGeneratorSource, injectUniAppXHarmonyBundleStyles, injectUniAppXStylePlaceholder } from '@/uni-app-x/style-asset'
-import { applyViteAssetEmissionPlan } from '../../generate-bundle/asset-emission-plan'
 
 function appendCss(baseCss: string, css: string) {
   if (baseCss.length === 0) {
@@ -15,15 +13,14 @@ function appendCss(baseCss: string, css: string) {
 }
 
 function injectHarmonyCssIntoMainAsset(
-  bundle: Record<string, OutputAsset | OutputChunk>,
+  bundle: FrameworkAssets,
   cssSources: string[],
   isMainCssAsset: (file: string) => boolean,
-  plan: AssetEmissionPlan,
-  writeTargets: Map<string, OutputAsset>,
+  assets: ViteFrameworkStyleAssetContext['assets'],
   onUpdate: ViteFrameworkStyleAssetContext['onUpdate'],
   debug: ViteFrameworkStyleAssetContext['debug'],
 ) {
-  let mainEntry: [string, OutputAsset] | undefined
+  let mainEntry: [string, Extract<FrameworkAssets[string], { type: 'asset' }>] | undefined
   for (const [bundleFile, output] of Object.entries(bundle)) {
     if (output.type !== 'asset') {
       continue
@@ -34,7 +31,7 @@ function injectHarmonyCssIntoMainAsset(
         ? output.fileName
         : undefined
     if (file) {
-      mainEntry = [file, output]
+      mainEntry = [bundleFile, output]
       break
     }
   }
@@ -54,9 +51,8 @@ function injectHarmonyCssIntoMainAsset(
   if (nextSource === currentSource) {
     return false
   }
-  plan.write(file, nextSource)
-  writeTargets.set(file, output)
-  onUpdate(file, currentSource, nextSource)
+  assets.replaceText(file, nextSource)
+  onUpdate(output.fileName || file, currentSource, nextSource)
   debug('uni-app-x harmony main css inject')
   return true
 }
@@ -68,8 +64,8 @@ interface HandleUniAppXPostCssOptions extends ViteFrameworkStyleAssetContext {
 
 export async function createHarmonyBundleStyleSources(context: ViteFrameworkStyleAssetContext) {
   const cssSources = context.getProcessedCssSources()
-  const applyUtilities = collectUniAppXHarmonyApplyUtilities(context.bundle)
-  const applyStyleSources = collectUniAppXHarmonyApplyStyleSources(context.bundle)
+  const applyUtilities = collectUniAppXHarmonyApplyUtilities(context.assets.read())
+  const applyStyleSources = collectUniAppXHarmonyApplyStyleSources(context.assets.read())
   if (applyUtilities.size > 0 && applyStyleSources.length > 0) {
     const css = await context.generateCss(
       createUniAppXHarmonyApplyGeneratorSource(applyStyleSources, applyUtilities),
@@ -84,7 +80,7 @@ export async function createHarmonyBundleStyleSources(context: ViteFrameworkStyl
 
 export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOptions) {
   const {
-    bundle,
+    assets,
     debug,
     getCssHandlerOptions,
     isHarmonyAppStyleTarget,
@@ -92,26 +88,17 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
     onUpdate,
     deferStylePlaceholderInjection,
   } = options
+  const bundle = assets.read()
   const applyStyleSources = collectUniAppXHarmonyApplyStyleSources(bundle)
   if (!options.enabled && !isNativeAppStyleTarget && !isHarmonyAppStyleTarget) {
     return applyStyleSources
   }
 
-  const emissionPlan = new AssetEmissionPlan()
-  const writeTargets = new Map<string, OutputAsset>()
-  const applyEmissionPlan = () => {
-    applyViteAssetEmissionPlan(emissionPlan, {
-      bundle,
-      writeTargets,
-    })
-    emissionPlan.clear()
-    writeTargets.clear()
-  }
   const getAssetSource = createUniAppXBundleAssetSourceGetter(bundle)
   const viteProcessedCssSources = isHarmonyAppStyleTarget
     ? await createHarmonyBundleStyleSources(options)
     : options.getProcessedCssSources()
-  if (isHarmonyAppStyleTarget && injectUniAppXHarmonyBundleStyles(bundle, { cssSources: viteProcessedCssSources })) {
+  if (isHarmonyAppStyleTarget && applyHarmonyBundleStyles(options, viteProcessedCssSources)) {
     debug('uni-app-x harmony bundle styles inject')
   }
   if (isHarmonyAppStyleTarget) {
@@ -119,12 +106,10 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
       bundle,
       viteProcessedCssSources,
       file => getCssHandlerOptions(file).isMainChunk === true,
-      emissionPlan,
-      writeTargets,
+      assets,
       onUpdate,
       debug,
     )
-    applyEmissionPlan()
   }
   if (deferStylePlaceholderInjection) {
     return applyStyleSources
@@ -147,12 +132,25 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
       viteProcessedCssSources,
     )
     if (nextSource !== currentSource) {
-      emissionPlan.write(file, nextSource)
-      writeTargets.set(file, item)
-      applyEmissionPlan()
+      assets.replaceText(bundleFile, nextSource)
       onUpdate(file, currentSource, nextSource)
       debug('uni-app-x style placeholder inject: %s', file)
     }
   }
   return applyStyleSources
+}
+
+/** 框架在私有副本上计算变更，实际产物由构建器操作提交。 */
+export function applyHarmonyBundleStyles(context: ViteFrameworkStyleAssetContext, cssSources: string[]) {
+  const snapshot = context.assets.read()
+  const working = Object.fromEntries(Object.entries(snapshot).map(([file, item]) => [file, { ...item }]))
+  const changed = injectUniAppXHarmonyBundleStyles(working, { cssSources })
+  if (changed) {
+    for (const [file, item] of Object.entries(working)) {
+      if (item.type === 'chunk' && item.code !== (snapshot[file] as typeof item).code) {
+        context.assets.replaceText(file, item.code)
+      }
+    }
+  }
+  return changed
 }

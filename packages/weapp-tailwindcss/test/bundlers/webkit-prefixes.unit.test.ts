@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { finalizeTracedWebpackCssAsset, finalizeWebpackCssAssetOutputSource, finalizeWebpackCssAssetSource } from '@/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/finalize'
 import { finalizeMiniProgramUserCssAssetSource } from '@/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/memory-trace'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { finalizeMiniProgramGeneratorCss } from '@/generation/generation-helpers/preflight'
 
 const source = '.issue-1286{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent;-webkit-appearance:none}'
 
 describe('Issue 1286 final CSS boundaries', () => {
   it.each([false, true])('preserves custom properties in Webpack assets (generated: %s)', (generatedCss) => {
-    const context = getCompilerContext({
+    const context = createCompilerContext({
       cssOptions: { cssPreflight: false, preserveWebkitProperties: ['-webkit-tap-highlight-color'] },
     })
     const finalized = finalizeWebpackCssAssetSource(source, context, false, { generatedCss, cssPreflight: false })
@@ -19,7 +19,7 @@ describe('Issue 1286 final CSS boundaries', () => {
   })
 
   it('preserves custom properties when finalizing traced author assets', () => {
-    const context = getCompilerContext({
+    const context = createCompilerContext({
       cssSourceTrace: true,
       cssOptions: { cssPreflight: false, preserveWebkitProperties: ['-webkit-tap-highlight-color'] },
     })

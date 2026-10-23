@@ -1,8 +1,14 @@
 import type { VitePluginSlot } from './plugin-slots'
 import { vitePluginName } from '@/constants'
 
+export const rewriteCssImportsSlot = {
+  name: `${vitePluginName}:rewrite-css-imports`,
+  enforce: 'pre',
+  hooks: { resolveId: true, transform: true },
+} satisfies VitePluginSlot
+
 export const sourcePluginSlots = [
-  { name: `${vitePluginName}:rewrite-css-imports`, enforce: 'pre', hooks: { resolveId: true, transform: true } },
+  rewriteCssImportsSlot,
   { name: `${vitePluginName}:source-candidates`, enforce: 'pre', runtimeApply: true, hooks: { load: true, transform: { order: 'pre' }, watchChange: true, handleHotUpdate: { order: 'post' }, closeBundle: true, buildStart: true, moduleParsed: true, shouldTransformCachedModule: true, buildEnd: true, generateBundle: true } },
 ] satisfies VitePluginSlot[]
 

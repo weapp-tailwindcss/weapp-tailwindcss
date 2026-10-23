@@ -1,9 +1,9 @@
-import type { OutputBundle } from 'rollup'
+import type { FrameworkAssetAccess, FrameworkAssets } from './framework-assets'
 import type { CreateJsHandlerOptions, InternalUserDefinedOptions, IStyleHandlerOptions, JsHandlerResult } from '@/types'
 
 /** 仅提供当前 JS 资产的转换服务；缓存提交与任务调度由构建器持有。 */
 export interface ViteFrameworkJsAssetContext {
-  bundle: Readonly<OutputBundle>
+  assets: FrameworkAssets
   file: string
   shouldTransform: boolean
   shouldSkipTransform: (extra?: CreateJsHandlerOptions) => boolean
@@ -16,7 +16,7 @@ export interface ViteFrameworkJsAssetContext {
 
 /** 框架只接收当前阶段产物和生成操作，不持有生成器或共享缓存状态。 */
 export interface ViteFrameworkStyleAssetContext {
-  bundle: OutputBundle
+  assets: FrameworkAssetAccess
   debug: (format: string, ...args: unknown[]) => void
   generateCss: (source: string, outputFile: string) => Promise<string | undefined>
   getCssHandlerOptions: (file: string) => IStyleHandlerOptions

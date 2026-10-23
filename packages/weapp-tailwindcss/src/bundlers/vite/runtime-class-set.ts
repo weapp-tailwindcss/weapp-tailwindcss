@@ -17,7 +17,7 @@ interface CreateViteRuntimeClassSetOptions {
   opts: InternalUserDefinedOptions
   initialTailwindRuntime: InternalUserDefinedOptions['tailwindRuntime']
   refreshTailwindcssRuntime: InternalUserDefinedOptions['refreshTailwindcssRuntime']
-  uniAppXEnabled: boolean
+  runtimeClassSetFeatureEnabled: boolean
   customAttributesEntities: unknown
   disabledDefaultTemplateHandler: boolean
   debug: (format: string, ...args: unknown[]) => void
@@ -28,7 +28,7 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     opts,
     initialTailwindRuntime,
     refreshTailwindcssRuntime,
-    uniAppXEnabled,
+    runtimeClassSetFeatureEnabled,
     customAttributesEntities,
     disabledDefaultTemplateHandler,
     debug,
@@ -71,7 +71,7 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     const signature = getRuntimeClassSetSignature(runtimeState.tailwindRuntime)
     const optionsKey = JSON.stringify({
       appType: opts.appType,
-      uniAppX: uniAppXEnabled,
+      uniAppX: runtimeClassSetFeatureEnabled,
       customAttributesEntities,
       disabledDefaultTemplateHandler,
       configPath,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createJsHandler, getCompilerContextMock, path, replaceWxml, testState, WeappTailwindcss } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createJsHandler, createCompilerContextMock, path, replaceWxml, testState, WeappTailwindcss } from './shared'
 describe('bundlers/webpack WeappTailwindcss / runtime js watch candidates', () => {
   setupWebpackV5UnitTest()
   it('uses incremental runtime candidates during webpack watch processAssets updates for Tailwind v4', async () => {
@@ -47,7 +47,7 @@ describe('bundlers/webpack WeappTailwindcss / runtime js watch candidates', () =
         },
       },
     })
-    getCompilerContextMock.mockImplementation(() => testState.currentContext)
+    createCompilerContextMock.mockImplementation(() => testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}

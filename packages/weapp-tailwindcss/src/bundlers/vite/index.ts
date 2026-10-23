@@ -6,10 +6,11 @@ import type { VitePluginSlot } from './shared/plugin-slots'
 import type { UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { createDebug } from '@/debug'
 import { logRuntimeTailwindcssVersion } from '@/tailwindcss/runtime-logs'
 import { logTailwindcssTarget } from '@/tailwindcss/targets'
+import { resolvePluginDisabledState } from '@/utils/disabled'
 import { resolvePackageDir } from '@/utils/resolve-package'
 import { resolveViteFrameworkProfile } from '../framework-selector'
 import { createGenericWebViteCapabilityProfile, frameworkViteCapabilityProfile } from './capability-profile'
@@ -26,8 +27,11 @@ import { pluginSlots as uniPluginSlots } from './frameworks/uni-app/plugin-descr
 import { createWeappVitePlugins } from './frameworks/weapp-vite'
 import { pluginSlots as weappPluginSlots } from './frameworks/weapp-vite/plugin-descriptors'
 import { resolveImplicitAppTypeFromViteRoot } from './resolve-app-type'
+import { createRewriteCssImportsPlugins } from './rewrite-css-imports'
 import { createGenerationConfigHook } from './shared/generation-config-hook'
+import { rewriteCssImportsSlot } from './shared/plugin-descriptors'
 import { createDeferredVitePlugins, mergeVitePluginSlots } from './shared/plugin-slots'
+import { slash } from './utils'
 
 export type { WeappTailwindcssVitePlugin } from './shared/create-framework-plugins'
 
@@ -114,7 +118,7 @@ function resolveViteProfile(options: UserDefinedOptions, config: ResolvedConfig,
 }
 
 function emitDeferredRuntimeLogs(
-  opts: ReturnType<typeof getCompilerContext>,
+  opts: ReturnType<typeof createCompilerContext>,
   profile: { isGenericWeb: boolean },
   rawOptions: UserDefinedOptions,
 ) {
@@ -149,9 +153,20 @@ const frameworkRegistry = {
 
 /** Vite 完成配置解析后才创建选定框架的独立编译实例。 */
 export function WeappTailwindcss(options: UserDefinedOptions = {}): WeappTailwindcssVitePlugin[] | undefined {
+  if (resolvePluginDisabledState(options.disabled).plugin) {
+    if (options.rewriteCssImports !== true) {
+      return
+    }
+    return createDeferredVitePlugins([rewriteCssImportsSlot], (config, context) => createRewriteCssImportsPlugins({
+      appType: resolveViteProfile(options, config, resolveEnvironmentName(context)).appType,
+      shouldRewrite: true,
+      weappTailwindcssDirPosix: slash(resolvePackageDir('weapp-tailwindcss')),
+    }))
+  }
   const forceGenericWeb = (options as UserDefinedOptions & { __internalViteForceGenericWeb?: boolean }).__internalViteForceGenericWeb === true
-  const selected = options.appType || options.uniAppX
-    ? frameworkRegistry[resolveViteFrameworkProfile(options).frameworkName].slots
+  const explicitFramework = resolveViteFrameworkProfile(options).frameworkName
+  const selected = options.appType || explicitFramework !== 'generic'
+    ? frameworkRegistry[explicitFramework].slots
     : undefined
   const candidates = forceGenericWeb
     ? webPluginSlots
@@ -162,7 +177,7 @@ export function WeappTailwindcss(options: UserDefinedOptions = {}): WeappTailwin
     const generator = profile.isGenericWeb && options.generator !== false
       ? { ...(typeof options.generator === 'object' ? options.generator : {}), target: profile.capability.generatorTarget ?? 'web' }
       : options.generator
-    const opts = getCompilerContext({
+    const opts = createCompilerContext({
       ...options,
       appType: profile.appType,
       tailwindcssBasedir: options.tailwindcssBasedir ?? config.root,

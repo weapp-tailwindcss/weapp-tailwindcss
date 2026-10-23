@@ -32,10 +32,10 @@ interface InternalContext {
 }
 
 let currentContext: InternalContext
-const getCompilerContextMock = vi.fn<(options?: unknown) => InternalContext>(() => currentContext)
+const createCompilerContextMock = vi.fn<(options?: unknown) => InternalContext>(() => currentContext)
 
 vi.mock('@/context', () => ({
-  getCompilerContext: (options?: unknown) => getCompilerContextMock(options),
+  createCompilerContext: (options?: unknown) => createCompilerContextMock(options),
 }))
 
 function createFile(path: string, contents: string) {
@@ -100,7 +100,7 @@ describe('bundlers/gulp createPlugins', () => {
       refreshTailwindcssRuntime: vi.fn(async () => tailwindRuntime),
     }
 
-    getCompilerContextMock.mockClear()
+    createCompilerContextMock.mockClear()
   })
 
   afterEach(() => {
@@ -122,12 +122,12 @@ describe('bundlers/gulp createPlugins', () => {
     await plugins.dispose()
     await plugins.dispose()
 
-    expect(runtimeManager.reset).toHaveBeenCalledTimes(2)
+    expect(runtimeManager.reset).toHaveBeenCalledTimes(1)
   })
 
   it('processes files and caches results across runs', async () => {
     const plugins = createPlugins()
-    expect(getCompilerContextMock).toHaveBeenCalled()
+    expect(createCompilerContextMock).toHaveBeenCalled()
 
     const cssFile = createFile('/src/app.wxss', '.foo { color: red; }')
     const processedCss = await runTransform(plugins.transformWxss(), cssFile)
@@ -338,7 +338,7 @@ describe('bundlers/gulp createPlugins', () => {
       root: null,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -460,7 +460,7 @@ describe('bundlers/gulp createPlugins', () => {
       root: null,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -566,7 +566,7 @@ describe('bundlers/gulp createPlugins', () => {
       root: null,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -661,7 +661,7 @@ describe('bundlers/gulp createPlugins', () => {
       generate: generateMock,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGenerator,
       normalizeWeappTailwindcssGeneratorOptions: vi.fn(() => ({
         enabled: true,

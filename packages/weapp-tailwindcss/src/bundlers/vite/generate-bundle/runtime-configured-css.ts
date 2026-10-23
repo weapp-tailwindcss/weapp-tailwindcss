@@ -7,6 +7,7 @@ import path from 'node:path'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../css-output'
+import { createFrameworkAssetAccess } from '../shared/framework-assets'
 import { collectConfiguredTailwindV4CssSourceEntries } from './configured-css-sources'
 import { normalizeRelativeCssConfigDirectives } from './css-config-directives'
 import { resolveOutputFileFromMatchedCssSource } from './css-output-helpers'
@@ -162,7 +163,7 @@ export function createConfiguredCssRootResolvers(
     if (!options.opts.cssMatcher(outputFile) || !isRootStyleOutputFile(outputFile)) {
       return false
     }
-    return options.cssPipelineStrategy?.shouldSelectConfiguredCssEntryRootSource?.({
+    return options.cssPipelineStrategy?.styles?.shouldSelectConfiguredCssEntryRootSource?.({
       ...options.cssPipelineContext,
       isRootStyleOutputFile,
       outputFile,
@@ -219,17 +220,13 @@ export function createConfiguredCssRootResolvers(
     }
     return undefined
   }
-  const shouldKeepRootImportShell = (outputFile: string, css?: string | undefined) => {
+  const shouldKeepRootImportShell = (outputFile: string, _css?: string | undefined) => {
     const normalizedOutputFile = normalizeOutputPathKey(outputFile.replace(/[?#].*$/, ''))
     return options.opts.cssMatcher(outputFile)
       && isMiniProgramStyleOutputFile(outputFile)
       && !normalizedOutputFile.includes('/')
       && shouldKeepRootMiniProgramStyleAsImportShell(
-        options.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-          ...options.cssPipelineContext,
-          css: css as string,
-          file: outputFile,
-        }),
+        (options.cssPipelineStrategy?.styles?.rootImportShell !== undefined),
       )
   }
 
@@ -270,9 +267,9 @@ export function createConfiguredCssRootResolvers(
       ) {
         return undefined
       }
-      return options.cssPipelineStrategy?.resolveConfiguredCssEntryRootInjectionTarget?.({
+      return options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.({
         ...options.cssPipelineContext,
-        bundle: options.bundle,
+        assets: createFrameworkAssetAccess(options.bundle).read(),
         isConfiguredCssEntryFile: file => typeof file === 'string'
           && explicitFileKeys.has(normalizeEntryFile(file)),
         isMiniProgramStyleOutputFile,

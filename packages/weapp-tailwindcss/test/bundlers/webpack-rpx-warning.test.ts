@@ -2,13 +2,13 @@ import type { SetupWebpackV5ProcessAssetsHookOptions } from '@/bundlers/webpack/
 import { logger } from '@weapp-tailwindcss/logger'
 import { afterEach, expect, it, vi } from 'vitest'
 import { setupWebpackV5ProcessAssetsHook } from '@/bundlers/webpack/BaseUnifiedPlugin/v5-assets'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { recordRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 
 afterEach(() => vi.restoreAllMocks())
 
 it.each(['mp-weixin', 'mp-alipay'])('Webpack 最终 asset 检查保留平台与会话边界：%s', async (platform) => {
-  const options = getCompilerContext({ platform, cssCalc: false, cssPreflight: false })
+  const options = createCompilerContext({ platform, cssCalc: false, cssPreflight: false })
   const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {})
   const runtimeState = { tailwindRuntime: options.tailwindRuntime, readyPromise: Promise.resolve() }
   recordRpxThemeRisk(runtimeState, 'theme', ['--spacing'])

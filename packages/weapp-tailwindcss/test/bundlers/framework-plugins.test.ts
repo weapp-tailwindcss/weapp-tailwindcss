@@ -9,20 +9,19 @@ describe('framework plugin composition profiles', () => {
   })
 
   it('routes Vite public entry to framework factories', async () => {
-    const createViteFrameworkPlugins = vi.fn((_options, framework) => [{ name: framework.frameworkName }])
+    const createViteFrameworkPlugins = vi.fn(() => [])
     vi.doMock('@/bundlers/vite/shared/create-framework-plugins', () => ({
       createViteFrameworkPlugins,
     }))
 
     const { WeappTailwindcss } = await import('@/bundlers/vite')
 
-    expect(WeappTailwindcss({ appType: 'taro' })?.map(plugin => plugin.name)).toEqual([
-      'weapp-tailwindcss:taro-alipay-browserslist-asset',
-      'taro',
-    ])
-    expect(WeappTailwindcss({ appType: 'uni-app-vite' })?.[0]?.name).toBe('uni-app')
-    expect(WeappTailwindcss({ appType: 'uni-app-x' })?.[0]?.name).toBe('uni-app-x')
-    expect(WeappTailwindcss({ appType: 'weapp-vite' })?.[0]?.name).toBe('weapp-vite')
+    for (const appType of ['taro', 'uni-app-vite', 'uni-app-x', 'weapp-vite'] as const) {
+      const plugins = WeappTailwindcss({ appType })!
+      const post = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post')!
+      expect(createViteFrameworkPlugins).toHaveBeenCalledTimes(['taro', 'uni-app-vite', 'uni-app-x', 'weapp-vite'].indexOf(appType))
+      await post.configResolved.call({}, { command: 'build', root: process.cwd(), build: { outDir: 'dist' } })
+    }
 
     const frameworkProfiles = createViteFrameworkPlugins.mock.calls.map(([, framework]) => framework)
     expect(frameworkProfiles.find(framework => framework.frameworkName === 'uni-app')).toMatchObject({
@@ -44,6 +43,7 @@ describe('framework plugin composition profiles', () => {
       const browserslistAssetPlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:taro-alipay-browserslist-asset')
       expect(browserslistAssetPlugin?.enforce).toBe('pre')
       expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:taro-cjs-stability')).toBe(false)
+      await browserslistAssetPlugin?.configResolved?.call({}, { command: 'build', root: process.cwd(), build: { outDir: 'dist' } })
       const weappBundle = {}
       await (browserslistAssetPlugin?.generateBundle as any)?.({}, weappBundle)
       expect(weappBundle).not.toHaveProperty('.browserslistrc')
@@ -51,12 +51,16 @@ describe('framework plugin composition profiles', () => {
       process.env.TARO_ENV = 'alipay'
       const alipayPlugins = WeappTailwindcss({ appType: 'taro' }) ?? []
       const alipayPlugin = alipayPlugins.find(plugin => plugin.name === 'weapp-tailwindcss:taro-alipay-browserslist-asset')
+      await alipayPlugin?.configResolved?.call({}, { command: 'build', root: process.cwd(), build: { outDir: 'dist' } })
       const unchangedWeappBundle = {}
       await (browserslistAssetPlugin?.generateBundle as any)?.({}, unchangedWeappBundle)
       expect(unchangedWeappBundle).not.toHaveProperty('.browserslistrc')
       process.env.TARO_ENV = 'weapp'
       const alipayBundle = {}
       await (alipayPlugin?.generateBundle as any)?.({}, alipayBundle)
+      for (const instance of [plugins, alipayPlugins]) {
+        await instance.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post')?.closeBundle?.call({ meta: { watchMode: false } })
+      }
       expect(alipayBundle).toMatchObject({
         '.browserslistrc': {
           type: 'asset',

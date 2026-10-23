@@ -1,11 +1,9 @@
-import type { HmrContext, Plugin, ResolvedConfig } from 'vite'
+import type { Plugin } from 'vite'
 import type { ViteFrameworkName } from '../../framework-selector'
 import type { ViteFrameworkAssetPipelineStrategy } from './framework-asset-strategy'
-import type { ViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
 import type { ViteFrameworkRuntimeStrategy } from './framework-runtime-strategy'
+import type { ViteFrameworkExtraPluginContext } from './framework-services'
 import type { ViteFrameworkCssPipelineStrategy } from './framework-strategy'
-import type { getCompilerContext } from '@/context'
-import type { toCustomAttributesEntities } from '@/context/custom-attributes'
 import type { ViteStyleInjectorDelegateFactory } from '@/style-injector/types'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import {
@@ -14,6 +12,8 @@ import {
 } from '../source-output-relations'
 import { createViteFrameworkPlugins as createRuntimeViteFrameworkPlugins } from './create-framework-plugins-runtime'
 
+export type { ViteFrameworkExtraPluginContext } from './framework-services'
+
 export interface WeappTailwindcssVitePlugin {
   name: string
   [hook: string]: any
@@ -21,7 +21,7 @@ export interface WeappTailwindcssVitePlugin {
 
 export interface ViteFrameworkBranchContext {
   frameworkName: ViteFrameworkName
-  createAssetPipeline?: (options: Readonly<UserDefinedOptions>) => ViteFrameworkAssetPipelineStrategy
+  createAssetPipeline?: () => ViteFrameworkAssetPipelineStrategy
   runtimeStrategy?: ViteFrameworkRuntimeStrategy
   adaptWatchCssBeforeFrameworkCache?: boolean
   createExtraPlugins?: (context: ViteFrameworkExtraPluginContext) => Plugin[]
@@ -29,34 +29,6 @@ export interface ViteFrameworkBranchContext {
   styleInjectorDelegate: ViteStyleInjectorDelegateFactory
   isRuntimeClassSetFeatureEnabled?: () => boolean
   sourceCandidatesBeforeExtraPlugin?: (plugin: Plugin) => boolean
-}
-
-export interface ViteFrameworkExtraPluginContext {
-  cssPreflight: InternalUserDefinedOptions['cssPreflight']
-  cssPreflightRange: InternalUserDefinedOptions['cssPreflightRange']
-  customAttributesEntities: ReturnType<typeof toCustomAttributesEntities>
-  disabledDefaultTemplateHandler: boolean | undefined
-  ensureRuntimeClassSet: (...args: any[]) => Promise<Set<string>>
-  generateCss: (...args: any[]) => Promise<string | undefined>
-  getResolvedConfig: () => ResolvedConfig | undefined
-  hmrCssModuleVersions: ViteHmrCssModuleVersionTracker
-  isEnabled: () => boolean
-  isNativeAppStyleTarget: () => boolean
-  isWebGeneratorTarget: () => boolean
-  jsHandler: ReturnType<typeof getCompilerContext>['jsHandler']
-  mainCssChunkMatcher: ReturnType<typeof getCompilerContext>['mainCssChunkMatcher']
-  registerModuleGraphCandidates: (id: string, source: string) => Promise<Set<string>>
-  waitForRuntimeReady: () => Promise<unknown>
-  styleHandler: ReturnType<typeof getCompilerContext>['styleHandler']
-  syncSourceCandidatesForHotUpdate: (ctx: HmrContext) => Promise<void>
-  tailwindRootCssModuleIds: ReadonlySet<string>
-  viteProcessedCssSourceFiles: Iterable<string>
-  webCssEntryDiagnostics: {
-    dispose: () => void
-    flush: () => void
-    observeSourceImports: (source: string, sourceId: string) => void
-    requestCheck: () => void
-  }
 }
 
 function wrapPluginHook(

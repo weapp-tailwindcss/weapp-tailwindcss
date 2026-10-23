@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from 'vite'
+import type { FrameworkBuildFacts } from '@/bundlers/vite/shared/framework-services'
 import path from 'node:path'
 import process from 'node:process'
 import { collectCssReferenceDirectives } from '@weapp-tailwindcss/postcss/transform'
@@ -20,7 +20,7 @@ interface CreateUniAppXHarmonyApplyExpanderOptions {
     sourceCandidates?: Iterable<string>
     transient?: boolean
   }) => Promise<string | undefined> | string | undefined) | undefined
-  getResolvedConfig: () => ResolvedConfig | undefined
+  getResolvedConfig: () => FrameworkBuildFacts | undefined
   isHarmonyBuildTarget: () => boolean
   transformCss: (css: string, id: string) => Promise<string>
 }

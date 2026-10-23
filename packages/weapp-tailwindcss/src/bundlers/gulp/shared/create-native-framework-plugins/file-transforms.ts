@@ -1,14 +1,15 @@
 import type File from 'vinyl'
-import type { getCompilerContext } from '@/context'
+import type { createCompilerContext } from '@/context'
 import type { SourceCandidateCollector } from '@/project-sources/candidates'
 import type { TailwindRuntimeState } from '@/tailwindcss/runtime'
 import type { CreateJsHandlerOptions, IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOptions } from '@/types'
 import path from 'node:path'
+import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { generateTailwindV4Css } from '@/context/generation'
 import { shouldSkipJsTransform } from '@/js/precheck'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { finalizeMiniProgramGeneratorCss } from '../../../../generation/generation-helpers'
 import { rewriteLocalCssImportRequestsForOutput } from '../../../../generation/local-imports'
-import { generateTailwindV4Css } from '../../../../generation/service'
 import { processCachedTask } from '../../../shared/cache'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, createCssTokenSourceMap } from '../../../shared/css-source-trace'
 import { finalizeMiniProgramCssStructure } from '../../../shared/final-css-cleanup'
@@ -25,7 +26,7 @@ type RuntimeRefreshOptions = boolean | {
 }
 
 export interface GulpFileTransformContext {
-  cache: ReturnType<typeof getCompilerContext>['cache']
+  cache: ReturnType<typeof createCompilerContext>['cache']
   createRuntimeSetHash: (
     rawSource: string,
     nextRuntimeSet: Set<string>,
@@ -40,7 +41,7 @@ export interface GulpFileTransformContext {
   getSourceCandidateSourceGetter: () => SourceCandidateCollector['sourcesForEntries'] | undefined
   getRuntimeSet: () => Set<string>
   gulpProcessCacheKeys: Set<string>
-  opts: ReturnType<typeof getCompilerContext>
+  opts: ReturnType<typeof createCompilerContext>
   refreshGulpV4SourceCandidates: (forceRefresh?: boolean) => Promise<SourceCandidateCollector['valuesForEntries'] | undefined>
   refreshRuntimeSet: (options?: RuntimeRefreshOptions) => Promise<Set<string>>
   refreshRuntimeSetForSource: (file: File, rawSource: string, type: 'html' | 'js') => Promise<Set<string>>
@@ -81,12 +82,14 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
     runtimeState,
   } = context
   const { templateHandler, styleHandler, jsHandler } = opts
+  const createOwnedTransform: typeof createVinylTransform = (phase, transform, timing) =>
+    createVinylTransform(phase, file => runCompilerOwnerActivity(runtimeState, () => transform(file)), timing)
 
   function createWxssTransform(
     options: Partial<IStyleHandlerOptions>,
     stage: 'generate' | 'transform',
   ) {
-    return createVinylTransform(`css:${stage}`, async (file) => {
+    return createOwnedTransform(`css:${stage}`, async (file) => {
       if (!file.contents) {
         return
       }
@@ -195,7 +198,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
   const generateWxss = (options: Partial<IStyleHandlerOptions> = {}) => createWxssTransform(options, 'generate')
   const transformWxss = (options: Partial<IStyleHandlerOptions> = {}) => createWxssTransform(options, 'transform')
   const adaptWxss = (options: Partial<IStyleHandlerOptions> = {}) =>
-    createVinylTransform('css:adapt', async (file) => {
+    createOwnedTransform('css:adapt', async (file) => {
       if (!file.contents) {
         return
       }
@@ -229,7 +232,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
     }, () => resolveGulpTransformTimingDetails('css:adapt'))
 
   const transformJs = (options: Partial<CreateJsHandlerOptions> = {}) =>
-    createVinylTransform('js', async (file) => {
+    createOwnedTransform('js', async (file) => {
       if (!file.contents) {
         return
       }
@@ -280,7 +283,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
     }, () => resolveGulpTransformTimingDetails('js'))
 
   const transformWxml = (options: Partial<ITemplateHandlerOptions> = {}) =>
-    createVinylTransform('html', async (file) => {
+    createOwnedTransform('html', async (file) => {
       if (!file.contents) {
         return
       }

@@ -1,5 +1,5 @@
-/* eslint-disable style/max-statements-per-line */
 import type { OutputAsset, OutputBundle } from 'rollup'
+/* eslint-disable style/max-statements-per-line */
 import type { BundleStateEntry } from '../bundle-state'
 import type { SourceCandidateCollector } from '../source-candidates'
 import type { GenerateBundleContext, GenerateBundleThis, PendingRememberedCssReplayUpdate } from './types'
@@ -23,6 +23,7 @@ import { createCssHandlerOptionsCache, resolveViteCssHandlerExtraOptions } from 
 import { resolveMiniProgramStyleOutputExtension, resolveMiniProgramStyleOutputExtension as resolveMiniProgramStyleOutputExtension2, resolveReplayCssOutputFile, resolveReplayCssOutputFile as resolveReplayCssOutputFile2, resolveReplayCssOutputFileFromSourceRoot, resolveViteCssPipelineOutputFile, resolveViteCssPipelineOutputFile as resolveViteCssPipelineOutputFile2, resolveViteCssPipelineOutputFileFromSourceFile } from '../css-output'
 import { collectViteProcessedCssAssetResults, isCssImportOnlyBundleAsset, removeCssCoveredByRootStyleBundleSources } from '../processed-css-assets'
 import { createRuntimeAffectingSourceSignature } from '../runtime-affecting-signature'
+import { createFrameworkCssContext } from '../shared/framework-css-context'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
 import { normalizeBundleFileNameKeysForTest } from './bundle-file-names'
@@ -82,8 +83,8 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
   const frameworkRootImportShellTargetByFile = context.frameworkRootImportShellTargetByFile ?? new Map<string, string>()
   let currentOutDir: string | undefined
   let currentSubpackageRoots: Set<string> | undefined
-  const createInitialCssPipelineContext = (file: string) => { const resolvedConfig = context.getResolvedConfig(); const platform = context.opts.cssOptions?.platform ?? context.opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir); const currentGeneratorOptions = resolveContextGeneratorConfiguration(context.opts, { platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion }).options; return { currentGeneratorBranch: currentGeneratorOptions.branch, currentGeneratorOptions, file, opts: context.opts, resolvedConfig, resolveStylePlatform: () => platform } }
-  const cssHandlerOptions = createCssHandlerOptionsCache({ getAppType: () => context.opts.appType, mainCssChunkMatcher: context.opts.mainCssChunkMatcher, getMajorVersion: () => context.runtimeState.tailwindRuntime.majorVersion, getOutputRoot: () => currentOutDir, getExtraOptions: file => ({ ...resolveViteCssHandlerExtraOptions(file), ...context.cssPipelineStrategy?.getCssHandlerExtraOptions?.(createInitialCssPipelineContext(file)) ?? {}, ...currentSubpackageRoots && isSubpackageOutputFile(file, currentSubpackageRoots) ? { isMainChunk: false } : {} }) })
+  const createInitialCssPipelineContext = (file: string) => { const resolvedConfig = context.getResolvedConfig(); const platform = context.opts.cssOptions?.platform ?? context.opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir); const currentGeneratorOptions = resolveContextGeneratorConfiguration(context.opts, { platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion }).options; return { ...createFrameworkCssContext({ currentGeneratorBranch: currentGeneratorOptions.branch, currentGeneratorOptions, opts: context.opts, resolvedConfig, resolveStylePlatform: () => platform }), file } }
+  const cssHandlerOptions = createCssHandlerOptionsCache({ getAppType: () => context.opts.appType, mainCssChunkMatcher: context.opts.mainCssChunkMatcher, getMajorVersion: () => context.runtimeState.tailwindRuntime.majorVersion, getOutputRoot: () => currentOutDir, getExtraOptions: file => ({ ...resolveViteCssHandlerExtraOptions(file), ...context.cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(createInitialCssPipelineContext(file)) ?? {}, ...currentSubpackageRoots && isSubpackageOutputFile(file, currentSubpackageRoots) ? { isMainChunk: false } : {} }) })
   return async function generateBundle(this: GenerateBundleThis, _opt: unknown, bundle: OutputBundle) {
     if (context.shouldProcessBundle?.() === false) {
       await context.onSkipProcessBundle?.()
@@ -101,13 +102,13 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const generatorPlatform = opts.cssOptions?.platform ?? opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir)
     const generatorOptions = resolveContextGeneratorConfiguration(opts, { platform: generatorPlatform, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion }).options
     const generatorBranch = generatorOptions.branch
-    const cssPipelineContext = { bundle, currentGeneratorBranch: generatorBranch, currentGeneratorOptions: generatorOptions, opts, resolvedConfig, resolveStylePlatform: () => generatorPlatform }
+    const cssPipelineContext = createFrameworkCssContext({ bundle, currentGeneratorBranch: generatorBranch, currentGeneratorOptions: generatorOptions, opts, resolvedConfig, resolveStylePlatform: () => generatorPlatform })
     const isWebGeneratorTarget = generatorBranch.isWeb
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, context.cssPipelineStrategy)
-    const transformWebTargetCss = (css: string) => { return context.cssPipelineStrategy?.transformGeneratedCss?.(css, { ...cssPipelineContext, defaultWebCssCompat: value => transformWebCssCompat(value, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }), removeScopedPreflight: value => value, shouldApplyWebCssCompat }) ?? (shouldApplyWebCssCompat ? transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }) : css) }
-    const isNativeAppStyleTarget = context.cssPipelineStrategy?.isNativeAppStyleTarget?.(cssPipelineContext) === true
-    const isHarmonyAppStyleTarget = context.cssPipelineStrategy?.isHarmonyAppStyleTarget?.(cssPipelineContext) === true
-    const shouldPreserveAppCssExtension = context.cssPipelineStrategy?.shouldPreserveStyleOutputExtension?.(cssPipelineContext) ?? (isNativeAppStyleTarget || isHarmonyAppStyleTarget)
+    const transformWebTargetCss = (css: string) => { return context.cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, { ...cssPipelineContext, defaultWebCssCompat: value => transformWebCssCompat(value, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }), removeScopedPreflight: value => value, shouldApplyWebCssCompat }) ?? (shouldApplyWebCssCompat ? transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }) : css) }
+    const isNativeAppStyleTarget = context.cssPipelineStrategy?.generation?.isNativeAppStyleTarget?.(cssPipelineContext) === true
+    const isHarmonyAppStyleTarget = context.cssPipelineStrategy?.generation?.isHarmonyAppStyleTarget?.(cssPipelineContext) === true
+    const shouldPreserveAppCssExtension = context.cssPipelineStrategy?.styles?.shouldPreserveStyleOutputExtension?.(cssPipelineContext) ?? (isNativeAppStyleTarget || isHarmonyAppStyleTarget)
     const shouldGenerateWebCssByGenerator = isWebGeneratorTarget
     const { getCssHandlerOptions, getCssUserHandlerOptions } = cssHandlerOptions
     const rootDir = resolvedConfig?.root ? path.resolve(resolvedConfig.root) : process.cwd()
@@ -215,7 +216,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const collectedGeneratorCandidates = new Set([...runtime, ...sourceCandidates])
     const filteredGeneratorCandidates = shouldFilterTailwindV4MiniProgramCandidates ? filterUnsupportedMiniProgramTailwindV4Candidates(collectedGeneratorCandidates) : collectedGeneratorCandidates
     const filteredSourceCandidates = shouldFilterTailwindV4MiniProgramCandidates ? filterUnsupportedMiniProgramTailwindV4Candidates(sourceCandidates) : sourceCandidates
-    const shouldTransformJsBundle = !isWebGeneratorTarget || context.cssPipelineStrategy?.shouldTransformServeJs?.(cssPipelineContext) === true
+    const shouldTransformJsBundle = !isWebGeneratorTarget || context.cssPipelineStrategy?.sources?.shouldTransformServeJs?.(cssPipelineContext) === true
     const transformRuntime = isWebGeneratorTarget
       ? new Set<string>()
       : shouldFilterTailwindV4MiniProgramCandidates
@@ -291,7 +292,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const shouldProcessTailwindGeneration = !useIncrementalMode || hasRuntimeAffectingChanges || generatorCandidatesChanged || snapshot.processFiles.css.size > 0
     const { applyLinkedUpdates, pendingLinkedUpdates } = createLinkedUpdateHelpers({ jsEntries, onUpdate, debug })
     const createBaseHandlerOptions = createJsHandlerOptionsFactory({ getExperimentalJsFastPath: () => jsFastPath.experimentalJsFastPath, getMajorVersion: () => runtimeState.tailwindRuntime.majorVersion, moduleGraph: moduleGraphOptions })
-    const resolveFrameworkJsHandlerOptions = (absoluteFilename: string) => context.cssPipelineStrategy?.getServeJsHandlerOptions?.({ ...cssPipelineContext, file: absoluteFilename })
+    const resolveFrameworkJsHandlerOptions = (absoluteFilename: string) => context.cssPipelineStrategy?.sources?.getServeJsHandlerOptions?.({ ...cssPipelineContext, file: absoluteFilename })
     const createHandlerOptions = (absoluteFilename: string, extra?: CreateJsHandlerOptions) => { const frameworkExtra = resolveFrameworkJsHandlerOptions(absoluteFilename); return createBaseHandlerOptions(absoluteFilename, frameworkExtra || extra ? { ...frameworkExtra, ...extra } : void 0) }
     const linkedByEntry = useIncrementalMode ? new Map<string, Set<string>>() : void 0
     const sharedCssResultCache = new Map()

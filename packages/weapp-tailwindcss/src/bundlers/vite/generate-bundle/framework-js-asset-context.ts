@@ -4,6 +4,7 @@ import type { CreateJsHandlerOptions, InternalUserDefinedOptions, LinkedJsModule
 import { processCachedTask } from '../../shared/cache'
 import { toAbsoluteOutputPath } from '../../shared/module-graph'
 import { shouldSkipViteJsTransform } from '../js-precheck'
+import { createFrameworkAssetAccess } from '../shared/framework-assets'
 
 interface FrameworkJsAssetContextOptions {
   asset: OutputAsset
@@ -28,7 +29,7 @@ interface FrameworkJsAssetContextOptions {
 export function createFrameworkJsAssetContext(options: FrameworkJsAssetContextOptions): ViteFrameworkJsAssetContext {
   const absoluteFile = toAbsoluteOutputPath(options.file, options.outDir)
   return {
-    bundle: options.bundle,
+    get assets() { return createFrameworkAssetAccess(options.bundle).read() },
     file: options.file,
     shouldTransform: options.shouldTransform,
     shouldSkipTransform: extra => !options.disableJsPrecheck

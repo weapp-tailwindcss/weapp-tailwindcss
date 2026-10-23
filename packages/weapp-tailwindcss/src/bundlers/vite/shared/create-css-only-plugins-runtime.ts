@@ -5,13 +5,13 @@ import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
+import { generateTailwindV4Css } from '@/context/generation'
 import { createDebug } from '@/debug'
 import { normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
 import { normalizeEmptyTailwindCustomVariants } from '@/generation/user-css'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolvePackageDir } from '@/utils/resolve-package'
-import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { createBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
 import { createHmrTimingRecorder } from '../../shared/hmr-timing'
@@ -57,7 +57,7 @@ export function createCssOnlyVitePlugins(
   let resolvedConfig: ResolvedConfig | undefined
   const originalOpts = 'tailwindRuntime' in options
     ? options as InternalUserDefinedOptions
-    : getCompilerContext({
+    : createCompilerContext({
         ...rawOptions,
         appType: undefined,
         platform: 'web',
@@ -83,7 +83,7 @@ export function createCssOnlyVitePlugins(
     opts,
     initialTailwindRuntime: opts.tailwindRuntime,
     refreshTailwindcssRuntime: opts.refreshTailwindcssRuntime,
-    uniAppXEnabled: false,
+    runtimeClassSetFeatureEnabled: false,
     customAttributesEntities: opts.customAttributesEntities,
     disabledDefaultTemplateHandler: opts.disabledDefaultTemplateHandler,
     debug,

@@ -1,8 +1,8 @@
 import type { ViteFrameworkAssetPipelineStrategy, ViteFrameworkJsAssetContext } from '../../shared/framework-asset-strategy'
 import type { CreateJsHandlerOptions, UserDefinedOptions } from '@/types'
 import { isUniAppXEnabled } from '@/uni-app-x/options'
-import { createUniAppXBundleAssetSourceGetter, injectUniAppXHarmonyBundleStyles, injectUniAppXStylePlaceholder, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
-import { createHarmonyBundleStyleSources, handleUniAppXPostCssTasks } from './postprocess'
+import { createUniAppXBundleAssetSourceGetter, injectUniAppXStylePlaceholder, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
+import { applyHarmonyBundleStyles, createHarmonyBundleStyleSources, handleUniAppXPostCssTasks } from './postprocess'
 
 function createJsAssetTask(context: ViteFrameworkJsAssetContext, options: Readonly<UserDefinedOptions>) {
   if (!options.uniAppX) {
@@ -12,7 +12,7 @@ function createJsAssetTask(context: ViteFrameworkJsAssetContext, options: Readon
     uniAppX: isUniAppXEnabled(options.uniAppX),
     babelParserOptions: { plugins: ['typescript'], sourceType: 'unambiguous' },
   }
-  const getAssetSource = createUniAppXBundleAssetSourceGetter(context.bundle)
+  const getAssetSource = createUniAppXBundleAssetSourceGetter(context.assets)
   return async () => {
     if (context.shouldTransform && context.shouldSkipTransform(handlerOptions)) {
       return
@@ -46,7 +46,7 @@ export function createUniAppXAssetPipeline(options: Readonly<UserDefinedOptions>
         return
       }
       return () => {
-        if (injectUniAppXHarmonyBundleStyles(context.bundle, { cssSources: context.getProcessedCssSources() })) {
+        if (applyHarmonyBundleStyles(context, context.getProcessedCssSources())) {
           context.debug('uni-app-x harmony bundle styles inject after css assets')
         }
       }
@@ -55,7 +55,7 @@ export function createUniAppXAssetPipeline(options: Readonly<UserDefinedOptions>
       if (!context.isHarmonyAppStyleTarget) {
         return
       }
-      if (injectUniAppXHarmonyBundleStyles(context.bundle, { cssSources: await createHarmonyBundleStyleSources(context) })) {
+      if (applyHarmonyBundleStyles(context, await createHarmonyBundleStyleSources(context))) {
         context.debug('uni-app-x harmony bundle styles inject')
       }
     },

@@ -3,33 +3,32 @@ import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-st
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import { resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { createTaroViteStyleInjector } from '@/style-injector/vite/taro'
-import { createReplayCssAsset } from '../../generate-bundle/rollup-assets'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
+import { createFrameworkAssetPlugin } from '../../shared/framework-asset-plugin'
 
 export const taroCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
-  shouldKeepRootMiniProgramStyleAsImportShell() {
-    return true
-  },
-  shouldMoveRootMiniProgramStyleToImportShellOrigin() {
-    return true
-  },
-  shouldNormalizeRootMiniProgramImportShell() {
-    return true
+  styles: {
+    rootImportShell: 'extract',
   },
 }
 
 function createTaroAlipayBrowserslistAssetPlugin(target: string | undefined): Plugin {
-  return {
+  return createFrameworkAssetPlugin({
     name: 'weapp-tailwindcss:taro-alipay-browserslist-asset',
     enforce: 'pre',
-    generateBundle(_options, bundle) {
+    generateBundle(assets) {
       if (target !== 'alipay') {
         return
       }
       // Taro Alipay 插件会在 modifyBuildAssets 中写入该文件；Vite runner 需要它先存在于 bundle 图中。
-      bundle['.browserslistrc'] = createReplayCssAsset('.browserslistrc', 'defaults and fully supports es6-module')
+      if (assets.read()['.browserslistrc']) {
+        assets.replaceText('.browserslistrc', 'defaults and fully supports es6-module')
+      }
+      else {
+        assets.emit('.browserslistrc', 'defaults and fully supports es6-module')
+      }
     },
-  }
+  })
 }
 
 export function createTaroVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {

@@ -11,8 +11,8 @@ vi.mock('@/bundlers/shared/css-source-trace', async (importOriginal) => {
   }
 })
 
-vi.mock('@/generation/service', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/generation/service')>()
+vi.mock('@/context/generation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/context/generation')>()
   return {
     ...actual,
     generateTailwindV4Css,
@@ -77,9 +77,9 @@ describe('bundlers/vite remembered css replay', () => {
       createScopedSourceCandidateGetter: vi.fn(() => undefined),
       createScopedSourceCandidateSourceGetter: vi.fn(() => () => new Map()),
       cssTaskFactories,
-      cssPipelineContext: { opts: { cssMatcher: (file: string) => file.endsWith('.wxss') } } as any,
+      cssPipelineContext: { matchesCss: (file: string) => file.endsWith('.wxss') } as any,
       cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
+        styles: { rootImportShell: 'preserve' },
       },
       debug: vi.fn(),
       defaultStyleOutputExtension: '.wxss',

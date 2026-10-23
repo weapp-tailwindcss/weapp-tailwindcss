@@ -47,7 +47,7 @@ import {
 } from '@/bundlers/vite/plugin-cache'
 import { taroCssPipelineStrategy } from '@/bundlers/vite/frameworks/taro'
 import { uniAppCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app'
-import { uniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
+import { createUniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
 import { resolveViteServeRootMiniProgramImportShell } from '@/bundlers/vite/serve-root-import-shell'
 
 let tempRoots: string[] = []
@@ -376,13 +376,13 @@ describe('bundlers/vite helper modules', () => {
     const frameworkStrategies = {
       'taro': taroCssPipelineStrategy,
       'uni-app-vite': uniAppCssPipelineStrategy,
-      'uni-app-x': uniAppXCssPipelineStrategy,
+      'uni-app-x': createUniAppXCssPipelineStrategy({}),
     }
     const preservedShells = Object.fromEntries(Object.entries(frameworkStrategies).map(([framework, cssPipelineStrategy]) => [
       framework,
       resolveViteServeRootMiniProgramImportShell({
         css: '@import "tailwind.wxss";',
-        cssPipelineContext: {} as any,
+        cssPipelineContext: { matchesCss: () => true } as any,
         cssPipelineStrategy,
         isWebGeneratorTarget: false,
         outputFile: 'app.wxss',
@@ -399,19 +399,13 @@ describe('bundlers/vite helper modules', () => {
 
     const baseOptions = {
       css: '@import "tailwind.wxss";',
-      cssPipelineContext: {} as any,
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: vi.fn(() => true),
-      },
+      cssPipelineContext: { matchesCss: () => true } as any,
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' as const } },
       isWebGeneratorTarget: false,
       outputFile: 'app.wxss',
     }
 
     expect(resolveViteServeRootMiniProgramImportShell(baseOptions)).toBe('@import "./tailwind.wxss";')
-    expect(baseOptions.cssPipelineStrategy.shouldKeepRootMiniProgramStyleAsImportShell).toHaveBeenCalledWith(expect.objectContaining({
-      css: '@import "tailwind.wxss";',
-      file: 'app.wxss',
-    }))
     expect(resolveViteServeRootMiniProgramImportShell({
       ...baseOptions,
       css: '@import "tailwind.wxss";\n.root{}',
@@ -426,9 +420,7 @@ describe('bundlers/vite helper modules', () => {
     })).toBeUndefined()
     expect(resolveViteServeRootMiniProgramImportShell({
       ...baseOptions,
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => false,
-      },
+      cssPipelineStrategy: {  },
     })).toBeUndefined()
   })
 
@@ -437,16 +429,12 @@ describe('bundlers/vite helper modules', () => {
     delete process.env.UNI_UTS_PLATFORM
     try {
       const context = {
-        resolvedConfig: {
-          build: {
-            outDir: '/project/unpackage/dist/dev/.uvue',
-          },
-          root: '/tmp/project-weapp-tw-app-android-12345',
-        },
+        outDir: '/project/unpackage/dist/dev/.uvue',
+        root: '/tmp/project-weapp-tw-app-android-12345',
       } as any
 
-      expect(uniAppXCssPipelineStrategy.isNativeAppStyleTarget?.(context)).toBe(true)
-      expect(uniAppXCssPipelineStrategy.shouldPreserveStyleOutputExtension?.(context)).toBe(true)
+      expect(createUniAppXCssPipelineStrategy({}).generation?.isNativeAppStyleTarget?.(context)).toBe(true)
+      expect(createUniAppXCssPipelineStrategy({}).styles?.shouldPreserveStyleOutputExtension?.(context)).toBe(true)
     }
     finally {
       process.env.UNI_UTS_PLATFORM = originalPlatform
@@ -836,10 +824,7 @@ describe('bundlers/vite helper modules', () => {
       platform: 'weapp',
     } as any
     const pipelineContext = {} as any
-    const taroRootStyleStrategy = {
-      shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-      shouldMoveRootMiniProgramStyleToImportShellOrigin: () => true,
-    }
+    const taroRootStyleStrategy = { styles: { rootImportShell: 'extract' as const } }
     expect(resolveCssBundleOutputFile({
       bundleFiles: ['app.wxss'],
       cssPipelineStrategy: taroRootStyleStrategy,

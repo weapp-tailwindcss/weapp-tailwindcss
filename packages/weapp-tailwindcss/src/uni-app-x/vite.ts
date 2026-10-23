@@ -61,6 +61,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     tailwindRootCssModuleIds = [],
     generateCss,
     hmrCssModuleVersions,
+    beginSfcStyleUpdate,
     jsHandler,
     ensureRuntimeClassSet,
     getResolvedConfig,
@@ -96,7 +97,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
   const webSfcHmr = createUniAppXWebSfcHmr({
     isEnabled: () => isEnabled() && isWebGeneratorTarget() && getResolvedConfig()?.command === 'serve',
     transform: (source, id) => runTransformSfc(source, id, {}),
-    hmrCssModuleVersions,
+    beginSfcStyleUpdate,
   })
   const webLocalStyle = createUniAppXWebLocalStyleBridge(isWebGeneratorTarget, hmrCssModuleVersions)
   let componentLocalStyleEnabled: boolean | undefined
@@ -309,7 +310,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     const runtimeSet = await ensureRuntimeClassSet()
     const currentRuntimeSet: Set<string> = moduleGraphCandidates?.size
       ? new Set([...runtimeSet, ...moduleGraphCandidates])
-      : runtimeSet
+      : new Set(runtimeSet)
     nativeHmrReloader.remember(currentRuntimeSet)
     const transformUVue = await loadTransformUVue()
     const transformOptions = omitUndefined({
@@ -403,9 +404,6 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       if (isWebGeneratorTarget()) {
         webCssEntryDiagnostics?.flush()
       }
-    },
-    closeBundle() {
-      webCssEntryDiagnostics?.dispose()
     },
   }
 

@@ -3,10 +3,12 @@ import type { RuntimeClassSetManager } from '../../shared/runtime-class-set'
 import type { IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
+import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
+import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { createDebug } from '@/debug'
 import { prependConfigDirective } from '@/generation/config-directive'
@@ -37,7 +39,7 @@ const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
  */
 export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
   const hasInitialTailwindCssRoots = hasConfiguredTailwindV4CssRoots(options)
-  const opts = getCompilerContext({
+  const opts = createCompilerContext({
     ...options,
     __internalDeferMissingCssEntriesWarning: true,
   } as UserDefinedOptions)
@@ -420,15 +422,28 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
     resolveWxssUserHandlerOptions,
     runtimeState,
   })
+  let closing: Promise<void> | undefined
   return {
     ...transforms,
     beginCompilerShadowRun: () => beginShadowRun(runtimeState),
     completeCompilerShadowRun: (revision?: number) => finalizeCompilerShadowRun(runtimeState, { revision }),
-    async dispose() {
-      await disposeCompilerOwner(runtimeState)
-      await bundleRuntimeClassSetManager.reset()
-    },
+    dispose: () => closing ??= disposeCompilerOwner(runtimeState, {
+      async beforeDispose() {
+        try {
+          await bundleRuntimeClassSetManager.reset()
+        }
+        finally {
+          runtimeSourcesByFile.clear()
+          generatedCssPreflightModeByFile.clear()
+          compilationScopeBySourceFile.clear()
+          gulpProcessCacheKeys.clear()
+          defaultStyleHandlerOptionsCache.clear()
+          runtimeSet.clear()
+          invalidateGulpSourceCandidates()
+        }
+      },
+    }).finally(() => runtimeState.dispose()),
     getCompilerShadowRunSnapshot: () => getCompilerShadowRunSnapshot(runtimeState),
-    watchChange,
+    watchChange: (file: string, change: Parameters<typeof watchChange>[1]) => runCompilerOwnerActivity(runtimeState, () => watchChange(file, change)),
   }
 }

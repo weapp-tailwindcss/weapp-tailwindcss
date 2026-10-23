@@ -1,3 +1,4 @@
+import { createFrameworkAssetAccess } from '@/bundlers/vite/shared/framework-assets'
 import type { OutputAsset } from 'rollup'
 import { describe, expect, it, vi } from 'vitest'
 import { handleUniAppXPostCssTasks } from '@/bundlers/vite/frameworks/uni-app-x/postprocess'
@@ -14,7 +15,7 @@ function asset(fileName: string, source: string): OutputAsset {
 
 function createOptions(overrides: Partial<Parameters<typeof handleUniAppXPostCssTasks>[0]> = {}) {
   return {
-    bundle: {},
+    assets: createFrameworkAssetAccess({}),
     debug: vi.fn(),
     enabled: false,
     generateCss: vi.fn(async () => undefined),
@@ -34,7 +35,7 @@ describe('bundlers/vite uni-app-x post css tasks', () => {
     }
 
     const sources = await handleUniAppXPostCssTasks(createOptions({
-      bundle,
+      assets: createFrameworkAssetAccess(bundle),
       enabled: false,
     }))
 
@@ -54,7 +55,7 @@ describe('bundlers/vite uni-app-x post css tasks', () => {
     }
 
     await handleUniAppXPostCssTasks(createOptions({
-      bundle,
+      assets: createFrameworkAssetAccess(bundle),
       debug,
       getCssHandlerOptions: vi.fn(file => ({
         isMainChunk: file === 'styles/root.css',

@@ -1,8 +1,8 @@
 // webpack 5
 import type { Compiler } from 'webpack'
 import type { AppType, IBaseWebpackPlugin, InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
-import process from 'node:process'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
+import { requireFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolveWebpackFrameworkProfile } from '../../framework-selector'
 import { createWebpackFrameworkPlugin } from '../frameworks'
 
@@ -16,9 +16,12 @@ export { weappTailwindcssPackageDir } from '../shared/create-framework-plugin'
 export class WeappTailwindcss implements IBaseWebpackPlugin {
   options: InternalUserDefinedOptions
   appType: AppType | undefined
+  private readonly sourceOptions: UserDefinedOptions
+  private applied = false
 
   constructor(options: UserDefinedOptions = {}) {
-    this.options = getCompilerContext({
+    this.sourceOptions = { ...options }
+    this.options = createCompilerContext({
       ...options,
       __internalDeferMissingCssEntriesWarning: true,
     } as UserDefinedOptions)
@@ -26,10 +29,15 @@ export class WeappTailwindcss implements IBaseWebpackPlugin {
   }
 
   apply(compiler: Compiler) {
+    if (this.applied) {
+      this.options = createCompilerContext({ ...this.sourceOptions, __internalDeferMissingCssEntriesWarning: true } as UserDefinedOptions)
+      this.appType = this.options.appType
+    }
+    this.applied = true
     const profile = resolveWebpackFrameworkProfile({
       appType: this.appType,
       detectEnv: true,
-      env: process.env,
+      env: requireFrameworkEnvironment(this.options).values,
       root: compiler.options?.context ?? compiler.context,
       uniAppX: this.options.uniAppX,
     })

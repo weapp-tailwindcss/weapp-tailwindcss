@@ -1,12 +1,11 @@
 import type { HmrContext } from 'vite'
-import type { ViteHmrCssModuleVersionTracker } from '@/bundlers/vite/shared/framework-hmr-module-version'
 import { normalizeUniAppXImportantApplyForSass } from '@weapp-tailwindcss/postcss/transform'
 import { hasUniAppXImportantApply } from './style-source'
 
 interface WebSfcHmrOptions {
   isEnabled: () => boolean
   transform: (source: string, id: string) => Promise<{ code: string } | undefined | null>
-  hmrCssModuleVersions: ViteHmrCssModuleVersionTracker | undefined
+  beginSfcStyleUpdate?: (() => void) | undefined
 }
 
 export function createUniAppXWebSfcHmr(options: WebSfcHmrOptions) {
@@ -31,7 +30,7 @@ export function createUniAppXWebSfcHmr(options: WebSfcHmrOptions) {
         return false
       }
       // 完整 SFC 事务取代已排队的 CSS 事务，防止过滤器丢弃当前样式模块。
-      options.hmrCssModuleVersions?.clear()
+      options.beginSfcStyleUpdate?.()
       const source = sources.get(ctx) ?? await ctx.read()
       if (hasUniAppXImportantApply(source, normalizeUniAppXImportantApplyForSass)) {
         ctx.server.ws.send({ type: 'full-reload', path: ctx.file })

@@ -5,6 +5,7 @@ import { collectImportedCssFiles, isStyleImportRequest, normalizeInjectableCssWi
 import path from 'pathe'
 import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
+import { createFrameworkAssetAccess } from '../shared/framework-assets'
 import { isCssOutputFile, isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isCssOutputFile } from './style-files'
@@ -66,7 +67,7 @@ export function createCssAssetPipelineContext(
   bundle: OutputBundle,
 ) {
   const context = options.createCssPipelineContext?.(file)
-  return context ? { ...context, bundle } : undefined
+  return context ? { ...context, assets: createFrameworkAssetAccess(bundle).read() } : undefined
 }
 
 export function getAssetFile(bundleFile: string, asset: OutputAsset) {

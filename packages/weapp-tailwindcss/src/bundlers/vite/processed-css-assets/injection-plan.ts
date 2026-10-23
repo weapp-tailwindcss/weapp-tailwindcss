@@ -88,11 +88,7 @@ export function shouldPreserveMiniProgramImportShell(
       file,
       isWebGeneratorTarget: context.currentGeneratorBranch?.isWeb === true,
       matchesCss: options.opts.cssMatcher(file),
-      shouldKeep: () => options.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-        ...context,
-        css,
-        file,
-      }),
+      shouldKeep: () => (options.cssPipelineStrategy?.styles?.rootImportShell !== undefined),
     })
 }
 
@@ -105,7 +101,7 @@ export function resolvePreservedImportShellInjectionTarget(
   const context = createCssAssetPipelineContext(options, file, bundle)
   if (
     context === undefined
-    || options.cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(context) !== true
+    || (options.cssPipelineStrategy?.styles?.rootImportShell === 'extract') !== true
   ) {
     return
   }
@@ -168,11 +164,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
   )
   if (
     context !== undefined
-    && options.cssPipelineStrategy?.shouldPreferMatchedRootWebOutputTarget?.({
-      ...context,
-      file,
-      matchedRootWebOutputTargets,
-    }) === true
+    && (options.cssPipelineStrategy?.styles?.preferMatchedRootWebTarget === true) === true
     && !isMiniProgramStyleOutputFile(file)
     && matchedRootWebOutputTargets.length > 0
   ) {
@@ -203,12 +195,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
     )
   if (
     context !== undefined
-    && options.cssPipelineStrategy?.shouldPreferExplicitWebCssTargets?.({
-      ...context,
-      explicitRootTargets,
-      explicitWebCssTargets,
-      file,
-    }) === true
+    && (options.cssPipelineStrategy?.styles?.preferExplicitWebTargets === true) === true
     && !isMiniProgramStyleOutputFile(file)
     && explicitWebCssTargets.length > 0
   ) {

@@ -120,7 +120,7 @@ describe('Vite 框架实例与产物阶段隔离', () => {
     const strategy: ViteFrameworkAssetPipelineStrategy = {
       async afterTransform(context) {
         const current = ++revision
-        expect(context.bundle['index.js']).toMatchObject({ code: expect.stringContaining('js:') })
+        expect(context.assets.read()['index.js']).toMatchObject({ code: expect.stringContaining('js:') })
         expect(context).not.toHaveProperty('runtimeState')
         expect(context).not.toHaveProperty('cache')
         events.push(`after:${current}`)

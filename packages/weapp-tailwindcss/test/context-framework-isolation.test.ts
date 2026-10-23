@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { uniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
+import { createUniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
+import { createFrameworkCssContext } from '@/bundlers/vite/shared/framework-css-context'
 import { resolveFrameworkStylePlatform } from '@/bundlers/vite/shared/framework-runtime-configuration'
 import { getCompilerContext } from '@/context'
 import { createCompilerContextCacheKey } from '@/context/compiler-context-cache'
@@ -25,16 +26,16 @@ describe('框架环境与 context 缓存隔离', () => {
     const nativeTarget = createUniAppXNativeBuildTargetResolver(() => undefined)
     const context = (opts: typeof web) => {
       const currentGeneratorOptions = resolveContextGeneratorConfiguration(opts).options
-      return { opts, currentGeneratorOptions, currentGeneratorBranch: currentGeneratorOptions.branch, resolvedConfig: undefined, resolveStylePlatform: () => resolveFrameworkStylePlatform(opts, undefined) }
+      return createFrameworkCssContext({ opts, currentGeneratorOptions, currentGeneratorBranch: currentGeneratorOptions.branch, resolvedConfig: undefined, resolveStylePlatform: () => resolveFrameworkStylePlatform(opts, undefined) })
     }
     for (const environment of ['web', 'app-harmony', 'mp-weixin']) {
       vi.stubEnv('UNI_UTS_PLATFORM', environment)
       expect(resolveContextGeneratorConfiguration(web).options.target).toBe('web')
       expect(resolveFrameworkStylePlatform(web, undefined)).toBe('web')
-      expect(uniAppXCssPipelineStrategy.isNativeAppStyleTarget!(context(web))).toBe(false)
-      expect(uniAppXCssPipelineStrategy.isHarmonyAppStyleTarget!(context(web))).toBe(false)
-      expect(uniAppXCssPipelineStrategy.isNativeAppStyleTarget!(context(native))).toBe(true)
-      expect(uniAppXCssPipelineStrategy.isHarmonyAppStyleTarget!(context(native))).toBe(true)
+      expect(createUniAppXCssPipelineStrategy(web).generation!.isNativeAppStyleTarget!(context(web))).toBe(false)
+      expect(createUniAppXCssPipelineStrategy(web).generation!.isHarmonyAppStyleTarget!(context(web))).toBe(false)
+      expect(createUniAppXCssPipelineStrategy(native).generation!.isNativeAppStyleTarget!(context(native))).toBe(true)
+      expect(createUniAppXCssPipelineStrategy(native).generation!.isHarmonyAppStyleTarget!(context(native))).toBe(true)
       expect(webNativeTarget()).toBe(false)
       expect(nativeTarget()).toBe(true)
     }
@@ -52,7 +53,10 @@ describe('框架环境与 context 缓存隔离', () => {
     expect(mini.tailwindRuntime).not.toBe(web.tailwindRuntime)
     expect(mini.cache).not.toBe(web.cache)
     vi.stubEnv(key, 'web')
-    expect(getCompilerContext({ ...options })).toBe(web)
+    const secondWeb = getCompilerContext({ ...options })
+    expect(secondWeb).not.toBe(web)
+    expect(secondWeb.tailwindRuntime).not.toBe(web.tailwindRuntime)
+    expect(secondWeb.platform).toBe(web.platform)
     expect(web.platform).toBe('web')
     expect(mini.platform).toBe('mp-weixin')
   })

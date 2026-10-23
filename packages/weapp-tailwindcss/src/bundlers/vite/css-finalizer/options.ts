@@ -181,7 +181,7 @@ export function finalizeWebCss(
     resolveViteWebCssCompatOptions(context),
     { deferPropertyFallback: true },
   )
-  return cssPipelineStrategy?.transformGeneratedCss?.(css, {
+  return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, {
     ...context,
     defaultWebCssCompat,
     removeScopedPreflight: value => value,

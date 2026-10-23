@@ -5,8 +5,8 @@ import process from 'node:process'
 import { postcss } from '@weapp-tailwindcss/postcss/transform'
 import { expect, it } from 'vitest'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
-import { generateTailwindV4Css } from '@/generation/service'
+import { createCompilerContext } from '@/context'
+import { generateTailwindV4Css } from '@/context/generation'
 
 it('同一会话按入口隔离候选：空范围、迁移、恢复与独立输出', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'multi-source-ownership-'))
@@ -16,7 +16,7 @@ it('同一会话按入口隔离候选：空范围、迁移、恢复与独立输�
     css: `@import 'tailwindcss' source(none); @source './template.vue'; @utility owned { z-index: ${index + 101}; }`,
   }))
   await Promise.all(sources.map(source => mkdir(source.base)))
-  const opts = getCompilerContext({ tailwindcssBasedir: process.cwd(), generator: { target: 'weapp' }, cssPreflight: false, logLevel: 'silent' })
+  const opts = createCompilerContext({ tailwindcssBasedir: process.cwd(), generator: { target: 'weapp' }, cssPreflight: false, logLevel: 'silent' })
   const runtimeState = { tailwindRuntime: opts.tailwindRuntime, readyPromise: Promise.resolve() }
   const candidates = new Set(['owned'])
   try {

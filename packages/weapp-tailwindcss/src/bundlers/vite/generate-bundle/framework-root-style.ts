@@ -67,14 +67,14 @@ type RootStylePlanOptions = Omit<ResolveFrameworkRootImportShellPlanOptions, 'is
 }
 
 export function planFrameworkRootStyle(options: RootStylePlanOptions) {
-  const { opts, rootImportShellOutputFile: file, cssPipelineStrategy, pipelineContext, targetByFile } = options
+  const { opts, rootImportShellOutputFile: file, cssPipelineStrategy, targetByFile } = options
   const plan = resolveFrameworkRootImportShellPlan({
     ...options,
     isMainChunk: opts.mainCssChunkMatcher(file, opts.appType),
     matchesCss: opts.cssMatcher(file) || opts.cssMatcher(options.file),
     rememberedTarget: targetByFile.get(file),
-    shouldKeep: () => cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({ ...pipelineContext, css: options.rawSource, file }),
-    shouldMoveToOrigin: () => cssPipelineStrategy?.shouldMoveRootMiniProgramStyleToImportShellOrigin?.({ ...pipelineContext, file }),
+    shouldKeep: () => (cssPipelineStrategy?.styles?.rootImportShell !== undefined),
+    shouldMoveToOrigin: () => (cssPipelineStrategy?.styles?.rootImportShell === 'extract'),
   })
   if (plan.targetToRemember) {
     targetByFile.set(file, plan.targetToRemember)

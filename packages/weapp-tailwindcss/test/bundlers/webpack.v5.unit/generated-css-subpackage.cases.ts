@@ -69,7 +69,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       }
     })
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,
@@ -315,7 +315,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       root: null,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,
@@ -536,7 +536,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       sourceCss: source.css,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,

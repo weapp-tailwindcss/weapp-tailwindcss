@@ -3,7 +3,7 @@ import type { Plugin } from 'vite'
 import type { CssFinalizerContext } from './options'
 import path from 'node:path'
 import process from 'node:process'
-import { finalizeCompilerShadowRun } from '@/compiler'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
 import { finalizeWebCssAssets } from './web-assets'
 

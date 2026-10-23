@@ -1,9 +1,9 @@
-import type { ResolvedConfig } from 'vite'
+import type { FrameworkBuildFacts } from '@/bundlers/vite/shared/framework-services'
 import { isUniAppXNativeAppOutDir } from '@/uni-app-x/harmony'
 import { resolveUniUtsPlatform } from '@/utils'
 
 export function createUniAppXNativeBuildTargetResolver(
-  getResolvedConfig: () => ResolvedConfig | undefined,
+  getResolvedConfig: () => FrameworkBuildFacts | undefined,
   platform = resolveUniUtsPlatform(),
 ) {
   let observedNativeAppBuildTarget = false

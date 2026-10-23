@@ -29,7 +29,7 @@ const delegate: Plugin = {
 }
 
 wrapViteCssPostOutput(config)
-for (const plugin of createBuiltinViteStyleInjectorPlugins(true, () => () => [delegate])) {
+for (const plugin of createBuiltinViteStyleInjectorPlugins(true, () => Object.assign(() => [delegate], { slots: [{ name: delegate.name, hooks: { buildStart: true as const, generateBundle: { order: 'post' as const } } }] }))) {
   getViteHookHandler(plugin.buildStart)?.call(context, buildOptions)
   getViteHookHandler(plugin.generateBundle)?.call(context, ...output)
 }

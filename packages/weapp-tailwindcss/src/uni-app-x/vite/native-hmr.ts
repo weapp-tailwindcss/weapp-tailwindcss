@@ -2,7 +2,7 @@ import type { HmrContext } from 'vite'
 import { hasSelfAcceptingNonStyleHotModule, resolveHotSourceModules, resolveHotSourceModulesByIds, resolveHotTailwindCssModules, sendFullReloadForUnresolvedHotUpdate } from '@/bundlers/vite/hot-css-modules'
 
 interface CreateUniAppXNativeHmrReloaderOptions {
-  ensureRuntimeClassSet: (force?: boolean) => Promise<Set<string>>
+  ensureRuntimeClassSet: (force?: boolean) => Promise<ReadonlySet<string>>
   isNativeAppBuildTarget: (id?: string) => boolean
   localStyleModuleIds: Iterable<string>
   syncSourceCandidates?: ((ctx: HmrContext) => Promise<void>) | undefined
@@ -15,7 +15,7 @@ export function createUniAppXNativeHmrReloader(
 ) {
   let previousRuntimeClassSet: Set<string> | undefined
 
-  function remember(runtimeClassSet: Set<string>) {
+  function remember(runtimeClassSet: ReadonlySet<string>) {
     previousRuntimeClassSet = new Set(runtimeClassSet)
     return runtimeClassSet
   }

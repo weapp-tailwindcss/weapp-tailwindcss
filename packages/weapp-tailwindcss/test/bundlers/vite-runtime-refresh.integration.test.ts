@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { createViteRuntimeClassSet } from '@/bundlers/vite/runtime-class-set'
 import { createRuntimeClassSetInvalidationPlugin } from '@/bundlers/vite/runtime-class-set/invalidation-plugin'
 import { createSourceCandidateCollector } from '@/bundlers/vite/source-candidates'
@@ -52,7 +52,7 @@ describe('issue 1245 real Tailwind runtime', () => {
     const { root, entry, file } = await fixture()
     const initial = 'text-[#123456]'
     await fs.writeFile(file, sfc(initial))
-    const ctx = getCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry], cssSourceTrace: trace })
+    const ctx = createCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry], cssSourceTrace: trace })
     const refresh = vi.fn(ctx.refreshTailwindcssRuntime)
     const manager = createViteRuntimeClassSet({ opts: ctx, initialTailwindRuntime: ctx.tailwindRuntime, refreshTailwindcssRuntime: refresh, uniAppXEnabled: true, customAttributesEntities: [['*', [/^t-class$/]]], disabledDefaultTemplateHandler: false, debug: () => {} })
     const collector = createSourceCandidateCollector({ customAttributesEntities: [['*', [/^t-class$/]]] })
@@ -109,7 +109,7 @@ describe('issue 1245 real Tailwind runtime', () => {
     await fs.writeFile(config, 'module.exports = { theme: { extend: { colors: { configured: "#123456" } } } }')
     await fs.writeFile(entry, '@import "tailwindcss" source(none); @config "./theme.cjs"; @source "./pages/*.uvue";')
     await fs.writeFile(file, '<template><view class="bg-configured bg-replacement" /></template>')
-    const ctx = getCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry] })
+    const ctx = createCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry] })
     const refresh = vi.fn(ctx.refreshTailwindcssRuntime)
     const manager = createViteRuntimeClassSet({ opts: ctx, initialTailwindRuntime: ctx.tailwindRuntime, refreshTailwindcssRuntime: refresh, uniAppXEnabled: true, customAttributesEntities: [], disabledDefaultTemplateHandler: false, debug: () => {} })
     try {
@@ -133,7 +133,7 @@ describe('issue 1245 real Tailwind runtime', () => {
     await fs.writeFile(file, '<template><view class="bg-brand text-accent" /></template>')
     await fs.writeFile(entry, '@import "tailwindcss" source(none); @source "./pages/*.uvue"; @theme { --color-brand: red; }')
     await fs.writeFile(second, '@import "tailwindcss" source(none); @source "./pages/*.uvue"; @theme { --color-accent: blue; }')
-    const ctx = getCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry, second] })
+    const ctx = createCompilerContext({ appType: 'uni-app-x', tailwindcssBasedir: root, cssEntries: [entry, second] })
     const manager = createViteRuntimeClassSet({ opts: ctx, initialTailwindRuntime: ctx.tailwindRuntime, refreshTailwindcssRuntime: ctx.refreshTailwindcssRuntime, uniAppXEnabled: true, customAttributesEntities: [], disabledDefaultTemplateHandler: false, debug: () => {} })
     const initial = await manager.ensureRuntimeClassSet()
     expect(initial.has('bg-brand')).toBe(true)

@@ -3,11 +3,11 @@ import process from 'node:process'
 import { describe, expect, it } from 'vitest'
 import { generateTailwindV4Css } from '@/context/generation'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 
 describe('generator output import boundaries', () => {
   it.each(['wxss', 'acss', 'ttss'])('preserves framework %s imports without resolving them as source dependencies', async (extension) => {
-    const opts = getCompilerContext({
+    const opts = createCompilerContext({
       tailwindcssBasedir: process.cwd(),
       generator: { target: 'weapp' },
       cssPreflight: false,

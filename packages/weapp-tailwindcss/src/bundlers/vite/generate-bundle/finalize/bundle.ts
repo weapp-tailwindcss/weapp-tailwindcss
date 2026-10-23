@@ -115,7 +115,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssMatcher: opts.cssMatcher,
     debug,
     enabled: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(finalizeCssPipelineContext) === true,
+      && (cssPipelineStrategy?.styles?.rootImportShell === 'extract') === true,
     onUpdate,
     recordCssAssetResult,
   })
@@ -124,7 +124,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssMatcher: opts.cssMatcher,
     debug,
     includeTailwindGeneratedCssAssets: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.includeTailwindGeneratedCssAssetsInRootCoverage?.({
+      && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.({
         ...finalizeCssPipelineContext,
         bundleFiles,
         isWebGeneratorTarget,
@@ -137,7 +137,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   })
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.({
+    && cssPipelineStrategy?.assets?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.({
       ...finalizeCssPipelineContext,
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,
@@ -162,7 +162,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   const webCompatStartedAt = performance.now()
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.shouldApplyFinalWebviewCssCompat?.({
+    && cssPipelineStrategy?.assets?.shouldApplyFinalWebviewCssCompat?.({
       ...finalizeCssPipelineContext,
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,

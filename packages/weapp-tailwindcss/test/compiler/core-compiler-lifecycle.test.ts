@@ -260,13 +260,16 @@ describe('createCompiler lifecycle', () => {
 
   it('passes template filename context to custom handlers', async () => {
     const templateHandler = vi.fn(async (source: string) => source)
-    vi.doMock('@/context', () => ({
-      createCompilerContext: () => ({
-        jsHandler: vi.fn(),
-        styleHandler: Object.assign(vi.fn(), { transformRoot: vi.fn() }),
-        templateHandler,
-      }),
-    }))
+    vi.doMock('@/context', async (importOriginal) => {
+      const original = await importOriginal<typeof import('@/context')>()
+      return {
+        ...original,
+        createCompilerContext: (...args: Parameters<typeof original.createCompilerContext>) => Object.assign(
+          original.createCompilerContext(...args),
+          { templateHandler },
+        ),
+      }
+    })
     const { createCompiler } = await import('@/core/compiler')
     const compiler = createCompiler()
     const snapshot = compiler.createSnapshot({ classSet: [], id: 'template-root' })
