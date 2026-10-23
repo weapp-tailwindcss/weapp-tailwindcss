@@ -2,6 +2,7 @@
 export interface FrameworkPolicy {
   readonly defaultGeneratorTarget: 'weapp' | 'web'
   readonly useNativeApp: boolean
+  readonly stylesEmbeddedInScript: boolean
   readonly contextDefaults: Readonly<{ platform?: string | undefined }>
   readonly disableWebRemToRpx: boolean
   readonly preserveWebRuntimeProperties: boolean

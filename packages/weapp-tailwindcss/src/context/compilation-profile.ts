@@ -52,7 +52,7 @@ export function resolveCompilationProfile(
   }, environment)
   const { appType: _appType, ...styleOptions } = baseStyle
   const resolvedPlatform = normalizeFrameworkStylePlatform(platform
-    ?? (environment.uniUtsPlatform.normalized || environment.uniPlatform || environment.mpxPlatform
+    ?? (environment.uniPlatform || environment.uniUtsPlatform.normalized || environment.mpxPlatform
       || environment.values.TARO_ENV), context.appType)
   const profile = snapshotConfiguration<ResolvedCompilationProfile>({
     revision,
@@ -62,14 +62,14 @@ export function resolveCompilationProfile(
       ...styleOptions,
       webRpxCompatibility: shouldUseUniAppWebRpxCompatibility(context.appType, environment.webTarget),
       uniAppXCssTarget: (context as Partial<IStyleHandlerOptions>).uniAppXCssTarget,
-      uniAppXUnsupported: (context as Partial<IStyleHandlerOptions>).uniAppXUnsupported,
+      uniAppXUnsupported: (context as Partial<IStyleHandlerOptions>).uniAppXUnsupported ?? styleOptions.uniAppXUnsupported,
     },
-    cssPreflight: context.cssPreflight,
+    cssPreflight: baseStyle.cssPreflight ?? context.cssPreflight,
     cssEntries: context.cssEntries,
     escapeMap: context.escapeMap,
     compilerMode: environment.compilerMode,
     sourceConcurrency: environment.sourceConcurrency,
-    stylesEmbeddedInScript: resolved.options.branch.isNativeApp,
+    stylesEmbeddedInScript: resolved.frameworkPolicy.stylesEmbeddedInScript,
     checkRpxThemeRisk: resolved.options.target === 'weapp'
       && context.logLevel !== 'silent' && context.logLevel !== 'error'
       && ['mp-weixin', 'weapp', 'wx', 'weixin'].includes(resolvedPlatform ?? ''),
@@ -81,7 +81,7 @@ export function resolveCompilationProfile(
 export function resolveContextStylePlatform(context: InternalUserDefinedOptions, platformOverride?: string) {
   const environment = resolveFrameworkEnvironment(context)
   const platform = platformOverride ?? context.cssOptions?.platform ?? context.platform
-    ?? (environment.uniUtsPlatform.normalized || environment.uniPlatform || environment.mpxPlatform || environment.values.TARO_ENV)
+    ?? (environment.uniPlatform || environment.uniUtsPlatform.normalized || environment.mpxPlatform || environment.values.TARO_ENV)
   return normalizeFrameworkStylePlatform(platform, context.appType)
 }
 

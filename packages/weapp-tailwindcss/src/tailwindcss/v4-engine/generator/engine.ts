@@ -18,6 +18,15 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
   const generationSessions = new TailwindV4NativeSessionPool()
   const incrementalCacheKeys = new Set<string>()
   const validationEngine = createEngineTailwindV4Engine(source)
+  let disposed = false
+
+  function ensureActive() {
+    if (disposed) {
+      throw new Error('TailwindV4Engine 已释放。')
+    }
+  }
+
+  const seedCache: typeof seedIncrementalGenerateCache = options => !disposed && seedIncrementalGenerateCache(options)
 
   async function generateOnce(generateSource: TailwindV4ResolvedSource, options: TailwindV4GenerateOptions = {}, preparedSource?: PreparedTailwindV4Source) {
     return transformGeneratedArtifact(await generateRawArtifact(generationSessions, generateSource, options, preparedSource))
@@ -44,7 +53,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
     if (options.scanSources === true) {
       return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
         const generated = await generateOnce(cssMacroSource, options, preparedSource)
-        const admitted = seedIncrementalGenerateCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
+        const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
         if (!admitted) {
           incrementalGenerateCache.delete(cacheKey)
         }
@@ -57,7 +66,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       if (hasRemovedCandidates(cached.seenCandidates, requestedCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
           const generated = await generateOnce(cssMacroSource, options, preparedSource)
-          const admitted = seedIncrementalGenerateCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -86,7 +95,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       if (shouldRebuildIncrementalEntry(cached, requestedCandidates, missingCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
           const generated = await generateOnce(cssMacroSource, options, preparedSource)
-          const admitted = seedIncrementalGenerateCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -119,7 +128,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
         if (needsFullTransform
           || (compatibilityValues && hasChangedCustomPropertyCompatibilityContext(cached.compatibilityValues, compatibilityValues))) {
           const generated = await transformGeneratedArtifact(artifact)
-          const admitted = seedIncrementalGenerateCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -161,12 +170,13 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
     return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
       const generated = await generateOnce(cssMacroSource, options, preparedSource)
-      seedIncrementalGenerateCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
+      seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
       return generated
     })
   }
 
   async function generate(options: TailwindV4GenerateOptions = {}) {
+    ensureActive()
     return options.incrementalCache && options.scanMode !== 'compiled'
       ? generateWithIncrementalCache(options)
       : generateOnce(source, options)
@@ -174,16 +184,36 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
   const engine = {
     source,
-    loadDesignSystem: validationEngine.loadDesignSystem,
-    validateCandidates: validationEngine.validateCandidates,
+    async loadDesignSystem() {
+      ensureActive()
+      return validationEngine.loadDesignSystem()
+    },
+    async validateCandidates(candidates: Iterable<string>) {
+      ensureActive()
+      return validationEngine.validateCandidates(candidates)
+    },
     generate,
     dispose() {
-      validationEngine.dispose?.()
-      generationSessions.dispose()
+      if (disposed) {
+        return
+      }
+      disposed = true
+      const failures: unknown[] = []
+      for (const release of [() => validationEngine.dispose?.(), () => generationSessions.dispose()]) {
+        try {
+          release()
+        }
+        catch (error) {
+          failures.push(error)
+        }
+      }
       for (const cacheKey of incrementalCacheKeys) {
         incrementalGenerateCache.delete(cacheKey)
       }
       incrementalCacheKeys.clear()
+      if (failures.length) {
+        throw new AggregateError(failures, '生成器释放失败，已继续释放其余资源。')
+      }
     },
   }
   return engine
