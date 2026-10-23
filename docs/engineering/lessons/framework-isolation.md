@@ -10,6 +10,7 @@ regressions:
   - packages/weapp-tailwindcss/test/context/style-capability.test.ts
   - packages/weapp-tailwindcss/test/compiler/profile-session-regressions.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-lifecycle.test.ts
+  - packages/weapp-tailwindcss/test/compiler/owner-activity-scope.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-root-store-cleanup.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
@@ -150,6 +151,19 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 工作流退出 1，后续 lint、类型、架构、static、watch、IDE 与设备阶段未执行。已立即释放共同窗口，核对登记 PID 和任务目录命令均无残留，Git 状态干净。完整日志、内存报告、退出回执与进程快照保存在 `.tmp/framework-isolation/local-acceptance/7b7d6991-e8b6-4251-80f8-807c5569a11f/`。修复需保留后代归属与 PID 复用边界，并通过确定性快速退出回归；不能忽略身份错误或反复重跑以获得偶然通过。
 
 整合提交 `8d8403397b57f28c9ebbd819848a00849da22e72` 的网站 CLI 启动回归 6 文件、60 项全部通过，原真实 Playwright 首错退出和两种配置发现链路均恢复通过。网站 CLI 启动顺序的根因、握手修复与跨平台加载回归见[本地 CLI 启动身份复盘](local-worker-startup-identity.md)。该修复属于验收基础设施，不改变框架能力或扩大进程清理范围。
+
+提交 `69797138eca97db894e798016d23cb6f99fb1d74` 的新预检 `07356e5b-740f-4847-bdb9-a986013869ac` 完成七项探针、当前会话真实后台页面交互及 verify。此时新增的真实 Windows CI 暴露生命周期回归，因此未启动完整验收，立即向七个协作任务释放错峰窗口。按 cwd 和监听端口确认本轮预检进程后定向 SIGTERM，报告转为 blocked，登记进程、端口和临时浏览器页均已释放。决策与清理证据保存在 `.tmp/framework-isolation/local-acceptance/07356e5b-740f-4847-bdb9-a986013869ac/acceptance-decision.json`；后续不能复用该报告。
+
+同一提交的 Benchmark run `39983357531` 中，Mpx HMR peak/steady RSS 首测分别增加 12.01%/11.01%，既有反向顺序复测仍增加 30.37%/16.95%，确认两项违规。采样没有构建错误或缺证，不属于 Windows 测试的连带失败。相较上一通过提交，主包与 benchmark 源码未改变，但这不能抵消当前失败；保留原始 GC、内存与构建日志继续定位，未放宽预算或重跑获取偶然通过。
+
+
+### 异步活动租约的实例引用释放
+
+配置与会话隔离后，异步活动使用租约识别关闭前已接收的嵌套任务。定向诊断发现：已结束租约仍随异步上下文传播，并强引用编译实例；新任务又复制这些失效租约。6000 次继承回调累计复制 18003000 个租约槽，真实 GC 夹具中 1024 个已完成实例仍无法回收。仅过滤失效租约仍会保留最后一个实例，所以修复同时过滤继承租约，并在结束时清除 owner 引用。
+
+整合提交 `0efd25c84` 与 `57486ba32` 保留关闭期间已接收的跨实例嵌套工作，拒绝外部新工作；GC 夹具验证待处理任务保持 owner 存活，已结束实例全部释放。子进程采用 15 秒内部截止、20 秒测试外层截止和 Vitest 取消信号。主工作树执行 `pnpm --filter weapp-tailwindcss exec vitest run test/compiler/owner-activity-scope.test.ts test/compiler/owner-lifecycle.test.ts test/ci/local-worker-workflow.test.ts --update=none --maxWorkers=1`，三文件 13 项通过。
+
+该缺陷与当前 Mpx/Uni Vite 性能失败分开记录：Mpx 真实 watch 的活动深度最高为 4，未观察到失效租约堆积。带 inspector 的分配采样也会改变分配与 GC 节奏，其 RSS 和耗时不能替代正式预算验收。目前没有证据把本修复认定为上述框架性能失败的根因。主包 ESM/CJS 与声明构建、website 类型检查、architecture:check（37 包 / 1511 个源码文件）、agents:check 和 release status 均通过。
 
 ## 适用边界
 

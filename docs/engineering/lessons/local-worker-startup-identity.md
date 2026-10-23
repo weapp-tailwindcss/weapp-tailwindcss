@@ -9,6 +9,8 @@ regressions:
   - website/scripts/local-worker/command.test.ts
   - website/scripts/local-worker/process-lifecycle.test.ts
   - website/scripts/local-worker/windows-lifecycle.test.ts
+  - website/scripts/local-worker/server.test.ts
+  - website/scripts/local-worker/test-scope.test.ts
 ---
 
 # 本地 CLI 的启动身份必须先于业务执行
@@ -49,6 +51,11 @@ pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/local-worker/la
 最后的覆盖核对发现，既有 PR Gate 全量单测只运行在 Ubuntu，原 Windows job 不包含网站脚本，所以此前 CI 全绿不能证明新握手在 Windows 上通过。整合提交 `51a7e5c8b343aa90d27667ea2e6c3b52cc7b657c` 复用平台工具矩阵，在 Windows Node 22/24、Ubuntu/macOS Node 24 执行完整六文件；显式 Bash `pipefail` 保留真实退出码，始终上传各系统与 Node 版本的日志、JSON。原 required 汇总继续要求该 job 成功，网站代码单独变更也会触发。
 
 新增工作流契约及既有 scope、取消、release trigger 回归共 5 文件、72 项，在实现工作树和主工作树均通过；命令为 `pnpm --filter weapp-tailwindcss exec vitest run test/ci/local-worker-workflow.test.ts test/ci/workflows.test.ts test/ci/workflow-gate-cancellation.test.ts test/ci/release-trigger-workflow.test.ts test/ci/pr-scope.test.ts --update=none --maxWorkers=1`。YAML 与测试 ESLint、diff 和独立审查通过。这些结构回归保证入口与失败传播存在，真实跨平台执行结果仍须等待新 head 的 CI，不能以静态检查替代。
+
+提交 `69797138eca97db894e798016d23cb6f99fb1d74` 的 PR Gate run `39983357897` 首次实际执行四组完整回归：Ubuntu/macOS Node 24 均为 60/60，Windows Node 22 为 51/60，Windows Node 24 为 55/60，均无跳过。原始日志、JSON 与已校验摘要的 artifact 保留为失败证据。Windows 暴露三类差异：Playwright 的错误消息带 ANSI 颜色码；cwd 的长路径与 `RUNNER~1` 别名代表同一目录；服务回归的 5 秒测试截止早于身份观察器已有的准备协议预算，超时后任务仍运行，夹具清理产生 `EBUSY` 或后续 `ENOENT`。最后一类必须同时修正测试的取消、排空和夹具归属，不能只延长等待后把失败视为机器波动。
+
+
+整合修复 `7a612c604` 将测试自身的取消与清理归属集中到 `test-scope`：Vitest 取消后向真实命令传递信号，先排空已接收工作，再恢复 mock 和删除夹具；等待 PID 标记时同时观察命令提前退出和取消。测试外层期限由已有启动、业务与清理预算组成，生产截止时间不变。ANSI 断言使用标准库去除控制字符，cwd 双方均经 realpath 核对真实目录。新增 10 项作用域回归进入四组 CI，覆盖取消、失败和排空顺序。主工作树 `57486ba32` 在 macOS / Node 24.18.0 的七文件 70 项全部通过，包含强制彩色输出的真实 Playwright 首错回归；同轮 workflow 与 compiler 回归三文件 13 项通过。真实 Windows 结果仍待本修复的新 head 验证。
 
 ## 适用边界
 
