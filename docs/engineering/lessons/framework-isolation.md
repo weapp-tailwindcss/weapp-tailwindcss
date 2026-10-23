@@ -18,6 +18,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/framework-css-context-lifetime.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
@@ -206,6 +207,18 @@ Node 22.22.3 在提交 `1c4ed4a2a72d9eec79715cb178a6b4f8668105b1` 上执行无 p
 Taro 随后的单轮阶段诊断中，基线/当前真实 context 为 2/1、engine 与原始生成均为 5 次，配置快照解析仅 4 次，没有观察到重复生成。当前十个释放步骤各执行一次，约 1ms 内 RSS 恒定、heapUsed 增加约 0.15MB；基线原先已有 owner 释放钩子，不能把关闭协调重构描述为首次释放。此次没有复现 CI 末尾内存脉冲。诊断会改变 GC 时机，且只测 macOS 主进程，不能据此否定 Linux 进程树预算失败。
 
 `1c4ed4a2a` 的四平台生命周期、三浏览器语义和 Expo iOS CI 均成功；quality shard 1 的唯一失败在 Linux 容器复现为已终止后代的 zombie 记录，出生身份和端口仍能确认清理结果。测试与 fixture 收尾修复保留运行进程、监听端口和探针错误的失败行为，新增随机退出凭据防止误停复用端口；未改变生产终止器或超时。独立工作树 Node 22/24 各 78 项及 Linux 三次真实场景通过，详见 [Linux zombie 夹具复盘](linux-zombie-fixture-lifecycle.md)。同一 head 的 Lynx iOS 在 `simctl getenv` 超过原 30s 截止时失败，保留证据且不扩大预算；新 head 仍需各自 CI 结果。
+
+### 错峰复验与配置快照分配
+
+Node 22 的原协议反向顺序复测中，Mpx HMR 内存未再次越界，两项由违规转为观察；Uni 的两项仍被确认，不能记为通过。Uni 首测 peak/steady RSS 为 1113.27/1098.41→1196.33/1187.08MB，反向复测为 955.22/905.36→1110.00/1100.97MB。原始失败、反向结果和既有评估器报告保存在 `.tmp/framework-isolation/node22-patched-framework-performance/`。
+
+七个协作任务明确确认错峰后，Taro Vite React 进行一次无探针、原参数的受控对照，基线与当前各三次构建、三轮 HMR；原预算零违规。构建时间与插件中位数变化为 -0.62%/-0.95%，构建 peak/steady RSS 为 -0.85%/+3.18%，HMR peak/steady 为 -0.52%/-0.53%。HMR 中位数仍约增加 9.5%，现有样本显著性规则没有构成违规，因此此结果不表示每项百分比均低于 5%。结果保存在 `.tmp/framework-isolation/node22-controlled-taro-performance/`，不能代替当前 head 的 Linux CI。采样与诊断结束后，已明确向七任务释放窗口。
+
+Uni 的单次带计数诊断中，当前 context/runtime 为 1/2，基线为 2/3；两侧真实引擎均为 9 次，原始生成当前 11 次、基线 12 次，资产视图读取为零。后续各轮重复创建 54 个框架 CSS 上下文，其中 post 阶段 8 个、finalizer 46 个。同一轮生成配置和 escapeMap 没有变化，按文件重复复制属于可消除的分配；这不能单独解释之前的 RSS 违规。两侧 heapUsed 都会在 GC 后回落，第六轮约从 749/737MB 降到 317/312MB；这是未强制 GC 的已用堆，仍可能包含待回收垃圾，不能证明没有保留泄漏。探针影响 GC，不能用诊断 RSS 趋同否定两次无探针失败；日志中的 closeBundle 也只是每轮钩子，不能当作永久关闭释放证据。
+
+`55d18e55f` 将两处 CSS 产物钩子的配置快照限制为本次调用内复用，文件请求只扩展自己的 file。等待任务前捕获配置，后续轮重新捕获；惰性资产仍读取该次 bundle，matcher 保留函数身份和闭包动态行为。持久 CSS handler 缓存未改，也未新增跨输出共享的 currentContext。六项回归在修复前全部失败，修复后作者五文件 48 项通过；主工作树执行 `pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/framework-css-context-lifetime.test.ts test/bundlers/framework-css-asset-demand.test.ts test/bundlers/vite-css-finalizer.unit.test.ts --update=none --maxWorkers=1`，三文件 36 项通过。回归验证局部配置和资产隔离，不声称整个构建状态可并行复用；RSS 仍需独立预算验收。
+
+主工作树重新构建 ESM/CJS 和声明，通过 architecture:check、agents:check、修改文件 ESLint 与 diff check。七方再次明确就绪后，在 Node 22.22.3 对基线与 `55d18e55f` 各执行三次构建、三轮 HMR，不带计数或 inspector；原预算通过、零违规，不需要反向内存确认。构建中位数为 4362.54→4464.73ms（+2.34%），插件中位数为 1203→1221ms（+1.50%）；HMR peak RSS 为 1250.36→1104.86MB（-11.64%），steady 为 1143.66→1094.27MB（-4.32%）。HMR 插件中位数为 92→101ms，仍在原绝对差值/显著性规则内。命令、环境负载、原始矩阵和既有评估器报告保存在 `.tmp/framework-isolation/uni-round-snapshot-performance/`。此轮支持修改后的本地工作负载通过，不把前两次失败删除，也不将改善完全归因于某一种分配；新 head 的远端预算与完整设备验收仍需通过。
 
 ## 适用边界
 
