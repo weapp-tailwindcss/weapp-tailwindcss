@@ -1,5 +1,6 @@
 import type { Plugin, ResolvedConfig } from 'vite'
 import type { ViteFrameworkStyleAssetContext } from '../src/bundlers/vite/shared/framework-asset-strategy'
+import type { ViteFrameworkRuntimeFacts, ViteFrameworkRuntimeStrategy } from '../src/bundlers/vite/shared/framework-runtime-strategy'
 import type { ViteFrameworkExtraPluginContext } from '../src/bundlers/vite/shared/framework-services'
 import { getViteHookHandler } from '../src/bundlers/vite/plugin-hook'
 import { wrapViteCssPostOutput } from '../src/bundlers/vite/watch-css-output'
@@ -55,3 +56,23 @@ if (typeof attributeNames !== 'string' && !(attributeNames instanceof RegExp)) {
 // @ts-expect-error 样式资产上下文只暴露匹配操作，不暴露缓存配置。
 styleAssets.getCssHandlerOptions('entry.css')
 expectType<boolean>(styleAssets.matchesMainCss('entry.css'))
+
+// 配置事实只允许读取标量与名称；不能沿类型或回调参数取回完整插件对象。
+declare const facts: ViteFrameworkRuntimeFacts
+declare const strategy: ViteFrameworkRuntimeStrategy
+expectType<string>(facts.mode)
+expectType<readonly string[]>(facts.pluginNames)
+// @ts-expect-error 内部快照必须只读。
+facts.mode = 'production'
+// @ts-expect-error 插件名称数组必须只读。
+facts.pluginNames.push('plugin')
+// @ts-expect-error 不暴露 Vite 插件对象。
+expectType<unknown>(facts.plugins)
+// @ts-expect-error 阶段策略不能接收完整配置。
+strategy.splitGenerateBundlePhases?.(config)
+// @ts-expect-error HMR 策略不能接收完整配置。
+strategy.requiresCssHotReload?.(config)
+// @ts-expect-error 框架实现不能收紧参数以索取完整配置。
+strategy.requiresCssHotReload = (_config: ResolvedConfig) => true
+strategy.requiresCssHotReload?.(undefined)
+strategy.splitGenerateBundlePhases?.(facts)

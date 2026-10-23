@@ -5,6 +5,7 @@ import path from 'node:path'
 import ts from 'typescript'
 import { createFrameworkBoundaryEdges, formatFrameworkBoundaryEdges } from './framework-boundaries/edges'
 import { auditFrameworkRegistration, defaultFrameworkBoundaryRegistration, resolveFrameworkOwnership } from './framework-boundaries/ownership'
+import { auditViteFrameworkRuntimeInputs } from './framework-boundaries/runtime-inputs'
 import { findPath } from './graph'
 import { inside } from './workspace'
 
@@ -63,7 +64,7 @@ export function auditFrameworkBoundariesDetailed(root: string, graph: Graph, reg
     path.join(source, 'framework', 'catalog.ts'),
   ])
   const implementationGraph: Graph = new Map([...graph].map(([file, targets]) => [file, new Set([...targets].filter(target => !compatibilityEdges.get(file)?.has(target)))]))
-  const errors = auditFrameworkRegistration(registration)
+  const errors = [...auditFrameworkRegistration(registration), ...auditViteFrameworkRuntimeInputs(root, graph)]
   const reported = new Set<string>()
   const report = (label: string, chain: string[]) => {
     const key = `${label}:${chain.slice(-2).join(' -> ')}`

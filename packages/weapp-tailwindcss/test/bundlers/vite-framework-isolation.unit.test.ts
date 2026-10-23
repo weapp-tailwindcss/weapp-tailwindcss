@@ -1,6 +1,7 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import type { Plugin, ResolvedConfig } from 'vite'
 import type { ViteFrameworkAssetPipelineStrategy } from '@/bundlers/vite/shared/framework-asset-strategy'
+import type { ViteFrameworkRuntimeStrategy } from '@/bundlers/vite/shared/framework-runtime-strategy'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTaroVitePlugins } from '@/bundlers/vite/frameworks/taro'
 import { createUniAppXVitePlugins } from '@/bundlers/vite/frameworks/uni-app-x'
@@ -11,9 +12,9 @@ function asset(source: string): OutputAsset {
   return { type: 'asset', fileName: 'page.asset.js', names: [], originalFileNames: [], source }
 }
 
-async function preparePostPlugin(plugins: Plugin[]) {
+async function preparePostPlugin(plugins: Plugin[], resolvedConfig?: ResolvedConfig) {
   const plugin = plugins.find(item => item.name === 'weapp-tailwindcss:adaptor:post')!
-  const config = {
+  const config = resolvedConfig ?? {
     command: 'build',
     mode: 'development',
     css: { postcss: { plugins: [] } },
@@ -48,6 +49,63 @@ async function dispose(plugins: Plugin[]) {
 
 describe('Vite 框架实例与产物阶段隔离', () => {
   beforeEach(resetVitePluginTestContext)
+
+  it('运行时阶段策略只收到独立只读事实，并在后续插件配置变化时更新', async () => {
+    const frameworkPlugin = { name: 'uni:framework' }
+    const configPlugins = [frameworkPlugin, { name: '@tailwindcss/vite:generate:build' }]
+    const splitGenerateBundlePhases = vi.fn<NonNullable<ViteFrameworkRuntimeStrategy['splitGenerateBundlePhases']>>(facts => facts?.mode !== 'production')
+    const plugins = createViteFrameworkPlugins(createContext({ appType: 'native' }) as any, {
+      frameworkName: 'generic',
+      runtimeStrategy: { splitGenerateBundlePhases },
+      styleInjectorDelegate: () => [],
+    }) as Plugin[]
+    try {
+      const post = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post')!
+      const hook = post.generateBundle!
+      const generate = typeof hook === 'function' ? hook : hook.handler
+      await generate.call({} as any, {} as any, {}, false)
+      expect(splitGenerateBundlePhases).toHaveBeenLastCalledWith(undefined)
+      expect(splitGenerateBundlePhases.mock.results[0]!.value).toBe(true)
+      splitGenerateBundlePhases.mockClear()
+      const config = {
+        command: 'build',
+        mode: 'development',
+        plugins: configPlugins,
+        css: { postcss: { plugins: [] } },
+        build: { outDir: 'dist', watch: {} },
+        root: process.cwd(),
+      } as ResolvedConfig
+      const build = await preparePostPlugin(plugins, config)
+      await build({})
+      const first = splitGenerateBundlePhases.mock.calls[0]![0]!
+      expect(first).toEqual({ mode: 'development', pluginNames: ['uni:framework'] })
+      expect(Object.isFrozen(first)).toBe(true)
+      expect(Object.isFrozen(first.pluginNames)).toBe(true)
+      await build({})
+      expect(splitGenerateBundlePhases.mock.calls[1]![0]).toBe(first)
+      frameworkPlugin.name = 'updated:framework'
+      configPlugins.push({ name: 'later:plugin' })
+      await build({})
+      expect(splitGenerateBundlePhases.mock.calls[2]![0]).toEqual({
+        mode: 'development',
+        pluginNames: ['updated:framework', 'later:plugin'],
+      })
+      expect(first.pluginNames).toEqual(['uni:framework'])
+      config.mode = 'production'
+      await build({})
+      expect(splitGenerateBundlePhases.mock.calls[3]![0]?.mode).toBe('production')
+      expect(splitGenerateBundlePhases.mock.results[3]!.value).toBe(false)
+      config.mode = 'development'
+      await build({})
+      expect(splitGenerateBundlePhases.mock.calls[4]![0]?.mode).toBe('development')
+      expect(splitGenerateBundlePhases.mock.results[4]!.value).toBe(true)
+      expect(Object.isFrozen(frameworkPlugin)).toBe(false)
+      expect(Object.isFrozen(configPlugins)).toBe(false)
+    }
+    finally {
+      await dispose(plugins)
+    }
+  })
 
   it('相同文件名的 Taro 与 uni-app-x 产物在交错构建中只消费各自的资产策略', async () => {
     const taro = createContext({ appType: 'taro' })

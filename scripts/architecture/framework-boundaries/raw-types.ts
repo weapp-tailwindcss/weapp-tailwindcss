@@ -9,7 +9,13 @@ function entityParts(name: ts.EntityName): string[] {
 }
 
 /** 追踪命名空间、类型包装和聚合导出；别名不改变输入的所有权。 */
-export function createRawTypeResolver(source: string, graph: Graph, asts: Map<string, ts.SourceFile>) {
+export function createRawTypeResolver(
+  source: string,
+  graph: Graph,
+  asts: Map<string, ts.SourceFile>,
+  forbiddenTypes: ReadonlySet<string> = rawConfigurationTypes,
+  forbiddenExportModules: ReadonlySet<string> = new Set(),
+) {
   const localTarget = (file: string, specifier: string) => {
     const base = specifier.startsWith('@/')
       ? path.resolve(source, specifier.slice(2))
@@ -24,7 +30,7 @@ export function createRawTypeResolver(source: string, graph: Graph, asts: Map<st
   const cache = new Map<string, boolean>()
   let cyclicReads = 0
   function resolvePath(file: string, names: readonly string[], visited = new Set<string>()): boolean {
-    if (names.length === 1 && rawConfigurationTypes.has(names[0]!)) {
+    if (names.length === 1 && forbiddenTypes.has(names[0]!)) {
       return true
     }
     const key = `${file}:${names.join('.')}`
@@ -63,29 +69,39 @@ export function createRawTypeResolver(source: string, graph: Graph, asts: Map<st
       if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
         const bindings = statement.importClause?.namedBindings
         const target = localTarget(file, statement.moduleSpecifier.text)
-        if (bindings && ts.isNamespaceImport(bindings) && bindings.name.text === name && members.length) {
-          return target !== undefined && resolvePath(target, members, next)
+        if (bindings && ts.isNamespaceImport(bindings) && bindings.name.text === name) {
+          if (members.length === 0) {
+            return target !== undefined ? exportsRaw(target, next) : forbiddenExportModules.has(statement.moduleSpecifier.text)
+          }
+          return target !== undefined ? resolvePath(target, members, next) : members.length === 1 && forbiddenTypes.has(members[0]!)
         }
         if (bindings && ts.isNamedImports(bindings)) {
           return bindings.elements.some(element => element.name.text === name
-            && ((members.length === 0 && rawConfigurationTypes.has((element.propertyName ?? element.name).text))
+            && ((members.length === 0 && forbiddenTypes.has((element.propertyName ?? element.name).text))
               || (target !== undefined && resolvePath(target, [(element.propertyName ?? element.name).text, ...members], next))))
         }
       }
       if (ts.isExportDeclaration(statement)) {
         const target = statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier) ? localTarget(file, statement.moduleSpecifier.text) : file
-        if (target === undefined) {
-          return false
-        }
         if (!statement.exportClause) {
-          return resolvePath(target, names, next)
+          return target !== undefined && resolvePath(target, names, next)
         }
         if (ts.isNamespaceExport(statement.exportClause)) {
-          return statement.exportClause.name.text === name && members.length > 0 && resolvePath(target, members, next)
+          if (statement.exportClause.name.text !== name) {
+            return false
+          }
+          if (members.length === 0) {
+            return target !== undefined
+              ? exportsRaw(target, next)
+              : statement.moduleSpecifier !== undefined && ts.isStringLiteral(statement.moduleSpecifier) && forbiddenExportModules.has(statement.moduleSpecifier.text)
+          }
+          return target !== undefined ? resolvePath(target, members, next) : members.length === 1 && forbiddenTypes.has(members[0]!)
         }
         if (ts.isNamedExports(statement.exportClause)) {
           return statement.exportClause.elements.some(element => element.name.text === name
-            && resolvePath(target, [(element.propertyName ?? element.name).text, ...members], next))
+            && (target !== undefined
+              ? resolvePath(target, [(element.propertyName ?? element.name).text, ...members], next)
+              : members.length === 0 && forbiddenTypes.has((element.propertyName ?? element.name).text)))
         }
       }
       if (members.length === 0 && (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) && statement.name.text === name) {
@@ -105,20 +121,23 @@ export function createRawTypeResolver(source: string, graph: Graph, asts: Map<st
     }
     const target = localTarget(file, node.argument.literal.text)
     const names = entityParts(node.qualifier)
-    return (names.length === 1 && rawConfigurationTypes.has(names[0]!)) || (target !== undefined && resolvePath(target, names, visited))
+    return (names.length === 1 && forbiddenTypes.has(names[0]!)) || (target !== undefined && resolvePath(target, names, visited))
   }
   function exportsRaw(file: string, visited = new Set<string>()): boolean {
     if (visited.has(file)) {
+      cyclicReads++
       return false
     }
     const next = new Set(visited).add(file)
     return (asts.get(file)?.statements ?? []).some((statement) => {
       if (ts.isExportDeclaration(statement)) {
         if (statement.exportClause && ts.isNamedExports(statement.exportClause)) {
-          return statement.exportClause.elements.some(element => resolvePath(file, [element.name.text]))
+          return statement.exportClause.elements.some(element => resolvePath(file, [element.name.text], next))
         }
         const target = statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier) ? localTarget(file, statement.moduleSpecifier.text) : undefined
-        return target !== undefined && exportsRaw(target, next)
+        return target !== undefined
+          ? exportsRaw(target, next)
+          : statement.moduleSpecifier !== undefined && ts.isStringLiteral(statement.moduleSpecifier) && forbiddenExportModules.has(statement.moduleSpecifier.text)
       }
       if ((ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)) && statement.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)) {
         return resolvePath(file, [statement.name.text])

@@ -5,7 +5,7 @@ import { createViteFrameworkPlugins } from '../../shared/create-framework-plugin
 export function createWeappVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
   return createViteFrameworkPlugins(options, {
     frameworkName: 'weapp-vite',
-    runtimeStrategy: { splitGenerateBundlePhases: config => config?.mode !== 'production' },
+    runtimeStrategy: { splitGenerateBundlePhases: facts => facts?.mode !== 'production' },
     styleInjectorDelegate: createGenericViteStyleInjector,
   })
 }

@@ -5,5 +5,5 @@ import { cleanUrl } from '../../../utils'
 export const uniViteRuntimeStrategy: ViteFrameworkRuntimeStrategy = {
   isTemplateHotSource: id => /\.(?:uvue|nvue)$/i.test(cleanUrl(id)),
   isTemplateHotSourceModule: id => /\.(?:uvue|nvue)(?:\?import)?$/i.test(id),
-  requiresCssHotReload: config => config?.plugins?.some(plugin => plugin.name.includes('uni')) ?? false,
+  requiresCssHotReload: facts => facts?.pluginNames.some(name => name.includes('uni')) ?? false,
 }

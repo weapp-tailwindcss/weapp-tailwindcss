@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { auditCoreFrameworkInputs } from '../../../../scripts/architecture/framework-boundaries/core-inputs'
 import { createFrameworkBoundaryEdges, formatFrameworkBoundaryEdges } from '../../../../scripts/architecture/framework-boundaries/edges'
 import { defaultFrameworkBoundaryRegistration } from '../../../../scripts/architecture/framework-boundaries/ownership'
+import { auditViteFrameworkRuntimeInputs } from '../../../../scripts/architecture/framework-boundaries/runtime-inputs'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -22,8 +23,57 @@ async function audit(files: Record<string, string>, dependencies: Record<string,
     await writeFile(target, code)
     graph.set(target, new Set((dependencies[file] ?? []).map(dependency => path.join(source, dependency))))
   }
-  return auditCoreFrameworkInputs(root, graph)
+  return [...auditCoreFrameworkInputs(root, graph), ...auditViteFrameworkRuntimeInputs(root, graph)]
 }
+
+describe('框架运行时配置输入门禁', () => {
+  const contract = 'bundlers/vite/shared/framework-runtime-strategy.ts'
+
+  it.each([
+    "import type { ResolvedConfig as Config } from 'vite'; export interface Strategy { addedHook?: (config: Config) => boolean }",
+    "import type * as Vite from 'vite'; export interface Strategy { addedHook?: (config: Vite.ResolvedConfig) => boolean }",
+    "export interface Strategy { addedHook?: (config: import('vite').UserConfig) => boolean }",
+    "import type { Plugin } from 'vite'; export interface Facts { readonly plugins: readonly Plugin[] }",
+    "export type { ResolvedConfig as Configuration } from 'vite'",
+    "export * from 'vite'",
+    "export * as Vite from 'vite'",
+    "import * as Vite from 'vite'; export { Vite }",
+  ])('新增或扩宽契约不能泄露配置与插件：%s', async (code) => {
+    expect((await audit({ [contract]: code })).join('\n')).toContain('框架运行时契约暴露 Vite 配置或插件')
+  })
+
+  it('聚合导出与只读类型包装不能掩盖完整配置输入', async () => {
+    expect((await audit({
+      'bridge.ts': "export type { ResolvedConfig as Configuration } from 'vite'",
+      'alias.ts': "import type { Configuration } from './bridge'; export type Facts = Readonly<Configuration>",
+      [contract]: "import type { Facts } from '../../../alias'; export interface Strategy { addedHook?: (facts: Facts) => boolean }",
+    })).join('\n')).toContain('框架运行时契约暴露 Vite 配置或插件')
+  })
+
+  it('必要事实不影响构建器自身持有和更新完整配置', async () => {
+    expect(await audit({
+      [contract]: 'export interface Facts { readonly mode: string; readonly pluginNames: readonly string[] }; export interface Strategy { addedHook?: (facts: Facts | undefined) => boolean }',
+      'bundlers/vite/shared/framework-runtime-facts.ts': "import type { ResolvedConfig } from 'vite'; export const read = (config: ResolvedConfig) => config.mode",
+    })).toEqual([])
+  })
+
+  it.each(["export * from 'vite'", "export * as Vite from 'vite'"])('本地聚合导出不能转运外部 Vite 配置：%s', async (code) => {
+    expect((await audit({
+      'bridge.ts': code,
+      [contract]: "export * from '../../../bridge'",
+    })).join('\n')).toContain('框架运行时契约暴露 Vite 配置或插件')
+  })
+
+  it.each([
+    "export { Vite } from '../../../bridge'",
+    "import * as Bridge from '../../../bridge'; export { Bridge }",
+  ])('完整命名空间不能通过命名重导出转入契约：%s', async (code) => {
+    expect((await audit({
+      'bridge.ts': "export * as Vite from 'vite'",
+      [contract]: code,
+    })).join('\n')).toContain('框架运行时契约暴露 Vite 配置或插件')
+  })
+})
 
 describe('编译内部只消费已解析配置', () => {
   it.each(['UserDefinedOptions', 'InternalUserDefinedOptions', 'FrameworkPolicyInput', 'FrameworkEnvironment', 'AppType'])('禁止直接消费 %s', async (type) => {
