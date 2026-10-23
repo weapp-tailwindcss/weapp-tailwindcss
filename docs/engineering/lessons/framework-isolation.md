@@ -17,6 +17,8 @@ regressions:
   - e2e/playwright-image-ci.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-generator-request.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-scoped-configuration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
@@ -59,6 +61,8 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 框架身份、别名、支持组合和模块归属成为声明数据，各构建器维护类型化注册表。AST 图覆盖主包及独立 injector 的实现、子目录、类型、动态导入和重导出。未知或冲突归属失败；核心输入类型检查包含别名、命名空间和聚合导出。兼容例外只登记具体依赖边、原因和替代入口，不豁免整个文件。测试框架通过新增实现、注册及 fixture 完成生成与更新，共享流程无需增加分支。
 
 只读能力查询与编译请求快照也必须分开。Taro 真实构建观测到约 20722 次“样式是否嵌入脚本”查询，每次都创建完整 profile，造成约 923ms 累计耗时，其中配置指纹约 705ms；真正编译请求只额外创建 4 次 profile。查询改为只调用已有策略解析，保持参数、配置与实例环境的优先级，不遍历无关来源配置，不推进 revision，也不按可变配置对象身份盲目缓存。回归先证明旧实现的 10 次查询读取 cssEntries 20 次，修复后无读取且既有请求仍有效；正式解析新配置时才推进 revision。
+
+CSS 来源选择同样属于请求，不能通过裁剪完整配置推进同一会话的全局 revision。Webpack 的交错来源回归、请求组装器及真实配置失效保护见[请求来源与会话配置复盘](webpack-request-configuration.md)。这项修复不等同于内存预算回归已经解决。
 
 ## 验证
 
