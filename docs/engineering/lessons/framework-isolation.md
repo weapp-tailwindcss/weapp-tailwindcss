@@ -18,6 +18,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
 ---
@@ -164,6 +165,15 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 整合提交 `0efd25c84` 与 `57486ba32` 保留关闭期间已接收的跨实例嵌套工作，拒绝外部新工作；GC 夹具验证待处理任务保持 owner 存活，已结束实例全部释放。子进程采用 15 秒内部截止、20 秒测试外层截止和 Vitest 取消信号。主工作树执行 `pnpm --filter weapp-tailwindcss exec vitest run test/compiler/owner-activity-scope.test.ts test/compiler/owner-lifecycle.test.ts test/ci/local-worker-workflow.test.ts --update=none --maxWorkers=1`，三文件 13 项通过。
 
 该缺陷与当前 Mpx/Uni Vite 性能失败分开记录：Mpx 真实 watch 的活动深度最高为 4，未观察到失效租约堆积。带 inspector 的分配采样也会改变分配与 GC 节奏，其 RSS 和耗时不能替代正式预算验收。目前没有证据把本修复认定为上述框架性能失败的根因。主包 ESM/CJS 与声明构建、website 类型检查、architecture:check（37 包 / 1511 个源码文件）、agents:check 和 release status 均通过。
+### 只读资产契约的惰性求值
+
+收紧契约后，CSS 框架上下文通过 `assets` getter 投影只读资产。调用方继续使用对象展开来扩展每个请求，导致 getter 提前求值，即使 Uni 的小程序 JS 钩子返回 undefined、完全不访问资产。真实 generateBundle 的确定性计数中，2/4/8 个 JS chunk 分别读取 sourcemap 内容 10/28/88 次，成本随 chunk 数量平方增长。
+
+提交 `d1cdd1d5f` 用统一的属性描述符扩展器保留惰性访问，覆盖生成、finalizer、配置根样式与 serve 路径。实际读取继续取得当前 bundle 的受限投影，未缓存整份旧视图；键集合与 CSS 文本维持读取时快照，chunk.code 保持既有 live getter 语义。另移除 CSS entry 路径附加的原始 bundle 引用。回归涵盖首轮与单 JS 更新、跳过与实际转译、replace/emit/remove 后重新读取和拒绝写入；对应无需求读取降至 0。独立审查无阻断项，作者 10 文件 286 项通过，主工作树新两文件 12 项与 ESM/CJS/声明构建通过；仅内存 bundle fixtures 变化，无 demo/static 基线变更。
+
+主工作树在 macOS arm64 / Node 24.18.0 执行无 inspector、无计数 preload 的基线/当前 Uni 小程序对照，各 3 次构建、3 轮 HMR，既有 5% 与绝对差值/显著性预算通过、0 违规。构建插件中位数 1009→984ms，HMR 插件中位数 105→99ms，HMR peak/steady RSS 1407.22/1323.12→1394.22/1320.38MB。原始 matrix、同一 CI 评估器生成的 summary 和报告保存在 `.tmp/framework-isolation/uni-lazy-assets-comparison/`；这支持本机该工作负载通过，远端 Node 22 仍须验证当前 head，不能证明此前 CI 的全部退化都来自此处。
+
+Mpx 的一组轻量计数对照中，两侧均首构建加 3 次新增/回退，共 7 个完整 processAssets 轮次；每轮 service/pipeline 4 次、compiler 3 次、缓存任务 23 次相同。首轮 23 miss，后续每轮 13 hit/10 miss；配置 revision 的 3 次变化均在首轮，后续稳定为 3。该组未发现额外生成或配置反复失效，但 RSS 仍有差异。后续 Node 22 的异步上下文诊断出现中间重建轮次，空闲时 disable 的反向对照也未确认稳定收益，因此尚不将其作为生产性能修复，继续核对写入、失效与构建完成的因果关系。
 
 ## 适用边界
 
