@@ -14,6 +14,7 @@ import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { hasLocalCssImport, hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../generation/directives'
 import { hasTailwindGeneratedCssMarkers } from '../../../generation/index'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
 
 interface RememberedMainCssSource {
@@ -181,10 +182,9 @@ export function finalizeWebCss(
     resolveViteWebCssCompatOptions(context),
     { deferPropertyFallback: true },
   )
-  return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, {
-    ...context,
+  return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(context, {
     defaultWebCssCompat,
     removeScopedPreflight: value => value,
     shouldApplyWebCssCompat,
-  }) ?? (shouldApplyWebCssCompat ? defaultWebCssCompat(css) : css)
+  })) ?? (shouldApplyWebCssCompat ? defaultWebCssCompat(css) : css)
 }

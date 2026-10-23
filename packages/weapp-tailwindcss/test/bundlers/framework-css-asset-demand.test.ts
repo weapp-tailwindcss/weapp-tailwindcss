@@ -4,7 +4,8 @@ import type { InternalUserDefinedOptions } from '@/types'
 import { describe, expect, it, vi } from 'vitest'
 import { injectViteProcessedCssIntoMainCssAssets } from '@/bundlers/vite/processed-css-assets'
 import { resolveConfiguredCssEntryRootInjectionTarget } from '@/bundlers/vite/processed-css-assets/cleanup'
-import { createFrameworkCssContext } from '@/bundlers/vite/shared/framework-css-context'
+import { createFrameworkAssetAccess } from '@/bundlers/vite/shared/framework-assets'
+import { createFrameworkCssContext, extendFrameworkCssContext } from '@/bundlers/vite/shared/framework-css-context'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 
 function asset(fileName: string, source: string): OutputAsset {
@@ -82,7 +83,9 @@ describe('framework CSS asset demand', () => {
       snapshots.push(assets)
       expect(Object.isFrozen(assets)).toBe(true)
       expect(Object.isFrozen(assets['entry.js'].map.sourcesContent)).toBe(true)
-      expect(() => { assets['theme.css'].source = '.wrong{}' }).toThrow()
+      expect(() => {
+        assets['theme.css'].source = '.wrong{}'
+      }).toThrow()
       expect(matchesMainCss('shell.css')).toBe(true)
       return assets['theme.css'].source === '.updated{}' ? 'theme.css' : 'shell.css'
     })
@@ -98,5 +101,53 @@ describe('framework CSS asset demand', () => {
     expect(sourcesContent).toHaveBeenCalledTimes(2)
     expect(snapshots[0]).not.toBe(snapshots[1])
     expect((bundle['theme.css'] as OutputAsset).source).toBe('.updated{}')
+  })
+
+  it('does not read assets when a dynamic resolver only needs source or platform facts', () => {
+    const { bundle, opts, context, sourcesContent } = createFixture('css')
+    const resolveTarget = vi.fn(({ sourceFile }) => sourceFile === 'source.css' ? 'shell.css' : undefined)
+    expect(resolveConfiguredCssEntryRootInjectionTarget(bundle, {
+      opts,
+      createCssPipelineContext: () => context,
+      cssPipelineStrategy: { styles: { resolveConfiguredCssEntryRootInjectionTarget: resolveTarget } },
+    }, 'source.css', 'theme.css')).toBe('shell.css')
+    expect(resolveTarget).toHaveBeenCalledOnce()
+    expect(sourcesContent).not.toHaveBeenCalled()
+  })
+
+  it('keeps extended contexts readonly and reads current assets after controlled commits', () => {
+    const { bundle, context, sourcesContent } = createFixture('css')
+    const access = createFrameworkAssetAccess(bundle)
+    const request = extendFrameworkCssContext(context, { file: 'theme.css' })
+    const nextRequest = extendFrameworkCssContext(request, { file: 'shell.css' })
+    expect(Object.isFrozen(nextRequest)).toBe(true)
+    expect(nextRequest.file).toBe('shell.css')
+    expect(request.file).toBe('theme.css')
+    expect(sourcesContent).not.toHaveBeenCalled()
+
+    const before = nextRequest.assets!
+    expect(sourcesContent).toHaveBeenCalledTimes(1)
+    access.replaceText('theme.css', '.updated{}')
+    access.replaceText('entry.js', 'updated()')
+    access.emit('generated.css', '.generated{}')
+    access.remove('shell.css')
+    const after = nextRequest.assets!
+    expect(sourcesContent).toHaveBeenCalledTimes(2)
+    expect(after).not.toBe(before)
+    expect(before['theme.css']).toHaveProperty('source', '.author{color:red}')
+    expect(after['theme.css']).toHaveProperty('source', '.updated{}')
+    expect(after['entry.js']).toHaveProperty('code', 'updated()')
+    expect(before['generated.css']).toBeUndefined()
+    expect(after['generated.css']).toHaveProperty('source', '.generated{}')
+    expect(after['shell.css']).toBeUndefined()
+    expect(before['shell.css']).toBeDefined()
+    expect(Object.isFrozen(after)).toBe(true)
+    expect(() => {
+      (after['theme.css'] as any).source = '.wrong{}'
+    }).toThrow()
+    expect(() => {
+      (nextRequest as any).file = 'other.css'
+    }).toThrow()
+    expect(bundle['theme.css']).toHaveProperty('source', '.updated{}')
   })
 })

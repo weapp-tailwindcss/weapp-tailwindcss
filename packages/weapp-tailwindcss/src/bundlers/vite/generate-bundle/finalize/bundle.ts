@@ -3,6 +3,7 @@ import type { FinalizeGenerateBundleOptions } from './root-import-shell'
 import { runWithConcurrency } from '../../../../utils/run-tasks'
 import { updateBundleBuildState } from '../../bundle-state'
 import { removeCssCoveredByRootStyleAssets, removeDuplicateUnlinkedRootCssAssetsReferencedByHtml } from '../../processed-css-assets'
+import { extendFrameworkCssContext } from '../../shared/framework-css-context'
 import { createFrameworkStyleAssetContext } from '../../shared/framework-style-assets'
 import { normalizeBundleFileNameKeysForTest } from '../bundle-file-names'
 import { finalizeMiniProgramCssAssets } from '../final-css-assets'
@@ -124,12 +125,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssMatcher: opts.cssMatcher,
     debug,
     includeTailwindGeneratedCssAssets: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.({
-        ...finalizeCssPipelineContext,
+      && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
         bundleFiles,
         isWebGeneratorTarget,
         outDir,
-      }) === true,
+      })) === true,
     isViteProcessedCssAsset,
     onUpdate,
     recordCssAssetResult,
@@ -137,12 +137,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   })
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.assets?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.({
-      ...finalizeCssPipelineContext,
+    && cssPipelineStrategy?.assets?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,
       outDir,
-    }) === true
+    })) === true
   ) {
     removeDuplicateUnlinkedRootCssAssetsReferencedByHtml(bundle, { debug })
   }
@@ -162,12 +161,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   const webCompatStartedAt = performance.now()
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.assets?.shouldApplyFinalWebviewCssCompat?.({
-      ...finalizeCssPipelineContext,
+    && cssPipelineStrategy?.assets?.shouldApplyFinalWebviewCssCompat?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,
       outDir,
-    }) === true
+    })) === true
   ) {
     finalizeWebviewCssCompat(bundle, {
       debug,

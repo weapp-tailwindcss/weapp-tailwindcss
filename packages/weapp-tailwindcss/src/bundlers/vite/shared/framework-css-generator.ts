@@ -32,6 +32,7 @@ import { resolveViteServeRootMiniProgramImportShell } from '../serve-root-import
 import { cleanUrl, isCSSRequest, isHTMLRequest, resolveViteCssPipelineRequestFile } from '../utils'
 import { resolveWeappViteSourceRoot } from '../weapp-vite-config'
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
+import { extendFrameworkCssContext } from './framework-css-context'
 import { createFrameworkCssGenerationQueue } from './framework-css-generation-queue'
 
 interface FrameworkCssGeneratorOptions extends Pick<ReturnType<typeof createFrameworkCssAssets>, 'cssMemory' | 'cleanGeneratedCssByFile' | 'tracedGeneratedCssByFile' | 'generatedClassSetByFile' | 'recordViteProcessedCssAssetResult'> {
@@ -154,7 +155,7 @@ ${previousTracedCss}`
     const outputCssHandlerOptions = transformCssHandlerOptions.getCssHandlerOptions(outputFile)
     const cssHandlerOptions = { ...sourceCssHandlerOptions, isMainChunk: outputCssHandlerOptions.isMainChunk }
     const transientCssSource = transientAutoCssSources.get(file) ?? (hasTailwindRootDirectives(generatorTransformCode, { importFallback: currentGeneratorOptions.importFallback }) || hasTailwindSourceDirectives(generatorTransformCode, { importFallback: currentGeneratorOptions.importFallback }) || hasTailwindApplyDirective(generatorTransformCode) ? { base: path.dirname(path.resolve(file)), css: generatorTransformCode, file: path.resolve(file) } : void 0)
-    const shouldDeferEmptyScopedCssSource = transientCssSource == null && (frameworkCssPipelineStrategy?.generation?.shouldDeferEmptyScopedCssSource?.({ ...cssPipelineContext, cssHandlerOptions, generatorCode: generatorTransformCode }) ?? true)
+    const shouldDeferEmptyScopedCssSource = transientCssSource == null && (frameworkCssPipelineStrategy?.generation?.shouldDeferEmptyScopedCssSource?.(extendFrameworkCssContext(cssPipelineContext, { cssHandlerOptions, generatorCode: generatorTransformCode })) ?? true)
     const previousCss = pendingHmrChange && !forceFullHmrCssRegeneration ? cleanGeneratedCssByFile.get(fileKey) : void 0
     const previousGeneratorCss = previousCss && !currentGeneratorBranch.isWeb ? normalizeMiniProgramGeneratorCssSource(previousCss, outputFile) : previousCss
     const hmrDebugState = hmrCandidateState.snapshotDebugState()
@@ -170,7 +171,7 @@ ${previousTracedCss}`
     }
     const finalizedCss = finalizeViteMiniProgramCss(generated.css)
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, frameworkCssPipelineStrategy)
-    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, { ...cssPipelineContext, defaultWebCssCompat: css => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat }) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
+    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: css => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
     if (transient) {
       for (const dependency of generated.dependencies) {
         hookContext?.addWatchFile?.(dependency)

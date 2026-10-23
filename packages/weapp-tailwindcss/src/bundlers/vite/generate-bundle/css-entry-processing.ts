@@ -1,6 +1,7 @@
 import type { RememberedCssSource } from './types'
 import { readDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeMiniProgramImportShell } from '../../../generation/output-import-shell'
+import { createCssAssetPipelineContext } from '../processed-css-assets/markers-imports'
 import { processViteCssEntryTransform } from './css-entry-transform'
 import { prepareFrameworkRootStyle, preserveFrameworkRootImportShell } from './framework-root-style'
 
@@ -90,7 +91,7 @@ export async function processViteCssBundleEntry(options: any) {
       })
   const rawSource = normalizeRelativeCssConfigDirectives(outputSource, assetSourceFile, outDir, opts)
   const currentRawSourceHasExplicitScanContext = rawSource.includes('@source') || rawSource.includes('@config')
-  const cssPipelineContext2 = { ...createInitialCssPipelineContext(file), bundle }
+  const cssPipelineContext2 = createCssAssetPipelineContext({ createCssPipelineContext: createInitialCssPipelineContext }, file, bundle)
   const rootImportShellOutputFile = resolveReplayCssOutputFile(outDir, originalSource.fileName || file)
   const { rootImportShellPlan, canClaimConfiguredOutput } = prepareFrameworkRootStyle({
     ...options,

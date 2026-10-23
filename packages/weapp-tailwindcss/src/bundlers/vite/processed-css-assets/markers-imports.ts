@@ -7,6 +7,7 @@ import path from 'pathe'
 import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { createFrameworkAssetAccess } from '../shared/framework-assets'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { isCssOutputFile, isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isCssOutputFile } from './style-files'
@@ -71,14 +72,9 @@ export function createCssAssetPipelineContext(
   if (!context) {
     return
   }
-  // 保留惰性属性，覆盖产物来源时不先读取并丢弃原上下文的完整快照。
-  return Object.freeze(Object.defineProperties({}, {
-    ...Object.getOwnPropertyDescriptors(context),
-    assets: {
-      enumerable: true,
-      get: () => createFrameworkAssetAccess(bundle).read(),
-    },
-  })) as ViteFrameworkCssPipelineContext & { readonly assets: FrameworkAssets }
+  return extendFrameworkCssContext(context, {
+    get assets() { return createFrameworkAssetAccess(bundle).read() },
+  })
 }
 
 export function getAssetFile(bundleFile: string, asset: OutputAsset) {

@@ -14,6 +14,17 @@ interface CssContextInput {
   resolveStylePlatform: () => string | undefined
 }
 
+/** 扩展请求上下文时保留惰性资产访问，避免每个来源触发完整 bundle 快照。 */
+export function extendFrameworkCssContext<Context extends ViteFrameworkCssPipelineContext, Extension extends object>(
+  context: Context,
+  extension: Extension,
+): Omit<Context, keyof Extension> & Readonly<Extension> {
+  return Object.freeze(Object.defineProperties({}, {
+    ...Object.getOwnPropertyDescriptors(context),
+    ...Object.getOwnPropertyDescriptors(extension),
+  })) as Omit<Context, keyof Extension> & Readonly<Extension>
+}
+
 /** 只投影当前阶段需要的信息；框架策略不持有内部上下文或 Vite 配置。 */
 export function createFrameworkCssContext(input: CssContextInput): ViteFrameworkCssPipelineContext {
   const { cssMatcher, mainCssChunkMatcher, appType, escapeMap } = input.opts

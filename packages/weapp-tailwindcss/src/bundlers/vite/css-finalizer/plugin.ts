@@ -21,7 +21,7 @@ import { linkEntryChunkStyles } from '../generate-bundle/entry-style-graph'
 import { normalizeRootMiniProgramImportShellAssets } from '../generate-bundle/finalize'
 import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramImportShellAssets } from '../generate-bundle/root-style-output'
 import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets } from '../processed-css-assets'
-import { createFrameworkCssContext } from '../shared/framework-css-context'
+import { createFrameworkCssContext, extendFrameworkCssContext } from '../shared/framework-css-context'
 import { createFrameworkStyleAssetContext } from '../shared/framework-style-assets'
 import { isHTMLRequest } from '../utils'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
@@ -88,10 +88,9 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }
         const finalizeWebCssAsset = (css: string, file: string) => {
           const startedAt = performance.now()
-          const finalized = finalizeWebCss(css, {
-            ...createCssPipelineContext(file),
+          const finalized = finalizeWebCss(css, extendFrameworkCssContext(createCssPipelineContext(file), {
             file,
-          }, cssPipelineStrategy)
+          }), cssPipelineStrategy)
           recordTiming('finalizeWebCss', startedAt)
           return finalized
         }
@@ -218,7 +217,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
               runtimeState.tailwindRuntime.majorVersion,
               file,
               outDir,
-              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({ ...createCssPipelineContext(file), file }) ?? {},
+              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(extendFrameworkCssContext(createCssPipelineContext(file), { file })) ?? {},
             ),
             getSourceCandidateSourcesForEntries,
             getSourceCandidatesForEntries,
@@ -295,10 +294,9 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
               runtimeState.tailwindRuntime.majorVersion,
               file,
               outDir,
-              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
-                ...createCssPipelineContext(file),
+              cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(extendFrameworkCssContext(createCssPipelineContext(file), {
                 file,
-              }) ?? {},
+              })) ?? {},
             )
             const nextCss = annotateCss(generatorBranch.isWeb
               ? finalizeWebCssAsset(cleanRawSource, file)
@@ -314,10 +312,9 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
             runtimeState.tailwindRuntime.majorVersion,
             file,
             outDir,
-            cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
-              ...createCssPipelineContext(file),
+            cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(extendFrameworkCssContext(createCssPipelineContext(file), {
               file,
-            }) ?? {},
+            })) ?? {},
           )
           const cssUserHandlerOptions = {
             ...cssHandlerOptions,
@@ -347,10 +344,9 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
                 runtimeState.tailwindRuntime.majorVersion,
                 generatorSourceFile,
                 outDir,
-                cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.({
-                  ...createCssPipelineContext(generatorSourceFile),
+                cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(extendFrameworkCssContext(createCssPipelineContext(generatorSourceFile), {
                   file: generatorSourceFile,
-                }) ?? {},
+                })) ?? {},
               )
             : cssHandlerOptions
           const generatorCssUserHandlerOptions = rememberedMainCssSource

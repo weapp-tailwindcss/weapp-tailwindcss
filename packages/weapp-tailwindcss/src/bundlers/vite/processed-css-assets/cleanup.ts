@@ -4,6 +4,7 @@ import type { InternalUserDefinedOptions } from '@/types'
 import { isCssImportOnly, restoreProcessedCssImports } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, readAssetSource } from './markers-imports'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
@@ -91,14 +92,13 @@ export function resolveConfiguredCssEntryRootInjectionTarget(
   if (context === undefined) {
     return
   }
-  const resolvedByStrategy = options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.({
-    ...context,
+  const resolvedByStrategy = options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.(extendFrameworkCssContext(context, {
     isConfiguredCssEntryFile: file => isConfiguredTailwindV4CssEntryFile(opts, file),
     isMiniProgramStyleOutputFile,
     isRootStyleOutputFile,
     outputFile,
     sourceFile,
-  })
+  }))
   if (resolvedByStrategy !== undefined) {
     return resolvedByStrategy
   }
