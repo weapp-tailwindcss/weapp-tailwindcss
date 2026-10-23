@@ -46,7 +46,7 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
           mutationCount += 1
           watchChild.stdout.emit('data', timing(20 + mutationCount))
         }
-        if (sourceWrites > 6) {
+        if (sourceWrites >= 6) {
           watchChild.exitCode = 0
         }
       }
@@ -78,12 +78,12 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
     prepareRun()
     const disabled = await runCase(versionFor(root), mpxProject, options)
     const disabledSpawns = structuredClone(mocks.spawn.mock.calls.map(([, args, config]) => ({ args, env: config.env })))
-    expect(sourceWrites).toBe(8)
+    expect(sourceWrites).toBe(6)
     prepareRun()
     const directory = path.join(root, 'diagnostics')
     const enabled = await runCase(versionFor(root), mpxProject, { ...options, gcDiagnosticDir: directory })
     expect(enabled).toEqual(disabled)
-    expect(sourceWrites).toBe(8)
+    expect(sourceWrites).toBe(6)
     expect(mutationCount).toBe(3)
     expect(mocks.spawn.mock.calls.map(([, args]) => args)).toEqual(disabledSpawns.map(item => item.args))
     expect(mocks.spawn).toHaveBeenCalledTimes(4)

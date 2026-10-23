@@ -132,8 +132,11 @@ async function readText(file) {
   try {
     return await fs.readFile(file, 'utf8')
   }
-  catch {
-    return ''
+  catch (error) {
+    if (error.code === 'ENOENT' || error.code === 'EBUSY') {
+      return undefined
+    }
+    throw error
   }
 }
 
@@ -438,6 +441,8 @@ async function runHmrRounds({
   const probePaths = [outputPath, ...outputProbeTemplates.map(item => path.join(cwd, item))]
   const original = await fs.readFile(sourcePath, 'utf8')
   const initialOutputMtime = await statMtimeMs(outputPath)
+  let baselineOutputs
+  let sourceDirty = false
 
   const child = spawnPnpmWithEnv(cwd, ['run', devScript], {
     WEAPP_TW_HMR_TIMING: '1',
@@ -457,15 +462,20 @@ async function runHmrRounds({
       if (child.exitCode != null) {
         throw new Error(`dev exited early code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
       }
-      const text = await readText(outputPath)
-      return isWatchReady({
+      const texts = await Promise.all(probePaths.map(readText))
+      const complete = texts.every(text => typeof text === 'string' && text.trim().length > 0)
+      const ready = isWatchReady({
         logs,
         outputExists: await exists(outputPath),
         outputMtime: await statMtimeMs(outputPath),
         initialOutputMtime,
-        outputHasContent: text.trim().length > 0,
+        outputHasContent: complete,
         watchReadyLog,
       })
+      if (ready) {
+        baselineOutputs = texts
+      }
+      return ready
     }, timeoutMs, pollIntervalMs)
 
     if (!ready) {
@@ -481,6 +491,7 @@ async function runHmrRounds({
       const roundLogs = logBuffer.beginRound()
       const start = now()
       diagnostics?.mark('mutation-write', i + 1)
+      sourceDirty = true
       await fs.writeFile(sourcePath, next, 'utf8')
 
       const ok = await waitFor(async () => {
@@ -489,7 +500,7 @@ async function runHmrRounds({
         }
         for (const probePath of probePaths) {
           const text = await readText(probePath)
-          if (text.includes(marker)) {
+          if (text?.includes(marker)) {
             return true
           }
         }
@@ -510,9 +521,11 @@ async function runHmrRounds({
 
       diagnostics?.mark('rollback-write', i + 1)
       await fs.writeFile(sourcePath, original, 'utf8')
+      sourceDirty = false
       const rolledBack = await waitFor(async () => {
-        for (const probePath of probePaths) {
-          if ((await readText(probePath)).includes(marker)) {
+        for (const [index, probePath] of probePaths.entries()) {
+          // 相同输入必须恢复完整探针；缺失、空读或截断内容不能作为回滚成功。
+          if (await readText(probePath) !== baselineOutputs[index]) {
             return false
           }
         }
@@ -525,7 +538,6 @@ async function runHmrRounds({
       diagnostics?.mark('rollback-observed', i + 1)
     }
 
-    await fs.writeFile(sourcePath, original, 'utf8')
     return {
       samples: times,
       memory: memorySampler.stop(),
@@ -534,7 +546,9 @@ async function runHmrRounds({
   finally {
     memorySampler.stop()
     await stopChild(child)
-    await fs.writeFile(sourcePath, original, 'utf8')
+    if (sourceDirty) {
+      await fs.writeFile(sourcePath, original, 'utf8')
+    }
   }
 }
 
