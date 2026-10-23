@@ -27,6 +27,8 @@ regressions:
   - e2e/demo-visual-artifact-root.test.ts
   - e2e/demo-visual-project-root.test.ts
   - e2e/framework-ide-artifact-contract.test.ts
+  - e2e/frameworkIdeProbeFailure.test.ts
+  - e2e/frameworkIdeProbeRunner.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
@@ -289,6 +291,20 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 第 13/23 阶段的真实微信视觉/HMR 报告为 11 组 passed，包括 uni-app-x 两种样式隔离和 HBuilderX 微信项目，已经实际越过旧 miniprogramRoot 首败。报告时间为 2026-10-23T21:58:20.363Z，156 个证据文件及 SHA-256 manifest 归档到 `.tmp/framework-isolation/local-acceptance/0c50ae63-df18-4890-b962-be63d508cfdf/visual-evidence/`。
 
 为整合关闭释放和 CI 修复并让出正式性能对照资源，本任务在核实 workflow PID、启动身份和 cwd 后发送一次 SIGINT，流程恢复 fixture 并正常收尾。第 14 阶段中断，15–23 未执行，不能声称本轮完整设备验收通过。已核对 prepare 退出、consumer finished、工作树干净、无本任务活动测试进程或微信租约；没有终止 IDE/模拟器或改变登录态。原始日志、退出记录、收尾原因和清理摘要在同一归档目录。最终源码必须重新 prepare、真实交互、verify 并从完整入口重跑，不能复用这一报告。
+
+### 新 head 的 CI 与微信环境中断
+
+`8e8f8ead4c5a1b5de38c63d74e847fa3a8ce3425` 的 CSS 固定镜像 job `120687028263` 在约 2分14秒内完成，原 25 分钟预算不变。日志核实指定 digest、三个浏览器真实 PNG、各 58 次语义对照、消费者与原 benchmark 均执行，artifact SHA-256 已验证。Taro Vite/Webpack 原性能门禁通过；weapp-vite 首轮内存超限，但原规则的反序确认未复现，confirmedViolations=0，不能表述为首轮全部指标正常。Expo iOS/Android 及 Lynx iOS 的原生报告、截图摘要和清理回执已核验。
+
+同一 head 的 Mpx 冷构建 peak/steady RSS 增加 15.23%/17.25%，没有冷构建反序确认。Uni HMR 首轮和反序均超过原 5%/64MiB，确认轮 peak 增加 92.51MiB、steady 增加 67.82MiB，属于已确认的失败。保留两框架首败及所有原始样本，不以历史通过、GC 时序线索或其他框架通过取消失败，也不添加共享可变 handler 补偿尚未定位的原因。
+
+新预检 `ea8f1180-5632-4838-805b-6c1d97cb8d05` 完成全部探针、当前会话真实输入/点击/截图及 verify，以该 head 执行完整 `--quality` 入口。前 12 阶段通过：根构建 71/71（0 缓存）、单测 1033 文件/11060 项、全部质量检查、矩阵 34 项、static 389 文件/4221 项与多平台构建 55 项。单测另外一项预期失败、五文件/44 项跳过，static 另有 15 文件/38 项跳过，均不计为已执行通过。
+
+第 13 阶段的 Taro Webpack 构建成功，但微信 `App.captureScreenshot` 在剩余 1812ms 内未响应，Launcher 报告 App 域未就绪。IDE runner 将该环境终态误判为可重试超时并继续，主任务发现后向自身 workflow 发送一次 SIGINT，停止后续调度；14–23 未执行。已核对源码恢复、工作树干净、consumer finished、自有测试进程/微信租约/临时浏览器页均无残留，未重启 IDE 或改动登录态。原日志、环境首败、阶段内存报告、退出与清理摘要归档在对应 local-acceptance 目录；后续必须重新 prepare 和完整验收。
+
+独立修复 `48453b91765a134810a5e25696fcbac2e686045d` 在子进程终态遍历真实错误、cause 和 AggregateError，将微信环境/协议终态与清理失败映射为不可重试的退出码；父进程先检查终态，超时、取消或信号终止也不再根据旧日志重试。产品错误的既有重试保留，诊断收集失败不会覆盖首错及输出。五项新增回归在修复前失败；作者 46 项定向回归、修改文件 ESLint 和 diff 检查通过，没有请求 IDE 或运行构建。该修复不恢复环境，也不代表本轮设备测试通过。
+
+主树整合 `d87039f45` 后以 macOS arm64、Node 24.18.0、CI=1 执行 `pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/frameworkIdeProbeFailure.test.ts e2e/frameworkIdeProbeRunner.test.ts e2e/framework-ide-project-lifecycle.test.ts e2e/workflow-cleanup.test.ts e2e/wechat-session-boundary.test.ts --update=none --maxWorkers=1`，本轮另传 pnpm 配置参数 `--config.verifyDepsBeforeRun=false`，五文件 35 项通过；六个修改文件 ESLint、agents:check 与 diff 检查通过。没有新增规则或修改超时，现有环境失败即停的规则由可执行终态和回归落实。
 
 ## 适用边界
 
