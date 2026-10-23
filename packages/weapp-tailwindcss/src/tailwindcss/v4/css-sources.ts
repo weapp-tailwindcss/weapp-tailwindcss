@@ -1,8 +1,14 @@
 import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
-import type { UserDefinedOptions } from '@/types'
+import type { TailwindCssOptions, TailwindCssRuntimeOptions } from '@/tailwindcss/runtime-types'
 import path from 'node:path'
 import { omitUndefined } from '@/utils/object'
 import { isTailwindV4CssEntry } from './css-entries'
+
+interface CssSourceConfiguration {
+  cssEntries?: string[] | undefined
+  tailwindcss?: TailwindCssOptions | undefined
+  tailwindcssRuntimeOptions?: TailwindCssRuntimeOptions | undefined
+}
 
 function hasCssEntriesValue(value: unknown) {
   if (typeof value === 'string') {
@@ -38,7 +44,7 @@ export function filterTailwindV4CssSourceRoots(
 }
 
 export function hasConfiguredTailwindV4CssRoots(
-  options: Pick<UserDefinedOptions, 'cssEntries' | 'tailwindcss' | 'tailwindcssRuntimeOptions'>,
+  options: CssSourceConfiguration,
 ) {
   return hasCssEntriesValue(options.cssEntries)
     || hasCssEntriesValue(options.tailwindcss?.v4?.cssEntries)
@@ -75,7 +81,7 @@ function isSameCssSource(a: TailwindV4CssSource, b: TailwindV4CssSource) {
 }
 
 export function upsertTailwindV4CssSource(
-  opts: UserDefinedOptions,
+  opts: CssSourceConfiguration,
   source: TailwindV4CssSource,
 ) {
   if (!isTailwindV4CssEntry(source.file)) {
@@ -121,7 +127,7 @@ export function upsertTailwindV4CssSource(
 }
 
 export function removeTailwindV4CssSource(
-  opts: UserDefinedOptions,
+  opts: CssSourceConfiguration,
   file: string,
 ) {
   const tailwindcss = opts.tailwindcss

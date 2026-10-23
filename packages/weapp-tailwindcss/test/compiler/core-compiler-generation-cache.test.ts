@@ -151,4 +151,31 @@ describe('compiler mutable generation inputs', () => {
     expect([...legacy.classSet]).toEqual(['w-[10px]'])
     expect(legacy.cache.output).toBe(false)
   })
+  it('invalidates generated output for callbacks with identical source and different captures', async () => {
+    const { compiler, request } = createCase()
+    const createPlugin = (opacity: string) => ({
+      postcssPlugin: 'captured-opacity',
+      Declaration(declaration: { prop: string, value: string }) {
+        if (declaration.prop === 'opacity') {
+          declaration.value = opacity
+        }
+      },
+    })
+    const firstPlugin = createPlugin('0.2')
+    const secondPlugin = createPlugin('0.7')
+    expect(firstPlugin.Declaration.toString()).toBe(secondPlugin.Declaration.toString())
+    const generate = (plugin: ReturnType<typeof createPlugin>) => compiler.generate({
+      ...request,
+      target: 'weapp',
+      candidates: ['opacity-[0.5]'],
+      styleOptions: { postcssOptions: { plugins: [plugin] } },
+    })
+    const first = await generate(firstPlugin)
+    const second = await generate(secondPlugin)
+    expect(first.css).toMatch(/opacity:\s*0?\.2/)
+    expect(second.css).toMatch(/opacity:\s*0?\.7/)
+    expect(second.cache.output).toBe(false)
+    expect((await generate(secondPlugin)).cache.output).toBe(true)
+  })
+
 })
