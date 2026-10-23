@@ -31,6 +31,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let didClose = false
   let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
   let identityError: unknown
+  let captureError: unknown
   const readTable = (timeoutMs: number, signal: AbortSignal) => options.observer
     ? options.observer.table(timeoutMs, signal)
     : readProcessTable(timeoutMs, signal)
@@ -110,7 +111,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       }
       owned = current
       return current
-    })().finally(() => {
+    })().catch((error) => {
+      captureError ??= error
+      throw error
+    }).finally(() => {
       pending = undefined
     })
     pending = { promise, controller, budget }
@@ -122,6 +126,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     }
     const errors: unknown[] = []
     const sent: Array<{ pid: number, started?: string, method: string }> = []
+    const requestedSignals = new Set<'SIGTERM' | 'SIGKILL'>()
     const fail = (message: string): never => {
       const targets = sent.map(item => `pid=${item.pid} started=${item.started ?? '未采集（本次 spawn 身份）'} method=${item.method}`).join('；')
       const termination = sent.length
@@ -129,23 +134,39 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         : []
       throw new AggregateError([...errors, ...termination], message)
     }
+    const terminateSpawnedChild = (signal: 'SIGTERM' | 'SIGKILL') => {
+      if (didClose || child.exitCode !== null || child.signalCode !== null || requestedSignals.has(signal) || sent.some(item => item.pid === child.pid && item.method === signal)) {
+        return
+      }
+      requestedSignals.add(signal)
+      // 探针失败不能撤销本次 spawn 的活句柄；不使用旧 PID 或进程组快照扩大清理范围。
+      try {
+        if (!child.kill(signal)) {
+          throw new Error(`本轮子进程 pid=${child.pid} 未接受 ${signal}`)
+        }
+        sent.push({ pid: child.pid!, method: signal })
+      }
+      catch (error) {
+        errors.push(error)
+      }
+    }
     let current = owned
     let verified = false
-    const read = async (deadline: number) => {
+    const read = async (probeDeadline: number) => {
       let remaining: number
       try {
-        remaining = remainingProbeBudget(deadline)
+        remaining = remainingProbeBudget(probeDeadline)
       }
       catch {
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
-      const task = capture(deadline)
+      const task = capture(probeDeadline)
       const controller = pending?.controller
       const timer = setTimeout(() => controller?.abort(new Error('进程归属扫描超过清理截止时间。')), remaining)
       try {
         current = await task
-        if (Date.now() > deadline) {
+        if (Date.now() > probeDeadline) {
           throw new Error('进程归属扫描结果超过清理截止时间，不能确认按时完成。')
         }
         verified = true
@@ -153,7 +174,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       }
       catch (error) {
         verified = false
-        errors.push(error)
+        if (!errors.includes(error)) {
+          errors.push(error)
+        }
+        terminateSpawnedChild(Date.now() >= deadline ? 'SIGKILL' : 'SIGTERM')
         return false
       }
       finally {
@@ -176,6 +200,9 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     const cleanupMs = options.cleanupMs ?? 2000
     const deadline = cooperativeDeadline + cleanupMs
     const graceDeadline = cooperativeDeadline + Math.floor(cleanupMs / 2)
+    if (captureError !== undefined) {
+      terminateSpawnedChild('SIGTERM')
+    }
     while (Date.now() < cooperativeDeadline) {
       // 合作窗口决定何时强制终止，不是身份查询预算；跨边界查询仍消耗预先固定的总截止。
       if (!await read(Math.min(Date.now() + 5000, deadline))) {
@@ -200,17 +227,8 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       if (Date.now() >= deadline) {
         break
       }
-      if (!available && !didClose && child.exitCode === null && child.signalCode === null) {
-        // 进程表不可用时仅停止本次 spawn 的本体，归属失败仍保留。
-        try {
-          if (!child.kill(value)) {
-            throw new Error(`本轮子进程 pid=${child.pid} 未接受 ${value}`)
-          }
-          sent.push({ pid: child.pid, method: value })
-        }
-        catch (error) {
-          errors.push(error)
-        }
+      if (!available) {
+        terminateSpawnedChild(value)
       }
       else if (available) {
         let latestRows: ProcessIdentity[] = []
@@ -260,6 +278,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
           await delay(Math.min(25, remaining))
         }
       }
+    }
+    // 预算耗尽不再新建探针或等待；仍活的本次句柄不能因观察失败遗漏最后的终止请求。
+    if (errors.length) {
+      terminateSpawnedChild('SIGKILL')
     }
     fail(`阶段子进程有界清理未成功；close=${didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
   }
