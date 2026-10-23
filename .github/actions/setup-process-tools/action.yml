@@ -1,0 +1,8 @@
+name: Setup process identity tools
+description: 验证预装容器的进程身份查询能力，缺失或异常直接阻断。
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        ps -A -o pid=,ppid=,pgid=,lstart=,stat= > /dev/null

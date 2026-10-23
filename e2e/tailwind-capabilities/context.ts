@@ -1,6 +1,7 @@
 import type { CapabilityReport, CaseContract, TailwindTarget } from './types'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
+import { filesystemObservedAt } from './artifact-clock'
 import { capabilityIdentity } from './identity'
 import { writeJsonFile } from './json'
 
@@ -9,6 +10,7 @@ export interface RunContext {
   directory: string
   runId: string
   startedAt?: string
+  artifactStartedAt?: string
   caseFilter?: RegExp
   env?: NodeJS.ProcessEnv
 }
@@ -18,11 +20,12 @@ export async function newReport(context: RunContext, target: TailwindTarget, con
     throw new Error(`${target} 过滤条件没有匹配任何案例`)
   }
   await mkdir(context.directory, { recursive: true })
-  return { schemaVersion: 2, runId: context.runId, target, observedAt: context.startedAt ?? new Date().toISOString(), identity: await capabilityIdentity(context.root, contracts, { target, fixture }), environment, results: [], artifacts: [] }
+  return { schemaVersion: 2, runId: context.runId, target, observedAt: context.artifactStartedAt ?? filesystemObservedAt(context.directory), identity: await capabilityIdentity(context.root, contracts, { target, fixture }), environment, results: [], artifacts: [] }
 }
 
 export function targetContext(context: RunContext, target: string): RunContext {
-  return { ...context, directory: path.join(context.directory, target), startedAt: new Date().toISOString() }
+  const directory = path.join(context.directory, target)
+  return { ...context, directory, startedAt: new Date().toISOString(), artifactStartedAt: filesystemObservedAt(directory) }
 }
 
 /** 把本轮合同和实际分层证据一并落盘，供统一 coverage 体系消费。 */

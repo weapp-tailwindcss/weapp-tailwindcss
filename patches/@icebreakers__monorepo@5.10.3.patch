@@ -1,0 +1,66 @@
+diff --git a/dist/commands-CB-HD_yZ.mjs b/dist/commands-CB-HD_yZ.mjs
+index 6d62dc6d108010f37008d65d57618b0b841ef6ca..92013ddb71c8b81d7d8f99cf9544d20012b36162 100644
+--- a/dist/commands-CB-HD_yZ.mjs
++++ b/dist/commands-CB-HD_yZ.mjs
+@@ -5308,6 +5308,19 @@ var GitHubClient = class {
+ 			return recovered.data;
+ 		}
+ 	}
++	/** 只按准确 tag 读取，分页集合不能证明某个已知版本不存在。 */
++	async readRelease(tag) {
++		let response;
++		try {
++			response = await this.request("GET", `/releases/tags/${encodeURIComponent(tag)}`);
++		} catch (error) {
++			if (error instanceof GitHubApiError && error.status === 404) return;
++			throw error;
++		}
++		const data = response.data;
++		if (!data || Array.isArray(data) || typeof data !== "object" || typeof data.id !== "number" || data.tag_name !== tag || typeof data.draft !== "boolean" || typeof data.prerelease !== "boolean") throw new GitHubApiError(`GitHub returned invalid release response for ${tag}; release state is unknown`, response.status);
++		return data;
++	}
+ 	async listReleases() {
+ 		const releases = [];
+ 		for (let page = 1;; page++) {
+@@ -6567,7 +6580,7 @@ async function assertPreviousReleaseComplete(options, distTag = "latest") {
+ 	}
+ 	if (!prepared.length) return;
+ 	const github = options.github;
+-	const releases = github?.listReleases ? await github.listReleases() : void 0;
++	const releases = !github?.readRelease && github?.listReleases ? await github.listReleases() : void 0;
+ 	const repository = getReleaseEnv(options)["GITHUB_REPOSITORY"];
+ 	const sources = /* @__PURE__ */ new Map();
+ 	const cohorts = /* @__PURE__ */ new Map();
+@@ -6586,9 +6599,9 @@ async function assertPreviousReleaseComplete(options, distTag = "latest") {
+ 	const rule = options.config?.branches ? await resolveReleaseBranch(options) : void 0;
+ 	for (const pkg of prepared) {
+ 		const published = await inspectRegistry(pkg, options);
+-		const release = releases?.find((item) => item.tag_name === packageKey(pkg));
++		const release = github?.readRelease ? await github.readRelease(packageKey(pkg)) : releases?.find((item) => item.tag_name === packageKey(pkg));
+ 		const tag = github?.readTagTarget ? await github.readTagTarget(packageKey(pkg)) : void 0;
+-		if (!published || unfinished.has(packageKey(pkg)) || releases && (!release || release.draft || Boolean(release.prerelease) !== Boolean(semver.prerelease(pkg.version))) || github?.readTagTarget && (!tag || published.gitHead && tag !== published.gitHead)) {
++		if (!published || unfinished.has(packageKey(pkg)) || (github?.readRelease || releases) && (!release || release.draft || Boolean(release.prerelease) !== Boolean(semver.prerelease(pkg.version))) || github?.readTagTarget && (!tag || published.gitHead && tag !== published.gitHead)) {
+ 			const source = sources.get(packageKey(pkg));
+ 			const recovery = rule?.kind === "maintenance" || distTag === "latest" ? `${rule ? `check out ${rule.branch} and run ` : ""}repo release ci --mode publish --source-sha ${source}` : `check out ${source} on ${rule?.branch ?? distTag} and run repo release ci`;
+ 			blocked.push(`${packageKey(pkg)} (source ${source}); recover with ${recovery}`);
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index 58ac78044b497d5edae8ed3a79ed407f156b4168..af7d0eb28cacec4253684204945386a18a08b07b 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -824,6 +824,8 @@ interface GitHubOperations {
+   ensureTag?: (options: EnsureTagOptions) => Promise<void>;
+   enrichReleaseNote?: (document: ReleaseNoteDocument) => Promise<ReleaseNoteDocument>;
+   readReleasePullRequestContributors?: (target: string) => Promise<string[]>;
++  /** 按准确 tag 只读查询；仅明确 404 表示不存在，未知响应必须抛出。 */
++  readRelease?: (tag: string) => Promise<GitHubRelease | undefined>;
+   listReleases?: () => Promise<GitHubRelease[]>;
+   updateRelease?: (options: UpdateReleaseOptions) => Promise<GitHubRelease>;
+ }
+@@ -859,6 +861,7 @@ export declare class GitHubClient implements GitHubOperations {
+   ensurePullRequest(options: EnsurePullRequestOptions): Promise<GitHubPullRequest>;
+   closeLegacyReleasePullRequests(options: CloseLegacyPullRequestsOptions): Promise<void>;
+   ensureRelease(options: EnsureReleaseOptions): Promise<GitHubRelease>;
++  readRelease(tag: string): Promise<GitHubRelease | undefined>;
+   listReleases(): Promise<GitHubRelease[]>;
+   updateRelease(options: UpdateReleaseOptions): Promise<GitHubRelease>;
+   enrichReleaseNote(document: ReleaseNoteDocument): Promise<ReleaseNoteDocument>;

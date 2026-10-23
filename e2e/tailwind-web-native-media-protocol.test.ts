@@ -1,17 +1,33 @@
 import type { Page } from 'playwright'
 import type { MediaObservation } from './tailwind-capabilities/web-native-media/types'
+import { runInNewContext } from 'node:vm'
 import { afterEach, expect, it, vi } from 'vitest'
+import { waitForFrameProgress } from './tailwind-capabilities/browser/frames'
 import { observeNativeContrast } from './tailwind-capabilities/web-native-media/native'
 import { syntheticMedia } from './tailwind-capabilities/web-native-media/test-fixture'
 
 afterEach(() => {
   vi.useRealTimers()
 })
-function setup() {
+function setup(mode: 'normal' | 'navigation' = 'normal') {
   const fixture = syntheticMedia()
   let index = 0
   const session = { send: vi.fn().mockResolvedValue({}), detach: vi.fn().mockResolvedValue(undefined) }
-  const page = { context: () => ({ newCDPSession: vi.fn().mockResolvedValue(session) }), evaluate: vi.fn().mockImplementation(async () => fixture.observation.states[index++]!) } as unknown as Page
+  const page = {
+    context: () => ({ newCDPSession: vi.fn().mockResolvedValue(session) }),
+    evaluate: vi.fn(async (callback, input) => {
+      if (callback === waitForFrameProgress) {
+        return fixture.observation.states[index]!.frames
+      }
+      if (Array.isArray(input)) {
+        return 100
+      }
+      if (mode === 'navigation') {
+        return runInNewContext(`(${String(callback)})(input)`, { input, performance: { timeOrigin: 200 } })
+      }
+      return fixture.observation.states[index++]!
+    }),
+  } as unknown as Page
   const observation: MediaObservation = { states: [], cleanup: { detached: false, errors: [] } }
   return { session, page, observation }
 }
@@ -58,4 +74,11 @@ it('恢复协议停摆也有界结束并继续detach', async () => {
   await vi.advanceTimersByTimeAsync(5_000)
   expect(String(await result)).toContain('媒体原生协议')
   expect(session.detach).toHaveBeenCalledTimes(1)
+})
+
+it('帧与样式阶段之间的同 URL reload 必须失败，并恢复原生媒体', async () => {
+  const { session, page, observation } = setup('navigation')
+  await expect(observeNativeContrast(page, observation, async () => '', 'unit-media', 'unit-css-hash')).rejects.toThrow('文档已变化')
+  expect(session.send).toHaveBeenLastCalledWith('Emulation.setEmulatedMedia', { media: '', features: [] })
+  expect(session.detach).toHaveBeenCalledOnce()
 })

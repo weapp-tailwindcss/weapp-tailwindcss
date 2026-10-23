@@ -8,6 +8,8 @@ const state = vi.hoisted(() => ({
   commands: [] as string[][],
   rawCommands: [] as string[][],
   close: vi.fn(),
+  closeIdle: vi.fn(),
+  closeAll: vi.fn(),
   publish: vi.fn(),
   closeError: undefined as Error | undefined,
   listenError: undefined as Error | undefined,
@@ -32,6 +34,8 @@ vi.mock('node:http', () => ({
         })
       },
       address: () => ({ port: 43210 }),
+      closeIdleConnections: state.closeIdle,
+      closeAllConnections: state.closeAll,
       close: (closed: (error?: Error) => void) => {
         state.close()
         server.listening = false
@@ -41,15 +45,17 @@ vi.mock('node:http', () => ({
     return server
   },
 }))
-vi.mock('node:fs/promises', () => ({
-  default: {
+vi.mock('node:fs/promises', () => {
+  const filesystem = {
     rm: vi.fn(),
     mkdir: vi.fn(),
     readFile: async () => 'original source',
     writeFile: async (file: string, contents: string) => { state.files.set(file, contents) },
-  },
-}))
-vi.mock('./react-native/runtime-artifacts', () => ({
+  }
+  return { ...filesystem, default: filesystem }
+})
+vi.mock('./react-native/runtime-artifacts', async importOriginal => ({
+  ...await importOriginal<typeof import('./react-native/runtime-artifacts')>(),
   createRuntimeArtifacts: async () => ({ directory: 'mock-evidence', publish: state.publish }),
 }))
 vi.mock('./react-native/native-toolchain', () => ({ reactNativeAndroidToolchain: async () => ({}) }))
@@ -120,6 +126,8 @@ beforeEach(() => {
   state.commands.length = 0
   state.rawCommands.length = 0
   state.close.mockClear()
+  state.closeIdle.mockClear()
+  state.closeAll.mockClear()
   state.publish.mockClear()
   state.closeError = undefined
   state.listenError = undefined
@@ -136,10 +144,14 @@ it('Android 准备中途失败仍恢复设置与端口并关闭报告服务', as
   expect(state.settings).toEqual(new Map([['hide_error_dialogs', '0']]))
   expect(state.reverse).toEqual(new Map([['tcp:9000', 'tcp:9001']]))
   expect(state.close).toHaveBeenCalledOnce()
+  expect(state.closeIdle).toHaveBeenCalledOnce()
+  expect(state.closeAll).not.toHaveBeenCalled()
   expect(state.publish).toHaveBeenCalledOnce()
   expect(state.commands).not.toContainEqual(['logcat', '-c'])
   const receipt = [...state.files.entries()].find(([file]) => file.endsWith('android-environment.json'))
   expect(JSON.parse(receipt![1])).toMatchObject({ device: 'selected-device', setup: 'failed', cleanup: 'passed' })
+  const cleanup = [...state.files.entries()].find(([file]) => file.endsWith('capture-cleanup.json'))
+  expect(JSON.parse(cleanup![1])).toMatchObject({ pending: false, status: 'settled' })
 })
 
 it('报告服务清理失败仍恢复 Android，聚合原始错误并发布回执', async () => {
@@ -151,6 +163,7 @@ it('报告服务清理失败仍恢复 Android，聚合原始错误并发布回�
   expect(state.settings).toEqual(new Map([['hide_error_dialogs', '0']]))
   expect(state.reverse).toEqual(new Map([['tcp:9000', 'tcp:9001']]))
   expect(state.close).toHaveBeenCalledOnce()
+  expect(state.closeAll).toHaveBeenCalledOnce()
   expect(state.publish).toHaveBeenCalledOnce()
   const receipt = [...state.files.entries()].find(([file]) => file.endsWith('android-environment.json'))
   expect(JSON.parse(receipt![1]).cleanup).toBe('passed')

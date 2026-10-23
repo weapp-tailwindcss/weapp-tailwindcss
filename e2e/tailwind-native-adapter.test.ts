@@ -11,6 +11,7 @@ import { nativeEncodingArtifactNames, nativeRuntimePhases } from './react-native
 import { updateNativePhaseFixtureReport, writeNativePhaseFixture } from './react-native/phase-fixture'
 import { snapshotNativePhase } from './react-native/phase-index'
 import { writeRuntimeFixture } from './react-native/runtime-fixture'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { buildNativeCapabilityReport } from './tailwind-capabilities/native-adapter'
 
 vi.mock('./tailwind-capabilities/context', async importOriginal => ({
@@ -18,7 +19,7 @@ vi.mock('./tailwind-capabilities/context', async importOriginal => ({
   newReport: vi.fn(async (context: RunContext, target: CapabilityReport['target'], _contracts: unknown, _fixture: unknown, environment: CapabilityReport['environment']): Promise<CapabilityReport> => ({
     schemaVersion: 2,
     runId: context.runId,
-    observedAt: context.startedAt!,
+    observedAt: context.artifactStartedAt!,
     target,
     environment,
     identity: { sourceHash: 'a'.repeat(64), lockfileHash: 'b'.repeat(64), catalogHash: 'c'.repeat(64), fixtureHash: 'd'.repeat(64), expectationsHash: 'e'.repeat(64), versions: { unit: '1.0.0' } },
@@ -35,7 +36,7 @@ afterEach(async () => {
 async function fixture(platform: ReactNativeReport['platform'] = 'web') {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'tailwind-native-adapter-'))
   directories.push(directory)
-  const context: RunContext = { root: directory, directory, runId: 'adapter-current-run', startedAt: new Date().toISOString() }
+  const context: RunContext = { root: directory, directory, runId: 'adapter-current-run', startedAt: new Date().toISOString(), artifactStartedAt: filesystemObservedAt(directory) }
   const artifacts = path.join(directory, 'native')
   const raw = await writeRuntimeFixture(artifacts, platform, context.runId, context.startedAt!)
   await writeNativePhaseFixture(artifacts, raw)

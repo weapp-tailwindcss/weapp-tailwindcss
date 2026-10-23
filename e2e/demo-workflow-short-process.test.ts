@@ -3,6 +3,7 @@ import type { ProcessIdentity } from '../scripts/demo-e2e-workflow/process-table
 import { EventEmitter } from 'node:events'
 import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
+import * as observers from '../scripts/demo-e2e-workflow/process-observer'
 import * as table from '../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
@@ -179,7 +180,7 @@ it('真实空 Node 进程退出通过 runStep，不要求短阶段必须产生�
 })
 
 it('短命令正常退出不会把仍在有界采集的身份探针截短为清理预算', async () => {
-  const scan = vi.spyOn(table, 'readProcessTable').mockImplementation((_timeout, signal) => new Promise((resolve, reject) => {
+  const scan = vi.fn<observers.WorkflowProcessObserver['table']>().mockImplementation((_timeout, signal) => new Promise((resolve, reject) => {
     // 复现 Windows 冷 PowerShell 超过 2 秒清理预算、仍处于 5 秒采集预算内的响应。
     const timer = setTimeout(resolve, 2200, [])
     signal?.addEventListener('abort', () => {
@@ -187,10 +188,18 @@ it('短命令正常退出不会把仍在有界采集的身份探针截短为清�
       reject(signal.reason)
     }, { once: true })
   }))
+  const close = vi.fn().mockResolvedValue(undefined)
+  vi.spyOn(observers, 'prepareWorkflowProcessObserver').mockResolvedValue({
+    table: scan,
+    subset: vi.fn().mockResolvedValue([]),
+    memory: vi.fn().mockRejectedValue(new Error('已退出的短命令不应采集内存')),
+    close,
+  })
   const report = await runStep({ name: 'slow identity probe', command: process.execPath, args: ['-e', ''] }, 1, 1)
   expect(report.exitCode).toBe(0)
   expect(report.error).toBeUndefined()
   expect(scan).toHaveBeenCalledOnce()
   expect(scan.mock.calls[0]?.[0]).toBe(5000)
   expect(scan.mock.calls[0]?.[1]?.aborted).toBe(false)
+  expect(close).toHaveBeenCalledOnce()
 })

@@ -11,6 +11,9 @@ on:
       - 'examples/react-native-expo/**'
       - 'e2e/react-native/**'
       - 'e2e/react-native-*.test.ts'
+      - 'e2e/playwright-image*.test.ts'
+      - scripts/ci/verify-playwright-image.mjs
+      - .github/actions/setup-process-tools/action.yml
       - 'tools/tailwindcss-test-catalog/**'
       - 'e2e/tailwind-capabilities/**'
       - package.json
@@ -44,16 +47,25 @@ jobs:
     name: Expo Web compatibility (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --init --ipc=host
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
     env:
+      HOME: /root
       RN_WEB_BROWSER: ${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - name: Trust container workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -64,16 +76,10 @@ jobs:
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
       - run: pnpm --filter @weapp-tailwindcss/react-native typecheck
       - run: pnpm --filter @weapp-tailwindcss/react-native test --update=none
-      - name: Install Playwright browser
-        run: |
-          for attempt in 1 2 3 4; do
-            if pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
-              exit 0
-            fi
-            echo "Playwright ${{ matrix.browser }} install failed, retrying (${attempt}/4)"
-            sleep $((attempt * 10))
-          done
-          pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - uses: ./.github/actions/setup-process-tools
+        timeout-minutes: 2
+      - name: Verify preinstalled Playwright browser
+        run: node scripts/ci/verify-playwright-image.mjs ${{ matrix.browser }}
       - run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ci.test.ts --update=none
       - run: pnpm e2e:react-native-compatibility
       - run: pnpm e2e:react-native:web

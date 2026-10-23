@@ -152,7 +152,7 @@ export async function verifyReportArtifacts(report: CapabilityReport, root: stri
     const bytes = await readFile(file)
     const metadata = await stat(file)
     if (metadata.mtimeMs + 1 < Date.parse(report.observedAt)) {
-      fail(`产物早于本轮执行：${item.path}`)
+      fail(`产物早于本轮执行：${item.path} (mtimeMs=${metadata.mtimeMs}, observedAt=${report.observedAt})`)
     }
     if (metadata.size !== item.byteLength || digest(bytes) !== item.sha256) {
       fail(`产物摘要不匹配：${item.path}`)

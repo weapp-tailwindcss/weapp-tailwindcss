@@ -791,6 +791,7 @@ packageExtensionsChecksum: sha256-AnfQroO3B91A4adanECz855ETxZRheZ1BPvbp/gL2ng=
 pnpmfileChecksum: sha256-VIhHxkE3DlYGW4jpmh5YBZoirXpyRMuq7rJOkofCfW8=
 
 patchedDependencies:
+  '@icebreakers/monorepo@5.10.3': 87c49672376b16465f4186d35d7a918fba3637f6d775b04e2620f71ecfad04ef
   '@lynx-js/tasm@0.0.49': e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545
   '@mpxjs/vue-cli-plugin-mpx@2.2.30': a26ae7412b1d225b09da9131a7271eb03aa6e17e9b0b3e83c7177bf1d4119eeb
   '@tarojs/plugin-framework-react@4.2.1': 69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815
@@ -43241,7 +43242,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@icebreakers/monorepo@5.10.3(202555b2aec20b9095158152fac1db33)':
+  '@icebreakers/monorepo@5.10.3(patch_hash=87c49672376b16465f4186d35d7a918fba3637f6d775b04e2620f71ecfad04ef)(202555b2aec20b9095158152fac1db33)':
     dependencies:
       '@arethetypeswrong/core': 0.18.5
       '@babel/parser': 7.29.9
@@ -70966,7 +70967,7 @@ snapshots:
 
   repoctl@5.10.3(1ed8b7498fcb33e9e9bd3c91c2a7b602):
     dependencies:
-      '@icebreakers/monorepo': 5.10.3(202555b2aec20b9095158152fac1db33)
+      '@icebreakers/monorepo': 5.10.3(patch_hash=87c49672376b16465f4186d35d7a918fba3637f6d775b04e2620f71ecfad04ef)(202555b2aec20b9095158152fac1db33)
     optionalDependencies:
       '@commitlint/cli': 21.2.3(@types/node@26.6.5)(conventional-commits-parser@7.1.2)(typescript@6.0.3)
       eslint: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)

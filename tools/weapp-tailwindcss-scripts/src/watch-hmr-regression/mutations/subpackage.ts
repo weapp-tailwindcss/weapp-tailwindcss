@@ -69,6 +69,11 @@ export function collectSubPackageStyleOutputs(mutation: SubPackageMutationConfig
   ])]
 }
 
+/** CSS 语义只消费已声明的样式入口；JS 载体继续由 marker 与回滚链路验证。 */
+export function collectSubPackageCssOutputs(mutation: SubPackageMutationConfig) {
+  return [...new Set(mutation.globalStyleCandidates)]
+}
+
 export async function runSubPackageMutation(
   watchCase: WatchCase,
   options: CliOptions,
@@ -118,7 +123,7 @@ export async function runSubPackageMutation(
   await sleep(Math.min(Math.max(options.pollMs * 2, 600), 1500))
   session.ensureRunning()
 
-  const globalStyleOutputs = collectSubPackageStyleOutputs(mutation)
+  const globalStyleOutputs = collectSubPackageCssOutputs(mutation)
   const template = await runClassMutation(
     subWatchCase,
     options,
@@ -138,7 +143,7 @@ export async function runSubPackageMutation(
         session,
         mutation.styleMutation,
         styleSourceOriginal!,
-        globalStyleOutputs,
+        collectSubPackageStyleOutputs(mutation),
       )
 
   let mainStyleHotUpdate

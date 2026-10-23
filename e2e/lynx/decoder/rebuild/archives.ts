@@ -1,8 +1,9 @@
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
+import { closeSync, openSync, readSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { x as extractTar, t as listTar } from 'tar'
+import { x as extractTar, Parser } from 'tar'
 
 export interface ArchiveInput {
   file: string
@@ -46,11 +47,16 @@ export async function unpackArchive(archive: string, destination: string, strip:
   await fs.mkdir(destination, { recursive: true })
   const links: Array<{ file: string[], target: string[] }> = []
   // 先同步检查所有成员，避免异步提取回调抛错后留下悬而未决的 Promise。
-  listTar({
+  const parser = new Parser({
     file: archive,
     sync: true,
     strict: true,
     onReadEntry(entry) {
+      // tar 在 Windows 会先改写 ReadEntry 路径；普通头原文必须先过 POSIX 边界。
+      validateArchivePath(entry.header.path ?? '')
+      if (entry.header.linkpath?.includes('\\')) {
+        throw new Error(`归档链接包含非 POSIX 路径: ${entry.header.linkpath}`)
+      }
       const name = entry.path
       validateArchivePath(name)
       if (entry.type === 'SymbolicLink') {
@@ -69,8 +75,28 @@ export async function unpackArchive(archive: string, destination: string, strip:
       else if (entry.type !== 'File' && entry.type !== 'Directory') {
         throw new Error(`归档包含非普通文件: ${name} (${entry.type})`)
       }
+      entry.resume()
     },
   })
+  // 固定源码归档仅接受 POSIX 元数据；在 tar 消费 PAX/GNU 扩展并做宿主归一化前检查。
+  parser.on('meta', (metadata: string) => {
+    if (metadata.includes('\\')) {
+      throw new Error('归档扩展元数据包含非 POSIX 路径')
+    }
+  })
+  const descriptor = openSync(archive, 'r')
+  try {
+    const chunk = Buffer.alloc(64 * 1024)
+    let length = readSync(descriptor, chunk, 0, chunk.length, null)
+    while (length > 0) {
+      parser.write(Buffer.from(chunk.subarray(0, length)))
+      length = readSync(descriptor, chunk, 0, chunk.length, null)
+    }
+    parser.end()
+  }
+  finally {
+    closeSync(descriptor)
+  }
   await extractTar({
     file: archive,
     cwd: destination,

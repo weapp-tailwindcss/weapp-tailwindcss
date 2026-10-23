@@ -1,7 +1,9 @@
+import { pnpmEnvironment } from '../../../../scripts/pnpm-environment.mjs'
 import { execaPnpm } from '../../../../scripts/pnpm-exec.mjs'
 
 const { execute } = vi.hoisted(() => ({ execute: vi.fn().mockResolvedValue({ stdout: 'ok' }) }))
 vi.mock('execa', () => ({ execa: execute }))
+vi.mock('node:fs/promises', () => ({ access: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('../../../../scripts/pnpm-command.mjs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../scripts/pnpm-command.mjs')>()
   return {
@@ -25,6 +27,6 @@ describe('Execa 的 Windows pnpm 参数边界', () => {
     const args = ['run', '带 空格', '"quoted" & %PATH%']
     const options = { extendEnv: false, env: { npm_execpath: cli } }
     await execaPnpm(args, options)
-    expect(execute).toHaveBeenCalledWith(cli, args, { ...options, shell: false })
+    expect(execute).toHaveBeenCalledWith(cli, args, { ...options, env: pnpmEnvironment({}, options.env, false), shell: false })
   })
 })

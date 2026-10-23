@@ -1,5 +1,6 @@
 import type { CDPSession, Page } from 'playwright'
 import type { AutofillCommand, AutofillEvent, AutofillObservation } from './types'
+import { waitForFrameProgress } from '../browser/frames'
 import { bounded } from '../web-native-media/deadline'
 import { addressFields, autofillAddress, autofillColors, autofillIds, autofillProbe, autofillStates } from './fixtures'
 
@@ -24,6 +25,7 @@ export async function observeAutofill(page: Page, observation: AutofillObservati
   }
   session.on('Autofill.addressFormFilled', event)
   const errors: unknown[] = []
+  let documentTimeOrigin: number | undefined
   try {
     const enable: AutofillCommand = { method: 'Autofill.enable', params: {} }
     observation.commands.push(enable)
@@ -66,28 +68,38 @@ export async function observeAutofill(page: Page, observation: AutofillObservati
           await page.locator(`#${id}`).pressSequentially('Edited')
         }
       }
-      const raw = await bounded('Autofill 绘制观察', () => page.evaluate(async ({ ids, colors }) => {
-        document.querySelectorAll<HTMLElement>('#identity i').forEach((node, index) => {
-          node.style.backgroundColor = `rgb(${colors[index]!.join(',')})`
-        })
-        const frames: number[] = []
-        for (let i = 0; i < 2; i++) {
-          frames.push(await new Promise<number>(resolve => requestAnimationFrame(resolve)))
+      const raw = await bounded('Autofill 绘制观察', async () => {
+        const deadline = performance.now() + 5_000
+        const timeOrigin = await page.evaluate((colors) => {
+          document.querySelectorAll<HTMLElement>('#identity i').forEach((node, index) => {
+            node.style.backgroundColor = `rgb(${colors[index]!.join(',')})`
+          })
+          return performance.timeOrigin
+        }, autofillColors(runId, state, cssHash))
+        documentTimeOrigin ??= timeOrigin
+        if (timeOrigin !== documentTimeOrigin) {
+          throw new Error('Autofill 观察期间文档已变化')
         }
-        return {
-          id: document.body.dataset['fixture'] ?? '',
-          runId: document.body.dataset['runId'] ?? '',
-          url: location.href,
-          frames,
-          fields: Object.fromEntries(ids.map((id) => {
-            const node = document.getElementById(id) as HTMLInputElement
-            const style = getComputedStyle(node)
-            const { left, top, width, height } = node.getBoundingClientRect()
-            return [id, { value: node.value, autofill: node.matches(':autofill'), outline: { width: style.outlineWidth, style: style.outlineStyle, color: style.outlineColor }, rect: { left, top, width, height } }]
-          })),
-          journal: (globalThis as typeof globalThis & { __autofillJournal: AutofillObservation['states'][number]['journal'] }).__autofillJournal,
-        }
-      }, { ids: autofillIds, colors: autofillColors(runId, state, cssHash) }))
+        const frames = await page.evaluate(waitForFrameProgress, { after: observation.states.at(-1)?.frames[1] ?? -1, timeOrigin, timeoutMs: Math.max(1, deadline - performance.now()) })
+        return page.evaluate(({ ids, frames, timeOrigin }) => {
+          if (performance.timeOrigin !== timeOrigin) {
+            throw new Error('Autofill 采样的文档已变化')
+          }
+          return {
+            id: document.body.dataset['fixture'] ?? '',
+            runId: document.body.dataset['runId'] ?? '',
+            url: location.href,
+            frames,
+            fields: Object.fromEntries(ids.map((id) => {
+              const node = document.getElementById(id) as HTMLInputElement
+              const style = getComputedStyle(node)
+              const { left, top, width, height } = node.getBoundingClientRect()
+              return [id, { value: node.value, autofill: node.matches(':autofill'), outline: { width: style.outlineWidth, style: style.outlineStyle, color: style.outlineColor }, rect: { left, top, width, height } }]
+            })),
+            journal: (globalThis as typeof globalThis & { __autofillJournal: AutofillObservation['states'][number]['journal'] }).__autofillJournal,
+          }
+        }, { ids: autofillIds, frames, timeOrigin })
+      })
       const result = { name: state, ...raw, screenshot: '' }
       observation.states.push(result)
       observation.timeline.push(`state/${state}`)
