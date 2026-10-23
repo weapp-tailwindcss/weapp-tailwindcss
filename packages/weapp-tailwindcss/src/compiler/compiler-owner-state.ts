@@ -7,7 +7,7 @@ interface OwnerState {
   idleWaiters: Set<() => void>
   disposal?: Promise<void>
 }
-interface ActivityLease { owner: object, active: boolean }
+interface ActivityLease { owner: object | undefined, active: boolean }
 const ownerStates = new WeakMap<object, OwnerState>()
 const activities = new AsyncLocalStorage<readonly ActivityLease[]>()
 
@@ -38,10 +38,12 @@ export function runCompilerOwnerActivity<T>(owner: object, activity: () => T | P
     return Promise.reject(error)
   }
   const state = getState(owner)
-  const lease = { owner, active: true }
+  const lease: ActivityLease = { owner, active: true }
   state.active++
   const release = () => {
     lease.active = false
+    // 异步后续任务可能继续持有租约；任务完成后不再通过租约保留整个编译实例。
+    lease.owner = undefined
     state.active--
     if (state.active === 0) {
       for (const resolve of state.idleWaiters) {
@@ -52,7 +54,9 @@ export function runCompilerOwnerActivity<T>(owner: object, activity: () => T | P
   }
   try {
     // 已接收任务可以完成其嵌套工作；关闭开始后的外部调用不能借用此租约。
-    return activities.run([...(activities.getStore() ?? []), lease], () => Promise.resolve(activity()).finally(release))
+    const activeLeases = activities.getStore()?.filter(activity => activity.active) ?? []
+    activeLeases.push(lease)
+    return activities.run(activeLeases, () => Promise.resolve(activity()).finally(release))
   }
   catch (error) {
     release()
