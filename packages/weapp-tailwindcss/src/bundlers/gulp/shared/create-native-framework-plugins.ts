@@ -444,6 +444,6 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
       },
     }).finally(() => runtimeState.dispose()),
     getCompilerShadowRunSnapshot: () => getCompilerShadowRunSnapshot(runtimeState),
-    watchChange: (file: string, change: Parameters<typeof watchChange>[1]) => runCompilerOwnerActivity(runtimeState, () => watchChange(file, change)),
+    watchChange: (file: string, change?: Parameters<typeof watchChange>[1]) => runCompilerOwnerActivity(runtimeState, () => watchChange(file, change)),
   }
 }
