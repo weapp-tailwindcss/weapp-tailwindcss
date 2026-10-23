@@ -1,3 +1,4 @@
+import type { BundleBuildState, BundleSnapshot, EntryType } from '../bundle-state'
 import type { ViteCssAssetIdentityKind } from '../css-asset-identity'
 import { hasTailwindApplyDirective } from '../../../generation/directives'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
@@ -179,20 +180,30 @@ export function resolveViteCssTransformCachePlan(
 }
 
 export interface ResolveViteCssLinkedImpactSignatureOptions {
-  changedHtmlFiles: ReadonlySet<string>
-  changedJsFiles: ReadonlySet<string>
-  runtimeAffectingSignatureByFile: ReadonlyMap<string, string>
+  snapshot: Pick<BundleSnapshot, 'entries' | 'runtimeAffectingHashByFile' | 'hasOmittedKnownFiles' | 'removedFiles'>
+  state: Pick<BundleBuildState, 'entryMetadataByFile' | 'runtimeAffectingHashByFile'>
 }
 
 export function resolveViteCssLinkedImpactSignature(
   options: ResolveViteCssLinkedImpactSignatureOptions,
 ) {
-  return [
-    ...[...options.changedHtmlFiles]
-      .sort()
-      .map(file => options.runtimeAffectingSignatureByFile.get(file) ?? ''),
-    ...[...options.changedJsFiles]
-      .sort()
-      .map(file => options.runtimeAffectingSignatureByFile.get(file) ?? ''),
-  ].join(':')
+  const { snapshot, state } = options
+  const entryTypes = new Map<string, EntryType>()
+  if (snapshot.hasOmittedKnownFiles) {
+    for (const [file, metadata] of state.entryMetadataByFile) {
+      entryTypes.set(file, metadata.type)
+    }
+  }
+  for (const entry of snapshot.entries) {
+    entryTypes.set(entry.file, entry.type)
+  }
+  for (const file of snapshot.removedFiles) {
+    entryTypes.delete(file)
+  }
+  // 缓存标识描述当前依赖内容；当轮变更集合在下一轮清空，不能作为内容身份。
+  // 增量产物省略的来源沿用构建图已有 hash，显式删除则必须从身份中移除。
+  return JSON.stringify([...entryTypes]
+    .filter(([, type]) => type === 'html' || type === 'js')
+    .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
+    .map(([file]) => [file, snapshot.runtimeAffectingHashByFile.get(file) ?? state.runtimeAffectingHashByFile.get(file) ?? '']))
 }

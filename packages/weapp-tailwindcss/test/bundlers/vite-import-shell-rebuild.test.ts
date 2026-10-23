@@ -42,7 +42,7 @@ describe('issue 1245 import shell rebuilds', () => {
       ensureRuntimeClassSet: async () => new Set(),
       ensureBundleRuntimeClassSet: async () => new Set(),
       frameworkRootImportShellTargetByFile: relations,
-      cssPipelineStrategy: { shouldKeepRootMiniProgramStyleAsImportShell: () => true },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' } },
       debug: () => {},
       getResolvedConfig: () => ({
         command: 'build', root: process.cwd(),
@@ -121,8 +121,10 @@ describe('framework root ownership in partial bundles', () => {
       ensureBundleRuntimeClassSet: async () => new Set(),
       frameworkRootImportShellTargetByFile: relations,
       cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-        shouldSelectConfiguredCssEntryRootSource: () => true,
+        styles: {
+          rootImportShell: 'preserve',
+          shouldSelectConfiguredCssEntryRootSource: () => true,
+        },
       },
       debug: () => {},
       getResolvedConfig: () => ({ command: 'build', root, build: { outDir: 'dist', watch: {} } } as ResolvedConfig),

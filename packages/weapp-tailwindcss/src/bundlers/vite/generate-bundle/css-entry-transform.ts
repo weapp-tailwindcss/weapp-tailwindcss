@@ -42,6 +42,7 @@ export async function processViteCssEntryTransform(options: any) {
     isWebGeneratorTarget,
     lastCssResultByFile,
     lastCssSourceHashByFile,
+    linkedImpactSignature,
     markCssAssetProcessed,
     measureElapsed,
     metrics,
@@ -63,7 +64,6 @@ export async function processViteCssEntryTransform(options: any) {
     rememberedCssSource,
     rememberedCssSources,
     removeCssCoveredByRootStyleBundleSources,
-    resolveViteCssLinkedImpactSignature,
     resolveViteCssTransformCachePlan,
     resolveViteCssTransformDecisionPlan,
     resolvedFromConfiguredOriginalCssEntry,
@@ -138,7 +138,6 @@ export async function processViteCssEntryTransform(options: any) {
       ? await createScopedGeneratorCandidateSignatureForSources({ createScopedGeneratorCandidateSignature, generatorCssHandlerOptions, majorVersion: runtimeState.tailwindRuntime.majorVersion, scopedSourceCandidateGetter, signatureSources, trackedGeneratorCandidateSignature })
       : await createScopedGeneratorCandidateSignature(generatorRawSource, generatorSourceFile, trackedGeneratorCandidateSignature, scopedSourceCandidateGetter, { includeFallbackSignature: generatorCssHandlerOptions.isMainChunk, majorVersion: runtimeState.tailwindRuntime.majorVersion })
     : trackedGeneratorCandidateSignature
-  const linkedImpactSignature = isRuntimeLinkedCss ? resolveViteCssLinkedImpactSignature({ changedHtmlFiles: snapshot.runtimeAffectingChangedByType.html, changedJsFiles: snapshot.runtimeAffectingChangedByType.js, runtimeAffectingSignatureByFile: snapshot.runtimeAffectingSignatureByFile }) : ''
   // 同一生成入口的产物还可合并普通作者样式，必须按本轮完整内容校验缓存。
   const cssTransformCachePlan = resolveViteCssTransformCachePlan({ cssBundleSourceHash: cache.computeHash(rawSource), cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, cssRuntimeAffectingHash, cssShareScope, linkedImpactSignature, outputFile, runtimeSignature, scopedGeneratorCandidateSignature, sourceTraceSignature, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion })
   const { cssCacheKey, cssHashKey, cssSharedCacheKey, cssTaskHash, rememberedCssRuntimeSignature } = cssTransformCachePlan

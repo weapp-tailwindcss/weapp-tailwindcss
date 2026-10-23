@@ -159,6 +159,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     currentOutDir = outDir
     const snapshotStart = performance.now()
     const snapshot = buildBundleSnapshot(bundle, opts, outDir, state, envFlags.disableDirtyOptimization || !useIncrementalMode, { hasOmittedKnownFiles })
+    const linkedImpactSignature = cache.computeHash(resolveViteCssLinkedImpactSignature({ snapshot, state }))
     const configuredTailwindV4CssSourceEntriesForScope = getConfiguredTailwindV4CssSourceEntries()
     const configuredCssRootResolvers = createConfiguredCssRootResolvers({
       bundle,
@@ -385,6 +386,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           isWebGeneratorTarget,
           lastCssResultByFile,
           lastCssSourceHashByFile,
+          linkedImpactSignature,
           markCssAssetProcessed,
           measureElapsed,
           metrics,
@@ -415,7 +417,6 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           resolveMatchedCssSourceOutputFile,
           resolveReplayCssOutputFile,
           resolveViteCssCompositionPlan,
-          resolveViteCssLinkedImpactSignature,
           resolveViteCssPipelineOutputFile,
           resolveViteCssSourcePlan,
           resolveViteCssTransformCachePlan,
