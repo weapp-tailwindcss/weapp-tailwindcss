@@ -59,6 +59,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
 
   const {
     clearCache: clearTransformCache,
+    dispose: disposeTransforms,
     ...transforms
   } = createCompilerTransforms({
     ensureActive,
@@ -261,6 +262,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
         await rootStore.dispose()
       }
       finally {
+        disposeTransforms()
         lifecycle = 'disposed'
       }
     })()
