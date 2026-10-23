@@ -33,6 +33,7 @@ function disposeGenerator(generator: WeappTailwindcssGenerator | undefined) {
 }
 
 export class CompilerRootStore {
+  private readonly backgroundReleases = new Set<Promise<void>>()
   private readonly dependencyRoots = new Map<string, Set<string>>()
   private readonly releasing = new Map<string, Promise<void>>()
   private readonly roots = new Map<string, CompilerRootSession>()
@@ -61,7 +62,7 @@ export class CompilerRootStore {
     if (this.roots.size >= this.maxRoots) {
       const oldest = [...this.roots.values()].find(entry => entry.pendingCount === 0)
       if (oldest) {
-        void this.remove(oldest.id, true)
+        this.evict(oldest.id)
       }
     }
     const entry: CompilerRootSession = {
@@ -142,7 +143,7 @@ export class CompilerRootStore {
       if (!oldest) {
         return
       }
-      void this.remove(oldest.id, true)
+      this.evict(oldest.id)
     }
   }
 
@@ -188,13 +189,25 @@ export class CompilerRootStore {
     const tasks = new Set([
       ...[...this.roots.keys()].map(id => this.remove(id)),
       ...this.releasing.values(),
+      ...this.backgroundReleases,
     ])
     const settled = await Promise.allSettled(tasks)
+    this.backgroundReleases.clear()
     this.dependencyRoots.clear()
     const errors = settled.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
     if (errors.length) {
       throw new AggregateError(errors, '编译来源释放失败，已继续释放其余来源。')
     }
+  }
+
+  private evict(id: string) {
+    const release = this.remove(id, true)
+    this.backgroundReleases.add(release)
+    void release.then(
+      () => this.backgroundReleases.delete(release),
+      // 后台淘汰立即接住异常，失败记录保留到实例关闭时统一报告。
+      () => undefined,
+    )
   }
 
   private detachDependencies(entry: CompilerRootSession) {
