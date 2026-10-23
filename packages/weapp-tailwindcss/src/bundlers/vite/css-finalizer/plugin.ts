@@ -68,7 +68,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }).options
         const generatorBranch = generatorOptions.branch
         const isWebGeneratorTarget = generatorBranch.isWeb
-        const createCssPipelineContext = (_file: string): ViteFrameworkCssPipelineContext => createFrameworkCssContext({
+        const cssPipelineContext = createFrameworkCssContext({
           bundle,
           currentGeneratorBranch: generatorBranch,
           currentGeneratorOptions: generatorOptions,
@@ -76,6 +76,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           resolvedConfig,
           resolveStylePlatform: () => generatorPlatform,
         })
+        const createCssPipelineContext = (_file: string): ViteFrameworkCssPipelineContext => cssPipelineContext
         const timingDetails: Record<string, number> = {}
         const recordTiming = (phase: string, startedAt: number) => {
           timingDetails[phase] = (timingDetails[phase] ?? 0) + Math.max(0, performance.now() - startedAt)

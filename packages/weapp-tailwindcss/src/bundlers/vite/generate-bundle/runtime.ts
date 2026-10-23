@@ -103,6 +103,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const generatorOptions = resolveContextGeneratorConfiguration(opts, { platform: generatorPlatform, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion }).options
     const generatorBranch = generatorOptions.branch
     const cssPipelineContext = createFrameworkCssContext({ bundle, currentGeneratorBranch: generatorBranch, currentGeneratorOptions: generatorOptions, opts, resolvedConfig, resolveStylePlatform: () => generatorPlatform })
+    const createCssPipelineContextForFile = (file: string) => extendFrameworkCssContext(cssPipelineContext, { file })
     const isWebGeneratorTarget = generatorBranch.isWeb
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, context.cssPipelineStrategy)
     const transformWebTargetCss = (css: string) => { return context.cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: value => transformWebCssCompat(value, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }), removeScopedPreflight: value => value, shouldApplyWebCssCompat })) ?? (shouldApplyWebCssCompat ? transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }) : css) }
@@ -342,7 +343,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           createCssSourceTraceCacheSignature,
           createCssTokenSourceMap,
           createCssTransformShareScopeKey,
-          createInitialCssPipelineContext,
+          createInitialCssPipelineContext: createCssPipelineContextForFile,
           createRuntimeAffectingSourceSignature,
           createScopedGeneratorCandidateSignature,
           createScopedGeneratorRuntime,
