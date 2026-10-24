@@ -89,7 +89,11 @@ export function createPluginShutdown(
   invocation: ReturnType<typeof createPluginInvocationSession>,
   config: ResolvedConfig,
   ownership: VitePluginOwnership,
+  onReleased: () => void,
 ) {
+  let delegates = plugins
+  let resolvedConfig: ResolvedConfig | undefined = config
+  let release: (() => void) | undefined = onReleased
   const coordinated = ownership !== 'standalone'
   if (coordinated) {
     for (const plugin of plugins) {
@@ -97,7 +101,7 @@ export function createPluginShutdown(
     }
   }
   const ownerSlot = slots.find(slot => slot.ownsSession)
-  const owner = plugins.find(plugin => plugin.name === (ownerSlot?.pluginName ?? ownerSlot?.name))
+  let owner = plugins.find(plugin => plugin.name === (ownerSlot?.pluginName ?? ownerSlot?.name))
   const contexts = new Map<Plugin, unknown>()
   const cleanups = new Map<Plugin, Promise<void>>()
   const disabled = new Set<Plugin>()
@@ -133,9 +137,13 @@ export function createPluginShutdown(
     }
   }
   const cleanupRemaining = async (preferred: ClosingHook) => {
+    const childConfig = resolvedConfig
+    if (!childConfig) {
+      return
+    }
     const children = new Set<NonNullable<ReturnType<typeof getVitePluginCleanup>>>()
     // 初始化失败或不存在对应终止钩子时，只能使用该插件已经取得的宿主上下文。
-    for (const plugin of plugins) {
+    for (const plugin of delegates) {
       if (plugin === owner || disabled.has(plugin)) {
         continue
       }
@@ -155,7 +163,7 @@ export function createPluginShutdown(
     await Promise.all(cleanups.values())
     for (const child of children) {
       try {
-        await child(config, preferred)
+        await child(childConfig, preferred)
       }
       catch (error) {
         rememberFailure(error)
@@ -188,6 +196,12 @@ export function createPluginShutdown(
         cleanups.clear()
         disabled.clear()
         failures.length = 0
+        delegates = []
+        owner = undefined
+        resolvedConfig = undefined
+        const notify = release
+        release = undefined
+        notify?.()
       }
     })
   }

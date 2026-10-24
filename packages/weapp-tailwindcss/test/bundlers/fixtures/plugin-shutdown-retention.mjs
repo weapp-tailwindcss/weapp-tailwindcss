@@ -21,40 +21,55 @@ async function exercise(failureMode, nested) {
   const references = []
   const gate = Promise.withResolvers()
   let cleanups = 0
-  const observe = (label) => {
-    const result = {}
+  const observe = (label, result = {}) => {
     references.push({ label, value: new WeakRef(result) })
     return result
   }
   const extensionSlot = { name: 'extension', hooks: { configResolved: true, transform: true, closeWatcher: true } }
-  const extension = () => ({
-    name: 'extension',
-    async transform() {
-      await gate.promise
+  const extension = () => {
+    // 真实工厂私有资源只能由委托闭包持有；外层工厂不会捕获本次实例资源。
+    const resource = observe('extension:private-resource')
+    const transform = observe('extension:private-handler', () => {
+      assert.ok(resource)
       return observe('transform-result')
-    },
-    closeWatcher() {
-      cleanups++
-      if (failureMode) {
-        const failure = new Error('cleanup failed')
-        if (failureMode === 'nested') {
-          const cause = new Error('cleanup cause', { cause: failure })
-          failure.cause = cause
-          throw new AggregateError([new AggregateError([failure], 'inner cleanup')], 'outer cleanup', { cause })
+    })
+    return {
+      name: 'extension',
+      async transform() {
+        await gate.promise
+        return transform()
+      },
+      closeWatcher() {
+        assert.ok(resource)
+        cleanups++
+        if (failureMode) {
+          const failure = new Error('cleanup failed')
+          if (failureMode === 'nested') {
+            const cause = new Error('cleanup cause', { cause: failure })
+            failure.cause = cause
+            throw new AggregateError([new AggregateError([failure], 'inner cleanup')], 'outer cleanup', { cause })
+          }
+          throw failure
         }
-        throw failure
-      }
-      return observe('cleanup-result')
-    },
-  })
+        return observe('cleanup-result')
+      },
+    }
+  }
+  const owner = () => {
+    const resource = observe('owner:private-resource')
+    const handler = observe('owner:private-handler', () => {
+      assert.ok(resource)
+    })
+    return { name: 'owner', closeWatcher: { order: 'post', sequential: true, handler } }
+  }
   const plugins = createDeferredVitePlugins([
     extensionSlot,
     { name: 'owner', ownsSession: true, hooks: { closeWatcher: { order: 'post', sequential: true } } },
   ], () => [
     ...(nested ? createDeferredVitePlugins([extensionSlot], () => [extension()]) : [extension()]),
-    { name: 'owner', closeWatcher: { order: 'post', sequential: true, handler() {} } },
+    owner(),
   ])
-  const resolved = { command: 'build', build: { watch: {} } }
+  const resolved = Object.assign(observe('resolved-config'), { command: 'build', build: { watch: {} } })
   for (const plugin of plugins) {
     await call(plugin, 'configResolved', observe(`${plugin.name}:configResolved`), resolved)
   }
@@ -108,7 +123,7 @@ async function main() {
     for (const failureMode of [false, 'plain', 'nested']) {
       const instance = await exercise(failureMode, nested)
       await collect()
-      assert.deepEqual(instance.references.filter(reference => reference.value.deref() !== undefined).map(reference => reference.label), [], `永久关闭不能保留插件 this、在途转换结果或扩展清理结果：nested=${nested}, failure=${failureMode}`)
+      assert.deepEqual(instance.references.filter(reference => reference.value.deref() !== undefined).map(reference => reference.label), [], `永久关闭不能保留真实委托私有资源、配置、插件 this 或任务结果：nested=${nested}, failure=${failureMode}`)
       assert.throws(() => call(instance.plugins[0], 'transform', {}, '', 'source.js'), /不再接收/)
       assert.equal(call(instance.plugins[1], 'closeWatcher', {}), instance.closed)
     }

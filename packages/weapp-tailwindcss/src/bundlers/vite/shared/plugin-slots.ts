@@ -123,7 +123,7 @@ export function bindVitePluginSlots(slots: readonly VitePluginSlot[], plugins: r
 }
 
 interface PluginSlotState {
-  config: ResolvedConfig
+  config: ResolvedConfig | undefined
   bindings: Map<string, Plugin>
   invocation: ReturnType<typeof createPluginInvocationSession>
   shutdown: ReturnType<typeof createPluginShutdown>
@@ -188,11 +188,15 @@ export function createDeferredVitePlugins(
       let state = states.get(selectedConfig)
       if (!state && config) {
         const invocation = createPluginInvocationSession()
-        state = { config, bindings: new Map(), invocation, shutdown: createPluginShutdown(slots, [], invocation, config, ownership) }
+        const release = () => {
+          state!.bindings.clear()
+          state!.config = undefined
+        }
+        state = { config, bindings: new Map(), invocation, shutdown: createPluginShutdown(slots, [], invocation, config, ownership, release) }
         states.set(config, state)
         try {
           const delegates = create(config, context)
-          state.shutdown = createPluginShutdown(slots, delegates, invocation, config, ownership)
+          state.shutdown = createPluginShutdown(slots, delegates, invocation, config, ownership, release)
           state.bindings = bindVitePluginSlots(slots, delegates)
         }
         catch (error) {
@@ -229,8 +233,24 @@ export function createDeferredVitePlugins(
         if (state?.initializationFailure) {
           return state.initializationFailure
         }
+        if (state && !state.config) {
+          // 永久终态不保留委托；仍按原所有权返回关闭结果或拒绝新任务。
+          if (hookName === 'closeBundle' || hookName === 'closeWatcher' || hookName === 'buildEnd') {
+            return slot.ownsSession ? state.invocation.getCloseResult() : state.invocation.drain()
+          }
+          try {
+            return state.invocation.run(() => undefined)
+          }
+          catch (error) {
+            if (hookName === 'configResolved') {
+              return Promise.reject(error)
+            }
+            throw error
+          }
+        }
         const delegate = state?.bindings.get(slot.name)
-        if (!delegate || !state) {
+        const resolvedConfig = state?.config
+        if (!delegate || !state || !resolvedConfig) {
           return
         }
         if (state.shutdown.coordinated) {
@@ -240,8 +260,8 @@ export function createDeferredVitePlugins(
         try {
           if (slot.runtimeApply && delegate.apply) {
             const enabled = typeof delegate.apply === 'function'
-              ? Reflect.apply(delegate.apply, delegate, [state.config, { command: state.config.command, mode: state.config.mode }])
-              : delegate.apply === state.config.command
+              ? Reflect.apply(delegate.apply, delegate, [resolvedConfig, { command: resolvedConfig.command, mode: resolvedConfig.mode }])
+              : delegate.apply === resolvedConfig.command
             state.shutdown.setEnabled(delegate, Boolean(enabled))
             if (!enabled) {
               return
@@ -252,7 +272,7 @@ export function createDeferredVitePlugins(
             return
           }
           const invoke = () => Reflect.apply(run, this, args)
-          const closesSession = state.shutdown.coordinated && isPermanentViteHook(state.config, hookName, args[0])
+          const closesSession = state.shutdown.coordinated && isPermanentViteHook(resolvedConfig, hookName, args[0])
           if (closesSession) {
             if (slot.ownsSession) {
               return state.shutdown.finish(invoke, hookName === 'closeWatcher' ? 'closeWatcher' : 'closeBundle')
@@ -289,7 +309,7 @@ export function createDeferredVitePlugins(
   if (owner) {
     plugins.push(createPluginShutdownBarrier(owner.name, (context, hook, error) => {
       const state = resolveState(context)
-      if (state && isPermanentViteHook(state.config, hook, error)) {
+      if (state && (!state.config || isPermanentViteHook(state.config, hook, error))) {
         return state.invocation.drain()
       }
     }))

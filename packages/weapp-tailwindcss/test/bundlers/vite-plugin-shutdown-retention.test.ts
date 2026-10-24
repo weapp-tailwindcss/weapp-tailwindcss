@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { describe, it } from 'vitest'
 
 describe('关闭插件的宿主引用释放', () => {
-  it('成功和失败关闭均释放上下文与任务结果，并保持插件可观察的幂等终态', async ({ signal }) => {
+  it('成功和失败关闭均释放真实委托、私有资源、配置与任务结果，保留幂等终态', async ({ signal }) => {
     try {
       await promisify(execFile)(process.execPath, [
         '--expose-gc',

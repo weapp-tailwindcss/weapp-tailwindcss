@@ -12,6 +12,7 @@ export function createPluginInvocationSession() {
   }
   return {
     drain,
+    getCloseResult: () => disposal,
     isAccepting: () => phase === 'active',
     run(invoke: () => unknown) {
       if (phase !== 'active') {

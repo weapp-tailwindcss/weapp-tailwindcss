@@ -20,7 +20,12 @@ describe('静态插件契约与逐配置实例', () => {
     const factory = vi.fn((): Plugin[] => [{
       name: 'fixture',
       buildStart() { calls.push(this) },
-      transform: { order: 'pre', handler(code) { if (code === 'fail') throw new Error('fixture failure'); return { code, map } } },
+      transform: { order: 'pre', handler(code) {
+        if (code === 'fail') {
+          throw new Error('fixture failure')
+        }
+        return { code, map }
+      } },
     }])
     const slots = [{ name: 'fixture', hooks: { buildStart: true, transform: { order: 'pre' } } }] satisfies VitePluginSlot[]
     const [plugin] = createDeferredVitePlugins(slots, factory)
@@ -85,7 +90,9 @@ describe('静态插件契约与逐配置实例', () => {
 
   it('关闭先排空任务，拒绝新任务并返回同一个关闭结果', async () => {
     let finish!: () => void
-    const pending = new Promise<void>((resolve) => { finish = resolve })
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve
+    })
     const dispose = vi.fn(async () => {})
     const slots = [{ name: 'fixture', ownsSession: true, hooks: { transform: true, closeWatcher: true } }] satisfies VitePluginSlot[]
     const [plugin] = createDeferredVitePlugins(slots, () => [{ name: 'fixture', transform: () => pending, closeWatcher: dispose }])
@@ -99,6 +106,48 @@ describe('静态插件契约与逐配置实例', () => {
     await task
     await firstClose
     expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('永久终态释放委托 API，同一配置不能重建，新配置仍创建独立实例', async () => {
+    let created = 0
+    const disposed: number[] = []
+    const [plugin] = createDeferredVitePlugins([
+      { name: 'fixture', ownsSession: true, hooks: { buildStart: true, transform: true, closeWatcher: true } },
+    ], () => {
+      const instance = ++created
+      let rounds = 0
+      return [{
+        name: 'fixture',
+        api: { instance },
+        buildStart() { rounds++ },
+        transform(code) { return `${instance}:${rounds}:${code}` },
+        closeWatcher() { disposed.push(instance) },
+      }]
+    })
+    const first = config(true)
+    const firstContext = { environment: { config: first } }
+    await call(plugin!, 'configResolved', firstContext, first)
+    await call(plugin!, 'buildStart', firstContext)
+    await call(plugin!, 'buildStart', firstContext)
+    expect(call(plugin!, 'transform', firstContext, 'first', 'input.css')).toBe('1:2:first')
+    const firstClosed = call(plugin!, 'closeWatcher', firstContext)
+    await firstClosed
+    expect(plugin!.api).toBeUndefined()
+    expect(call(plugin!, 'closeWatcher', firstContext)).toBe(firstClosed)
+    await expect(call(plugin!, 'configResolved', firstContext, first)).rejects.toThrow('不再接收')
+    expect(created).toBe(1)
+
+    const second = config(true)
+    const secondContext = { environment: { config: second } }
+    await call(plugin!, 'configResolved', secondContext, second)
+    await call(plugin!, 'buildStart', secondContext)
+    expect(plugin!.api).toEqual({ instance: 2 })
+    expect(() => call(plugin!, 'transform', firstContext, 'closed', 'input.css')).toThrow('不再接收')
+    expect(call(plugin!, 'closeWatcher', firstContext)).toBe(firstClosed)
+    expect(call(plugin!, 'transform', secondContext, 'second', 'input.css')).toBe('2:1:second')
+    await call(plugin!, 'closeWatcher', secondContext)
+    expect(created).toBe(2)
+    expect(disposed).toEqual([1, 2])
   })
 })
 
@@ -132,7 +181,10 @@ describe('关闭协调者', () => {
     const events: string[] = []
     await expect(disposeViteResources([
       () => { events.push('queue') },
-      () => { events.push('extension'); throw failure },
+      () => {
+        events.push('extension')
+        throw failure
+      },
       () => { events.push('graph') },
       async () => { events.push('core') },
     ])).rejects.toMatchObject({ errors: [failure] })
