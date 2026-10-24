@@ -55,6 +55,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-source-discovery-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-deletion-order.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-profile-reentry.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-preparation.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-source-watch-delete-create-overlap.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-eligibility-serialization.test.ts
   - packages/weapp-tailwindcss/test/cache-transaction.test.ts
@@ -395,6 +396,14 @@ static 阶段已执行生成模式、Taro H5、Issue 1241 watch 与动态类四�
 上述修订最终在主树整合的二十二文件 / 418 项通过、零跳过；主包 ESM/CJS/DTS、标准源码类型检查、全部本轮修改源码及测试的 ESLint `--no-ignore`（关闭 Prettier 规则）与架构检查通过。普通 scoped ESLint 的测试忽略提示保留，严格检查另外执行，不以被忽略文件代作通过。最终日志位于 `.tmp/framework-isolation/reports/source-lifecycle-final-*.log` 和 `source-lifecycle-vite-domain-final.log`。
 
 作者 CSS 修复域十九文件 / 166 项、候选归属域五文件 / 84 项分别通过；主树整合后，包含实际 bundle、扫描、删除与重建并发的新定向域二十文件 / 392 项通过、零跳过。主包 ESM/CJS/DTS 构建、标准 `tsconfig.typecheck.json`、修改文件 ESLint（禁用 Prettier 规则）及 architecture:check 通过。第一次误用含全仓测试引用的 `tsconfig.json` 所得错误保留在原日志，不作为标准源码类型门禁结果。这里没有修改 demo 或静态基线，实际项目的 static 和设备结果仍由下一轮完整验收核对。
+
+### 独立实例的不可变扫描准备与异步交接
+
+`ce91720685bf369b6dabe308923cc2a5cbe8898d` 的 PR Gate 暴露原 bundle 回归要求的跨实例扫描复用被取消。恢复该能力只共享有界、复制并冻结的作者扫描文件、来源全文和候选数组，不共享 context、转换层、CSS/module 状态或 revision。新实例重新发现完整文件集合并逐份核对全文，提取选项和回调身份参与 key，再复制至自身 scan 层；不依赖 size/mtime 排除未观察到的新增、删除或等长修改。
+
+第一次修订仍有验证函数返回与调用方恢复之间的 await 交接窗口。确定性回归在验证完成后注入来源更新和配置失效，旧准备结果分别覆盖最新候选或恢复旧范围，得到两项失败。最终在恢复前同步检查本会话失效代次、永久关闭状态及共享准备结果身份；检查与提交之间没有 await，配置变化重新解析，旧准备结果不得复活。新增另一实例更新分支单独验证共享身份失效，关闭分支保证空状态和监听集合不被恢复。
+
+主树整合 `e944bce0f` 后，实际 Node 22.23.3、`CI=1` 的来源候选、扫描、bundle、Webpack 回执与源码行数定向域二十三文件 / 413 项通过，零跳过。后续真实 `tsconfig.typecheck.json` 发现两个提取接口类型错误，修订为只读字符串来源输入并移除必需方法的存在判断后通过；含 `noCheck` 的声明构建不能作为类型验证。主包 ESM/CJS/DTS 和 loader 构建另行通过。公开入口、HBuilderX、loader、preparation、bundle 与源码行数八文件 / 261 项通过，零跳过，与前组有交叠，不累加总数；最终二十一个修改源码和测试文件的 ESLint `--no-ignore`、规则与 diff 检查通过。独立审查核对冻结数据、实例状态和同步提交边界，没有重复重型构建；当前 head 全面验收仍待新预检与完整流程。
 
 ## 适用边界
 

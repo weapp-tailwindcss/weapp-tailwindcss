@@ -28,6 +28,12 @@ regressions:
   - benchmark/version-compare/test/vite-instrumentation.test.mjs
   - benchmark/version-compare/test/vite-operation-evidence.test.mjs
 verification:
+  - claim: ce917 的正式 Synthetic、五个框架分片及聚合性能门禁通过，不能解释历史首败
+    kind: ci
+    status: passed
+    sha: ce91720685bf369b6dabe308923cc2a5cbe8898d
+    environment: Ubuntu，正式 Benchmark，原工作负载、采样、预算与确认规则
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083216980
   - claim: ce917 的 Taro 实际输入全文及逐请求产物已独立复核，存在额外请求且没有 watch 关闭尾部证据，不能解释历史 RSS 首败
     kind: ci
     status: passed
@@ -347,6 +353,8 @@ Uni/Taro 现在与 Mpx 共用生成器、原生生成会话、engine compile/bui
 current 三次冷构建各四个服务和四个租约均有实际 release、service.dispose 及关联 generator/native/engine 关闭成功记录。两侧每次冷构建均另有一个来源发现 generator 未观测关闭；current watch 最后四个租约未观测 release。两侧 watch-stop 最后快照后均无关闭尾部事件，`complete=true` 只证明采样停止握手，不能证明永久关闭完成，也不足以断言对象泄漏。逻辑 dispose 更不能证明 V8 或原生内存归还。
 
 该次运行没有 allocation 或保留链证据，不解释历史 RSS 差额。独立审计保存原始 ZIP、官方摘要、逐请求关联、额外调用和生命周期尾部，未重复 dispatch 或 rerun；输入诊断成功与正式性能预算、最新 head CI、完整设备验收分别核对。历史首败及本记录的 `partial` 状态保持。
+
+同 head 自动触发的[正式 Benchmark `40083216980`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083216980) 中，Synthetic、Mpx、Taro Vite、Taro Webpack、Uni Vite、weapp-vite 五个框架分片及 Performance guard 聚合均成功。此结果来自正式性能检查，不能与 inputs-only 诊断混用；它证明该准确 head 在原门禁下通过，不解释历史 Synthetic/RSS 首败，也不替代后续新增缓存修正 head 的独立 CI。
 
 ## 适用边界
 
