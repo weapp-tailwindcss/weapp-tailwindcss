@@ -22,6 +22,9 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-input-ownership.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-task.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-transform-decision-plan.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-context-lifetime.test.ts
   - packages/weapp-tailwindcss/type-tests/framework-css-context.test.ts
@@ -325,6 +328,14 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 [Expo iOS job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40043575778/job/120720156860) 在第三阶段 CSS HMR、`layout-overflow/default` 第一帧截图时超过原 10000ms 预算；真实 `xcrun simctl screenshot` 命令在约 10440ms 后以 SIGTERM 结束，没有强制终止，也没有生成该帧 PNG 或进入解码和像素判断。前两阶段各 44 条回执完整，全部 89 条已提交回执的 178 帧重新核验 SHA-256 与长度一致，不能补齐缺失的失败回执。
 
 失败约 86 秒后的独立诊断截图显示对应页面和 CSS HMR 颜色，只能证明诊断时状态，不能替代截止时间内的通过。现有证据没有发现截图并发、重复 stop 或未排空任务，也缺少足以确定 CoreSimulator 宿主调度根因的数据。因此保留首败，不增加重试或放宽预算，随必要修复的新 head 正常重验。工件 `12541271522` 的 SHA-256 为 `787017c3b55962974ab18e0200dc6171277b2985f05ecdde1df8e3d9ab9267a2`；详细首败分析和回执摘要保存在本任务 CI 证据目录。Uni 正式性能失败及诊断限制另见[框架内存证据](framework-memory-evidence.md)。
+
+### watch 中作者来源与本轮产物的所有权
+
+真实 injector 对照发现，普通作者 CSS 被后处理缓存登记为生成来源后，watch 来源刷新会让共享组合流程用作者源码覆盖本轮 bundle，丢失 injector 加入的 `@import`。来源关联和 processed 身份只证明资产关系，不能授予恢复作者输入的权限。修复将生成输入与实际生成器返回的输出导入壳显式登记；普通 CSS 消费当前 bundle，作者来源刷新撤销旧导入壳权限。
+
+删除全部 `@apply` 时还必须清理已编译的旧生成 CSS。本轮 Vite marker 与来源身份共同证明旧载荷，在 collector 剥离 marker 前用调用内 WeakMap 记录，不能借用上一轮状态；来源不匹配时不恢复。新增 compiled 变体先暴露旧决策仍保留生成结果，再收紧复用资格，未将夹具退回尚含指令的源码或放宽输出断言。
+
+作者提交 `00e3ef666033801e3e221290bb8191f5faddb396`、主树整合 `0e2102d91` 的十九文件 / 518 项定向回归通过，0 跳过；原实现红灯为十一失败 / 十一通过，另保留 compiled 回滚红绿证据。覆盖 POSIX、Windows 反斜杠、盘符、根目录与相对路径、来源匹配/不匹配和导入壳权限撤销。使用 `CI=1`、`pnpm --filter weapp-tailwindcss exec vitest run <定向文件> --update=none --maxWorkers=1`；完整文件列表和 JSON 保存于本任务忽略工件。严格源码 tsc、修改源码与新增测试 ESLint、architecture:check、diff 检查通过。主树另执行 `pnpm --filter weapp-tailwindcss build` 与 `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`，均通过。两个真实 watcher 对照、static、设备和正式性能仍分别验收，不能以这些定向用例替代。
 
 ## 适用边界
 
