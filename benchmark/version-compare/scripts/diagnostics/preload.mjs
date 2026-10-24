@@ -3,9 +3,9 @@ import path from 'node:path'
 import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { persistCompilationEvidence } from './capture.mjs'
 import { diagnosticSymbol, limits } from './constants.mjs'
-import { candidateEvidence, compilationCandidates, createEvidenceWriter, sha256 } from './evidence.mjs'
-import { annotateAllocationFrames } from './frames.mjs'
+import { createEvidenceWriter, sha256 } from './evidence.mjs'
 
 async function start() {
   const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
@@ -35,6 +35,7 @@ async function start() {
   let recordingError
   let queue = Promise.resolve()
   let lastCommand = 0
+  const frameReceipts = []
   const startedAt = performance.now()
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
@@ -64,6 +65,7 @@ async function start() {
       recordingError,
       compilationCount: compilationId,
       storeCount: storeId,
+      frameReceipts,
       elapsedMs: performance.now() - startedAt,
       ...writer.accounting(),
     }))
@@ -90,33 +92,10 @@ async function start() {
     try {
       // 先取 profile，再序列化来源；观测自身分配会进入下一份累计 profile，按诊断栈单独标识。
       const sampling = await sampler?.capture(stop)
-      const allocationFrames = sampling ? annotateAllocationFrames(sampling.profile, identity) : undefined
-      const profileFile = sampling ? `allocation-${index}.json` : undefined
-      const profileReceipt = sampling ? writer.write(profileFile, { identity, phase, index, sampling, allocationFrames }) : undefined
-      const sources = []
-      for (const [id, reference] of stores) {
-        const store = reference.deref()
-        if (store) {
-          sources.push({ storeId: id, ...candidateEvidence(store, identity.root) })
-        }
-        else {
-          stores.delete(id)
-        }
+      const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started })
+      if (frames) {
+        frameReceipts.push(frames)
       }
-      if (sources.length === 0) {
-        throw new Error('没有活动候选 store，拒绝空证据')
-      }
-      writer.write(`inputs-${index}.json`, {
-        identity,
-        phase,
-        index,
-        sources,
-        compilationCandidates: collections ? compilationCandidates(collections) : undefined,
-        profileFile,
-        profileReceipt,
-        observationDurationMs: performance.now() - started,
-        samplingIncludesPreviousObservationAllocations: Boolean(sampling) && index > 1,
-      })
       complete = stop
       writeStatus()
     }

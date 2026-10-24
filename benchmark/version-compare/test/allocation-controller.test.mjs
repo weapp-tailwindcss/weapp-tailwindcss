@@ -85,6 +85,11 @@ if (allocation.length !== 20000) throw new Error('fixture');
         const profile = JSON.parse(await fs.readFile(path.join(directory, 'allocation-1.json'), 'utf8'))
         expect(profile.sampling.parameters).toMatchObject({ includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true })
         expect(profile.sampling.profile.samples.length).toBeGreaterThan(0)
+        const frames = JSON.parse(await fs.readFile(path.join(directory, inputs.framesFile), 'utf8'))
+        expect(frames.allocationFrames.length).toBeGreaterThan(0)
+        expect(frames.profileReceipt).toEqual(inputs.profileReceipt)
+        await fs.writeFile(path.join(directory, inputs.framesFile), '{}')
+        await expect(diagnostics.finish()).rejects.toThrow('栈映射缺失或哈希不匹配')
       }
       controllers.push(controller)
     }

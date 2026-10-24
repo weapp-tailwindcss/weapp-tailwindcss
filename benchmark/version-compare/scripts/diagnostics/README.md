@@ -27,7 +27,8 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 - `allocation-preparation/*/instrumentation.json`：副本原文和插桩后的 SHA，以及唯一 AST 锚点。源码工作树和含 `.git` 的目录不能插桩。
 - `gc-diagnostics/*/*/allocation-controller.json`：准确执行命令、限定范围的构建环境、源码初始/修改/回滚实际 SHA、预期 SHA、marker 和阶段时间。marker 归一化 SHA 仅供辅助比较，实际 SHA 始终保留。
 - `inputs-N.json`：各来源层的完整候选和源码 SHA、UTF-8 字节数、UTF-16 长度、完整编译候选集合。每次冷构建 1 份；watch 包含首次构建、3 次修改、3 次回滚和结束共 8 份。最后一份来自停止采样，未发生新编译，因此不虚构编译候选集合。
-- `allocation-N.json`：从启动以来累计的统计分配 profile、采样参数、阶段及栈映射。该数值不是存活堆或 RSS，不能直接和进程树 RSS 相减。源码映射缺失时保留生成模块身份并标记不可跨构建比较。
+- `allocation-N.json`：从启动以来累计的完整原始统计分配 profile、采样参数和阶段。该数值不是存活堆或 RSS，不能直接和进程树 RSS 相减。源码映射缺失时保留生成模块身份并标记不可跨构建比较。
+- `allocation-frames-N.json`：原始 profile 对应的全部栈帧与映射；只读取准备副本内仓库模块的源码和 sourcemap。第三方 `node_modules`、副本外模块及越界符号链接保留原始函数名、模块身份和行列，明确标记未映射、不能跨构建比较。原始 profile 与 `inputs-N.json` 在映射前写入；映射失败保留这些首败证据，但状态仍失败，不产生完整验收结果。控制器同时核对原始 profile 和映射文件的哈希。
 - `diagnostic-input-comparison.json`：两侧对应阶段逐项比较候选和来源哈希，额外候选列出所属来源层及 SHA。仅来源 key 的已知项目根会归一化；源码中的根目录文字、marker 等内容差异保留。若实际输入不同，本轮分配差异不能解释原正式失败。
 - `allocation-diagnostic.json`：明确标记 `diagnosticOnly=true`、`budgetAcceptance=false`。这两个模式在正式预算和反序确认前返回，不产生正式通过报告。
 
@@ -35,6 +36,6 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 
 ## 固定范围
 
-采样间隔固定 256 KiB，每会话最多 8 个阶段、32 个 store、每 store 4096 个来源条目、每集合 100000 个候选；每文件最多 16 MiB、每会话输出最多 64 MiB。栈映射最多读取 128 个模块、累计 32 MiB。超限、未知锚点、worker 缺失或阶段不匹配使诊断失败，不截断后继续。
+采样间隔固定 256 KiB，每会话最多 8 个阶段、32 个 store、每 store 4096 个来源条目、每集合 100000 个候选；每文件最多 16 MiB、每会话输出最多 64 MiB。栈映射最多读取 128 个准备副本内仓库模块、累计 32 MiB；原始采样仍覆盖完整 worker 生命周期和第三方调用栈，不因映射范围收紧而删减样本。超限、未知锚点、worker 缺失或阶段不匹配使诊断失败，不截断后继续。
 
 这些限制约束诊断输入/输出和阶段数，不能硬性限制 V8 inspector 内部的采样内存。watch 停止握手最多等待 10 秒；失败仍由原 runner 结束自己创建的子进程并恢复已修改来源。没有强制 GC、额外业务重建或产品源码埋点。

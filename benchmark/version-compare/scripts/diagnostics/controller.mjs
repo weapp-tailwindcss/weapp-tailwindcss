@@ -8,7 +8,7 @@ import { appendNodeImport } from '../gc-paths.mjs'
 import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
 
-const modules = ['constants.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'preload.mjs']
+const modules = ['constants.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs']
 const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$)/
 
 export async function createCaseDiagnostics(options) {
@@ -128,6 +128,13 @@ export async function createCaseDiagnostics(options) {
             const profile = await fs.readFile(path.join(directory, inputs.profileFile))
             if (sha256(profile) !== inputs.profileReceipt.sha256) {
               throw new Error(`分配 profile 哈希不匹配：${index + 1}`)
+            }
+            const frames = await fs.readFile(path.join(directory, inputs.framesFile))
+            const receipt = status.frameReceipts?.[index]
+            const mapping = JSON.parse(frames)
+            if (receipt?.file !== inputs.framesFile || receipt.receipt.sha256 !== sha256(frames)
+              || mapping.profileFile !== inputs.profileFile || mapping.profileReceipt.sha256 !== inputs.profileReceipt.sha256) {
+              throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
             }
           }
         }
