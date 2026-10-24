@@ -50,6 +50,8 @@ function createNativeGulpSession(options: UserDefinedOptions) {
   } as UserDefinedOptions)
 
   const { cache } = opts
+  // 兼容传入缓存实例；只有新创建的缓存允许由本编译实例整体修剪和清空。
+  const ownsCache = cache !== (options.cache as unknown)
   const initialTailwindRuntime = opts.tailwindRuntime
   const refreshTailwindcssRuntime = opts.refreshTailwindcssRuntime
 
@@ -405,6 +407,7 @@ function createNativeGulpSession(options: UserDefinedOptions) {
 
   const { release: releaseTransforms, ...transforms } = createGulpFileTransforms({
     cache,
+    ownsCache,
     createRuntimeSetHash,
     debug,
     generatedCssPreflightModeByFile,
@@ -437,8 +440,12 @@ function createNativeGulpSession(options: UserDefinedOptions) {
         const errors: unknown[] = []
         const cleanups = [
           () => bundleRuntimeClassSetManager.reset(),
-          () => cache.instance.clear(),
-          () => cache.hashMap.clear(),
+          ...(ownsCache
+            ? [
+                () => cache.instance.clear(),
+                () => cache.hashMap.clear(),
+              ]
+            : []),
           releaseTransforms,
           () => {
             runtimeSourcesByFile.clear()

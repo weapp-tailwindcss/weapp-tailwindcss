@@ -27,6 +27,7 @@ type RuntimeRefreshOptions = boolean | {
 
 export interface GulpFileTransformContext {
   cache: ReturnType<typeof createCompilerContext>['cache']
+  ownsCache: boolean
   createRuntimeSetHash: (
     rawSource: string,
     nextRuntimeSet: Set<string>,
@@ -85,6 +86,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         getSourceCandidateSourceGetter,
         gulpProcessCacheKeys,
         opts,
+        ownsCache,
         refreshGulpV4SourceCandidates,
         refreshRuntimeSet,
         registerAutoCssSource,
@@ -196,7 +198,9 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         },
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
-      pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      if (ownsCache) {
+        pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      }
     }, () => getContext().resolveGulpTransformTimingDetails(`css:${stage}`))
   }
 
@@ -240,7 +244,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
 
   const transformJs = (options: Partial<CreateJsHandlerOptions> = {}) =>
     createOwnedTransform('js', async (file) => {
-      const { cache, debug, getRuntimeSet, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveModuleGraphOptions, runtimeState, opts } = getContext()
+      const { cache, debug, getRuntimeSet, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveModuleGraphOptions, runtimeState, opts, ownsCache } = getContext()
       const { jsHandler } = opts
       if (!file.contents) {
         return
@@ -288,12 +292,14 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         },
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
-      pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      if (ownsCache) {
+        pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      }
     }, () => getContext().resolveGulpTransformTimingDetails('js'))
 
   const transformWxml = (options: Partial<ITemplateHandlerOptions> = {}) =>
     createOwnedTransform('html', async (file) => {
-      const { cache, debug, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveWxmlHandlerOptions, runtimeState, opts } = getContext()
+      const { cache, debug, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveWxmlHandlerOptions, runtimeState, opts, ownsCache } = getContext()
       const { templateHandler } = opts
       if (!file.contents) {
         return
@@ -319,7 +325,9 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         },
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
-      pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      if (ownsCache) {
+        pruneGulpProcessCache(cache, gulpProcessCacheKeys)
+      }
     }, () => getContext().resolveGulpTransformTimingDetails('html'))
 
   return {

@@ -58,9 +58,11 @@ async function close(plugins, fails) {
   return { closed }
 }
 
-async function exercisePublic(fails) {
+async function exercisePublic(fails, sharedCache = false) {
   const { references, observe } = observer()
   const resource = observe('extension-resource', {})
+  const cache = sharedCache ? observe('external-cache', createCache()) : undefined
+  cache?.set('caller-entry', resource)
   const plugin = {
     postcssPlugin: 'observe-gulp-owned-transform',
     Once(root) {
@@ -81,6 +83,7 @@ async function exercisePublic(fails) {
     cssPreflight: false,
     mainCssChunkMatcher: matcher,
     postcssOptions: { plugins: [plugin] },
+    cache,
     __internalGulpRuntimeClassSetManager: { reset },
   })
   const stream = plugins.adaptWxss()
@@ -89,6 +92,9 @@ async function exercisePublic(fails) {
   await render(stream)
   assert.ok(references.some(reference => reference.label === 'real-css-root'))
   const { closed } = await close(plugins, fails)
+  if (cache) {
+    assert.equal(cache.get('caller-entry'), resource, '释放实例不能清除调用者缓存中的内容')
+  }
   return { plugins, stream, downstream, closed, references }
 }
 
@@ -136,7 +142,11 @@ async function exerciseServices(fails) {
 }
 
 async function main() {
-  for (const [label, exercise] of [['public Gulp', exercisePublic], ['transform services', exerciseServices]]) {
+  for (const [label, exercise] of [
+    ['public Gulp', exercisePublic],
+    ['public shared-cache Gulp', fails => exercisePublic(fails, true)],
+    ['transform services', exerciseServices],
+  ]) {
     for (const fails of [false, true]) {
       const instance = await exercise(fails)
       await collect()

@@ -23,24 +23,28 @@ function write(stream: Transform, name: string) {
   })
 }
 
+function createContext() {
+  const runtimeSet = new Set(['p-4'])
+  const runtime = {
+    majorVersion: 3,
+    getClassSet: async () => runtimeSet,
+    getClassSetSync: () => runtimeSet,
+    extract: async () => ({ classSet: runtimeSet }),
+  }
+  return {
+    cache: createCache(),
+    styleHandler: vi.fn(async (css: string) => ({ css })),
+    jsHandler: vi.fn((code: string) => ({ code })),
+    templateHandler: vi.fn(async (html: string) => html),
+    mainCssChunkMatcher: () => false,
+    tailwindRuntime: runtime,
+    refreshTailwindcssRuntime: async () => runtime,
+  }
+}
+
 describe('公开 Gulp 实例关闭协调', () => {
   beforeEach(() => {
-    const runtimeSet = new Set(['p-4'])
-    const runtime = {
-      majorVersion: 3,
-      getClassSet: async () => runtimeSet,
-      getClassSetSync: () => runtimeSet,
-      extract: async () => ({ classSet: runtimeSet }),
-    }
-    context = {
-      cache: createCache(),
-      styleHandler: vi.fn(async (css: string) => ({ css })),
-      jsHandler: vi.fn((code: string) => ({ code })),
-      templateHandler: vi.fn(async (html: string) => html),
-      mainCssChunkMatcher: () => false,
-      tailwindRuntime: runtime,
-      refreshTailwindcssRuntime: async () => runtime,
-    }
+    context = createContext()
   })
 
   it('排空已接受的文件后才清缓存，重复关闭同 Promise，关闭后拒绝旧 stream 和新任务', async () => {
@@ -90,6 +94,53 @@ describe('公开 Gulp 实例关闭协调', () => {
     expect(plugins.dispose()).toBe(closing)
     await expect(write(stream, 'late')).rejects.toThrow('已释放')
     expect(reset).toHaveBeenCalledOnce()
+  })
+
+  it.each([false, true])('显式共享缓存归调用者所有，关闭及失败关闭不清空另一实例缓存：失败=%s', async (fails) => {
+    const shared = context.cache as ReturnType<typeof createCache>
+    shared.set('caller-entry', 'caller-value')
+    shared.setHashValue('caller-hash', { hash: 'caller-hash', changed: false })
+    const first = createPlugins({
+      cache: shared,
+      __internalGulpRuntimeClassSetManager: {
+        reset() {
+          if (fails) {
+            throw new Error('reset failed')
+          }
+        },
+      },
+    } as any)
+    const firstStream = first.transformWxss()
+    await write(firstStream, 'first')
+    context = { ...createContext(), cache: shared }
+    const second = createPlugins({ cache: shared } as any)
+    const secondStream = second.transformWxss()
+    try {
+      await write(secondStream, 'second')
+      const cached = [...shared.instance.entries()]
+      const hashes = [...shared.hashMap.entries()]
+      const closing = first.dispose()
+      if (fails) {
+        await expect(closing).rejects.toThrow('释放失败')
+      }
+      else {
+        await closing
+      }
+      expect(first.dispose()).toBe(closing)
+      expect([...shared.instance.entries()]).toEqual(cached)
+      expect([...shared.hashMap.entries()]).toEqual(hashes)
+      await expect(write(firstStream, 'late')).rejects.toThrow('已释放')
+      await write(secondStream, 'second')
+      expect(context.styleHandler).toHaveBeenCalledOnce()
+      await second.dispose()
+      expect(shared.get('caller-entry')).toBe('caller-value')
+      expect(shared.getHashValue('caller-hash')).toEqual({ hash: 'caller-hash', changed: false })
+    }
+    finally {
+      firstStream.destroy()
+      secondStream.destroy()
+      await Promise.allSettled([first.dispose(), second.dispose()])
+    }
   })
 
   it('公开 generateWxss 到 adaptWxss 的在途管线在关闭前完整提交样式', async () => {

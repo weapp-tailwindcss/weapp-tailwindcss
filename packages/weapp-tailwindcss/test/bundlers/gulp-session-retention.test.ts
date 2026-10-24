@@ -20,6 +20,8 @@ describe('Gulp 关闭后的宿主引用释放', () => {
       expect(stdout.trim().split('\n')).toEqual([
         'PASS public Gulp successful close',
         'PASS public Gulp failed close',
+        'PASS public shared-cache Gulp successful close',
+        'PASS public shared-cache Gulp failed close',
         'PASS transform services successful close',
         'PASS transform services failed close',
       ])
