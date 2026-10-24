@@ -100,6 +100,8 @@ const config = createMonorepoEslintConfig(
 export default config
   .prepend(
     globalIgnores([
+      // ESLint 不承担独立样式校验；关闭格式化器后，上游规则覆写仍会将其交给 JS parser。
+      '**/*.{css,scss,sass,less,pcss,postcss}',
       // 本地验收报告和参考源码不属于仓库维护的代码，避免扫描大型生成文件。
       'e2e/reports/local-full-run/**',
       // 固定上游注册表和样式基线由合同测试校验字节，不交给格式化器改写。

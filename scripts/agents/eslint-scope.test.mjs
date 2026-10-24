@@ -15,6 +15,18 @@ beforeAll(async () => {
   assert.ok(Object.keys(config.rules ?? {}).length > 0, '真实 ESLint 配置必须包含检查规则')
 })
 
+it('真实配置图不得在文件忽略之前注册 Prettier 规则', async () => {
+  const { default: composer } = await import('../../eslint.config.js')
+  for (const config of await composer) {
+    for (const [name, value] of Object.entries(config.rules ?? {})) {
+      if (name === 'format/prettier' || name.endsWith('/prettier')) {
+        const severity = Array.isArray(value) ? value[0] : value
+        assert.ok(severity === 0 || severity === 'off', `${name} 不得被样式文件的忽略规则掩盖`)
+      }
+    }
+  }
+})
+
 it.each([
   ['packages-runtime', 'ui', 'src', 'index.css'],
   ['website', 'src', 'css', 'tailwind.css'],
@@ -32,6 +44,22 @@ it.each([
 })
 
 it.each([
+  ['apps', 'lynx-promo-video', 'src', 'styles.css'],
+  ['packages-runtime', 'theme-transition', 'scss', 'index.scss'],
+  ['packages', 'reset', 'taro', 'sanitize', 'sanitize.css'],
+  ['tools', 'weapp-tailwindcss-scripts', 'src', 'var.css'],
+])('独立样式不进入 JavaScript lint：%j', async (...segments) => {
+  const file = path.join(root, ...segments)
+  assert.equal((await stat(file)).isFile(), true, '必须验证 CI 首败中的真实样式文件')
+  assert.equal(await eslint.isPathIgnored(file), true)
+})
+
+it.each(['css', 'scss', 'sass', 'less', 'pcss', 'postcss'])('关闭格式化器后独立 %s 文件不进入 JavaScript parser', async (extension) => {
+  const file = path.join(root, 'scripts', 'agents', `language-fixture.${extension}`)
+  assert.equal(await eslint.isPathIgnored(file), true)
+})
+
+it.each([
   ['e2e', 'reports', 'local-full-run', 'run-example', 'runner.mjs'],
   ['e2e', 'reports', 'local-full-run', 'run-example', 'coverage', 'prettify.js'],
   ['submodules', 'tailwindcss-mangle', 'packages', 'core', 'src', 'index.ts'],
@@ -43,6 +71,7 @@ it.each([
 })
 
 it.each([
+  ['package.json'],
   ['scripts', 'agents', 'check.mjs'],
   ['e2e', 'react-native', 'reports.ts'],
   ['packages', 'shared', 'src', 'index.ts'],
