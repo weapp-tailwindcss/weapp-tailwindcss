@@ -249,7 +249,7 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 
 Webpack 记录每个实际 compilation 的创建和完成，额外编译及 child 编译均保留；阶段快照只选择根编译，并携带实际 compilation 身份。child 先完成不占用根快照。快照数、编译数和生成调用数分别报告，不互相替代。停止采样不替产品关闭，只被动记录随后实际发生的释放；创建减释放不足以推断泄漏，更不能证明 V8 或原生内存已经归还。缺失、损坏、配对不完整或超过固定事件、身份、文件及总字节上限都会使诊断失败。
 
-新增受控源码执行先暴露了确定性插桩错误：无分号源码后的 `(globalThis...)` 被 ASI 解析为前一调用的继续，执行 `acquire` 报 `this.leases.set(...) is not a function`。显式分隔语句后，真实 service、scan、generator 和 native 源码在 stub 后端下通过。真实 Node worker 用例使用手工构造的 Mpx 对象及操作，验证协议和 child/root 顺序；它们没有运行真实 Mpx CLI。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，24 文件、178 项通过，零跳过；修改文件严格 ESLint、actionlint 与 diff 检查通过。准确最终 head 的真实 Mpx 输入诊断及其工件复核仍待执行，整篇保持 `partial`，不能用这些测试解释此前 RSS 差额。
+新增受控源码执行先暴露了确定性插桩错误：无分号源码后的 `(globalThis...)` 被 ASI 解析为前一调用的继续，执行 `acquire` 报 `this.leases.set(...) is not a function`。显式分隔语句后，真实 service、scan、generator 和 native 源码在 stub 后端下通过。真实 Node worker 用例使用手工构造的 Mpx 对象及操作，验证协议和 child/root 顺序；它们没有运行真实 Mpx CLI。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，24 文件、178 项通过，零跳过；修改文件严格 ESLint、actionlint 与 diff 检查通过。本节仅证明诊断工具契约，真实 Mpx 输入诊断须另按准确 head、run 和工件登记；整篇保持 `partial`，不能用这些测试解释此前 RSS 差额。
 
 ## 适用边界
 
