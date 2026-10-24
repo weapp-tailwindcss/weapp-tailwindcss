@@ -5,6 +5,7 @@ import { LRUCache } from 'lru-cache'
 import { md5Hash } from '@/cache/md5'
 import { extractCandidatesFromSource } from '@/tailwindcss/candidates'
 import { FULL_SOURCE_SCAN_EXTENSION_RE, resolveSourceScanPath } from '@/tailwindcss/source-scan'
+import { stableSerialize } from '@/utils/stable-serialize'
 
 export interface SourceCandidateStore {
   syncSource: (id: string, source: string) => Promise<void>
@@ -105,7 +106,7 @@ export function createSourceCandidateContentCacheKey(
     JSON.stringify(bareArbitraryValues ?? false),
     createCustomAttributesCacheSignature(customAttributesEntities),
     disabledDefaultTemplateHandler === true ? 'default-template:off' : 'default-template:on',
-    extractor ? 'custom' : 'default',
+    extractor ? stableSerialize(extractor) : 'default',
     md5Hash(source),
   ].join('\0')
 }

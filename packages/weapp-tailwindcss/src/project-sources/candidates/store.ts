@@ -17,6 +17,12 @@ interface FileCandidateMemo {
   candidates: Set<string>
 }
 
+type SourceLayer = 'scan' | 'transform' | 'css' | 'module'
+
+interface SourceOwner {
+  active: boolean
+}
+
 function areSetsEqual(left: Set<string> | undefined, right: Set<string>) {
   if (!left || left.size !== right.size) {
     return false
@@ -41,12 +47,42 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   const moduleSourceById = new Map<string, string>()
   const candidateCount = new Map<string, number>()
   const fileCandidateMemo = new Map<string, FileCandidateMemo>()
+  const sourceOwners = new Map<string, Map<SourceLayer, SourceOwner>>()
   const candidateViewMemo = createCandidateViewMemo()
   let inlineIncludedCandidates = new Set<string>()
   let inlineExcludedCandidates = new Set<string>()
   let revision = 0
 
-  async function resolveCandidates(id: string, source: string, extension: string) {
+  async function withSourceOwner<T>(id: string, layer: SourceLayer, action: (owner: SourceOwner) => Promise<T>) {
+    const owners = sourceOwners.get(id) ?? new Map<SourceLayer, SourceOwner>()
+    const previous = owners.get(layer)
+    if (previous) {
+      previous.active = false
+    }
+    const owner: SourceOwner = { active: true }
+    owners.set(layer, owner)
+    sourceOwners.set(id, owners)
+    try {
+      return await action(owner)
+    }
+    finally {
+      if (owners.get(layer) === owner) {
+        owners.delete(layer)
+      }
+      if (sourceOwners.get(id) === owners && owners.size === 0) {
+        sourceOwners.delete(id)
+      }
+    }
+  }
+
+  function revokeSourceOwners(id: string) {
+    for (const owner of sourceOwners.get(id)?.values() ?? []) {
+      owner.active = false
+    }
+    sourceOwners.delete(id)
+  }
+
+  async function resolveCandidates(id: string, source: string, extension: string, owner: SourceOwner) {
     const normalizedId = cleanUrl(id)
     const memoKey = `${normalizedId}\0${extension}`
     const memo = fileCandidateMemo.get(memoKey)
@@ -67,6 +103,9 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
       : await extractCandidates(source, extension, options)
     if (!cachedCandidates) {
       sourceCandidateContentCache.set(contentCacheKey, [...nextCandidates])
+    }
+    if (!owner.active) {
+      return new Set<string>()
     }
     fileCandidateMemo.delete(memoKey)
     fileCandidateMemo.set(memoKey, {
@@ -101,74 +140,88 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     return visible
   }
 
-  async function sync(id: string, source: string) {
-    const normalizedId = cleanUrl(id)
-    if (scanSourceById.get(normalizedId) !== source) {
+  async function syncLayerSource(id: string, source: string, extension: string, owner: SourceOwner, sourceById: Map<string, string>, replaceLayer: (id: string, candidates: Set<string>) => void) {
+    const candidates = await resolveCandidates(id, source, extension, owner)
+    if (!owner.active) {
+      return new Set<string>()
+    }
+    if (sourceById.get(id) !== source) {
       revision++
     }
-    scanSourceById.set(normalizedId, source)
-    const extension = resolveSourceCandidateExtension(normalizedId)
-    replaceScanLayer(normalizedId, await resolveCandidates(normalizedId, source, extension))
+    sourceById.set(id, source)
+    replaceLayer(id, candidates)
+    return candidates
+  }
+
+  async function sync(id: string, source: string) {
+    const normalizedId = cleanUrl(id)
+    await withSourceOwner(normalizedId, 'scan', owner =>
+      syncLayerSource(normalizedId, source, resolveSourceCandidateExtension(normalizedId), owner, scanSourceById, replaceScanLayer))
   }
 
   async function syncCss(id: string, source: string) {
     const normalizedId = cleanUrl(id)
-    if (cssSourceById.get(normalizedId) !== source) {
-      revision++
-    }
-    cssSourceById.set(normalizedId, source)
-    replaceCssLayer(normalizedId, await resolveCandidates(normalizedId, source, 'css'))
+    await withSourceOwner(normalizedId, 'css', owner =>
+      syncLayerSource(normalizedId, source, 'css', owner, cssSourceById, replaceCssLayer))
   }
 
   async function syncModuleSource(id: string, source: string, sourceExtension?: string) {
     const normalizedId = cleanUrl(id)
-    if (moduleSourceById.get(normalizedId) !== source) {
-      revision++
-    }
-    moduleSourceById.set(normalizedId, source)
     const extension = sourceExtension ?? resolveSourceCandidateExtension(normalizedId)
-    const candidates = await resolveCandidates(normalizedId, source, extension)
-    replaceModuleLayer(normalizedId, candidates)
+    const candidates = await withSourceOwner(normalizedId, 'module', owner =>
+      syncLayerSource(normalizedId, source, extension, owner, moduleSourceById, replaceModuleLayer))
     return new Set(candidates)
   }
 
   async function merge(id: string, source: string) {
     const normalizedId = cleanUrl(id)
-    if (transformSourceById.get(normalizedId) !== source) {
-      revision++
-    }
-    transformSourceById.set(normalizedId, source)
-    const extension = resolveSourceCandidateExtension(normalizedId)
-    replaceTransformLayer(normalizedId, await resolveCandidates(normalizedId, source, extension))
+    await withSourceOwner(normalizedId, 'transform', owner =>
+      syncLayerSource(normalizedId, source, resolveSourceCandidateExtension(normalizedId), owner, transformSourceById, replaceTransformLayer))
+  }
+
+  async function syncFileSource(id: string, current: boolean) {
+    const normalizedId = cleanUrl(id)
+    return withSourceOwner(normalizedId, 'scan', async (owner) => {
+      try {
+        const source = await readSourceCandidateFile(normalizedId)
+        if (owner.active) {
+          if (current) {
+            return await syncCurrentSourceWithOwner(normalizedId, source, owner)
+          }
+          await syncLayerSource(normalizedId, source, resolveSourceCandidateExtension(normalizedId), owner, scanSourceById, replaceScanLayer)
+        }
+      }
+      catch (error) {
+        const code = typeof error === 'object' && error !== null && 'code' in error
+          ? (error as { code?: unknown }).code
+          : undefined
+        if (code !== 'ENOENT') {
+          throw error
+        }
+        if (owner.active) {
+          return remove(normalizedId)
+        }
+      }
+      return diffCandidateSets(new Set(), new Set())
+    })
   }
 
   async function syncFile(id: string) {
-    const normalizedId = cleanUrl(id)
-    try {
-      await sync(normalizedId, await readSourceCandidateFile(normalizedId))
-    }
-    catch (error) {
-      const code = typeof error === 'object' && error !== null && 'code' in error
-        ? (error as { code?: unknown }).code
-        : undefined
-      if (code === 'ENOENT') {
-        remove(normalizedId)
-        return
-      }
-      throw error
-    }
+    await syncFileSource(id, false)
   }
 
-  async function syncCurrentSource(id: string, source: string) {
-    const normalizedId = cleanUrl(id)
-    const previousFileCandidates = new Set(candidatesById.get(normalizedId) ?? [])
+  async function syncCurrentSourceWithOwner(normalizedId: string, source: string, owner: SourceOwner) {
     const extension = resolveSourceCandidateExtension(normalizedId)
+    const nextCandidates = await resolveCandidates(normalizedId, source, extension, owner)
+    if (!owner.active) {
+      return diffCandidateSets(new Set(), new Set())
+    }
+    const previousFileCandidates = new Set(candidatesById.get(normalizedId) ?? [])
     const layerStateChanged = scanSourceById.get(normalizedId) !== source
       || (extension !== 'css' && (transformSourceById.has(normalizedId) || cssSourceById.has(normalizedId) || moduleSourceById.has(normalizedId)))
     if (layerStateChanged) {
       revision++
     }
-    const nextCandidates = await resolveCandidates(normalizedId, source, extension)
     const affectedCandidates = new Set([
       ...previousFileCandidates,
       ...nextCandidates,
@@ -192,20 +245,13 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     )
   }
 
-  async function syncCurrentFile(id: string) {
+  async function syncCurrentSource(id: string, source: string) {
     const normalizedId = cleanUrl(id)
-    try {
-      return await syncCurrentSource(normalizedId, await readSourceCandidateFile(normalizedId))
-    }
-    catch (error) {
-      const code = typeof error === 'object' && error !== null && 'code' in error
-        ? (error as { code?: unknown }).code
-        : undefined
-      if (code === 'ENOENT') {
-        return remove(normalizedId)
-      }
-      throw error
-    }
+    return withSourceOwner(normalizedId, 'scan', owner => syncCurrentSourceWithOwner(normalizedId, source, owner))
+  }
+
+  async function syncCurrentFile(id: string) {
+    return syncFileSource(id, true)
   }
 
   async function resolveScanFiles({ entries, explicit, root, outDir }: ScanSourceCandidateRootOptions) {
@@ -310,6 +356,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
 
   function remove(id: string) {
     const normalizedId = cleanUrl(id)
+    revokeSourceOwners(normalizedId)
     const hadState = candidatesById.has(normalizedId)
       || scanCandidatesById.has(normalizedId)
       || transformCandidatesById.has(normalizedId)
@@ -377,6 +424,9 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   }
 
   function clear() {
+    for (const id of sourceOwners.keys()) {
+      revokeSourceOwners(id)
+    }
     if (candidateCount.size > 0 || fileCandidateMemo.size > 0 || inlineIncludedCandidates.size > 0 || inlineExcludedCandidates.size > 0) {
       revision++
     }
