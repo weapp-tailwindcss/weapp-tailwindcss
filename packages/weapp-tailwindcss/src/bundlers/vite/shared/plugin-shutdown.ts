@@ -2,6 +2,7 @@ import type { Plugin, ResolvedConfig } from 'vite'
 import type { VitePluginClosingHook, VitePluginOwnership } from './plugin-cleanup-bridge'
 import type { createPluginInvocationSession } from './plugin-invocation-session'
 import type { VitePluginSlot } from './plugin-slots'
+import { materializeErrorStack } from '../../shared/materialize-error-stack'
 import { claimVitePluginCleanup, getVitePluginCleanup } from './plugin-cleanup-bridge'
 
 type ClosingHook = VitePluginClosingHook
@@ -29,30 +30,6 @@ function consumeOnce(operation: () => unknown) {
     const invoke = pending
     pending = undefined
     return invoke?.()
-  }
-}
-
-function materializeErrorStack(error: unknown, seen = new WeakSet<Error>()) {
-  if (error instanceof Error && !seen.has(error)) {
-    seen.add(error)
-    try {
-      // V8 延迟栈会保留真实 this；在诊断边界物化文本，仍保留原错误身份。
-      void error.stack
-    }
-    catch {
-      // 用户自定义 stack getter 失败不能遮蔽原始清理错误。
-    }
-    try {
-      materializeErrorStack(error.cause, seen)
-      if (error instanceof AggregateError) {
-        for (const nested of error.errors) {
-          materializeErrorStack(nested, seen)
-        }
-      }
-    }
-    catch {
-      // 用户自定义 cause/errors 访问器同样不能改变原始错误结果。
-    }
   }
 }
 
