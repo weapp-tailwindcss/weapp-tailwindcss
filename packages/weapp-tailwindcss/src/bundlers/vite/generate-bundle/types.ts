@@ -70,6 +70,8 @@ export interface GenerateBundleContext {
 export interface RememberedCssSource {
   /** 生成输入与已解析的输出导入壳分别登记，资产处理标记不提供此权限。 */
   kind?: 'generation' | 'output-import-shell' | undefined
+  /** 已经通过样式模块交还 Vite；当前模块在图内时不能另行回放独立产物。 */
+  delivery?: 'vite-module' | undefined
   outputFile: string
   rawSource: string
   sourceFile: string

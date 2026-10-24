@@ -14,6 +14,7 @@ import { canProcessViteSourceStyleAsCss, SOURCE_STYLE_OUTPUT_EXT_RE } from '../c
 import { createRuntimeAffectingSourceSignature } from '../runtime-affecting-signature'
 import { isHTMLRequest } from '../utils'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
+import { selectUnbundledCssReplaySources } from './bundled-css-sources'
 import { createCssRuntimeSignature } from './css-share-scope'
 import { measureElapsed } from './metrics'
 import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createGeneratedReplayCacheProof, createGeneratedReplayCacheSignature, createRememberedCssRuntimeSignature, getGeneratedReplayCache, mergeRememberedCssSources } from './remembered-css'
@@ -193,7 +194,9 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     useIncrementalMode,
   } = options
   const rememberedReplayGroups = collectRememberedCssReplayGroups(
-    getRememberedCssSources?.(),
+    selectUnbundledCssReplaySources(getRememberedCssSources?.(), bundle, (sourceFile) => {
+      activeViteCssCacheFiles.add(normalizeViteCssCacheKey(sourceFile))
+    }),
     opts,
     rootDir,
     isWebGeneratorTarget,

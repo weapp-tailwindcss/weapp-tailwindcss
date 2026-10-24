@@ -107,6 +107,7 @@ describe('uni-app X H5 watch 的 CSS 资产身份', () => {
         expect(output.css.match(/uni-app uni-ad-draw/g), output.css).toHaveLength(1)
         expect(output.css.indexOf('uni-app uni-ad-draw')).toBeGreaterThan(output.css.indexOf('medium'))
         expect(output.references).toContain(output.fileName)
+        expect(output.cssFiles).toEqual([output.fileName])
         if (index > 0) {
           expect(output.fileName).not.toBe(snapshots[index - 1]!.fileName)
           expect(output.cssFiles).not.toContain(snapshots[index - 1]!.fileName)

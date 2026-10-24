@@ -204,7 +204,7 @@ ${previousTracedCss}`
     else if (!hmrCandidateState.hasPendingChange()) {
       hmrCandidateState.clear()
     }
-    cssMemory.rememberCssSource({ outputFile, rawSource: code, sourceFile: requestFile })
+    cssMemory.rememberCssSource({ outputFile, rawSource: code, sourceFile: requestFile, delivery: currentGeneratorBranch.isWeb ? 'vite-module' : undefined })
     debug('css generated for vite postcss pipeline: %s bytes=%d', requestFile, tracedCss.length)
     return `${createBundlerGeneratedCssMarker('vite', normalizeViteProcessedCssFile(file))}
 ${tracedCss}${currentGeneratorBranch.isWeb ? `\n${createBundlerGeneratedCssEndMarker('vite', normalizeViteProcessedCssFile(file))}` : ''}`
