@@ -232,6 +232,9 @@ async function generateTailwindV4CssWithOwner(
     emitArtifact: true,
     frameworkAdapter: 'graph',
   })
+  if (!generationOptions.isConfigurationCurrent()) {
+    return undefined
+  }
   const report = createCompilerShadowReport(
     generationOptions.file,
     legacy?.artifact,
@@ -250,5 +253,8 @@ async function generateTailwindV4CssWithOwner(
 }
 
 export function generateTailwindV4Css(options: TailwindV4GenerationCoreInput) {
-  return runCompilerOwnerActivity(options.runtimeState, () => generateTailwindV4CssWithOwner(options))
+  return runCompilerOwnerActivity(options.runtimeState, async () => {
+    const result = await generateTailwindV4CssWithOwner(options)
+    return options.isConfigurationCurrent() ? result : undefined
+  })
 }
