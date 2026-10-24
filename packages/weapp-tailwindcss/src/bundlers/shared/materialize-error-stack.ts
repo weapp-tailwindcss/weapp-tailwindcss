@@ -12,6 +12,11 @@ export function materializeErrorStack(error: unknown, seen = new WeakSet<Error>(
   }
   try {
     materializeErrorStack(error.cause, seen)
+  }
+  catch {
+    // cause 访问失败不应阻止聚合错误中的其他诊断释放调用帧。
+  }
+  try {
     if (error instanceof AggregateError) {
       for (const nested of error.errors) {
         materializeErrorStack(nested, seen)
@@ -19,6 +24,6 @@ export function materializeErrorStack(error: unknown, seen = new WeakSet<Error>(
     }
   }
   catch {
-    // 用户自定义 cause/errors 访问器同样不能改变原始错误结果。
+    // 用户自定义 errors 访问器同样不能改变原始错误结果。
   }
 }
