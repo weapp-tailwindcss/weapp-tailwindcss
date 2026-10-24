@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createGcDiagnostics } from '../scripts/gc-diagnostics.mjs'
 import { appendNodeImport, sameFilesystemPath } from '../scripts/gc-paths.mjs'
-import { createServiceFixture, mpxProject, versionFor } from './helpers/gc-service.mjs'
+import { createServiceFixture, createUniServiceFixture, mpxProject, uniProject, versionFor } from './helpers/gc-service.mjs'
 
 const roots = []
 async function fixture() {
@@ -21,12 +21,38 @@ afterEach(async () => {
 })
 
 describe('私有 GC 诊断控制器', () => {
-  it('关闭时及非 Mpx 项目不创建目录、不调整子进程环境', async () => {
+  it('关闭时及未登记项目不创建目录、不调整子进程环境', async () => {
     const { root, cwd } = await fixture()
     const directory = path.join(root, 'disabled')
     expect(await createGcDiagnostics({ cwd, versionMeta: versionFor(root), projectMeta: mpxProject, kind: 'build', run: 1 })).toBeUndefined()
     expect(await createGcDiagnostics({ cwd, versionMeta: versionFor(root), projectMeta: { ...mpxProject, key: 'other' }, directory, kind: 'build', run: 1 })).toBeUndefined()
     await expect(fs.access(directory)).rejects.toThrow()
+  })
+
+  it('Uni 两侧都绑定包声明的实际 bin 和同一 preload，缺失或错误身份明确缺证', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-gc-uni-'))
+    roots.push(root)
+    const { cwd, entry } = await createUniServiceFixture(root)
+    const sessions = []
+    for (const role of ['base', 'current']) {
+      const diagnostics = await createGcDiagnostics({ cwd, versionMeta: { ...versionFor(root), diagnosticIdentity: { role } }, projectMeta: uniProject, directory: path.join(root, 'diag'), kind: 'hmr', run: 1, env: { NODE_OPTIONS: '--no-warnings' } })
+      expect(diagnostics.env.WEAPP_TW_BENCH_GC_EXPECTED_ENTRY).toBe(await fs.realpath(entry))
+      const identity = JSON.parse(diagnostics.env.WEAPP_TW_BENCH_GC_SESSION)
+      expect(identity).toMatchObject({ role, project: uniProject.key })
+      await diagnostics.finish()
+      sessions.push(JSON.parse(await fs.readFile(path.join(identity.sessionDirectory, 'controller.json'), 'utf8')))
+    }
+    expect(sessions[0].preloadSha256).toBe(sessions[1].preloadSha256)
+    const manifestPath = path.join(cwd, 'node_modules', '@dcloudio', 'vite-plugin-uni', 'package.json')
+    for (const invalid of [{ name: 'different-package', bin: { uni: 'bin/uni.mjs' } }, { name: '@dcloudio/vite-plugin-uni', bin: { different: 'bin/uni.mjs' } }]) {
+      await fs.writeFile(manifestPath, JSON.stringify(invalid))
+      const diagnostics = await createGcDiagnostics({ cwd, versionMeta: versionFor(root), projectMeta: uniProject, directory: path.join(root, 'invalid'), kind: 'hmr', run: 1 })
+      expect(diagnostics.env).toEqual({})
+      await diagnostics.finish()
+    }
+    const invalidManifests = await Promise.all((await fs.readdir(path.join(root, 'invalid'))).map(async dir => JSON.parse(await fs.readFile(path.join(root, 'invalid', dir, 'controller.json'), 'utf8'))))
+    expect(invalidManifests).toHaveLength(2)
+    expect(invalidManifests.every(item => item.missingPreloadEvidence && item.setupError.includes('身份或 bin 不匹配'))).toBe(true)
   })
 
   it('解析实际 service bin，保留 NODE_OPTIONS 并给每轮唯一目录，缺失 preload 证据明确标记', async () => {

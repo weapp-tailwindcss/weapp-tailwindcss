@@ -28,6 +28,15 @@ on:
         description: npm 发布基线；auto 会按当前包版本推断 next/beta/rc/latest
         required: false
         default: auto
+      baseline_ref:
+        description: 可选 Git 基线完整 40 位 commit SHA；指定后保留原性能预算及反向确认
+        type: string
+        required: false
+        default: ''
+      gc_diagnostics:
+        description: 为 only 指定的 Mpx 或 Uni Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.3
+        type: boolean
+        default: false
       build_runs:
         description: 每个项目的 build 采样次数
         required: false
@@ -127,6 +136,15 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Validate dispatch diagnostic inputs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          BENCH_DISPATCH_BASELINE_REF: ${{ inputs.baseline_ref }}
+          BENCH_DISPATCH_GC_DIAGNOSTICS: ${{ inputs.gc_diagnostics }}
+          BENCH_ONLY: ${{ inputs.only }}
+        run: node benchmark/version-compare/scripts/dispatch-inputs.mjs
 
       - name: Generate benchmark matrix
         id: matrix
@@ -151,13 +169,14 @@ jobs:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
       WEAPP_TW_BENCH_BASELINE: ${{ github.event.inputs.baseline || 'auto' }}
+      WEAPP_TW_BENCH_BASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.baseline_ref || '' }}
       BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
       BENCH_HMR_RUNS: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && '3' || github.event.inputs.hmr_runs || '5' }}
       BENCH_ONLY: ${{ matrix.bench_only }}
       # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
       WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
       # 私有自然 GC 证据与原 RSS 门禁隔离，两侧及已有确认轮次使用相同 preload。
-      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' && '1' || '0' }}
+      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || (github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin')) && '1' || '0' }}
 
     steps:
       - name: Check out code
@@ -171,7 +190,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: ${{ github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && '22.23.3' || '22' }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 

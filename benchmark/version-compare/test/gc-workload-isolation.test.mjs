@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildSummary, evaluatePerformanceGuard } from '../scripts/ci-report.mjs'
 import { summarizeProcessMemory } from '../scripts/process-memory.mjs'
 import { runCase } from '../scripts/run-matrix.mjs'
-import { createServiceFixture, mpxProject, versionFor } from './helpers/gc-service.mjs'
+import { createServiceFixture, createUniServiceFixture, mpxProject, uniProject, versionFor } from './helpers/gc-service.mjs'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), sampler: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({ ...await importOriginal(), spawn: mocks.spawn }))
@@ -20,12 +20,13 @@ afterEach(async () => {
 })
 
 describe('GC 诊断与原 benchmark workload 隔离', () => {
-  it('开关前后逐字段结果、RSS 汇总和 blocking guard 一致，仍为原 3 build / 3 HMR 与 rollback', async () => {
+  it.each([mpxProject, uniProject].flatMap(project => ['base', 'current'].map(role => ({ project, role }))))('$project.key 的 $role 开关前后结果、RSS 与预算一致，仍为原 3 build / 3 HMR 与 rollback', async ({ project, role }) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-gc-isolation-'))
     roots.push(root)
-    const { cwd } = await createServiceFixture(root)
-    const sourcePath = path.join(cwd, mpxProject.sourceFile)
-    const outputPath = path.join(cwd, mpxProject.outputTemplate)
+    const { cwd } = await (project === uniProject ? createUniServiceFixture(root) : createServiceFixture(root))
+    const version = { ...versionFor(root), version: `${role}:fixture`, diagnosticIdentity: { role } }
+    const sourcePath = path.join(cwd, project.sourceFile)
+    const outputPath = path.join(cwd, project.outputTemplate)
     const original = '<template><view class="flex">fixture</view></template>'
     const writeFile = fs.writeFile.bind(fs)
     await writeFile(sourcePath, original, 'utf8')
@@ -58,7 +59,7 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
       mocks.spawn.mockReset().mockImplementation((_command, args) => {
         const index = mocks.spawn.mock.calls.length - 1
         const child = Object.assign(new EventEmitter(), { pid: 1000 + index, exitCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() })
-        if (args[1] === mpxProject.devScript) {
+        if (args[1] === project.devScript) {
           watchChild = child
           queueMicrotask(() => child.stdout.emit('data', Buffer.from('fixture-ready\n')))
         }
@@ -76,12 +77,12 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
     }
 
     prepareRun()
-    const disabled = await runCase(versionFor(root), mpxProject, options)
+    const disabled = await runCase(version, project, options)
     const disabledSpawns = structuredClone(mocks.spawn.mock.calls.map(([, args, config]) => ({ args, env: config.env })))
     expect(sourceWrites).toBe(6)
     prepareRun()
     const directory = path.join(root, 'diagnostics')
-    const enabled = await runCase(versionFor(root), mpxProject, { ...options, gcDiagnosticDir: directory })
+    const enabled = await runCase(version, project, { ...options, gcDiagnosticDir: directory })
     expect(enabled).toEqual(disabled)
     expect(sourceWrites).toBe(6)
     expect(mutationCount).toBe(3)
@@ -92,7 +93,7 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
       const activeEnv = { ...mocks.spawn.mock.calls[index][2].env }
       expect(activeEnv.NODE_OPTIONS).toContain('--import=file:')
       const identity = JSON.parse(activeEnv.WEAPP_TW_BENCH_GC_SESSION)
-      expect(identity).toMatchObject({ kind: index < 3 ? 'build' : 'hmr', run: index < 3 ? index + 1 : 1, role: 'current' })
+      expect(identity).toMatchObject({ kind: index < 3 ? 'build' : 'hmr', run: index < 3 ? index + 1 : 1, role, project: project.key })
       for (const key of ['NODE_OPTIONS', 'WEAPP_TW_BENCH_GC_EXPECTED_ENTRY', 'WEAPP_TW_BENCH_GC_SESSION']) {
         if (key in disabledSpawns[index].env) {
           activeEnv[key] = disabledSpawns[index].env[key]
