@@ -207,6 +207,12 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 
 此模式在 Vite 完成边界采集候选与来源快照，没有记录生成后的 `rawCss`、完整 CSS/JS 产物、逐生成请求的配置和调用次数、原生 runtime 创建数或分配路径，不能把快照数当作生成请求数，也不能声称 `rawCss` 已逐字节对照。`diagnostic-input-comparison.json` 的十一组均为 `sameActualCandidatesAndSourceHashes: false`，总判定 `canExplainFormalRegression: false` 与独立复核一致。本次补齐了实际候选及修改内容对照，仍未建立 Linux RSS 差额的因果证据；不以诊断绿灯替代正式预算、旧失败解释或完整设备验收。
 
+### 实例内服务复用后的 Mpx 正式首败
+
+[run `40066210730`、job `120790757674`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40066210730/job/120790757674) 对准确提交 `ab1aa7d59e6fa22e1208e15453f2217bed3cfb40` 与基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 执行原正式预算，包含三次冷构建和三轮 HMR。Mpx 的插件 HMR 中位耗时为 `233 → 248ms`，增加 `15ms / 6.44%`，两项回归样本、显著性判定 `p=0.05`；HMR peak RSS 为 `1866.71 → 2133.25MiB`，增加 `14.28%`，steady RSS 为 `1827.89 → 2077.75MiB`，增加 `13.67%`。`summary.json` 的 `blocking=true`、`passed=false`，三项均为实际预算违规，不是构建错误或缺少采样。
+
+该轮同时包含耗时与 RSS 违规；既有 `requiresHmrMemoryConfirmation` 只对全部违规均为 RSS 的情形进行反向顺序确认，所以本轮没有 `memory-confirmation-*` 工件，也没有等待后续 job 自动确认。不能将三项失败写成“待反序后通过”，更不能把测试断言修正或另一提交的自然绿灯认定为性能根因修复。自然 GC 工件仅用于后续定位；实例内服务复用的创建次数与确定性产物证据仍不足以解释此 Linux RSS 差额。原预算和首败保留，未为此触发正式 benchmark 重跑。
+
 ## 适用边界
 
 本记录仅约束上述未解决的性能失败。配置版本与 CSS 来源并发问题已有独立[修复与回归](webpack-request-configuration.md)，没有证据证明该修复解释 RSS 增幅。完整验收、环境中断和其他框架证据见[框架隔离记录](framework-isolation.md)。
