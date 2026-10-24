@@ -31,7 +31,7 @@ async function buildRound(plugins: Plugin[]) {
   return Object.fromEntries(Object.entries(bundle).filter(([, value]) => value.type === 'asset').map(([name, value]) => [name, (value as OutputAsset).source]))
 }
 
-describe('内置与独立 injector 连续构建一致性', () => {
+describe('内置与独立 injector 手动钩子与文件系统回归', () => {
   it('每轮刷新来源，更新和删除不沿用前一轮样式', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'injector-watch-parity-'))
     try {
