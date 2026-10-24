@@ -3,6 +3,11 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417
 regressions:
+  - packages/weapp-tailwindcss/test/compiler/generator-service-fingerprint.test.ts
+  - packages/weapp-tailwindcss/test/compiler/generator-service-pool.test.ts
+  - packages/weapp-tailwindcss/test/compiler/generator-service-isolation.test.ts
+  - packages/weapp-tailwindcss/test/compiler/graph-generation-session.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.integration.test.ts
   - benchmark/version-compare/test/dispatch-inputs.test.mjs
   - benchmark/version-compare/test/gc-diagnostics.test.mjs
   - benchmark/version-compare/test/gc-workload-isolation.test.mjs
@@ -14,6 +19,12 @@ regressions:
   - benchmark/version-compare/test/allocation-watch.test.mjs
   - benchmark/version-compare/test/taro-diagnostics.test.mjs
 verification:
+  - claim: 同实例同源服务复用保持候选、产物、revision 与关闭隔离，真实 watch 保留候选替换及来源删除
+    kind: integration
+    status: passed
+    sha: 59a086b174b5da439f61a847810c58b972985054
+    environment: macOS arm64，Node 24.18.0，pnpm 12.14.0，该提交叠加本节尚未提交的服务池源码及测试，49 文件 437 项
+    command: pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindcss exec vitest run test/compiler test/tailwindcss/v4-source-preparation.test.ts test/tailwindcss/native-generation-session.test.ts test/tailwindcss/generator-close.test.ts test/tailwindcss/native-session-close.test.ts test/bundlers/generator-css.unit.test.ts test/bundlers/vite-framework-extension.integration.test.ts --update=none --maxWorkers=1
   - claim: Git 基线输入、Uni CLI 身份和双侧自然 GC 环境遵循既有统计与确认契约
     kind: unit
     status: passed
@@ -105,6 +116,29 @@ verification:
 Linux 显式自然 GC 诊断 `40043661543` 使用同一 `c3f5` head、`fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 基线及 Node 22.23.3，结果通过原预算：HMR peak 1150.859 → 1001.293 MiB，steady 1133.934 → 982.965 MiB，冷构建 peak 中位数 632.047 → 646.133 MiB。但冷构建两侧 source/generator 候选为 287/391 和 289/393，修改阶段为 290/400 和 292/402；差异在首次构建已存在，不能归因于修改回滚残留。此前的正式 `c3f5` 失败两侧数量则均为冷构建 287/391、HMR 290/400。
 
 诊断两版本的完整 demo Git tree、入口原文以及配置文件相同，但没有采到完整候选名字、来源映射和运行时改写哈希，因此不能以静态 demo 相同证明实际生成输入等量。`knownCssSources` 长度多 18、remembered CSS 多 21 与两侧根路径长度差 3 有关系的可能性尚未验证。自然 GC 的 major/minor 计数为基线 4/365、当前 5/356，首次时序差异在启动阶段出现。最后一次当前 major 回调比事件延后约 506 ms，中间存在 minor GC；该回调的堆统计不能冒充同步 major 后存活堆。诊断成功不能取消原首败，也不足以归因为 GC 噪声。
+
+### 同一编译实例内重复创建生成器的确定性证据
+
+为区分实例隔离的必要成本和同一实例内的重复工作，在 macOS / Node 24.18.0 对准确基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417`、准确当前版本 `4801004a68644b7da5d10f5f452ee73f5deef067` 运行真实 `@import "tailwindcss";` 输入。一个 `FrameworkCompilerSession` 创建四个不同 scope，来源、配置和首次候选 `block` / `p-4` 相同；通过原生编译适配和 design system 工厂记录实际调用与对象身份。另设仅在测试内移除 `${engineIdentity}\0` 缓存前缀的受控组，产品代码和正式预算均不改动。
+
+| 四个 scope 首次构建完成时 | 原生会话 | 原生 compile | 独占 design system 加载 | design system 对象总数 |
+| --- | ---: | ---: | ---: | ---: |
+| `fdc3d585` 基线 | 1 | 1 | 1 | 2 |
+| `4801004` 实例隔离版本 | 4 | 4 | 4 | 5 |
+| `4801004` 仅移除身份前缀的受控组 | 1 | 1 | 1 | 2 |
+| 本轮实例内服务池源码 | 1 | 1 | 1 | 2 |
+
+四组首次生成的 CSS SHA-256 均为 `a0e6b54219242a90eee6bcc1ded100f8d99ad6c5abe3591196620f77ddc181cd`。本轮源码基于 `59a086b174b5da439f61a847810c58b972985054` 加未提交修改，已包含原生释放协调修复；不能把该 SHA 单独解释为包含服务池。原始实验保存在忽略目录 `.tmp/engine-session-audit/evidence/`，按准确 SHA 和实验模式分别归档；持久回归位于上方登记的三个 `generator-service-*` 文件。
+
+这些数据证明身份前缀阻断了同实例中等价生成请求的原生状态复用。它们没有测量 Linux RSS、累计分配或保留链，也没有证明真实 Taro / weapp-vite 各 CSS 入口的完整配置键相同，不能解释此前百 MiB 级 RSS 差额。`4801004` 的正式 Taro job 已在本补丁之前通过，不能把该通过归功于本轮优化。原有失败和整篇 `partial` 状态保持。
+
+纠正方式是在每个 `createResolvedCompiler` 内持有独立服务池，保留引擎身份隔离。完整解析来源和除候选以外的完整生成配置参与服务键，包含 target、扫描模式、来源规则、排除项、预处理、样式、preflight 和回调身份。Set / Map 按内容规范化，数组保留顺序；相同源码但捕获值不同的闭包仍按函数对象区分。不同 Core / 构建实例继续创建不同原生服务，同一实例中样式能力不同的 scope 不复用生成器。
+
+每个 root 只持有自己的引用计数租约、候选、输出缓存和 revision。等价租约的生成与候选验证在服务内串行，排队前复制输入；单 root 删除只释放自身引用，最后引用或 owner 关闭才排空并关闭原生服务。依赖失效将旧服务退役，新请求取得新服务，旧任务无法重新登记旧服务。生成失败或交付复制失败都清空增量游标；跨 root 返回完整 CSS，同 root 连续成功保留真正的增量路径。命中 root 输出缓存不移动服务游标，避免把其他 root 的增量错误应用到当前产物。
+
+本轮回归覆盖两个独立 owner、一个 owner 的四个 scope、交错并发增删、缓存命中后继续增量、同源码不同闭包、样式和来源切换、三轮共同依赖失效、引用释放及清理失败。真实 Tailwind preflight / 主样式 / 局部样式产物逐字节对照独立 owner；四 scope 所有者关闭后保留原生会话为零，两个独立引擎仍各有自己的服务。旧 graph 过期结果测试分别验证同源服务排队和不同来源服务新结果先提交，未删去旧结果晚到保护。
+
+域回归执行 `test/compiler`、四个生成器 / 原生生命周期文件及 `generator-css.unit`、`vite-framework-extension.integration`，共 49 文件 / 437 项通过，零跳过。真实 watch 保留原有 29 → 43 候选替换和文件删除断言；这只是当前 macOS 源码结果，不替代 `4801004` 的 Linux watch 首败调查。`tsc -p tsconfig.typecheck.json --noEmit`、严格 scoped ESLint（显式禁用 `format/prettier`）、`pnpm architecture:check`、`pnpm --filter weapp-tailwindcss build` 和 `pnpm agents:check` 通过；构建包含 ESM / CJS 入口与声明文件。没有执行需全端预检放行的本地全面验收，也没有更改任何性能预算、超时、缓存开关或设备门禁。
 
 ## 验证
 

@@ -9,9 +9,9 @@ import type { CacheTelemetryCollector } from '@/compiler/cache-telemetry'
 import type { CompilerTransformServices } from '@/compiler/transform-services'
 import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot } from '@weapp-tailwindcss/postcss/transform'
 import { snapshotConfiguration } from '@/compiler/configuration-snapshot'
-import { createWeappTailwindcssGenerator } from '@/generator/runtime'
 import { createCompilerGenerationCacheKey, isSameCompilerGenerationCacheKey, reuseCompilerGenerationResult } from './generation-cache'
 import { commitCompilerGeneration, prepareCompilerGeneration } from './generation-state'
+import { createCompilerGeneratorServices } from './generator-services'
 import { CompilerRootStore } from './root-store'
 import {
   createImmutableSet,
@@ -38,6 +38,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
   const maxRoots = Math.max(1, Math.floor(compilerOptions?.maxRoots ?? DEFAULT_MAX_ROOTS))
   const cacheTelemetry = compilerOptions?.cacheTelemetry
   const rootStore = new CompilerRootStore(maxRoots, compilerOptions?.onRootEvicted)
+  const generatorServices = createCompilerGeneratorServices(rootStore)
   const activeTasks = new Set<Promise<unknown>>()
   let lifecycle: 'active' | 'disposing' | 'disposed' = 'active'
   let disposePromise: Promise<void> | undefined
@@ -75,10 +76,6 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
     const engineInvalidation = entry.engineInvalidation
     const { source, sourceFingerprint, sourceInputFingerprint } = await resolveCompilerSource(entry, request, engineInvalidation)
     const sourceReused = entry.sourceFingerprint === sourceFingerprint
-    const engineReused = sourceReused
-      && entry.generator !== undefined
-      && entry.appliedEngineInvalidation === engineInvalidation
-    const generator = engineReused ? entry.generator! : createWeappTailwindcssGenerator(source)
     const target = request.target ?? 'weapp'
     const {
       id: _id,
@@ -93,6 +90,13 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
       source,
       !sourceReused || entry.appliedInvalidation !== invalidation,
     )
+    const generationOptions = {
+      ...generateOptions,
+      ...(prepared.explicitCandidates ? { candidates: prepared.compilation.candidates } : {}),
+      incrementalCache: generateOptions.incrementalCache ?? true,
+      target: target === 'tailwind' ? 'web' as const : target,
+    }
+    const { generator, reused: engineReused } = generatorServices.select(entry, source, engineInvalidation, generationOptions)
     const generationCacheKey = createCompilerGenerationCacheKey(
       request,
       prepared.compilation.candidates,
@@ -119,12 +123,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
     try {
       const generated = reusableGeneration
         ? reuseCompilerGenerationResult(reusableGeneration)
-        : await generator.generate({
-            ...generateOptions,
-            ...(prepared.explicitCandidates ? { candidates: prepared.compilation.candidates } : {}),
-            incrementalCache: generateOptions.incrementalCache ?? true,
-            target: target === 'tailwind' ? 'web' : target,
-          })
+        : await generator.generate(generationOptions)
       if (!entry.active) {
         throw new Error(`Compiler root 已被移除：${entry.id}`)
       }
@@ -264,7 +263,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
       await Promise.allSettled([...activeTasks])
       clearTransformCache()
       try {
-        await rootStore.dispose()
+        await generatorServices.dispose()
       }
       finally {
         disposeTransforms()

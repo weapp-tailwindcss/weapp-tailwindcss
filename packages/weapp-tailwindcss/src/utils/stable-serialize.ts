@@ -33,6 +33,9 @@ export function stableSerialize(value: unknown, stack = new WeakSet<object>()): 
     const entries = [...value].map(([key, item]) => `[${stableSerialize(key, stack)},${stableSerialize(item, stack)}]`)
     serialized = `Map(${entries.sort().join(',')})`
   }
+  else if (value instanceof Set) {
+    serialized = `Set(${[...value].map(item => stableSerialize(item, stack)).sort().join(',')})`
+  }
   else if (Array.isArray(value)) {
     serialized = `[${value.map(item => stableSerialize(item, stack)).join(',')}]`
   }

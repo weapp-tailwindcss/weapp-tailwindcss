@@ -51,7 +51,7 @@ describe('compiler mutable generation inputs', () => {
     expect([...changed.classSet]).toEqual(['p-10%'])
     expect(changed.css).toMatch(/padding:\s*10%/)
     expect(changed.css).not.toMatch(/padding:\s*10px/)
-    expect(changed.cache).toEqual({ engine: true, output: false, source: true })
+    expect(changed.cache).toEqual({ engine: false, output: false, source: true })
 
     const equivalent = await compiler.generate({
       ...request,
@@ -71,7 +71,7 @@ describe('compiler mutable generation inputs', () => {
     expect([...changed.classSet]).toEqual(['w-[20px]'])
     expect(changed.css).toMatch(/width:\s*20px/)
     expect(changed.css).not.toMatch(/width:\s*10px/)
-    expect(changed.cache).toEqual({ engine: true, output: false, source: true })
+    expect(changed.cache).toEqual({ engine: false, output: false, source: true })
 
     const equivalent = await compiler.generate(structuredClone(request))
     expect(equivalent.cache.output).toBe(true)
@@ -177,5 +177,4 @@ describe('compiler mutable generation inputs', () => {
     expect(second.cache.output).toBe(false)
     expect((await generate(secondPlugin)).cache.output).toBe(true)
   })
-
 })
