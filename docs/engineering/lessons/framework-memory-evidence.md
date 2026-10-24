@@ -215,6 +215,10 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 
 这里的提交身份区分 PR head 与实际测试源码：工件的 `sourceCommit` 为 GitHub 测试合并提交 `0bdf6b5c2efc1361dd69553df0193bd3ecbba973`，父提交依次为上述基线和 PR head。GitHub API 与本地 Git 分别核验两者源码树均为 `801e64fe985e77beba7846f0c43e2ff8ed3e3952`，因此该轮源码与 PR head 一致，不能把合并提交的 SHA 差异认作性能输入差异。
 
+后续准确 head `8f0d56a7b355a86fc11a9f23748ae88e8f7adb90` 自动创建的[正式 run `40067923070`、Mpx job `120795374942`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923070/job/120795374942) 在相同基线、三次冷构建、三轮 HMR 和原预算下通过，`blocking=true`、`passed=true`、`errors=[]`、`violations=[]`，未触发反序确认。门禁使用的 steady 插件耗时为 `401 → 377ms`，HMR peak RSS 为 `1951.32 → 1610.05MiB`，steady RSS 为 `1898.43 → 1585.04MiB`；耗时三项原样本为基线 `[398,379,401]`、当前 `[417,376,377]`，不能将全部三项中位数与剔除预热后的门禁值混用。
+
+该次工件 `12550681085` 的测试合并提交 `87ec517c25bf2a192a9708fabdb07ddd84a7bef2` 与 head 源码树同为 `859802a8301a86ded9b11a9a4ab15ff80fdc1a12`。`ab1aa7d` 到 `8f0d56a` 只修改四个测试和两份复盘文档，产品源码、性能脚本及预算相同；因此这是新 head 的独立正式采样通过，不是性能修复证据，也不抵销此前三项实际违规。两次首轮和原始样本并列保留，未为此次失败触发正式重跑；造成两轮差异的分配及输入因素仍未确定。
+
 ## 适用边界
 
 本记录仅约束上述未解决的性能失败。配置版本与 CSS 来源并发问题已有独立[修复与回归](webpack-request-configuration.md)，没有证据证明该修复解释 RSS 增幅。完整验收、环境中断和其他框架证据见[框架隔离记录](framework-isolation.md)。

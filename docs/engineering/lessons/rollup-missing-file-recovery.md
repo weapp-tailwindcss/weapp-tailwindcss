@@ -1,11 +1,25 @@
+---
+status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
+baseline: 8f0d56a7b355a86fc11a9f23748ae88e8f7adb90
+regressions:
+  - scripts/ci/demo-matrix/rollup-recreation-multi-directory.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-lifecycle.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-readiness.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-error.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-owner.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-timer.test.mjs
+  - scripts/ci/demo-matrix/rollup-watch.test.mjs
+---
+
 # Rollup 多目录监听的缺失文件恢复
 
-## 首败与准确运行时
+## 症状
 
-2026-10-24，PR #1316 的 `8f0d56a7b` 在 [Demo Watch Diagnostic run 40067923012](https://github.com/sonofmagic/weapp-tailwindcss/actions/runs/40067923012) 出现两份独立 Windows 首败：
+2026-10-24，PR #1316 的 `8f0d56a7b` 在 [Demo Watch Diagnostic run 40067923012](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923012) 出现两份独立 Windows 首败：
 
-- [job 120794961700](https://github.com/sonofmagic/weapp-tailwindcss/actions/runs/40067923012/job/120794961700)：`uni-app-vite-tailwindcss-v4 / cjs / file`。
-- [job 120794961799](https://github.com/sonofmagic/weapp-tailwindcss/actions/runs/40067923012/job/120794961799)：同一项目的 `esm / file`；该 job 的 CJS 组合通过。
+- [job 120794961700](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923012/job/120794961700)：`uni-app-vite-tailwindcss-v4 / cjs / file`。
+- [job 120794961799](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923012/job/120794961799)：同一项目的 `esm / file`；该 job 的 CJS 组合通过。
 
 两份日志的真实 Node 都是 24.22.1。失败发生在 demo 启动前的 `pnpm test:demo:matrix`：`rollup-watch.test.mjs` 的 0、1、2、3 轮通过，删除文件并收到 ERROR 后发布 value 4，5 秒内没有新 BUNDLE_END，结果始终为 `undefined`。这不能描述为 Mpx 或 uni-app 产品 demo 的 watch 已经失败。
 
@@ -20,7 +34,7 @@
 
 uni-app 失败不属于 Rollup 3。回归从这些消费方实际解析运行时，并在名称中显示 `rollup.VERSION`，不根据 demo 名称推断主版本。
 
-## 根因与确定性复现
+## 根因与纠正
 
 Rollup 4 的 bundled Chokidar 在 `_remove` 中只为 `_watched.size === 1` 的单目录情况建立文件恢复订阅。入口位于根目录、文件型 transform dependency 位于子目录时，删除后可能只剩入口句柄，没有任何订阅负责发现文件重建。构建失败路径再次 `add` 文件可能遮蔽这个缺口，但该异步路径不能成为底层订阅的所有者。
 
@@ -28,7 +42,7 @@ Rollup 4 的 bundled Chokidar 在 `_remove` 中只为 `_watched.size === 1` 的�
 
 新增最小回归只选择 Rollup 的 Windows 分支，文件删除、原子重建、stat 和原生订阅均使用宿主真实 API；入口和数据文件位于两个目录。未改实现时，三个 Rollup 4 版本的 CJS/ESM 共 6 项在原 5 秒内收不到 create，Rollup 3 的 2 项通过。这证明缺失订阅的结构问题；原 CI 日志没有原生订阅时序，不能据此还原其中每个事件的具体先后。
 
-## 修复边界
+### 恢复状态的所有权
 
 - 三个 Rollup 4 补丁补齐缺失文件 owner：先退出旧句柄，再建立目标文件的临时父目录订阅；订阅后对账，并仅在 `ENOENT` / `ENOTDIR` 时继续有归属的重试。
 - 绑定成功、unwatch、close 都释放 owner、句柄及定时器；在途 stat 和已派发的旧回调必须核验原 owner 身份。
@@ -38,7 +52,7 @@ Rollup 4 的 bundled Chokidar 在 `_remove` 中只为 `_watched.size === 1` 的�
 
 补丁仅属于本仓库冻结工具链，不随 weapp-tailwindcss 的 npm 安装发布。
 
-## 本地证据与限制
+## 验证
 
 本轮在 macOS / Node 24.18.0 完成：
 
@@ -49,8 +63,16 @@ pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo
 
 全部 19 个 Rollup 回归文件、565 项通过；范围包括四版本 CJS/ESM、删除重建、原子替换、polling、订阅就绪、权限错误、关闭、定时器释放以及旧 owner 的异步结果。原 `rollup-watch.test.mjs` 的全部 12 个组合通过，5 秒断言保持不变。
 
+主树整合为 `a09ac33c3` 后再次完成冻结离线安装，并执行同一组实际展开的 Rollup 文件，19 文件、565 项通过、零跳过。主树独立按三个版本的前后 hash 反向核对锁文件，除这三个 hash 外逐字节相同；规则检查通过。一次把 glob 作为字面过滤参数的调用未选择任何测试，已保留该零项报告，不计作通过。
+
 本地选择 Windows 分支不等于 Windows 原生文件系统验收。仍需在整合后准确 head 上验证 Windows CI；未通过重跑旧 CI、增加超时、跳过组合或放宽产物断言取绿。
 
 原始日志和红绿 JSON 作为当前任务的本地证据保留：`rollup-multiple-directory-red.json` 为 6 红 / 2 绿，`rollup-multiple-directory-green.json` 为新增与原端到端 watcher 共 20 项通过，`rollup-all-node24.json` 为全部 565 项通过。
 
-当上游同时修复文件订阅身份、缺失恢复和生命周期后，先用实际 demo 解析版本运行所有 `rollup-*.test.mjs`，再评估删除相应冻结补丁；不能只按 Rollup 主版本或单目录用例决定移除。
+## 适用边界
+
+当上游同时修复文件订阅身份、缺失恢复和生命周期后，先用实际 demo 解析版本运行所有 `rollup-*.test.mjs`，再评估删除相应冻结补丁；不能只按 Rollup 主版本或单目录用例决定移除。上游背景沿用[原补丁记录](rollup3-file-recreation.md)，本记录不把仓库补丁与上游原版混为一谈。
+
+## 规则评估
+
+不新增 AGENTS。通过实际消费方版本登记和有归属的恢复生命周期回归补齐覆盖；没有 demo 或样式输出变更，无需更新 static 基线。补丁只影响开发工具链，不新增公开包 change intent。
