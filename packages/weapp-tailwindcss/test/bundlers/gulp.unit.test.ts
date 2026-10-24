@@ -328,7 +328,7 @@ describe('bundlers/gulp createPlugins', () => {
   it('registers tailwindcss v4 cssSources without local css imports', async () => {
     tailwindRuntime.majorVersion = 4
     currentContext.cssMatcher = vi.fn((id: string) => id.endsWith('.wxss'))
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => ({
       css: [...candidates].sort().map(candidate => `.adapted-${candidate}{}`).join('\n'),
       rawCss: [...candidates].sort().map(candidate => `.raw-${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -450,7 +450,7 @@ describe('bundlers/gulp createPlugins', () => {
     await writeFile(normalWxml, '<view class="normal-only"></view>')
     await writeFile(independentWxml, '<view class="independent-only"></view>')
 
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => ({
       css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -516,10 +516,10 @@ describe('bundlers/gulp createPlugins', () => {
         contents: Buffer.from(await fs.promises.readFile(independentCss, 'utf8')),
       }))
 
-      const [appCall, normalCall, independentCall] = generateMock.mock.calls.map(call => call[0]?.candidates as Set<string>)
-      expect(appCall).toEqual(new Set(['app-only']))
-      expect(normalCall).toEqual(new Set(['normal-only']))
-      expect(independentCall).toEqual(new Set(['independent-only']))
+      const [appCall, normalCall, independentCall] = generateMock.mock.calls.map(call => [...call[0]!.candidates].sort())
+      expect(appCall).toEqual(['app-only'])
+      expect(normalCall).toEqual(['normal-only'])
+      expect(independentCall).toEqual(['independent-only'])
     }
     finally {
       vi.doUnmock('@/generator')
@@ -556,7 +556,7 @@ describe('bundlers/gulp createPlugins', () => {
         return candidates
       }),
     }
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => ({
       css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -625,8 +625,8 @@ describe('bundlers/gulp createPlugins', () => {
         contents: Buffer.from(await fs.promises.readFile(appCss, 'utf8')),
       }))
 
-      const lastCandidates = generateMock.mock.calls.at(-1)?.[0]?.candidates as Set<string>
-      expect(lastCandidates).toEqual(new Set(['app-after']))
+      const lastCandidates = generateMock.mock.calls.at(-1)![0].candidates
+      expect([...lastCandidates]).toEqual(['app-after'])
     }
     finally {
       vi.doUnmock('@/generator')
@@ -642,7 +642,7 @@ describe('bundlers/gulp createPlugins', () => {
     currentContext.mainCssChunkMatcher = vi.fn((name: string) => name === 'styles/root.css')
     const dependency = '/project/tailwind.config.ts'
     let generation = 0
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => {
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => {
       generation += 1
       const css = `.generation-${generation}{display:block}`
       return {

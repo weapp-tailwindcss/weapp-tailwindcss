@@ -157,7 +157,7 @@ function mockTailwindV4GeneratorCss(css = '/* generated */') {
     return {
       ...actual,
       createWeappTailwindcssGenerator: vi.fn(() => ({
-        generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+        generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
           css,
           rawCss: css,
           target: 'weapp',
@@ -628,7 +628,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     const validateCandidatesMock = vi.fn(async (candidates: Set<string>) => {
       return new Set([...candidates].filter(candidate => candidate === 'bg-[red]'))
     })
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: '.bg-_red_ { background-color: red; }',
       rawCss: '.bg-\\[red\\] { background-color: red; }',
       target: 'weapp',
@@ -724,7 +724,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     expect(generateMock.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
       incrementalCache: true,
     }))
-    expect([...(generateMock.mock.calls[0]?.[0].candidates as Set<string>)]).toEqual(
+    expect([...(generateMock.mock.calls[0]?.[0].candidates as Iterable<string>)]).toEqual(
       expect.arrayContaining(['bg-[red]']),
     )
     expect([...(currentContext.jsHandler.mock.calls[0]?.[1] as Set<string>)]).toEqual(expect.arrayContaining(['bg-[red]']))
@@ -1029,7 +1029,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'weapp',
@@ -1111,7 +1111,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: adaptedCss,
             rawCss,
             target: 'weapp',
@@ -1267,7 +1267,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         createWeappTailwindcssGenerator: vi.fn((source: { css: string, base: string }) => {
           createdSources.push(source)
           return {
-            generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+            generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
               css: '.font-bold{font-weight:700}',
               rawCss: '.font-bold{font-weight:700}',
               target,
@@ -1350,7 +1350,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'web',
@@ -1489,13 +1489,13 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await mkdir(path.dirname(cssFile), { recursive: true })
     await writeFile(cssFile, css, 'utf8')
 
-    const generatedOptions: Array<{ candidates: Set<string>, scanSources?: boolean | unknown }> = []
+    const generatedOptions: Array<{ candidates: Iterable<string>, scanSources?: boolean | unknown }> = []
     vi.doMock('@/generator/runtime', async (importOriginal) => {
       const actual = await importOriginal<typeof import('@/generator')>()
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string>, scanSources?: boolean | unknown }) => {
+          generate: vi.fn(async (options: { candidates: Iterable<string>, scanSources?: boolean | unknown }) => {
             generatedOptions.push(options)
             const css = [...options.candidates].sort().map(candidate => `.${candidate.replace(/[^\w-]/g, '_')}{display:block}`).join('\n')
             return {
@@ -1665,7 +1665,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(cssFile, css, 'utf8')
 
     const generatedOptions: Array<{
-      candidates: Set<string>
+      candidates: Iterable<string>
       previousClassSet?: Set<string> | unknown
       previousCss?: string | unknown
       scanSources?: boolean | unknown
@@ -1676,7 +1676,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
           generate: vi.fn(async (options: {
-            candidates: Set<string>
+            candidates: Iterable<string>
             previousClassSet?: Set<string> | unknown
             previousCss?: string | unknown
             scanSources?: boolean | unknown
@@ -2001,7 +2001,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => {
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => {
             const candidates = [...options.candidates]
             generatedCandidateBatches.push(candidates)
             const generatedCss = candidates
@@ -2134,7 +2134,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => {
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => {
             const generatedCss = [...options.candidates]
               .map(candidate => `/* ${candidate} */`)
               .join('\n')
@@ -2300,7 +2300,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         return {
           ...actual,
           createWeappTailwindcssGenerator: vi.fn(() => ({
-            generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+            generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
               css: generatedCss,
               rawCss: generatedCss,
               target: 'weapp',
@@ -2490,7 +2490,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       ]
 
       const seenCandidates: string[][] = []
-      const generateMock = vi.fn(async (options: { candidates: Set<string> }) => {
+      const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => {
         const candidates = [...options.candidates].sort()
         seenCandidates.push(candidates)
         const css = candidates.map(candidate => `.${replaceWxml(candidate)}{}`).join('\n')
@@ -2660,7 +2660,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'weapp',
@@ -2773,7 +2773,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => {
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => {
             const candidates = [...options.candidates].sort()
             seenCandidates.push(candidates)
             const css = candidates
@@ -2927,7 +2927,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => {
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => {
             const candidates = [...options.candidates].sort()
             seenCandidates.push(candidates)
             const css = candidates
@@ -3206,7 +3206,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'weapp',
@@ -3283,7 +3283,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'weapp',
@@ -3370,7 +3370,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(async (options: { candidates: Set<string> }) => ({
+          generate: vi.fn(async (options: { candidates: Iterable<string> }) => ({
             css: generatedCss,
             rawCss: generatedCss,
             target: 'web',
@@ -3531,7 +3531,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(subPage, '<view class="bg-normal"></view>\n', 'utf8')
 
     const validateCandidates = vi.fn(async (candidates: Set<string>) => new Set(candidates))
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }, source?: { config?: string }) => {
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }, source?: { config?: string }) => {
       const candidates = source?.config === subConfig
         ? ['bg-normal']
         : [...options.candidates]
@@ -3552,7 +3552,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn((source: { config?: string }) => ({
-          generate(options: { candidates: Set<string> }) {
+          generate(options: { candidates: Iterable<string> }) {
             return generateMock(options, source)
           },
           validateCandidates,
@@ -3609,9 +3609,9 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await generateBundle?.call({ addWatchFile: vi.fn() }, {}, bundle, false)
 
     expect(validateCandidates).not.toHaveBeenCalled()
-    expect(generateMock.mock.calls.some(call => call[0].candidates instanceof Set)).toBe(true)
     const generatedCandidateSets = generateMock.mock.calls.map(call => [...call[0].candidates])
     expect(generatedCandidateSets).toContainEqual(['bg-main'])
+    expect(generatedCandidateSets).toContainEqual(['bg-normal'])
     expect(String(bundle['app.css'].source)).toBe('')
     expect(String(bundle['src/app.css'].source)).toContain('.bg-main{display:block}')
     expect(String(bundle['src/app.css'].source)).not.toContain('.bg-normal{display:block}')
@@ -3629,7 +3629,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await mkdir(path.dirname(pageFile), { recursive: true })
     await writeFile(configFile, 'module.exports = { content: ["./pages/**/*.{wxml,ts}"] }\n', 'utf8')
     await writeFile(pageFile, '<view class="bg-[#010721] text-[35px] h-[29px]">ok</view>\n', 'utf8')
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].map(candidate => `.${replaceWxml(candidate)}{display:block}`).join(''),
       rawCss: [...options.candidates].map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
@@ -3715,7 +3715,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(featureACss, '@config "./tailwind.config.cjs";\n@tailwind utilities;\n', 'utf8')
     await writeFile(featureBCss, '@config "./tailwind.config.cjs";\n@tailwind utilities;\n', 'utf8')
 
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
@@ -3818,7 +3818,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(featureACss, '@import "tailwindcss" source(none);\n@source "./**/*.{wxml,js,ts}";\n', 'utf8')
     await writeFile(featureBCss, '@import "tailwindcss" source(none);\n@config "./tailwind.config.cjs";\n', 'utf8')
 
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
@@ -3973,7 +3973,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(configFile, 'module.exports = { content: [] }\n', 'utf8')
     await writeFile(cssEntry, '@config "./tailwind.config.cjs";\n@tailwind utilities;\n', 'utf8')
 
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
       target: 'weapp',
@@ -5205,7 +5205,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     delete process.env.UNI_PLATFORM
     delete process.env.UNI_UTS_PLATFORM
     try {
-      const generateMock = vi.fn(async (options: { candidates: Set<string>, target: string }) => {
+      const generateMock = vi.fn(async (options: { candidates: Iterable<string>, target: string }) => {
         const webCss = [
           ':root{--color-emerald-500:oklch(69.6% 0.17 162.48);--color-zinc-950:oklch(14.1% 0.005 285.823)}',
           ':root{--spacing:.25rem}',
@@ -5250,7 +5250,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         return {
           ...actual,
           createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => ({
-            generate: vi.fn((options: { candidates: Set<string>, target: string }) => generateMock(options, source)),
+            generate: vi.fn((options: { candidates: Iterable<string>, target: string }) => generateMock(options, source)),
             validateCandidates: vi.fn(async (candidates: Set<string>) => candidates),
           })),
         }
@@ -5450,7 +5450,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         ['bg-normal-subpackage-marker', '.bg-normal-subpackage-marker{background-color:#2563eb}'],
         ['bg-independent-subpackage-marker', '.bg-independent-subpackage-marker{background-color:#dc2626}'],
       ])
-      const generateMock = vi.fn(async (options: { candidates: Set<string>, target: string }, source: { css: string }) => {
+      const generateMock = vi.fn(async (options: { candidates: Iterable<string>, target: string }, source: { css: string }) => {
         const allowedCandidates = source.css.includes('source:main')
           ? new Set(['bg-[#102938]', 'bg-[#3b0764]', 'text-[#fef08a]', 'h-[41px]', 'mt-[19px]'])
           : source.css.includes('source:normal')
@@ -5481,7 +5481,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         return {
           ...actual,
           createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => ({
-            generate: vi.fn((options: { candidates: Set<string>, target: string }) => generateMock(options, source)),
+            generate: vi.fn((options: { candidates: Iterable<string>, target: string }) => generateMock(options, source)),
           })),
         }
       })
@@ -5672,7 +5672,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     const previousUtsPlatform = process.env.UNI_UTS_PLATFORM
     delete process.env.UNI_UTS_PLATFORM
     try {
-      const generateMock = vi.fn(async (_options: { candidates: Set<string> }, source: { css: string }) => {
+      const generateMock = vi.fn(async (_options: { candidates: Iterable<string> }, source: { css: string }) => {
         const isHarmonyApplySource = source.css.includes('.wtu-1k0qd6d-4')
         const css = isHarmonyApplySource
           ? [
@@ -5703,7 +5703,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         return {
           ...actual,
           createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => ({
-            generate: vi.fn((options: { candidates: Set<string> }) => generateMock(options, source)),
+            generate: vi.fn((options: { candidates: Iterable<string> }) => generateMock(options, source)),
           })),
           normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,
           resolveTailwindV4Source: vi.fn(async (options: any) => ({
@@ -7336,7 +7336,7 @@ module.exports = {
   }, TEST_TIMEOUT_MS)
 
   it('excludes subpackage source candidates when generating Tailwind v4 app css', async () => {
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => {
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => {
       const css = [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join('')
       return {
         css,
@@ -8590,7 +8590,7 @@ preferMatchedRootWebTarget: true } }
   it('generates Tailwind v4 web css in vite generator mode', async () => {
     const runtimeSet = new Set(['flex', 'min-h-screen'])
     const generatedCss = '.flex{display:flex}.min-h-screen{min-height:100vh}'
-    const generateMock = vi.fn(async ({ target, candidates }: { target: string, candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ target, candidates }: { target: string, candidates: Iterable<string> }) => ({
       css: generatedCss,
       rawCss: generatedCss,
       target,
@@ -8678,11 +8678,9 @@ preferMatchedRootWebTarget: true } }
     expect((bundle['app.js'] as OutputChunk).code).toBe('const cls = "flex min-h-screen"')
     expect(generateMock).toHaveBeenCalledWith(expect.objectContaining({
       target: 'web',
-      candidates: expect.any(Set),
     }))
-    const candidates = generateMock.mock.calls[0]?.[0]?.candidates as Set<string>
-    expect(candidates.has('flex')).toBe(true)
-    expect(candidates.has('min-h-screen')).toBe(true)
+    const candidates = generateMock.mock.calls[0]?.[0]?.candidates as Iterable<string>
+    expect([...candidates].sort()).toEqual(['flex', 'min-h-screen'])
   }, TEST_TIMEOUT_MS)
 
   it('reuses snapshot hashes for unchanged js process cache checks', async () => {
@@ -9463,7 +9461,7 @@ const trace = "at App.vue:4"
 
   it('generates Tailwind v4 css for uni-app x H5 web target during vite build finalization', async () => {
     const generatedCss = '.bg-\\[\\#f21903\\]{background-color:#f21903}.text-xl{font-size:1.25rem;line-height:1.75rem}'
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: generatedCss,
       rawCss: generatedCss,
       target: 'web',
@@ -9736,9 +9734,7 @@ const trace = "at App.vue:4"
 
     expect((bundle['app.css'] as OutputAsset).source).toBe(weappCss)
     expect(addWatchFile.mock.calls.map(([file]) => file)).toEqual(dependencyFiles)
-    expect(generateMock).toHaveBeenCalledWith(expect.objectContaining({
-      candidates: new Set(['w-[100px]']),
-    }))
+    expect(generateMock.mock.calls.map(call => [...call[0].candidates])).toContainEqual(['w-[100px]'])
     expect(currentContext.styleHandler).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
@@ -9913,11 +9909,8 @@ const trace = "at App.vue:4"
 
     expect((bundle['app.css'] as OutputAsset).source).toBe(`${weappCss}\ncss:.card{color:red}`)
     expect((bundle['app.css'] as OutputAsset).source.toString()).not.toContain('generator-placeholder')
-    expect(generateMock).toHaveBeenCalledWith(expect.objectContaining({
-      candidates: expect.any(Set),
-    }))
-    const candidates = generateMock.mock.calls[0]?.[0]?.candidates as Set<string>
-    expect(candidates.has('w-[100px]')).toBe(true)
+    const candidates = generateMock.mock.calls[0]?.[0]?.candidates as Iterable<string>
+    expect([...candidates]).toEqual(['w-[100px]'])
   }, TEST_TIMEOUT_MS)
 
   it('keeps appended user css when tailwind v4 engine css matches the generated prefix', async () => {
@@ -10091,20 +10084,16 @@ const trace = "at App.vue:4"
     const generateBundle = getGenerateBundleHandler(postPlugin)
     await generateBundle?.call(postPlugin, {} as any, bundle)
 
-    expect(generateMock).toHaveBeenCalledWith(expect.objectContaining({
-      candidates: expect.any(Set),
-    }))
-    const candidates = generateMock.mock.calls[0]?.[0]?.candidates as Set<string>
-    expect(candidates.has('text-[#123456]')).toBe(true)
-    expect(candidates.has('w-[100px]')).toBe(true)
-    expect(candidates.has('in-[.group/name]:flex')).toBe(false)
-    expect(candidates.has('group-hover/item:visible')).toBe(false)
+    const candidates = [...generateMock.mock.calls[0]![0].candidates].sort()
+    expect(candidates).toEqual(['text-[#123456]', 'w-[100px]'])
+    expect(candidates).not.toContain('in-[.group/name]:flex')
+    expect(candidates).not.toContain('group-hover/item:visible')
   }, TEST_TIMEOUT_MS)
 
   it('keeps raw vue source candidates when vite transforms vue sub-requests', async () => {
     const runtimeSet = new Set<string>()
     const rawTailwindCss = '/*! weapp-tailwindcss generator-placeholder */'
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => ({
       css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
@@ -10177,7 +10166,7 @@ const trace = "at App.vue:4"
     const generateBundle = getGenerateBundleHandler(postPlugin)
     await generateBundle?.call(postPlugin, {} as any, bundle)
 
-    const candidates = generateMock.mock.calls.at(-1)?.[0].candidates as Set<string>
+    const candidates = generateMock.mock.calls.at(-1)?.[0].candidates as Iterable<string>
     expect(candidates).toContain('text-[188rpx]')
     expect(candidates).toContain('font-bold')
     expect(String((bundle['app.css'] as OutputAsset).source)).toContain('.text-[188rpx]{display:block}')
@@ -12278,7 +12267,7 @@ const cls = "w-[1.5px]"
   }, TEST_TIMEOUT_MS)
 
   it('replays clean css results when only script candidates change in incremental runs', async () => {
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
@@ -12395,7 +12384,7 @@ const cls = "w-[1.5px]"
   }, TEST_TIMEOUT_MS)
 
   it('regenerates remembered vite pipeline main css when only script candidates change', async () => {
-    const generateMock = vi.fn(async (options: { candidates: Set<string>, css: string }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string>, css: string }) => ({
       css: `${options.css}\n${[...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n')}`,
       rawCss: `${options.css}\n${[...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n')}`,
       target: 'weapp',
@@ -12542,9 +12531,9 @@ ${generatedBanner}`
   }, TEST_TIMEOUT_MS)
 
   it('keeps uni-app dev app.wxss as an import shell when the incremental bundle omits main.wxss', async () => {
-    const localCandidates = (candidates: Set<string>) =>
+    const localCandidates = (candidates: Iterable<string>) =>
       new Set([...candidates].filter(candidate => /^text-\[\d+\.\d+rpx\]$/.test(candidate)))
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...localCandidates(options.candidates)].sort().map((candidate) => {
         const fontSize = candidate.match(/^text-\[(.+)\]$/)?.[1] ?? '0rpx'
         return `.${replaceWxml(candidate)}{font-size:${fontSize}}`
@@ -13024,9 +13013,9 @@ ${generatedBanner}`
   }, TEST_TIMEOUT_MS)
 
   it('refreshes uni-app dev app.wxss from script-only escaped v4 hmr candidates without force refresh env', async () => {
-    const localCandidates = (candidates: Set<string>) =>
+    const localCandidates = (candidates: Iterable<string>) =>
       new Set([...candidates].filter(candidate => /^text-\[\d+\.\d+rpx\]$/.test(candidate)))
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...localCandidates(options.candidates)].sort().map((candidate) => {
         const fontSize = candidate.match(/^text-\[(.+)\]$/)?.[1] ?? '0rpx'
         return `.${replaceWxml(candidate)}{font-size:${fontSize}}`
@@ -13147,7 +13136,7 @@ ${generatedBanner}`
       await generateBundle?.call(postPlugin, {} as any, secondBundle)
       const secondAppCss = (secondBundle['app.wxss'] as OutputAsset).source.toString()
       expect(generateMock.mock.calls.some(call =>
-        (call[0].candidates as Set<string>).has('text-[103.43rpx]'),
+        [...call[0].candidates].includes('text-[103.43rpx]'),
       )).toBe(true)
       expect(secondAppCss).toContain(replaceWxml('text-[103.43rpx]'))
       expect(secondAppCss).toContain('103.43rpx')
@@ -13171,7 +13160,7 @@ ${utilities}
 /*! weapp-tailwindcss layer components start */
 .tw-watch-layer{color:red}
 /*! weapp-tailwindcss layer components end */`
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: wrapGeneratedCss([...options.candidates].sort().map(candidate => `.${replaceWxml(candidate)}{background:${candidate}}`).join('\n')),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -13565,7 +13554,7 @@ ${utilities}
   }, TEST_TIMEOUT_MS)
 
   it('refreshes runtime-linked alipay acss when only axml changes', async () => {
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${replaceWxml(candidate)}{}`).join('\n'),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -13643,7 +13632,7 @@ ${utilities}
   }, TEST_TIMEOUT_MS)
 
   it('refreshes runtime-linked toutiao ttss when only ttml changes', async () => {
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => ({
       css: [...options.candidates].sort().map(candidate => `.${replaceWxml(candidate)}{}`).join('\n'),
       rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
       target: 'weapp',
@@ -15002,7 +14991,7 @@ ${utilities}
 
   it('appends incremental generator css when only runtime candidates grow', async () => {
     const generatedCandidates = new Set<string>()
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => {
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => {
       const candidates = [...options.candidates].sort()
       const missingCandidates = candidates.filter(candidate => !generatedCandidates.has(candidate))
       for (const candidate of missingCandidates) {
@@ -15105,7 +15094,7 @@ ${utilities}
 
   it('does not duplicate preflight when appending incremental v4 generator css', async () => {
     const generatedCandidates = new Set<string>()
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => {
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => {
       const candidates = [...options.candidates].sort()
       const missingCandidates = candidates.filter(candidate => !generatedCandidates.has(candidate))
       for (const candidate of missingCandidates) {
@@ -15209,7 +15198,7 @@ ${utilities}
 
   it('keeps generator css incremental when runtime candidates replace a utility', async () => {
     const generatedCandidates = new Set<string>()
-    const generateMock = vi.fn(async (options: { candidates: Set<string> }) => {
+    const generateMock = vi.fn(async (options: { candidates: Iterable<string> }) => {
       const candidates = [...options.candidates].sort()
       const missingCandidates = candidates.filter(candidate => !generatedCandidates.has(candidate))
       for (const candidate of missingCandidates) {
