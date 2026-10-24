@@ -48,6 +48,16 @@ Mpx 使用 `--only demo-mpx-tailwindcss-v4__mp-weixin`，其他限制相同。�
 
 Mpx 仅在准备副本注入唯一 AST 锚点：Webpack compilation 创建与处理完成、来源扫描已读到的文本、生成器、原生生成会话、底层 compile/build，以及版本存在时的 compiler 服务池。准备阶段验证所有锚点后才写入；基线缺失服务池登记为 `absentCapabilities`，不是零次调用。锚点损坏仍直接失败。
 
+插桩模块也会被准备阶段的包构建消费，此时 worker 尚未注册 observer。七类 Mpx 插桩点都在调用时读取 observer：不存在时直接执行原表达式或原函数体，不构造诊断详情、不追加 Promise 或等待边界；后续注册和移除立即生效。已注册但损坏的 observer 仍报错。服务释放的原有幂等 guard 保持在记录之外。
+
+准备链路可在已安装依赖、无 `.git` 且尚未插桩的副本上做定向回归：
+
+```sh
+node benchmark/version-compare/scripts/diagnostics/verify-preparation-build.mjs <准备副本> <源码工作树> <证据目录>
+```
+
+该命令先执行实际 `prepareAllocationRoot`，只构建 UI 的 workspace 依赖链（包含 engine、主包及其依赖）和 UI 本身，不运行 `build:pkgs`、设备验收或 Mpx worker。依赖须提前就绪，构建期间关闭 pnpm 自动重新安装。它核对 UI → 主包、主包 → engine 的实际解析路径属于副本，并确认两个包的产物确实含插桩；记录命令、构建日志和解析路径。复用第三方依赖时必须将全部 workspace 链接指向副本，不能用原工作树的未插桩 dist 产生假通过。此回归只证明准备包构建和 UI 消费链路；真实 Mpx 诊断及性能门禁仍需单独运行。
+
 - `operation-N.json` 按顺序保存实际开始、成功、失败、复用和失效事件。开始与完成以 `operationId` 对应，保留当前阶段和开始阶段；每轮额外 compilation 不合并或丢弃。`compilationCount` / `webpackCreatedCount` 是实际创建次数，`webpackCompletedCount` 是本插件处理完成次数，二者均包含 child；`snapshotCount` 仅登记每阶段首个完成的非 child 根编译快照，并保存对应 `compilationId`。child 先完成也不能抢占阶段快照。被跳过或失败的 compilation 不虚构完成；最后的 watch-stop 快照不增加编译次数或身份。
 - `text-<sha256>.json` 保存实际来源、生成请求中的 CSS 与产物 CSS/rawCss 全文，按内容去重，保留 CRLF、根目录文字及实际 marker。来源取自既有扫描读取结果，不额外读源码；Mpx watch 缓存省略来源文本时仍能复核未变化文件。控制器逐份校验引用、全文哈希、文件数和总字节，并复核每项操作开始与完成配对，损坏、缺失和超限均失败。
 - `matches.key`、`acquire.key`、`request.key`、`acquire.sourceSnapshot`、`request.snapshot`、`result.copy` 分别记录实际次数和耗时。计时包住原有一次调用，不重算 key 或重复复制数据；记录序列化耗时另列。没有服务池的基线不伪造这六项数据。

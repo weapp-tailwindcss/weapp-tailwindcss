@@ -1,5 +1,6 @@
 import ts from 'typescript'
 import { diagnosticSymbol } from './constants.mjs'
+import { guardMpxObserver } from './mpx-observer-guard.mjs'
 
 const observer = `(globalThis as any)[Symbol.for(${JSON.stringify(diagnosticSymbol)})]`
 const operations = `${observer}.operations`
@@ -173,6 +174,7 @@ export function instrumentMpxSource(source, kind, relative) {
     source = source.slice(0, edit.start) + edit.text + source.slice(edit.end)
     previous = edit.start
   }
+  source = guardMpxObserver(source, relative)
   const output = ts.createSourceFile(relative, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
   if (output.parseDiagnostics.length) {
     throw new Error(`Mpx 插桩后语法无效：${relative}`)
