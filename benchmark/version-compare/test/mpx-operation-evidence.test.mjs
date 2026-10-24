@@ -22,12 +22,13 @@ async function fixture() {
   const root = await directory()
   const writer = createEvidenceWriter(root)
   const recorder = createOperationRecorder({ root, writer, phase: () => ({ type: 'build-start' }) })
-  recorder.emit('webpack.created')
+  recorder.emit('webpack.created', { compilationId: 1, isChild: false })
   recorder.source(path.join(root, 'source.mpx'), '<view class="flex"/>')
   for (const name of ['generator.generate', 'native.create', 'native.generate', 'engine.compile', 'engine.build']) {
     recorder.sync(name, {}, () => undefined)
   }
-  recorder.emit('webpack.completed')
+  recorder.emit('webpack.completed', { compilationId: 1, isChild: false, selectedForSnapshot: true, startedPhase: { type: 'build-start' } })
+  writer.write('inputs-1.json', { compilationId: 1, phase: { type: 'build-start' } })
   const status = () => ({ ...writer.accounting(), operations: recorder.summary(), webpackCreatedCount: 1, webpackCompletedCount: 1, snapshotCount: 1 })
   return { root, recorder, status }
 }
@@ -45,7 +46,7 @@ describe('Mpx 操作完整性与跨工程比较', () => {
     ['C:\\', 'D:\\head', 'win32'],
   ])('仅结构化路径按已知根归一化：%s', (before, after, platform) => {
     const paths = platform === 'win32' ? path.win32 : path.posix
-    const details = root => ({ source: { base: root, dependencies: [paths.join(root, 'src', 'main.css'), 'relative.css'], css: { text: { sha256: sha256('a{}') } } }, request: { candidates: ['flex'] }, sessionId: root === before ? 1 : 7 })
+    const details = root => ({ source: { base: root, dependencies: [paths.join(root, 'src', 'main.css'), 'relative.css'], css: { text: { sha256: sha256('a{}') } } }, request: { candidates: ['flex'] }, sessionId: root === before ? 1 : 7, engineId: root === before ? 2 : 9 })
     expect(compareOperationInputs(controller(before, platform, details(before)), controller(after, platform, details(after))).sameRecordedOperationsAndInputs).toBe(true)
     const differentContent = details(after)
     differentContent.source.css.text.sha256 = sha256(`/* ${after} */a{}`)
@@ -64,6 +65,23 @@ describe('Mpx 操作完整性与跨工程比较', () => {
     const reversed = structuredClone(ordered)
     reversed.operationEvidence.inputs.reverse()
     expect(compareOperationInputs(ordered, reversed).sameRecordedOperationsAndInputs).toBe(false)
+  })
+
+  it('身份名单只排除事件顶层元数据，嵌套 options/source 同名输入和不透明引用仍保留', () => {
+    const identityFields = ['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId']
+    const details = value => ({ ...Object.fromEntries(identityFields.map(name => [name, value])), options: { ownerId: 7 }, source: { generatorId: 8 } })
+    const base = controller('/base', 'linux', details(1))
+    const current = controller('/head', 'linux', details(99))
+    expect(compareOperationInputs(base, current).sameRecordedOperationsAndInputs).toBe(true)
+    current.operationEvidence.inputs[0].details.options.ownerId = 10
+    expect(compareOperationInputs(base, current).sameRecordedOperationsAndInputs).toBe(false)
+    current.operationEvidence.inputs[0].details.options.ownerId = 7
+    current.operationEvidence.inputs[0].details.source.generatorId = 10
+    expect(compareOperationInputs(base, current).sameRecordedOperationsAndInputs).toBe(false)
+    for (const reference of [{ opaqueFunction: 1, comparableAcrossWorkers: false }, { reference: 1, comparableAcrossWorkers: false }]) {
+      const input = controller('/base', 'linux', { options: { callback: reference } })
+      expect(compareOperationInputs(input, structuredClone(input))).toMatchObject({ sameRecordedOperationsAndInputs: false, opaqueInputs: true })
+    }
   })
 
   it('完整文件、全文引用和操作配对通过，尾部缺失、重复完成及未对应完成失败', async () => {

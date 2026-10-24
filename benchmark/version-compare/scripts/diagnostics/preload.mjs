@@ -90,7 +90,7 @@ async function start() {
     throw error
   }
 
-  async function capture(collections, stop = false, completedPhase) {
+  async function capture(collections, stop = false, completedPhase, rootCompilationId) {
     if (recordingError || complete) {
       throw new Error(recordingError ?? '诊断会话已关闭')
     }
@@ -103,7 +103,7 @@ async function start() {
     try {
       // 先取 profile，再序列化来源；观测自身分配会进入下一份累计 profile，按诊断栈单独标识。
       const sampling = await sampler?.capture(stop)
-      const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started })
+      const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId: rootCompilationId })
       if (frames) {
         frameReceipts.push(frames)
       }
@@ -123,24 +123,28 @@ async function start() {
       }
       const current = stage()
       const type = current.type === 'watch-ready' ? 'watch-start' : current.type.replace(/-observed$/, '-write')
-      webpackPhases.set(compilation, { ...current, type })
+      const isChild = compilation.compiler?.isChild?.() ?? false
+      const id = operations.identity(compilation)
+      webpackPhases.set(compilation, { phase: { ...current, type }, isChild, id })
       webpackCreatedCount++
-      operations.emit('webpack.created', { compilationId: operations.identity(compilation), isChild: compilation.compiler?.isChild?.() ?? false })
+      operations.emit('webpack.created', { compilationId: id, isChild })
     },
     webpackCompleted(compilation, collections) {
-      const phase = webpackPhases.get(compilation)
-      if (!operations || !phase) {
+      const recorded = webpackPhases.get(compilation)
+      if (!operations || !recorded) {
         throw new Error('Webpack 完成缺少创建事件')
       }
       webpackPhases.delete(compilation)
       webpackCompletedCount++
-      operations.emit('webpack.completed', { compilationId: operations.identity(compilation), collections, startedPhase: phase })
+      const { phase, isChild, id } = recorded
       const key = `${phase.type}:${phase.round ?? ''}`
-      if (capturedPhases.has(key)) {
+      const selectedForSnapshot = !isChild && !capturedPhases.has(key)
+      operations.emit('webpack.completed', { compilationId: id, isChild, selectedForSnapshot, collections, startedPhase: phase })
+      if (!selectedForSnapshot) {
         return queue
       }
       capturedPhases.add(key)
-      queue = queue.then(() => capture(collections, identity.kind === 'build', phase))
+      queue = queue.then(() => capture(collections, identity.kind === 'build', phase, id))
       return queue
     },
     registerStore(store) {

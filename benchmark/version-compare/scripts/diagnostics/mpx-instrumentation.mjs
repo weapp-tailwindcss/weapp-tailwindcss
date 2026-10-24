@@ -61,13 +61,13 @@ export function instrumentMpxSource(source, kind, relative) {
     if (!ts.isArrowFunction(callback) || !ts.isBlock(callback.body)) {
       throw new Error('Webpack compilation 回调结构改变')
     }
-    insert(callback.body.getStart(ast) + 1, `\n${observer}.webpackCreated(compilation);\n`)
+    insert(callback.body.getStart(ast) + 1, `;\n${observer}.webpackCreated(compilation);\n`)
     const end = call(fn, 'finalizeWebpackProcessAssets')
     if (!ts.isAwaitExpression(end.parent) || !ts.isExpressionStatement(end.parent.parent)) {
       throw new Error('Webpack 完成锚点必须是独立 await')
     }
     const statement = end.parent.parent
-    insert(statement.end, `\nawait ${observer}.webpackCompleted(compilation, { sourceCandidates: webpackSourceCandidateSet ?? [], runtime: runtimeSet, transformRuntime: transformRuntimeSet, generatorRuntime: generatorRuntimeSet });\n`)
+    insert(statement.end, `;\nawait ${observer}.webpackCompleted(compilation, { sourceCandidates: webpackSourceCandidateSet ?? [], runtime: runtimeSet, transformRuntime: transformRuntimeSet, generatorRuntime: generatorRuntimeSet });\n`)
   }
   else if (kind === 'scan') {
     const fn = named('resolveScanFileSnapshot')
@@ -76,33 +76,40 @@ export function instrumentMpxSource(source, kind, relative) {
     if (!ts.isVariableDeclaration(declaration) || declaration.name.getText(ast) !== 'source') {
       throw new Error('扫描源码读取锚点改变')
     }
-    insert(declaration.parent.parent.end, `\n${operations}.source(file, source);\n`)
+    insert(declaration.parent.parent.end, `;\n${operations}.source(file, source);\n`)
     const signature = call(named('resolve'), 'createSourceCandidateScanSignature')
     const signatureDeclaration = signature.parent
     if (!ts.isVariableDeclaration(signatureDeclaration) || signatureDeclaration.name.getText(ast) !== 'nextSignature') {
       throw new Error('扫描签名锚点改变')
     }
-    insert(signatureDeclaration.parent.parent.end, `\n${operations}.emit('scan.signature', { signature: JSON.parse(nextSignature), root, outDir });\n`)
+    insert(signatureDeclaration.parent.parent.end, `;\n${operations}.emit('scan.signature', { signature: JSON.parse(nextSignature), root, outDir });\n`)
     const cache = call(named('resolve'), 'scans.get')
     wrapCall(cache, 'scan.lookup', '{ signatureHash: nextSignatureHash }')
   }
   else if (kind === 'generator') {
-    surround(named('createTailwindV4Engine'), 'generator.create', '{ source }')
-    surround(named('generate'), 'generator.generate', '{ source, options }', true)
-    surround(named('dispose'), 'generator.dispose', '{}')
+    const factory = named('createTailwindV4Engine')
+    unique(factory, node => ts.isVariableDeclaration(node) && node.name.getText(ast) === 'engine' && ts.isObjectLiteralExpression(node.initializer), 'generator engine identity')
+    unique(factory, node => ts.isVariableDeclaration(node) && node.name.getText(ast) === 'generationSessions' && ts.isNewExpression(node.initializer) && node.initializer.expression.getText(ast) === 'TailwindV4NativeSessionPool', 'generator native pool identity')
+    surround(factory, 'generator.create', '{ source }')
+    const identities = `engineId: ${operations}.identity(engine), poolId: ${operations}.identity(generationSessions)`
+    surround(named('generate'), 'generator.generate', `{ ${identities}, source, options }`, true)
+    surround(named('dispose'), 'generator.dispose', `{ ${identities} }`)
   }
   else if (kind === 'native') {
     const fn = named('getSession')
     wrapCall(call(fn, 'this.createSession'), 'native.create', '{ poolId: ' + `${operations}.identity(this), target, sourceKey, source, preparation }`)
     const cachedReturn = unique(fn, node => ts.isReturnStatement(node) && node.expression?.getText(ast) === 'cached', 'cached return')
-    insert(cachedReturn.getStart(ast), `${operations}.emit('native.reuse', { poolId: ${operations}.identity(this), sessionId: ${operations}.identity(cached.session), target, sourceKey });\n`)
+    if (!ts.isBlock(cachedReturn.parent)) {
+      throw new Error('原生会话缓存返回必须处于显式语句块')
+    }
+    insert(cachedReturn.getStart(ast), `;${operations}.emit('native.reuse', { poolId: ${operations}.identity(this), sessionId: ${operations}.identity(cached.session), target, sourceKey });\n`)
     const release = call(named('disposeEntry'), 'entry.session.dispose')
-    edits.push({ start: release.getStart(ast), end: release.end, text: `${operations}.observe('native.dispose', { sessionId: ${operations}.identity(entry.session) }, () => (${release.getText(ast)}))` })
-    wrapCall(call(named('generate'), 'entry.session.generate'), 'native.generate', '{ sessionId: ' + `${operations}.identity(entry.session), target, sourceKey, source, request }`, true)
+    edits.push({ start: release.getStart(ast), end: release.end, text: `${operations}.observe('native.dispose', { poolId: ${operations}.identity(this), sessionId: ${operations}.identity(entry.session) }, () => (${release.getText(ast)}))` })
+    wrapCall(call(named('generate'), 'entry.session.generate'), 'native.generate', '{ poolId: ' + `${operations}.identity(this), sessionId: ${operations}.identity(entry.session), target, sourceKey, source, request }`, true)
   }
   else if (kind === 'engine') {
     const constructor = unique(ast, ts.isConstructorDeclaration, 'engine constructor')
-    insert(constructor.body.end - 1, `\n${operations}.emit('engine.create', { sessionId: ${operations}.identity(this), source });\n`)
+    insert(constructor.body.end - 1, `;\n${operations}.emit('engine.create', { sessionId: ${operations}.identity(this), source });\n`)
     surround(named('dispose'), 'engine.dispose', `{ sessionId: ${operations}.identity(this) }`)
     surround(named('invalidate'), 'engine.invalidate', `{ sessionId: ${operations}.identity(this), change }`)
     wrapCall(call(named('generateInternal'), 'runtime.compiled.build'), 'engine.build', `{ sessionId: ${operations}.identity(this), source, candidates: buildCandidates }`)
@@ -132,12 +139,27 @@ export function instrumentMpxSource(source, kind, relative) {
     wrapCall(call(acquire, 'copyGeneratorServiceResult'), 'result.copy', '{}')
     wrapCall(call(acquire, 'this.available.get'), 'service.lookup', `{ ownerId: ${operations}.identity(this), key }`)
     wrapCall(call(acquire, 'this.createGenerator'), 'service.create', `{ ownerId: ${operations}.identity(this), key, source: stableSource }`)
+    const leaseRegistration = call(acquire, 'this.leases.set')
+    if (!ts.isExpressionStatement(leaseRegistration.parent) || leaseRegistration.arguments.map(argument => argument.getText(ast)).join(',') !== 'generator,lease') {
+      throw new Error('服务租约登记锚点改变')
+    }
+    insert(leaseRegistration.parent.end, `;\n${operations}.emit('service.acquire', { ownerId: ${operations}.identity(this), serviceId: ${operations}.identity(entry), serviceGeneratorId: ${operations}.identity(entry.generator), leaseId: ${operations}.identity(lease), generatorId: ${operations}.identity(generator), key, references: entry.references });\n`)
+    const matchesReturn = unique(named('matches'), node => ts.isReturnStatement(node) && Boolean(node.expression), 'matches result').expression
+    insert(matchesReturn.getStart(ast), `${operations}.sync('service.matches', { ownerId: ${operations}.identity(this), serviceId: ${operations}.identity(lease?.entry), serviceGeneratorId: ${operations}.identity(lease?.entry.generator), leaseId: ${operations}.identity(lease), generatorId: ${operations}.identity(generator), key: lease?.entry.key }, () => (`)
+    insert(matchesReturn.end, '))')
     for (const method of ['retire', 'closeEntry']) {
       surround(named(method), `service.${method}`, `{ ownerId: ${operations}.identity(this), serviceId: ${operations}.identity(entry), key: entry.key }`)
     }
-    surround(named('release'), 'service.release', `{ ownerId: ${operations}.identity(this), leaseId: ${operations}.identity(lease), serviceId: ${operations}.identity(lease.entry) }`)
+    const release = named('release')
+    const guard = release.body.statements[0]
+    if (!ts.isIfStatement(guard) || guard.expression.getText(ast) !== 'lease.disposal' || all(guard, node => ts.isReturnStatement(node) && node.expression?.getText(ast) === 'lease.disposal').length !== 1) {
+      throw new Error('服务幂等释放锚点改变')
+    }
+    // 重复 dispose 在既有 guard 返回同一 Promise，只记录一次实际释放转换。
+    insert(guard.end, `\nreturn ${operations}.observe('service.release', { ownerId: ${operations}.identity(this), leaseId: ${operations}.identity(lease), serviceId: ${operations}.identity(lease.entry), serviceGeneratorId: ${operations}.identity(lease.entry.generator), key: lease.entry.key }, () => {\n`)
+    insert(release.body.end - 1, '\n});\n')
     const disposal = call(named('closeEntry'), 'entry.generator.dispose')
-    edits.push({ start: disposal.getStart(ast), end: disposal.end, text: `${operations}.observe('service.dispose', { serviceId: ${operations}.identity(entry), key: entry.key, callable: typeof entry.generator.dispose === 'function' }, () => (${disposal.getText(ast)}))` })
+    edits.push({ start: disposal.getStart(ast), end: disposal.end, text: `${operations}.observe('service.dispose', { ownerId: ${operations}.identity(this), serviceId: ${operations}.identity(entry), serviceGeneratorId: ${operations}.identity(entry.generator), key: entry.key, callable: typeof entry.generator.dispose === 'function' }, () => (${disposal.getText(ast)}))` })
   }
   else {
     throw new Error(`未知 Mpx 插桩能力：${kind}`)

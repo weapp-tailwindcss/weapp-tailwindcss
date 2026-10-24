@@ -114,7 +114,7 @@ export function createOperationRecorder({ writer, root, phase }) {
     const start = performance.now()
     const finish = (result) => {
       const duration = performance.now() - start
-      emit(`${name}.success`, { operationId, resultId: identity(result), ...(name.endsWith('.key') ? { key: result } : {}), ...(['generator.generate', 'native.generate'].includes(name) ? { result } : {}), ...(name === 'engine.build' ? { css: result } : {}) }, duration, startedPhase)
+      emit(`${name}.success`, { operationId, resultId: identity(result), ...(name.endsWith('.key') ? { key: result } : {}), ...(['generator.generate', 'native.generate', 'service.matches'].includes(name) ? { result } : {}), ...(name === 'engine.build' ? { css: result } : {}) }, duration, startedPhase)
       return result
     }
     const fail = (error) => {

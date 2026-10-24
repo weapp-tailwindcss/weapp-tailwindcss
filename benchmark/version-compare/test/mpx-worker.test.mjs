@@ -45,19 +45,30 @@ const candidates = () => new Set(read().includes('twbenchdiagnosticround') ? ['f
 const source = { css: '@import "tailwindcss";', base: identity.root };
 const session = ops.sync('native.create', { source }, () => ({}));
 ops.sync('engine.compile', { source }, () => ({}));
+let service;
 if (identity.capabilities.compilerServicePool.available) {
-  ops.sync('service.lookup', { key: 'fixture' }, () => undefined);
-  ops.sync('service.create', { source, key: 'fixture' }, () => ({}));
+  service = { ownerId: ops.identity({}), serviceId: ops.identity({}), leaseId: ops.identity({}), generatorId: ops.identity({}), key: 'fixture', references: 1 };
+  ops.sync('service.lookup', { ownerId: service.ownerId, key: service.key }, () => undefined);
+  const generator = ops.sync('service.create', { ownerId: service.ownerId, source, key: service.key }, () => ({}));
+  service.serviceGeneratorId = ops.identity(generator);
+  ops.emit('service.acquire', service);
 }
 const store = { snapshot: () => ({ candidatesById: [[file, [...candidates()]]], sourceById: [[file, read()]], inlineIncludedCandidates: [], inlineExcludedCandidates: [] }), values: candidates, getRevision: () => 1 };
 observer.registerStore(store);
 async function compile() {
   const compilation = {};
   observer.webpackCreated(compilation);
+  if (process.env.MPX_DIAGNOSTIC_CHILD_FIRST === '1') {
+    const child = { compiler: { isChild: () => true } };
+    observer.webpackCreated(child);
+    const childCandidates = new Set(['child-only']);
+    await observer.webpackCompleted(child, { sourceCandidates: childCandidates, runtime: childCandidates, transformRuntime: childCandidates, generatorRuntime: childCandidates });
+  }
   const content = read();
   ops.source(file, content);
   const input = store.values();
   if (identity.capabilities.compilerServicePool.available) for (const name of ['matches.key', 'acquire.key', 'request.key', 'acquire.sourceSnapshot', 'request.snapshot', 'result.copy']) ops.sync(name, {}, () => 'fixture');
+  if (service) ops.sync('service.matches', service, () => true);
   await ops.async('generator.generate', { source, options: { candidates: input } }, async () => {
     await ops.async('native.generate', { source, request: { candidates: input } }, async () => ({}));
     const css = ops.sync('engine.build', { source, candidates: input }, () => [...input].join(' '));
@@ -67,6 +78,7 @@ async function compile() {
 }
 process.on('message', async value => {
   if (value === 'exit') {
+    if (service) await ops.observe('service.release', service, () => Promise.resolve());
     const promise = Promise.resolve();
     if (ops.observe('native.dispose', { sessionId: ops.identity(session) }, () => promise) !== promise) throw new Error('dispose identity');
     await promise;
@@ -80,8 +92,8 @@ process.on('message', async value => {
 await compile(); process.send('ready');
 `
 
-describe('真实 Mpx worker 输入与操作证据', () => {
-  it.each([[false, 'inputs'], [true, 'inputs'], [false, 'allocation']])('三轮增删回滚、额外编译与停止采样后释放完整保留，服务能力=%s 模式=%s', async (servicePool, mode) => {
+describe('Mpx 诊断的真实 Node worker 协议', () => {
+  it.each([[false, 'inputs', false], [true, 'inputs', false], [false, 'allocation', false], [false, 'inputs', true]])('三轮增删、额外编译与停止采样后释放保留，服务=%s 模式=%s child先完成=%s', async (servicePool, mode, childFirst) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mpx-diagnostic-worker-'))
     roots.push(root)
     if (servicePool) {
@@ -94,7 +106,7 @@ describe('真实 Mpx worker 输入与操作证据', () => {
     const original = '<view class="flex">中文</view>'
     await fs.writeFile(source, original)
     const diagnostic = await createCaseDiagnostics({ allocation: mode, cwd, versionMeta: versionFor(root), projectMeta: mpxProject, directory: path.join(root, 'evidence'), kind: 'hmr', run: 1 })
-    const child = spawn(process.execPath, [entry], { cwd, env: { ...process.env, ...diagnostic.env }, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] })
+    const child = spawn(process.execPath, [entry], { cwd, env: { ...process.env, ...diagnostic.env, MPX_DIAGNOSTIC_CHILD_FIRST: childFirst ? '1' : '0' }, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] })
     let output = ''
     child.stderr.on('data', (chunk) => {
       output += chunk
@@ -121,13 +133,27 @@ describe('真实 Mpx worker 输入与操作证据', () => {
       await diagnostic.finish()
       const directory = JSON.parse(diagnostic.env.WEAPP_TW_BENCH_ALLOCATION_SESSION).sessionDirectory
       const controller = JSON.parse(await fs.readFile(path.join(directory, 'allocation-controller.json'), 'utf8'))
-      expect(controller.operationEvidence).toMatchObject({ webpackCreated: 9, webpackCompleted: 9, snapshotCount: 8, capabilities: { compilerServicePool: { available: servicePool } } })
-      expect(controller.status.compilationCount).toBe(9)
+      const compilations = childFirst ? 18 : 9
+      expect(controller.operationEvidence).toMatchObject({ webpackCreated: compilations, webpackCompleted: compilations, snapshotCount: 8, capabilities: { compilerServicePool: { available: servicePool } } })
+      expect(controller.status.compilationCount).toBe(compilations)
+      expect(controller.operationEvidence.rootSnapshots).toHaveLength(7)
       const final = JSON.parse(await fs.readFile(path.join(directory, 'inputs-8.json'), 'utf8'))
       expect(final.compilationCandidates).toBeUndefined()
+      expect(final.compilationId).toBeUndefined()
       const files = (await fs.readdir(directory)).filter(name => /^operation-\d+\.json$/.test(name))
       const events = await Promise.all(files.map(name => fs.readFile(path.join(directory, name), 'utf8').then(JSON.parse)))
-      expect(events.filter(event => event.name === 'webpack.completed' && event.phase.type === 'mutation-write' && event.phase.round === 3)).toHaveLength(3)
+      events.sort((left, right) => left.sequence - right.sequence)
+      expect(events.filter(event => event.name === 'webpack.completed' && event.phase.type === 'mutation-write' && event.phase.round === 3)).toHaveLength(childFirst ? 6 : 3)
+      for (const snapshot of controller.operationEvidence.rootSnapshots) {
+        const inputs = JSON.parse(await fs.readFile(path.join(directory, snapshot.file), 'utf8'))
+        const completion = events.find(event => event.name === 'webpack.completed' && event.details.compilationId === inputs.compilationId)
+        expect(completion.details).toMatchObject({ isChild: false, selectedForSnapshot: true })
+        expect(inputs.compilationCandidates.runtime).not.toContain('child-only')
+      }
+      if (childFirst) {
+        expect(events.filter(event => event.name === 'webpack.completed' && event.details.isChild)).toHaveLength(9)
+        expect(events.find(event => event.name === 'webpack.completed').details).toMatchObject({ isChild: true, selectedForSnapshot: false })
+      }
       expect(events.find(event => event.name === 'native.dispose.success').phase.type).toBe('watch-stop')
       const request = events.find(event => event.name === 'generator.generate.start' && event.phase.type === 'rollback-write' && event.phase.round === 3)
       expect(request.details.options.candidates).toEqual(['flex'])
@@ -153,7 +179,7 @@ describe('真实 Mpx worker 输入与操作证据', () => {
     }
   }, 30000)
 
-  it('真实 worker 释放拒绝后退出时保留失败，缺失编译与阶段不能验收成功', async () => {
+  it('Node worker 释放拒绝后退出时保留失败，缺失编译与阶段不能验收成功', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mpx-diagnostic-failure-'))
     roots.push(root)
     const failure = `const ops = globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})].operations;

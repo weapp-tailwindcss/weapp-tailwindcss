@@ -48,10 +48,13 @@ Mpx 使用 `--only demo-mpx-tailwindcss-v4__mp-weixin`，其他限制相同。�
 
 Mpx 仅在准备副本注入唯一 AST 锚点：Webpack compilation 创建与处理完成、来源扫描已读到的文本、生成器、原生生成会话、底层 compile/build，以及版本存在时的 compiler 服务池。准备阶段验证所有锚点后才写入；基线缺失服务池登记为 `absentCapabilities`，不是零次调用。锚点损坏仍直接失败。
 
-- `operation-N.json` 按顺序保存实际开始、成功、失败、复用和失效事件。开始与完成以 `operationId` 对应，保留当前阶段和开始阶段；每轮额外 compilation 不合并或丢弃。`compilationCount` / `webpackCreatedCount` 是实际创建次数，`webpackCompletedCount` 是本插件处理完成次数，`snapshotCount` 单独记录阶段快照。被跳过或失败的 compilation 不虚构完成；最后的 watch-stop 快照不增加编译次数。
+- `operation-N.json` 按顺序保存实际开始、成功、失败、复用和失效事件。开始与完成以 `operationId` 对应，保留当前阶段和开始阶段；每轮额外 compilation 不合并或丢弃。`compilationCount` / `webpackCreatedCount` 是实际创建次数，`webpackCompletedCount` 是本插件处理完成次数，二者均包含 child；`snapshotCount` 仅登记每阶段首个完成的非 child 根编译快照，并保存对应 `compilationId`。child 先完成也不能抢占阶段快照。被跳过或失败的 compilation 不虚构完成；最后的 watch-stop 快照不增加编译次数或身份。
 - `text-<sha256>.json` 保存实际来源、生成请求中的 CSS 与产物 CSS/rawCss 全文，按内容去重，保留 CRLF、根目录文字及实际 marker。来源取自既有扫描读取结果，不额外读源码；Mpx watch 缓存省略来源文本时仍能复核未变化文件。控制器逐份校验引用、全文哈希、文件数和总字节，并复核每项操作开始与完成配对，损坏、缺失和超限均失败。
 - `matches.key`、`acquire.key`、`request.key`、`acquire.sourceSnapshot`、`request.snapshot`、`result.copy` 分别记录实际次数和耗时。计时包住原有一次调用，不重算 key 或重复复制数据；记录序列化耗时另列。没有服务池的基线不伪造这六项数据。
 - 服务、生成器及 engine/native 会话只用弱映射分配进程内身份。复用、创建、退役、实际 dispose 调用及其返回分别记录；服务可选 dispose 记录 `callable`，方法不存在不能算作已释放。`native` 指本项目的生成会话层，不等同于 Rust 分配器；逻辑释放不能证明 RSS 下降。采样停止后仍被动记录实际关闭事件，不额外调用 dispose、不改变信号或生产关闭顺序。尾部状态与事件不一致即缺证，缺少释放事件不自动解释为泄漏或成功释放。
+- `service.acquire` 在原有租约登记后关联 owner、entry、底层 `serviceGeneratorId`、lease、公开 facade 的 `generatorId`、key 和当时引用数；`service.matches` 保存实际布尔结果及同组身份。`serviceGeneratorId` 等于 `service.create.success.resultId`、`generator.create.success.resultId` 和生成/释放事件的 `engineId`；后者同时记录原生 `poolId`，与 `native.create/generate/dispose` 的 pool/session 身份串联。退役后相同 key 的新 entry 是不同代际。释放须对应既有 acquire 且身份一致，未知租约、跨 owner 或重复实际释放均失败；生产幂等 guard 内的重复 dispose 继续返回同一 Promise，不伪造第二次释放转换。
 - 扫描 signature 原始结构含绝对工程根和输出目录，不同副本根足以改变其哈希。对照只归一化结构化路径，全文哈希不归一化；没有全文比较前，不能据签名差异宣称实际来源相同或不同。操作对照保留实际次数与顺序，以工件引用定位差异；不透明对象或函数身份不能用来证明跨进程闭包相等。
 
 每会话最多 4096 个操作事件、4096 个弱映射身份；仍共用每文件 16 MiB、会话 64 MiB 的写入预算，全文文件与操作事件均计入。未知候选迭代器不能被额外消费，诊断明确失败。观测会改变分配和时序，所有数据仅用于诊断，不能直接解释原正式 RSS 差异。
+
+定向回归包含真实 Node 子进程中的 Mpx 诊断 worker 协议、手工构造的 compilation/store/操作，以及插桩后真实会话源码的受控依赖测试；这些不是实际 Mpx CLI 构建验收。真实框架行为仍需在集成后的准确 head 上单独运行 inputs 诊断，不能以协议 fixture 通过代替。

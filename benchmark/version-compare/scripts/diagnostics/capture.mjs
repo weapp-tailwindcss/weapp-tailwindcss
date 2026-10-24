@@ -2,7 +2,7 @@ import { performance } from 'node:perf_hooks'
 import { candidateEvidence, compilationCandidates } from './evidence.mjs'
 import { annotateAllocationFrames } from './frames.mjs'
 
-export function persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started }) {
+export function persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId }) {
   // 原始 profile 与输入先持久保存；归因失败仍保留首败数据，不把缺失映射当作成功。
   const profileFile = sampling ? `allocation-${index}.json` : undefined
   const framesFile = sampling ? `allocation-frames-${index}.json` : undefined
@@ -24,6 +24,7 @@ export function persistCompilationEvidence({ identity, phase, index, sampling, s
     identity,
     phase,
     index,
+    compilationId,
     sources,
     compilationCandidates: collections ? compilationCandidates(collections) : undefined,
     profileFile,

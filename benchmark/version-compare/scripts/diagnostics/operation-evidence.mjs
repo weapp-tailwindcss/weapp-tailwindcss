@@ -2,6 +2,10 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { limits } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { verifyServiceEvidence } from './service-evidence.mjs'
+
+// 只排除事件 details 顶层的进程内身份；同名用户输入和不透明引用仍完整比较。
+const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey'])
 
 /** 控制器逐份复核全文引用；不以缺失或截断记录证明没有操作。 */
 export async function verifyOperationEvidence(directory, status, identity = {}) {
@@ -78,7 +82,7 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
   }
   const requiredOperations = ['webpack.created', 'webpack.completed', 'scan.source', 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.success']
   if (identity.capabilities?.compilerServicePool.available) {
-    requiredOperations.push('service.lookup.start', 'service.create.start', 'acquire.key.success', 'request.key.success', 'acquire.sourceSnapshot.success', 'request.snapshot.success', 'result.copy.success')
+    requiredOperations.push('service.lookup.start', 'service.create.start', 'service.acquire', 'acquire.key.success', 'request.key.success', 'acquire.sourceSnapshot.success', 'request.snapshot.success', 'result.copy.success')
   }
   for (const required of requiredOperations) {
     if (!events.some(event => event.name === required)) {
@@ -89,12 +93,58 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
   if (count('webpack.created') !== status.webpackCreatedCount || count('webpack.completed') !== status.webpackCompletedCount) {
     throw new Error('Mpx 编译次数与最后状态不一致')
   }
+  const serviceEvidence = verifyServiceEvidence(events)
+  const compilations = new Map()
+  for (const event of events.filter(item => item.name === 'webpack.created' || item.name === 'webpack.completed')) {
+    const { compilationId, isChild } = event.details
+    if (event.name === 'webpack.created') {
+      if (!Number.isInteger(compilationId) || compilations.has(compilationId) || typeof isChild !== 'boolean') {
+        throw new Error('Webpack compilation 创建身份无效或重复')
+      }
+      compilations.set(compilationId, { isChild, completed: false })
+    }
+    else {
+      const creation = compilations.get(compilationId)
+      if (!creation || creation.completed || creation.isChild !== isChild) {
+        throw new Error('Webpack compilation 完成身份不匹配')
+      }
+      creation.completed = true
+    }
+  }
+  const selectedCompilations = new Map(events.filter(event => event.name === 'webpack.completed' && event.details.selectedForSnapshot).map(event => [event.details.compilationId, event]))
+  const rootSnapshots = []
+  const snapshots = files.filter(file => /^inputs-\d+\.json$/.test(file))
+  if (snapshots.length !== status.snapshotCount) {
+    throw new Error('阶段快照数量与最后状态不一致')
+  }
+  for (const name of snapshots) {
+    const inputs = JSON.parse(await fs.readFile(path.join(directory, name), 'utf8'))
+    if (inputs.phase.type === 'watch-stop') {
+      if (inputs.compilationId !== undefined) {
+        throw new Error('停止采样不能虚构 compilation 身份')
+      }
+      continue
+    }
+    const completion = selectedCompilations.get(inputs.compilationId)
+    const creation = compilations.get(inputs.compilationId)
+    if (!completion || !creation || creation.isChild !== false || completion.details.isChild !== false
+      || completion.details.startedPhase.type !== inputs.phase.type || completion.details.startedPhase.round !== inputs.phase.round) {
+      throw new Error('阶段快照必须对应已完成的非 child 根 compilation')
+    }
+    rootSnapshots.push({ file: name, compilationId: inputs.compilationId })
+    selectedCompilations.delete(inputs.compilationId)
+  }
+  if (selectedCompilations.size) {
+    throw new Error('根 compilation 缺少对应阶段快照')
+  }
   return {
     events: events.length,
     textFiles: texts.size,
     webpackCreated: count('webpack.created'),
     webpackCompleted: count('webpack.completed'),
     snapshotCount: status.snapshotCount,
+    rootSnapshots,
+    serviceEvidence,
     capabilities: identity.capabilities,
     lifecycleBoundary: '按实际调用记录；watch-stop 仅停止采样。关闭尾部可能缺失，不以创建减释放推断泄漏或原生内存释放。',
     inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature'].includes(event.name)).map(event => `operation-${event.sequence}.json`),
@@ -117,7 +167,6 @@ function normalizeInput(value, root, platform, key = '') {
     return { textSha256: value.text.sha256 }
   }
   return Object.fromEntries(Object.entries(value)
-    .filter(([name]) => !['sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey'].includes(name))
     .map(([name, item]) => [name, normalizeInput(item, root, platform, name)]))
 }
 
@@ -126,7 +175,7 @@ export function compareOperationInputs(base, current) {
     return controller.operationEvidence.inputs.map(event => ({
       name: event.name,
       phase: { type: event.phase.type.replace(/-observed$/, '-write'), round: event.phase.round },
-      details: normalizeInput(event.details, controller.identity.root, controller.identity.platform),
+      details: normalizeInput(Object.fromEntries(Object.entries(event.details).filter(([name]) => !operationMetadataFields.has(name))), controller.identity.root, controller.identity.platform),
     }))
   }
   const beforeValues = values(base).map(value => JSON.stringify(value))
