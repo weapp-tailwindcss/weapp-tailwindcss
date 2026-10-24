@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ESLint } from 'eslint'
@@ -12,6 +13,22 @@ beforeAll(async () => {
   const config = await eslint.calculateConfigForFile(path.join(root, 'scripts', 'agents', 'check.mjs'))
   assert.ok(config, '仓库维护的脚本必须加载真实 ESLint 配置')
   assert.ok(Object.keys(config.rules ?? {}).length > 0, '真实 ESLint 配置必须包含检查规则')
+})
+
+it.each([
+  ['packages-runtime', 'ui', 'src', 'index.css'],
+  ['website', 'src', 'css', 'tailwind.css'],
+])('真实 CSS 配置不得启用 Prettier 格式化规则：%j', async (...segments) => {
+  const file = path.join(root, ...segments)
+  assert.equal((await stat(file)).isFile(), true, '必须验证仓库中的真实 CSS 文件')
+  const config = await eslint.calculateConfigForFile(file)
+  // 关闭格式化器后 CSS 可以没有 ESLint 配置；此合同不扩展既有文件检查范围。
+  for (const [name, value] of Object.entries(config?.rules ?? {})) {
+    if (name === 'format/prettier' || name.endsWith('/prettier')) {
+      const severity = Array.isArray(value) ? value[0] : value
+      assert.ok(severity === 0 || severity === 'off', `${name} 不得在普通 lint 中调用 Prettier`)
+    }
+  }
 })
 
 it.each([

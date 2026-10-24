@@ -3,6 +3,7 @@ import { createMonorepoEslintConfig } from 'repoctl/tooling'
 
 const config = createMonorepoEslintConfig(
   {
+    formatters: false,
     tailwindcss: false,
     markdown: false,
     ignores: [
