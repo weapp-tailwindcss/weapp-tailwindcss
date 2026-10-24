@@ -34,15 +34,15 @@ on:
         required: false
         default: ''
       gc_diagnostics:
-        description: 为 only 指定的 Mpx 或 Uni Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.3
+        description: 为 only 指定的 Mpx、Uni 或 Taro Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.3
         type: boolean
         default: false
       input_diagnostics:
-        description: 仅 Uni 的完整候选与来源证据，独立诊断，不启用 inspector，不参与正式预算
+        description: Uni 或 Taro Vite 的完整候选与来源证据，独立诊断，不启用 inspector，不参与正式预算
         type: boolean
         default: false
       allocation_diagnostics:
-        description: 仅 Uni 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
+        description: Uni 或 Taro Vite 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
         type: boolean
         default: false
       build_runs:
@@ -192,7 +192,7 @@ jobs:
       # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
       WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
       # 私有自然 GC 证据与原 RSS 门禁隔离，两侧及已有确认轮次使用相同 preload。
-      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || (github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin')) && '1' || '0' }}
+      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || (github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && (matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'))) && '1' || '0' }}
 
     steps:
       - name: Check out code

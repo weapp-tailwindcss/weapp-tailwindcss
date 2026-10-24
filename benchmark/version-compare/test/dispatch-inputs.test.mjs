@@ -10,6 +10,7 @@ import { validateBenchmarkDispatch } from '../scripts/dispatch-inputs.mjs'
 const roots = []
 const uni = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
 const mpx = 'demo-mpx-tailwindcss-v4__mp-weixin'
+const taro = 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
@@ -37,11 +38,11 @@ describe('手动诊断输入边界', () => {
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: '0'.repeat(40) })).toThrow('对象不存在')
   })
 
-  it.each([uni, mpx, `${uni},${mpx}`])('诊断允许显式登记的项目 %s', (only) => {
+  it.each([uni, mpx, taro, `${uni},${mpx}`, `${uni},${taro}`])('诊断允许显式登记的项目 %s', (only) => {
     expect(() => validateBenchmarkDispatch({ gcDiagnostics: true, only })).not.toThrow()
   })
 
-  it.each(['', 'unknown', 'toString', 'demo-taro-vite-react-tailwindcss-v4__mp-weixin', `${uni},unknown`])('诊断拒绝缺失或不支持的项目 %j', (only) => {
+  it.each(['', 'unknown', 'toString', 'demo-taro-webpack-tailwindcss-v4__mp-weixin', `${uni},unknown`])('诊断拒绝缺失或不支持的项目 %j', (only) => {
     expect(() => validateBenchmarkDispatch({ gcDiagnostics: true, only })).toThrow('显式选择')
   })
 
@@ -88,7 +89,7 @@ describe('Benchmark 工作流诊断装配', () => {
     expect(render(workflow.concurrency.group, 'workflow_dispatch', { gc_diagnostics: true })).toBe('benchmark-diagnostic-123')
   })
 
-  it('只在显式诊断 dispatch 为 Uni 启用 preload 和固定 Node，正式 PR 保持原策略', async () => {
+  it('只在显式诊断 dispatch 为 Uni/Taro 启用 preload 和固定 Node，正式 PR 保持原策略', async () => {
     const workflow = parse(await fs.readFile(new URL('../../../.github/workflows/benchmark.yml', import.meta.url), 'utf8'))
     expect(workflow.on.workflow_dispatch.inputs.gc_diagnostics).toMatchObject({ type: 'boolean', default: false })
     expect(workflow.on.workflow_dispatch.inputs.input_diagnostics).toMatchObject({ type: 'boolean', default: false })
@@ -109,11 +110,14 @@ describe('Benchmark 工作流诊断装配', () => {
     const inputs = { baseline_ref: 'a'.repeat(40), gc_diagnostics: true }
     for (const event of ['pull_request', 'push']) {
       expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, event, inputs, uni)).toBe('0')
+      expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, event, inputs, taro)).toBe('0')
       expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, event, inputs, mpx)).toBe('1')
       expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, event, inputs, uni)).toBe('')
       expect(evaluate(node, event, inputs, uni)).toBe('22')
     }
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', inputs, uni)).toBe('1')
+    expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', inputs, taro)).toBe('1')
+    expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: false }, taro)).toBe('0')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', inputs, uni)).toBe(inputs.baseline_ref)
     expect(evaluate(node, 'workflow_dispatch', inputs, uni)).toBe('22.23.3')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', { baseline_ref: '' }, uni)).toBe('')

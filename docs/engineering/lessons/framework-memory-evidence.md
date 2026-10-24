@@ -12,6 +12,7 @@ regressions:
   - benchmark/version-compare/test/allocation-instrumentation.test.mjs
   - benchmark/version-compare/test/allocation-sampling.test.mjs
   - benchmark/version-compare/test/allocation-watch.test.mjs
+  - benchmark/version-compare/test/taro-diagnostics.test.mjs
 verification:
   - claim: Git 基线输入、Uni CLI 身份和双侧自然 GC 环境遵循既有统计与确认契约
     kind: unit
@@ -55,6 +56,18 @@ verification:
     sha: d4ee686ad35f050ada02b643a3bfb5ab694d72ea
     environment: Ubuntu，正式 Benchmark 工作流，原采样与预算
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40051887228/job/120746755655
+  - claim: dff 的 Taro Vite HMR RSS 首轮与反序确认均超过原预算，原因尚待分配证据定位
+    kind: ci
+    status: failed
+    sha: dffce96e901fb06783219b464b27a03090af58ac
+    environment: Ubuntu，Node 22，首次 build 3 / HMR 3，反序 build 0 / HMR 3，poll 30ms
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40059017762/job/120769919334
+  - claim: dff 的 weapp-vite HMR RSS 首轮与反序确认均超过原预算
+    kind: ci
+    status: failed
+    sha: dffce96e901fb06783219b464b27a03090af58ac
+    environment: Ubuntu，Node 22，首次 build 3 / HMR 3，反序 build 0 / HMR 3，poll 30ms
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40059017762/job/120769919318
 ---
 
 # 框架隔离后的内存证据与诊断边界
@@ -72,6 +85,14 @@ verification:
 后续 `c3f5e0884e783efda1948c9dff4480b1d25f95cc` 的正式 Uni job 仍首败：HMR plugin P95 从 148 到 162 ms（+9.459% / +14 ms），peak RSS 从 873.328 到 1205.570 MiB，steady RSS 从 794.020 到 1076.982 MiB。两侧实际执行 3 次修改与回滚；报告的 `2/2` 是剔除预热后的 steady 样本数，不能解释成缩短为两轮。该轮包含耗时违规，按既有 `requiresHmrMemoryConfirmation` 规则没有触发仅内存违规的反序确认。这是未通过的首轮，不能声称其反序确认失败，也不能扩大确认范围来规避耗时失败。
 
 ## 根因与纠正
+
+### Taro Vite 的后续首败与诊断范围
+
+`dffce96e901fb06783219b464b27a03090af58ac` 的 Taro Vite 正式门禁在首次及反序确认均超出 5% / 64 MiB：首次 peak 为 3007.46 → 3182.82 MiB（+175.36 MiB / 5.83%），steady 为 2891.79 → 3045.64 MiB（+153.84 MiB / 5.32%）；反序 peak 为 2887.40 → 3156.41 MiB（+269.01 MiB / 9.32%），steady 为 2832.40 → 3071.27 MiB（+238.87 MiB / 8.43%）。两侧均有九个进程，差额主要位于执行 Taro 构建的 Node 进程。相同进程数不能排除堆、原生分配或保留链差异，也不能将首败归为随机噪声。
+
+该正式 run 没有开启 GC、输入或分配诊断，现有 RSS 轨迹不能定位分配来源。本轮将已有显式诊断扩展至该确切 Taro Vite React 项目，并登记仓库 runner 作为 Node 实际入口；普通 PR、固定工作负载、限额、预算与反序规则不变。旧实现的两个确定性入口用例失败，修订后真实 worker 验证输入与分配两种模式、CLI 包身份、改写 argv、缺失 runner 和失效元数据。它们只证明诊断入口可用；同输入的 Linux 分配证据和正式预算通过仍待完成，不以工具回归代替产品性能结论。
+
+同 run 的 weapp-vite 也首败：首次 peak 1366.88 → 1579.19 MiB（+212.30 MiB / 15.53%），steady 1352.43 → 1517.37 MiB（+164.94 MiB / 12.20%）；反序 peak 1356.54 → 1619.50 MiB（+262.96 MiB / 19.38%），steady 1347.14 → 1526.30 MiB（+179.17 MiB / 13.30%）。这提供了检查 Vite 共用路径的线索，尚不能证明两个框架具有相同根因。原始 artifact 与失败状态保留，不以其他框架或历史 head 的通过抵消。
 
 内存根因尚未确定。Mpx 的低内存基线轮次出现额外晚期 major GC，说明 GC 时序影响样本，但没有累计分配或保留路径证据，不能据此将失败归因于环境噪声。现有反序确认只适用于 HMR，没有冷构建确认，不扩大其含义。
 

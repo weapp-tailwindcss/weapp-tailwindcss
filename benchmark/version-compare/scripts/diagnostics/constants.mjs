@@ -1,5 +1,6 @@
 export const diagnosticSymbol = 'weapp-tailwindcss.benchmark.allocation-observer.v1'
 export const allocationProject = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
+export const allocationProjects = Object.freeze([allocationProject, 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'])
 export const mutationMarkerRule = '固定 twbenchdiagnosticround 加 1..3；两侧相同，不含时钟或进程信息；初始源码碰撞即失败'
 
 /**
@@ -39,7 +40,7 @@ export function validateAllocationRequest({ enabled, guardMode, baselineRef, sel
   if (guardMode || !/^[a-f\d]{40}$/i.test(baselineRef)) {
     throw new Error('分配诊断必须使用完整 Git 基线 SHA，且不能与正式 --guard 一起运行')
   }
-  if (selectedProjects.length !== 1 || selectedProjects[0].key !== allocationProject || buildRuns !== 3 || hmrRuns !== 3) {
-    throw new Error('分配诊断仅接受登记的 Uni 项目和固定 build 3 / HMR 3 工作负载')
+  if (selectedProjects.length !== 1 || !allocationProjects.includes(selectedProjects[0].key) || buildRuns !== 3 || hmrRuns !== 3) {
+    throw new Error('分配诊断仅接受登记的 Uni 或 Taro Vite 项目和固定 build 3 / HMR 3 工作负载')
   }
 }

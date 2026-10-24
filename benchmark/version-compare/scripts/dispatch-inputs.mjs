@@ -28,7 +28,7 @@ export function validateBenchmarkDispatch({ baselineRef = '', gcDiagnostics = fa
   if (gcDiagnostics) {
     const keys = only.split(',').map(key => key.trim()).filter(Boolean)
     if (!keys.length || keys.some(key => !getGcDiagnosticService(key))) {
-      throw new Error('gc_diagnostics 需要通过 only 显式选择已支持的 Mpx 或 Uni Vite 小程序项目')
+      throw new Error('gc_diagnostics 需要通过 only 显式选择已支持的 Mpx、Uni 或 Taro Vite 小程序项目')
     }
   }
 }

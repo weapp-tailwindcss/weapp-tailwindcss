@@ -111,7 +111,10 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
     if (service.name !== serviceMetadata.packageName || typeof entry !== 'string' || !entry) {
       throw new Error(`GC 诊断 service 身份或 bin 不匹配：${serviceMetadata.packageName}`)
     }
-    expectedEntry = await fs.realpath(path.resolve(path.dirname(packagePath), entry))
+    // Taro runner 在加载 CLI 前改写 argv；preload 必须绑定 Node 最初执行的仓库入口。
+    expectedEntry = await fs.realpath(serviceMetadata.repositoryEntry
+      ? path.resolve(versionMeta.root, serviceMetadata.repositoryEntry)
+      : path.resolve(path.dirname(packagePath), entry))
     await fs.copyFile(preloadSourcePath, preloadPath)
     await fs.copyFile(pathHelperSourcePath, path.join(sessionDirectory, 'gc-paths.mjs'))
     preloadSha256 = createHash('sha256').update(await fs.readFile(preloadPath)).digest('hex')
