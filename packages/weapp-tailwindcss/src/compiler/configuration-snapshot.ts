@@ -6,6 +6,9 @@ function immutableCollection<T extends Map<unknown, unknown> | Set<unknown>>(tar
           throw new TypeError('编译配置快照不能修改。')
         }
       }
+      if (key === 'valueOf') {
+        return () => view
+      }
       if (key === 'forEach') {
         return (callback: (value: unknown, key: unknown, collection: T) => void, thisArg?: unknown) => {
           collection.forEach((value, entryKey) => callback.call(thisArg, value, entryKey, view))

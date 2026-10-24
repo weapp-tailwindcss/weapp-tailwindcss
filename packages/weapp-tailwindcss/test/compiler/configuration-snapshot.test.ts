@@ -37,4 +37,17 @@ describe('configuration collection snapshots', () => {
     expect([...(snapshot.get('set') as Set<unknown>)]).toEqual([snapshot])
     expect(() => Map.prototype.set.call(snapshot, 'next', 1)).toThrow(TypeError)
   })
+
+  it.each(['map', 'set'] as const)('prevents %s valueOf from exposing the mutable collection target', (kind) => {
+    const input = kind === 'map' ? new Map([['stable', 1]]) : new Set([1])
+    const snapshot = snapshotConfiguration(input)
+    const value = snapshot.valueOf()
+    expect(() => kind === 'map'
+      ? (value as Map<string, number>).set('injected', 2)
+      : (value as Set<number>).add(2)).toThrow(TypeError)
+    expect(value).toBe(snapshot)
+    expect(snapshot.size).toBe(1)
+    expect(input.size).toBe(1)
+    expect(Object.isFrozen(input)).toBe(false)
+  })
 })

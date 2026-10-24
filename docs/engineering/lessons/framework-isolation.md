@@ -9,6 +9,7 @@ regressions:
   - packages/weapp-tailwindcss/test/context/compilation-profile.test.ts
   - packages/weapp-tailwindcss/test/context/style-capability.test.ts
   - packages/weapp-tailwindcss/test/compiler/profile-session-regressions.test.ts
+  - packages/weapp-tailwindcss/test/compiler/configuration-snapshot.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-activity-scope.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-root-store-cleanup.test.ts
@@ -62,6 +63,8 @@ regressions:
 ## 根因与纠正
 
 公开兼容入口解析用户配置、框架身份和环境事实；核心接收独立的 `ResolvedCompilationProfile` 与窄操作。框架策略只返回配置，不持有会话。配置深复制并冻结内部数据，保留用户对象可变；函数按身份参与缓存键，不能以相同函数源码代表相同闭包。配置更新产生新 revision，异步请求使用开始时的快照，旧结果不覆盖新配置。
+
+后续复核在 `f5e308a98` 发现集合代理的 `valueOf()` 被绑定到底层可变 Map / Set。即使 `Object.isFrozen(snapshot)` 为 true，调用方仍能经该方法修改内部快照。两项持久回归先确认写入没有抛错，再让 `valueOf()` 返回同一只读视图；不冻结用户集合，也不改变原有迭代、循环引用及 `forEach` 接收方语义。基于该提交叠加修订运行配置快照、profile、样式选项与生成服务七个文件，48 项通过、零跳过；标准类型检查及两个改动 TypeScript 文件严格 ESLint 通过。此结论仅覆盖只读契约，不解释 Mpx 性能样本或代替最终完整验收。
 
 每个 Core 和构建器实例拥有自己的可变会话，相同配置也创建独立实例。同一 watch 会话跨轮复用，后续独立 build 重新建立会话。原 context 缓存入口仅保留兼容调用，停止缓存可变 context；共享准备缓存继续按内容和依赖失效。实例显式保存环境事实，内部不能在参数缺失时回读全局环境。隐藏 Symbol 与旧运行时回溯限定在兼容桥。
 
