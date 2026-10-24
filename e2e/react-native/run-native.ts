@@ -33,6 +33,7 @@ import { closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
 import { createNativeDiagnosticWriter } from './failure-diagnostics'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
+import { createIosScreenshotDiagnostics } from './ios-screenshot'
 import { launchIosRuntime } from './ios-runtime'
 import { readRuntimePublication } from './installation-evidence'
 import { prepareMetroHttpObservation } from './http-observation'
@@ -59,6 +60,7 @@ const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
 const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
 const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`), runtimeArtifactIdentity('react-native', `react-native-${platform}`, runId))
 const artifacts = artifactSession.directory
+const iosScreenshots = platform === 'ios' ? createIosScreenshotDiagnostics(artifacts, runId) : undefined
 const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
 const cssFile = path.resolve(exampleRoot, 'global.css')
@@ -221,7 +223,7 @@ async function capture(name: string, device: string, cancelSignal?: AbortSignal)
     await fs.writeFile(output, result.stdout, { signal: cancelSignal })
   }
   else {
-    await execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { cancelSignal, forceKillAfterDelay: 1_000 })
+    return iosScreenshots!.capture(output, device, cancelSignal)
   }
   cancelSignal?.throwIfAborted()
   const stat = await fs.stat(output)
@@ -534,4 +536,7 @@ async function main() {
   })
 }
 
-await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, semanticReporter, restoreAfterCapture)))
+await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, {
+  capturePending: () => semanticReporter.capturePending(),
+  drain: () => runWithCleanup(() => semanticReporter.drain(), () => iosScreenshots?.flush()),
+}, restoreAfterCapture)))
