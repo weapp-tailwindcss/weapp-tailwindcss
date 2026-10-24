@@ -47,6 +47,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           getResolvedConfig,
           recordCssAssetResult,
           recordViteProcessedCssAssetResult,
+          replaceViteProcessedCssAssetOutputs,
           getViteProcessedCssAssetResults,
           getRecordedGeneratorCandidates,
           getSourceCandidates,
@@ -180,6 +181,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
             markCssAssetProcessed,
             recordCssAssetResult,
             recordViteProcessedCssAssetResult,
+            replaceViteProcessedCssAssetOutputs,
             onAssetWrite: file => finalCssAssetFiles.add(file),
             resolveViteProcessedCssOutputFile: file => resolveViteCssPipelineOutputFile(file, opts, rootDir, isWebGeneratorTarget, isNativeAppStyleTarget, sourceRoot, resolveMiniProgramStyleOutputExtension({
               files: Object.keys(bundle),

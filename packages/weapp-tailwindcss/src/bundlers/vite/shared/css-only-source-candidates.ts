@@ -20,7 +20,10 @@ export function createFrameworkSourceCandidatesPluginForCssOnly(options: any): P
       }
       await options.sourceCandidateCollector.merge(id, code)
     },
-    async watchChange(id) {
+    async watchChange(id, change) {
+      if (change.event === 'delete') {
+        options.removeViteProcessedCssSource?.(id)
+      }
       options.invalidateRecordedGeneratorCandidates()
       options.sourceScanSession.invalidate()
       await options.sourceScanSession.syncChangedFile(id)

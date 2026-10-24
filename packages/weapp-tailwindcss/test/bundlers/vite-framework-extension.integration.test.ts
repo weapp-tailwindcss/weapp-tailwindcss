@@ -78,7 +78,7 @@ describe('新框架复用生产 Vite 组装器', () => {
     }
   }, 60_000)
 
-  it('真实 watch 连续更新、删除来源并排空在途转换后关闭，再允许独立 build', async ({ signal }) => {
+  it.for(['default', 'root-last'] as const)('真实 watch 连续更新、删除来源并排空在途转换后关闭，再允许独立 build（%s）', async (assetOrder, { signal }) => {
     const root = await createCapabilityProject()
     const sessions: CapabilitySessionEvidence[] = []
     const observer = createCapabilityWatchObserver()
@@ -95,7 +95,17 @@ describe('新框架复用生产 Vite 组装器', () => {
       }
     })
     try {
-      const result = await build(capabilityBuildConfig(root, [...plugins, observer.plugin], true))
+      const result = await build(capabilityBuildConfig(root, [...plugins, {
+        name: 'capability-fixture:root-last',
+        generateBundle: { order: 'pre', handler(_options, bundle) {
+          if (assetOrder !== 'root-last') {
+            return
+          }
+          const rootAsset = bundle[capabilityOutput.styles]!
+          delete bundle[capabilityOutput.styles]
+          bundle[capabilityOutput.styles] = rootAsset
+        } },
+      }, observer.plugin], true))
       if (Array.isArray(result) || 'output' in result) {
         throw new Error('预期真实 Rollup watcher，实际取得单次构建产物')
       }

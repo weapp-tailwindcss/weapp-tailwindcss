@@ -14,6 +14,7 @@ type SyncProcessedCssOptions = Pick<
   | 'markCssAssetProcessed'
   | 'recordCssAssetResult'
   | 'recordViteProcessedCssAssetResult'
+  | 'replaceViteProcessedCssAssetOutputs'
   | 'rootDir'
   | 'isWebGeneratorTarget'
   | 'shouldPreserveAppCssExtension'
@@ -29,7 +30,7 @@ type SyncProcessedCssOptions = Pick<
 >
 
 export function syncProcessedCss(options: SyncProcessedCssOptions) {
-  const { bundle, opts, cssPipelineStrategy, createCssPipelineContext, isViteProcessedCssAsset, markCssAssetProcessed, recordCssAssetResult, recordViteProcessedCssAssetResult, rootDir, isWebGeneratorTarget, shouldPreserveAppCssExtension, sourceRoot, defaultStyleOutputExtension, bundleFiles, transformWebTargetCss, debug, recordTimingDetail, getViteProcessedCssAssetResults, onUpdate, pendingRememberedCssReplayUpdates } = options
+  const { bundle, opts, cssPipelineStrategy, createCssPipelineContext, isViteProcessedCssAsset, markCssAssetProcessed, recordCssAssetResult, recordViteProcessedCssAssetResult, replaceViteProcessedCssAssetOutputs, rootDir, isWebGeneratorTarget, shouldPreserveAppCssExtension, sourceRoot, defaultStyleOutputExtension, bundleFiles, transformWebTargetCss, debug, recordTimingDetail, getViteProcessedCssAssetResults, onUpdate, pendingRememberedCssReplayUpdates } = options
   const collectStartedAt = performance.now()
   collectViteProcessedCssAssetResults(bundle, {
     opts,
@@ -39,6 +40,7 @@ export function syncProcessedCss(options: SyncProcessedCssOptions) {
     markCssAssetProcessed,
     recordCssAssetResult,
     recordViteProcessedCssAssetResult,
+    replaceViteProcessedCssAssetOutputs,
     resolveViteProcessedCssOutputFile: file => resolveViteCssPipelineOutputFile(file, opts, rootDir, isWebGeneratorTarget, shouldPreserveAppCssExtension, sourceRoot, defaultStyleOutputExtension, bundleFiles),
     subpackageRoots: collectMiniProgramSubpackageRoots(bundle),
     transformCss: transformWebTargetCss,

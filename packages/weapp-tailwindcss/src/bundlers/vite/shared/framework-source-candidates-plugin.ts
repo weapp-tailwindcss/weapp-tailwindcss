@@ -115,6 +115,9 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
       },
     },
     async watchChange(id, change) {
+      if (change.event === 'delete') {
+        options.removeViteProcessedCssSource?.(id)
+      }
       if (shouldSkipSourceCandidateState()) {
         return
       }

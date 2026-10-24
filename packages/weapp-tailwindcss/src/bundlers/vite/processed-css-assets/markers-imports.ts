@@ -1,6 +1,7 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import type { FrameworkAssets } from '../shared/framework-assets'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
+import type { ViteProcessedCssAssetOutputsReplacer } from './output-ownership'
 import type { InternalUserDefinedOptions } from '@/types'
 import { collectImportedCssFiles, isStyleImportRequest, normalizeInjectableCssWithImports } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
@@ -24,6 +25,8 @@ interface CssAssetProcessedMarker {
 interface CssAssetResultRecordOptions {
   injectIntoMain?: boolean | undefined
   outputFile?: string | undefined
+  sourceAsset?: string | undefined
+  mergeSourceAssets?: boolean | undefined
 }
 
 export interface CssAssetResultRecorder {
@@ -42,6 +45,7 @@ export interface CollectViteProcessedCssAssetOptions {
   markCssAssetProcessed?: CssAssetProcessedMarker | undefined
   recordCssAssetResult?: CssAssetResultRecorder | undefined
   recordViteProcessedCssAssetResult?: CssAssetResultRecorder | undefined
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   resolveViteProcessedCssOutputFile?: ((file: string) => string | undefined) | undefined
   onAssetWrite?: ((file: string) => void) | undefined
   subpackageRoots?: Set<string> | undefined

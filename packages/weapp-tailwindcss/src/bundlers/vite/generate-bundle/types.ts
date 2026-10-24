@@ -3,6 +3,7 @@ import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { BundleSnapshot } from '../bundle-state'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteProcessedCssAssetOutputsReplacer } from '../processed-css-assets/output-ownership'
 import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { SourceCandidateFilterOptions } from '../source-candidates'
@@ -38,7 +39,8 @@ export interface GenerateBundleContext {
   isViteProcessedCssAsset?: (asset: OutputAsset, file?: string) => boolean
   resolveCssAssetIdentity?: (asset: OutputAsset, file?: string) => ViteCssAssetIdentity
   recordCssAssetResult?: (file: string, css: string) => void
-  recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined }) => void
+  recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined, sourceAsset?: string | undefined, mergeSourceAssets?: boolean | undefined }) => void
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   getViteProcessedCssAssetResults?: () => Iterable<[string, string | { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined }]>
   getViteProcessedCssAssetResult?: (file: string) => { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined } | undefined
   getSourceCandidates?: () => Set<string>

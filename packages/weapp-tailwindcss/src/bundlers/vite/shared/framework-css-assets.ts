@@ -109,6 +109,7 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource }: Fr
     isCssAssetProcessed,
     recordCssAssetResult,
     recordViteProcessedCssAssetResult,
+    replaceViteProcessedCssAssetOutputs: processedCssRegistry.replaceOutputs,
     getViteProcessedCssAssetResults,
     getViteProcessedCssAssetResult,
     pruneViteCssCaches,

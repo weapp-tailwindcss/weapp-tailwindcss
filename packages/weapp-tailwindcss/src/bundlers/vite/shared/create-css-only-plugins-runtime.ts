@@ -245,6 +245,7 @@ function createRuntimePlugins(
     sourceScanSession,
     tailwindRootCssModuleIds,
     viteProcessedCssSourceFiles: processedCssRegistry.sourceFiles,
+    removeViteProcessedCssSource: processedCssRegistry.removeSource,
   })
   const postPlugin = createFrameworkPostPlugin({
     debug,
@@ -276,6 +277,7 @@ function createRuntimePlugins(
     resolveCssAssetIdentity: createViteCssAssetIdentityResolver({ generatorPlaceholderFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'), getProjectRoot: () => resolvedConfig?.root, isKnownProcessedSource: processedCssRegistry.matchesIdentity }),
     recordCssAssetResult: (file, css) => { generatedCssByFile.set(file, css) },
     recordViteProcessedCssAssetResult: processedCssRegistry.record,
+    replaceViteProcessedCssAssetOutputs: processedCssRegistry.replaceOutputs,
     getViteProcessedCssAssetResults: processedCssRegistry.entries,
     getRecordedGeneratorCandidates: () => recordedCandidates,
     getSourceCandidates: () => sourceCandidateCollector.values(),

@@ -3,6 +3,7 @@ import type { OutputAsset, PluginContext } from 'rollup'
 import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteProcessedCssAssetOutputsReplacer } from '../processed-css-assets/output-ownership'
 import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
@@ -39,6 +40,7 @@ export interface CssFinalizerContext {
   getResolvedConfig: () => ResolvedConfig | undefined
   recordCssAssetResult?: (file: string, css: string) => void
   recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined }) => void
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   getViteProcessedCssAssetResults?: () => Iterable<[string, string | { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined }]>
   getRecordedGeneratorCandidates?: () => Set<string> | undefined
   getSourceCandidates?: () => Set<string>

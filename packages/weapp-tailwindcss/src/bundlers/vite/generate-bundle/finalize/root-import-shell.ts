@@ -58,6 +58,7 @@ export interface FinalizeGenerateBundleOptions {
   recordCssAssetResult: GenerateBundleContext['recordCssAssetResult']
   recordTimingDetail: (name: string, startedAt: number) => void
   recordViteProcessedCssAssetResult: GenerateBundleContext['recordViteProcessedCssAssetResult']
+  replaceViteProcessedCssAssetOutputs?: GenerateBundleContext['replaceViteProcessedCssAssetOutputs']
   rootDir: string
   runtime: Set<string>
   runtimeState: GenerateBundleContext['runtimeState']
