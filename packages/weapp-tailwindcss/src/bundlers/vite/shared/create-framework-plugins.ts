@@ -1,5 +1,4 @@
 import type { Plugin } from 'vite'
-import type { ViteFrameworkName } from '../../framework-selector'
 import type { ViteFrameworkAssetPipelineStrategy } from './framework-asset-strategy'
 import type { ViteFrameworkRuntimeStrategy } from './framework-runtime-strategy'
 import type { ViteFrameworkExtraPluginContext } from './framework-services'
@@ -20,7 +19,8 @@ export interface WeappTailwindcssVitePlugin {
 }
 
 export interface ViteFrameworkBranchContext {
-  frameworkName: ViteFrameworkName
+  /** 仅用于诊断；受支持的框架身份由公开入口注册表约束。 */
+  readonly frameworkName: string
   createAssetPipeline?: () => ViteFrameworkAssetPipelineStrategy
   runtimeStrategy?: ViteFrameworkRuntimeStrategy
   adaptWatchCssBeforeFrameworkCache?: boolean
