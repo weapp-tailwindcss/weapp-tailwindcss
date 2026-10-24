@@ -1,3 +1,4 @@
+import type { CssAssetResultRecorder } from '@/bundlers/vite/processed-css-assets/markers-imports'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -11294,7 +11295,7 @@ describe('bundlers/shared generator css', () => {
         source: '.script-only{}',
       },
     } as any
-    const records: Array<[string, string, { injectIntoMain?: boolean | undefined } | undefined]> = []
+    const records: Array<Parameters<CssAssetResultRecorder>> = []
 
     const collected = collectViteProcessedCssAssetResults(bundle, {
       opts: {
@@ -11310,7 +11311,7 @@ describe('bundlers/shared generator css', () => {
     expect(records).toEqual([[
       'app-origin.wxss',
       '.script-only{}',
-      { injectIntoMain: undefined, outputFile: 'app-origin.wxss' },
+      { injectIntoMain: undefined, outputFile: 'app-origin.wxss', sourceAsset: 'app-origin.wxss' },
     ]])
   })
 
@@ -11327,7 +11328,7 @@ describe('bundlers/shared generator css', () => {
         ].join('\n'),
       },
     } as any
-    const records: Array<[string, string, { injectIntoMain?: boolean | undefined, outputFile?: string | undefined } | undefined]> = []
+    const records: Array<Parameters<CssAssetResultRecorder>> = []
 
     const collected = collectViteProcessedCssAssetResults(bundle, {
       opts: {
@@ -11345,12 +11346,12 @@ describe('bundlers/shared generator css', () => {
       [
         'app-origin.wxss',
         '.app-main{}',
-        { injectIntoMain: undefined, outputFile: 'app-origin.wxss' },
+        { injectIntoMain: undefined, outputFile: 'app-origin.wxss', sourceAsset: 'app-origin.wxss' },
       ],
       [
         '/project/src/app.css',
         '.app-main{}',
-        { injectIntoMain: undefined, outputFile: 'app-origin.wxss' },
+        { injectIntoMain: undefined, outputFile: 'app-origin.wxss', sourceAsset: 'app-origin.wxss' },
       ],
     ])
   })

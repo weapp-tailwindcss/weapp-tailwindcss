@@ -3,6 +3,7 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: 4801004a68644b7da5d10f5f452ee73f5deef067
 regressions:
+  - packages/weapp-tailwindcss/test/bundlers/generator-css.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.integration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-processed-css-ownership.test.ts
 ---
@@ -37,6 +38,10 @@ collector 复制到来源或目标别名的记录显式带有物理产物 proven
 - `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --noEmit`、`pnpm --filter weapp-tailwindcss build`、`pnpm architecture:check` 通过；17 个本次修改的 TypeScript 文件通过严格、无自动修复的 ESLint 检查。
 
 本记录未宣称更新后 PR head 的完整 CI 或真实设备验收通过。此修改不调整 demo、static CSS 基线或产品样式预期；测试保留原有旧候选必须消失的语义。
+
+提交 `ab1aa7d59e6fa22e1208e15453f2217bed3cfb40` 的新预检 `810668af-7e5a-43fc-91a3-98789ce71200` 完成全部探针、当前会话真实输入/点击/截图及 verify，临时浏览器页已关闭。标准 `pnpm e2e:demo:workflow:local --quality --preflight-report <本轮报告>` 的 23 阶段入口通过根构建 71/71、0 缓存；全量单测为 1067 文件通过、4 文件失败、5 文件跳过，11310 项通过、13 项失败、1 项预期失败、44 项跳过。工作流按首败退出并释放预检与错峰窗口，后续 static、IDE 和设备阶段未执行；该命令未启用 `--extended`。
+
+其中两项失败是旧 collector 精确断言未包含新增的 `sourceAsset`，其余十一项是其他生成适配测试仍假定候选容器为 `Set`。collector 测试改为引用生产 recorder 的参数类型，并精确检查物理记录与来源别名都携带实际产物身份，不删除 provenance 或放宽为部分匹配。两项旧断言先独立复现失败，随后基于上述提交加本次测试修改运行 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/generator-css.unit.test.ts test/bundlers/vite-processed-css-ownership.test.ts --update=none`，两文件 193 项通过、0 跳过。强制检查原本被普通 lint 忽略的旧大文件时，基线与修改后均有相同的 60 项既有诊断，未新增诊断；不把它写成严格全文件 lint 通过。上述结果仅证明 collector 契约与归属回归，修正后的新 head 仍须重新预检并完整验收。
 
 ## 适用边界
 
