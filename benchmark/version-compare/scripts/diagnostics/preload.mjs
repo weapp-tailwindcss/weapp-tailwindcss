@@ -4,8 +4,9 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { persistCompilationEvidence } from './capture.mjs'
-import { diagnosticSymbol, limits } from './constants.mjs'
+import { diagnosticSymbol, limits, mpxProject } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
+import { createOperationRecorder } from './operations.mjs'
 
 async function start() {
   const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
@@ -31,12 +32,17 @@ async function start() {
   const stores = new Map()
   let storeId = 0
   let compilationId = 0
+  let webpackCreatedCount = 0
+  let webpackCompletedCount = 0
+  const webpackPhases = new WeakMap()
+  const capturedPhases = new Set()
   let complete = false
   let recordingError
   let queue = Promise.resolve()
   let lastCommand = 0
   const frameReceipts = []
   const startedAt = performance.now()
+  const operations = identity.project === mpxProject ? createOperationRecorder({ writer, root: identity.root, phase: stage }) : undefined
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
     identity,
@@ -63,7 +69,9 @@ async function start() {
       pid: process.pid,
       complete,
       recordingError,
-      compilationCount: compilationId,
+      compilationCount: operations ? webpackCreatedCount : compilationId,
+      snapshotCount: compilationId,
+      ...(operations ? { webpackCreatedCount, webpackCompletedCount, operations: operations.summary() } : {}),
       storeCount: storeId,
       frameReceipts,
       elapsedMs: performance.now() - startedAt,
@@ -82,12 +90,15 @@ async function start() {
     throw error
   }
 
-  async function capture(collections, stop = false) {
+  async function capture(collections, stop = false, completedPhase) {
     if (recordingError || complete) {
       throw new Error(recordingError ?? '诊断会话已关闭')
     }
-    const phase = stage()
+    const phase = completedPhase ?? stage()
     const index = ++compilationId
+    if (index > limits.maxSnapshots) {
+      return fail(new Error('诊断阶段快照超过上限'))
+    }
     const started = performance.now()
     try {
       // 先取 profile，再序列化来源；观测自身分配会进入下一份累计 profile，按诊断栈单独标识。
@@ -105,6 +116,33 @@ async function start() {
   }
 
   globalThis[Symbol.for(diagnosticSymbol)] = {
+    operations,
+    webpackCreated(compilation) {
+      if (!operations || webpackPhases.has(compilation)) {
+        throw new Error('Webpack compilation 身份缺失或重复')
+      }
+      const current = stage()
+      const type = current.type === 'watch-ready' ? 'watch-start' : current.type.replace(/-observed$/, '-write')
+      webpackPhases.set(compilation, { ...current, type })
+      webpackCreatedCount++
+      operations.emit('webpack.created', { compilationId: operations.identity(compilation), isChild: compilation.compiler?.isChild?.() ?? false })
+    },
+    webpackCompleted(compilation, collections) {
+      const phase = webpackPhases.get(compilation)
+      if (!operations || !phase) {
+        throw new Error('Webpack 完成缺少创建事件')
+      }
+      webpackPhases.delete(compilation)
+      webpackCompletedCount++
+      operations.emit('webpack.completed', { compilationId: operations.identity(compilation), collections, startedPhase: phase })
+      const key = `${phase.type}:${phase.round ?? ''}`
+      if (capturedPhases.has(key)) {
+        return queue
+      }
+      capturedPhases.add(key)
+      queue = queue.then(() => capture(collections, identity.kind === 'build', phase))
+      return queue
+    },
     registerStore(store) {
       if (++storeId > limits.maxStores) {
         throw new Error('候选 store 数超过诊断上限')
@@ -143,6 +181,17 @@ async function start() {
     })
   }, 20)
   timer.unref()
+  if (operations) {
+    // 不添加信号处理或业务关闭；exit 只写最后实际观测状态，强制终止仍可能缺证。
+    process.once('exit', () => {
+      try {
+        writeStatus()
+      }
+      catch (error) {
+        process.stderr.write(`Mpx 诊断末尾状态写入失败：${String(error)}\n`)
+      }
+    })
+  }
   writeStatus()
 }
 

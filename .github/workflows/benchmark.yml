@@ -38,11 +38,11 @@ on:
         type: boolean
         default: false
       input_diagnostics:
-        description: Uni 或 Taro Vite 的完整候选与来源证据，独立诊断，不启用 inspector，不参与正式预算
+        description: Uni、Taro Vite 或 Mpx 的候选与来源证据；Mpx 额外记录有界操作，不启用 inspector，不参与正式预算
         type: boolean
         default: false
       allocation_diagnostics:
-        description: Uni 或 Taro Vite 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
+        description: Uni、Taro Vite 或 Mpx 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
         type: boolean
         default: false
       build_runs:

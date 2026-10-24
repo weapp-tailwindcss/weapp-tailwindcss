@@ -1,6 +1,6 @@
-# Uni / Taro Vite 输入与分配诊断
+# Uni / Taro Vite / Mpx 输入与分配诊断
 
-这两个手动模式用于定位性能失败，不能证明正式性能验收通过。`--input-diagnostics` 记录完整候选和来源，不启用 inspector；`--allocation-diagnostics` 额外启动包含 major/minor GC 已回收对象的统计分配采样。二者分开运行，均要求一个完整 Git 基线 SHA、一个已登记的 Uni 或 Taro Vite React 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚。禁止与 `--guard` 同时使用。
+这两个手动模式用于定位性能失败，不能证明正式性能验收通过。`--input-diagnostics` 记录完整候选和来源，不启用 inspector；`--allocation-diagnostics` 额外启动包含 major/minor GC 已回收对象的统计分配采样。二者分开运行，均要求一个完整 Git 基线 SHA、一个已登记的 Uni、Taro Vite React 或 Mpx 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚。禁止与 `--guard` 同时使用。
 
 ## 运行入口
 
@@ -41,3 +41,17 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 采样间隔固定 256 KiB，每会话最多 8 个阶段、32 个 store、每 store 4096 个来源条目、每集合 100000 个候选；每文件最多 16 MiB、每会话输出最多 64 MiB。栈映射最多读取 128 个准备副本内仓库模块、累计 32 MiB；原始采样仍覆盖完整 worker 生命周期和第三方调用栈，不因映射范围收紧而删减样本。超限、未知锚点、worker 缺失或阶段不匹配使诊断失败，不截断后继续。
 
 这些限制约束诊断输入/输出和阶段数，不能硬性限制 V8 inspector 内部的采样内存。watch 停止握手最多等待 10 秒；失败仍由原 runner 结束自己创建的子进程并恢复已修改来源。没有强制 GC、额外业务重建或产品源码埋点。
+
+## Mpx 操作与实际输入
+
+Mpx 使用 `--only demo-mpx-tailwindcss-v4__mp-weixin`，其他限制相同。优先单独运行 inputs 模式核对明确问题，不因诊断成功或另一次正式采样通过而丢弃首败证据。正式 Mpx 的预算、工作负载、自然 GC 配置和 PR 默认路径均不改变。
+
+Mpx 仅在准备副本注入唯一 AST 锚点：Webpack compilation 创建与处理完成、来源扫描已读到的文本、生成器、原生生成会话、底层 compile/build，以及版本存在时的 compiler 服务池。准备阶段验证所有锚点后才写入；基线缺失服务池登记为 `absentCapabilities`，不是零次调用。锚点损坏仍直接失败。
+
+- `operation-N.json` 按顺序保存实际开始、成功、失败、复用和失效事件。开始与完成以 `operationId` 对应，保留当前阶段和开始阶段；每轮额外 compilation 不合并或丢弃。`compilationCount` / `webpackCreatedCount` 是实际创建次数，`webpackCompletedCount` 是本插件处理完成次数，`snapshotCount` 单独记录阶段快照。被跳过或失败的 compilation 不虚构完成；最后的 watch-stop 快照不增加编译次数。
+- `text-<sha256>.json` 保存实际来源、生成请求中的 CSS 与产物 CSS/rawCss 全文，按内容去重，保留 CRLF、根目录文字及实际 marker。来源取自既有扫描读取结果，不额外读源码；Mpx watch 缓存省略来源文本时仍能复核未变化文件。控制器逐份校验引用、全文哈希、文件数和总字节，并复核每项操作开始与完成配对，损坏、缺失和超限均失败。
+- `matches.key`、`acquire.key`、`request.key`、`acquire.sourceSnapshot`、`request.snapshot`、`result.copy` 分别记录实际次数和耗时。计时包住原有一次调用，不重算 key 或重复复制数据；记录序列化耗时另列。没有服务池的基线不伪造这六项数据。
+- 服务、生成器及 engine/native 会话只用弱映射分配进程内身份。复用、创建、退役、实际 dispose 调用及其返回分别记录；服务可选 dispose 记录 `callable`，方法不存在不能算作已释放。`native` 指本项目的生成会话层，不等同于 Rust 分配器；逻辑释放不能证明 RSS 下降。采样停止后仍被动记录实际关闭事件，不额外调用 dispose、不改变信号或生产关闭顺序。尾部状态与事件不一致即缺证，缺少释放事件不自动解释为泄漏或成功释放。
+- 扫描 signature 原始结构含绝对工程根和输出目录，不同副本根足以改变其哈希。对照只归一化结构化路径，全文哈希不归一化；没有全文比较前，不能据签名差异宣称实际来源相同或不同。操作对照保留实际次数与顺序，以工件引用定位差异；不透明对象或函数身份不能用来证明跨进程闭包相等。
+
+每会话最多 4096 个操作事件、4096 个弱映射身份；仍共用每文件 16 MiB、会话 64 MiB 的写入预算，全文文件与操作事件均计入。未知候选迭代器不能被额外消费，诊断明确失败。观测会改变分配和时序，所有数据仅用于诊断，不能直接解释原正式 RSS 差异。

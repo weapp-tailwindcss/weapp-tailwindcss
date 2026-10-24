@@ -34,6 +34,9 @@ describe('手动诊断输入边界', () => {
     const commit = git('rev-parse', 'HEAD')
     const tree = git('rev-parse', 'HEAD^{tree}')
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: commit })).not.toThrow()
+    for (const mode of ['inputDiagnostics', 'allocationDiagnostics']) {
+      expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: commit, only: mpx, [mode]: true })).not.toThrow()
+    }
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: tree })).toThrow('commit 对象')
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: '0'.repeat(40) })).toThrow('对象不存在')
   })
@@ -50,7 +53,7 @@ describe('手动诊断输入边界', () => {
     expect(() => validateBenchmarkDispatch({ inputDiagnostics: true, allocationDiagnostics: true })).toThrow('分开')
     expect(() => validateBenchmarkDispatch({ inputDiagnostics: true, only: uni })).toThrow('完整 Git')
     expect(() => validateBenchmarkDispatch({ allocationDiagnostics: true, baselineRef: 'a'.repeat(40), only: uni, hmrRuns: 5 })).toThrow('固定')
-    expect(() => validateBenchmarkDispatch({ allocationDiagnostics: true, baselineRef: 'a'.repeat(40), only: mpx })).toThrow('Uni')
+    expect(() => validateBenchmarkDispatch({ allocationDiagnostics: true, baselineRef: 'a'.repeat(40), only: `${uni},${mpx}` })).toThrow('固定')
   })
 })
 

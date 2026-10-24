@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { compareOperationInputs } from './operation-evidence.mjs'
 
 function origins(input, candidate) {
   return input.sources.flatMap(store => Object.entries(store.maps).flatMap(([layer, entries]) => {
@@ -75,12 +76,22 @@ export async function compareDiagnosticInputs(directory) {
     sessions.push({ folder, controller })
   }
   const comparisons = []
+  const operationComparisons = []
   for (const base of sessions.filter(session => session.controller.identity.role === 'base')) {
     const identity = base.controller.identity
     const current = sessions.find(session => session.controller.identity.role === 'current'
       && session.controller.identity.kind === identity.kind && session.controller.identity.run === identity.run)
     if (!current) {
       throw new Error('诊断缺失当前版本的对应会话')
+    }
+    if (base.controller.operationEvidence || current.controller.operationEvidence) {
+      if (!base.controller.operationEvidence || !current.controller.operationEvidence) {
+        throw new Error('Mpx 双侧操作证据不完整')
+      }
+      for (const session of [base, current]) {
+        session.controller.operationEvidence.inputs = await Promise.all(session.controller.operationEvidence.inputFiles.map(file => fs.readFile(path.join(session.folder, file), 'utf8').then(JSON.parse)))
+      }
+      operationComparisons.push({ kind: identity.kind, run: identity.run, ...compareOperationInputs(base.controller, current.controller) })
     }
     const count = identity.kind === 'build' ? 1 : 8
     for (let index = 1; index <= count; index++) {
@@ -95,9 +106,10 @@ export async function compareDiagnosticInputs(directory) {
   return {
     diagnosticOnly: true,
     canExplainFormalRegression: false,
-    explanation: comparisons.every(item => item.sameActualCandidatesAndSourceHashes)
+    explanation: comparisons.every(item => item.sameActualCandidatesAndSourceHashes) && operationComparisons.every(item => item.sameRecordedOperationsAndInputs)
       ? '已核对候选和来源；插桩分配仍只提供归因线索，不能替代正式预算或独立建立因果'
-      : '两侧实际候选或源码哈希不一致，不能用本轮分配差异解释正式失败；先核对列出的来源差异',
+      : '两侧实际候选、源码或调用输入不同，或存在无法跨进程比较的身份；不能用本轮分配差异解释正式失败，先核对列出的证据',
     comparisons,
+    operationComparisons,
   }
 }

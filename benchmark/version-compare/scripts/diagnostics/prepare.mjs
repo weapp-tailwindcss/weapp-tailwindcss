@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import ts from 'typescript'
-import { diagnosticSymbol } from './constants.mjs'
+import { diagnosticSymbol, mpxProject } from './constants.mjs'
+import { instrumentMpxSource, mpxTargets } from './mpx-instrumentation.mjs'
 
 const targets = [
   { relative: 'packages/weapp-tailwindcss/src/project-sources/candidates/store.ts', kind: 'store', name: 'createSourceCandidateStore' },
@@ -70,7 +71,7 @@ export function instrumentDiagnosticSource(source, target) {
   return { source: source.slice(0, start) + replacement + source.slice(end), anchor: { function: target.name, kind: target.kind, offset: start } }
 }
 
-export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory) {
+export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory, project) {
   const realRoot = await fs.realpath(root)
   if (realRoot === await fs.realpath(sourceRoot)) {
     throw new Error('拒绝向源码工作树注入诊断')
@@ -85,10 +86,24 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory)
     }
   }
   const prepared = []
-  for (const target of targets) {
+  const selected = project === mpxProject
+    ? [targets[0], ...mpxTargets.map(([kind, relative]) => ({ kind, relative }))]
+    : targets
+  const absentCapabilities = []
+  for (const target of selected) {
     const file = path.resolve(realRoot, target.relative)
-    const source = await fs.readFile(file, 'utf8')
-    const transformed = instrumentDiagnosticSource(source, target)
+    let source
+    try {
+      source = await fs.readFile(file, 'utf8')
+    }
+    catch (error) {
+      if (target.kind === 'service' && error.code === 'ENOENT') {
+        absentCapabilities.push({ kind: 'service', file: target.relative, reason: '该源码版本没有 compiler 服务池，不能虚构零次调用' })
+        continue
+      }
+      throw error
+    }
+    const transformed = target.name ? instrumentDiagnosticSource(source, target) : instrumentMpxSource(source, target.kind, target.relative)
     prepared.push({ target, file, original: source, ...transformed })
   }
   // 所有锚点均验证成功后再写入副本，不容许半套观测协议启动。
@@ -97,6 +112,6 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory)
     await fs.writeFile(item.file, item.source)
   }
   const manifest = prepared.map(item => ({ file: item.target.relative, anchor: item.anchor, originalSha256: sha256(item.original), instrumentedSha256: sha256(item.source) }))
-  await fs.writeFile(path.join(evidenceDirectory, 'instrumentation.json'), `${JSON.stringify({ root: realRoot, symbol: diagnosticSymbol, manifest }, null, 2)}\n`)
+  await fs.writeFile(path.join(evidenceDirectory, 'instrumentation.json'), `${JSON.stringify({ root: realRoot, symbol: diagnosticSymbol, manifest, absentCapabilities }, null, 2)}\n`)
   return manifest
 }

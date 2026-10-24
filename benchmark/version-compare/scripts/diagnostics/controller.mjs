@@ -5,10 +5,11 @@ import path from 'node:path'
 import process from 'node:process'
 import { createGcDiagnostics } from '../gc-diagnostics.mjs'
 import { appendNodeImport } from '../gc-paths.mjs'
-import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constants.mjs'
+import { diagnosticMutationMarker, limits, mpxProject, mutationMarkerRule } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { verifyOperationEvidence } from './operation-evidence.mjs'
 
-const modules = ['constants.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs']
+const modules = ['constants.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs']
 const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$)/
 
 export async function createCaseDiagnostics(options) {
@@ -19,7 +20,17 @@ export async function createCaseDiagnostics(options) {
   if (!gc?.env.WEAPP_TW_BENCH_GC_SESSION) {
     throw new Error('分配诊断无法取得实际 worker 身份')
   }
-  const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), mode: options.allocation === 'inputs' ? 'inputs' : 'allocation' }
+  const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), platform: process.platform, mode: options.allocation === 'inputs' ? 'inputs' : 'allocation' }
+  if (identity.project === mpxProject) {
+    const serviceFile = path.join(identity.root, 'packages/weapp-tailwindcss/src/core/compiler/generator-service-pool.ts')
+    const available = await fs.access(serviceFile).then(() => true, (error) => {
+      if (error.code !== 'ENOENT') {
+        throw error
+      }
+      return false
+    })
+    identity.capabilities = { compilerServicePool: { available, interpretation: available ? '仅统计真实执行的操作' : '此版本没有服务池，不以零次调用参与比较' } }
+  }
   const directory = identity.sessionDirectory
   const moduleHashes = {}
   for (const name of modules) {
@@ -108,13 +119,17 @@ export async function createCaseDiagnostics(options) {
     async finish() {
       await gc.finish()
       let error
+      let operationEvidence
       try {
         status = JSON.parse(await fs.readFile(path.join(directory, 'status.json'), 'utf8'))
         const startup = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
         const expectedCount = options.kind === 'build' ? 1 : 8
         if (Object.entries(moduleHashes).some(([name, hash]) => startup.moduleHashes?.[name] !== hash)
-          || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || status.compilationCount !== expectedCount) {
+          || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (status.snapshotCount ?? status.compilationCount) !== expectedCount) {
           throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
+        }
+        if (identity.project === mpxProject) {
+          operationEvidence = await verifyOperationEvidence(directory, status, identity)
         }
         const expectedPhases = options.kind === 'build'
           ? [['build-start', undefined]]
@@ -151,6 +166,7 @@ export async function createCaseDiagnostics(options) {
         sources,
         events,
         status,
+        operationEvidence,
         error,
         diagnosticOnly: true,
         mutationMarkerRule,

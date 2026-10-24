@@ -286,7 +286,7 @@ async function patchPublishedRootOverrides(root) {
   await fs.writeFile(file, `${JSON.stringify(json, null, 2)}\n`, 'utf8')
 }
 
-async function prepareRoot({ root, role, baseline, baselineRef, resolverDependencies, allocationDirectory }) {
+async function prepareRoot({ root, role, baseline, baselineRef, resolverDependencies, allocationDirectory, diagnosticProject }) {
   if (role === 'base') {
     await copyRepoAtRef(root, baselineRef)
   }
@@ -299,7 +299,7 @@ async function prepareRoot({ root, role, baseline, baselineRef, resolverDependen
   }
   if (allocationDirectory) {
     const { prepareAllocationRoot } = await import('./diagnostics/prepare.mjs')
-    await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role))
+    await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject)
   }
   await run(root, 'pnpm', ['install', role === 'published' ? '--no-frozen-lockfile' : '--frozen-lockfile'])
   await run(root, 'pnpm', ['build:pkgs'])
@@ -480,7 +480,7 @@ async function main() {
   const allocationDirectory = instrumentationEnabled ? path.join(resultDir, 'allocation-preparation') : undefined
 
   await fs.mkdir(resultDir, { recursive: true })
-  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, resolverDependencies, allocationDirectory })
+  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, resolverDependencies, allocationDirectory, diagnosticProject: selectedProjects[0]?.key })
   await prepareRoot({
     root: baselineRoot,
     role: baselineRef ? 'base' : 'published',
@@ -488,6 +488,7 @@ async function main() {
     baselineRef,
     resolverDependencies,
     allocationDirectory,
+    diagnosticProject: selectedProjects[0]?.key,
   })
   const gcDiagnosticsEnabled = process.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS === '1' || instrumentationEnabled
   let diagnosticIdentity
