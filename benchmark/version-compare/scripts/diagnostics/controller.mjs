@@ -9,8 +9,10 @@ import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constant
 import { rootRelativeKey, sha256 } from './evidence.mjs'
 import { verifyOperationEvidence } from './operation-evidence.mjs'
 import { readAllocationEvidenceFile } from './profile-files.mjs'
+import { verifyViteTailEvidence } from './vite-tail-evidence.mjs'
+import { viteTailProject } from './vite-tail-observer.mjs'
 
-const modules = ['constants.mjs', 'profile-codec.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs']
+const modules = ['constants.mjs', 'profile-codec.mjs', 'profile-compression.mjs', 'profile-json.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs', 'vite-tail-observer.mjs']
 const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$)/
 
 export async function createCaseDiagnostics(options) {
@@ -130,6 +132,9 @@ export async function createCaseDiagnostics(options) {
           throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
         }
         operationEvidence = await verifyOperationEvidence(directory, status, identity)
+        if (identity.project === viteTailProject && identity.kind === 'build') {
+          operationEvidence.viteTail = await verifyViteTailEvidence(directory, status.viteTail)
+        }
         const expectedPhases = options.kind === 'build'
           ? [['build-start', undefined]]
           : [['watch-start', undefined], ...[1, 2, 3].flatMap(round => [['mutation-write', round], ['rollback-write', round]]), ['watch-stop', undefined]]

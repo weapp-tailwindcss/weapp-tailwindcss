@@ -302,6 +302,10 @@ async function prepareRoot({ root, role, baseline, baselineRef, resolverDependen
     await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject)
   }
   await run(root, 'pnpm', ['install', role === 'published' ? '--no-frozen-lockfile' : '--frozen-lockfile'])
+  if (allocationDirectory) {
+    const { prepareViteTailDependencies } = await import('./diagnostics/vite-tail-dependencies.mjs')
+    await prepareViteTailDependencies(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject)
+  }
   await run(root, 'pnpm', ['build:pkgs'])
 }
 

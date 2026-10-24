@@ -7,6 +7,7 @@ import { persistCompilationEvidence } from './capture.mjs'
 import { diagnosticSymbol, limits, mpxProject } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
 import { createOperationRecorder } from './operations.mjs'
+import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
 
 async function start() {
   const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
@@ -44,6 +45,7 @@ async function start() {
   const frameReceipts = []
   const startedAt = performance.now()
   const operations = createOperationRecorder({ writer, root: identity.root, phase: stage })
+  const viteTail = identity.project === viteTailProject && identity.kind === 'build' ? createViteTailObserver({ operations }) : undefined
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
     identity,
@@ -76,6 +78,7 @@ async function start() {
       operations: operations.summary(),
       storeCount: storeId,
       frameReceipts,
+      ...(viteTail ? { viteTail: viteTail.summary() } : {}),
       elapsedMs: performance.now() - startedAt,
       ...writer.accounting(),
     }))
@@ -104,12 +107,14 @@ async function start() {
     const started = performance.now()
     try {
       // 先取 profile，再序列化来源；观测自身分配会进入下一份累计 profile，按诊断栈单独标识。
+      viteTail?.point('snapshot.before')
       const sampling = await sampler?.capture(stop)
       const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId: rootCompilationId, finalizationId, operations })
       if (frames) {
         frameReceipts.push(frames)
       }
       complete = stop
+      viteTail?.point('snapshot.after')
       writeStatus()
     }
     catch (error) {
@@ -119,6 +124,7 @@ async function start() {
 
   globalThis[Symbol.for(diagnosticSymbol)] = {
     operations,
+    viteTail,
     webpackCreated(compilation) {
       if (!operations || webpackPhases.has(compilation)) {
         throw new Error('Webpack compilation 身份缺失或重复')
@@ -161,6 +167,7 @@ async function start() {
       const key = `${phase.type}:${phase.round ?? ''}`
       const id = ++viteCompletedCount
       const selectedForSnapshot = phase.type !== 'watch-stop' && !capturedPhases.has(key)
+      viteTail?.point('main-finalizer')
       operations.emit('vite.completed', { finalizationId: id, selectedForSnapshot, collections }, undefined, undefined, phase)
       if (!selectedForSnapshot) {
         return queue

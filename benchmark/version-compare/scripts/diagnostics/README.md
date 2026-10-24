@@ -92,3 +92,17 @@ Uni 和 Taro Vite 复用同一套生成器、原生会话、engine compile/build
 Vite 的无 observer 准备构建可在前述 `verify-preparation-build.mjs` 命令末尾追加 `demo-taro-vite-react-tailwindcss-v4__mp-weixin` 或 Uni 项目标识，默认仍验证 Mpx。该回归只构建已有依赖与 UI 消费链，不启动真实框架性能 workload。
 
 定向回归包含真实 Node 子进程中的 Mpx 诊断 worker 协议、手工构造的 compilation/store/操作，以及插桩后真实会话源码的受控依赖测试；这些不是实际 Mpx CLI 构建验收。真实框架行为仍需在集成后的准确 head 上单独运行 inputs 诊断，不能以协议 fixture 通过代替。
+
+## Taro 冷构建尾部阶段
+
+Taro 的 input / allocation 两种显式模式同时启用尾部数值观测，普通 PR、正式门禁、单独 GC 模式和 watch 轮次不启用。定位 RSS 尾峰优先使用 input 模式，避免把大 profile 的序列化、映射和压缩开销混入尾部判断。allocation 模式的原停止点仍在主 `finalizeGenerateBundle` 的 `onEnd` 前；后续阶段记录不是延长后的分配 profile。
+
+源码准备阶段验证并插桩独立 CSS finalizer。依赖安装后，从准备副本的 Taro runner 实际解析 Vite，再从 Vite 解析 Rollup，沿各包 `exports.import` 的相对静态 ESM 图查找唯一 AST 锚点。`tail-dependencies.json` 记录实际版本、包元数据哈希、源码前后 SHA 和锚点。路径 realpath 必须留在无 Git 元数据的准备副本内；全部依赖锚点成功后使用临时文件 rename 替换，避免原位写穿 pnpm 硬链接。未知布局、重复插桩和路径逃逸直接失败。未注册尾部 observer 时执行原语句，不求值统计参数、不增加回调、Promise 或 await。
+
+`operation-N.json` 中的 `vite.tail.phase` 与既有操作共享序列。每轮冷构建必须具有以下完整顺序：实际 resolved config → 主 finalizer 完成点 → `snapshot.before/after` → 独立 CSS finalizer 起止 → Rollup 文件写出起止 → `writeBundle` 起止（其中包含 Vite reporter 起止）→ `closeBundle` 起止。末尾摘要和每份实际事件都由控制器复核；阶段缺失或顺序变化不能当作零开销。
+
+事件记录 wall clock、单调时间和本 Node 进程 `rss/heapTotal/heapUsed/external/arrayBuffers`，不能直接等同正式进程树 RSS。`snapshot.before/after` 包围既有候选、来源和可选 profile 处理；阶段统计的 `observationPreparationMs` 与 operation 自身的准备耗时单独保留。observer 会改变分配和时序，这些标记不能消除全部观测影响。
+
+资产只统计全资产与脚本的数量和 UTF-8 字节，不复制 CSS、JS、AST 或 sourcemap 全文，不读取用户 opts 或额外调用 cssMatcher。无法从已知元数据确定的 CSS 数量和字节、sourcemap 序列化大小及未观测到的 styleHandler 调用次数保持 `unknown`；不能用文件名启发式分类。候选、sourceId、生成次数及请求 CSS 全文复用同序列的 `source.snapshot` 和已有生成操作，不重复扫描或额外调用 handler。reporter 是否可能压缩或序列化 map，应读取本次 resolved `logLevel/reportCompressedSize/ssr/sourcemap`，不能从框架名猜测。
+
+每进程最多 64 个尾部事件、每次最多 4096 个资产；仍共用原操作事件数与文件/会话字节预算。没有强制 GC、额外构建、采样间隔或正式阈值变更。阶段结束与实际 RSS 峰的时序需要在同次诊断中对照；诊断 fixture 成功不表示 Taro 性能回归已修复。

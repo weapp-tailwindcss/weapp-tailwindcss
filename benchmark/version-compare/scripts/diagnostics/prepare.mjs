@@ -6,6 +6,8 @@ import { diagnosticSymbol, mpxProject } from './constants.mjs'
 import { instrumentMpxSource, mpxTargets } from './mpx-instrumentation.mjs'
 import { guardDiagnosticObserver } from './observer-guard.mjs'
 import { generationTargets, instrumentOperationSource } from './operation-instrumentation.mjs'
+import { instrumentViteTailSource } from './vite-tail-instrumentation.mjs'
+import { viteTailProject } from './vite-tail-observer.mjs'
 
 const targets = [
   { relative: 'packages/weapp-tailwindcss/src/project-sources/candidates/store.ts', kind: 'store', name: 'createSourceCandidateStore' },
@@ -92,6 +94,9 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
   const selected = project === mpxProject
     ? [targets[0], ...mpxTargets.map(([kind, relative]) => ({ kind, relative }))]
     : [...targets, ...generationTargets.map(([kind, relative]) => ({ kind, relative }))]
+  if (project === viteTailProject) {
+    selected.push({ kind: 'vite-tail-css', relative: 'packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/plugin.ts' })
+  }
   const absentCapabilities = []
   for (const target of selected) {
     const file = path.resolve(realRoot, target.relative)
@@ -106,7 +111,9 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
       }
       throw error
     }
-    const transformed = target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
+    const transformed = target.kind === 'vite-tail-css'
+      ? instrumentViteTailSource(source, 'css', target.relative)
+      : target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
     prepared.push({ target, file, original: source, ...transformed })
   }
   // 所有锚点均验证成功后再写入副本，不容许半套观测协议启动。
