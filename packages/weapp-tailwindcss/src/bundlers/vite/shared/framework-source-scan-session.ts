@@ -77,6 +77,8 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
   let sourceScanExplicit = false
   let sourceCandidateScanSignature: string | undefined
   let sourceCandidateScanInvalidated = true
+  let sourceScanRevision = 0
+  let disposed = false
   const pendingSourceCandidateSyncs = new Set<Promise<unknown>>()
   const pendingSourceCandidateSyncByFile = new Map<string, Promise<any>>()
   const pendingHotUpdateChangeByFile = new Map<string, ViteSourceCandidateChange>()
@@ -95,6 +97,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
   const invalidateSourceSnapshots = (file?: string) => {
     // 来源事件也会影响暂未启用的扫描配置，不能在切回旧配置时恢复过期候选。
     sourceCandidateScanCache.clear()
+    sourceScanRevision++
     invalidateSourceCandidateScanPreparation(preparationKey(), file)
     cachedCollectorRevision = undefined
     cacheDirty = true
@@ -164,8 +167,8 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
     return sourceCandidateScanInvalidated
   }
 
-  const sync = async (syncOptions: { force?: boolean } = {}) => {
-    if (!options.shouldOwnTailwindGeneration) {
+  const sync = async (syncOptions: { force?: boolean } = {}): Promise<void> => {
+    if (disposed || !options.shouldOwnTailwindGeneration) {
       return
     }
     if (!syncOptions.force && options.isWatchLikeBuild() && hasState() && !sourceCandidateScanInvalidated) {
@@ -173,9 +176,13 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
       return
     }
     const resolvedConfig = options.getResolvedConfig()
+    const revision = sourceScanRevision
     const root = resolvedConfig?.root ?? process.cwd()
     const outDir = resolvedConfig?.build?.outDir
     const sourceScan = await resolveViteSourceScanEntries(options.opts, options.runtimeState.tailwindRuntime, { outDir, root })
+    if (disposed || revision !== sourceScanRevision) {
+      return disposed ? undefined : sync({ force: true })
+    }
     sourceScanEntries = sourceScan?.entries
     sourceScanExplicit = sourceScan?.explicit ?? false
     sourceScanDependencies = new Set((sourceScan?.dependencies ?? []).map(normalizeDependency))
@@ -211,11 +218,15 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
     const prepared = key && options.sourceCandidateCollector.restoreScan
       ? await readSourceCandidateScanPreparation(key, async () => (await Promise.all(roots.map(root => options.sourceCandidateCollector.resolveScanFiles({ ...root, outDir })))).flat())
       : undefined
-    if (prepared) {
-      options.sourceCandidateCollector.restoreScan(prepared)
+    // await 交接后还可能先运行来源事件；恢复前同步核对本会话与共享准备结果的代次。
+    if (disposed || revision !== sourceScanRevision) {
+      return disposed ? undefined : sync({ force: true })
+    }
+    if (prepared?.isCurrent()) {
+      options.sourceCandidateCollector.restoreScan(prepared.files)
       options.sourceCandidateCollector.syncInline(sourceScan?.inlineCandidates)
       sourceScanIneligibleFiles.clear()
-      updateSourceScanMatchers(prepared.map(file => file.id))
+      updateSourceScanMatchers(prepared.files.map(file => file.id))
       sourceCandidateScanSignature = nextScanSignature
       sourceCandidateScanInvalidated = false
       cacheDirty = true
@@ -239,6 +250,9 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
       outDir,
       onFilesResolved: files => files.forEach(file => eligibleFiles.add(file)),
     })))
+    if (disposed || revision !== sourceScanRevision) {
+      return disposed ? undefined : sync({ force: true })
+    }
     updateSourceScanMatchers(eligibleFiles)
     sourceCandidateScanSignature = nextScanSignature
     sourceCandidateScanInvalidated = false
@@ -431,6 +445,8 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
   return {
     cacheCurrent,
     async dispose() {
+      disposed = true
+      sourceScanRevision++
       await pendingChangedFilesFlush?.catch(() => {})
       await sourceScanEligibleFilesRefresh?.catch(() => {})
       await Promise.allSettled(pendingSourceCandidateSyncs)

@@ -83,5 +83,8 @@ export async function readSourceCandidateScanPreparation(key: string, resolveFil
     }
     return undefined
   }
-  return preparation.files
+  return Object.freeze({
+    files: preparation.files,
+    isCurrent: () => preparations.peek(key) === preparation,
+  })
 }

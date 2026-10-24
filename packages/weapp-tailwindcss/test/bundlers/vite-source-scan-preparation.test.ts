@@ -1,21 +1,23 @@
 import type { SourceCandidateCollectorOptions } from '@/project-sources/candidates/types-and-cache'
-import { mkdtemp, rm, stat, utimes, writeFile } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { createViteCssMemory } from '@/bundlers/vite/css-memory'
 import { createFrameworkSourceScanSession } from '@/bundlers/vite/shared/framework-source-scan-session'
 import { createSourceCandidateCollector } from '@/bundlers/vite/source-candidates'
+import * as scanPreparation from '@/project-sources/candidates/scan-preparation'
 
 const cleanups: Array<() => Promise<unknown>> = []
 const extract = (source: string) => [source]
 
 async function fixture() {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'vite-scan-preparation-'))
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'vite-scan-preparation-')))
   const file = path.join(root, 'entry.html')
   await writeFile(file, 'first-candidate')
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   const create = (options: SourceCandidateCollectorOptions = {}, pattern = '*.html') => {
+    const sources = [{ base: root, pattern, negated: false }]
     const collector = createSourceCandidateCollector({ extractor: extract, ...options })
     const memory = createViteCssMemory({ debug: vi.fn(), getSourceCandidateSource: collector.source })
     const session = createFrameworkSourceScanSession({
@@ -26,7 +28,7 @@ async function fixture() {
       isCandidateRequest: () => true,
       isWatchLikeBuild: () => true,
       opts: {},
-      runtimeState: { tailwindRuntime: { majorVersion: 4, options: { projectRoot: root, tailwindcss: { cwd: root, v4: { base: root, sources: [{ base: root, pattern, negated: false }] } } } } } as any,
+      runtimeState: { tailwindRuntime: { majorVersion: 4, options: { projectRoot: root, tailwindcss: { cwd: root, v4: { base: root, sources } } } } } as any,
       shouldOwnTailwindGeneration: true,
       sourceCandidateCollector: collector,
     })
@@ -35,7 +37,7 @@ async function fixture() {
       memory.dispose()
     }
     cleanups.push(dispose)
-    return { collector, session, dispose, scan: vi.spyOn(collector, 'scanRoot') }
+    return { collector, session, dispose, sources, scan: vi.spyOn(collector, 'scanRoot') }
   }
   return { root, file, create }
 }
@@ -130,6 +132,44 @@ it('新实例核验期间到达的来源事件撤销旧准备结果', async () =
   await preparing
   expect(second.scan).toHaveBeenCalledOnce()
   expect(second.collector.values()).toEqual(new Set(['first-candidate']))
+})
+
+it.each(['update', 'other-instance', 'profile', 'close'] as const)('验证完成后、恢复前发生 %s，旧准备结果不能覆盖本实例新状态', async (event) => {
+  const { root, file, create } = await fixture()
+  await writeFile(path.join(root, 'other.ts'), 'other-source')
+  const first = create()
+  await first.session.sync()
+  const second = create()
+  const readPreparation = scanPreparation.readSourceCandidateScanPreparation
+  const read = vi.spyOn(scanPreparation, 'readSourceCandidateScanPreparation').mockImplementationOnce(async (...args) => {
+    const prepared = await readPreparation(...args)
+    expect(prepared).toBeDefined()
+    if (event === 'update' || event === 'other-instance') {
+      await writeFile(file, 'latest-candidate')
+      await (event === 'update' ? second : first).session.syncChangedFile(file, 'latest-candidate')
+    }
+    else if (event === 'profile') {
+      second.sources[0]!.pattern = '*.ts'
+      second.session.invalidate()
+    }
+    else {
+      await second.dispose()
+    }
+    return prepared
+  })
+  try {
+    await second.session.sync()
+    expect(second.collector.values()).toEqual(new Set(event === 'close' ? [] : [event === 'profile' ? 'other-source' : 'latest-candidate']))
+    if (event === 'update' || event === 'other-instance') {
+      expect([...second.session.getWatchFiles()]).toContain(file)
+    }
+    else {
+      expect([...second.session.getWatchFiles()]).not.toContain(file)
+    }
+  }
+  finally {
+    read.mockRestore()
+  }
 })
 
 it('提取选项或解析后的来源范围改变时，使用各自的准备结果', async () => {
