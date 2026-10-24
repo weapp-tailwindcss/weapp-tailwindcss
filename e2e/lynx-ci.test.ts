@@ -11,6 +11,20 @@ async function androidJob() {
   return workflow.jobs.android
 }
 
+it('Lynx Android 在 Gradle 和原生验证前固定兼容的 Java 工具链', async () => {
+  const { steps } = await androidJob()
+  const javaIndex = steps.findIndex((step: { uses?: string }) => step.uses === 'actions/setup-java@v5')
+  const gradleIndex = steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('gradle/actions/setup-gradle@'))
+  const nativeIndex = steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('reactivecircus/android-emulator-runner@'))
+  expect(javaIndex).toBeGreaterThan(-1)
+  expect(javaIndex).toBeLessThan(gradleIndex)
+  expect(gradleIndex).toBeLessThan(nativeIndex)
+  expect(steps[javaIndex].with).toMatchObject({ 'distribution': 'temurin', 'java-version': 17 })
+  expect(steps[gradleIndex].with['gradle-version']).toBe('8.10.2')
+  const contract = steps.find((step: { name?: string }) => step.name === 'Verify Android CI contract')
+  expect(contract.run).toContain('e2e/lynx-gradle-java.test.ts')
+})
+
 it('显式 Lynx 回归入口的每条测试路径必须存在，防止 Vitest 静默过滤失效路径', async () => {
   const workflow = YAML.parse(await readFile(new URL('../.github/workflows/lynx-native.yml', import.meta.url), 'utf8'))
   const { scripts } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
