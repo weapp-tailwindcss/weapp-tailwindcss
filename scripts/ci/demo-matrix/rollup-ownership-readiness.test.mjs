@@ -55,6 +55,7 @@ function handshakeFixture(options = {}) {
   const task = { fileWatcher: { fileGroups: new Map([[directory, { watcher }]]) } }
   const sources = []
   const published = []
+  const received = []
   let elapsed = 0
   let drained = !options.pending
   const input = {
@@ -66,6 +67,14 @@ function handshakeFixture(options = {}) {
     now: () => elapsed,
     async pause() {
       elapsed++
+      for (const receipt of received.splice(0)) {
+        if (receipt.readyAt <= elapsed) {
+          sources.push(receipt.source)
+        }
+        else {
+          received.push(receipt)
+        }
+      }
       if (elapsed === 3 && !options.neverDrain) {
         watcher._throttled.clear()
         drained = true
@@ -74,10 +83,17 @@ function handshakeFixture(options = {}) {
     readStat: async () => ({ atime: new Date(0), mtimeMs: 1000 }),
     async publish(_, mtime) {
       published.push(mtime)
-      if (options.dropFirst && published.length === 1) {
+      if ((options.dropFirst && published.length === 1) || (options.onlyFirst && published.length > 1)) {
         return
       }
-      sources.push({ watcher, file, event: 'update', stats: { mtimeMs: mtime }, ...options.source })
+      const source = { watcher, file, event: 'update', stats: { mtimeMs: mtime }, ...options.source }
+      if (options.receiptLag) {
+        // 每次 stat 都先取得旧快照，再在后续事件循环返回，不能被新 probe 改写。
+        received.push({ readyAt: elapsed + options.receiptLag, source })
+      }
+      else {
+        sources.push(source)
+      }
       if (options.pending) {
         watcher._throttled.set('watch', new Map([[file, {}]]))
       }
@@ -92,6 +108,21 @@ it('首个原生 probe 尚未被监听采集时必须获得后续目标回执，
   await prepareOwnershipSource(input)
   expect(published).toEqual([2000, 3000])
   expect(elapsed()).toBe(3)
+})
+
+it('连续慢 stat 回执不能因持续追逐最新 probe 而饥饿，确认已发回执后停止写入', async () => {
+  const { input, published, elapsed } = handshakeFixture({ receiptLag: 2 })
+  await prepareOwnershipSource(input)
+  expect(published).toEqual([2000, 3000])
+  expect(input.sources.map(source => source.stats.mtimeMs)).toEqual([2000, 3000])
+  expect(elapsed()).toBe(3)
+})
+
+it('较早 probe 已确认但最后发布始终无回执时不能追加写入或放行', async () => {
+  const { input, published } = handshakeFixture({ receiptLag: 2, onlyFirst: true })
+  await expect(prepareOwnershipSource(input)).rejects.toThrow('source-final-acknowledgement')
+  expect(published).toEqual([2000, 3000])
+  expect(input.sources.map(source => source.stats.mtimeMs)).toEqual([2000])
 })
 
 it.each([

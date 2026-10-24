@@ -36,16 +36,22 @@ export async function prepareOwnershipSource({
   const offset = sources.length
   const key = path.resolve(file)
   let probe = Math.floor(before.mtimeMs / 1000) * 1000
-  const acknowledged = () => sources.slice(offset).some(source => source.watcher === watcher
-    && source.file === key && source.event === 'update' && source.stats?.mtimeMs === probe)
+  const published = new Set()
+  const acknowledged = matchesTime => sources.slice(offset).some(source => source.watcher === watcher
+    && source.file === key && source.event === 'update' && matchesTime(source.stats?.mtimeMs))
   // 原生句柄登记不等于事件流已生效；同一 deadline 内取得目标自己的新 mtime 回执。
   do {
     if (now() >= deadline) {
       throw new Error('原生订阅握手超时：source-acknowledgement')
     }
-    await publish(before.atime, probe += 1000)
+    published.add(probe += 1000)
+    await publish(before.atime, probe)
     await wait('source-acknowledgement')
-  } while (!acknowledged())
+  } while (!acknowledged(time => published.has(time)))
+  // 慢 stat 可能返回较早 probe；确认事件流生效后停止写入，等最后一次发布被采集。
+  while (!acknowledged(time => time === probe)) {
+    await wait('source-final-acknowledgement')
+  }
   // 已接收的 stat/目录扫描和 watch 节流任务必须排空，才可清掉 probe 通知。
   while (!isDrained() || watcher._streams.size > 0 || getWatchPathEntry(watcher._throttled.get('watch') ?? [], file)
     || getWatchPathEntry(watcher._throttled.get('readdir') ?? [], owner)) {
