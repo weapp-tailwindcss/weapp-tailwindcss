@@ -75,16 +75,20 @@ export function compilationCandidates(collections) {
   return Object.fromEntries(Object.entries(collections).map(([name, values]) => [name, sortedCandidates(values)]))
 }
 
+export function evidenceLimitError({ filename, bytes, maximum, bytesWritten, scope = 'encoded-file', statistics }) {
+  return new Error(`诊断输出超过固定上限；本份证据未写入，不做静默截断：${JSON.stringify({ filename, bytes, maximum, bytesWritten, totalMaximum: limits.maxTotalBytes, fileMaximum: limits.maxProfileBytes, scope, statistics })}`)
+}
+
 export function createEvidenceWriter(directory) {
   let bytesWritten = 0
   let filesWritten = 0
-  function write(name, value, maximum = limits.maxProfileBytes) {
+  function write(name, value, maximum = limits.maxProfileBytes, statistics) {
     if (path.basename(name) !== name) {
       throw new Error('诊断文件名不能越过会话目录')
     }
     const payload = Buffer.from(`${JSON.stringify(value)}\n`)
     if (payload.length > maximum || bytesWritten + payload.length > limits.maxTotalBytes) {
-      throw new Error('诊断输出超过固定上限；本份证据未写入，不做静默截断')
+      throw evidenceLimitError({ filename: name, bytes: payload.length, maximum, bytesWritten, scope: payload.length > maximum ? 'encoded-file' : 'session-total', statistics })
     }
     fs.writeFileSync(path.join(directory, name), payload, { flag: 'wx' })
     bytesWritten += payload.length

@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -7,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { diagnosticSymbol } from '../scripts/diagnostics/constants.mjs'
 import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { sha256 } from '../scripts/diagnostics/evidence.mjs'
+import { decodeAllocationEvidence } from '../scripts/diagnostics/profile-codec.mjs'
 import { createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
 import { viteOperationFixture } from './helpers/vite-operations.mjs'
 
@@ -87,12 +89,30 @@ if (allocation.length !== 20000) throw new Error('fixture');
       const files = await fs.readdir(directory)
       expect(files.includes('allocation-1.json')).toBe(mode === 'allocation')
       if (mode === 'allocation') {
-        const profile = JSON.parse(await fs.readFile(path.join(directory, 'allocation-1.json'), 'utf8'))
+        const profile = decodeAllocationEvidence(await fs.readFile(path.join(directory, 'allocation-1.json')), inputs.profileReceipt)
         expect(profile.sampling.parameters).toMatchObject({ includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true })
         expect(profile.sampling.profile.samples.length).toBeGreaterThan(0)
-        const frames = JSON.parse(await fs.readFile(path.join(directory, inputs.framesFile), 'utf8'))
+        const frames = decodeAllocationEvidence(await fs.readFile(path.join(directory, inputs.framesFile)))
         expect(frames.allocationFrames.length).toBeGreaterThan(0)
         expect(frames.profileReceipt).toEqual(inputs.profileReceipt)
+        const profileFile = path.join(directory, inputs.profileFile)
+        const inputFile = path.join(directory, 'inputs-1.json')
+        const originalProfile = await fs.readFile(profileFile)
+        const originalInputs = await fs.readFile(inputFile)
+        const invalidProfile = Buffer.from(originalProfile.toString().replace('allocation-url-dictionary.v1', 'allocation-url-dictionary.v2'))
+        expect(invalidProfile.length).toBe(originalProfile.length)
+        await fs.writeFile(profileFile, invalidProfile)
+        await fs.writeFile(inputFile, originalInputs.toString().replace(inputs.profileReceipt.sha256, sha256(invalidProfile)))
+        await expect(diagnostics.finish()).rejects.toThrow('envelope schema/version')
+        await fs.writeFile(profileFile, originalProfile)
+        await fs.writeFile(inputFile, originalInputs)
+        const statusFile = path.join(directory, 'status.json')
+        const originalStatus = await fs.readFile(statusFile)
+        const missingReceipt = JSON.parse(originalStatus)
+        delete missingReceipt.frameReceipts[0].receipt
+        await fs.writeFile(statusFile, JSON.stringify(missingReceipt))
+        await expect(diagnostics.finish()).rejects.toThrow('receipt')
+        await fs.writeFile(statusFile, originalStatus)
         const corrupted = await fs.readFile(path.join(directory, inputs.framesFile))
         corrupted[0] = 91
         await fs.writeFile(path.join(directory, inputs.framesFile), corrupted)

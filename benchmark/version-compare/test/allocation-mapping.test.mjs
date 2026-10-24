@@ -9,6 +9,7 @@ import { persistCompilationEvidence } from '../scripts/diagnostics/capture.mjs'
 import { limits } from '../scripts/diagnostics/constants.mjs'
 import { createEvidenceWriter, sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { allocationMappingScope, annotateAllocationFrames } from '../scripts/diagnostics/frames.mjs'
+import { decodeAllocationEvidence } from '../scripts/diagnostics/profile-codec.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -104,7 +105,7 @@ describe('分配归因只读取准备副本内的仓库模块', () => {
     const writer = createEvidenceWriter(identity.sessionDirectory)
     expect(() => persistCompilationEvidence({ identity, phase: { type: 'build-start' }, index: 1, sampling, stores: new Map([[1, new WeakRef(store)]]), collections: { runtime: store.values() }, writer, started: performance.now() })).toThrow('栈映射模块数超过诊断上限')
     const raw = await fs.readFile(path.join(identity.sessionDirectory, 'allocation-1.json'))
-    expect(JSON.parse(raw).sampling.profile).toEqual(profile)
+    expect(decodeAllocationEvidence(raw).sampling.profile).toEqual(profile)
     const inputs = JSON.parse(await fs.readFile(path.join(identity.sessionDirectory, 'inputs-1.json'), 'utf8'))
     expect(inputs.compilationCandidates.runtime).toEqual(['flex'])
     expect(inputs.sources[0].maps.sourceById[0]).toMatchObject({ sha256: sha256('中文 flex') })
