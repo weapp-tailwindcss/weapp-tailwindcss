@@ -450,7 +450,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 -	    this._userIgnored = undefined;
 -	  });
 -
-+	    if (this._watched.has(path)) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
++	    if (this._watched.has(sysPath.resolve(path))) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
 +	    operations.push(() => this._closePath(path), () => this._closeRecreation(path));
 +	  }
 +	  this._userIgnored = undefined;
@@ -1393,7 +1393,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 -	    this._userIgnored = undefined;
 -	  });
 -
-+	    if (this._watched.has(path)) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
++	    if (this._watched.has(sysPath.resolve(path))) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
 +	    operations.push(() => this._closePath(path), () => this._closeRecreation(path));
 +	  }
 +	  this._userIgnored = undefined;

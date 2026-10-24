@@ -13,6 +13,7 @@ regressions:
   - scripts/ci/demo-matrix/rollup-hierarchical-ownership.test.mjs
   - scripts/ci/demo-matrix/rollup-watch-groups.test.mjs
   - scripts/ci/demo-matrix/rollup-directory-retirement.test.mjs
+  - scripts/ci/demo-matrix/rollup-directory-identity.test.mjs
   - scripts/ci/demo-matrix/rollup-directory-errors.test.mjs
   - scripts/ci/demo-matrix/rollup-close-errors.test.mjs
   - scripts/ci/demo-matrix/rollup-polling-identity.test.mjs
@@ -138,6 +139,25 @@ pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo
 ```
 
 原始 772 项首败及两次握手红灯日志保留。上述 Linux 事件序列和原生回执在本机执行，不能替代准确新 head 的原生 Linux/Windows CI。
+
+### Windows 退役目录的索引身份首败
+
+`017956820f6f88a9ed11fa52e5673951dde61a1d` 的 [run 40095880350 / job 120877927872](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40095880350/job/120877927872) 在 Windows / Node 24 的前置 `pnpm test:demo:matrix` 首败。失败为 `rollup-hierarchical-ownership.test.mjs` 的 `4.63.5 / cjs / register-child`：父目录已退役，旧 watcher 仍有其子树 closer。真实 Taro Vue H5 repeated watch 尚未启动，诊断上传因无文件而没有 artifact。日志里同 stat 的两次 `retained.js` 更新仍发生在订阅握手阶段，而且没有 watcher 身份，不能据此判为重复失效；直接失败证据是旧组的资源残留。
+
+`unwatch()` 的路径经过 `unifyPaths` 后使用 `/`，而 `_getWatchedDir()` 用宿主 `path.resolve()` 登记 `_watched`。Windows 下 `C:/…` 查不到 `C:\…` 目录键，因此只屏蔽根路径，漏掉子树 ignore。当时已登记的句柄会被释放，但迟到的子文件发现仍可重新登记。修订让撤销查询使用与目录登记相同的 `sysPath.resolve(path)`，同步四版本 CJS/ESM 共八处；不改变事件、stat、观察预算或旧组必须同步无残留的断言。
+
+新增目录身份回归直接执行实际解析版本的 `unwatch` 方法，仅固定宿主 path 与 `unifyPaths` 的规范化输出，分别覆盖 POSIX、根目录、相对路径、Windows 盘符及 UNC。准确旧锁图得到 32 项失败、32 项通过，失败均为缺失子树 ignore。原真实目录退役回归增加 `before-child`：由真实扫描进入子文件 `_addToNodeFs` 后暂停，退役父目录，再放行并检查句柄、索引、恢复 owner 和扫描流；稳定文件的正向更新作为后续事件屏障。原 `before-directory`、`during-read`、`after-read` 及父子订阅断言全部保留。
+
+本地前两次试验分别遇到构造后写入冻结 options 的夹具错误、消费方仍解析旧补丁安装目录，均未计入产品红灯。重新冻结离线安装后，逐个核对实际 Vite 消费方的版本和补丁 hash，才建立上述红灯。四个新补丁 hash 按内容 SHA256 更新，反向替换后锁文件与修改前逐字节一致，依赖版本和 peer 布局未变；随后再次执行冻结离线安装，确认真实消费方加载新实现。
+
+修订在 macOS / Node 24.18.0 上执行以下定向回归，5 文件、244 项通过、零跳过：
+
+```sh
+HUSKY=0 pnpm install --frozen-lockfile --offline --ignore-scripts
+pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup-directory-identity.test.mjs scripts/ci/demo-matrix/rollup-directory-retirement.test.mjs scripts/ci/demo-matrix/rollup-hierarchical-ownership.test.mjs scripts/ci/demo-matrix/rollup-watch-groups.test.mjs scripts/ci/demo-matrix/rollup-close-errors.test.mjs --maxWorkers=1 --no-file-parallelism --update=none
+```
+
+身份回归模拟路径语义，目录退役回归使用本机真实文件事件；两者都不能替代新 head 的原生 Windows CI。首败完整日志、修订前后的定向结果均保留，没有重跑旧 CI 取绿。
 
 ## 适用边界
 

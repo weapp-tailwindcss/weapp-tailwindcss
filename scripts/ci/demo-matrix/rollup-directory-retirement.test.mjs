@@ -7,7 +7,7 @@ import { rollupTestVariants } from './rollup-test-runtime.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-const cases = rollupTestVariants().flatMap(runtime => ['before-directory', 'during-read', 'after-read'].map(stage => ({ ...runtime, stage })))
+const cases = rollupTestVariants().flatMap(runtime => ['before-directory', 'during-read', 'after-read', 'before-child'].map(stage => ({ ...runtime, stage })))
 
 it.each(cases)('退役目录的迟到异步发现不恢复句柄、目录索引或扫描流 ($version, $format, $stage)', async ({ require, format, stage }) => {
   const dist = path.dirname(require.resolve('rollup'))
@@ -37,31 +37,39 @@ it.each(cases)('退役目录的迟到异步发现不恢复句柄、目录索引�
   const method = stage === 'during-read' ? '_readdirp' : stage === 'before-directory' ? '_handleDir' : '_handleRead'
   const target = stage === 'during-read' ? watcher : handler
   const original = target[method].bind(target)
-  const intercepted = vi.spyOn(target, method).mockImplementation(stage === 'during-read'
-    ? (...args) => {
-        const stream = original(...args)
-        if (path.resolve(args[0]) === directory) {
-          stream.pause()
+  const intercepted = stage === 'before-child'
+    ? undefined
+    : vi.spyOn(target, method).mockImplementation(stage === 'during-read'
+        ? (...args) => {
+            const stream = original(...args)
+            if (path.resolve(args[0]) === directory) {
+              stream.pause()
+              entered = true
+            }
+            return stream
+          }
+        : async (...args) => {
+          if (path.resolve(args[0]) !== directory) {
+            return original(...args)
+          }
+          const result = stage === 'after-read' ? await original(...args) : undefined
           entered = true
-        }
-        return stream
-      }
-    : async (...args) => {
-      if (path.resolve(args[0]) !== directory) {
-        return original(...args)
-      }
-      const result = stage === 'after-read' ? await original(...args) : undefined
-      entered = true
-      await paused
-      return stage === 'before-directory' ? original(...args) : result
-    })
+          await paused
+          return stage === 'before-directory' ? original(...args) : result
+        })
   const add = handler._addToNodeFs.bind(handler)
   const tracked = vi.spyOn(handler, '_addToNodeFs').mockImplementation(async (...args) => {
+    const isTarget = path.resolve(args[0]) === (stage === 'before-child' ? child : directory)
     try {
+      if (stage === 'before-child' && isTarget) {
+        // 由真实目录扫描进入子文件发现后再退役，旧目录的 exact ignore 不能代替子树撤销。
+        entered = true
+        await paused
+      }
       return await add(...args)
     }
     finally {
-      if (path.resolve(args[0]) === directory) {
+      if (isTarget) {
         completed()
       }
     }
@@ -92,10 +100,20 @@ it.each(cases)('退役目录的迟到异步发现不恢复句柄、目录索引�
     expect(events.every(event => event.id === stable)).toBe(true)
     expect(task.fileWatcher.watcherGroups.size).toBeLessThanOrEqual(task.fileWatcher.fileAliases.size)
   }
+  catch (error) {
+    const state = {
+      stage,
+      ignored: [...watcher._ignoredPaths],
+      closers: [...watcher._closers.keys()],
+      directories: [...watcher._watched.keys()],
+      groups: [...task.fileWatcher.watcherGroups].map(group => [...group.roots]),
+    }
+    throw new Error(`${error}\nDirectory retirement trace: ${JSON.stringify(state)}`, { cause: error })
+  }
   finally {
     release()
     await task.close()
-    intercepted.mockRestore()
+    intercepted?.mockRestore()
     tracked.mockRestore()
     await rm(root, { recursive: true, force: true })
   }
