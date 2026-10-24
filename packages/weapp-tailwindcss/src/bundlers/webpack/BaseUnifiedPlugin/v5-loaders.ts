@@ -8,7 +8,7 @@ import type { AppType, InternalUserDefinedOptions } from '@/types'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { ensureCompilerOwnerActive, runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { ensureCompilerOwnerActive, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { pluginName } from '@/constants'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsFromLoaderEntries } from '../../../generation/framework-postcss'
@@ -99,7 +99,7 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
   const runtimeCssImportRewriteLoaderExists = runtimeCssImportRewriteLoader
     ? fs.existsSync(runtimeCssImportRewriteLoader)
     : false
-  const run = <T>(activity: () => T | Promise<T>) => runCompilerOwnerActivity(runtimeState, activity)
+  const run = <T>(activity: () => T | Promise<T>) => runCompilerOwnerExternalActivity(runtimeState, activity)
   const runtimeLoaderRewriteOptions = shouldInjectCssImportRewriteLoader || shouldInjectCssGenerationLoader
     ? {
         run,

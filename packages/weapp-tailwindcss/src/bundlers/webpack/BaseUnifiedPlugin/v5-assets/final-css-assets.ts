@@ -2,7 +2,7 @@ import type { WebCssCompatUserOptions } from '@weapp-tailwindcss/postcss/transfo
 import type { Compilation, Compiler } from 'webpack'
 import type { SetupWebpackV5ProcessAssetsHookOptions } from './helpers'
 import { collectWebCssPropertyFallbackEdits } from '@weapp-tailwindcss/postcss/transform'
-import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { pluginName } from '@/constants'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { getGroupedEntries } from '@/utils'
@@ -47,7 +47,7 @@ export function setupWebpackMiniCssAssetFinalizer(options: {
       name: `${pluginName}:finalize-css-assets`,
       stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_HASH,
     },
-    assets => runCompilerOwnerActivity(runtimeState, async () => {
+    assets => runCompilerOwnerExternalActivity(runtimeState, async () => {
       const entries = Object.entries(assets)
       if (entries.length === 0) {
         return

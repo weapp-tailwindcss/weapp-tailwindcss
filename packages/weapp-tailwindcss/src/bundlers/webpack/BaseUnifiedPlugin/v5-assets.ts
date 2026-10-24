@@ -4,7 +4,7 @@ import path from 'node:path'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { LRUCache } from 'lru-cache'
 import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
-import { ensureCompilerOwnerActive, runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { ensureCompilerOwnerActive, runCompilerOwnerActivity, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { pluginName } from '@/constants'
 import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
@@ -93,7 +93,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           ? Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE
           : Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
       },
-      assets => runCompilerOwnerActivity(runtimeState, async () => {
+      assets => runCompilerOwnerExternalActivity(runtimeState, async () => {
         const entries = Object.entries(assets)
         if (entries.length === 0) {
           return
