@@ -73,6 +73,7 @@ interface ProcessRememberedCssReplayOptions {
   getCssUserHandlerOptions: (file: string) => ReturnType<ReturnType<typeof import('../css-handler-options').createCssHandlerOptionsCache>['getCssUserHandlerOptions']>
   getRememberedCssSignature?: ((file: string) => string | undefined) | undefined
   getRememberedCssSources?: (() => Iterable<[string, RememberedCssSource]>) | undefined
+  captureCssSource?: GenerateBundleContext['captureCssSource']
   frameworkRootImportShellTargetByFile?: ReadonlyMap<string, string> | undefined
   isNativeAppStyleTarget: boolean
   isWebGeneratorTarget: boolean
@@ -243,6 +244,13 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     ) {
       continue
     }
+    // 规划时固定全部贡献来源的代次；删除和同名重建不能恢复旧任务的提交权。
+    const currentSources = replayableRememberedGroup.map(({ remembered }) => options.captureCssSource?.(remembered.sourceFile))
+    const isReplayCurrent = () => currentSources.every(isCurrent => isCurrent?.() !== false)
+    const releaseSources = () => currentSources.forEach(isCurrent => isCurrent?.release())
+    const queueReplay = (task: () => Promise<void>) => {
+      cssTaskFactories.push(() => timeTask('css.replay', task).finally(releaseSources))
+    }
     const rawSource = isWebGeneratorTarget
       ? rememberedCssSource.rawSource
       : normalizeMiniProgramImportShell(rememberedCssSource.rawSource, {
@@ -355,6 +363,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     const shouldEmitRememberedReplayCssAsset = shouldRecordRememberedReplayCss
       && !shouldMergeReplayIntoFrameworkRootTarget
     if (!shouldRecordRememberedReplayCss) {
+      releaseSources()
       continue
     }
     const shouldPreserveFrameworkRootImportShell = shouldPreserveFrameworkRootMiniProgramImportShell({
@@ -382,7 +391,10 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       }
     }
     if (shouldPreserveLocalImportWrapper) {
-      cssTaskFactories.push(() => timeTask('css.replay', async () => {
+      queueReplay(async () => {
+        if (!isReplayCurrent()) {
+          return
+        }
         const start = performance.now()
         const css = annotateCss(normalizeMiniProgramImportShell(rawSource))
         lastCssRawSourceHashByFile.set(outputFile, rawSourceHash)
@@ -398,7 +410,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         metrics.css.transformed++
         onUpdate(outputFile, rememberedCssSource.rawSource, css)
         debug('css replay preserve local import shell: %s', outputFile)
-      }))
+      })
       continue
     }
     const recordGeneratedReplayCss = (css: string) => {
@@ -427,7 +439,10 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       }
     }
     if (cachedGeneratedReplay !== undefined) {
-      cssTaskFactories.push(() => timeTask('css.replay', async () => {
+      queueReplay(async () => {
+        if (!isReplayCurrent()) {
+          return
+        }
         const start = performance.now()
         const css = annotateCss(cachedGeneratedReplay.css)
         registerGeneratorDependencies({ addWatchFile }, cachedGeneratedReplay.dependencies)
@@ -436,10 +451,13 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         metrics.css.cacheHits++
         onUpdate(outputFile, rememberedCssSource.rawSource, css)
         debug('css replay reuse generated cache: %s bytes=%d', outputFile, cachedGeneratedReplay.css.length)
-      }))
+      })
       continue
     }
-    cssTaskFactories.push(() => timeTask('css.replay', async () => {
+    queueReplay(async () => {
+      if (!isReplayCurrent()) {
+        return
+      }
       const start = performance.now()
       const generated = await generateTailwindV4Css({
         deferWebCssPropertyFallback: true,
@@ -459,6 +477,9 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         previousCss: undefined,
       })
       const generatedCss = generated?.css ?? (await styleHandler(generatorRawSource, cssHandlerOptions)).css
+      if (!isReplayCurrent()) {
+        return
+      }
       // 注释来源按本轮重新标注，缓存保留未混入框架贡献的原始生成结果。
       rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedCss, createGeneratedReplayCacheProof(generatedReplaySignature, generated?.dependencies))
       const css = annotateCss(generatedCss)
@@ -471,6 +492,6 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       metrics.css.transformed++
       onUpdate(outputFile, rememberedCssSource.rawSource, css)
       debug('css replay handle: %s', outputFile)
-    }))
+    })
   }
 }

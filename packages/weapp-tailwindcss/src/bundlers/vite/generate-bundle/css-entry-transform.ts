@@ -1,8 +1,29 @@
+import { captureViteCssSources } from '../css-memory/source-lifecycle'
 import { createScopedGeneratorCandidateSignatureForSources, createScopedGeneratorSourceData } from './scoped-generator-sources'
 import { scheduleViteCssTransform } from './transform-scheduling'
 
 /** 消费已确定的来源与输出计划，依次复用、回放或调度 CSS 转换。 */
 export async function processViteCssEntryTransform(options: any) {
+  const isSourceCurrent = captureViteCssSources(options.captureCssSource, [
+    options.cssCompositionPlan.generatorSourceFile,
+    options.assetSourceFile,
+    ...options.rememberedCssSources.map((source: { sourceFile: string }) => source.sourceFile),
+  ].filter((file): file is string => typeof file === 'string'))
+  let scheduled = false
+  try {
+    scheduled = await processViteCssEntryTransformNow({ ...options, isSourceCurrent }) === true
+  }
+  finally {
+    if (!scheduled) {
+      isSourceCurrent.release()
+    }
+  }
+}
+
+async function processViteCssEntryTransformNow(options: any) {
+  if (!options.isSourceCurrent()) {
+    return
+  }
   const {
     addWatchFile,
     alreadyProcessedCssAsset,
@@ -124,6 +145,9 @@ export async function processViteCssEntryTransform(options: any) {
   const scopedSourceCandidateGetter = createScopedSourceCandidateGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
   const scopedSourceCandidateSourceGetter = createScopedSourceCandidateSourceGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
   const { scopedGeneratorRuntime, signatureSources, sourceTraceSources } = await createScopedGeneratorSourceData({ createScopedGeneratorRuntime, createScopedGeneratorSourceTraceMap: (source, file, options) => createScopedGeneratorSourceTraceMap(source, file, scopedSourceCandidateSourceGetter, options), generatorCssHandlerOptions, generatorRawSource, generatorRuntime, generatorSourceFile, rememberedCssSources, scopedSourceCandidateSourceGetter, outputFile })
+  if (!options.isSourceCurrent()) {
+    return
+  }
   const sourceTraceTokenSources = sourceTraceSources ? createCssTokenSourceMap(sourceTraceSources, opts) : void 0
   const sourceTraceSignature = createCssSourceTraceCacheSignature(sourceTraceTokenSources, opts)
   const annotateCss = (css: string) => annotateCssSourceTrace(css, { opts, tokenSources: sourceTraceTokenSources })
@@ -137,6 +161,9 @@ export async function processViteCssEntryTransform(options: any) {
       ? await createScopedGeneratorCandidateSignatureForSources({ createScopedGeneratorCandidateSignature, generatorCssHandlerOptions, majorVersion: runtimeState.tailwindRuntime.majorVersion, scopedSourceCandidateGetter, signatureSources, trackedGeneratorCandidateSignature })
       : await createScopedGeneratorCandidateSignature(generatorRawSource, generatorSourceFile, trackedGeneratorCandidateSignature, scopedSourceCandidateGetter, { includeFallbackSignature: generatorCssHandlerOptions.isMainChunk, majorVersion: runtimeState.tailwindRuntime.majorVersion })
     : trackedGeneratorCandidateSignature
+  if (!options.isSourceCurrent()) {
+    return
+  }
   // 同一生成入口的产物还可合并普通作者样式，必须按本轮完整内容校验缓存。
   const cssTransformCachePlan = resolveViteCssTransformCachePlan({ cssBundleSourceHash: cache.computeHash(rawSource), cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, cssRuntimeAffectingHash, cssShareScope, outputFile, runtimeSignature, scopedGeneratorCandidateSignature, sourceTraceSignature, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion })
   const { cssCacheKey, cssHashKey, cssSharedCacheKey, cssTaskHash, rememberedCssRuntimeSignature } = cssTransformCachePlan
@@ -152,6 +179,7 @@ export async function processViteCssEntryTransform(options: any) {
   }
   rememberProcessCacheKey(cssCacheKey, cssHashKey)
   scheduleViteCssTransform({
+    isSourceCurrent: options.isSourceCurrent,
     addWatchFile,
     annotateCss,
     applyCssResult,
@@ -217,4 +245,5 @@ export async function processViteCssEntryTransform(options: any) {
     vitePipelineCssAsset,
     vitePipelineCssInjectionOutputFile,
   })
+  return true
 }

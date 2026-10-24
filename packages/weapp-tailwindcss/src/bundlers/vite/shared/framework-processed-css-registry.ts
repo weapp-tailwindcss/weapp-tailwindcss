@@ -122,8 +122,17 @@ export function createFrameworkProcessedCssRegistry() {
       detachOutput(output)
       invalidateOutput(output)
     }
-    removeRecord(source)
+    for (const key of results.keys()) {
+      if (normalizeVitePersistentCacheKey(cleanUrl(key)) === source) {
+        const outputFile = results.get(key)?.outputFile
+        if (outputFile) {
+          retired.add(outputFile)
+        }
+        removeRecord(key)
+      }
+    }
     sourceFiles.delete(path.resolve(cleanUrl(file)))
+    return retired
   }
 
   const markSource = (file: string) => {

@@ -1,3 +1,4 @@
+import type { ViteCssSourceLease } from '../css-memory/source-lifecycle'
 import { hasTailwindRootDirectives } from '@/generation/directives'
 import { isSourceStyleRequest } from '../../../generation/style-requests'
 import { resolveViteModuleIdentity } from '../module-identity'
@@ -8,6 +9,7 @@ interface FrameworkTailwindRootCssOptions {
   refreshRuntimeState: (force: boolean) => Promise<void>
   registerAutoCssSource: (id: string, css: string) => Promise<void>
   shouldOwnTailwindGeneration: boolean
+  captureCssSource?: (file: string) => ViteCssSourceLease
   sourceScanSession: {
     invalidate: () => void
     sync: (options?: { force?: boolean }) => Promise<void>
@@ -33,28 +35,61 @@ export function createFrameworkTailwindRootCss(options: FrameworkTailwindRootCss
   }
 
   const register = async (id: string, code: string) => {
-    rememberModule(id)
-    const hotSource = hotSourceByFile.get(normalizeSourceFile(id))
-    await options.registerAutoCssSource(id, hotSource ?? code)
+    const isCurrent = options.captureCssSource?.(id)
+    try {
+      if (isCurrent?.() === false) {
+        return
+      }
+      rememberModule(id)
+      const hotSource = hotSourceByFile.get(normalizeSourceFile(id))
+      await options.registerAutoCssSource(id, hotSource ?? code)
+    }
+    finally {
+      isCurrent?.release()
+    }
   }
 
   const refreshSource = async (id: string, code: string) => {
-    const file = cleanUrl(id)
-    if (
-      !moduleIds.has(id)
-      && !moduleIds.has(file)
-      && !hasTailwindRootDirectives(code, { importFallback: options.getImportFallback() })
-    ) {
-      return
+    const isCurrent = options.captureCssSource?.(id)
+    try {
+      if (isCurrent?.() === false) {
+        return
+      }
+      const file = cleanUrl(id)
+      if (
+        !moduleIds.has(id)
+        && !moduleIds.has(file)
+        && !hasTailwindRootDirectives(code, { importFallback: options.getImportFallback() })
+      ) {
+        return
+      }
+      hotSourceByFile.set(normalizeSourceFile(id), code)
+      await register(id, code)
+      if (isCurrent?.() === false) {
+        return
+      }
+      options.sourceScanSession.invalidate()
+      await options.refreshRuntimeState(true)
+      if (isCurrent?.() === false) {
+        return
+      }
+      await options.sourceScanSession.sync({ force: true })
     }
-    hotSourceByFile.set(normalizeSourceFile(id), code)
-    await register(id, code)
-    options.sourceScanSession.invalidate()
-    await options.refreshRuntimeState(true)
-    await options.sourceScanSession.sync({ force: true })
+    finally {
+      isCurrent?.release()
+    }
   }
 
   return {
+    removeSource(id: string) {
+      const sourceKey = normalizeSourceFile(id)
+      hotSourceByFile.delete(sourceKey)
+      for (const moduleId of moduleIds) {
+        if (normalizeSourceFile(moduleId) === sourceKey) {
+          moduleIds.delete(moduleId)
+        }
+      }
+    },
     dispose() {
       hotSourceByFile.clear()
       moduleIds.clear()

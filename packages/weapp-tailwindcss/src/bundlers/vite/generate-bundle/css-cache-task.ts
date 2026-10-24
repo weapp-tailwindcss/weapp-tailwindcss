@@ -2,6 +2,7 @@ import type { OutputAsset } from 'rollup'
 import type { RememberedCssSource } from './types'
 import type { ICreateCacheReturnType } from '@/cache'
 import { processCachedTask } from '../../shared/cache'
+import { discardedViteCssSource } from '../css-memory/source-lifecycle'
 import { hasTailwindGenerationSource } from './sfc-style-source'
 import { rememberLastCssResult } from './vite-css-cache'
 
@@ -76,22 +77,40 @@ export function processViteCssCacheTask(
     hashKey: options.hashKey,
     onCacheHit: options.onCacheHit,
     async transform() {
+      const createTask = () => {
+        const task = options.transform()
+        const sharedCacheKey = options.sharedCacheKey
+        if (sharedCacheKey) {
+          options.sharedResultCache.set(sharedCacheKey, task)
+          void task.catch(() => {
+            if (options.sharedResultCache.get(sharedCacheKey) === task) {
+              options.sharedResultCache.delete(sharedCacheKey)
+            }
+          })
+        }
+        return task
+      }
       let task: Promise<string>
       if (options.sharedCacheKey) {
         const sharedTask = options.sharedResultCache.get(options.sharedCacheKey)
         if (sharedTask) {
           options.onSharedCacheHit()
-          const sharedCss = await sharedTask
+          // 被删除的来源不能取消其他独立消费者，后者用自身凭据重新生成。
+          const sharedCss = await sharedTask.catch((error) => {
+            if (error !== discardedViteCssSource) {
+              throw error
+            }
+            return createTask()
+          })
           options.onSharedResult(sharedCss)
           task = Promise.resolve(sharedCss)
         }
         else {
-          task = options.transform()
-          options.sharedResultCache.set(options.sharedCacheKey, task)
+          task = createTask()
         }
       }
       else {
-        task = options.transform()
+        task = createTask()
       }
       const css = await task
       options.onTransformResult(css)

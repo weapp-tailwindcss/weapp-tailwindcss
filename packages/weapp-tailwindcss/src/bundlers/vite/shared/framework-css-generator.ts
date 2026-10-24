@@ -1,6 +1,7 @@
 import type { ResolvedConfig } from 'vite'
 import type { createHmrTimingRecorder } from '../../shared/hmr-timing'
 import type { createCssHandlerOptionsCache } from '../css-handler-options'
+import type { ViteCssSourceLease } from '../css-memory/source-lifecycle'
 import type { createViteRuntimeClassSet } from '../runtime-class-set'
 import type { SourceCandidateCollector } from '../source-candidates'
 import type { ViteFrameworkBranchContext } from './create-framework-plugins'
@@ -69,7 +70,7 @@ interface FrameworkCssGeneratorOptions extends Pick<ReturnType<typeof createFram
 /** 生成队列消费显式状态，资产写入仍经调用方的 bundler API 完成。 */
 export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOptions) {
   const { opts, runtimeState, shouldOwnTailwindGeneration, sourceScanSession, getResolvedConfig, resolveCurrentGeneratorOptions, resolveCurrentGeneratorBranch, createCssPipelineContext, frameworkCssPipelineStrategy, normalizeGeneratedCssCacheFile, getSourceCandidates, getRecordedGeneratorCandidates, ensureRuntimeClassSet, hmrCandidateState, getSourceCandidatesForEntries, getSourceCandidateSourcesForEntries, markViteProcessedCssSource, rememberTailwindRootCssModule, recordGeneratorCandidates, debug, normalizeViteProcessedCssFile, transformCssHandlerOptions, transientAutoCssSources, hmrTimingRecorder, resolveGeneratorPlatform, styleHandler, shouldAdaptFrameworkWatchCss, finalizeViteMiniProgramCss, mainCssChunkMatcher, cssMemory, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedClassSetByFile, recordViteProcessedCssAssetResult } = options
-  const generateTailwindCssForVitePipelineNow = async (id: string, code: string, hookContext?: {
+  const generateTailwindCssForVitePipelineNow = async (id: string, code: string, hookContext: {
     addWatchFile?: ((id: string) => void) | undefined
     emitFile?: (asset: {
       type: 'asset'
@@ -80,12 +81,15 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     disableSourceScan?: boolean | undefined
     sourceCandidates?: Iterable<string> | undefined
     transient?: boolean | undefined
-  }) => {
+  } | undefined, isSourceCurrent: ViteCssSourceLease) => {
     if (!shouldOwnTailwindGeneration) {
       return void 0
     }
     await runtimeState.readyPromise
     await sourceScanSession.waitForPendingSyncs()
+    if (!isSourceCurrent()) {
+      return undefined
+    }
     const resolvedConfig = getResolvedConfig()
     const file = cleanUrl(id)
     const inferredSfcStyleRequest = isSfcStyleSourceFile(file) ? resolveSfcStyleRequestFromKnownSource(file, cssMemory.getKnownSfcSource(file), code) : file
@@ -104,6 +108,9 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     const generatorTransformCode = currentGeneratorBranch.isWeb ? generatorCode : normalizeMiniProgramGeneratorCssSource(generatorCode, outputFile)
     const fileKey = normalizeGeneratedCssCacheFile(file)
     const fullRuntime = getSourceCandidates() ?? getRecordedGeneratorCandidates() ?? await ensureRuntimeClassSet()
+    if (!isSourceCurrent()) {
+      return undefined
+    }
     const transient = hookContext?.transient === true
     const pendingHmrChange = transient ? void 0 : hmrCandidateState.resolve(generatorCode, file)
     const forceFullHmrCssRegeneration = hmrCandidateState.shouldForceFullRegeneration(file, pendingHmrChange !== undefined)
@@ -160,6 +167,9 @@ ${previousTracedCss}`
     const previousGeneratorCss = previousCss && !currentGeneratorBranch.isWeb ? normalizeMiniProgramGeneratorCssSource(previousCss, outputFile) : previousCss
     const hmrDebugState = hmrCandidateState.snapshotDebugState()
     const generated = await hmrTimingRecorder.measure(`generateCss.${resolvedConfig?.command ?? 'unknown'}`, () => generateTailwindV4Css({ opts, runtimeState, runtime, rawSource: generatorTransformCode, file, outputFile, cssHandlerOptions, cssUserHandlerOptions: transformCssHandlerOptions.getCssUserHandlerOptions(requestFile), cssSources: transientCssSource ? [transientCssSource] : void 0, getSourceCandidatesForEntries: getGenerationSourceCandidatesForEntries, generatorPlatform: resolveGeneratorPlatform(), styleHandler, debug, previousCss: previousGeneratorCss, previousClassSet: pendingHmrChange && !forceFullHmrCssRegeneration ? generatedClassSetByFile.get(fileKey) : void 0, deferWebCssPropertyFallback: resolvedConfig?.command === 'build', deferEmptyScopedCssSource: shouldDeferEmptyScopedCssSource, deferCssAdaptation: resolvedConfig?.command === 'build' && !transient && !currentGeneratorBranch.isWeb && !shouldAdaptFrameworkWatchCss(), disableSourceScan: hookContext?.disableSourceScan === true, cssStage: hookContext?.cssStage, restoreLocalCssImports: !currentGeneratorBranch.isWeb }), { file, memoryDebug: { cleanCacheHit: cleanGeneratedCssByFile.has(fileKey), forceFullHmrCssRegeneration, ...hmrDebugState, pendingResolved: pendingHmrChange !== void 0, runtimeCandidates: runtime.size, target: currentGeneratorOptions.target } })
+    if (!isSourceCurrent()) {
+      return undefined
+    }
     if (!generated) {
       if (pendingHmrChange) {
         hmrCandidateState.finishTarget(file)
@@ -209,6 +219,15 @@ ${previousTracedCss}`
     return `${createBundlerGeneratedCssMarker('vite', normalizeViteProcessedCssFile(file))}
 ${tracedCss}${currentGeneratorBranch.isWeb ? `\n${createBundlerGeneratedCssEndMarker('vite', normalizeViteProcessedCssFile(file))}` : ''}`
   }
-  const generateTailwindCssForVitePipeline = createFrameworkCssGenerationQueue(normalizeGeneratedCssCacheFile, generateTailwindCssForVitePipelineNow)
-  return generateTailwindCssForVitePipeline
+  const queue = createFrameworkCssGenerationQueue(normalizeGeneratedCssCacheFile, generateTailwindCssForVitePipelineNow)
+  // 排队时固定来源代次，不能让删除前接收的任务借用同名新文件的提交权。
+  const generateTailwindCssForVitePipeline = (
+    id: string,
+    code: string,
+    hookContext?: Parameters<typeof generateTailwindCssForVitePipelineNow>[2],
+  ) => {
+    const isCurrent = cssMemory.captureSource(id)
+    return queue(id, code, hookContext, isCurrent).finally(isCurrent.release)
+  }
+  return Object.assign(generateTailwindCssForVitePipeline, { dispose: queue.dispose })
 }

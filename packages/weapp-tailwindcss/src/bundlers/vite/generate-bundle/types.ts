@@ -52,6 +52,7 @@ export interface GenerateBundleContext {
   waitForSourceCandidateSyncs?: () => Promise<void>
   rememberCssSource?: ((entry: RememberedCssSource, cssRuntimeSignature?: string) => void) | undefined
   getRememberedCssSources?: () => Iterable<[string, RememberedCssSource]>
+  captureCssSource?: (file: string) => import('../css-memory/source-lifecycle').ViteCssSourceLease
   getRememberedCssSignature?: (file: string) => string | undefined
   setRememberedCssSignature?: (file: string, cssRuntimeSignature: string) => void
   getKnownCssSource?: (file: string) => string | undefined

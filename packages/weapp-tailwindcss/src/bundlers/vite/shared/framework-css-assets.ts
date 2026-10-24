@@ -7,6 +7,7 @@ import { LRUCache } from 'lru-cache'
 import { hasUserCssLayerBlocks, splitUserCssLayerBlocks } from '@/generation/user-css'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { createViteCssMemory } from '../css-memory'
+import { normalizeViteCssSourceOwner } from '../css-memory/source-lifecycle'
 import { touchMapEntry } from '../map-cache'
 import { normalizeVitePersistentCacheKey, summarizeStringCache } from '../plugin-cache'
 import { cleanUrl, isCSSRequest } from '../utils'
@@ -97,7 +98,24 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource }: Fr
     cssMemory.prune(options2)
   }
   const frameworkRootImportShellTargetByFile = new Map<string, string>()
+  const removeViteProcessedCssSource = (file: string) => {
+    const sourceKey = normalizeViteCssSourceOwner(file)
+    const outputKeys = new Set([
+      ...cssMemory.removeSource(file),
+      ...processedCssRegistry.removeSource(file),
+    ].map(normalizeVitePersistentCacheKey))
+    processedCssAssets = new WeakSet()
+    // 删除来源使旧复合输出失效，其他来源的独立缓存与记忆仍保留。
+    for (const cache of [originalCssLayerSourceByFile, processedCssAssetSourceByFile, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedClassSetByFile]) {
+      for (const key of cache.keys()) {
+        if (normalizeViteCssSourceOwner(key) === sourceKey || outputKeys.has(key)) {
+          cache.delete(key)
+        }
+      }
+    }
+  }
   return {
+    removeViteProcessedCssSource,
     originalCssLayerSourceByFile,
     rememberOriginalCssLayerSource,
     cleanGeneratedCssByFile,

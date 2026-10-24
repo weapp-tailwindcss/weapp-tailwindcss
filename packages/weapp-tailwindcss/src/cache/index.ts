@@ -137,11 +137,13 @@ function createCache(options?: boolean): ICreateCacheReturnType {
 
       const cacheHashKey = hashKey ?? key
       let hasChanged = true
+      let hashOwner: HashMapValue | undefined
 
       if (hash != null || rawSource != null) {
         const nextHash = hash ?? cache.computeHash(rawSource as string | Buffer)
         cache.calcHashValueChanged(cacheHashKey, nextHash)
         const entry = cache.getHashValue(cacheHashKey)
+        hashOwner = entry
         hasChanged = entry?.changed ?? true
       }
 
@@ -155,11 +157,22 @@ function createCache(options?: boolean): ICreateCacheReturnType {
         }
       }
 
-      const value = await transform()
-      const normalized = isProcessResult(value) ? value : { result: value }
-      const stored = (normalized.cacheValue ?? normalized.result) as CacheValue
-      cache.set(key, stored)
-      return normalized.result
+      try {
+        const value = await transform()
+        const normalized = isProcessResult(value) ? value : { result: value }
+        const stored = (normalized.cacheValue ?? normalized.result) as CacheValue
+        if (!hashOwner || cache.getHashValue(cacheHashKey) === hashOwner) {
+          cache.set(key, stored)
+        }
+        return normalized.result
+      }
+      catch (error) {
+        // 失败任务不能用新 hash 证明旧结果有效，也不能撤销后续任务已取得的归属。
+        if (hashOwner && cache.getHashValue(cacheHashKey) === hashOwner) {
+          hashMap.delete(cacheHashKey)
+        }
+        throw error
+      }
     },
   }
 
