@@ -20,6 +20,15 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/webpack-generator-request.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-scoped-configuration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.integration.test.ts
+  - packages/weapp-tailwindcss/type-tests/framework-registration.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-shutdown.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-nested-shutdown.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-shutdown-retention.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-wrapper-identity.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-construction.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-runtime-construction.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin-construction-boundary.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-input-ownership.unit.test.ts
@@ -37,6 +46,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.integration.test.ts
   - scripts/ci/demo-matrix/mpx-static-config.test.mjs
   - benchmark/version-compare/test/watch-output.test.mjs
 ---
@@ -336,6 +346,18 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 删除全部 `@apply` 时还必须清理已编译的旧生成 CSS。本轮 Vite marker 与来源身份共同证明旧载荷，在 collector 剥离 marker 前用调用内 WeakMap 记录，不能借用上一轮状态；来源不匹配时不恢复。新增 compiled 变体先暴露旧决策仍保留生成结果，再收紧复用资格，未将夹具退回尚含指令的源码或放宽输出断言。
 
 作者提交 `00e3ef666033801e3e221290bb8191f5faddb396`、主树整合 `0e2102d91` 的十九文件 / 518 项定向回归通过，0 跳过；原实现红灯为十一失败 / 十一通过，另保留 compiled 回滚红绿证据。覆盖 POSIX、Windows 反斜杠、盘符、根目录与相对路径、来源匹配/不匹配和导入壳权限撤销。使用 `CI=1`、`pnpm --filter weapp-tailwindcss exec vitest run <定向文件> --update=none --maxWorkers=1`；完整文件列表和 JSON 保存于本任务忽略工件。严格源码 tsc、修改源码与新增测试 ESLint、architecture:check、diff 检查通过。主树另执行 `pnpm --filter weapp-tailwindcss build` 与 `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`，均通过。两个真实 watcher 对照、static、设备和正式性能仍分别验收，不能以这些定向用例替代。
+
+### Vite 跨插件关闭与构造事务的生产回归
+
+真实 watcher 在 transform 尚未结束时已经调用扩展的 closeWatcher，原先仅在核心 owner 内排空不足以保护其他插件。逐插件代理现在使用前置串行屏障停止接收并排空任务，扩展仍由宿主按原 hook 元数据和各自 this 调度，末尾串行 owner 统一释放核心并报告错误，不等待尚未调度的后续 hook。嵌套 injector 通过私有清理登记交给父级协调，独立无主代理保留原始返回和错误语义。生产包装不再克隆插件对象，避免丢失清理登记身份和非枚举 api getter。
+
+工厂在 core/runtime 已创建后、lifecycle 尚未返回前抛错，也必须完整释放。两个实际 runtime 工厂在资源创建后立即登记有序释放表，正常关闭与构造回滚共用；配置初始化的唯一接点等待已接收服务和回滚结束后报告原始错误，部分清理失败继续释放其余资源，同配置失败保持终态。禁用分支仅返回静态重写插件，不创建会话。runtimeState 之前的 context/handler 构造均为惰性对象和空缓存，没有待释放的后台或原生会话；关系 owner 仍由事务释放。持有插件数组与失败 Promise 的 GC 回归覆盖宿主 this、结果和资源释放，并在生产诊断边界安全物化 Error/cause/嵌套 AggregateError 的延迟栈，保留原 Error 身份，不由测试先读取 stack 掩盖保留链。
+
+新的测试框架直接经过生产四组 assembler、生成和受限资产操作，验证三个独立 build、同一 watcher 更新/删除、在途关闭及关闭后配置复用；frameworkName 仅作开放的诊断标签，公开支持身份仍由封闭注册表约束，并有实际 tsc 负向断言。独立与内置 injector 使用两个真实 Vite watcher，对照非微信后缀的完整 CSS/JS 映射，连续两次修改及来源删除，同时验证局部/分包注入。上述真实用例补齐此前手动 hooks 夹具的证据范围，没有修改 demo 或静态基线；对应真实项目 static 仍由最终完整验收核对。
+
+作者最终联合验证十八文件 / 83 项通过，0 跳过，标准 noCheck:false 类型检查、主包构建、二十二文件严格 ESLint、architecture:check 与 diff 检查通过。主树整合 `1602df1a9cd86fef09886b1e7f20e359771fef63` 后重新构建、执行标准类型检查、九文件 / 40 项公开 ESM/CJS、loader、HBuilderX、真实新框架/watch parity、构造和引用释放回归，以及 architecture:check，均通过。后续仅有证据文档更新；本地全面验收与最终 head CI 仍待执行，不能以这些定向结果放行合并。
+
+`f65b646f7c12ce497a9783ea46a275ee8812cd23` 的 [Lynx Android API 30 模拟器 CI](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40050547259/job/120742151195) 已通过，验证 Temurin 17 修复后的实际原生链路；它不能替代后续提交的完整检查或实体设备证据。
 
 ## 适用边界
 
