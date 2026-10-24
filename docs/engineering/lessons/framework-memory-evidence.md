@@ -25,7 +25,15 @@ regressions:
   - benchmark/version-compare/test/mpx-observer-lifecycle.test.mjs
   - benchmark/version-compare/test/mpx-observer-generation.test.mjs
   - benchmark/version-compare/test/mpx-observer-webpack.test.mjs
+  - benchmark/version-compare/test/vite-instrumentation.test.mjs
+  - benchmark/version-compare/test/vite-operation-evidence.test.mjs
 verification:
+  - claim: Vite 与 Mpx 共用生成操作诊断在最终整合源码及实际 Node 22 上通过，不能替代真实框架诊断或正式预算
+    kind: unit
+    status: passed
+    sha: fb3a82dd6d807357a71d6f6346afbbacbc9d7a44
+    environment: macOS arm64，实际 Node 22.23.3，CI=1，29 文件 209 项，零跳过；包含最终主树 Vite 完成锚点校验
+    command: node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1 --no-file-parallelism
   - claim: f811 的正式 Synthetic HMR 复杂度超出原预算，本地另一个环境未复现不能抵销首败
     kind: ci
     status: failed
@@ -315,6 +323,14 @@ Taro Vite HMR peak RSS 首轮 `2933.68 → 3188.52MiB`、反序 `2959.57 → 321
 十一阶段候选相同，扫描来源文本哈希多重集与控制器十次写入记录相同，但逐请求并不等量：存在准备根路径、显式默认配置、请求顺序与移除旧 appType 等差异；current 第二次冷构建额外生成一次重复 web 结果（8 次对 7 次）。其余冷构建及 watch 的生成 CSS/rawCss 逐调用序列相同，该额外构建的输出哈希集合也相同。watch 后半阶段弱 store 的历史快照集合不同，不能据此称当前来源错误。冷构建的三份 current 服务与租约实际释放；watch 两侧均没有关闭尾部的 dispose 记录，既不宣称已回收，也不据此宣称泄漏。
 
 该诊断没有 allocation，`canExplainFormalRegression=false`；不能解释正式 Taro/Uni 或此前 Mpx 的 RSS 差额。Vite 仍需实际来源全文、逐生成请求与服务代次证据，才有条件判断输入等价性；补证工具和后续 inputs-only 成功均不能替代正式预算。上述失败没有人工重跑，后续产品必要修复的新 head 应独立验收，所有历史失败保持原样。
+
+### Vite 逐操作证据的补充
+
+Uni/Taro 现在与 Mpx 共用生成器、原生生成会话、engine compile/build 和可选服务池的五类 AST 插桩；来源全文来自同一次 store snapshot，不追加文件读取。Vite 按真实 finalizer 完成记录固定阶段、单调身份和候选，额外完成保留，阶段快照一一关联，停止阶段不虚构完成。Webpack 继续单独校验创建、child 与根 compilation。未注册 observer 时直接执行原有表达式或函数体，不增加 await、Promise 或诊断参数求值；真实 Node 回归覆盖这些语义和晚注册、移除、损坏协议。
+
+实际 Node 22.23.3 的完整工具域二十九文件 / 209 项通过；基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 与整合前源码的 Uni/Taro 二十六个目标插桩哈希匹配，基线缺失服务池登记 absent。无 `.git` 副本中，三百九十四条依赖链接有归属清单，主包与 engine 均解析至副本，Taro 准备依赖链及 UI 消费构建成功。主树 `fb3a82dd6d807357a71d6f6346afbbacbc9d7a44` 再以真实 Node 22 运行二十九文件 / 209 项通过，包含最终 store 和 Vite 完成锚点。这些只是诊断完整性与准备链路验证，准确新 head 的真实 Taro 输入采样仍须独立执行。
+
+本次没有修改产品源码、正式 workflow、预算、采样次数或工作负载；固定事件、全文和总输出上限继续生效。诊断局部规则新增同次快照和无 observer 语义的现有约束，已有可执行回归，不新增根级安全要求。
 
 ## 适用边界
 
