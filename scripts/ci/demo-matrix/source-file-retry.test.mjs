@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
@@ -8,6 +8,27 @@ import { replaceSourceFile } from './source-file.mjs'
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal()
   return { ...actual, rename: vi.fn(actual.rename) }
+})
+
+it('显式 staging 与目标同卷但位于监视目录外，保留一次原子发布和完整内容', async () => {
+  const actual = await vi.importActual('node:fs/promises')
+  await withSource(async (_file, dir) => {
+    const watched = path.join(dir, 'watched')
+    await mkdir(watched)
+    const destination = path.join(watched, 'value.js')
+    await writeFile(destination, 'original')
+    vi.mocked(rename).mockImplementation(async (temporary, target) => {
+      expect(path.dirname(temporary)).toBe(dir)
+      expect(target).toBe(destination)
+      expect(await readdir(watched)).toEqual(['value.js'])
+      expect(await readFile(destination, 'utf8')).toBe('original')
+      expect(await readFile(temporary, 'utf8')).toBe('replacement')
+      await actual.rename(temporary, target)
+    })
+    await replaceSourceFile(destination, 'replacement', { stagingDirectory: dir })
+    expect(await readFile(destination, 'utf8')).toBe('replacement')
+    expect((await readdir(dir)).sort()).toEqual(['entry.uvue', 'watched'])
+  })
 })
 vi.mock('node:timers/promises', () => ({ setTimeout: vi.fn(async () => {}) }))
 
