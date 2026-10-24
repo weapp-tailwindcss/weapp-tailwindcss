@@ -18,6 +18,12 @@ verification:
     sha: 7ed0208eeaee37a34a87faceaba8863aa591156e
     environment: macOS，Node 24.18.0，pnpm 12.14.0
     command: pnpm --filter weapp-tailwindcss build
+  - claim: 公开入口兼容、Mpx 和 Taro Webpack static 快照以及支付宝真实产物
+    kind: integration
+    status: passed
+    sha: 60bc111130d29d7863523a1bfa780efab6df85eb
+    environment: macOS，Node 24.18.0，pnpm 12.14.0，CI=1，不连接微信 IDE
+    command: pnpm e2e:multiplatform-build:taro-alipay
   - claim: 最终源码的完整验收
     kind: integration
     status: pending
@@ -47,6 +53,10 @@ verification:
 命令见上面的验证记录。实际执行额外使用 `CI=1` 和 pnpm 的 `verifyDepsBeforeRun=false`，只避免独立工作树重复核验安装，没有跳过测试或更新快照。主包 ESM/CJS/loader/声明构建、类型、源码 ESLint、架构检查（37 包、1512 源文件）和 diff 检查通过。没有修改 demo 或样式 static 基线。
 
 原始前后日志保存在忽略目录 `.tmp/framework-isolation/scoped-configuration-before.log` 与 `scoped-configuration-after.log`。前者为一项失败、一项通过；后者包括完整的三个定向文件。
+
+构建后的公开入口另以 `pnpm --filter weapp-tailwindcss exec vitest run test/ci/framework-public-entries.test.ts test/ci/package-module-exports.test.ts test/exports-alias.test.ts --update=none --maxWorkers=1` 验证，三文件 18 项通过，覆盖 ESM/CJS、loader 和 HBuilderX 同步 require 链路。随后执行 `pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/mpx-tailwindcss-v4.test.ts e2e/taro-webpack-react-tailwindcss-v4.test.ts e2e/taro-webpack-vue3-tailwindcss-v4.test.ts --update=none --maxWorkers=1`，三文件 17 项 static 回归通过，既有快照无差异。上述命令均设置 `CI=1`、`verifyDepsBeforeRun=false`；static 入口设置 `E2E_OPEN_AUTOMATOR=0`，本轮未连接 IDE。
+
+非微信目标执行 `pnpm e2e:multiplatform-build:taro-alipay`，真实 Taro Webpack 构建成功，随后两项产物断言通过，消费本轮 `.acss` / `.axml` 输出。构建保留既有 `app.acss` 体积提示，没有更新 static 基线。以上结果均来自 `60bc111130d29d7863523a1bfa780efab6df85eb`，不能替代尚待重新预检的完整多端验收。
 
 ## 适用边界
 
