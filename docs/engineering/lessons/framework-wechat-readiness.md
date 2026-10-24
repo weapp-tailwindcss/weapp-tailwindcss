@@ -33,6 +33,12 @@ verification:
     sha: 79818d04e7a04c07ca912e02a79ec713a77cfdbf
     environment: macOS，Node 24.18.0，真实 SDK 就绪回归及合成阶段故障，新增复盘尚未提交
     command: CI=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/wechat-launch-diagnostics.test.ts e2e/wechat-launch-stages.test.ts e2e/wechat-automator.test.ts e2e/wechat-session-boundary.test.ts --update=none
+  - claim: 严格首次编译成功后，原 Taro 用例仍在微信模拟器启动与 App 就绪阶段失败
+    kind: native
+    status: failed
+    sha: 4d7f10934fad5a811e3974459de864fb65517388
+    environment: macOS，Node 24.18.0，微信开发者工具 Stable 2.02.2608080，单用例有界诊断，保留已有登录态
+    command: CI=1 E2E_PROJECT_FILTER=^taro-webpack-react-tailwindcss-v4$ E2E_IDE_PROBE_RETRIES=0 pnpm e2e:ide:case --update=none
 ---
 
 # 首次编译契约与微信 App 就绪的证据边界
@@ -66,6 +72,18 @@ verification:
 - 本轮报告记录的 1814 个 PID 与两个 owner root 均经独立复查确认退出；微信租约不存在、prepare 为 finished、Git 工作树干净，原日志没有独立清理错误。
 - 首次按数字匹配 PID 时，曾命中在验收退出后启动的审计 Python helper。原观察保留，随后按启动时间和命令确认是 PID 重用，未终止该进程。进程归属不能仅凭历史 PID 数字认定。
 - 当前 IDE 选中窗口属于另一 worktree 的旧预检，仅进行只读观察。没有关闭、重载或操作该项目，也不以当前窗口推断历史失败现场。
+
+### 当前提交的有界诊断
+
+提交 `4d7f10934` 的一次原失败用例诊断使用全新报告 `11c6ada9-b3d6-4545-805a-7cfe5a0b25df`。prepare、当前会话原生 Chrome 交互、verify 和门禁领取全部通过；原 Taro Webpack React 用例运行一次，重试数为零。首次 watch 编译 `Compiled successfully in 9.85s`，但探针仍以 78 退出，测试结果为 2 项通过、1 项失败，没有运行完整工作流。
+
+分阶段记录显示：discovery 与两次 login 成功，auto 用时约 2793ms，约 4786ms 建立连接；readiness 使用剩余约 25214ms 后发生 `DEVTOOLS_PROTOCOL_TIMEOUT`。作用域事件循环 1458 个样本的 max 为 58.95ms、mean 为 20.642ms；该作用域包含失败清理，不能据此判断 IDE 进程或全宿主调度。
+
+诊断运行期间，仅用原生应用控制读取当前 worktree 的 Taro 项目并截图，实际界面显示“模拟器启动失败 / Error: simulator launch failed”，调试器也显示同一错误；没有输入、点击、重载、重启或修改 IDE。此证据证明本轮失败现场位于模拟器启动与 App 就绪层，仍不能解释模拟器启动失败的底层原因，也不能回溯证明此前两次失败的现场。当前项目对应的两个 IDE 日志文件仅有文件监听记录或为空，未提供更深原因。
+
+原诊断日志 SHA-256 为 `d8d28bcca36c89b7812dc1dda37f1348dff14dbb5823dac53206b8d468775c9c`。独立结果、阶段元数据及两份原生截图均保留于本轮忽略目录；观察器没有额外请求或省略阶段。报告为 finished，诊断报告中记录的 19 个 PID 均已退出，微信服务租约不存在，Git 源码干净；未见独立清理失败。停止后续全面测试调度，等待人工恢复模拟器后再重新 prepare。
+
+本次诊断封装还暴露了调用入口差异：`pnpm` lifecycle script 与 `pnpm exec` 注入的 PATH 不同。初次报告 `4725c014-1d22-4d3f-ba24-a30eed88edae` 被身份检查拒绝，测试没有启动；已显式 block 并保留原报告。随后诊断的 prepare、verify、消费入口统一使用 `pnpm exec tsx` 调用现有实现，重新取得全新证据；没有复制报告 PATH 或修改门禁。此入口仅用于有界诊断，完整验收仍使用一致的标准脚本入口和另一份全新报告。
 
 ## 适用边界
 
