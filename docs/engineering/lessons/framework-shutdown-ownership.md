@@ -18,6 +18,7 @@ regressions:
   - packages/weapp-tailwindcss/test/tailwindcss/generator-close.test.ts
   - packages/weapp-tailwindcss/test/compiler/generation-pool-close.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-compiler-async-cleanup.test.ts
+  - packages/weapp-tailwindcss/test/compiler/owner-activity-idle.test.ts
 ---
 
 # 编译会话关闭后的真实所有权
@@ -36,6 +37,10 @@ Webpack 将可复用源配置与可变 context 分离。公开组装入口显式
 
 宿主接收边界还必须与内部嵌套协作区分。processAssets、mini CSS finalizer 和 loader 原先使用可继承活动租约的入口；handler 异步后续发起关闭后，再调用这些宿主入口会借用祖先租约而错误接收新任务。三个入口改用已有的外部活动接收操作，内部候选与生成协作继续继承已接受租约，保证原任务提交后再释放；不另建关闭协调者。
 
+活动租约失效后还需退出共享异步上下文。`fdbaa8fa168c1930d46cbc596e50a5b881252cd2` 在全部活动结束后仍保持 `AsyncLocalStorage` 启用；实际 Node 22.23.3 会继续向宿主新建 Promise 传播空存储，固定的五十万次 Promise 微实验中，两份空闲启用样本约 53 ms，无存储或停用样本约 20–25 ms。该实验未强制 GC，不是实际框架的性能验收，也不能解释 Taro 的约 186–193 MiB RSS 差额。
+
+共享存储现在按全部实例的在途活动总数管理：最后一个活动完成后停用，下次活动自动启用。不能在单个 owner 空闲时停用，否则会清除其他实例关闭期间仍需继承的租约。同步异常在实际活动作用域内释放；Node 24 的 async context frame 只删除当前 frame 的存储，在 `run` 恢复祖先后才释放会遗留该活动 frame 的失活上下文。用户 ALS 已复制的其他 frame 仍可能读到失活租约，因此继续清空 owner 并检查 active，不能声称全部捕获上下文均已消除。重新启用不会恢复旧任务权限，用户自有的异步上下文保持独立。
+
 Gulp 在 `write` 或 `end(chunk)` 接受文件时登记完整活动，等待 handler、Node write callback 和已发布输出三个条件。受管 pipe 只允许同一 Vinyl 沿已登记的上下游关系继承租约，背压中的输出同样受保护；`unpipe` 和 destroy 解除输出关系，仍在运行的 handler 继续排空。用户 callback 重入属于新外部任务，关闭后不能借用旧异步作用域。session 和转换服务使用可清空槽，未结束的 stream 不再永久捕获完整 context。
 
 V8 的延迟 Error.stack 也可能保留原调用帧。共享诊断 helper 在释放边界物化 stack、cause 与嵌套 AggregateError，循环去重；各访问器分别保护，用户自定义 getter 失败不能遮蔽原始错误或阻止其余子错误处理。错误身份及聚合关系保持不变，测试不能先读取 stack 隐藏问题。
@@ -51,6 +56,10 @@ Vite 作者九文件 / 52 项定向回归通过，覆盖普通失败、循环 ca
 Webpack 作者十二文件 / 223 项、标准 `noCheck:false` 类型检查、严格 ESLint、架构与 diff 检查通过。主树整合 `2ec91cb1d` 后，context release、retention、session lifecycle、source options 和共享错误 helper 五文件 / 13 项通过，0 跳过。真实 GC 子进程长期持有 compiler、插件及关闭 Promise，并覆盖清理失败。
 
 宿主重入补充回归先在修复前复现五类错误接收（五项失败、原有五项通过），覆盖真实 templateHandler 的异步后续重入 processAssets、finalizer、rewrite/generation/classset loader。整合提交 `54c9db8bc1746fa8fa3595745ff0ed240b13711b` 后，主树实际 Node 22.23.3 执行 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/webpack-operation-lifecycle.test.ts test/bundlers/webpack-loader-session.test.ts test/bundlers/webpack-session-lifecycle.test.ts test/bundlers/webpack-context-release.test.ts test/compiler/owner-activity-scope.test.ts --update=none --maxWorkers=1 --no-file-parallelism`，五文件 / 27 项通过，0 跳过。主包 ESM/CJS/声明构建、标准类型检查、四文件严格 ESLint 与架构检查通过；独立只读复核未发现阻断问题。这是关闭接收语义的证据，不解释 Mpx 正常 HMR 内存差额。
+
+空闲作用域回归在上述 `fdbaa8fa` 上新增测试后先得到五项失败：成功、同步异常、异步拒绝、thenable 拒绝和外部同步异常均能从绑定资源读到失活上下文。归零停用修订首次在 Node 22 下六文件 / 36 项通过；Node 24 仍暴露两项同步异常失败，移入当前作用域释放后，两版本定向回归通过。测试使用实际 `AsyncResource` 和 `getStore` 验证结果，未依赖 Node 私有符号或停用调用次数；另覆盖跨实例排空和用户自有存储。后续正式性能、完整设备和 reviewer 验收仍须单独完成。
+
+该修订在 `fdbaa8fa` 基础的提交前源码上，以实际 Node 22.23.3、`CI=1`、Vitest `--update=none --maxWorkers=1` 执行完整 `test/compiler` 与 Webpack/Vite/Gulp 生命周期定向集，共 57 文件 / 327 项通过，0 跳过。Node 24.18.0 的新增文件八项通过；主包 ESM/CJS/声明构建、标准类型检查、严格 ESLint、架构与规则检查通过。未更改 demo 或产物基线，不把这份回归与微实验当作 Taro RSS 预算的通过证据。
 
 Gulp 作者首批九文件 / 59 项定向回归、标准类型检查、严格 ESLint 与 diff 检查通过。主树整合 `8346e2cae` 后，关闭、真实 GC、Vinyl 生命周期、受管 pipe 及 owner 六文件 / 26 项通过，0 跳过。独立复核随后发现显式缓存所有权还需补齐：不能用实例自己的键集合修剪或清空调用者提供的整个缓存。
 

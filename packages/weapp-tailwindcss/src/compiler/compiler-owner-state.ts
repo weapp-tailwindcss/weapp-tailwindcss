@@ -10,6 +10,8 @@ interface OwnerState {
 interface ActivityLease { owner: object | undefined, active: boolean }
 const ownerStates = new WeakMap<object, OwnerState>()
 const activities = new AsyncLocalStorage<readonly ActivityLease[]>()
+let activeActivities = 0
+activities.disable()
 
 function getState(owner: object) {
   let state = ownerStates.get(owner)
@@ -40,11 +42,17 @@ export function runCompilerOwnerActivity<T>(owner: object, activity: () => T | P
   const state = getState(owner)
   const lease: ActivityLease = { owner, active: true }
   state.active++
+  activeActivities++
   const release = () => {
     lease.active = false
     // 异步后续任务可能继续持有租约；任务完成后不再通过租约保留整个编译实例。
     lease.owner = undefined
     state.active--
+    activeActivities--
+    // 所有实例都空闲时停止宿主异步资源的传播；其他实例仍在排空时保留上下文。
+    if (activeActivities === 0) {
+      activities.disable()
+    }
     if (state.active === 0) {
       for (const resolve of state.idleWaiters) {
         resolve()
@@ -56,7 +64,16 @@ export function runCompilerOwnerActivity<T>(owner: object, activity: () => T | P
     // 已接收任务可以完成其嵌套工作；关闭开始后的外部调用不能借用此租约。
     const activeLeases = activities.getStore()?.filter(activity => activity.active) ?? []
     activeLeases.push(lease)
-    return activities.run(activeLeases, () => Promise.resolve(activity()).finally(release))
+    return activities.run(activeLeases, () => {
+      try {
+        return Promise.resolve(activity()).finally(release)
+      }
+      catch (error) {
+        // 同步异常同样在活动作用域内退出，兼容 Node 的 async context frame 实现。
+        release()
+        return Promise.reject(error)
+      }
+    })
   }
   catch (error) {
     release()
