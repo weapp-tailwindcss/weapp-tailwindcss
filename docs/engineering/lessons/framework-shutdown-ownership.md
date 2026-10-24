@@ -8,6 +8,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/materialize-error-stack.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-context-release.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-context-retention.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/context-source-options.test.ts
   - packages/weapp-tailwindcss/test/bundlers/gulp-session-lifecycle.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/gulp-session-retention.test.ts
@@ -33,6 +34,8 @@ Vite 在永久关闭后清空 delegate、owner、bindings、resolved config 和�
 
 Webpack 将可复用源配置与可变 context 分离。公开组装入口显式转交自建 context，外部 Internal context 保留首次 handler 兼容，同时建立适配器自己的 runtime。永久关闭先排空，再清空扩展清理表、释放自有缓存并断开 handler、刷新闭包及 runtime。调用者显式提供的缓存保持调用者所有权。一个清理动作失败后仍执行剩余动作，最后聚合报告。
 
+宿主接收边界还必须与内部嵌套协作区分。processAssets、mini CSS finalizer 和 loader 原先使用可继承活动租约的入口；handler 异步后续发起关闭后，再调用这些宿主入口会借用祖先租约而错误接收新任务。三个入口改用已有的外部活动接收操作，内部候选与生成协作继续继承已接受租约，保证原任务提交后再释放；不另建关闭协调者。
+
 Gulp 在 `write` 或 `end(chunk)` 接受文件时登记完整活动，等待 handler、Node write callback 和已发布输出三个条件。受管 pipe 只允许同一 Vinyl 沿已登记的上下游关系继承租约，背压中的输出同样受保护；`unpipe` 和 destroy 解除输出关系，仍在运行的 handler 继续排空。用户 callback 重入属于新外部任务，关闭后不能借用旧异步作用域。session 和转换服务使用可清空槽，未结束的 stream 不再永久捕获完整 context。
 
 V8 的延迟 Error.stack 也可能保留原调用帧。共享诊断 helper 在释放边界物化 stack、cause 与嵌套 AggregateError，循环去重；各访问器分别保护，用户自定义 getter 失败不能遮蔽原始错误或阻止其余子错误处理。错误身份及聚合关系保持不变，测试不能先读取 stack 隐藏问题。
@@ -46,6 +49,8 @@ V8 的延迟 Error.stack 也可能保留原调用帧。共享诊断 helper 在�
 Vite 作者九文件 / 52 项定向回归通过，覆盖普通失败、循环 cause、嵌套 AggregateError，以及平铺和嵌套代理。旧实现真实 delegate/config 私有资源的保留红灯已保存。主树在 `88936874e` 对关闭、slots、嵌套关闭和真实 GC 四文件 / 29 项复验通过。
 
 Webpack 作者十二文件 / 223 项、标准 `noCheck:false` 类型检查、严格 ESLint、架构与 diff 检查通过。主树整合 `2ec91cb1d` 后，context release、retention、session lifecycle、source options 和共享错误 helper 五文件 / 13 项通过，0 跳过。真实 GC 子进程长期持有 compiler、插件及关闭 Promise，并覆盖清理失败。
+
+宿主重入补充回归先在修复前复现五类错误接收（五项失败、原有五项通过），覆盖真实 templateHandler 的异步后续重入 processAssets、finalizer、rewrite/generation/classset loader。整合提交 `54c9db8bc1746fa8fa3595745ff0ed240b13711b` 后，主树实际 Node 22.23.3 执行 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/webpack-operation-lifecycle.test.ts test/bundlers/webpack-loader-session.test.ts test/bundlers/webpack-session-lifecycle.test.ts test/bundlers/webpack-context-release.test.ts test/compiler/owner-activity-scope.test.ts --update=none --maxWorkers=1 --no-file-parallelism`，五文件 / 27 项通过，0 跳过。主包 ESM/CJS/声明构建、标准类型检查、四文件严格 ESLint 与架构检查通过；独立只读复核未发现阻断问题。这是关闭接收语义的证据，不解释 Mpx 正常 HMR 内存差额。
 
 Gulp 作者首批九文件 / 59 项定向回归、标准类型检查、严格 ESLint 与 diff 检查通过。主树整合 `8346e2cae` 后，关闭、真实 GC、Vinyl 生命周期、受管 pipe 及 owner 六文件 / 26 项通过，0 跳过。独立复核随后发现显式缓存所有权还需补齐：不能用实例自己的键集合修剪或清空调用者提供的整个缓存。
 

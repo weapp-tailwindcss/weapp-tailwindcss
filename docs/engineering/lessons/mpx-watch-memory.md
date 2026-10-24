@@ -55,7 +55,9 @@ Mpx 框架迁移中的 plugin-owner 文件与原实现逐字节相同，别名�
 
 ## 适用边界
 
-本记录保持 partial；历史框架证据见[框架内存记录](framework-memory-evidence.md)，Taro 的独立完整性限制见[分配输出边界](taro-allocation-output-boundary.md)。本次没有产品修复、预算调整或 demo 基线变化。
+另一次 macOS arm64 的有界 hardlink 机制对照按 baseline → patched → patched → baseline 完成四个 watch 会话，各七轮、两次 raw parse。首方向 patched 的 peak/steady 较低，反方向较高，不能认定补丁导致或修复正式 RSS 差额。四侧固定同一组 78 个已哈希 dist 文件，但缺少构建来源凭证，不能充当准确 PR 源码构建对照。三个会话有诊断目录失效混入；实际修改只改变 WXML，CSS 未变，不能证明候选增删。最终 32 个非 sourcemap 资产仅在明确路径与 ID 映射后相同，七个 sourcemap 仍不同。四个 worker 均有关闭回执并已退出，不据此放行正式平台预算。
+
+本记录保持 partial；历史框架证据见[框架内存记录](framework-memory-evidence.md)，Taro 的独立完整性限制见[分配输出边界](taro-allocation-output-boundary.md)。[关闭所有权修复](framework-shutdown-ownership.md)处理独立的宿主重入缺陷，不作为正常 HMR RSS 的根因或修复证明。本次没有性能预算调整或 demo 基线变化。
 
 ## 规则评估
 
