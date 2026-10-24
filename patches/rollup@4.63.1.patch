@@ -1,5 +1,5 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0e7f4878c 100644
+index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..074dab7627b09ab93e2c282caa9c6e47f7e2947d 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
 @@ -7679,6 +7679,8 @@ function requireNodefsHandler () {
@@ -419,7 +419,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
 +	  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +	  this._pendingRecreations = new Map();
 +	  this._pendingClosures = new Set();
-+	  this._closeErrors = [];
++	  this._closeFailure = undefined;
  	  /** @type {Set<String>} */
  	  this._ignoredPaths = new Set();
  
@@ -458,7 +458,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	  return this;
  	}
  
-@@ -9140,26 +9264,56 @@ function requireChokidar () {
+@@ -9140,26 +9264,64 @@ function requireChokidar () {
  	close() {
  	  if (this.closed) return this._closePromise;
  	  this.closed = true;
@@ -494,9 +494,11 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
 +	  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
 +	  const settle = async () => {
 +	    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
-+	    errors.push(...this._closeErrors);
-+	    this._closeErrors.length = 0;
-+	    this._throwCloseErrors(errors);
++	    const failure = this._closeFailure;
++	    this._closeFailure = undefined;
++	    const count = errors.length + (failure?.count || 0);
++	    if (failure) errors.push(failure.error);
++	    this._throwCloseErrors(errors, count);
 +	  };
 +	  settle().then(complete, fail);
  	  return this._closePromise;
@@ -509,7 +511,9 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
 +	      const result = operation();
 +	      if (result && typeof result.then === 'function') {
 +	        const pending = Promise.resolve(result).catch(error => {
-+	          this._closeErrors.push(error);
++	          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++	          if (this._closeFailure) this._closeFailure.count++;
++	          else this._closeFailure = { error, count: 1 };
 +	        }).then(() => this._pendingClosures.delete(pending));
 +	        this._pendingClosures.add(pending);
 +	      }
@@ -520,14 +524,18 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
 +	  return errors;
 +	}
 +	
-+	_throwCloseErrors(errors) {
-+	  if (errors.length === 1) throw errors[0];
-+	  if (errors.length > 1) throw new AggregateError(errors, 'Watcher resource cleanup failed');
++	_throwCloseErrors(errors, count = errors.length) {
++	  if (count === 1) throw errors[0];
++	  if (count > 1) {
++	    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++	    failure.errorCount = count;
++	    throw failure;
++	  }
 +	}
  
  	/**
  	 * Expose list of watched paths
-@@ -9251,8 +9405,15 @@ function requireChokidar () {
+@@ -9251,8 +9413,15 @@ function requireChokidar () {
  	  }
  
  	  if (event === EV_CHANGE) {
@@ -545,7 +553,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9490,11 +9651,6 @@ function requireChokidar () {
+@@ -9490,11 +9659,6 @@ function requireChokidar () {
  	  // via multiple paths (such as _handleFile and _handleDir)
  	  if (!this._throttle('remove', path, 100)) return;
  
@@ -557,7 +565,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	  // This will create a new entry in the watched object in either case
  	  // so we got to do the directory check beforehand
  	  const wp = this._getWatchedDir(path);
-@@ -9530,12 +9686,23 @@ function requireChokidar () {
+@@ -9530,12 +9694,23 @@ function requireChokidar () {
  	  this._watched.delete(path);
  	  this._watched.delete(fullPath);
  	  const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -584,7 +592,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	}
  
  	/**
-@@ -9543,9 +9710,10 @@ function requireChokidar () {
+@@ -9543,9 +9718,10 @@ function requireChokidar () {
  	 * @param {Path} path
  	 */
  	_closePath(path) {
@@ -598,7 +606,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	}
  
  	/**
-@@ -9553,10 +9721,10 @@ function requireChokidar () {
+@@ -9553,10 +9729,10 @@ function requireChokidar () {
  	 * @param {Path} path
  	 */
  	_closeFile(path) {
@@ -611,7 +619,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	}
  
  	/**
-@@ -9566,6 +9734,12 @@ function requireChokidar () {
+@@ -9566,6 +9742,12 @@ function requireChokidar () {
  	 */
  	_addPathCloser(path, closer) {
  	  if (!closer) return;
@@ -624,7 +632,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	  let list = this._closers.get(path);
  	  if (!list) {
  	    list = [];
-@@ -9577,17 +9751,11 @@ function requireChokidar () {
+@@ -9577,17 +9759,11 @@ function requireChokidar () {
  	_readdirp(root, opts) {
  	  if (this.closed) return;
  	  const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
@@ -646,7 +654,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
  	  return stream;
  	}
  
-@@ -9615,59 +9783,166 @@ function requireChokidar () {
+@@ -9615,59 +9791,166 @@ function requireChokidar () {
  var chokidarExports = /*@__PURE__*/ requireChokidar();
  const chokidar = /*@__PURE__*/getDefaultExportFromCjs(chokidarExports);
  
@@ -847,7 +855,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
      }
  }
  
-@@ -9706,17 +9981,16 @@ class Watcher {
+@@ -9706,17 +9989,16 @@ class Watcher {
          }
          process$1.nextTick(() => this.run());
      }
@@ -874,7 +882,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
      }
      invalidate(file) {
          if (file) {
-@@ -9785,6 +10059,7 @@ class Task {
+@@ -9785,6 +10067,7 @@ class Task {
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -882,7 +890,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -9805,11 +10080,12 @@ class Task {
+@@ -9805,11 +10088,12 @@ class Task {
      }
      close() {
          this.closed = true;
@@ -896,7 +904,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -9824,6 +10100,8 @@ class Task {
+@@ -9824,6 +10108,8 @@ class Task {
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -905,7 +913,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
          const options = {
              ...this.options,
              cache: this.cache
-@@ -9879,6 +10157,12 @@ class Task {
+@@ -9879,6 +10165,12 @@ class Task {
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -919,7 +927,7 @@ index 1efc69ca5cb5d6d653d64c4a4afb9efefdaa246b..ec33f7d898c0b6cb9a5a22b5d2b446e0
              this.watchFile(id);
          }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
-index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c370ed154 100644
+index 47ef0203e264b7c04bcbba76cd90253b30085f4c..84b88be94ad04c8e70ade86f36324781ccede6a3 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
 @@ -7675,6 +7675,8 @@ function requireNodefsHandler () {
@@ -1339,7 +1347,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
 +	  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +	  this._pendingRecreations = new Map();
 +	  this._pendingClosures = new Set();
-+	  this._closeErrors = [];
++	  this._closeFailure = undefined;
  	  /** @type {Set<String>} */
  	  this._ignoredPaths = new Set();
  
@@ -1378,7 +1386,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	  return this;
  	}
  
-@@ -9136,26 +9260,56 @@ function requireChokidar () {
+@@ -9136,26 +9260,64 @@ function requireChokidar () {
  	close() {
  	  if (this.closed) return this._closePromise;
  	  this.closed = true;
@@ -1414,9 +1422,11 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
 +	  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
 +	  const settle = async () => {
 +	    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
-+	    errors.push(...this._closeErrors);
-+	    this._closeErrors.length = 0;
-+	    this._throwCloseErrors(errors);
++	    const failure = this._closeFailure;
++	    this._closeFailure = undefined;
++	    const count = errors.length + (failure?.count || 0);
++	    if (failure) errors.push(failure.error);
++	    this._throwCloseErrors(errors, count);
 +	  };
 +	  settle().then(complete, fail);
  	  return this._closePromise;
@@ -1429,7 +1439,9 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
 +	      const result = operation();
 +	      if (result && typeof result.then === 'function') {
 +	        const pending = Promise.resolve(result).catch(error => {
-+	          this._closeErrors.push(error);
++	          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++	          if (this._closeFailure) this._closeFailure.count++;
++	          else this._closeFailure = { error, count: 1 };
 +	        }).then(() => this._pendingClosures.delete(pending));
 +	        this._pendingClosures.add(pending);
 +	      }
@@ -1440,14 +1452,18 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
 +	  return errors;
 +	}
 +	
-+	_throwCloseErrors(errors) {
-+	  if (errors.length === 1) throw errors[0];
-+	  if (errors.length > 1) throw new AggregateError(errors, 'Watcher resource cleanup failed');
++	_throwCloseErrors(errors, count = errors.length) {
++	  if (count === 1) throw errors[0];
++	  if (count > 1) {
++	    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++	    failure.errorCount = count;
++	    throw failure;
++	  }
 +	}
  
  	/**
  	 * Expose list of watched paths
-@@ -9247,8 +9401,15 @@ function requireChokidar () {
+@@ -9247,8 +9409,15 @@ function requireChokidar () {
  	  }
  
  	  if (event === EV_CHANGE) {
@@ -1465,7 +1481,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9486,11 +9647,6 @@ function requireChokidar () {
+@@ -9486,11 +9655,6 @@ function requireChokidar () {
  	  // via multiple paths (such as _handleFile and _handleDir)
  	  if (!this._throttle('remove', path, 100)) return;
  
@@ -1477,7 +1493,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	  // This will create a new entry in the watched object in either case
  	  // so we got to do the directory check beforehand
  	  const wp = this._getWatchedDir(path);
-@@ -9526,12 +9682,23 @@ function requireChokidar () {
+@@ -9526,12 +9690,23 @@ function requireChokidar () {
  	  this._watched.delete(path);
  	  this._watched.delete(fullPath);
  	  const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -1504,7 +1520,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	}
  
  	/**
-@@ -9539,9 +9706,10 @@ function requireChokidar () {
+@@ -9539,9 +9714,10 @@ function requireChokidar () {
  	 * @param {Path} path
  	 */
  	_closePath(path) {
@@ -1518,7 +1534,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	}
  
  	/**
-@@ -9549,10 +9717,10 @@ function requireChokidar () {
+@@ -9549,10 +9725,10 @@ function requireChokidar () {
  	 * @param {Path} path
  	 */
  	_closeFile(path) {
@@ -1531,7 +1547,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	}
  
  	/**
-@@ -9562,6 +9730,12 @@ function requireChokidar () {
+@@ -9562,6 +9738,12 @@ function requireChokidar () {
  	 */
  	_addPathCloser(path, closer) {
  	  if (!closer) return;
@@ -1544,7 +1560,7 @@ index 47ef0203e264b7c04bcbba76cd90253b30085f4c..e6ae15cedb38613664fa3a1e7fafb37c
  	  let list = this._closers.get(path);
  	  if (!list) {
  	    list = [];
-@@ -9573,17 +9747,11 @@ function requireChokidar () {
+@@ -9573,17 +9755,11 @@ function requireChokidar () {
  	_readdirp(root, opts) {
  	  if (this.closed) return;
  	  const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};

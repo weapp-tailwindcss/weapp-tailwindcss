@@ -1,5 +1,5 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41c6331569 100644
+index dc419c2d423cdfa2479b2cd9c6343b05d936c741..dcf4231261867e33551ad77ad1b460d0e1c110ad 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
 @@ -2656,6 +2656,8 @@ const FsWatchFileInstances = new Map();
@@ -419,7 +419,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
 +  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +  this._pendingRecreations = new Map();
 +  this._pendingClosures = new Set();
-+  this._closeErrors = [];
++  this._closeFailure = undefined;
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
@@ -458,7 +458,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
    return this;
  }
  
-@@ -4101,27 +4225,57 @@ unwatch(paths_) {
+@@ -4101,27 +4225,65 @@ unwatch(paths_) {
  close() {
    if (this.closed) return this._closePromise;
    this.closed = true;
@@ -494,9 +494,11 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
 +  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
 +  const settle = async () => {
 +    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
-+    errors.push(...this._closeErrors);
-+    this._closeErrors.length = 0;
-+    this._throwCloseErrors(errors);
++    const failure = this._closeFailure;
++    this._closeFailure = undefined;
++    const count = errors.length + (failure?.count || 0);
++    if (failure) errors.push(failure.error);
++    this._throwCloseErrors(errors, count);
 +  };
 +  settle().then(complete, fail);
    return this._closePromise;
@@ -509,7 +511,9 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
 +      const result = operation();
 +      if (result && typeof result.then === 'function') {
 +        const pending = Promise.resolve(result).catch(error => {
-+          this._closeErrors.push(error);
++          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++          if (this._closeFailure) this._closeFailure.count++;
++          else this._closeFailure = { error, count: 1 };
 +        }).then(() => this._pendingClosures.delete(pending));
 +        this._pendingClosures.add(pending);
 +      }
@@ -520,15 +524,19 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
 +  return errors;
 +}
 +
-+_throwCloseErrors(errors) {
-+  if (errors.length === 1) throw errors[0];
-+  if (errors.length > 1) throw new AggregateError(errors, 'Watcher resource cleanup failed');
++_throwCloseErrors(errors, count = errors.length) {
++  if (count === 1) throw errors[0];
++  if (count > 1) {
++    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++    failure.errorCount = count;
++    throw failure;
++  }
 +}
 +
  /**
   * Expose list of watched paths
   * @returns {Object} for chaining
-@@ -4212,8 +4366,15 @@ async _emit(event, path, val1, val2, val3) {
+@@ -4212,8 +4374,15 @@ async _emit(event, path, val1, val2, val3) {
    }
  
    if (event === EV_CHANGE) {
@@ -546,7 +554,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4451,11 +4612,6 @@ _remove(directory, item, isDirectory) {
+@@ -4451,11 +4620,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -558,7 +566,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4491,12 +4647,23 @@ _remove(directory, item, isDirectory) {
+@@ -4491,12 +4655,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -585,7 +593,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
  }
  
  /**
-@@ -4504,9 +4671,10 @@ _remove(directory, item, isDirectory) {
+@@ -4504,9 +4679,10 @@ _remove(directory, item, isDirectory) {
   * @param {Path} path
   */
  _closePath(path) {
@@ -599,7 +607,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
  }
  
  /**
-@@ -4514,10 +4682,10 @@ _closePath(path) {
+@@ -4514,10 +4690,10 @@ _closePath(path) {
   * @param {Path} path
   */
  _closeFile(path) {
@@ -612,7 +620,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
  }
  
  /**
-@@ -4527,6 +4695,12 @@ _closeFile(path) {
+@@ -4527,6 +4703,12 @@ _closeFile(path) {
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
@@ -625,7 +633,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
    let list = this._closers.get(path);
    if (!list) {
      list = [];
-@@ -4538,17 +4712,11 @@ _addPathCloser(path, closer) {
+@@ -4538,17 +4720,11 @@ _addPathCloser(path, closer) {
  _readdirp(root, opts) {
    if (this.closed) return;
    const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
@@ -647,7 +655,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
    return stream;
  }
  
-@@ -4571,58 +4739,166 @@ const watch = (paths, options) => {
+@@ -4571,58 +4747,166 @@ const watch = (paths, options) => {
  
  chokidar.watch = watch;
  
@@ -847,7 +855,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
      }
  }
  
-@@ -4661,17 +4937,16 @@ class Watcher {
+@@ -4661,17 +4945,16 @@ class Watcher {
          }
          process$1.nextTick(() => this.run());
      }
@@ -874,7 +882,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
      }
      invalidate(file) {
          if (file) {
-@@ -4740,6 +5015,7 @@ class Task {
+@@ -4740,6 +5023,7 @@ class Task {
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -882,7 +890,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -4760,11 +5036,12 @@ class Task {
+@@ -4760,11 +5044,12 @@ class Task {
      }
      close() {
          this.closed = true;
@@ -896,7 +904,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -4778,6 +5055,8 @@ class Task {
+@@ -4778,6 +5063,8 @@ class Task {
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -905,7 +913,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
          const options = {
              ...this.options,
              cache: this.cache
-@@ -4827,6 +5106,12 @@ class Task {
+@@ -4827,6 +5114,12 @@ class Task {
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -919,7 +927,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..4d4b7d918c6aceeeb7fee137aea73c41
              this.watchFile(id);
          }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
-index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de4810b127696 100644
+index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..b721b63f4fcc78ea001997ce6ae0cf7e7354fcc0 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
 @@ -2652,6 +2652,8 @@ const FsWatchFileInstances = new Map();
@@ -1339,7 +1347,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
 +  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +  this._pendingRecreations = new Map();
 +  this._pendingClosures = new Set();
-+  this._closeErrors = [];
++  this._closeFailure = undefined;
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
@@ -1378,7 +1386,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
    return this;
  }
  
-@@ -4097,27 +4221,57 @@ unwatch(paths_) {
+@@ -4097,27 +4221,65 @@ unwatch(paths_) {
  close() {
    if (this.closed) return this._closePromise;
    this.closed = true;
@@ -1414,9 +1422,11 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
 +  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
 +  const settle = async () => {
 +    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
-+    errors.push(...this._closeErrors);
-+    this._closeErrors.length = 0;
-+    this._throwCloseErrors(errors);
++    const failure = this._closeFailure;
++    this._closeFailure = undefined;
++    const count = errors.length + (failure?.count || 0);
++    if (failure) errors.push(failure.error);
++    this._throwCloseErrors(errors, count);
 +  };
 +  settle().then(complete, fail);
    return this._closePromise;
@@ -1429,7 +1439,9 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
 +      const result = operation();
 +      if (result && typeof result.then === 'function') {
 +        const pending = Promise.resolve(result).catch(error => {
-+          this._closeErrors.push(error);
++          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++          if (this._closeFailure) this._closeFailure.count++;
++          else this._closeFailure = { error, count: 1 };
 +        }).then(() => this._pendingClosures.delete(pending));
 +        this._pendingClosures.add(pending);
 +      }
@@ -1440,15 +1452,19 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
 +  return errors;
 +}
 +
-+_throwCloseErrors(errors) {
-+  if (errors.length === 1) throw errors[0];
-+  if (errors.length > 1) throw new AggregateError(errors, 'Watcher resource cleanup failed');
++_throwCloseErrors(errors, count = errors.length) {
++  if (count === 1) throw errors[0];
++  if (count > 1) {
++    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++    failure.errorCount = count;
++    throw failure;
++  }
 +}
 +
  /**
   * Expose list of watched paths
   * @returns {Object} for chaining
-@@ -4208,8 +4362,15 @@ async _emit(event, path, val1, val2, val3) {
+@@ -4208,8 +4370,15 @@ async _emit(event, path, val1, val2, val3) {
    }
  
    if (event === EV_CHANGE) {
@@ -1466,7 +1482,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4447,11 +4608,6 @@ _remove(directory, item, isDirectory) {
+@@ -4447,11 +4616,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -1478,7 +1494,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4487,12 +4643,23 @@ _remove(directory, item, isDirectory) {
+@@ -4487,12 +4651,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -1505,7 +1521,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
  }
  
  /**
-@@ -4500,9 +4667,10 @@ _remove(directory, item, isDirectory) {
+@@ -4500,9 +4675,10 @@ _remove(directory, item, isDirectory) {
   * @param {Path} path
   */
  _closePath(path) {
@@ -1519,7 +1535,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
  }
  
  /**
-@@ -4510,10 +4678,10 @@ _closePath(path) {
+@@ -4510,10 +4686,10 @@ _closePath(path) {
   * @param {Path} path
   */
  _closeFile(path) {
@@ -1532,7 +1548,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
  }
  
  /**
-@@ -4523,6 +4691,12 @@ _closeFile(path) {
+@@ -4523,6 +4699,12 @@ _closeFile(path) {
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
@@ -1545,7 +1561,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..157e06cd779baea769106df9ad3de481
    let list = this._closers.get(path);
    if (!list) {
      list = [];
-@@ -4534,17 +4708,11 @@ _addPathCloser(path, closer) {
+@@ -4534,17 +4716,11 @@ _addPathCloser(path, closer) {
  _readdirp(root, opts) {
    if (this.closed) return;
    const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};

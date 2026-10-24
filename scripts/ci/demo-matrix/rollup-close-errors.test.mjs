@@ -172,3 +172,44 @@ it.each(rollupTestVariants())('退役异步 closer 的归属保留至永久关�
     await task.close().catch(() => {})
   }
 })
+
+it.each(rollupTestVariants())('长期 watch 的连续异步退役失败只保留首错与总次数 ($version, $format)', async (variant) => {
+  const task = await createTask(variant)
+  const fileWatcher = task.fileWatcher
+  const watcher = fileWatcher.watcher
+  vi.spyOn(watcher, 'add').mockReturnThis()
+  const root = path.join(os.tmpdir(), 'rollup-bounded-close-errors')
+  const stable = path.join(root, 'stable.js')
+  const files = Array.from({ length: 24 }, (_, index) => path.join(root, `retired-${index}.js`))
+  const first = new Error('retired closer 0 failed')
+  fileWatcher.watch(stable, false)
+  // add 已替换为可控登记；目录索引同样保留稳定文件，避免触发无关缺失目录恢复。
+  watcher._getWatchedDir(root).add(path.basename(stable))
+  for (const file of files) {
+    fileWatcher.watch(file, false)
+  }
+  try {
+    for (const [index, file] of files.entries()) {
+      const failure = index === 0 ? first : new Error(`retired closer ${index} failed`)
+      watcher._addPathCloser(file, () => Promise.reject(failure))
+      fileWatcher.unwatch(file)
+      await Promise.all([...watcher._pendingClosures])
+      expect(watcher._pendingClosures.size).toBe(0)
+      expect(fileWatcher.fileAliases.has(stable)).toBe(true)
+      expect(fileWatcher.watcherGroups.size).toBe(1)
+    }
+    expect(watcher._closeErrors).toBeUndefined()
+    expect(watcher._closeFailure).toEqual({ error: first, count: files.length })
+    const closing = task.close()
+    expect(task.close()).toBe(closing)
+    const failure = await closing.catch(error => error)
+    expect(failure).toBeInstanceOf(AggregateError)
+    expect(failure.errors).toEqual([first])
+    expect(failure.errorCount).toBe(files.length)
+    expect(failure.message).toContain(`(${files.length} errors)`)
+    expect(watcher._closeFailure).toBeUndefined()
+    expect(watcher._pendingClosures.size).toBe(0)
+    await expect(task.close()).rejects.toBe(failure)
+  }
+  finally { await task.close().catch(() => {}) }
+})
