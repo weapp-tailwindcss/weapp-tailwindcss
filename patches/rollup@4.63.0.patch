@@ -137,7 +137,23 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9569,50 +9617,43 @@
+@@ -9505,6 +9553,7 @@
+ 	 * @param {Path} path
+ 	 */
+ 	_closeFile(path) {
++	  path = normalizePathToUnix(path);
+ 	  const closers = this._closers.get(path);
+ 	  if (!closers) return;
+ 	  closers.forEach(closer => closer());
+@@ -9518,6 +9567,7 @@
+ 	 */
+ 	_addPathCloser(path, closer) {
+ 	  if (!closer) return;
++	  path = normalizePathToUnix(path);
+ 	  let list = this._closers.get(path);
+ 	  if (!list) {
+ 	    list = [];
+@@ -9569,50 +9619,43 @@
  
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -204,7 +220,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -9737,6 +9778,7 @@
+@@ -9737,6 +9780,7 @@
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -212,7 +228,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -9762,6 +9804,7 @@
+@@ -9762,6 +9806,7 @@
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -220,7 +236,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -9776,6 +9819,8 @@
+@@ -9776,6 +9821,8 @@
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -229,7 +245,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -9831,6 +9876,12 @@
+@@ -9831,6 +9878,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -492,3 +508,19 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
+@@ -9501,6 +9549,7 @@
+ 	 * @param {Path} path
+ 	 */
+ 	_closeFile(path) {
++	  path = normalizePathToUnix(path);
+ 	  const closers = this._closers.get(path);
+ 	  if (!closers) return;
+ 	  closers.forEach(closer => closer());
+@@ -9514,6 +9563,7 @@
+ 	 */
+ 	_addPathCloser(path, closer) {
+ 	  if (!closer) return;
++	  path = normalizePathToUnix(path);
+ 	  let list = this._closers.get(path);
+ 	  if (!list) {
+ 	    list = [];
