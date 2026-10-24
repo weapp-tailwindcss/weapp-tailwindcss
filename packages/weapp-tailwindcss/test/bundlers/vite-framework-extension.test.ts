@@ -9,14 +9,14 @@ import { fixtureFrameworkRegistration } from './fixtures/capability-framework'
 
 function hook(plugin: Plugin, name: keyof Plugin) {
   const candidate = plugin[name]
-  const handler = typeof candidate === 'function' ? candidate : (candidate as { handler?: Function } | undefined)?.handler
+  const handler = typeof candidate === 'function' ? candidate : (candidate as { handler?: (...args: unknown[]) => unknown } | undefined)?.handler
   if (!handler) {
     throw new Error(`测试框架缺少钩子：${String(name)}`)
   }
-  return handler as Function
+  return handler as (...args: unknown[]) => unknown
 }
 
-describe('只通过注册数据接入测试框架', () => {
+describe('测试框架复用 Core 服务与静态插件代理', () => {
   it('复用生成能力完成首次构建、连续更新、来源删除和配置重复 build', async () => {
     const compilers: Compiler[] = []
     const framework = fixtureFrameworkRegistration.capability
@@ -30,7 +30,10 @@ describe('只通过注册数据接入测试框架', () => {
       }))
     })
     const emissions: EmittedAsset[] = []
-    const context = { emitFile: (asset: EmittedAsset) => { emissions.push(asset); return 'fixture-output' } }
+    const context = { emitFile: (asset: EmittedAsset) => {
+      emissions.push(asset)
+      return 'fixture-output'
+    } }
     const invoke = (name: keyof Plugin, ...args: unknown[]) => hook(plugin!, name).apply(context, args)
     const configure = () => invoke('configResolved', { command: 'build', root: process.cwd(), build: { watch: {} } } as ResolvedConfig)
     const build = async () => {
