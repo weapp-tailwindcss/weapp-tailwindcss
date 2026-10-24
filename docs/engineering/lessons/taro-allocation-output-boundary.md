@@ -14,6 +14,18 @@ regressions:
   - benchmark/version-compare/test/vite-tail-evidence.test.mjs
   - benchmark/version-compare/test/vite-tail-dependencies.test.mjs
 verification:
+  - claim: 937 的 Taro Vite 正式性能分片通过原门槛；产品源码未变，不能据此声称历史 RSS 根因已修复
+    kind: ci
+    status: passed
+    sha: 93716b6f14babbde359176a285f7d2dfddca5389
+    environment: Ubuntu，实际 Node 22.23.3；PR 实际 checkout 为 08d396cbd47bb0f9238db59d7c668fd1e811f213，与 head 的 tree 同为 5247e77b06c36b66bf5d4b26e282f5213f156908
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40098965639/job/120889064650
+  - claim: gzip 真实诊断六次冷构建取得完整 profile；两侧 watch 的第六份 frames 超过逻辑上限，整体失败
+    kind: ci
+    status: failed
+    sha: 93716b6f14babbde359176a285f7d2dfddca5389
+    environment: Ubuntu，实际 Node 22.23.3，固定 build 3 / HMR 3，原 256 KiB 采样、停止点、文件及会话预算
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40099027157/job/120888181433
   - claim: inputs 诊断完成两侧各三次冷构建与连续 watch；十五对生成 CSS 和 rawCss 原文字节相同，但实际来源根路径、候选顺序和 watch 调用次数存在差异
     kind: ci
     status: passed
@@ -124,9 +136,15 @@ verification:
 
 每轮冷构建各有五次 generator、native 和 engine build，以及六次 compile。按 target、scanSources 和候选集合唯一配对后，十五对 CSS、十五对 rawCss 的原文字节、UTF-8 长度及 SHA 全部相同，五种结果跨三轮稳定。这是逐请求生成输出证据，不是最终磁盘 CSS/JS 一致性证书。来源中的四份 CSS 仅 `@config` 的实际工程根 `/base/` 与 `/current/` 不同，当前各多三个 UTF-8 字节；实际哈希比较仍为不同，不归一化全文。sub-normal、issue-998、app mini 的候选顺序及请求调度顺序不同；watch 两侧 generate 为 20 / 19 次、compile 为 10 / 7 次。不透明对象和函数无法跨进程比较，不能将本轮诊断直接等同于正式失败输入。
 
-阶段事件与同次实际 Taro PID 的进程采样对齐后，当前三次主进程峰值为 `1537.15625 / 1539.73047 / 1524.17578 MiB`，分别位于主 finalizer 完成事件后 `144 ms`、前 `330 ms`、前 `306 ms`。两次峰值处于原 allocation 停点之前，因此不能继续把未观测的写出或关闭阶段当作已确定根因。独立 CSS finalizer 的 RSS 增量基线为 `7.47 / 11.66 / 11.05 MiB`，当前为 `44.87 / 9.57 / 8.11 MiB`；写出阶段增量不足 `1 MiB`，reporter 约 `3.1 MiB`，关闭约为零。阶段端点与明显的 GC 波动不足以证明分配和存活关系，也不能用诊断进程树 RSS 替代正式验收。
+阶段事件与同次实际 Taro PID 的进程采样对齐后，当前三次主进程的采样最大值为 `1537.15625 / 1539.73047 / 1524.17578 MiB`，分别位于主 finalizer 完成事件后 `144 ms`、前 `330 ms`、前 `306 ms`。250 ms 采样可能漏过末尾瞬时峰值：第一轮 CSS finalizer 结束及关闭端点为 `1550.82 / 1555.07 MiB`，已经高于其进程采样最大值。因此只能确认两轮的高 RSS 样本出现在原 allocation 停点之前，不能证明连续真实峰值也在此前，更不能排除后续阶段。独立 CSS finalizer 的 RSS 增量基线为 `7.47 / 11.66 / 11.05 MiB`，当前为 `44.87 / 9.57 / 8.11 MiB`；写出阶段增量不足 `1 MiB`，reporter 约 `3.1 MiB`，关闭约为零。阶段端点与明显的 GC 波动不足以证明分配和存活关系，也不能用诊断进程树 RSS 替代正式验收。
 
-下一步仅执行一次同基线、build 3 / HMR 3 的 gzip allocation 诊断，在原停止点获得完整分配栈。保留三个正式失败、两次传输失败以及本次输入差异；有界传输、产品内存归因、当前 head 原门禁通过及本地完整设备验收仍需分别完成。
+唯一 gzip allocation 诊断 `40099027157` 已结束，整体为失败。工件 `12562169719` 为 `44,931,695` 字节、2401 个文件，ZIP SHA-256 为 `a6f279f79256f5689f5e8101fd6938fbbdb039569f61e244da44431e84a40ae2`；服务端摘要、大小、CRC 与解压文件原字节经独立核验。两侧各三次冷构建的控制器、真实 PID / Node、操作关系、profile / frames 回执和节点覆盖均完整，十五对 CSS 与十五对 rawCss 原文字节仍相同。候选顺序、opaque 身份和实际工程根差异保留。
+
+六份冷 profile 包含 major/minor GC 已回收对象的累计统计分配。selfSize 总量基线为 `10187.89 / 10034.28 / 10032.04 MiB`，当前为 `10052.45 / 10017.28 / 10046.28 MiB`；三轮均值差约 `−46.07 MiB / −0.46%`。全部 sample.nodeId 都能在完整树中找到，但这不是存活堆或 RSS，也不能解释正式失败的尾部峰值。六份数据均无可用 source-map 帧；不同构建文件的同名函数不直接配对。相同 module SHA 与精确 generated location 可核对字节身份，不能以文件 hash 改变证明函数实现改变。自然 GC 事件另有截断计数，不能将分配数据完整换算为自然 GC 轨迹完整。
+
+两侧 watch 只完成五份 profile / frames 对。第三轮 mutation 写入后，第六份 frames 的 decoded-document 字节分别为 `70,806,659 / 70,394,636`，均超过原 `67,108,864` 逻辑上限；第六份 profile 已写入，frames 未写入且没有回执。第三轮 rollback 与 watch-stop 未完成，不能用已有片段证明完整 HMR 或最终释放，也不能把这次诊断记为通过。本轮不增加上限或更改采样与停点。
+
+准确 head `93716b6f14babbde359176a285f7d2dfddca5389` 的正式 Taro Vite 分片 `40098965639 / 120889064650` 已通过原预算。PR checkout 实际为 merge `08d396cbd47bb0f9238db59d7c668fd1e811f213`，Git API 与本地核对其 tree 与 head 同为 `5247e77b06c36b66bf5d4b26e282f5213f156908`。产品源码自 c5 未变，因此本次成功不能充作产品内存根因修复；三个正式失败、三次不完整 allocation 诊断及其限制均保留。本地完整设备验收仍未完成。
 
 ## 适用边界
 

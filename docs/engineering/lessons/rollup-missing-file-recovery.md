@@ -19,6 +19,13 @@ regressions:
   - scripts/ci/demo-matrix/rollup-polling-identity.test.mjs
   - scripts/ci/demo-matrix/rollup-polling-receipt.test.mjs
   - scripts/ci/demo-matrix/rollup-ownership-readiness.test.mjs
+verification:
+  - claim: Windows 退役目录修复在准确整合 head 的原生前置矩阵及 Taro Vue H5 三轮 repeated watch 中通过
+    kind: ci
+    status: passed
+    sha: 93716b6f14babbde359176a285f7d2dfddca5389
+    environment: Windows runner，实际 Node 24.22.1；前置矩阵 66 文件、1100 项通过及 3 项平台跳过
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40098965534/job/120886993266
 ---
 
 # Rollup 多目录监听的缺失文件恢复
@@ -158,6 +165,8 @@ pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo
 ```
 
 身份回归模拟路径语义，目录退役回归使用本机真实文件事件；两者都不能替代新 head 的原生 Windows CI。首败完整日志、修订前后的定向结果均保留，没有重跑旧 CI 取绿。
+
+整合为 `683b6d74b` 时与作者被测树完全相同（tree `78de7484dd1d7f3a103a859b2ac7d7a64c7d5d82`）；主工作树冻结离线安装后，在实际 Node 22.23.3 下重新执行真实消费方的目录身份回归，64 项通过、零跳过。随后准确 head `93716b6f14babbde359176a285f7d2dfddca5389` 的 [Windows 原生 job 120886993266](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40098965534/job/120886993266) 通过，实际 Node 24.22.1。前置矩阵为 66 文件、1100 项通过，3 项分别属于 process-group-signal 和 process-stop 的平台跳过；新增 64 项身份回归全部执行。之后真实 Taro Vue3 Vite H5 repeated watch 三轮均通过，工件为 `12561912751`。这确认了对应 Windows 首败的修复，不替代本 PR 其他组合、性能或设备验收。
 
 ## 适用边界
 
