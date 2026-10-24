@@ -4,9 +4,27 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { describe, expect, it, vi } from 'vitest'
-import { runCompilerOwnerActivity, runCompilerOwnerDisposal } from '@/compiler/compiler-owner-state'
+import { runCompilerOwnerActivity, runCompilerOwnerDisposal, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 
 describe('compiler activity scope', () => {
+  it('external admission rejects inherited leases while accepted internal work drains', async () => {
+    const owner = {}
+    const gate = Promise.withResolvers<void>()
+    const events: string[] = []
+    const accepted = runCompilerOwnerExternalActivity(owner, async () => {
+      await gate.promise
+      await expect(runCompilerOwnerExternalActivity(owner, () => events.push('unexpected'))).rejects.toThrow('正在释放')
+      await runCompilerOwnerActivity(owner, () => events.push('internal'))
+    })
+    const closing = runCompilerOwnerDisposal(owner, async () => {
+      events.push('closed')
+    })
+    gate.resolve()
+    await Promise.all([accepted, closing])
+    expect(events).toEqual(['internal', 'closed'])
+    await expect(runCompilerOwnerExternalActivity(owner, () => undefined)).rejects.toThrow('已释放')
+  })
+
   it('releases completed owners while preserving pending activity ownership', async ({ signal }) => {
     await promisify(execFile)(process.execPath, [
       '--expose-gc',

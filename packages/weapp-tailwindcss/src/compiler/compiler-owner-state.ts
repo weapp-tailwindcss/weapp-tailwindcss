@@ -64,6 +64,11 @@ export function runCompilerOwnerActivity<T>(owner: object, activity: () => T | P
   }
 }
 
+/** 宿主回调重入仍是新任务，不得借用正在排空的内部租约。 */
+export function runCompilerOwnerExternalActivity<T>(owner: object, activity: () => T | Promise<T>): Promise<Awaited<T>> {
+  return activities.exit(() => runCompilerOwnerActivity(owner, activity))
+}
+
 export function runCompilerOwnerDisposal(owner: object, dispose: () => Promise<void>): Promise<void> {
   const state = getState(owner)
   if (state.disposal) {

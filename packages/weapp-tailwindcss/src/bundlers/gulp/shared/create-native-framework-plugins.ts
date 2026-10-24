@@ -4,7 +4,7 @@ import type { IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOption
 import path from 'node:path'
 import process from 'node:process'
 import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
-import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import { createCompilerContext } from '@/context'
@@ -28,6 +28,7 @@ import {
   touchMapEntry,
 } from './create-native-framework-plugins/cache-state'
 import { createGulpFileTransforms } from './create-native-framework-plugins/file-transforms'
+import { createGulpPluginFacade } from './plugin-session'
 
 const debug = createDebug()
 const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
@@ -38,6 +39,10 @@ const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
  * @link https://tw.weapp.dev/docs/quick-start/frameworks/native
  */
 export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
+  return createGulpPluginFacade(createNativeGulpSession(options))
+}
+
+function createNativeGulpSession(options: UserDefinedOptions) {
   const hasInitialTailwindCssRoots = hasConfiguredTailwindV4CssRoots(options)
   const opts = createCompilerContext({
     ...options,
@@ -398,7 +403,7 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
     return affectedScopes
   }
 
-  const transforms = createGulpFileTransforms({
+  const { release: releaseTransforms, ...transforms } = createGulpFileTransforms({
     cache,
     createRuntimeSetHash,
     debug,
@@ -429,21 +434,39 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
     completeCompilerShadowRun: (revision?: number) => finalizeCompilerShadowRun(runtimeState, { revision }),
     dispose: () => closing ??= disposeCompilerOwner(runtimeState, {
       async beforeDispose() {
-        try {
-          await bundleRuntimeClassSetManager.reset()
+        const errors: unknown[] = []
+        const cleanups = [
+          () => bundleRuntimeClassSetManager.reset(),
+          () => cache.instance.clear(),
+          () => cache.hashMap.clear(),
+          releaseTransforms,
+          () => {
+            runtimeSourcesByFile.clear()
+            generatedCssPreflightModeByFile.clear()
+            compilationScopeBySourceFile.clear()
+            gulpProcessCacheKeys.clear()
+            defaultStyleHandlerOptionsCache.clear()
+            runtimeSet.clear()
+            cachedDefaultTemplateHandlerOptions = undefined
+            cachedDefaultTemplateRuntimeSet = undefined
+            cachedDefaultModuleGraphOptions = undefined
+            invalidateGulpSourceCandidates()
+          },
+        ]
+        for (const cleanup of cleanups) {
+          try {
+            await cleanup()
+          }
+          catch (error) {
+            errors.push(error)
+          }
         }
-        finally {
-          runtimeSourcesByFile.clear()
-          generatedCssPreflightModeByFile.clear()
-          compilationScopeBySourceFile.clear()
-          gulpProcessCacheKeys.clear()
-          defaultStyleHandlerOptionsCache.clear()
-          runtimeSet.clear()
-          invalidateGulpSourceCandidates()
+        if (errors.length > 0) {
+          throw new AggregateError(errors, 'Gulp 资源释放失败，已继续释放其余资源。')
         }
       },
     }).finally(() => runtimeState.dispose()),
     getCompilerShadowRunSnapshot: () => getCompilerShadowRunSnapshot(runtimeState),
-    watchChange: (file: string, change?: Parameters<typeof watchChange>[1]) => runCompilerOwnerActivity(runtimeState, () => watchChange(file, change)),
+    watchChange: (file: string, change?: Parameters<typeof watchChange>[1]) => runCompilerOwnerExternalActivity(runtimeState, () => watchChange(file, change)),
   }
 }

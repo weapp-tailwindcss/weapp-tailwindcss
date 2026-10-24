@@ -4,7 +4,7 @@ import type { SourceCandidateCollector } from '@/project-sources/candidates'
 import type { TailwindRuntimeState } from '@/tailwindcss/runtime'
 import type { CreateJsHandlerOptions, IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOptions } from '@/types'
 import path from 'node:path'
-import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { runCompilerOwnerActivity, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { generateTailwindV4Css } from '@/context/generation'
 import { shouldSkipJsTransform } from '@/js/precheck'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
@@ -57,39 +57,44 @@ export interface GulpFileTransformContext {
 }
 
 export function createGulpFileTransforms(context: GulpFileTransformContext) {
-  const {
-    cache,
-    createRuntimeSetHash,
-    debug,
-    generatedCssPreflightModeByFile,
-    getCompilationDependencyRevision,
-    getSourceCandidateGetter,
-    getSourceCandidateSourceGetter,
-    getRuntimeSet,
-    gulpProcessCacheKeys,
-    opts,
-    refreshGulpV4SourceCandidates,
-    refreshRuntimeSet,
-    refreshRuntimeSetForSource,
-    registerAutoCssSource,
-    rememberCompilationScope,
-    resolveGulpStyleOutputExtension,
-    resolveGulpTransformTimingDetails,
-    resolveModuleGraphOptions,
-    resolveWxmlHandlerOptions,
-    resolveWxssFileHandlerOptions,
-    resolveWxssUserHandlerOptions,
-    runtimeState,
-  } = context
-  const { templateHandler, styleHandler, jsHandler } = opts
+  let current: GulpFileTransformContext | undefined = context
+  const getContext = () => {
+    if (!current) {
+      throw new Error('Gulp 转换服务已释放，不再接收任务。')
+    }
+    return current
+  }
   const createOwnedTransform: typeof createVinylTransform = (phase, transform, timing) =>
-    createVinylTransform(phase, file => runCompilerOwnerActivity(runtimeState, () => transform(file)), timing)
+    createVinylTransform(phase, transform, timing, (operation, forwarded) => {
+      const run = forwarded ? runCompilerOwnerActivity : runCompilerOwnerExternalActivity
+      return run(getContext().runtimeState, operation)
+    })
 
   function createWxssTransform(
     options: Partial<IStyleHandlerOptions>,
     stage: 'generate' | 'transform',
   ) {
     return createOwnedTransform(`css:${stage}`, async (file) => {
+      const {
+        cache,
+        createRuntimeSetHash,
+        debug,
+        generatedCssPreflightModeByFile,
+        getCompilationDependencyRevision,
+        getSourceCandidateGetter,
+        getSourceCandidateSourceGetter,
+        gulpProcessCacheKeys,
+        opts,
+        refreshGulpV4SourceCandidates,
+        refreshRuntimeSet,
+        registerAutoCssSource,
+        rememberCompilationScope,
+        resolveGulpStyleOutputExtension,
+        resolveWxssFileHandlerOptions,
+        resolveWxssUserHandlerOptions,
+        runtimeState,
+      } = getContext()
+      const { styleHandler } = opts
       if (!file.contents) {
         return
       }
@@ -192,13 +197,15 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
       pruneGulpProcessCache(cache, gulpProcessCacheKeys)
-    }, () => resolveGulpTransformTimingDetails(`css:${stage}`))
+    }, () => getContext().resolveGulpTransformTimingDetails(`css:${stage}`))
   }
 
   const generateWxss = (options: Partial<IStyleHandlerOptions> = {}) => createWxssTransform(options, 'generate')
   const transformWxss = (options: Partial<IStyleHandlerOptions> = {}) => createWxssTransform(options, 'transform')
   const adaptWxss = (options: Partial<IStyleHandlerOptions> = {}) =>
     createOwnedTransform('css:adapt', async (file) => {
+      const { debug, generatedCssPreflightModeByFile, opts, resolveGulpStyleOutputExtension, resolveWxssFileHandlerOptions, runtimeState } = getContext()
+      const { styleHandler } = opts
       if (!file.contents) {
         return
       }
@@ -229,10 +236,12 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
       writeGulpFileAsset(file, finalCss)
       warnFinalRpxThemeRisk(runtimeState, [finalCss], opts)
       debug('css adapt: %s', file.path)
-    }, () => resolveGulpTransformTimingDetails('css:adapt'))
+    }, () => getContext().resolveGulpTransformTimingDetails('css:adapt'))
 
   const transformJs = (options: Partial<CreateJsHandlerOptions> = {}) =>
     createOwnedTransform('js', async (file) => {
+      const { cache, debug, getRuntimeSet, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveModuleGraphOptions, runtimeState, opts } = getContext()
+      const { jsHandler } = opts
       if (!file.contents) {
         return
       }
@@ -280,10 +289,12 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
       pruneGulpProcessCache(cache, gulpProcessCacheKeys)
-    }, () => resolveGulpTransformTimingDetails('js'))
+    }, () => getContext().resolveGulpTransformTimingDetails('js'))
 
   const transformWxml = (options: Partial<ITemplateHandlerOptions> = {}) =>
     createOwnedTransform('html', async (file) => {
+      const { cache, debug, gulpProcessCacheKeys, refreshRuntimeSetForSource, resolveWxmlHandlerOptions, runtimeState, opts } = getContext()
+      const { templateHandler } = opts
       if (!file.contents) {
         return
       }
@@ -309,7 +320,16 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
       })
       rememberGulpProcessCacheKey(gulpProcessCacheKeys, file.path)
       pruneGulpProcessCache(cache, gulpProcessCacheKeys)
-    }, () => resolveGulpTransformTimingDetails('html'))
+    }, () => getContext().resolveGulpTransformTimingDetails('html'))
 
-  return { adaptWxss, generateWxss, transformWxss, transformWxml, transformJs }
+  return {
+    adaptWxss,
+    generateWxss,
+    transformWxss,
+    transformWxml,
+    transformJs,
+    release() {
+      current = undefined
+    },
+  }
 }
