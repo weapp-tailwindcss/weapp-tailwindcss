@@ -117,8 +117,12 @@ it('新实例核验期间到达的来源事件撤销旧准备结果', async () =
   const resolveFiles = second.collector.resolveScanFiles
   let release!: () => void
   let entered!: () => void
-  const blocked = new Promise<void>((resolve) => { release = resolve })
-  const started = new Promise<void>((resolve) => { entered = resolve })
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const started = new Promise<void>((resolve) => {
+    entered = resolve
+  })
   vi.spyOn(second.collector, 'resolveScanFiles').mockImplementationOnce(async (options) => {
     entered()
     await blocked
