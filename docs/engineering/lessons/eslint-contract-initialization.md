@@ -34,6 +34,14 @@ pnpm agents:check
 
 此处验证的是仓库真实 ESLint 配置的忽略合同，不是性能门禁；完整配置仍在每个测试进程内首次加载，未宣称缩短其成本。此次未对首次失败样本进行细粒度跟踪，不能把该次耗时波动归因于特定插件、CPU 负载或缓存。修复后完整扩展流程由主工作流重新预检验收，本提交仅运行定向工程测试，不操作 IDE、设备或浏览器。未改变公开包或 demo，无需 change intent 或 static 基线更新。
 
+## 隐式格式化器的配置合同
+
+[PR #1316](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316) 的验收准备中发现：不传 `--fix` 只能保证 ESLint 不写回文件，不能保证它不调用格式化器。`repoctl/tooling` 转发的 `@icebreakers/monorepo@5.10.3` 与 `@icebreakers/eslint-config@8.0.9` 默认启用格式化器；真实 CSS 文件的最终配置包含 `format/prettier`，该规则在普通 lint 中也会调用 `prettier.format` 进行内存比较。这与仓库禁止使用 Prettier 的规则冲突。
+
+根配置显式设置 `formatters: false`，保留原有脚本和 TypeScript 检查范围。回归先确认两份仓库 CSS 文件真实存在，再通过同一个 ESLint 实例解析最终配置，拒绝启用的 Prettier 规则；不运行 formatter，也不以检查根配置字符串替代真实解析。关闭格式化器后，CSS 可以没有 ESLint 配置，此合同不额外引入 CSS 检查器。
+
+旧配置下两个新增用例均失败；修复提交 `175e88451` 的定向合同为 1 文件、13 项通过，命令为 `CI=1 pnpm exec vitest run -c scripts/agents/vitest.config.mts scripts/agents/eslint-scope.test.mjs --update=none`。此结果只证明格式化器和路径范围合同，不代表 PR 的完整验收或 CI 已通过。
+
 ## 规则评估
 
 不新增 AGENTS 规则。保留真实配置覆盖，并在现有回归中明确共享初始化与单项断言的生命周期即可。
