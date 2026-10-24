@@ -18,9 +18,13 @@ interface FileCandidateMemo {
 }
 
 type SourceLayer = 'scan' | 'transform' | 'css' | 'module'
+type SupplementalSourceLayer = Exclude<SourceLayer, 'scan'>
 
 interface SourceOwner {
   active: boolean
+  layer: SourceLayer
+  order: number
+  replaceableLayers?: Set<SupplementalSourceLayer>
 }
 
 function areSetsEqual(left: Set<string> | undefined, right: Set<string>) {
@@ -48,18 +52,29 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   const candidateCount = new Map<string, number>()
   const fileCandidateMemo = new Map<string, FileCandidateMemo>()
   const sourceOwners = new Map<string, Map<SourceLayer, SourceOwner>>()
+  const supplementalLayers = {
+    transform: { candidates: transformCandidatesById, sources: transformSourceById },
+    css: { candidates: cssCandidatesById, sources: cssSourceById },
+    module: { candidates: moduleCandidatesById, sources: moduleSourceById },
+  }
   const candidateViewMemo = createCandidateViewMemo()
   let inlineIncludedCandidates = new Set<string>()
   let inlineExcludedCandidates = new Set<string>()
   let revision = 0
+  let sourceOwnerOrder = 0
 
-  async function withSourceOwner<T>(id: string, layer: SourceLayer, action: (owner: SourceOwner) => Promise<T>) {
+  async function withSourceOwner<T>(id: string, layer: SourceLayer, action: (owner: SourceOwner) => Promise<T>, replaceOtherLayers = false) {
     const owners = sourceOwners.get(id) ?? new Map<SourceLayer, SourceOwner>()
     const previous = owners.get(layer)
     if (previous) {
       previous.active = false
     }
-    const owner: SourceOwner = { active: true }
+    const owner: SourceOwner = {
+      active: true,
+      layer,
+      order: ++sourceOwnerOrder,
+      ...(replaceOtherLayers ? { replaceableLayers: new Set<SupplementalSourceLayer>(['transform', 'css', 'module']) } : {}),
+    }
     owners.set(layer, owner)
     sourceOwners.set(id, owners)
     try {
@@ -145,6 +160,11 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     if (!owner.active) {
       return new Set<string>()
     }
+    const currentSourceOwner = sourceOwners.get(id)?.get('scan')
+    if (owner.layer !== 'scan' && currentSourceOwner && owner.order > currentSourceOwner.order) {
+      // 后来的独立层已经成功提交，较早作者任务不得再清除此层。
+      currentSourceOwner.replaceableLayers?.delete(owner.layer)
+    }
     if (sourceById.get(id) !== source) {
       revision++
     }
@@ -203,7 +223,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
         }
       }
       return diffCandidateSets(new Set(), new Set())
-    })
+    }, current)
   }
 
   async function syncFile(id: string) {
@@ -217,8 +237,9 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
       return diffCandidateSets(new Set(), new Set())
     }
     const previousFileCandidates = new Set(candidatesById.get(normalizedId) ?? [])
+    const layersToReplace = extension === 'css' ? [] : [...owner.replaceableLayers ?? []]
     const layerStateChanged = scanSourceById.get(normalizedId) !== source
-      || (extension !== 'css' && (transformSourceById.has(normalizedId) || cssSourceById.has(normalizedId) || moduleSourceById.has(normalizedId)))
+      || layersToReplace.some(layer => supplementalLayers[layer].sources.has(normalizedId))
     if (layerStateChanged) {
       revision++
     }
@@ -228,13 +249,16 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     ])
     const previousVisibleCandidates = collectVisibleCandidates(affectedCandidates)
 
-    if (extension !== 'css') {
-      transformCandidatesById.delete(normalizedId)
-      cssCandidatesById.delete(normalizedId)
-      moduleCandidatesById.delete(normalizedId)
-      transformSourceById.delete(normalizedId)
-      cssSourceById.delete(normalizedId)
-      moduleSourceById.delete(normalizedId)
+    for (const layer of layersToReplace) {
+      const owners = sourceOwners.get(normalizedId)
+      const pendingOwner = owners?.get(layer)
+      if (pendingOwner && pendingOwner.order < owner.order) {
+        // 只在作者内容成功后撤销旧提取；后来仍在提取的独立层保留提交权。
+        pendingOwner.active = false
+        owners?.delete(layer)
+      }
+      supplementalLayers[layer].candidates.delete(normalizedId)
+      supplementalLayers[layer].sources.delete(normalizedId)
     }
     scanSourceById.set(normalizedId, source)
     replaceScanLayer(normalizedId, nextCandidates)
@@ -247,7 +271,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
 
   async function syncCurrentSource(id: string, source: string) {
     const normalizedId = cleanUrl(id)
-    return withSourceOwner(normalizedId, 'scan', owner => syncCurrentSourceWithOwner(normalizedId, source, owner))
+    return withSourceOwner(normalizedId, 'scan', owner => syncCurrentSourceWithOwner(normalizedId, source, owner), true)
   }
 
   async function syncCurrentFile(id: string) {
