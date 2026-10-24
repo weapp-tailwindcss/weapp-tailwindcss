@@ -8,13 +8,15 @@ import path from 'node:path'
 import process from 'node:process'
 import { LRUCache } from 'lru-cache'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
-import { isTailwindV4CssEntry } from '@/tailwindcss/v4/css-entries'
 import { isSourceStyleRequest } from '../../../generation/style-requests'
+import { invalidateSourceCandidateScanPreparation, readSourceCandidateScanPreparation, rememberSourceCandidateScanPreparation } from '../../../project-sources/candidates/scan-preparation'
 import { createSourceCandidateEligibilityMatcher } from '../../../project-sources/candidates/scan-root'
 import { createSourceCandidateScanSignature } from '../source-candidate-scan-signature'
 import { resolveViteSourceScanEntries } from '../source-scan'
 import { cleanUrl } from '../utils'
 import { hasFrameworkHmrRuntimeSourceChange } from './framework-hmr-runtime-signature'
+import { createHotUpdateChangeRecorder } from './framework-source-change-recorder'
+import { collectSourceScanRoots } from './framework-source-scan-roots'
 import { readViteHmrSource } from './hmr-source'
 
 const SOURCE_CANDIDATE_SCAN_CACHE_MAX = 8
@@ -66,7 +68,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
   let sourceScanEntries: SourceScanResult['entries']
   let sourceScanMatcher: ReturnType<typeof createSourceCandidateEligibilityMatcher> | undefined
   let sourceScanBoundaryMatcher: ReturnType<typeof createSourceCandidateEligibilityMatcher> | undefined
-  let sourceScanRoots: ReturnType<typeof collectRoots> = []
+  let sourceScanRoots: ReturnType<typeof collectSourceScanRoots> = []
   let sourceScanOutDir: string | undefined
   let sourceScanEligibleFiles = new Set<string>()
   let sourceScanEligibleFilesRefresh: Promise<void> | undefined
@@ -78,6 +80,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
   const pendingSourceCandidateSyncs = new Set<Promise<unknown>>()
   const pendingSourceCandidateSyncByFile = new Map<string, Promise<any>>()
   const pendingHotUpdateChangeByFile = new Map<string, ViteSourceCandidateChange>()
+  const rememberHotUpdateChange = createHotUpdateChangeRecorder(pendingHotUpdateChangeByFile)
   const pendingChangedFiles = new Map<string, PendingSourceCandidateFileChange>()
   let pendingChangedFilesFlush: Promise<Map<string, ViteSourceCandidateChange | undefined>> | undefined
   let isFlushingChangedFiles = false
@@ -86,9 +89,13 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
 
   const normalizeDependency = (file: string) => path.normalize(path.resolve(cleanUrl(file)))
   const isDependency = (file: string) => sourceScanDependencies.has(normalizeDependency(file))
-  const invalidateSourceSnapshots = () => {
+  const preparationKey = (signature = sourceCandidateScanSignature) => signature && options.sourceCandidateCollector.getPreparationKey?.()
+    ? JSON.stringify([signature, options.sourceCandidateCollector.getPreparationKey()])
+    : undefined
+  const invalidateSourceSnapshots = (file?: string) => {
     // 来源事件也会影响暂未启用的扫描配置，不能在切回旧配置时恢复过期候选。
     sourceCandidateScanCache.clear()
+    invalidateSourceCandidateScanPreparation(preparationKey(), file)
     cachedCollectorRevision = undefined
     cacheDirty = true
   }
@@ -98,36 +105,6 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
     invalidateSourceSnapshots()
   }
   const hasState = () => sourceCandidateScanSignature !== undefined
-
-  const collectRoots = (root: string, entries: SourceScanResult['entries']) => {
-    if (entries?.length) {
-      return [{ entries, explicit: sourceScanExplicit, root }]
-    }
-    if (sourceScanExplicit && entries !== undefined) {
-      return []
-    }
-    const roots: Array<{ entries?: SourceScanResult['entries'], explicit?: boolean, root: string }> = [{ entries, root }]
-    const seenRoots = new Set([path.resolve(root)])
-    const basedir = options.opts.tailwindcssBasedir
-      ? path.resolve(options.opts.tailwindcssBasedir)
-      : undefined
-    if (basedir && !seenRoots.has(basedir)) {
-      roots.push({ root: basedir })
-      seenRoots.add(basedir)
-    }
-    for (const cssEntry of options.opts.tailwindcss?.v4?.cssEntries ?? []) {
-      if (!isTailwindV4CssEntry(cssEntry)) {
-        continue
-      }
-      const cssEntryRoot = path.dirname(path.resolve(cssEntry))
-      if (seenRoots.has(cssEntryRoot)) {
-        continue
-      }
-      roots.push({ root: cssEntryRoot })
-      seenRoots.add(cssEntryRoot)
-    }
-    return roots
-  }
 
   const cacheCurrent = () => {
     if (!sourceCandidateScanSignature) {
@@ -148,6 +125,10 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
       snapshot: options.sourceCandidateCollector.snapshot(),
     }
     sourceCandidateScanCache.set(sourceCandidateScanSignature, entry)
+    const key = preparationKey()
+    if (key) {
+      rememberSourceCandidateScanPreparation(key, sourceScanRoots.map(root => ({ ...root, outDir: sourceScanOutDir })), sourceScanEligibleFiles, entry.snapshot)
+    }
     cachedCollectorRevision = collectorRevision
     cacheDirty = false
   }
@@ -198,7 +179,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
     sourceScanEntries = sourceScan?.entries
     sourceScanExplicit = sourceScan?.explicit ?? false
     sourceScanDependencies = new Set((sourceScan?.dependencies ?? []).map(normalizeDependency))
-    const roots = collectRoots(root, sourceScanEntries)
+    const roots = collectSourceScanRoots(root, sourceScanEntries, sourceScanExplicit, options.opts)
     sourceScanRoots = roots
     sourceScanOutDir = outDir
     const nextScanSignature = createSourceCandidateScanSignature({
@@ -224,6 +205,22 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
       sourceCandidateScanSignature = nextScanSignature
       options.debug('reuse cached vite source candidate scan for watch rebuild')
       sourceCandidateScanInvalidated = false
+      return
+    }
+    const key = options.isWatchLikeBuild() ? preparationKey(nextScanSignature) : undefined
+    const prepared = key && options.sourceCandidateCollector.restoreScan
+      ? await readSourceCandidateScanPreparation(key, async () => (await Promise.all(roots.map(root => options.sourceCandidateCollector.resolveScanFiles({ ...root, outDir })))).flat())
+      : undefined
+    if (prepared) {
+      options.sourceCandidateCollector.restoreScan(prepared)
+      options.sourceCandidateCollector.syncInline(sourceScan?.inlineCandidates)
+      sourceScanIneligibleFiles.clear()
+      updateSourceScanMatchers(prepared.map(file => file.id))
+      sourceCandidateScanSignature = nextScanSignature
+      sourceCandidateScanInvalidated = false
+      cacheDirty = true
+      cacheCurrent()
+      options.debug('reuse validated vite source candidate preparation in independent session')
       return
     }
     if (options.isWatchLikeBuild()) {
@@ -265,39 +262,12 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
     }
   }
 
-  const rememberHotUpdateChange = (change: ViteSourceCandidateChange | undefined) => {
-    if (!change) {
-      return undefined
-    }
-    const previous = pendingHotUpdateChangeByFile.get(change.file)
-    if (!previous) {
-      const remembered = {
-        ...change,
-        addedCandidates: new Set(change.addedCandidates),
-        removedCandidates: new Set(change.removedCandidates),
-      }
-      pendingHotUpdateChangeByFile.set(change.file, remembered)
-      return remembered
-    }
-    for (const candidate of change.addedCandidates) {
-      previous.addedCandidates.add(candidate)
-      previous.removedCandidates.delete(candidate)
-    }
-    for (const candidate of change.removedCandidates) {
-      if (!previous.addedCandidates.delete(candidate)) {
-        previous.removedCandidates.add(candidate)
-      }
-    }
-    previous.runtimeAffecting ||= change.runtimeAffecting
-    return previous
-  }
-
   const syncChangedFileNow = async (id: string, sourceOverride?: string, event: PendingSourceCandidateFileChange['event'] = 'update'): Promise<ViteSourceCandidateChange | undefined> => {
     if (!options.shouldOwnTailwindGeneration || !options.isCandidateRequest(id)) {
       return undefined
     }
     const file = cleanUrl(id)
-    invalidateSourceSnapshots()
+    invalidateSourceSnapshots(file)
     const isCurrent = options.cssMemory.captureSource(file)
     try {
       const runtimeAffectingByDependency = isDependency(file)
@@ -412,7 +382,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
 
   const queueChangedFile = (change: Omit<PendingSourceCandidateFileChange, 'file'> & { id: string }) => {
     const file = cleanUrl(change.id)
-    invalidateSourceSnapshots()
+    invalidateSourceSnapshots(file)
     if (change.event === 'delete') {
       options.cssMemory.removeSource(file)
     }

@@ -1,21 +1,14 @@
-import type { ScanSourceCandidateRootOptions, SourceCandidateCollectorOptions, SourceCandidateCollectorSnapshot, SourceCandidateFilterOptions, SourceCandidateStore } from './types-and-cache'
+import type { PreparedSourceCandidateFile, ScanSourceCandidateRootOptions, SourceCandidateCollectorOptions, SourceCandidateCollectorSnapshot, SourceCandidateFilterOptions, SourceCandidateStore } from './types-and-cache'
 import type { TailwindInlineSourceCandidates, TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
+import { createCandidateMemo } from './candidate-memo'
 import { forEachSourceCandidateFile, readSourceCandidateFile } from './file-io'
 import { resolveSourceCandidateScanFiles } from './scan-root'
 import { createCandidateSnapshot, restoreCandidateSnapshot } from './snapshot'
 import { mergeSourcesByPriority } from './source-priority'
-import { addCandidateSet, cleanUrl, createSourceCandidateContentCacheKey, diffCandidateSets, extractCandidates, isSourceCandidateRequest, removeCandidateSet, resolveSourceCandidateExtension, sourceCandidateContentCache } from './types-and-cache'
+import { addCandidateSet, areSetsEqual, cleanUrl, createSourceCandidateContentCacheKey, diffCandidateSets, isSourceCandidateRequest, removeCandidateSet, resolveSourceCandidateExtension } from './types-and-cache'
 import { createCandidateViewMemo } from './view-memo'
 import { collectCandidateSources, collectCandidateValues } from './views'
-
-const SOURCE_CANDIDATE_FILE_MEMO_MAX = 4096
-
-interface FileCandidateMemo {
-  extension: string
-  source: string
-  candidates: Set<string>
-}
 
 type SourceLayer = 'scan' | 'transform' | 'css' | 'module'
 type SupplementalSourceLayer = Exclude<SourceLayer, 'scan'>
@@ -25,18 +18,6 @@ interface SourceOwner {
   layer: SourceLayer
   order: number
   replaceableLayers?: Set<SupplementalSourceLayer>
-}
-
-function areSetsEqual(left: Set<string> | undefined, right: Set<string>) {
-  if (!left || left.size !== right.size) {
-    return false
-  }
-  for (const value of right) {
-    if (!left.has(value)) {
-      return false
-    }
-  }
-  return true
 }
 
 export function createSourceCandidateStore(options: SourceCandidateCollectorOptions = {}): SourceCandidateStore {
@@ -50,7 +31,8 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   const cssSourceById = new Map<string, string>()
   const moduleSourceById = new Map<string, string>()
   const candidateCount = new Map<string, number>()
-  const fileCandidateMemo = new Map<string, FileCandidateMemo>()
+  const fileCandidateMemo = createCandidateMemo(options)
+  const resolveCandidates = fileCandidateMemo.resolveCandidates
   const sourceOwners = new Map<string, Map<SourceLayer, SourceOwner>>()
   const supplementalLayers = {
     transform: { candidates: transformCandidatesById, sources: transformSourceById },
@@ -95,47 +77,6 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
       owner.active = false
     }
     sourceOwners.delete(id)
-  }
-
-  async function resolveCandidates(id: string, source: string, extension: string, owner: SourceOwner) {
-    const normalizedId = cleanUrl(id)
-    const memoKey = `${normalizedId}\0${extension}`
-    const memo = fileCandidateMemo.get(memoKey)
-    if (memo?.source === source) {
-      return new Set(memo.candidates)
-    }
-    const contentCacheKey = createSourceCandidateContentCacheKey(
-      extension,
-      source,
-      options.bareArbitraryValues,
-      options.customAttributesEntities,
-      options.disabledDefaultTemplateHandler,
-      options.extractor,
-    )
-    const cachedCandidates = sourceCandidateContentCache.get(contentCacheKey)
-    const nextCandidates = cachedCandidates
-      ? new Set(cachedCandidates)
-      : await extractCandidates(source, extension, options)
-    if (!cachedCandidates) {
-      sourceCandidateContentCache.set(contentCacheKey, [...nextCandidates])
-    }
-    if (!owner.active) {
-      return new Set<string>()
-    }
-    fileCandidateMemo.delete(memoKey)
-    fileCandidateMemo.set(memoKey, {
-      candidates: new Set(nextCandidates),
-      extension,
-      source,
-    })
-    while (fileCandidateMemo.size > SOURCE_CANDIDATE_FILE_MEMO_MAX) {
-      const oldest = fileCandidateMemo.keys().next().value
-      if (oldest === undefined) {
-        break
-      }
-      fileCandidateMemo.delete(oldest)
-    }
-    return new Set(nextCandidates)
   }
 
   function isCandidateVisible(candidate: string) {
@@ -400,11 +341,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     transformSourceById.delete(normalizedId)
     cssSourceById.delete(normalizedId)
     moduleSourceById.delete(normalizedId)
-    for (const key of fileCandidateMemo.keys()) {
-      if (key.startsWith(`${normalizedId}\0`)) {
-        fileCandidateMemo.delete(key)
-      }
-    }
+    fileCandidateMemo.remove(normalizedId)
     const previousCandidates = candidatesById.get(normalizedId)
     if (!previousCandidates) {
       if (hadState) {
@@ -502,6 +439,26 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     })
   }
 
+  function restoreScan(files: readonly PreparedSourceCandidateFile[]) {
+    const affected = new Set([...scanSourceById.keys(), ...scanCandidatesById.keys(), ...files.map(file => file.id)])
+    for (const id of affected) {
+      const owner = sourceOwners.get(id)?.get('scan')
+      if (owner) {
+        owner.active = false
+      }
+    }
+    scanSourceById.clear()
+    scanCandidatesById.clear()
+    for (const file of files) {
+      scanSourceById.set(file.id, file.source)
+      scanCandidatesById.set(file.id, new Set(file.candidates))
+    }
+    revision++
+    for (const id of affected) {
+      recompute(id)
+    }
+  }
+
   return {
     syncSource: sync,
     sync,
@@ -522,6 +479,8 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
     sourcesForEntries,
     snapshot,
     restore,
+    restoreScan,
+    getPreparationKey: () => createSourceCandidateContentCacheKey('', '', options.bareArbitraryValues, options.customAttributesEntities, options.disabledDefaultTemplateHandler, options.extractor),
     clearScan,
     resetScan,
     clear,

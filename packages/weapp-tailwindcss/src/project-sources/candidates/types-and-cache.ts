@@ -27,6 +27,8 @@ export interface SourceCandidateStore {
   sourcesForEntries: (entries: TailwindSourceEntry[] | undefined, options?: SourceCandidateFilterOptions) => Map<string, Set<string>>
   snapshot: () => SourceCandidateCollectorSnapshot
   restore: (snapshot: SourceCandidateCollectorSnapshot) => void
+  restoreScan: (files: readonly PreparedSourceCandidateFile[]) => void
+  getPreparationKey: () => string
   clearScan: () => void
   resetScan: () => void
   clear: () => void
@@ -34,6 +36,12 @@ export interface SourceCandidateStore {
 }
 
 export interface SourceCandidateCollector extends SourceCandidateStore {}
+
+export interface PreparedSourceCandidateFile {
+  readonly id: string
+  readonly source: string
+  readonly candidates: readonly string[]
+}
 
 export interface SourceCandidateChange {
   addedCandidates: Set<string>
@@ -183,4 +191,16 @@ export function diffCandidateSets(previous: Set<string>, next: Set<string>): Sou
     addedCandidates,
     removedCandidates,
   }
+}
+
+export function areSetsEqual(left: Set<string> | undefined, right: Set<string>) {
+  if (!left || left.size !== right.size) {
+    return false
+  }
+  for (const value of right) {
+    if (!left.has(value)) {
+      return false
+    }
+  }
+  return true
 }
