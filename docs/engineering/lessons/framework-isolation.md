@@ -72,9 +72,9 @@ CSS 来源选择同样属于请求，不能通过裁剪完整配置推进同一�
 
 - profile 与环境快照：不同框架、不同项目、同项目同配置的独立实例；交错候选、配置、环境更新和独立关闭；同源码不同捕获值的回调。
 - 生命周期：任务排空、重复关闭、清理失败、watch 错误恢复、来源删除、配置失效及旧任务结果隔离。
-- Vite 与 injector：真实重复 build、Vite 4–8 watch/HMR、模板删除、uni-app-x 局部样式与样式哈希、内置与独立 injector 连续更新和删除对照。
+- Vite 与 injector：真实重复 build、Vite 4–8 watch/HMR、模板删除、uni-app-x 局部样式与样式哈希。既有内置与独立 injector 对照主要手动调用 hooks，不能表述为两个真实 watcher 的连续更新与删除验收。
 - Webpack/Rspack/Gulp：真实来源生成契约、Mpx loader、compiler registry、重复 apply、完整任务关闭与流处理。
-- 架构：直接、类型、别名、命名空间、聚合导出、跨框架引用及未登记 injector 模块反例；测试框架扩展。
+- 架构：直接、类型、别名、命名空间、聚合导出、跨框架引用及未登记 injector 模块反例；既有测试框架扩展覆盖 deferred dispatcher 与 Core，不能据此证明生产四组 assembler 的扩展成本。
 - 发布：公开类型、ESM/CJS、loader 路径和受支持 Node 的 HBuilderX 同步加载链路，拦截官方 Tailwind ESM 生成插件防止意外引入。
 
 首批定向结果（2026-10-23，生产源码提交 `95b3ef2ba`）：
@@ -309,6 +309,22 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 独立修复 `48453b91765a134810a5e25696fcbac2e686045d` 在子进程终态遍历真实错误、cause 和 AggregateError，将微信环境/协议终态与清理失败映射为不可重试的退出码；父进程先检查终态，超时、取消或信号终止也不再根据旧日志重试。产品错误的既有重试保留，诊断收集失败不会覆盖首错及输出。五项新增回归在修复前失败；作者 46 项定向回归、修改文件 ESLint 和 diff 检查通过，没有请求 IDE 或运行构建。该修复不恢复环境，也不代表本轮设备测试通过。
 
 主树整合 `d87039f45` 后以 macOS arm64、Node 24.18.0、CI=1 执行 `pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/frameworkIdeProbeFailure.test.ts e2e/frameworkIdeProbeRunner.test.ts e2e/framework-ide-project-lifecycle.test.ts e2e/workflow-cleanup.test.ts e2e/wechat-session-boundary.test.ts --update=none --maxWorkers=1`，本轮另传 pnpm 配置参数 `--config.verifyDepsBeforeRun=false`，五文件 35 项通过；六个修改文件 ESLint、agents:check 与 diff 检查通过。没有新增规则或修改超时，现有环境失败即停的规则由可执行终态和回归落实。
+
+### c3f5 的本地部分验收与取消收尾
+
+预检 `deb64317-118c-460f-b65f-7cf7771890ac` 的全部探针、当前会话真实输入/点击/截图和 verify 通过，以 `c3f5e0884e783efda1948c9dff4480b1d25f95cc` 从完整入口执行。根构建 71/71（0 缓存）、全量单测 1036 文件 / 11101 项、全部质量检查、矩阵 34 项与 static 390 文件 / 4233 项通过；单测另有一项预期失败、五文件 / 44 项跳过，static 另有 15 文件 / 38 项条件跳过。static 阶段耗时 1417.30 秒，不能将跳过项计为执行通过。
+
+为整合已确定的 CI 修复并补充真实框架契约回归，在完成 static 后主动结束旧提交验收；取消时已进入第 12/23 阶段多平台构建，真实 IDE、视觉 HMR 与后续设备阶段没有完成。取消协调器对部分自有子进程使用 SIGTERM，原报告保留清理未正常完成和 `sourceRestoration: unverified`，没有将其改写为成功。之后逐项复核取消前登记的十三个进程和协调器登记的十个终止目标均已退出，主树干净，prepare 退出码为 0、workflow 为 1；人工复核仅补充当前清理事实，不覆盖原始失败状态。
+
+原日志、取消报告与人工核对归档在 `.tmp/framework-isolation/local-acceptance/deb64317-118c-460f-b65f-7cf7771890ac/`；最早构建输出曾被工具截断，不能宣称全部标准输出完整保存。七个协作任务均已收到窗口释放通知，不沿用旧 READY 或预检报告；源码稳定后重新协调窗口并执行全新 prepare、真实交互、verify 和完整入口。
+
+### c3f5 的 Java 工具链与 Expo iOS 首败
+
+[Lynx Android job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40043575776/job/120720216983) 在 Gradle 8.10.2 继承 Java 25 时报告 `Unsupported class file major version 69`，尚未安装或运行 App。`6692a329cb4fbfcd6f6ee7b0686dc1f580efc8a2` 在 Gradle 前显式选择 Temurin 17，与现有 AGP 8.7.3 及相邻 Android 工作流保持兼容。工作流契约先失败，修复后两文件 / 十四项通过；回归覆盖 Java 选择优先级、Windows/POSIX 路径及中文空格路径，修改文件 ESLint、actionlint 与 diff 检查通过。没有以这些夹具测试代替真实 Android 验收。
+
+[Expo iOS job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40043575778/job/120720156860) 在第三阶段 CSS HMR、`layout-overflow/default` 第一帧截图时超过原 10000ms 预算；真实 `xcrun simctl screenshot` 命令在约 10440ms 后以 SIGTERM 结束，没有强制终止，也没有生成该帧 PNG 或进入解码和像素判断。前两阶段各 44 条回执完整，全部 89 条已提交回执的 178 帧重新核验 SHA-256 与长度一致，不能补齐缺失的失败回执。
+
+失败约 86 秒后的独立诊断截图显示对应页面和 CSS HMR 颜色，只能证明诊断时状态，不能替代截止时间内的通过。现有证据没有发现截图并发、重复 stop 或未排空任务，也缺少足以确定 CoreSimulator 宿主调度根因的数据。因此保留首败，不增加重试或放宽预算，随必要修复的新 head 正常重验。工件 `12541271522` 的 SHA-256 为 `787017c3b55962974ab18e0200dc6171277b2985f05ecdde1df8e3d9ab9267a2`；详细首败分析和回执摘要保存在本任务 CI 证据目录。Uni 正式性能失败及诊断限制另见[框架内存证据](framework-memory-evidence.md)。
 
 ## 适用边界
 
