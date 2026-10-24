@@ -28,13 +28,39 @@ function taskWithoutFilesystem(Task, ignored) {
   return { task, fileWatcher, invalidate }
 }
 
+function sourceAliases(name, entry, cwd = process.cwd(), paths = path) {
+  // 这里只构造虚拟模块 ID；与 cwd 同盘才能保证相对别名不同于绝对 ID。
+  const directory = paths.resolve(cwd, name)
+  const file = paths.join(directory, entry)
+  return { directory, file, relative: paths.relative(cwd, file) }
+}
+
+const aliasPlatforms = [
+  { name: 'POSIX', paths: path.posix, cwd: '/workspace/project', temporary: '/tmp' },
+  { name: 'POSIX 根目录', paths: path.posix, cwd: '/', temporary: '/tmp' },
+  { name: 'Windows 同盘', paths: path.win32, cwd: 'C:\\workspace\\project', temporary: 'C:\\Temp' },
+  { name: 'Windows 跨盘', paths: path.win32, cwd: 'D:\\workspace\\project', temporary: 'C:\\Temp' },
+  { name: 'Windows 盘符根目录', paths: path.win32, cwd: 'D:\\', temporary: 'C:\\Temp' },
+  { name: 'Windows UNC', paths: path.win32, cwd: '\\\\server\\share\\project', temporary: 'C:\\Temp' },
+].flatMap(platform => ['entry.js', 'nested'].map(entry => ({ ...platform, entry })))
+
+it.each(aliasPlatforms)('虚拟来源夹具始终提供同文件的不同绝对与相对 ID ($name, $entry)', ({ paths, cwd, temporary, entry }) => {
+  const temp = vi.spyOn(os, 'tmpdir').mockReturnValue(temporary)
+  try {
+    const { file, relative } = sourceAliases('rollup-alias-contract', entry, cwd, paths)
+    expect(paths.isAbsolute(file)).toBe(true)
+    expect(paths.isAbsolute(relative)).toBe(false)
+    expect(relative).not.toBe(file)
+    expect(paths.resolve(cwd, relative)).toBe(file)
+  }
+  finally { temp.mockRestore() }
+})
+
 it.each(rollupTestVariants())('分组只通知所属原始模块 ID，保留订阅不重新安装 ($version, $format)', async (variant) => {
   const { Task } = await runtime(variant)
   const { task, fileWatcher, invalidate } = taskWithoutFilesystem(Task)
-  const directory = path.join(os.tmpdir(), 'rollup-group')
-  const child = path.join(directory, 'entry.js')
+  const { directory, file: child, relative } = sourceAliases('rollup-group', 'entry.js')
   const sibling = path.join(directory, 'sibling.js')
-  const relative = path.relative(process.cwd(), child)
   try {
     fileWatcher.watch(directory, true)
     fileWatcher.watch(child, false)
@@ -108,9 +134,7 @@ it.each(rollupTestVariants())('组数量随活跃根有界，重新分组仍遵�
 it.each(rollupTestVariants())('纯 transform 子目录不能抢占普通父目录的源码事件 ($version, $format)', async (variant) => {
   const { Task } = await runtime(variant)
   const { task, fileWatcher, invalidate } = taskWithoutFilesystem(Task)
-  const directory = path.join(os.tmpdir(), 'rollup-source-and-transform')
-  const nested = path.join(directory, 'nested')
-  const dependency = path.relative(process.cwd(), nested)
+  const { directory, file: nested, relative: dependency } = sourceAliases('rollup-source-and-transform', 'nested')
   const file = path.join(nested, 'entry.js')
   try {
     fileWatcher.watch(directory, false)
