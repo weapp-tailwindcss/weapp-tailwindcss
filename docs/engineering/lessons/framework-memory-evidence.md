@@ -28,6 +28,12 @@ regressions:
   - benchmark/version-compare/test/vite-instrumentation.test.mjs
   - benchmark/version-compare/test/vite-operation-evidence.test.mjs
 verification:
+  - claim: ce917 的 Taro 实际输入全文及逐请求产物已独立复核，存在额外请求且没有 watch 关闭尾部证据，不能解释历史 RSS 首败
+    kind: ci
+    status: passed
+    sha: ce91720685bf369b6dabe308923cc2a5cbe8898d
+    environment: Ubuntu，八个实际 Node 22.23.3 worker，inputs-only，两侧各三次冷构建及三轮 watch 修改回滚，attempt 1
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083283724
   - claim: Vite 与 Mpx 共用生成操作诊断在最终整合源码及实际 Node 22 上通过，不能替代真实框架诊断或正式预算
     kind: unit
     status: passed
@@ -331,6 +337,16 @@ Uni/Taro 现在与 Mpx 共用生成器、原生生成会话、engine compile/bui
 实际 Node 22.23.3 的完整工具域二十九文件 / 209 项通过；基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 与整合前源码的 Uni/Taro 二十六个目标插桩哈希匹配，基线缺失服务池登记 absent。无 `.git` 副本中，三百九十四条依赖链接有归属清单，主包与 engine 均解析至副本，Taro 准备依赖链及 UI 消费构建成功。主树 `fb3a82dd6d807357a71d6f6346afbbacbc9d7a44` 再以真实 Node 22 运行二十九文件 / 209 项通过，包含最终 store 和 Vite 完成锚点。这些只是诊断完整性与准备链路验证，准确新 head 的真实 Taro 输入采样仍须独立执行。
 
 本次没有修改产品源码、正式 workflow、预算、采样次数或工作负载；固定事件、全文和总输出上限继续生效。诊断局部规则新增同次快照和无 observer 语义的现有约束，已有可执行回归，不新增根级安全要求。
+
+### ce917 的 Taro 实际输入与产物复核
+
+[inputs-only run `40083283724`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083283724) 的 attempt 1 准确绑定 `ce91720685bf369b6dabe308923cc2a5cbe8898d`，基线仍为 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417`。八个真实 worker 均使用 Node 22.23.3；两侧各三次冷构建、一个 watcher 三轮修改和回滚。Taro ZIP 为 5613105 字节、2268 文件，官方 digest、CRC、逐文件哈希及完整日志均独立复核；两侧十三个原文与插桩目标哈希对应准确 Git 源码。二十二份快照、一千一百二十二条同次快照来源全文的协议、引用和内容哈希通过现有 verifier。
+
+十一组阶段的候选集合均相同。六十六项来源哈希差异的全文只包含两准备副本的绝对根目录文字；实际输入哈希仍然不同，不以归一化结果宣称输入完全等价。按来源、target 和阶段关联后，三次冷构建各五对、watch 二十对，共三十五对生成 CSS 与 rawCss 的实际字节和 SHA 均一致。current watch 另有一次 mutation-1 的 sub-normal 样式生成请求，三十三个候选及 CSS/rawCss 与该来源首构相同；它是额外调用，不能配对成相同工作量。候选插入顺序、显式 profile 默认值和不可跨 worker 比较的引用也保留差异。
+
+current 三次冷构建各四个服务和四个租约均有实际 release、service.dispose 及关联 generator/native/engine 关闭成功记录。两侧每次冷构建均另有一个来源发现 generator 未观测关闭；current watch 最后四个租约未观测 release。两侧 watch-stop 最后快照后均无关闭尾部事件，`complete=true` 只证明采样停止握手，不能证明永久关闭完成，也不足以断言对象泄漏。逻辑 dispose 更不能证明 V8 或原生内存归还。
+
+该次运行没有 allocation 或保留链证据，不解释历史 RSS 差额。独立审计保存原始 ZIP、官方摘要、逐请求关联、额外调用和生命周期尾部，未重复 dispatch 或 rerun；输入诊断成功与正式性能预算、最新 head CI、完整设备验收分别核对。历史首败及本记录的 `partial` 状态保持。
 
 ## 适用边界
 

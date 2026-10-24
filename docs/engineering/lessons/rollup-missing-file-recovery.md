@@ -17,6 +17,7 @@ regressions:
   - scripts/ci/demo-matrix/rollup-close-errors.test.mjs
   - scripts/ci/demo-matrix/rollup-polling-identity.test.mjs
   - scripts/ci/demo-matrix/rollup-polling-receipt.test.mjs
+  - scripts/ci/demo-matrix/rollup-ownership-readiness.test.mjs
 ---
 
 # Rollup 多目录监听的缺失文件恢复
@@ -124,7 +125,19 @@ pnpm --config.verifyDepsBeforeRun=false exec vitest run -c scripts/ci/demo-matri
 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup-polling-receipt.test.mjs scripts/ci/demo-matrix/rollup-polling-identity.test.mjs --maxWorkers=1 --no-file-parallelism --update=none
 ```
 
-作者树扩大到全部 25 个 Rollup 回归文件时，772 项中 771 项通过、1 项失败：`rollup-hierarchical-ownership.test.mjs` 的 `4.63.0 / esm / register-parent` 首次替换期望 update、实际收到 create。该文件未消费新 helper；原始失败日志保留，事件来源仍待诊断，不能把本轮 Rollup 全套写成通过。上述 Linux 事件序列回归在本机执行，不代替准确 head 的原生 Linux/Windows CI。
+作者树扩大到全部 25 个 Rollup 回归文件时，772 项中 771 项通过、1 项失败：`rollup-hierarchical-ownership.test.mjs` 的 `4.63.0 / esm / register-parent` 首次替换期望 update、实际收到 create。该文件未消费新 helper；原始失败日志保留，具体 create 来源没有确定，不能归因于临时文件、初始扫描或产品缺陷。
+
+沿该夹具的真实订阅链复核发现，叶子 closer 登记早于目录异步读取完成。新增真实 `_handleRead` 屏障确定性证明旧握手过早放行；修订同时等待实际 owner、叶子登记及扫描结束，使用目标文件的真实 mtime 探针回执建立事件流，再排空已接收的原生异步任务和扫描、watch 节流。目录传播只跟随实际子文件事件，兄弟路径和临时文件不能代替目标回执；staged 文件移至受监视目录之外、同一临时根与卷内。
+
+慢 stat 故障注入又复现了探针持续改写导致最终回执总是落后一代的问题。修订在任一已发布探针回执到达后停止写入，再等待最后一次已发布探针的回执；缺少最后回执仍按原期限失败。没有增加观察期限、改写业务内容或用事件计数替代产物断言。
+
+主树整合至 `740074ba7` 后，在 macOS arm64 / Node 24.18.0、`CI=1` 下执行以下扩大回归，28 文件、791 项通过、零跳过；shell 实际展开全部 Rollup 文件，另包含来源读取回归：
+
+```sh
+pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup-*.test.mjs scripts/ci/demo-matrix/source-file-retry.test.mjs scripts/ci/demo-matrix/source-file.test.mjs --maxWorkers=1 --no-file-parallelism --update=none
+```
+
+原始 772 项首败及两次握手红灯日志保留。上述 Linux 事件序列和原生回执在本机执行，不能替代准确新 head 的原生 Linux/Windows CI。
 
 ## 适用边界
 
