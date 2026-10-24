@@ -5,12 +5,12 @@ import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { expect, vi } from 'vitest'
-import { rollupTestRequire } from './rollup-test-runtime.mjs'
+import { rollupTestRequire, rollupTestVariants } from './rollup-test-runtime.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-const require = rollupTestRequire('taro-vite-react-tailwindcss-v4')
-const dist = path.dirname(require.resolve('rollup'))
+const runtimes = rollupTestVariants()
+export const recoveryFormats = runtimes.map(({ version, format }) => `${version}/${format}`)
 // 每个 fixture 都调用原生函数，不能捕获上一用例尚未恢复的 spy。
 const nativeWatch = fs.watch
 
@@ -42,7 +42,10 @@ async function waitFor(predicate, message, signal) {
 export async function recoveryFixture(format, context, run, watchOptions = {}) {
   const { signal } = context
   signal.throwIfAborted()
-  const { Task } = format === 'cjs'
+  const runtime = runtimes.find(candidate => `${candidate.version}/${candidate.format}` === format)
+  const require = runtime?.require ?? rollupTestRequire('taro-vite-react-tailwindcss-v4')
+  const dist = path.dirname(require.resolve('rollup'))
+  const { Task } = (runtime?.format ?? format) === 'cjs'
     ? require(path.join(dist, 'shared/watch.js'))
     : await import(pathToFileURL(path.join(dist, 'es/shared/watch.js')).href)
   const dir = await realpath(await mkdtemp(path.join(tmpdir(), 'rollup-recovery-lifecycle-')))

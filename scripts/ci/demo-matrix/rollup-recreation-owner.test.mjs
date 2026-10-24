@@ -2,11 +2,11 @@ import fs from 'node:fs'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it } from 'vitest'
-import { recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { recoveryFixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-it.for(['cjs', 'esm'])('旧恢复 stat 不能借立即重新 watch 复活订阅 (%s)', async (format, context) => {
+it.for(recoveryFormats)('旧恢复 stat 不能借立即重新 watch 复活订阅 (%s)', async (format, context) => {
   await recoveryFixture(format, context, async ({ task, watcher, data, events, waitFor, settle, onStop }) => {
     const handler = watcher._nodeFsHandler
     const add = handler._addToNodeFs
