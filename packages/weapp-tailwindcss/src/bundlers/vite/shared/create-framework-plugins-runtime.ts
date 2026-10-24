@@ -272,9 +272,10 @@ function createRuntimePlugins(options: ViteFrameworkRuntimeOptions, frameworkBra
     rememberOriginalCssLayerSource, rememberTailwindRootCssModule, resolveCurrentGeneratorBranch, resolveCurrentGeneratorOptions,
     resolveViteStylePlatform, runtimeState, shouldOwnTailwindGeneration, sourceCandidateCollector, sourceScanSession,
     tailwindRootCssModuleIds, transformEarlyMiniProgramCss, viteProcessedCssSourceFiles: processedCssRegistry.sourceFiles,
-    removeViteProcessedCssSource: (id: string) => {
+    removeViteProcessedCssSource: async (id: string) => {
       cssAssets.removeViteProcessedCssSource(id)
       tailwindRootCss.removeSource(id)
+      await sourceDiscovery.removeSource(id)
     },
     collectSourceCandidates: capability.sourceCandidates,
     shouldSkipSourceCandidateState,

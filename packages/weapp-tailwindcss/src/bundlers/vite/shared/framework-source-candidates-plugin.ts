@@ -121,13 +121,13 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
       },
     },
     async watchChange(id, change) {
-      if (change.event === 'delete') {
-        await options.removeViteProcessedCssSource?.(id)
-      }
-      else if (change.event === 'create') {
+      if (change.event === 'create') {
         options.cssMemory?.restoreSource?.(id)
       }
       if (shouldSkipSourceCandidateState()) {
+        if (change.event === 'delete') {
+          await options.removeViteProcessedCssSource?.(id)
+        }
         return
       }
       const isCurrent = change.event === 'delete' ? undefined : options.cssMemory?.captureSource?.(id)
@@ -157,6 +157,8 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
                 runtimeAffecting: options.sourceScanSession.isDependency(file),
               }))
             }
+            // 删除先进入来源队列，再等待资源清理；晚完成的删除不能撤销新 create 的代次。
+            await options.removeViteProcessedCssSource?.(id)
             return
           }
           const changedSource = options.shouldOwnTailwindGeneration && isSourceCandidateRequest(id) && isCSSRequest(id)

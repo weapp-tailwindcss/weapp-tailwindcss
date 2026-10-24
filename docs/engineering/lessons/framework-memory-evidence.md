@@ -26,6 +26,30 @@ regressions:
   - benchmark/version-compare/test/mpx-observer-generation.test.mjs
   - benchmark/version-compare/test/mpx-observer-webpack.test.mjs
 verification:
+  - claim: f811 的正式 Synthetic HMR 复杂度超出原预算，本地另一个环境未复现不能抵销首败
+    kind: ci
+    status: failed
+    sha: f81163842e54c11ec7be9da2c30f44485fc3274a
+    environment: Ubuntu，正式 Benchmark，原 21 次采样与 1.25 指数限额，测试 merge SHA b39a34d6c55cf9f022118be93141f9edfd2161e9
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077357864/job/120823906536
+  - claim: f811 的正式 Taro Vite HMR RSS 首轮和原有反序确认均超出原预算，尚无活堆归因
+    kind: ci
+    status: failed
+    sha: f81163842e54c11ec7be9da2c30f44485fc3274a
+    environment: Ubuntu，正式 Benchmark，原工作负载、5% 与 64MiB 限额
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077357864/job/120824630989
+  - claim: f811 的正式 Uni Vite HMR RSS 首轮和原有反序确认均超出原预算，尚无活堆归因
+    kind: ci
+    status: failed
+    sha: f81163842e54c11ec7be9da2c30f44485fc3274a
+    environment: Ubuntu，正式 Benchmark，原工作负载、5% 与 64MiB 限额
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077357864/job/120824630994
+  - claim: f811 的 Mpx 实际输入协议和全文工件复核完成，输入不完全逐请求等量且不能解释正式 RSS 失败
+    kind: ci
+    status: passed
+    sha: f81163842e54c11ec7be9da2c30f44485fc3274a
+    environment: Ubuntu，实际 Node 22.23.3，八个 inputs-only worker，无 allocation
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077388173
   - claim: 无 observer 的真实源码语义及既有 benchmark 契约在实际 Node 22 上通过，不代表真实 Mpx 诊断完成
     kind: unit
     status: passed
@@ -279,6 +303,18 @@ Webpack 记录每个实际 compilation 的创建和完成，额外编译及 chil
 真实源码回归先得到无 observer 的四项确定性失败；最终新增十二项覆盖七类入口的结果、this、调用次数、原异常、Promise 身份、微任务时序、延迟注册和损坏协议。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，27 文件、190 项通过、零跳过；八个修改脚本显式 ESLint `--no-ignore` 和 diff 检查通过。独立只读内存复核通过，未重复重型构建。这些仍是工具契约验证。
 
 同一个无 .git 准备副本在 macOS / Node 24.18.0 验证实际失败消费链：先构建 UI 的十七个依赖包，旧插桩在 UI Vite 构建复现上述 operations 错误；修订后同一副本的十七个依赖包及 UI 均构建通过。脚本 [verify-preparation-build.mjs](../../../benchmark/version-compare/scripts/diagnostics/verify-preparation-build.mjs) 禁用构建前自动安装，记录命令和解析 realpath，断言主包、engine 来自副本且其 dist 包含插桩。该定向链路没有执行完整 build:pkgs、真实 Mpx worker、全面验收或设备测试；修订协议的真实输入诊断需另按准确 head 登记。
+
+### f811 的正式性能首败与 Mpx 输入复核
+
+[正式 run `40077357864`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077357864) 准确绑定 head `f81163842e54c11ec7be9da2c30f44485fc3274a`；测试合并提交为 `b39a34d6c55cf9f022118be93141f9edfd2161e9`。Synthetic HMR 的 25/50/100 规模耗时中位数分别为 0.399304、0.827442、2.489835ms，拟合指数 1.3202453547994046 超出原 1.25 限额。最大规模 21 份样本中有 11 份达到该中位数，不能描述为单个离群值；序列前后也存在变化，具体 JIT、GC 或调度原因尚未证实。同内容在本地 macOS / Node 24.18.0 的一次定向诊断未复现，只能证明另一环境下结果不同，不能撤销 Linux 首败。
+
+Taro Vite HMR peak RSS 首轮 `2933.68 → 3188.52MiB`、反序 `2959.57 → 3217.87MiB`；steady 首轮 `2763.84 → 3079.23MiB`、反序 `2899.37 → 3061.54MiB`。Uni Vite peak 首轮 `1081.94 → 1159.04MiB`、反序 `1023.09 → 1240.73MiB`；steady 首轮 `976.44 → 1045.05MiB`、反序 `1013.55 → 1123.95MiB`。原 5% / 64MiB 门限和内置反序确认均保持。Taro 四组均为相同九进程拓扑，Uni 四组为相同七进程拓扑，差额主要来自最大的 Node 进程；没有 PID 重叠或重复进程混计证据，也没有足以区分活堆、V8 保留和原生分配的材料。汇总门禁只是复述这些违规，不另算一个根因。
+
+[Mpx inputs-only run `40077388173`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40077388173) 使用同一准确 head，全部 worker 为实际 Node 22.23.3。工件 `12553812964` 为 4196254 字节，SHA-256 `4e633805281cfc2d91c8a68f827fc4b1ce80bc258b5820ff76de5bf435f10c42` 与服务端摘要一致；首次下载超时残片保留，一次整包恢复后完成独立复核。2564 个文件、八个 worker、22 份输入、2078 条事件及 334 份全文的协议、身份、字节数和哈希均完整，插桩原文对应两侧 Git。
+
+十一阶段候选相同，扫描来源文本哈希多重集与控制器十次写入记录相同，但逐请求并不等量：存在准备根路径、显式默认配置、请求顺序与移除旧 appType 等差异；current 第二次冷构建额外生成一次重复 web 结果（8 次对 7 次）。其余冷构建及 watch 的生成 CSS/rawCss 逐调用序列相同，该额外构建的输出哈希集合也相同。watch 后半阶段弱 store 的历史快照集合不同，不能据此称当前来源错误。冷构建的三份 current 服务与租约实际释放；watch 两侧均没有关闭尾部的 dispose 记录，既不宣称已回收，也不据此宣称泄漏。
+
+该诊断没有 allocation，`canExplainFormalRegression=false`；不能解释正式 Taro/Uni 或此前 Mpx 的 RSS 差额。Vite 仍需实际来源全文、逐生成请求与服务代次证据，才有条件判断输入等价性；补证工具和后续 inputs-only 成功均不能替代正式预算。上述失败没有人工重跑，后续产品必要修复的新 head 应独立验收，所有历史失败保持原样。
 
 ## 适用边界
 

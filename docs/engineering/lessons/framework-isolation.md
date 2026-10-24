@@ -48,6 +48,16 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.integration.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/source-candidate-ownership.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/source-candidate-current-layer-order.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-watch-deletion.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-watch-task-cancellation.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-discovery-lifecycle.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-deletion-order.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-profile-reentry.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-watch-delete-create-overlap.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-source-scan-eligibility-serialization.test.ts
+  - packages/weapp-tailwindcss/test/cache-transaction.test.ts
   - scripts/ci/demo-matrix/mpx-static-config.test.mjs
   - benchmark/version-compare/test/watch-output.test.mjs
 ---
@@ -365,6 +375,26 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 后续真实 delegate、Webpack context 与 Gulp Vinyl 管线的关闭所有权审查、修正及定向证据见[编译会话关闭后的真实所有权](framework-shutdown-ownership.md)。该记录区分主包内置代理与独立 injector 的公开生命周期，避免把 watcher 行为对照扩大为永久释放保证。
 
 `d4ee` 新 CI 的 uni-app-x CSS watch 首败、当前模块交付事实与合并资产所有权的区别，见[样式模块交付记录](framework-css-module-delivery.md)。原断言与压缩行为保留，两种拆分模式的连续生产构建已定向复验。
+
+### f811 的部分验收与显式删除来源修复
+
+七方任务确认错峰窗口后，准确 head `f81163842e54c11ec7be9da2c30f44485fc3274a` 使用全新预检 `67626e33-83c9-42a8-88eb-05c512ae5d78`。脚本探针、当前会话真实浏览器交互与 verify 均通过，标准完整入口前十阶段通过：根构建 71/71、全量单测 1078 文件 / 11362 项，以及 lint、类型、架构、文档站、规则、release status、diff 和矩阵。单测另有五文件 / 44 项既有跳过及一项预期失败，不计作执行通过。
+
+static 阶段已执行生成模式、Taro H5、Issue 1241 watch 与动态类四文件的 25 项用例，随后因新确认的显式删除缺陷主动取消；后续 static、IDE、HMR、设备与视觉阶段未完成，不能称全面验收通过。退出后记录的 747 个自有 PID 均已结束，预检 consumer finished、工作树恢复干净；临时浏览器页关闭且复核为空。七方窗口已全部释放，下一轮不得复用这份预检或 READY。证据保存在 `.tmp/framework-isolation/local-acceptance/67626e33-83c9-42a8-88eb-05c512ae5d78/`。
+
+删除 hook 原来只撤销 processed registry，remembered CSS 与在途任务仍可重放旧作者来源。来源凭据现在在排队或异步读取前取得，显式删除永久撤销旧凭据，同名 create 只创建新代次。普通部分构建仍复用未删除来源，复合资产按真实贡献关系失效；任务、规划失败、未执行队列与轮次关闭统一释放凭据。通用 `cache.process` 的转换失败同时撤销本任务尚持有的 hash，避免下一次同内容命中旧结果，也不覆盖较新的并发提交。
+
+来源扫描保留显式事件及当前事件的快照；等待旧任务不能把 delete 改成 update，delete/create 无快照时不能继承删除前内容。来源删除在第一个异步清理前进入扫描队列，避免旧 delete 晚完成时再次撤销新 create。资格刷新后重新检查同文件任务归属。自动发现只移除自身登记的根配置，已提交配置由实例刷新队列持有；重复来源扫描不能取消必要刷新。关闭先停止接收、排空已接收发现任务，再清理扩展状态。
+
+扫描候选快照限制在当前会话内。全局快照按相同项目配置复用会使新实例看见旧来源，新增同项目双实例用例已精确复现；同一 watch 会话的扫描缓存及共享纯内容缓存保留。自定义提取器的纯内容缓存按 WeakMap 函数身份区分，不能仅标记为 custom；候选 store 各层的在途提交权确保删除、清空和更新后的旧任务不能恢复状态，成功时原子提交来源与候选，失败保留上一份有效状态。
+
+作者来源成功替换其他候选层时，还必须遵循接收顺序。真实延迟提取用例在修前有十项失败：旧层任务能复活，或较早作者任务误删后来已提交的层。提交权现在记录在途顺序，作者任务仅替换仍由自己拥有的层；后来成功的独立层保留，较早未完成任务仅在作者提交成功后撤销，失败不改变其他层。额外集合随在途任务结束释放，不建立永久的逐文件代次表。二十二项新增回归及 Vite/Webpack 消费域十二文件 / 131 项通过；主树整合后的相关八文件 / 92 项与标准类型检查另行通过，各组存在交叠，不累计为独立总数。
+
+会话内的旧扫描范围同样需要失效：A→B 期间删除、修改或新增 A 的来源，再切回 A，旧签名缓存会恢复旧候选或遗漏新增文件。真实文件回归修前分别失败；来源事件、直接 HMR 同步与配置失效现在撤销旧快照，保留有效 watch 轮次的直接复用及内容提取缓存。三项变更场景与一项无变更复用回归通过。生产关闭链已核对到唯一协调者，未把内部模块绕过协调者的直接调用当作额外生产缺陷。
+
+上述修订最终在主树整合的二十二文件 / 418 项通过、零跳过；主包 ESM/CJS/DTS、标准源码类型检查、全部本轮修改源码及测试的 ESLint `--no-ignore`（关闭 Prettier 规则）与架构检查通过。普通 scoped ESLint 的测试忽略提示保留，严格检查另外执行，不以被忽略文件代作通过。最终日志位于 `.tmp/framework-isolation/reports/source-lifecycle-final-*.log` 和 `source-lifecycle-vite-domain-final.log`。
+
+作者 CSS 修复域十九文件 / 166 项、候选归属域五文件 / 84 项分别通过；主树整合后，包含实际 bundle、扫描、删除与重建并发的新定向域二十文件 / 392 项通过、零跳过。主包 ESM/CJS/DTS 构建、标准 `tsconfig.typecheck.json`、修改文件 ESLint（禁用 Prettier 规则）及 architecture:check 通过。第一次误用含全仓测试引用的 `tsconfig.json` 所得错误保留在原日志，不作为标准源码类型门禁结果。这里没有修改 demo 或静态基线，实际项目的 static 和设备结果仍由下一轮完整验收核对。
 
 ## 适用边界
 
