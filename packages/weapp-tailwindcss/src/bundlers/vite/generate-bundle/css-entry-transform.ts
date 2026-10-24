@@ -82,7 +82,7 @@ export async function processViteCssEntryTransform(options: any) {
     useIncrementalMode,
     viteProcessedCssAsset,
   } = options
-  const { cssHandlerOptions: cssHandlerOptions2, generatorCssHandlerOptions, generatorRawSource, generatorSourceFile, generatorUserLayerRawSource, hasCurrentTailwindGenerationDirective, hasRememberedApplySource, hasSameOutputRememberedTailwindGenerationSource, hasStaleViteProcessedCssSource, usesConfiguredTailwindV4FallbackSource, vitePipelineCssAsset, webviewRootCssInjectionTarget } = cssCompositionPlan
+  const { cssHandlerOptions: cssHandlerOptions2, generatorCssHandlerOptions, generatorRawSource, generatorSourceFile, generatorSourceKind, generatorUserLayerRawSource, hasCurrentTailwindGenerationDirective, hasRememberedApplySource, hasSameOutputRememberedTailwindGenerationSource, hasStaleViteProcessedCssSource, usesConfiguredTailwindV4FallbackSource, vitePipelineCssAsset, webviewRootCssInjectionTarget } = cssCompositionPlan
   const removeRootCoveredCssFromScopedAsset = (css: string) => {
     const normalizedOutputFile = normalizeOutputPathKey(outputFile.replace(/[?#].*$/, ''))
     const isRootOrSubpackageCss = !normalizedOutputFile.includes('/')
@@ -106,8 +106,8 @@ export async function processViteCssEntryTransform(options: any) {
     applyCssResult(nextCss)
     markCssAssetProcessed?.(originalSource, outputFile)
     recordCssAssetResult?.(outputFile, nextCss)
-    if (vitePipelineCssAsset && rememberedCssSource) {
-      rememberCssSource?.({ outputFile: vitePipelineCssInjectionOutputFile, rawSource: generatorRawSource, sourceFile: generatorSourceFile })
+    if (vitePipelineCssAsset && rememberedCssSource && generatorSourceKind) {
+      rememberCssSource?.({ kind: generatorSourceKind, outputFile: vitePipelineCssInjectionOutputFile, rawSource: generatorRawSource, sourceFile: generatorSourceFile })
     }
     // 普通作者样式的兼容处理不能升级为生成来源，否则回滚时会误用旧 remembered source。
     if (vitePipelineCssAsset && shouldRecordVitePipelineCssByOutput) {
@@ -176,6 +176,7 @@ export async function processViteCssEntryTransform(options: any) {
     generatorPlatform,
     generatorRawSource,
     generatorSourceFile,
+    generatorSourceKind,
     generatorUserLayerRawSource,
     getLastCssResult,
     hasRuntimeAffectingChanges,

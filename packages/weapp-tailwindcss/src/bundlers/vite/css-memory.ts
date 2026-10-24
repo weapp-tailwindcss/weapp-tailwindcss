@@ -166,6 +166,7 @@ export function createViteCssMemory(options: {
     for (const [rememberedKey, remembered] of relatedRememberedEntries) {
       touchMapEntry(rememberedCssSources, rememberedKey, {
         ...remembered,
+        kind: entry.kind,
         outputFile: entry.outputFile,
         rawSource: entry.rawSource,
         sourceFile: entry.sourceFile,
@@ -189,11 +190,13 @@ export function createViteCssMemory(options: {
     sourceFile: string,
     rawSource: string,
   ) => {
-    if (remembered.rawSource === rawSource && remembered.sourceFile === sourceFile) {
+    if (remembered.kind !== 'output-import-shell' && remembered.rawSource === rawSource && remembered.sourceFile === sourceFile) {
       return remembered
     }
     const nextRemembered = {
       ...remembered,
+      // 生命周期刷新提供作者源码，不能继承旧输出导入壳的回放权限。
+      kind: remembered.kind === 'output-import-shell' ? undefined : remembered.kind,
       rawSource,
       sourceFile,
     }

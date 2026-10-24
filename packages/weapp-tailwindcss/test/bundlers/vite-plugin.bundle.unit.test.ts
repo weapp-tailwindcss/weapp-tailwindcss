@@ -14220,6 +14220,7 @@ ${utilities}
     })
     const rememberedCssSources = new Map([
       ['main.wxss', {
+        kind: 'output-import-shell' as const,
         outputFile: 'main.wxss',
         rawSource: '@import "app.wxss";\n',
         sourceFile: path.join(root, 'src/main.css'),
@@ -14898,7 +14899,7 @@ ${utilities}
     expect(replayedCss).toContain('.tw-watch-style-case')
   }, TEST_TIMEOUT_MS)
 
-  it('regenerates vite pipeline css when a style source rolls back with css bundle asset', async () => {
+  it.each(['directives', 'compiled'])('regenerates vite pipeline css when a style source rolls back with %s css bundle asset', async (assetStage) => {
     const generateMock = vi.fn(async (source: { css: string }) => {
       const css = source.css.includes('.tw-watch-style-case')
         ? '.tw-watch-style-case{font-weight:700}'
@@ -14978,9 +14979,12 @@ ${utilities}
 
     const cleanTransformResult = await transform?.call(rewritePlugin, cleanSource, sourceFile)
     expect(cleanTransformResult).toBeNull()
+    const staleSource = assetStage === 'compiled'
+      ? String(firstBundle['pages/index/index.wxss'].source)
+      : dirtySource
     const secondBundle = {
       'pages/index/index.wxss': {
-        ...createRollupAsset(createViteProcessedCssAsset(dirtySource)),
+        ...createRollupAsset(createViteProcessedCssAsset(staleSource)),
         fileName: 'pages/index/index.wxss',
         originalFileNames: [sourceFile],
       },

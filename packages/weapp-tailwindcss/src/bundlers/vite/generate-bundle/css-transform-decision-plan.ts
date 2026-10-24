@@ -83,6 +83,8 @@ export function resolveViteCssTransformDecisionPlan(
     )
   const strippedViteProcessedCss = stripBundlerGeneratedCssMarkers(options.rawSource)
   const shouldPreserveStaleGeneratedCssAsset = options.hasStaleViteProcessedCssSource
+    // 作者已删除生成指令时必须采用新来源，旧生成标记不能保活被移除的样式。
+    && (options.rememberedRawSource == null || hasRememberedTailwindGenerationSource)
     && shouldPreserveCollectedViteCssAsset
     && strippedViteProcessedCss.trim().length > 0
     && options.cssAssetIdentityKind !== 'generator-placeholder'

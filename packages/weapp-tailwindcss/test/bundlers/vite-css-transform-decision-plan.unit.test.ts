@@ -30,6 +30,16 @@ function createDecisionOptions() {
 }
 
 describe('vite css transform decision plan', () => {
+  it('已知作者源删除生成指令后不复用旧生成载荷', () => {
+    const plan = resolveViteCssTransformDecisionPlan({
+      ...createDecisionOptions(),
+      generatorRawSource: '.clean{display:block}',
+      rememberedRawSource: '.clean{display:block}',
+    })
+    expect(plan.shouldPreserveStaleGeneratedCssAsset).toBe(false)
+    expect(plan.shouldReuseProcessedCss).toBe(false)
+  })
+
   it('reuses stable stale generated css without tracking the generator', () => {
     const plan = resolveViteCssTransformDecisionPlan(createDecisionOptions())
 

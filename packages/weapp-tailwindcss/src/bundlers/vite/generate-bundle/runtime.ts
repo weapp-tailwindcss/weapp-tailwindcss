@@ -15,7 +15,7 @@ import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/
 import { collectGeneratedRawSourceCandidatesFromCss } from '../../../generation/class-selectors'
 import { normalizeMiniProgramGeneratorCssSource } from '../../../generation/output-import-shell'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, createCssTokenSourceMap } from '../../shared/css-source-trace'
-import { hasBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
+import { hasBundlerGeneratedCssMarker, parseBundlerGeneratedCssMarkerBlocks } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { createBundleModuleGraphOptions } from '../bundle-entries'
 import { buildBundleSnapshot, createBundleBuildState } from '../bundle-state'
@@ -120,7 +120,18 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     await runtimeState.readyPromise
     debug('start')
     onStart()
-    const collectedBundlerGeneratedCssFiles = new Set(Object.entries(bundle).filter(([, output]) => output.type === 'asset' && hasBundlerGeneratedCssMarker(output.source)).map(([file]) => file))
+    const collectedBundlerGeneratedCssFiles = new Set<string>()
+    const generatedSourceFilesByAsset = new WeakMap<OutputAsset, readonly string[]>()
+    for (const [file, output] of Object.entries(bundle)) {
+      if (output.type !== 'asset' || typeof output.source !== 'string' || !hasBundlerGeneratedCssMarker(output.source)) {
+        continue
+      }
+      collectedBundlerGeneratedCssFiles.add(file)
+      // 标记清理前固定本轮资产证据，不能借用上一轮的 processed 身份恢复作者源。
+      generatedSourceFilesByAsset.set(output, parseBundlerGeneratedCssMarkerBlocks(output.source)
+        .filter(marker => marker.bundler === 'vite' && marker.file != null)
+        .map(marker => marker.file!))
+    }
     const subpackageRoots = collectMiniProgramSubpackageRoots(bundle)
     if (subpackageRoots) {
       currentSubpackageRoots = subpackageRoots
@@ -362,6 +373,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           generatorCandidatesChanged,
           generatorPlatform,
           generatorRuntime,
+          generatedSourceFiles: generatedSourceFilesByAsset.get(originalSource),
           getConfiguredTailwindV4CssSourceEntries,
           getCssHandlerOptions,
           getCssSource,

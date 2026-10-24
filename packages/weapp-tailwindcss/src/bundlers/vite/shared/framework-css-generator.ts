@@ -139,7 +139,7 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
       else if (!hmrCandidateState.hasPendingChange()) {
         hmrCandidateState.clear()
       }
-      cssMemory.rememberCssSource({ outputFile, rawSource: code, sourceFile: requestFile })
+      cssMemory.rememberCssSource({ kind: 'output-import-shell', outputFile, rawSource: importShellCss, sourceFile: requestFile })
       debug('css preserved root mini-program import shell for vite postcss pipeline: %s bytes=%d', requestFile, importShellCss.length)
       return importShellCss
     }

@@ -161,6 +161,7 @@ export function mergeRememberedCssSources(
     rawSources.push(source.rawSource)
   }
   return {
+    ...sources.every(source => source.kind === 'output-import-shell') ? { kind: 'output-import-shell' as const } : {},
     outputFile,
     rawSource: rawSources.join('\n'),
     sourceFile: sources[0]?.sourceFile ?? outputFile,

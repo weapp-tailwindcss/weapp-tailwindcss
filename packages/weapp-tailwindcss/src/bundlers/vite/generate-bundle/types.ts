@@ -68,6 +68,8 @@ export interface GenerateBundleContext {
 }
 
 export interface RememberedCssSource {
+  /** 生成输入与已解析的输出导入壳分别登记，资产处理标记不提供此权限。 */
+  kind?: 'generation' | 'output-import-shell' | undefined
   outputFile: string
   rawSource: string
   sourceFile: string

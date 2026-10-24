@@ -246,6 +246,7 @@ export async function processViteCssBundleEntry(options: any) {
   }
   const cssCompositionPlan = resolveViteCssCompositionPlan({
     assetSourceFile,
+    generatedSourceFiles: options.generatedSourceFiles,
     configuredSourceFileKeys: configuredTailwindV4CssSourceFileKeysForScope,
     cssEntries: opts.cssEntries,
     cssMatcher: opts.cssMatcher,
