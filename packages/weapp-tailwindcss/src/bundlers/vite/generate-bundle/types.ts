@@ -10,6 +10,11 @@ import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types'
 
+/** 单次产物处理的来源能力，不存入跨轮次构建状态。 */
+export interface GenerateBundleRoundServices {
+  readonly captureCssSource: GenerateBundleContext['captureCssSource']
+}
+
 export interface GenerateBundleContext {
   onSkipProcessBundle?: (() => void | Promise<void>) | undefined
   processMarkupAndScripts?: boolean | undefined

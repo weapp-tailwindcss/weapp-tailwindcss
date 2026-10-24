@@ -19,6 +19,8 @@ regressions:
   - packages/weapp-tailwindcss/test/compiler/generation-pool-close.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-compiler-async-cleanup.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-activity-idle.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-source-task-scope.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-watch-deletion.test.ts
 ---
 
 # 编译会话关闭后的真实所有权
@@ -40,6 +42,8 @@ Webpack 将可复用源配置与可变 context 分离。公开组装入口显式
 活动租约失效后还需退出共享异步上下文。`fdbaa8fa168c1930d46cbc596e50a5b881252cd2` 在全部活动结束后仍保持 `AsyncLocalStorage` 启用；实际 Node 22.23.3 会继续向宿主新建 Promise 传播空存储，固定的五十万次 Promise 微实验中，两份空闲启用样本约 53 ms，无存储或停用样本约 20–25 ms。该实验未强制 GC，不是实际框架的性能验收，也不能解释 Taro 的约 186–193 MiB RSS 差额。
 
 共享存储现在按全部实例的在途活动总数管理：最后一个活动完成后停用，下次活动自动启用。不能在单个 owner 空闲时停用，否则会清除其他实例关闭期间仍需继承的租约。同步异常在实际活动作用域内释放；Node 24 的 async context frame 只删除当前 frame 的存储，在 `run` 恢复祖先后才释放会遗留该活动 frame 的失活上下文。用户 ALS 已复制的其他 frame 仍可能读到失活租约，因此继续清空 owner 并检查 active，不能声称全部捕获上下文均已消除。重新启用不会恢复旧任务权限，用户自有的异步上下文保持独立。
+
+CSS 来源凭据不能只依赖调用时的异步上下文。旧 Vite 轮次服务在每个产物钩子内创建长期启用的 ALS；保存的捕获函数若在新轮次调用，会借用新轮次权限，嵌套轮次也可能提前释放通过外层服务申请的来源。现在每轮创建显式捕获闭包，通过窄 `GenerateBundleRoundServices` 传到样式规划和回放任务，移除该 ALS，长期 bundle 状态与 CSS 缓存继续复用。轮次结束先清空来源 provider 槽，再释放全部凭据；迟到调用返回失活凭据，不再调用已释放服务。宿主保留轮次闭包及完成 Promise 时，来源 provider 的私有资源仍可回收。某项清理失败不跳过其余来源，任务与清理错误保留原身份。这是来源能力和资源生命周期修复，尚无证据将其归因为 Uni HMR 的 RSS 首败。
 
 Gulp 在 `write` 或 `end(chunk)` 接受文件时登记完整活动，等待 handler、Node write callback 和已发布输出三个条件。受管 pipe 只允许同一 Vinyl 沿已登记的上下游关系继承租约，背压中的输出同样受保护；`unpipe` 和 destroy 解除输出关系，仍在运行的 handler 继续排空。用户 callback 重入属于新外部任务，关闭后不能借用旧异步作用域。session 和转换服务使用可清空槽，未结束的 stream 不再永久捕获完整 context。
 
@@ -68,6 +72,8 @@ Gulp 作者首批九文件 / 59 项定向回归、标准类型检查、严格 ES
 主树最终源码的主包 ESM/CJS 与声明构建、标准 `tsconfig.typecheck.json`、48 个修改脚本/源码/测试的严格 ESLint 和 architecture:check 均通过。发布入口、声明、HBuilderX 加载、边界检查器反例与源码行数共八文件 / 123 项通过，0 跳过。架构检查覆盖 37 包、1522 个源码文件，原 53 条组装边和 13 条具体兼容边保持；没有扩大兼容豁免。
 
 native 关闭补充回归先在 `4801004a6` 复现四项提前关闭失败，再验证当前与退役 session、在途 CSS 转换和候选校验、LRU 释放失败、公开 compiler 的临时生成器清理。独立工作树最终二十五文件 / 125 项通过，0 跳过；其中包含公开 ESM/CJS、声明、HBuilderX 同步加载、Webpack loader、真实 Vite watch 与 injector 更新删除对照。主包构建、标准类型检查（含同步消费与可等待关闭的类型回归）、严格 ESLint 和架构检查均通过。该记录是关闭链路的定向证据，整合后的完整验收仍按下述边界执行。
+
+CSS 来源轮次回归先在 `69b7b1e4758f1f6cf37863dd7d9409e17f0a272c` 的旧实现上通过测试适配旧 API 取证，八项中四项失败，分别覆盖迟到借权、嵌套误归属、清理中断和任务错误被覆盖。显式闭包初版随后在真实 GC 子进程复现 provider 私有资源保留，清空槽后再复现清理错误的延迟调用帧保留；复用现有诊断物化后，正常和失败轮次均可释放。实际 Node 22.23.3 执行 `pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-css-source-task-scope.test.ts test/bundlers/vite-css-watch-deletion.test.ts test/compiler/vite-removed-files-port.test.ts test/compiler/shadow-report-vite-port.test.ts test/bundlers/vite-css-cache-inputs.unit.test.ts test/bundlers/vite-import-shell-rebuild.test.ts test/bundlers/vite-remembered-css-replay-cache.unit.test.ts test/bundlers/vite-local-css-replay-ownership.test.ts --update=none`，八文件 / 77 项通过，0 跳过。标准 `tsconfig.typecheck.json`、七个源码/测试文件严格 ESLint 和 `pnpm architecture:check` 通过；未更改 demo 或样式产物基线，也未新增 benchmark 或设备负载。
 
 ## 适用边界
 

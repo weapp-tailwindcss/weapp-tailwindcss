@@ -53,7 +53,6 @@ function createWatchCase() {
     getCssUserHandlerOptions: vi.fn(() => ({})),
     getRememberedCssSignature: cssMemory.getRememberedCssSignature,
     getRememberedCssSources: cssMemory.getRememberedCssSources,
-    captureCssSource: sourceTaskScope.captureSource,
     isNativeAppStyleTarget: false,
     isWebGeneratorTarget: false,
     lastCssRawSourceHashByFile: new Map<string, string>(),
@@ -78,15 +77,15 @@ function createWatchCase() {
     timeTask: async (_name: string, task: () => Promise<void>) => task(),
     useIncrementalMode: true,
   }
-  const prepareReplay = async () => {
+  const prepareReplay = async (captureCssSource = cssMemory.captureSource) => {
     options.bundle = {}
     options.activeViteCssCacheFiles.clear()
     options.cssTaskFactories = []
     options.emitOrReplayCssAsset.mockClear()
-    await processRememberedCssReplay(options as any)
+    await processRememberedCssReplay({ ...options, captureCssSource } as any)
     return () => Promise.all(options.cssTaskFactories.map(task => task()))
   }
-  const replay = () => sourceTaskScope.run(async () => (await prepareReplay())())
+  const replay = () => sourceTaskScope.run(async capture => (await prepareReplay(capture))())
   return { assets, cssMemory, options, prepareReplay, remember, replay, sourceTaskScope, watch }
 }
 
@@ -235,7 +234,7 @@ describe('Vite watch CSS source deletion', () => {
     await expect(fixture.replay()).rejects.toThrow('plan failed')
     expect(fixture.cssMemory.getStats().pendingCssSourceOwners).toBe(0)
     for (let index = 0; index < 3; index++) {
-      await fixture.sourceTaskScope.run(() => fixture.prepareReplay())
+      await fixture.sourceTaskScope.run(capture => fixture.prepareReplay(capture))
       expect(fixture.cssMemory.getStats().pendingCssSourceOwners).toBe(0)
     }
     await fixture.replay()
@@ -254,8 +253,8 @@ describe('Vite watch CSS source deletion', () => {
       wake = resolve
     })
     let late!: Promise<ReturnType<typeof fixture.cssMemory.captureSource>>
-    await fixture.sourceTaskScope.run(async () => {
-      late = pending.then(() => fixture.sourceTaskScope.captureSource!('/repo/late.css'))
+    await fixture.sourceTaskScope.run(async (capture) => {
+      late = pending.then(() => capture!('/repo/late.css'))
     })
     wake()
     expect((await late)()).toBe(false)

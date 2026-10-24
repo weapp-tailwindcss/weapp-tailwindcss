@@ -27,7 +27,6 @@ export function createGenerateBundleHook(context: GenerateBundleContext) {
   const sourceTaskScope = createViteCssSourceTaskScope(context.captureCssSource)
   const runtimeHandler = createRuntimeGenerateBundleHook({
     ...context,
-    captureCssSource: sourceTaskScope.captureSource,
     frameworkRootImportShellTargetByFile,
     rememberCssSource: rememberCssSource
       ? (entry, cssRuntimeSignature) => {
@@ -45,9 +44,9 @@ export function createGenerateBundleHook(context: GenerateBundleContext) {
     const removedFiles = removalConsumer?.consume(Object.keys(bundle)) ?? []
     const rememberFrameworkStyles = frameworkStyleMemory.prepare(bundle, removedFiles)
     beginCompilerShadowRun(context.runtimeState)
-    const runRuntime = () => sourceTaskScope.run(() => runWithRemovedBundleFiles(
+    const runRuntime = () => sourceTaskScope.run(captureCssSource => runWithRemovedBundleFiles(
       removedFiles,
-      () => runtimeHandler.call(this, options, bundle),
+      () => runtimeHandler.call(this, options, bundle, { captureCssSource }),
     ))
     await (relationOwner
       ? withViteSourceOutputRelationOwner(relationOwner, runRuntime)

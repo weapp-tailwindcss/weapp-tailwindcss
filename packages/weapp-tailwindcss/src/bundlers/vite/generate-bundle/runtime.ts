@@ -2,7 +2,7 @@ import type { OutputAsset, OutputBundle } from 'rollup'
 /* eslint-disable style/max-statements-per-line */
 import type { BundleStateEntry } from '../bundle-state'
 import type { SourceCandidateCollector } from '../source-candidates'
-import type { GenerateBundleContext, GenerateBundleThis, PendingRememberedCssReplayUpdate } from './types'
+import type { GenerateBundleContext, GenerateBundleRoundServices, GenerateBundleThis, PendingRememberedCssReplayUpdate } from './types'
 import type { CreateJsHandlerOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
@@ -84,7 +84,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
   let currentSubpackageRoots: Set<string> | undefined
   const createInitialCssPipelineContext = (file: string) => { const resolvedConfig = context.getResolvedConfig(); const platform = context.opts.cssOptions?.platform ?? context.opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir); const currentGeneratorOptions = resolveContextGeneratorConfiguration(context.opts, { platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion }).options; return extendFrameworkCssContext(createFrameworkCssContext({ currentGeneratorBranch: currentGeneratorOptions.branch, currentGeneratorOptions, opts: context.opts, resolvedConfig, resolveStylePlatform: () => platform }), { file }) }
   const cssHandlerOptions = createCssHandlerOptionsCache({ getAppType: () => context.opts.appType, mainCssChunkMatcher: context.opts.mainCssChunkMatcher, getMajorVersion: () => context.runtimeState.tailwindRuntime.majorVersion, getOutputRoot: () => currentOutDir, getExtraOptions: file => ({ ...resolveViteCssHandlerExtraOptions(file), ...context.cssPipelineStrategy?.generation?.getCssHandlerExtraOptions?.(createInitialCssPipelineContext(file)) ?? {}, ...currentSubpackageRoots && isSubpackageOutputFile(file, currentSubpackageRoots) ? { isMainChunk: false } : {} }) })
-  return async function generateBundle(this: GenerateBundleThis, _opt: unknown, bundle: OutputBundle) {
+  return async function generateBundle(this: GenerateBundleThis, _opt: unknown, bundle: OutputBundle, services: GenerateBundleRoundServices) {
     if (context.shouldProcessBundle?.() === false) {
       await context.onSkipProcessBundle?.()
       return
@@ -369,7 +369,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           getLastCssResult,
           getOriginalCssLayerSource,
           getRememberedCssSources,
-          captureCssSource: context.captureCssSource,
+          captureCssSource: services.captureCssSource,
           getSfcSource,
           getSourceCandidateSources,
           getViteProcessedCssAssetResult,
@@ -471,7 +471,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     recordTimingDetail('entries.plan', entryPlanningStartedAt)
     const rememberedCssStartedAt = performance.now()
     if (processStyles && (shouldProcessTailwindGeneration || useIncrementalMode || isNativeAppStyleTarget)) {
-      await processRememberedCssReplay({ captureCssSource: context.captureCssSource, addWatchFile, activeViteCssCacheFiles, bundle, bundleFiles, cache, changedCssFiles: snapshot.changedByType.css, cssTaskFactories, cssPipelineContext, cssPipelineStrategy: context.cssPipelineStrategy, createScopedGeneratorRuntime, createScopedSourceCandidateGetter, createScopedSourceCandidateSourceGetter, debug, defaultStyleOutputExtension, emitOrReplayCssAsset, frameworkRootImportShellTargetByFile, generatorPlatform, generatorRuntime, getCssHandlerOptions, getCssUserHandlerOptions, getRememberedCssSignature, getRememberedCssSources, isNativeAppStyleTarget, isWebGeneratorTarget, lastCssRawSourceHashByFile, lastCssResultByFile, lastCssSourceHashByFile, markCssAssetProcessed, metrics, normalizeViteCssCacheKey, onUpdate, opts, pendingRememberedCssReplayUpdates, recordCssAssetResult, recordViteProcessedCssAssetResult, rootDir, runtimeSignature, runtimeState, setRememberedCssSignature, shouldInjectCssIntoMainFromOutput, shouldPreserveAppCssExtension, sourceRoot, styleHandler, timeTask, useIncrementalMode })
+      await processRememberedCssReplay({ captureCssSource: services.captureCssSource, addWatchFile, activeViteCssCacheFiles, bundle, bundleFiles, cache, changedCssFiles: snapshot.changedByType.css, cssTaskFactories, cssPipelineContext, cssPipelineStrategy: context.cssPipelineStrategy, createScopedGeneratorRuntime, createScopedSourceCandidateGetter, createScopedSourceCandidateSourceGetter, debug, defaultStyleOutputExtension, emitOrReplayCssAsset, frameworkRootImportShellTargetByFile, generatorPlatform, generatorRuntime, getCssHandlerOptions, getCssUserHandlerOptions, getRememberedCssSignature, getRememberedCssSources, isNativeAppStyleTarget, isWebGeneratorTarget, lastCssRawSourceHashByFile, lastCssResultByFile, lastCssSourceHashByFile, markCssAssetProcessed, metrics, normalizeViteCssCacheKey, onUpdate, opts, pendingRememberedCssReplayUpdates, recordCssAssetResult, recordViteProcessedCssAssetResult, rootDir, runtimeSignature, runtimeState, setRememberedCssSignature, shouldInjectCssIntoMainFromOutput, shouldPreserveAppCssExtension, sourceRoot, styleHandler, timeTask, useIncrementalMode })
     }
     recordTimingDetail('rememberedCss.plan', rememberedCssStartedAt)
     const prepareJsTransformRuntime = isWebGeneratorTarget && shouldTransformJsBundle
