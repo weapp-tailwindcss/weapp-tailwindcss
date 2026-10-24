@@ -14,6 +14,7 @@ import { defuOverrideArray } from '@/utils'
 import { toCustomAttributesEntities } from './custom-attributes'
 import { createHandlersFromContext } from './handlers'
 import { applyLoggerLevel } from './logger'
+import { getCompilerContextSourceOptions, registerCompilerContextSourceOptions } from './source-options'
 import { createTailwindcssRuntimeFromContext } from './tailwindcss'
 
 interface ClearTailwindcssRuntimeCacheOptions {
@@ -165,6 +166,7 @@ const originalCacheConfigurations = new WeakMap<object, UserDefinedOptions['cach
 
 /** 为一个编译实例创建独立的可变上下文；配置相同也不共享运行时。 */
 export function createCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
+  const sourceOptions = getCompilerContextSourceOptions(opts)
   const ctx = defuOverrideArray<InternalUserDefinedOptions, Partial<InternalUserDefinedOptions>[]>(
     opts as InternalUserDefinedOptions,
     getDefaultOptions() as InternalUserDefinedOptions,
@@ -239,6 +241,7 @@ export function createCompilerContext(opts?: UserDefinedOptions): InternalUserDe
     value: refreshTailwindcssRuntime,
     configurable: true,
   })
+  registerCompilerContextSourceOptions(ctx, sourceOptions)
   return ctx
 }
 

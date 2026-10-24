@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createCompilerWithLoaderTracking, createContext, createCompilerContextMock, getWebpackLoaderRuntime, isCssImportRewriteLoader, path, setupWebpackV5UnitTest, testState, WeappTailwindcss } from './webpack.v5.unit/shared'
+import { createCompilerContextMock, createCompilerWithLoaderTracking, createContext, getWebpackLoaderRuntime, isCssImportRewriteLoader, path, setupWebpackV5UnitTest, testState, WeappTailwindcss } from './webpack.v5.unit/shared'
 
 describe('Webpack 框架扩展隔离', () => {
   setupWebpackV5UnitTest()
@@ -47,7 +47,6 @@ describe('Webpack 框架扩展隔离', () => {
     }
   })
 
-
   it('同一插件配置重复 apply 为每个 compiler 创建独立 context', async () => {
     const first = createContext()
     const second = createContext()
@@ -82,17 +81,29 @@ describe('Webpack 框架扩展隔离', () => {
     await (b.compiler.hooks.watchClose.tap.mock.calls[0]![1] as () => Promise<void>)()
   })
 
-  it('同一内部 context 仅首次转移所有权，后续框架实例创建新 context', async () => {
+  it('外部内部 context 保持调用者所有权，每个框架实例创建新 context 并保留首次 handler 兼容', async () => {
     const { GenericWebpackPlugin } = await import('@/bundlers/webpack/frameworks/generic')
     const shared = createContext()
     const fresh = createContext()
-    createCompilerContextMock.mockReturnValue(fresh)
+    const next = createContext()
+    createCompilerContextMock.mockReturnValueOnce(fresh).mockReturnValueOnce(next)
     const first = new GenericWebpackPlugin(shared as any)
-    expect(first.options).toBe(shared)
-    expect(createCompilerContextMock).not.toHaveBeenCalled()
+    expect(first.options).toBe(fresh)
+    expect(first.options.styleHandler).toBe(shared.styleHandler)
+    expect(first.options.tailwindRuntime).not.toBe(shared.tailwindRuntime)
     const second = new GenericWebpackPlugin(shared as any)
-    expect(second.options).toBe(fresh)
-    expect(createCompilerContextMock).toHaveBeenCalledTimes(1)
+    expect(second.options).toBe(next)
+    expect(second.options.templateHandler).toBe(shared.templateHandler)
+    expect(createCompilerContextMock).toHaveBeenCalledTimes(2)
+    for (const [source] of createCompilerContextMock.mock.calls) {
+      expect(source).not.toHaveProperty('styleHandler')
+      expect(source).not.toHaveProperty('tailwindRuntime')
+    }
+    const compiler = createCompilerWithLoaderTracking()
+    first.apply(compiler.compiler as any)
+    await compiler.compiler.hooks.watchClose.tap.mock.calls[0]![1]()
+    expect(shared.styleHandler).not.toBe(first.options.styleHandler)
+    expect(shared.tailwindRuntime.getClassSetSync()).toEqual(new Set(['beta']))
   })
 
   it('关闭 CSS import 重写时不安装 MPX resolver 和预处理规则', async () => {

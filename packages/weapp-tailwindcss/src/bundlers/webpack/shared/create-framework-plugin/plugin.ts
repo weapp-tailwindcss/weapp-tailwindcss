@@ -7,12 +7,12 @@ import type { LoaderAnchorFinders } from '../loader-anchors'
 import type { WebpackStyleInjectorDelegateFactory } from '@/style-injector/types'
 import type { AppType, IBaseWebpackPlugin, InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
+import { materializeErrorStack } from '@/bundlers/shared/materialize-error-stack'
 import { createCompilationDependencyChanges, recordCompilationDependencyChanges } from '@/compiler'
 import { ensureCompilerOwnerActive, runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import { pluginName } from '@/constants'
-import { createCompilerContext } from '@/context'
 import { createBuiltinWebpackStyleInjectorPlugin } from '@/style-injector/webpack/runtime'
 import { createTailwindRuntimeReadyPromise, ensureRuntimeClassSet, refreshTailwindRuntimeState } from '@/tailwindcss/runtime'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
@@ -25,18 +25,10 @@ import { isWatchFileInRuntimeDependencies } from '../../BaseUnifiedPlugin/shared
 import { setupWebpackV5ProcessAssetsHook } from '../../BaseUnifiedPlugin/v5-assets'
 import { setupWebpackV5Loaders } from '../../BaseUnifiedPlugin/v5-loaders'
 import { collectConfiguredCssSourceFiles } from './configured-css-sources'
+import { createWebpackContext, releaseWebpackContext } from './context-ownership'
 import { createWebpackLoaderRuntimePreparation } from './runtime-preparation'
 import { createWebpackSessionLifecycle } from './session-lifecycle'
 import { debug, setupWebpackWatchOutputIgnore, shouldKeepPreviousWebpackCssSource, weappTailwindcssPackageDir } from './watch-output'
-
-const claimedCompilerContexts = new WeakSet<object>()
-
-function isInternalUserDefinedOptions(options: UserDefinedOptions | InternalUserDefinedOptions): options is InternalUserDefinedOptions {
-  return typeof (options as InternalUserDefinedOptions).onLoad === 'function'
-    && typeof (options as InternalUserDefinedOptions).mainCssChunkMatcher === 'function'
-    && typeof (options as InternalUserDefinedOptions).tailwindRuntime === 'object'
-    && typeof (options as InternalUserDefinedOptions).refreshTailwindcssRuntime === 'function'
-}
 
 /**
  * Webpack 各框架分支共享的核心实现。具体框架入口位于 frameworks/*，避免公共入口承载框架细节。
@@ -57,26 +49,23 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
   private frameworkBranch: WebpackFrameworkBranchContext
   private readonly sourceOptions: UserDefinedOptions
   private applied = false
+  private contextOwnership: ReturnType<typeof createWebpackContext>
 
   constructor(options: UserDefinedOptions | InternalUserDefinedOptions = {}, frameworkBranch: WebpackFrameworkBranchContext) {
-    this.sourceOptions = { ...options }
     this.frameworkBranch = frameworkBranch
     this.hasInitialTailwindCssRoots = hasConfiguredTailwindV4CssRoots(options)
-    this.options = isInternalUserDefinedOptions(options) && !claimedCompilerContexts.has(options)
-      ? options
-      : createCompilerContext({
-          ...options,
-          __internalDeferMissingCssEntriesWarning: true,
-        } as UserDefinedOptions & { __internalDeferMissingCssEntriesWarning: true })
-    claimedCompilerContexts.add(this.options)
+    this.contextOwnership = createWebpackContext(options)
+    this.sourceOptions = this.contextOwnership.sourceOptions
+    this.options = this.contextOwnership.context
     this.appType = this.options.appType
   }
 
   apply(compiler: Compiler) {
-    const opts = this.applied ? createCompilerContext(this.sourceOptions) : this.options
+    const owned = this.applied ? createWebpackContext(this.sourceOptions) : this.contextOwnership
+    const opts = owned.context
+    this.contextOwnership = owned
     this.applied = true
     this.options = opts
-    claimedCompilerContexts.add(opts)
     const appType = opts.appType
     this.appType = appType
     debug('apply webpack framework plugin framework=%s', this.frameworkBranch.frameworkName)
@@ -95,6 +84,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     const disabledOptions = resolvePluginDisabledState(disabled)
     const shouldRewriteCssImports = opts.rewriteCssImports === true
     if (disabledOptions.plugin) {
+      releaseWebpackContext(owned)
       return
     }
     const readyPromise = createTailwindRuntimeReadyPromise(initialTailwindRuntime)
@@ -106,7 +96,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     void runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'webpack', phase: 'hmr', revision: runtimeState.revision, operationId: `webpack-init-${Date.now()}`, evidence: ['compiler.apply'] })
 
     const cleanup: Array<() => void | Promise<void>> = []
-    const lifecycle = createWebpackSessionLifecycle(compiler, runtimeState, cleanup)
+    const lifecycle = createWebpackSessionLifecycle(compiler, runtimeState, cleanup, () => releaseWebpackContext(owned, runtimeState))
     void readyPromise.catch(() => lifecycle.close().catch(lifecycle.reportError))
     try {
       if (shouldRewriteCssImports) {
@@ -474,6 +464,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       createBuiltinWebpackStyleInjectorPlugin(styleInjector, this.frameworkBranch.styleInjectorDelegate)?.apply(compiler)
     }
     catch (error) {
+      materializeErrorStack(error)
       void lifecycle.close().catch(lifecycle.reportError)
       throw error
     }

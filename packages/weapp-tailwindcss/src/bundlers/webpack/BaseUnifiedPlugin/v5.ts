@@ -2,9 +2,11 @@
 import type { Compiler } from 'webpack'
 import type { AppType, IBaseWebpackPlugin, InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import { createCompilerContext } from '@/context'
+import { getCompilerContextSourceOptions } from '@/context/source-options'
 import { requireFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolveWebpackFrameworkProfile } from '../../framework-selector'
 import { createWebpackFrameworkPlugin } from '../frameworks'
+import { transferWebpackContext } from '../shared/create-framework-plugin/context-ownership'
 
 export { weappTailwindcssPackageDir } from '../shared/create-framework-plugin'
 
@@ -20,17 +22,17 @@ export class WeappTailwindcss implements IBaseWebpackPlugin {
   private applied = false
 
   constructor(options: UserDefinedOptions = {}) {
-    this.sourceOptions = { ...options }
-    this.options = createCompilerContext({
+    this.sourceOptions = getCompilerContextSourceOptions(options)
+    this.options = transferWebpackContext(createCompilerContext({
       ...options,
       __internalDeferMissingCssEntriesWarning: true,
-    } as UserDefinedOptions)
+    } as UserDefinedOptions), this.sourceOptions)
     this.appType = this.options.appType
   }
 
   apply(compiler: Compiler) {
     if (this.applied) {
-      this.options = createCompilerContext({ ...this.sourceOptions, __internalDeferMissingCssEntriesWarning: true } as UserDefinedOptions)
+      this.options = transferWebpackContext(createCompilerContext({ ...this.sourceOptions, __internalDeferMissingCssEntriesWarning: true } as UserDefinedOptions), this.sourceOptions)
       this.appType = this.options.appType
     }
     this.applied = true

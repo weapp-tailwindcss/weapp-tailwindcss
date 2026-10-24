@@ -19,7 +19,9 @@ describe('Webpack 编译会话关闭', () => {
     const released = vi.fn()
     const { runtime, lifecycle } = setup([released])
     let finish!: () => void
-    const task = runCompilerOwnerActivity(runtime, () => new Promise<void>(resolve => { finish = resolve }))
+    const task = runCompilerOwnerActivity(runtime, () => new Promise<void>((resolve) => {
+      finish = resolve
+    }))
     const first = lifecycle.close()
     expect(lifecycle.close()).toBe(first)
     await Promise.resolve()
@@ -34,7 +36,9 @@ describe('Webpack 编译会话关闭', () => {
 
   it('释放失败仍清理其他图关系并关闭核心', async () => {
     const released = vi.fn()
-    const { runtime, lifecycle } = setup([() => { throw new Error('extension') }, released])
+    const { runtime, lifecycle } = setup([() => {
+      throw new Error('extension')
+    }, released])
     const closed = lifecycle.close()
     await expect(closed).rejects.toThrow('释放失败')
     expect(released).toHaveBeenCalledTimes(1)
@@ -50,5 +54,26 @@ describe('Webpack 编译会话关闭', () => {
     expect(watchClose()).toBe(lifecycle.close())
     await shutdown()
     expect(released).toHaveBeenCalledTimes(1)
+  })
+
+  it('同时保留核心与上下文释放错误，清空清理回调后重复关闭不重跑', async () => {
+    const extensionFailure = new Error('extension failure')
+    const contextFailure = new Error('context failure')
+    const cleanups = [() => {
+      throw extensionFailure
+    }]
+    const { compiler, runtime } = setup([])
+    const releaseContext = vi.fn(() => {
+      throw contextFailure
+    })
+    const lifecycle = createWebpackSessionLifecycle(compiler, runtime, cleanups, releaseContext)
+    const closed = lifecycle.close()
+    const failure = await closed.catch(error => error as AggregateError)
+    expect(failure).toBeInstanceOf(AggregateError)
+    expect(failure.errors).toContain(contextFailure)
+    expect(failure.errors[0].errors[0].errors).toContain(extensionFailure)
+    expect(cleanups).toEqual([])
+    expect(releaseContext).toHaveBeenCalledTimes(1)
+    expect(lifecycle.close()).toBe(closed)
   })
 })
