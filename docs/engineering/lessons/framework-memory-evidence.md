@@ -7,6 +7,7 @@ regressions:
   - benchmark/version-compare/test/gc-diagnostics.test.mjs
   - benchmark/version-compare/test/gc-workload-isolation.test.mjs
   - benchmark/version-compare/test/allocation-controller.test.mjs
+  - benchmark/version-compare/test/allocation-mapping.test.mjs
   - benchmark/version-compare/test/allocation-evidence.test.mjs
   - benchmark/version-compare/test/allocation-instrumentation.test.mjs
   - benchmark/version-compare/test/allocation-sampling.test.mjs
@@ -48,6 +49,12 @@ verification:
     sha: d6a77403f88f037466d72bd8889e78d133fe02d2
     environment: macOS arm64，校验官方 SHA256 的 Node 22.23.3，提交前相同代码内容，CI=1
     command: pnpm exec node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1
+  - claim: d4ee 的正式 Uni 性能 job 在原门禁下通过，历史首败与诊断限制仍保留
+    kind: ci
+    status: passed
+    sha: d4ee686ad35f050ada02b643a3bfb5ab694d72ea
+    environment: Ubuntu，正式 Benchmark 工作流，原采样与预算
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40051887228/job/120746755655
 ---
 
 # 框架隔离后的内存证据与诊断边界
@@ -97,6 +104,16 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 新增诊断的首轮 watch fixture 暴露出夹具 owner 未保留 store：观测器只有 WeakRef，实际 GC 后如实报告空来源。夹具改为由持续编译的 owner 使用该 store，未将观测器改成强引用。固定 Node 22.23.3 的真实协议、双侧输入/分配 worker 和三轮 watch 回归随后 9 项通过；确定性 marker 修订后，完整 benchmark 回归最终为 18 文件 / 133 项通过，0 跳过。该测试执行于提交前相同代码内容之上，使用 `process.execPath` 启动实际 22.23.3 worker；输入模式确认 inspector 未加载，分配模式返回实际 profile，协议失败仍断开会话。
 
 修改文件 ESLint（显式关闭 `format/prettier`，不使用 Prettier）、`actionlint .github/workflows/benchmark.yml` 的实际工作流/schema/表达式检查及 `git diff --check` 均通过。独立旧基线的 `pnpm agents:check` 发现一处既有复盘链接目标缺失：`webpack-request-configuration.md` 已在集成树存在，但不在诊断分支；原失败保留。整合到 `774bb90f1` 后重新执行规则结构检查，69 份规则、390 份文档、1081 个命令条目、0 错误，diff 检查通过。新 Linux 输入/分配诊断尚未执行，不能用这些夹具测试代替真实分配归因或正式性能验收。
+
+### Linux 分配诊断首败与证据持久化
+
+[run `40050595063`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40050595063) 准确绑定 `f65b646f7c12ce497a9783ea46a275ee8812cd23`，两侧 worker 都为 Node 22.23.3。基线与当前版本均在第一次 build 的证据保存阶段报“栈映射模块数超过诊断上限”，没有进入 watch。两份 ZIP 的 SHA-256 与 GitHub digest 相符；旧协议先做映射再写 profile 和输入，因而这轮没有完整 profile 或候选快照。只能确认映射超限，不能还原第 129 个模块、证明第三方模块占比或实际候选等量，更不能据此定位产品内存回归。
+
+作者提交 `f7618c20ab7999815c99c3ee6c0cbea8f841dd30`、主树整合 `98b2f0c81` 收紧映射读取范围：准备副本内的仓库模块才读取源码及 source map，第三方依赖和副本外的帧保留完整原始位置并标明未映射。实际路径和符号链接再次校验，原 128 模块、32 MiB 限额不变，采样仍从 worker 启动开始。原始 profile 和输入先落盘，独立映射文件与原始 profile 双向绑定哈希；映射失败仍使诊断失败，保留已取得的首败材料。
+
+在实际 Node 22.23.3 上，allocation-mapping、allocation-evidence、allocation-controller、allocation-watch、allocation-sampling 五文件 / 37 项通过，0 跳过，严格 scoped ESLint 与 diff 检查通过。回归覆盖超过 128 个第三方帧时不读取第三方源码、仓库映射及原上限、跨平台路径、符号链接、映射失败后的原始材料保留和映射文件篡改失败。这些夹具证明工具边界；尚未有修订协议的真实 Linux 分配归因，原正式性能首败保持未解释。
+
+后续 `d4ee686ad35f050ada02b643a3bfb5ab694d72ea` 的正式 Uni job 在原门禁下通过。这是该提交的新结果，不能倒推旧提交失败的根因，也不能代替后续关闭与样式修订的性能验收；本轮未为取得成功而盲目重跑正式任务或放宽门限。
 
 ## 适用边界
 

@@ -359,6 +359,10 @@ Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f38
 
 `f65b646f7c12ce497a9783ea46a275ee8812cd23` 的 [Lynx Android API 30 模拟器 CI](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40050547259/job/120742151195) 已通过，验证 Temurin 17 修复后的实际原生链路；它不能替代后续提交的完整检查或实体设备证据。
 
+后续真实 delegate、Webpack context 与 Gulp Vinyl 管线的关闭所有权审查、修正及定向证据见[编译会话关闭后的真实所有权](framework-shutdown-ownership.md)。该记录区分主包内置代理与独立 injector 的公开生命周期，避免把 watcher 行为对照扩大为永久释放保证。
+
+`d4ee` 新 CI 的 uni-app-x CSS watch 首败、当前模块交付事实与合并资产所有权的区别，见[样式模块交付记录](framework-css-module-delivery.md)。原断言与压缩行为保留，两种拆分模式的连续生产构建已定向复验。
+
 ## 适用边界
 
 继续统一发布，包名、公开配置、导入路径和支持组合兼容。Rspack 复用 Webpack，Gulp 保留 native；目录隔离不增加支持组合。env 提供事实，engine 生成 Tailwind，postcss 转换 CSS，这些能力不复制到框架。只有独立依赖、维护负责人或发布周期出现实际需要时再考虑拆 npm 包。
