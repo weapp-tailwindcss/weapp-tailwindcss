@@ -19,6 +19,12 @@ regressions:
   - benchmark/version-compare/test/allocation-watch.test.mjs
   - benchmark/version-compare/test/taro-diagnostics.test.mjs
 verification:
+  - claim: Taro inputs-only 诊断完成且候选逐项一致，但运行时 CSS 来源哈希未对齐，不能解释正式 RSS 首败
+    kind: ci
+    status: passed
+    sha: 4801004a68644b7da5d10f5f452ee73f5deef067
+    environment: Ubuntu，8 个实际 Node 22.23.3 worker，两侧各 3 次冷构建和同 watcher 三轮修改回滚，仅输入诊断
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40063475127
   - claim: 同实例同源服务复用保持候选、产物、revision 与关闭隔离，真实 watch 保留候选替换及来源删除
     kind: integration
     status: passed
@@ -169,6 +175,37 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 在实际 Node 22.23.3 上，allocation-mapping、allocation-evidence、allocation-controller、allocation-watch、allocation-sampling 五文件 / 37 项通过，0 跳过，严格 scoped ESLint 与 diff 检查通过。回归覆盖超过 128 个第三方帧时不读取第三方源码、仓库映射及原上限、跨平台路径、符号链接、映射失败后的原始材料保留和映射文件篡改失败。这些夹具证明工具边界；尚未有修订协议的真实 Linux 分配归因，原正式性能首败保持未解释。
 
 后续 `d4ee686ad35f050ada02b643a3bfb5ab694d72ea` 的正式 Uni job 在原门禁下通过。这是该提交的新结果，不能倒推旧提交失败的根因，也不能代替后续关闭与样式修订的性能验收；本轮未为取得成功而盲目重跑正式任务或放宽门限。
+
+### Taro inputs-only 诊断的完整性与差异
+
+[run `40063475127`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40063475127) 使用准确当前 head `4801004a68644b7da5d10f5f452ee73f5deef067` 与基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417`。这是 `mode: inputs`、`budgetAcceptance: false` 的显式诊断，未包含后续实例内生成服务池，也没有 allocation profile。该 run 的成功只表示诊断过程完成；既有 profile 限额失败、正式 RSS 首败及整篇 `partial` 状态保持。
+
+解压工件包含八个实际 Node 22.23.3 worker：两侧各三次冷 build 和一个 watch。八份输入 `status.json` 都为 `complete: true`，没有 `recordingError`。逐份核对身份、真实 runner 入口、六个诊断模块以及 GC preload / path helper 的 SHA-256，记录文件数及累计字节数均与实际文件一致；插桩清单的两个原始源码哈希也与对应 Git 提交吻合。本次只核验解压目录的内部一致性，未取得 ZIP 与服务端 digest，不宣称已独立核验下载包摘要。GC NDJSON 最后一条记录仍为 `complete: false`，它与输入诊断完成状态不同，不能据输入完成宣称已记录进程终止后的全部 GC 事件。
+
+两侧各有十一份输入，共二十二份、十一组配对。冷构建各三份；watch 包含初次构建、三次修改和三次回滚的七份编译完成快照，以及一份关闭前的 stop 快照。watch 的 `compilationCount: 8` 包含 stop，不能读成八次编译或生成器调用。两侧阶段、实际候选数组、逐来源候选映射、store revision 均相同：
+
+| 观测内容 | 首次 / 回滚 | 修改时 |
+| --- | ---: | ---: |
+| store 合并候选 | 152 | 153 |
+| `sourceCandidates` | 382 | 383 |
+| `generatorRuntime` | 384 | 385 |
+| `runtime` | 105 | 105 |
+| `transformRuntime` | 108 | 108 |
+
+三次修改新增的候选分别只有 `twbenchdiagnosticround1`、`twbenchdiagnosticround2`、`twbenchdiagnosticround3`，回滚后消失；`runtime` 与 `transformRuntime` 的实际成员也保持不变。这不能替代生成后 CSS 对照。watch 的 store revision 两侧均为 `56 → 59 → 62 → 65 → 68 → 71 → 74`，stop 仍为 74。两侧控制器的十条初始源码、修改写入、回滚写入及回滚观测记录逐项 SHA-256 相同，所有带期望哈希的事件均命中；三轮使用同一确定性 marker 规则。两版本 demo Git tree 同为 `44ade97339597ecacd054ab59501ac39330a0c57`。
+
+然而每组都有六条来源 map 记录的哈希不同，涉及四个实际 CSS 来源；前两份同时出现在 `sourceById`，不是六个不同文件。其余来源 key 与哈希对齐。下表为 `cssSourceById` 中保存的运行时来源 UTF-8 字节数，不是生成后 CSS 产物大小：
+
+| CSS 来源（相对 demo） | 基线 | 当前 |
+| --- | ---: | ---: |
+| `src/app.css` | 2591 | 2594 |
+| `src/pages/issue-998/index.css` | 257 | 260 |
+| `src/sub-independent/pages/index.css` | 209 | 212 |
+| `src/sub-normal/pages/index.css` | 204 | 207 |
+
+例如 `app.css` 来源 SHA-256 为基线 `b12dcd28e814fc04d015b5d959c3fd69b4e3f527e2e1390f0291859261a7d367`、当前 `5cd586d38f030f302dd59ef63cfc234214ac120431a1888b541475a48997d938`。每份多三个字节与准备根目录 `current` 比 `base` 多三个字符一致，但工件只保存来源哈希和长度，没有来源全文，因此不能确认差异仅由绝对路径文字造成。静态 demo 和候选相同不足以证明运行时生成输入完全一致。
+
+此模式在 Vite 完成边界采集候选与来源快照，没有记录生成后的 `rawCss`、完整 CSS/JS 产物、逐生成请求的配置和调用次数、原生 runtime 创建数或分配路径，不能把快照数当作生成请求数，也不能声称 `rawCss` 已逐字节对照。`diagnostic-input-comparison.json` 的十一组均为 `sameActualCandidatesAndSourceHashes: false`，总判定 `canExplainFormalRegression: false` 与独立复核一致。本次补齐了实际候选及修改内容对照，仍未建立 Linux RSS 差额的因果证据；不以诊断绿灯替代正式预算、旧失败解释或完整设备验收。
 
 ## 适用边界
 
