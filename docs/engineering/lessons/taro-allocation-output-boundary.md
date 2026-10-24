@@ -6,7 +6,14 @@ regressions:
   - benchmark/version-compare/test/allocation-evidence.test.mjs
   - benchmark/version-compare/test/allocation-controller.test.mjs
   - benchmark/version-compare/test/allocation-mapping.test.mjs
+  - benchmark/version-compare/test/allocation-profile-codec.test.mjs
 verification:
+  - claim: 无损传输、有界读取、文件类型与回执拒绝路径及完整诊断工具域整合回归通过，不能替代真实 Taro 诊断
+    kind: unit
+    status: passed
+    sha: 9c268356ba54236c801534590aba34ee0704d174
+    environment: macOS arm64，实际 Node 22.23.3，CI=1，30 文件 227 项通过，零跳过
+    command: node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1 --no-file-parallelism
   - claim: c5ce4c1 的 Taro Vite 冷构建峰值内存超过原门禁，其他指标通过不能抵销该失败
     kind: ci
     status: failed
@@ -42,7 +49,7 @@ verification:
 
 原始 profile 未落盘，无法从残存工件恢复。重复的大 URL 是待检验的编码假设；依赖源码具有生成 `data:` URL 的路径，并不能证明这次实际使用了该路径。不得以此宣称 RSS 增量已经找到根因。
 
-修复方向是在原有限额内，使用版本化字典无损保存重复 URL，同时保存所有节点、采样、计数、字符串原文及未知字段；profile 和 frames 的消费者须先核验实际存储字节与哈希，再严格解码。编码后的单文件仍不得超过 `16 MiB`，同会话总输出仍不得超过 `64 MiB`，逻辑展开也必须有独立上限。超限或损坏必须明确失败，不能截断、增大采样间隔或改动正式预算来取得成功。
+修订实现在原有限额内，使用版本化字典无损保存重复 URL，同时保存所有节点、采样、计数、字符串原文及未知字段；profile 和 frames 的消费者先有界读取并核验实际存储字节与哈希，再严格解码。编码后的单文件仍不得超过 `16 MiB`，同会话总输出仍不得超过 `64 MiB`，逻辑展开另受 `64 MiB` 上限约束。错误附实际文件名、尺寸、写入量与节点、样本及 URL 统计。超限或损坏明确失败，不截断、增大采样间隔或改动正式预算。
 
 ## 验证
 
@@ -52,7 +59,9 @@ verification:
 
 冷构建采样在 Vite finalizer 完成处停止；永久关闭尾部与此后的 Taro 处理不在该 profile 范围内。操作日志存在采样后的释放事件，不等于已观察其分配或证明物理内存归还。修复输出协议时保留原采样停点，不静默改变阶段含义。
 
-无损编码回归、修订协议的新真实诊断、产品内存归因、当前 head 原门禁通过及本地完整设备验收仍需分别完成。现有单测或残存产物对照不能替代这些证据。
+同一完整 fixture 的直接旧写入超过 `16 MiB`，未产生半份文件或增加写入计数；字典写入低于该限额后，全部节点、样本、扩展字段及 URL 逐项还原。真实 inspector、连续 watch、Mpx worker、Taro 入口和既有诊断工具域在实际 Node 22.23.3 下三十文件 / 227 项通过，零跳过。十个修改脚本与测试的严格 ESLint、架构检查和规则检查通过；独立只读审查发现的类型串用与缺失 receipt 漏验路径均已补回归。
+
+修订协议的新真实诊断、产品内存归因、当前 head 原门禁通过及本地完整设备验收仍需分别完成。现有单测或残存产物对照不能替代这些证据。
 
 ## 适用边界
 
