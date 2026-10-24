@@ -2,13 +2,26 @@ import type { Buffer } from 'node:buffer'
 import type { Page } from 'playwright'
 import { runInNewContext } from 'node:vm'
 import { PNG } from 'pngjs'
-import { expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { waitForFrameProgress } from './tailwind-capabilities/browser/frames'
+import { historyAssertions } from './tailwind-capabilities/web-history/contract'
 import { historyIdentity, historyProbe } from './tailwind-capabilities/web-history/fixtures'
 import { captureHistory } from './tailwind-capabilities/web-history/observe'
 import { syntheticHistory } from './tailwind-capabilities/web-history/test-fixture'
 
-function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 'error' | 'navigation') {
+const clock = vi.hoisted(() => ({ now: 0 }))
+vi.mock('node:timers/promises', () => ({
+  setTimeout: async (delay: number) => {
+    clock.now += delay
+  },
+}))
+beforeEach(() => {
+  clock.now = 0
+  vi.spyOn(performance, 'now').mockImplementation(() => clock.now)
+})
+afterEach(() => vi.restoreAllMocks())
+
+function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 'error' | 'navigation', onCapture?: (attempt: number) => void) {
   const fixture = syntheticHistory()
   const state = fixture.raw.states[1]!
   fixture.raw.states = []
@@ -32,6 +45,7 @@ function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 
   const screenshots = new Map<string, Buffer>()
   const capture = vi.fn(async (token: string) => {
     calls++
+    onCapture?.(calls)
     if (mode === 'error') {
       throw new Error('original screenshot error')
     }
@@ -78,9 +92,34 @@ it.each(['never', 'reference-only'] as const)('%s不能凭节点、computed或�
   const f = observation(mode)
   await expect(f.run()).rejects.toThrow(/预算|达成/)
   const trace = f.fixture.raw.states[0]!.observation!
-  expect(trace.samples.length).toBeGreaterThan(1)
-  expect(trace.samples.at(-1)!.elapsedMs).toBeLessThanOrEqual(2_000)
-  expect(trace.elapsedMs).toBeGreaterThanOrEqual(2_000)
+  expect(trace.samples).toHaveLength(20)
+  expect(trace.samples.map(sample => sample.startedMs)).toEqual(Array.from({ length: 20 }, (_, i) => i * 100))
+  expect(trace.samples.at(-1)!.elapsedMs).toBe(1_900)
+  expect(trace.elapsedMs).toBe(2_000)
+  expect(f.capture).toHaveBeenCalledTimes(20)
+  expect(f.fixture.raw.lifecycle).not.toContain('visited:captured')
+})
+
+it('迟到的达成样本保留PNG和首败，但不能超过预算后通过', async () => {
+  const f = observation('delayed', (attempt) => {
+    if (attempt === 2) {
+      clock.now = 2_000.8575
+    }
+  })
+  await expect(f.run()).rejects.toThrow('超过 2000ms 总预算')
+  const state = f.fixture.raw.states[0]!
+  const trace = state.observation!
+  expect(trace.samples).toHaveLength(2)
+  expect(trace.samples.at(-1)).toMatchObject({ attempt: 2, startedMs: 100, elapsedMs: 2_000.8575, screenshot: `${historyProbe.id}-visited-observation-2.png` })
+  expect(trace.elapsedMs).toBe(2_000.8575)
+  expect(f.screenshots.has(state.screenshot)).toBe(true)
+  expect(f.fixture.raw.observationFailures).toEqual([expect.objectContaining({ attempt: 2, elapsedMs: 2_000.8575, screenshot: state.screenshot, error: 'Error: 历史 visited 绘制超过 2000ms 总预算' })])
+  expect(f.fixture.raw.lifecycle).not.toContain('visited:captured')
+  const { raw, cssHash, engine, runId } = f.fixture
+  const assertions = historyAssertions(raw, f.screenshots, cssHash, engine, runId)
+  expect(assertions.find(item => item.name === 'visited/probe/pixel/top/red')).toMatchObject({ actual: 18, expected: 18 })
+  expect(assertions.find(item => item.name === 'visited/observation/policy')).toMatchObject({ actual: false, expected: true })
+  expect(assertions.find(item => item.name === 'visited/observation/no-errors')).toMatchObject({ actual: false, expected: true })
 })
 
 it('未访问control被污染时立即保留失败，不等待后续样本覆盖', async () => {
