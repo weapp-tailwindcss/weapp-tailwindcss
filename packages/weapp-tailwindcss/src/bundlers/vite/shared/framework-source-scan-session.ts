@@ -215,7 +215,7 @@ export function createFrameworkSourceScanSession(options: FrameworkSourceScanSes
       return
     }
     const key = options.isWatchLikeBuild() ? preparationKey(nextScanSignature) : undefined
-    const prepared = key && options.sourceCandidateCollector.restoreScan
+    const prepared = key
       ? await readSourceCandidateScanPreparation(key, async () => (await Promise.all(roots.map(root => options.sourceCandidateCollector.resolveScanFiles({ ...root, outDir })))).flat())
       : undefined
     // await 交接后还可能先运行来源事件；恢复前同步核对本会话与共享准备结果的代次。

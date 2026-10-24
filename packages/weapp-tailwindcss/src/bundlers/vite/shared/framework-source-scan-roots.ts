@@ -2,7 +2,7 @@ import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import path from 'node:path'
 import { isTailwindV4CssEntry } from '@/tailwindcss/v4/css-entries'
 
-export function collectSourceScanRoots(root: string, entries: TailwindSourceEntry[] | undefined, explicit: boolean, options: { tailwindcssBasedir?: string, tailwindcss?: { v4?: { cssEntries?: unknown[] } } }) {
+export function collectSourceScanRoots(root: string, entries: TailwindSourceEntry[] | undefined, explicit: boolean, options: { tailwindcssBasedir?: string, tailwindcss?: { v4?: { cssEntries?: readonly string[] } } }) {
   if (entries?.length) {
     return [{ entries, explicit, root }]
   }
