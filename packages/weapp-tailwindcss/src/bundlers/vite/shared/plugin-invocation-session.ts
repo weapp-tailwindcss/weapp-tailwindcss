@@ -3,7 +3,16 @@ export function createPluginInvocationSession() {
   let phase: 'active' | 'closing' | 'closed' = 'active'
   const pending = new Set<Promise<unknown>>()
   let disposal: Promise<unknown> | undefined
+  let drained: Promise<void> | undefined
+  const drain = () => {
+    if (phase === 'active') {
+      phase = 'closing'
+    }
+    return drained ??= Promise.allSettled([...pending]).then(() => {})
+  }
   return {
+    drain,
+    isAccepting: () => phase === 'active',
     run(invoke: () => unknown) {
       if (phase !== 'active') {
         throw new Error('Vite 编译会话已关闭，不再接收钩子任务。')
@@ -19,8 +28,7 @@ export function createPluginInvocationSession() {
     },
     close(dispose: () => unknown) {
       if (!disposal) {
-        phase = 'closing'
-        disposal = Promise.allSettled([...pending]).then(dispose).finally(() => {
+        disposal = drain().then(dispose).finally(() => {
           phase = 'closed'
           pending.clear()
         })

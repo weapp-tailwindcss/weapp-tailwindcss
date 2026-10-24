@@ -21,7 +21,8 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
     return undefined
   }
   return plugins.map((plugin) => {
-    const wrapped: Plugin = { ...plugin }
+    // 插件由本轮工厂创建，包装钩子时保留清理桥与属性描述符。
+    const wrapped: Plugin = plugin
     if (plugin.watchChange) {
       const hook = plugin.watchChange
       const handler: Extract<Plugin['watchChange'], (...args: any[]) => any> = function (id, change) {

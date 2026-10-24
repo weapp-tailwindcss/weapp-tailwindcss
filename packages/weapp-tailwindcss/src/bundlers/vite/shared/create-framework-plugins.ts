@@ -67,8 +67,8 @@ export function createViteFrameworkPlugins(
     relationOwner.dispose()
     return undefined
   }
-  const wrappedPlugins = plugins.map((plugin: WeappTailwindcssVitePlugin) => ({
-    ...plugin,
+  // 本轮新建的插件保持身份，保留内部清理桥和非枚举的 api getter。
+  const wrappedPlugins = plugins.map((plugin: WeappTailwindcssVitePlugin) => Object.assign(plugin, {
     watchChange: wrapPluginHook(plugin['watchChange'], (id: string, change: { event?: string } | undefined) => {
       if (change?.event === 'delete') {
         relationOwner.removeSource(id)

@@ -32,10 +32,14 @@ export function createFrameworkRuntimeLifecycle(options: FrameworkRuntimeLifecyc
   return {
     name: 'weapp-tailwindcss:runtime-lifecycle',
     enforce: 'post',
-    buildEnd(error) {
-      if (error && !isPersistent()) {
-        return dispose()
-      }
+    buildEnd: {
+      order: 'post',
+      sequential: true,
+      handler(error) {
+        if (error && !isPersistent()) {
+          return dispose()
+        }
+      },
     },
     closeBundle: {
       order: 'post',

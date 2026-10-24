@@ -1,5 +1,9 @@
 import type { Plugin, ResolvedConfig } from 'vite'
+import type { VitePluginOwnership } from './plugin-cleanup-bridge'
+import { registerVitePluginCleanup } from './plugin-cleanup-bridge'
+import { settleVitePluginConstructionFailure } from './plugin-construction'
 import { createPluginInvocationSession } from './plugin-invocation-session'
+import { assertPluginShutdownOrder, createPluginShutdown, createPluginShutdownBarrier, isPermanentViteHook } from './plugin-shutdown'
 
 /** 只列出 Vite/Rollup 的钩子；插件数据字段不作为可执行钩子代理。 */
 export const vitePluginHookNames = [
@@ -122,15 +126,8 @@ interface PluginSlotState {
   config: ResolvedConfig
   bindings: Map<string, Plugin>
   invocation: ReturnType<typeof createPluginInvocationSession>
+  shutdown: ReturnType<typeof createPluginShutdown>
   initializationFailure?: Promise<never>
-}
-
-function failInitialization(state: PluginSlotState, coordinator: Plugin | undefined, context: unknown, error: unknown): Promise<never> {
-  const cleanup = handlerOf(coordinator?.closeWatcher)
-  return state.invocation.close(() => cleanup && Reflect.apply(cleanup, context, [])).then(
-    () => { throw error },
-    (cleanupError) => { throw new AggregateError([error, cleanupError], 'Vite 初始化与清理均失败。') },
-  )
 }
 
 /** 多个候选分支共享槽位时只合并兼容的钩子声明。 */
@@ -179,6 +176,8 @@ export function createDeferredVitePlugins(
   slots: readonly VitePluginSlot[],
   create: (config: ResolvedConfig, context: unknown) => readonly Plugin[],
 ): Plugin[] {
+  assertPluginShutdownOrder(slots)
+  let ownership: VitePluginOwnership = slots.some(slot => slot.ownsSession) ? 'owner' : 'standalone'
   const states = new WeakMap<ResolvedConfig, PluginSlotState>()
   const contexts = new WeakMap<object, PluginSlotState>()
   let active: PluginSlotState | undefined
@@ -188,15 +187,21 @@ export function createDeferredVitePlugins(
     if (selectedConfig) {
       let state = states.get(selectedConfig)
       if (!state && config) {
-        const delegates = create(config, context)
-        state = { config, bindings: new Map(), invocation: createPluginInvocationSession() }
+        const invocation = createPluginInvocationSession()
+        state = { config, bindings: new Map(), invocation, shutdown: createPluginShutdown(slots, [], invocation, config, ownership) }
         states.set(config, state)
         try {
+          const delegates = create(config, context)
+          state.shutdown = createPluginShutdown(slots, delegates, invocation, config, ownership)
           state.bindings = bindVitePluginSlots(slots, delegates)
         }
         catch (error) {
-          const coordinator = slots.find(candidate => candidate.ownsSession)
-          state.initializationFailure = failInitialization(state, delegates.find(plugin => plugin.name === (coordinator?.pluginName ?? coordinator?.name)), context, error)
+          const failedState = state
+          const fail = (failure: unknown): Promise<never> => (failedState.shutdown.coordinated ? failedState.shutdown.fail(failure) : Promise.reject(failure)).then(() => {
+            throw failure
+          })
+          // 同步工厂失败也占据本配置的终态；唯一入口等待回滚完成后报告错误。
+          state.initializationFailure = settleVitePluginConstructionFailure(error)?.catch(fail) ?? fail(error)
         }
       }
       if (state) {
@@ -209,7 +214,7 @@ export function createDeferredVitePlugins(
     }
     return context && typeof context === 'object' ? contexts.get(context) ?? active : active
   }
-  return slots.map((slot) => {
+  const plugins = slots.map((slot) => {
     const plugin: Plugin = {
       name: slot.name,
       ...(slot.enforce === undefined ? {} : { enforce: slot.enforce }),
@@ -228,45 +233,50 @@ export function createDeferredVitePlugins(
         if (!delegate || !state) {
           return
         }
-        if (slot.runtimeApply && delegate.apply) {
-          const enabled = typeof delegate.apply === 'function'
-            ? Reflect.apply(delegate.apply, delegate, [state.config, { command: state.config.command, mode: state.config.mode }])
-            : delegate.apply === state.config.command
-          if (!enabled) {
-            return
-          }
-        }
-        const run = handlerOf(delegate[hookName])
-        if (!run) {
-          return
-        }
-        const invoke = () => Reflect.apply(run, this, args)
-        const watchBuild = state.config.command === 'build' && state.config.build?.watch != null
-        const closesSession = slot.ownsSession && (hookName === 'closeWatcher'
-          || (hookName === 'closeBundle' && !watchBuild)
-          || (hookName === 'buildEnd' && args[0] && state.config.command === 'build' && !watchBuild))
-        if (closesSession) {
-          return state.invocation.close(invoke)
-        }
-        // 结束钩子允许重复调用，由唯一关闭协调者保证幂等。
-        if (hookName === 'closeBundle' || hookName === 'closeWatcher' || hookName === 'buildEnd') {
-          return invoke()
+        if (state.shutdown.coordinated) {
+          state.shutdown.capture(delegate, this)
         }
         let result: unknown
         try {
+          if (slot.runtimeApply && delegate.apply) {
+            const enabled = typeof delegate.apply === 'function'
+              ? Reflect.apply(delegate.apply, delegate, [state.config, { command: state.config.command, mode: state.config.mode }])
+              : delegate.apply === state.config.command
+            state.shutdown.setEnabled(delegate, Boolean(enabled))
+            if (!enabled) {
+              return
+            }
+          }
+          const run = handlerOf(delegate[hookName])
+          if (!run) {
+            return
+          }
+          const invoke = () => Reflect.apply(run, this, args)
+          const closesSession = state.shutdown.coordinated && isPermanentViteHook(state.config, hookName, args[0])
+          if (closesSession) {
+            if (slot.ownsSession) {
+              return state.shutdown.finish(invoke, hookName === 'closeWatcher' ? 'closeWatcher' : 'closeBundle')
+            }
+            return hookName === 'buildEnd' ? state.shutdown.finalBuildEnd(invoke) : state.shutdown.cleanup(delegate, invoke)
+          }
+          // 结束钩子允许重复调用，由唯一关闭协调者保证幂等。
+          if (hookName === 'closeBundle' || hookName === 'closeWatcher' || hookName === 'buildEnd') {
+            return invoke()
+          }
           result = state.invocation.run(invoke)
         }
         catch (error) {
-          if (hookName !== 'configResolved') {
+          if (hookName !== 'configResolved' || !state.shutdown.coordinated) {
             throw error
           }
-          const coordinator = slots.find(candidate => candidate.ownsSession)
-          return failInitialization(state, coordinator && state.bindings.get(coordinator.name), this, error)
+          if (!state.invocation.isAccepting()) {
+            return Promise.reject(error)
+          }
+          return state.shutdown.fail(error)
         }
-        if (hookName === 'configResolved' && result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
+        if (state.shutdown.coordinated && hookName === 'configResolved' && result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
           return Promise.resolve(result).catch((error) => {
-            const coordinator = slots.find(candidate => candidate.ownsSession)
-            return failInitialization(state, coordinator && state.bindings.get(coordinator.name), this, error)
+            return state.shutdown.fail(error)
           })
         }
         return result
@@ -275,4 +285,17 @@ export function createDeferredVitePlugins(
     }
     return plugin
   })
+  const owner = slots.find(slot => slot.ownsSession)
+  if (owner) {
+    plugins.push(createPluginShutdownBarrier(owner.name, (context, hook, error) => {
+      const state = resolveState(context)
+      if (state && isPermanentViteHook(state.config, hook, error)) {
+        return state.invocation.drain()
+      }
+    }))
+  }
+  registerVitePluginCleanup(plugins, (config, hook) => states.get(config)?.shutdown.close(hook), () => {
+    ownership = 'child'
+  })
+  return plugins
 }
