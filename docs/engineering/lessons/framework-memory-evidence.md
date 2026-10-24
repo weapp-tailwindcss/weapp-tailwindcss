@@ -213,6 +213,8 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 
 该轮同时包含耗时与 RSS 违规；既有 `requiresHmrMemoryConfirmation` 只对全部违规均为 RSS 的情形进行反向顺序确认，所以本轮没有 `memory-confirmation-*` 工件，也没有等待后续 job 自动确认。不能将三项失败写成“待反序后通过”，更不能把测试断言修正或另一提交的自然绿灯认定为性能根因修复。自然 GC 工件仅用于后续定位；实例内服务复用的创建次数与确定性产物证据仍不足以解释此 Linux RSS 差额。原预算和首败保留，未为此触发正式 benchmark 重跑。
 
+这里的提交身份区分 PR head 与实际测试源码：工件的 `sourceCommit` 为 GitHub 测试合并提交 `0bdf6b5c2efc1361dd69553df0193bd3ecbba973`，父提交依次为上述基线和 PR head。GitHub API 与本地 Git 分别核验两者源码树均为 `801e64fe985e77beba7846f0c43e2ff8ed3e3952`，因此该轮源码与 PR head 一致，不能把合并提交的 SHA 差异认作性能输入差异。
+
 ## 适用边界
 
 本记录仅约束上述未解决的性能失败。配置版本与 CSS 来源并发问题已有独立[修复与回归](webpack-request-configuration.md)，没有证据证明该修复解释 RSS 增幅。完整验收、环境中断和其他框架证据见[框架隔离记录](framework-isolation.md)。
