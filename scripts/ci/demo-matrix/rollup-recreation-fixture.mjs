@@ -60,16 +60,18 @@ export async function recoveryFixture(format, context, run, watchOptions = {}) {
     watch: { chokidar: { atomic: false, useFsEvents: false, usePolling: false, ...watchOptions } },
   })
   const watcher = task.fileWatcher.watcher
+  const watchers = new Set([watcher])
+  const watcherFor = file => task.fileWatcher.fileGroups.get(path.resolve(file))?.watcher ?? watcher
   const listeners = new Map()
   const bindings = new Set()
   const trace = []
   const record = (operation, detail) => {
-    trace.push({ operation, detail, at: performance.now(), tracked: watcher._watched.get(dataDir)?.has(path.basename(data)), addThrottle: watcher._throttled.get('add')?.get(data)?.count, pending: typeof watcher._pendingRecreations.get(data)?.closer, closers: [...watcher._closers.keys()] })
+    const owner = watcherFor(data)
+    trace.push({ operation, detail, at: performance.now(), tracked: owner._watched.get(dataDir)?.has(path.basename(data)), addThrottle: owner._throttled.get('add')?.get(data)?.count, pending: typeof owner._pendingRecreations.get(data)?.closer, closers: [...owner._closers.keys()] })
     if (trace.length > 100) {
       trace.shift()
     }
   }
-  watcher.on('all', (event, file) => record('event', { event, file }))
   const restores = []
   const releases = []
   let beforeNativeWatch
@@ -86,7 +88,7 @@ export async function recoveryFixture(format, context, run, watchOptions = {}) {
     }
     stopped = true
     // close 同步使 watcher 失效；先恢复拦截并释放屏障，再等待异步收尾。
-    closing = watcher.close()
+    closing = task.close()
     for (const restore of restores.reverse()) {
       restore()
     }
@@ -99,36 +101,53 @@ export async function recoveryFixture(format, context, run, watchOptions = {}) {
     try {
       await closing
       await waitFor(() => bindings.size === 0, 'native handles closed')
-      expect(watcher._pendingRecreations.size).toBe(0)
-      expect(watcher._closers.size).toBe(0)
+      for (const owner of watchers) {
+        expect(owner._pendingRecreations.size).toBe(0)
+        expect(owner._closers.size).toBe(0)
+      }
+      expect(task.fileWatcher.watcherGroups.size).toBe(0)
     }
     finally {
       signal.removeEventListener('abort', stop)
       await rm(dir, { recursive: true, force: true })
     }
   })()
-  const bind = watcher._nodeFsHandler._watchWithNodeFs
-  trackSpy(vi.spyOn(watcher._nodeFsHandler, '_watchWithNodeFs')).mockImplementation(function (file, listener, ...args) {
-    listeners.set(path.resolve(file), listener)
-    return bind.call(this, file, listener, ...args)
-  })
-  const handler = watcher._nodeFsHandler
-  const add = handler._addToNodeFs
-  // 用普通包装器保留原函数；用例再 spyOn 同一方法时不能重新指向自己。
-  handler._addToNodeFs = async function (file, ...args) {
-    record('subscription-start', { file, initial: args[0], target: args[3] })
-    try {
-      const result = await add.call(this, file, ...args)
-      record('subscription-end', { file, result })
-      return result
+  const instrumentWatcher = (owner) => {
+    watchers.add(owner)
+    owner.on('all', (event, file) => record('event', { event, file }))
+    const handler = owner._nodeFsHandler
+    const bind = handler._watchWithNodeFs
+    trackSpy(vi.spyOn(handler, '_watchWithNodeFs')).mockImplementation(function (file, listener, ...args) {
+      listeners.set(path.resolve(file), listener)
+      return bind.call(this, file, listener, ...args)
+    })
+    const add = handler._addToNodeFs
+    // 用普通包装器保留原函数；用例再 spyOn 同一方法时不能重新指向自己。
+    handler._addToNodeFs = async function (file, ...args) {
+      record('subscription-start', { file, initial: args[0], target: args[3] })
+      try {
+        const result = await add.call(this, file, ...args)
+        record('subscription-end', { file, result })
+        return result
+      }
+      catch (error) {
+        record('subscription-error', { file, code: error.code, message: error.message })
+        throw error
+      }
     }
-    catch (error) {
-      record('subscription-error', { file, code: error.code, message: error.message })
-      throw error
-    }
+    restores.push(() => {
+      handler._addToNodeFs = add
+    })
+  }
+  instrumentWatcher(watcher)
+  const createGroup = task.fileWatcher.createWatcherGroup.bind(task.fileWatcher)
+  task.fileWatcher.createWatcherGroup = () => {
+    const group = createGroup()
+    instrumentWatcher(group.watcher)
+    return group
   }
   restores.push(() => {
-    handler._addToNodeFs = add
+    task.fileWatcher.createWatcherGroup = createGroup
   })
   trackSpy(vi.spyOn(fs, 'watch')).mockImplementation((file, ...args) => {
     const relative = path.relative(dir, path.resolve(String(file)))
@@ -172,6 +191,7 @@ export async function recoveryFixture(format, context, run, watchOptions = {}) {
     await run({
       task,
       watcher,
+      watcherFor,
       data,
       dataDir,
       events,
