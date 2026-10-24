@@ -96,6 +96,14 @@ pnpm --config.verifyDepsBeforeRun=false exec vitest run -c scripts/ci/demo-matri
 
 本地选择 Windows 分支不等于 Windows 原生文件系统验收。仍需在整合后准确 head 上验证 Windows CI；未通过重跑旧 CI、增加超时、跳过组合或放宽产物断言取绿。
 
+### Windows 跨盘测试夹具首败
+
+后续 `189c9e385afbfaf0744e76bbbc96c4430879e2f3` 的 [run 40073856672](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40073856672) 有八个 Windows job 首败，Node 22/24 均涉及。每个 job 都是 `rollup-watch-groups.test.mjs` 的四版本双格式共八项失败，其余 971 项通过、3 项跳过；失败仍在 demo 启动前。该首败是分组事件期望三条、实际两条，不能与此前 value 4 的重建失败合并描述。
+
+夹具从 C 盘临时目录构造绝对 ID，再从 D 盘 checkout 取相对路径；Windows 的跨盘 `path.relative()` 返回绝对路径，两个本应不同的 ID 实际相同，后一次登记覆盖同一逻辑 ID 的角色。实现按身份去重正确，错误在测试前提。虚拟模块 ID 无须真实临时文件，现改为从 cwd 所在卷构造同一文件的绝对和相对别名；两处需要不同别名的用例共用同一构造入口，原三条事件及其余断言保留。
+
+新增夹具契约覆盖 POSIX、根目录、Windows 同盘/跨盘/盘符根及 UNC 的文件和目录别名。旧构造得到 6 项失败、54 项通过；修订在作者树和主树 `6b7645c89` 均为 60 项通过、零跳过。主树报告为 `.tmp/framework-isolation/reports/rollup-alias-integrated.json`。这次只改测试，不修改产品补丁；Windows 原生 CI 仍需在后续准确 head 上通过。
+
 原始日志和红绿 JSON 作为当前任务的本地证据保留：`rollup-multiple-directory-red.json` 为 6 红 / 2 绿，`rollup-multiple-directory-green.json` 为新增与原端到端 watcher 共 20 项通过，`rollup-all-node24.json` 为全部 565 项通过。
 
 ## 适用边界
