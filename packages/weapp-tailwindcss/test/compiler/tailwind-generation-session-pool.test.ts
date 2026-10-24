@@ -52,7 +52,7 @@ describe('tailwind generation session pool', () => {
     const { TailwindGenerationSessionPool } = await import('@/compiler/tailwind-generation-session-pool')
     const pool = new TailwindGenerationSessionPool()
     await pool.generate(source as any)
-    pool.dispose()
+    await pool.dispose()
 
     expect(dispose).toHaveBeenCalledTimes(1)
     await expect(pool.generate(source as any)).rejects.toThrow('已释放')

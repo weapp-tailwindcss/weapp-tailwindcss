@@ -29,7 +29,7 @@ export interface CompilerRootSession {
 }
 
 function disposeGenerator(generator: WeappTailwindcssGenerator | undefined) {
-  generator?.dispose?.()
+  return generator?.dispose?.()
 }
 
 export class CompilerRootStore {
@@ -37,6 +37,7 @@ export class CompilerRootStore {
   private readonly dependencyRoots = new Map<string, Set<string>>()
   private readonly releasing = new Map<string, Promise<void>>()
   private readonly roots = new Map<string, CompilerRootSession>()
+  private disposal: Promise<void> | undefined
 
   constructor(
     private readonly maxRoots: number,
@@ -44,6 +45,9 @@ export class CompilerRootStore {
   ) {}
 
   get(id: string) {
+    if (this.disposal) {
+      throw new Error('Compiler root store 已释放。')
+    }
     if (!id) {
       throw new Error('Compiler root id 不能为空。')
     }
@@ -159,12 +163,12 @@ export class CompilerRootStore {
     entry.accepting = false
     this.roots.delete(id)
     this.detachDependencies(entry)
-    const release = entry.pending.then(() => {
+    const release = entry.pending.then(async () => {
       entry.active = false
       entry.compilation.dispose()
       entry.compilationCache = undefined
       try {
-        disposeGenerator(entry.generator)
+        await disposeGenerator(entry.generator)
       }
       finally {
         entry.generator = undefined
@@ -185,7 +189,18 @@ export class CompilerRootStore {
     return release
   }
 
-  async dispose() {
+  retireGenerator(generator: WeappTailwindcssGenerator | undefined) {
+    if (!generator) {
+      return
+    }
+    this.trackBackgroundRelease(Promise.resolve().then(() => disposeGenerator(generator)))
+  }
+
+  dispose() {
+    return this.disposal ??= this.close()
+  }
+
+  private async close() {
     const tasks = new Set([
       ...[...this.roots.keys()].map(id => this.remove(id)),
       ...this.releasing.values(),
@@ -201,7 +216,10 @@ export class CompilerRootStore {
   }
 
   private evict(id: string) {
-    const release = this.remove(id, true)
+    this.trackBackgroundRelease(this.remove(id, true))
+  }
+
+  private trackBackgroundRelease(release: Promise<void>) {
     this.backgroundReleases.add(release)
     void release.then(
       () => this.backgroundReleases.delete(release),

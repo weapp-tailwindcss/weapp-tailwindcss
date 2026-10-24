@@ -18,7 +18,9 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
   const generationSessions = new TailwindV4NativeSessionPool()
   const incrementalCacheKeys = new Set<string>()
   const validationEngine = createEngineTailwindV4Engine(source)
+  const activeTasks = new Set<Promise<unknown>>()
   let disposed = false
+  let disposal: Promise<void> | undefined
 
   function ensureActive() {
     if (disposed) {
@@ -27,6 +29,19 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
   }
 
   const seedCache: typeof seedIncrementalGenerateCache = options => !disposed && seedIncrementalGenerateCache(options)
+
+  function track<T>(task: Promise<T>) {
+    activeTasks.add(task)
+    void task.then(() => activeTasks.delete(task), () => activeTasks.delete(task))
+    return task
+  }
+
+  function clearCache() {
+    for (const cacheKey of incrementalCacheKeys) {
+      incrementalGenerateCache.delete(cacheKey)
+    }
+    incrementalCacheKeys.clear()
+  }
 
   async function generateOnce(generateSource: TailwindV4ResolvedSource, options: TailwindV4GenerateOptions = {}, preparedSource?: PreparedTailwindV4Source) {
     return transformGeneratedArtifact(await generateRawArtifact(generationSessions, generateSource, options, preparedSource))
@@ -177,43 +192,46 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
   async function generate(options: TailwindV4GenerateOptions = {}) {
     ensureActive()
-    return options.incrementalCache && options.scanMode !== 'compiled'
+    return track(options.incrementalCache && options.scanMode !== 'compiled'
       ? generateWithIncrementalCache(options)
-      : generateOnce(source, options)
+      : generateOnce(source, options))
   }
 
   const engine = {
     source,
     async loadDesignSystem() {
       ensureActive()
-      return validationEngine.loadDesignSystem()
+      return track(validationEngine.loadDesignSystem())
     },
     async validateCandidates(candidates: Iterable<string>) {
       ensureActive()
-      return validationEngine.validateCandidates(candidates)
+      return track(validationEngine.validateCandidates(candidates))
     },
     generate,
     dispose() {
-      if (disposed) {
-        return
+      if (disposal) {
+        return disposal
       }
       disposed = true
-      const failures: unknown[] = []
-      for (const release of [() => validationEngine.dispose?.(), () => generationSessions.dispose()]) {
-        try {
-          release()
+      clearCache()
+      disposal = (async () => {
+        await Promise.allSettled([...activeTasks])
+        const failures: unknown[] = []
+        for (const release of [() => generationSessions.dispose(), () => validationEngine.dispose?.()]) {
+          try {
+            await release()
+          }
+          catch (error) {
+            failures.push(error)
+          }
         }
-        catch (error) {
-          failures.push(error)
+        activeTasks.clear()
+        clearCache()
+        if (failures.length) {
+          throw new AggregateError(failures, '生成器释放失败，已继续释放其余资源。')
         }
-      }
-      for (const cacheKey of incrementalCacheKeys) {
-        incrementalGenerateCache.delete(cacheKey)
-      }
-      incrementalCacheKeys.clear()
-      if (failures.length) {
-        throw new AggregateError(failures, '生成器释放失败，已继续释放其余资源。')
-      }
+      })()
+      return disposal
     },
   }
   return engine

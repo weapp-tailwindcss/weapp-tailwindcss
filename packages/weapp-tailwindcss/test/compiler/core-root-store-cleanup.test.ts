@@ -3,14 +3,45 @@ import { setImmediate } from 'node:timers/promises'
 import { describe, expect, it, vi } from 'vitest'
 import { CompilerRootStore } from '@/core/compiler/root-store'
 
-function attachGenerator(entry: CompilerRootSession, dispose: () => void) {
+function attachGenerator(entry: CompilerRootSession, dispose: () => void | Promise<void>) {
   entry.generator = { dispose } as NonNullable<CompilerRootSession['generator']>
 }
 
 describe('compiler root eviction cleanup', () => {
+  it('移除和最终关闭等待同一生成器的异步释放', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const dispose = vi.fn(() => gate)
+    const store = new CompilerRootStore(1)
+    attachGenerator(store.get('root'), dispose)
+    const removed = store.remove('root')
+    const closing = store.dispose()
+    let closed = false
+    const result = closing.then(() => {
+      closed = true
+    })
+    try {
+      await setImmediate()
+      expect(dispose).toHaveBeenCalledTimes(1)
+      expect(closed).toBe(false)
+      expect(store.remove('root')).toBe(removed)
+      release()
+      await Promise.all([removed, result])
+      expect(closed).toBe(true)
+    }
+    finally {
+      release()
+      await Promise.allSettled([removed, result])
+    }
+  })
+
   it.each(['get', 'trim'] as const)('reports a settled %s eviction failure when closing and releases remaining roots', async (trigger) => {
     const failure = new Error('evicted generator cleanup failed')
-    const failedRelease = vi.fn(() => { throw failure })
+    const failedRelease = vi.fn(() => {
+      throw failure
+    })
     const remainingRelease = vi.fn()
     const store = new CompilerRootStore(1)
     const first = store.get('first')
@@ -34,7 +65,9 @@ describe('compiler root eviction cleanup', () => {
 
   it('retains eviction callback failures after the generator has been released', async () => {
     const failure = new Error('eviction callback failed')
-    const onRootEvicted = vi.fn(() => { throw failure })
+    const onRootEvicted = vi.fn(() => {
+      throw failure
+    })
     const released = vi.fn()
     const remainingRelease = vi.fn()
     const store = new CompilerRootStore(1, onRootEvicted)
@@ -51,12 +84,18 @@ describe('compiler root eviction cleanup', () => {
   it('waits for a pending eviction and reports its failure once alongside remaining cleanup failures', async () => {
     const evictionFailure = new Error('evicted generator cleanup failed')
     const closingFailure = new Error('remaining generator cleanup failed')
-    const failedRelease = vi.fn(() => { throw evictionFailure })
-    const remainingRelease = vi.fn(() => { throw closingFailure })
+    const failedRelease = vi.fn(() => {
+      throw evictionFailure
+    })
+    const remainingRelease = vi.fn(() => {
+      throw closingFailure
+    })
     let release!: () => void
     const store = new CompilerRootStore(1)
     const first = store.get('first')
-    first.pending = new Promise<void>((resolve) => { release = resolve })
+    first.pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
     attachGenerator(first, failedRelease)
     attachGenerator(store.get('second'), remainingRelease)
 

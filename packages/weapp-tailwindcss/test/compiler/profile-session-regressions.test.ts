@@ -1,9 +1,10 @@
+import { setImmediate } from 'node:timers/promises'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { getCompilerContext } from '@/context'
+import { resolveCompilationProfile, resolveContextStylePlatform } from '@/context/compilation-profile'
 import { createCompiler } from '@/core/compiler'
 import { createTailwindV4Engine, resolveTailwindV4Source } from '@/tailwindcss/v4-engine'
 import { clearTailwindV4IncrementalGenerateCacheForTest, getTailwindV4IncrementalGenerateCacheStatsForTest } from '@/tailwindcss/v4-engine/generator/cache-stats'
-import { getCompilerContext } from '@/context'
-import { resolveCompilationProfile, resolveContextStylePlatform } from '@/context/compilation-profile'
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -47,7 +48,9 @@ describe('public generation configuration and session isolation', () => {
 
   it('keeps a disposed engine cache empty after an accepted generation finishes', async () => {
     let release!: () => void
-    const gate = new Promise<void>(resolve => { release = resolve })
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
     let entered = false
     const source = await resolveTailwindV4Source({ css: '@tailwind utilities;', base: process.cwd() })
     const engine = createTailwindV4Engine(source)
@@ -55,22 +58,33 @@ describe('public generation configuration and session isolation', () => {
       scanSources: false,
       candidates: ['w-[10px]'],
       incrementalCache: true,
-      styleOptions: { postcssOptions: { plugins: [{ postcssPlugin: 'wait', async Once() { entered = true; await gate } }] } },
+      styleOptions: { postcssOptions: { plugins: [{ postcssPlugin: 'wait', async Once() {
+        entered = true
+        await gate
+      } }] } },
     })
     try {
       await vi.waitFor(() => expect(entered).toBe(true))
-      engine.dispose?.()
+      const closing = engine.dispose?.()
+      let closed = false
+      const finished = Promise.resolve(closing).then(() => {
+        closed = true
+      })
       await expect(engine.generate({ candidates: ['w-[10px]'], incrementalCache: true })).rejects.toThrow('已释放')
       await expect(engine.validateCandidates(['w-[10px]'])).rejects.toThrow('已释放')
       await expect(engine.loadDesignSystem()).rejects.toThrow('已释放')
+      await setImmediate()
+      expect(closed).toBe(false)
       release()
       await pending
+      await finished
+      expect(engine.dispose?.()).toBe(closing)
       expect(getTailwindV4IncrementalGenerateCacheStatsForTest().size).toBe(0)
     }
     finally {
       release()
       await pending
-      engine.dispose?.()
+      await engine.dispose?.()
     }
   })
 

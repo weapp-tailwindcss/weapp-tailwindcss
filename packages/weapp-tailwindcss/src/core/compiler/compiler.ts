@@ -167,7 +167,7 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
       rootStore.attachDependencies(entry, dependencies)
       rootStore.attachSources(entry, snapshot.sources)
       if (!engineReused && previousGenerator !== generator) {
-        previousGenerator?.dispose?.()
+        rootStore.retireGenerator(previousGenerator)
       }
       const css = target === 'tailwind' ? generated.rawCss : generated.css
       const incrementalCss = target === 'tailwind' ? generated.incrementalRawCss : generated.incrementalCss
@@ -190,8 +190,13 @@ export function createResolvedCompiler(options: ResolvedCompilerOptions): Compil
       }
     }
     catch (error) {
-      if (!engineReused) {
-        generator.dispose?.()
+      if (!engineReused && entry.generator !== generator) {
+        try {
+          await generator.dispose?.()
+        }
+        catch (cleanupError) {
+          throw new AggregateError([error, cleanupError], '生成失败且生成器释放失败。')
+        }
       }
       throw error
     }

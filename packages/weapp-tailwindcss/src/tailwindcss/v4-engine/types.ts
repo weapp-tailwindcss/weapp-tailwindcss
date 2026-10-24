@@ -127,9 +127,9 @@ export interface TailwindV4Engine extends Omit<EngineTailwindV4Engine, 'generate
    */
   generate: (options?: TailwindV4GenerateOptions) => Promise<TailwindV4GenerateResult>
   /**
-   * 释放生成会话及其缓存。
+   * 停止接收新任务，排空已接受任务后释放会话及缓存；支持等待关闭完成。
    */
-  dispose?: () => void
+  dispose?: () => void | Promise<void>
 }
 
 export type {
