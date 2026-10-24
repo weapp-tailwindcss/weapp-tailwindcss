@@ -63,7 +63,6 @@ import {
   readJoinedOutputFiles,
   resolveCompileSettleTimeoutMs,
   waitForCompileSettled,
-  waitForInitialWarmup,
   waitForOutputFilesUpdated,
   waitForOutputFilesUpdatedWithDiagnostics,
   waitForOutputsReady,
@@ -1240,40 +1239,6 @@ describe('watch-hmr regression text helpers', () => {
     }
 
     expect(elapsed).toBeGreaterThanOrEqual(100)
-  })
-
-  it('requires a stable post-start output update during warmup when compile success is mandatory', async () => {
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-watch-warmup-'))
-    tempDirs.push(tempDir)
-    const wxmlFile = path.join(tempDir, 'index.wxml')
-    const jsFile = path.join(tempDir, 'index.js')
-    await writeFilePreserveEol(wxmlFile, '<view />', '<view />')
-    await writeFilePreserveEol(jsFile, 'Page({})', 'Page({})')
-    const sessionStartedAt = Date.now()
-
-    await new Promise(resolve => setTimeout(resolve, 20))
-    await writeFilePreserveEol(wxmlFile, '<view>ready</view>', '<view />')
-    await writeFilePreserveEol(jsFile, 'Page({ data: 1 })', 'Page({})')
-
-    const elapsed = await waitForInitialWarmup(
-      {
-        label: 'demo/weapp-vite-tailwindcss-v4',
-        requireInitialCompileSuccess: true,
-        outputWxml: wxmlFile,
-        outputJs: jsFile,
-      } as any,
-      {
-        timeoutMs: 2_000,
-        pollMs: 20,
-      } as CliOptions,
-      {
-        ensureRunning() {},
-        lastCompileSuccessAt: () => 0,
-      } as any,
-      sessionStartedAt,
-    )
-
-    expect(elapsed).toBeGreaterThanOrEqual(0)
   })
 
   it('asserts text presence and absence', () => {

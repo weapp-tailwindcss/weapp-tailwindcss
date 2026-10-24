@@ -113,6 +113,10 @@ export async function waitForInitialWarmup(
       if (lastCompileSuccessAt > sessionStartedAt) {
         return Date.now() - lastCompileSuccessAt >= warmupStableWindowMs
       }
+      // 严格模式只接受本轮编译成功信号，部分产物的 mtime 不能证明产物图已提交。
+      if (requireInitialCompileSuccess) {
+        return false
+      }
 
       const [wxmlMtime, jsMtime] = await Promise.all([
         getMtime(watchCase.outputWxml),
@@ -125,10 +129,6 @@ export async function waitForInitialWarmup(
       const latestOutputMtime = Math.max(wxmlMtime, jsMtime)
       if (latestOutputMtime > sessionStartedAt) {
         return Date.now() - latestOutputMtime >= warmupStableWindowMs
-      }
-
-      if (requireInitialCompileSuccess) {
-        return false
       }
 
       // Some watch toolchains reuse existing outputs without touching mtimes on initial attach.
