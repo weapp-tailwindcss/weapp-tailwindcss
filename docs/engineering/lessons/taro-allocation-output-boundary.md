@@ -7,7 +7,19 @@ regressions:
   - benchmark/version-compare/test/allocation-controller.test.mjs
   - benchmark/version-compare/test/allocation-mapping.test.mjs
   - benchmark/version-compare/test/allocation-profile-codec.test.mjs
+  - benchmark/version-compare/test/allocation-compression.test.mjs
+  - benchmark/version-compare/test/allocation-json.test.mjs
+  - benchmark/version-compare/test/vite-tail-worker.test.mjs
+  - benchmark/version-compare/test/vite-tail-instrumentation.test.mjs
+  - benchmark/version-compare/test/vite-tail-evidence.test.mjs
+  - benchmark/version-compare/test/vite-tail-dependencies.test.mjs
 verification:
+  - claim: 有界 gzip 与尾部观测整合后，完整诊断工具域通过；包含旧 fixture 迁移与缺阶段拒绝，不能替代真实 Taro 工作负载
+    kind: unit
+    status: passed
+    sha: 817b99acd07145ea8a7693390c4e5bff4a17d6b6
+    environment: macOS arm64，实际 Node 22.23.3，CI=1，36 文件 279 项通过，零跳过；整合树与执行测试树相同
+    command: node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1 --no-file-parallelism
   - claim: 无损传输、有界读取、文件类型与回执拒绝路径及完整诊断工具域整合回归通过，不能替代真实 Taro 诊断
     kind: unit
     status: passed
@@ -76,7 +88,7 @@ verification:
 | 不同 URL 数 | 883 | 850 |
 | 最长 URL 的 UTF-8 字节 | 286 | 273 |
 
-这次失败并非大 `data:` URL 导致；普通 URL 字典没有消除十万余节点的重复 JSON 结构。旧运行仍缺实际 profile，不能用新统计补造旧运行的 URL 内容。下一步传输修订须保持全部样本和原有字节预算，以有界无损压缩处理重复结构，补充压缩损坏、截断和解码膨胀的拒绝测试；未经真实诊断不能宣布该方案已经解决完整取证。
+这次失败并非大 `data:` URL 导致；普通 URL 字典没有消除十万余节点的重复 JSON 结构。旧运行仍缺实际 profile，不能用新统计补造旧运行的 URL 内容。后续实现增加版本化 gzip envelope，仍在原 `16 MiB` 文件与 `64 MiB` 会话预算内保存全部样本；压缩输入和逻辑展开各受 `64 MiB` 硬界约束。序列化前有界计数，gzip 按实际 envelope/base64 余量限制输出，gunzip 不使用声明长度分配；先核 receipt、实际 UTF-8 与版本，再核内外统计、引用和完整还原尺寸。旧 raw / 字典协议继续读取。回归覆盖损坏、截断、非规范 base64、虚假长度、膨胀、外层非法 UTF-8 和正确哈希下的无效内容。未经真实诊断不能宣布该方案已经解决完整取证。
 
 ## 验证
 
@@ -90,7 +102,11 @@ verification:
 
 同一完整 fixture 的直接旧写入超过 `16 MiB`，未产生半份文件或增加写入计数；字典写入低于该限额后，全部节点、样本、扩展字段及 URL 逐项还原。真实 inspector、连续 watch、Mpx worker、Taro 入口和既有诊断工具域在实际 Node 22.23.3 下三十文件 / 227 项通过，零跳过。十个修改脚本与测试的严格 ESLint、架构检查和规则检查通过；独立只读审查发现的类型串用与缺失 receipt 漏验路径均已补回归。
 
-修订协议的新真实诊断、产品内存归因、当前 head 原门禁通过及本地完整设备验收仍需分别完成。现有单测或残存产物对照不能替代这些证据。
+有界 gzip 与尾部观测整合后，完整诊断域在实际 Node 22.23.3 下 36 文件 / 279 项通过，零跳过。初次整合暴露了旧 Taro fixture 缺失新增阶段和 CSS finalizer 文件的问题；补齐真实锚点与尾部协议后通过，缺阶段拒绝断言保留。整合树 SHA `011665979e9fd455bcb7e1e603f65c7365d335d4` 与执行测试的独立工作树一致。严格 ESLint、架构与规则检查通过；未修改产品源码或 demo 基线。
+
+新增的 Taro 冷构建尾部观测记录配置、主 finalizer、快照前后、独立 CSS finalizer、Rollup 写出、writeBundle、Vite reporter 和关闭共 14 个有序阶段。它只保存当前 Node 的五类内存数值、小规模资产统计和同一操作序列身份，不读取 matcher、handler 或 sourcemap 全文；任意产品抛出值保持原样，诊断失败仍拒绝验收。依赖插桩从 Taro 实际解析到的 Vite / Rollup ESM 图取得，先验证所有锚点，再用临时文件 rename 避免写穿 pnpm 硬链接。正式入口不启用；原 allocation 停点、预算与生产关闭顺序保持。
+
+下一次仅运行一次固定基线、build 3 / HMR 3 的 inputs 诊断，先用阶段数值定位正常尾部增长，不启用 inspector 或 profile 压缩。阶段 RSS 仍不能单独证明分配与存活关系；完整输入对照、产品内存归因、当前 head 原门禁通过及本地完整设备验收仍需分别完成。现有单测或残存产物对照不能替代这些证据。
 
 ## 适用边界
 
