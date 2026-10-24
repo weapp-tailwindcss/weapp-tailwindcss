@@ -22,7 +22,22 @@ regressions:
   - benchmark/version-compare/test/mpx-operations.test.mjs
   - benchmark/version-compare/test/mpx-operation-evidence.test.mjs
   - benchmark/version-compare/test/mpx-worker.test.mjs
+  - benchmark/version-compare/test/mpx-observer-lifecycle.test.mjs
+  - benchmark/version-compare/test/mpx-observer-generation.test.mjs
+  - benchmark/version-compare/test/mpx-observer-webpack.test.mjs
 verification:
+  - claim: 无 observer 的真实源码语义及既有 benchmark 契约在实际 Node 22 上通过，不代表真实 Mpx 诊断完成
+    kind: unit
+    status: passed
+    sha: daf3c348cf38622c642069652d2274671af341b3
+    environment: macOS arm64，实际 Node 22.23.3，CI=1，27 文件 190 项，零跳过
+    command: node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1 --no-file-parallelism
+  - claim: Mpx 输入诊断在准备包构建时因 observer 尚未加载而失败，没有进入实际 Mpx 采样
+    kind: ci
+    status: failed
+    sha: 189c9e385afbfaf0744e76bbbc96c4430879e2f3
+    environment: Ubuntu，显式 inputs-only 诊断，current 准备副本的 build:pkgs 阶段
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40073897707/job/120815885894
   - claim: Mpx 诊断协议、受控源码执行及原有 benchmark 回归通过，尚不代表真实 Mpx 构建或性能归因
     kind: unit
     status: passed
@@ -250,6 +265,20 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 Webpack 记录每个实际 compilation 的创建和完成，额外编译及 child 编译均保留；阶段快照只选择根编译，并携带实际 compilation 身份。child 先完成不占用根快照。快照数、编译数和生成调用数分别报告，不互相替代。停止采样不替产品关闭，只被动记录随后实际发生的释放；创建减释放不足以推断泄漏，更不能证明 V8 或原生内存已经归还。缺失、损坏、配对不完整或超过固定事件、身份、文件及总字节上限都会使诊断失败。
 
 新增受控源码执行先暴露了确定性插桩错误：无分号源码后的 `(globalThis...)` 被 ASI 解析为前一调用的继续，执行 `acquire` 报 `this.leases.set(...) is not a function`。显式分隔语句后，真实 service、scan、generator 和 native 源码在 stub 后端下通过。真实 Node worker 用例使用手工构造的 Mpx 对象及操作，验证协议和 child/root 顺序；它们没有运行真实 Mpx CLI。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，24 文件、178 项通过，零跳过；修改文件严格 ESLint、actionlint 与 diff 检查通过。本节仅证明诊断工具契约，真实 Mpx 输入诊断须另按准确 head、run 和工件登记；整篇保持 `partial`，不能用这些测试解释此前 RSS 差额。
+
+### Mpx 输入诊断的准备构建首败
+
+[run `40073897707`、job `120815885894`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40073897707/job/120815885894) 准确绑定 `189c9e385afbfaf0744e76bbbc96c4430879e2f3`，使用原基线与显式 inputs-only 模式。首异常发生在 current 准备副本的 `pnpm build:pkgs`，UI 包的 Vite 构建经 `CompilerGeneratorServicePool.matches` 报 `Cannot read properties of undefined (reading 'operations')`。插桩副本在 Mpx worker preload 注册 observer 之前就被包准备构建消费，新增操作记录直接解引用 observer；此前受控源码测试均主动安装 observer，因而遗漏了此执行边界。
+
+这轮没有进入实际 Mpx worker，也没有两侧三次冷构建、三轮 HMR 或逐请求输入对照，不能描述为产品构建失败、预算违规或诊断限额失败。首败保留；必须先修复无 observer 的准备执行语义并验证实际准备链路，不能只重跑远端获取成功。后续提交仅改 Rollup 测试夹具和文档，既不能补齐本轮缺失工件，也不能将该诊断视为后续 head 的直接结果。
+
+唯一工件 `12552881428` 为 1886 字节，ZIP SHA-256 `c5146b647a424922ca1d3c9374d867e444b00ce1e8ba2a0fc331c3b9dd9dc6ef` 与 GitHub digest 一致，仅含 current 的 `instrumentation.json`；八个原始源码哈希均与该 head 相符。日志确认准备宿主为 Node 22.23.3，没有实际诊断 worker 的版本证据。工件只下载一次，未重跑该 run。
+
+作者提交 `f75be6e477451425c3f46e87c388adb62e48d7f5` 为七类插桩统一增加惰性边界：observer 为 undefined 时执行原表达式或原函数体，详情不求值，不额外包装 Promise 或执行无效 await；注册后严格记录，注册对象损坏仍失败。每次调用动态读取 observer，支持模块先加载、随后注册及移除；正常返回 undefined 不得重复执行。原控制器的身份、哈希、阶段、完整快照与必需事件检查保持，实际 worker 缺 preload 或记录仍因缺证失败。
+
+真实源码回归先得到无 observer 的四项确定性失败；最终新增十二项覆盖七类入口的结果、this、调用次数、原异常、Promise 身份、微任务时序、延迟注册和损坏协议。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，27 文件、190 项通过、零跳过；八个修改脚本显式 ESLint `--no-ignore` 和 diff 检查通过。独立只读内存复核通过，未重复重型构建。这些仍是工具契约验证。
+
+同一个无 .git 准备副本在 macOS / Node 24.18.0 验证实际失败消费链：先构建 UI 的十七个依赖包，旧插桩在 UI Vite 构建复现上述 operations 错误；修订后同一副本的十七个依赖包及 UI 均构建通过。脚本 [verify-preparation-build.mjs](../../../benchmark/version-compare/scripts/diagnostics/verify-preparation-build.mjs) 禁用构建前自动安装，记录命令和解析 realpath，断言主包、engine 来自副本且其 dist 包含插桩。该定向链路没有执行完整 build:pkgs、真实 Mpx worker、全面验收或设备测试；修订协议的真实输入诊断需另按准确 head 登记。
 
 ## 适用边界
 
