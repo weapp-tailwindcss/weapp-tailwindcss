@@ -63,9 +63,15 @@ if (${JSON.stringify(mode)} === 'inputs' && process.moduleLoadList.includes('Nat
 const store = { snapshot: () => ({ candidatesById: [['source.tsx', ['flex']]], sourceById: [['source.tsx', 'flex 中文']] }), values: () => new Set(['flex']), getRevision: () => 1 };
 observer.registerStore(store);
 ${viteOperationFixture()}
+observer.viteTail.configuration({ command: 'build', mode: 'production', logLevel: 'silent', build: { sourcemap: false, reportCompressedSize: true, ssr: false, write: true, watch: null } });
 await diagnosticGenerate();
 const allocation = Array.from({length: 20000}, (_, i) => ({ values: new Array(32).fill(i) }));
 await observer.compilation({ sourceCandidates: store.values() });
+for (const phase of ['css-finalizer', 'rollup-write']) observer.viteTail.end(observer.viteTail.begin(phase));
+const writing = observer.viteTail.begin('rollup-writeBundle');
+observer.viteTail.end(observer.viteTail.begin('vite-reporter'));
+observer.viteTail.end(writing);
+observer.viteTail.end(observer.viteTail.begin('rollup-close'));
 if (allocation.length !== 20000) throw new Error('fixture');
 `)
   const diagnostics = await createCaseDiagnostics({ allocation: mode, cwd, versionMeta: versionFor(root), projectMeta: project, directory: path.join(root, 'evidence'), kind: 'build', run: 1 })
@@ -94,6 +100,9 @@ if (allocation.length !== 20000) throw new Error('fixture');
     expect(gc).toMatchObject({ missingPreloadEvidence: false, processEvidence: [{ ready: true }] })
     const inputs = JSON.parse(await fs.readFile(path.join(directory, 'inputs-1.json'), 'utf8'))
     expect(inputs.compilationCandidates.sourceCandidates).toEqual(['flex'])
+    const status = JSON.parse(await fs.readFile(path.join(directory, 'status.json'), 'utf8'))
+    expect(status.viteTail.events).toHaveLength(14)
+    expect(status.viteTail.pending).toBe(0)
     expect((await fs.readdir(directory)).includes('allocation-1.json')).toBe(mode === 'allocation')
   }
   finally {
