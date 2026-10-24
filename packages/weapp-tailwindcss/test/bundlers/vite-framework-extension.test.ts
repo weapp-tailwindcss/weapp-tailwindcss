@@ -47,6 +47,7 @@ describe('测试框架复用 Core 服务与静态插件代理', () => {
       expect(plugin!.transform).toMatchObject({ order: 'pre' })
       expect(plugin!.generateBundle).toMatchObject({ order: 'post' })
       await configure()
+      const firstApi = plugin!.api
       await invoke('buildStart', {})
       const first = await invoke('transform', 'w-[17px]', firstFile)
       expect(first).toEqual({ code: '<view class="w-_b17px_B" />', map: null })
@@ -65,19 +66,25 @@ describe('测试框架复用 Core 服务与静态插件代理', () => {
       const removed = await build()
       expect(removed).not.toContain('width:')
       expect(removed).toContain('height: 31px')
-      expect(plugin!.api).toMatchObject({ builds: 3, closes: 0 })
+      expect(firstApi).toMatchObject({ builds: 3, closes: 0 })
 
       await invoke('closeWatcher')
       await invoke('closeWatcher')
-      expect(plugin!.api).toMatchObject({ builds: 3, closes: 1 })
+      expect(firstApi).toMatchObject({ builds: 3, closes: 1 })
+      expect(plugin!.api).toBeUndefined()
       await configure()
       expect(compilers).toHaveLength(2)
+      const secondApi = plugin!.api
+      expect(secondApi).not.toBe(firstApi)
+      expect(secondApi).toMatchObject({ builds: 0, closes: 0 })
       await invoke('buildStart', {})
       await invoke('transform', 'w-[43px]', firstFile)
       const rebuilt = await build()
       expect(rebuilt).toContain('width: 43px')
       expect(rebuilt).not.toContain('height: 31px')
-      expect(plugin!.api).toMatchObject({ builds: 1, closes: 0 })
+      expect(plugin!.api).toBe(secondApi)
+      expect(secondApi).toMatchObject({ builds: 1, closes: 0 })
+      expect(firstApi).toMatchObject({ builds: 3, closes: 1 })
     }
     finally {
       await invoke('closeWatcher')
