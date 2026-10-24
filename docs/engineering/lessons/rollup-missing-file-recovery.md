@@ -15,6 +15,8 @@ regressions:
   - scripts/ci/demo-matrix/rollup-directory-retirement.test.mjs
   - scripts/ci/demo-matrix/rollup-directory-errors.test.mjs
   - scripts/ci/demo-matrix/rollup-close-errors.test.mjs
+  - scripts/ci/demo-matrix/rollup-polling-identity.test.mjs
+  - scripts/ci/demo-matrix/rollup-polling-receipt.test.mjs
 ---
 
 # Rollup 多目录监听的缺失文件恢复
@@ -105,6 +107,24 @@ pnpm --config.verifyDepsBeforeRun=false exec vitest run -c scripts/ci/demo-matri
 新增夹具契约覆盖 POSIX、根目录、Windows 同盘/跨盘/盘符根及 UNC 的文件和目录别名。旧构造得到 6 项失败、54 项通过；修订在作者树和主树 `6b7645c89` 均为 60 项通过、零跳过。主树报告为 `.tmp/framework-isolation/reports/rollup-alias-integrated.json`。这次只改测试，不修改产品补丁；Windows 原生 CI 仍需在后续准确 head 上通过。
 
 原始日志和红绿 JSON 作为当前任务的本地证据保留：`rollup-multiple-directory-red.json` 为 6 红 / 2 绿，`rollup-multiple-directory-green.json` 为新增与原端到端 watcher 共 20 项通过，`rollup-all-node24.json` 为全部 565 项通过。
+
+### Linux 原子替换的多事件回执首败
+
+`ce91720685bf369b6dabe308923cc2a5cbe8898d` 的 [run 40083216958 / job 120840833202](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083216958/job/120840833202) 在前置单测 `rollup-polling-identity.test.mjs` 首败，组合为 `uni-app-vite-tailwindcss-v4 / cjs / file / atime=false / delayed=false`，实际 Linux / Node 24.21.0。此时真实 repeated watch 尚未启动，后续没有诊断产物属于前置失败的结果。
+
+精确 BigInt 发布回执确认 inode 从 1634 替换为 1635，文件长度 11、mtime 946684800000 不变。但原生 polling 先报告旧 inode 的 ctime 变化，再报告新 inode；第二条事件的 prev 已包含中间 ctime，不能与发布前 stat 全量相等。前一事件触发构建读取后，新 inode 的 atime 也从发布值推进。测试原先要求一条 raw 同时精确匹配前后 stat 以及固定 atime，错误地把异步文件系统协议当成一次不可分割的快照变更。
+
+首败日志已出现两次 change 和两次 invalidate，但测试停在 raw 断言，尚未执行最终产物为 6 的断言。因此这些事件只能证明通知已经到达，不能证明产物正确。修订应联合精确发布身份、连续事件身份链与真实构建产物验证替换；ctime 和 atime 的单独变化仍不能代替新文件身份。原有 5 秒观察预算、失效通知和产物断言均需保留。
+
+新增回归保存上述 Linux 原始事件顺序；旧 matcher 得到 1 项失败、21 项通过，修订跟踪 rawOffset 后连续的旧快照到发布快照，忽略读取会推进的 atime。输入 atime 改在 staged 文件发布前验证。精确发布身份仍使用 BigInt；Number inode 碰撞时，raw 不能单独证明文件身份，必须与 BigInt 发布回执和真实产物联合验证。负例覆盖仅 ctime/atime 变化、缺失中间采样、错误身份、长度、mtime、旧产物和预热回执。
+
+主树整合为 `004e14228` 后，在 macOS arm64 / Node 24.18.0、`CI=1` 下执行以下定向回归，2 文件、56 项通过、零跳过：
+
+```sh
+pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup-polling-receipt.test.mjs scripts/ci/demo-matrix/rollup-polling-identity.test.mjs --maxWorkers=1 --no-file-parallelism --update=none
+```
+
+作者树扩大到全部 25 个 Rollup 回归文件时，772 项中 771 项通过、1 项失败：`rollup-hierarchical-ownership.test.mjs` 的 `4.63.0 / esm / register-parent` 首次替换期望 update、实际收到 create。该文件未消费新 helper；原始失败日志保留，事件来源仍待诊断，不能把本轮 Rollup 全套写成通过。上述 Linux 事件序列回归在本机执行，不代替准确 head 的原生 Linux/Windows CI。
 
 ## 适用边界
 
