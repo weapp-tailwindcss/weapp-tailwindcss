@@ -19,6 +19,18 @@ regressions:
   - benchmark/version-compare/test/allocation-watch.test.mjs
   - benchmark/version-compare/test/taro-diagnostics.test.mjs
 verification:
+  - claim: ab1aa7d 的正式 Mpx 首轮同时超过耗时及 RSS 预算，未触发仅 RSS 反序确认
+    kind: ci
+    status: failed
+    sha: ab1aa7d59e6fa22e1208e15453f2217bed3cfb40
+    environment: Ubuntu，正式 Benchmark 工作流，三次冷构建与三轮 HMR，原采样及预算
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40066210730/job/120790757674
+  - claim: 8f0d56a 的独立正式 Mpx 采样通过原预算，不能解释或抵销此前首败
+    kind: ci
+    status: passed
+    sha: 8f0d56a7b355a86fc11a9f23748ae88e8f7adb90
+    environment: Ubuntu，正式 Benchmark 工作流，三次冷构建与三轮 HMR，原采样及预算，未重跑
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923070/job/120795374942
   - claim: Taro inputs-only 诊断完成且候选逐项一致，但运行时 CSS 来源哈希未对齐，不能解释正式 RSS 首败
     kind: ci
     status: passed
