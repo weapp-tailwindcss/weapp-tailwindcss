@@ -43,7 +43,9 @@ weapp-vite 的首轮产物写出早于监听初始化完成；首次修改前必
 
 源码修改先完整写入同目录临时文件，再原子替换目标文件，保留现有权限。真实 watcher 回归检查连续替换时只读到完整版本，避免文件截断与写入之间触发编译。
 
-锁文件中的 Rollup 4.63.0 使用 [watcher 补丁](../../../patches/rollup@4.63.0.patch)：同一构建任务共用文件 watcher，transform dependency 单独记录失效语义。原版在 Linux 对普通模块和 transform dependency 重复监听同一文件，原子替换后会停止响应后续修改。[CJS/ESM 回归](./rollup-watch.test.mjs) 同时检查直接导入、虚拟模块消费方、连续修改与删除后重建。补丁仅随本仓库冻结依赖应用，不随 weapp-tailwindcss npm 包安装；后续升级 Rollup 时必须复验并评估移除，不能只改版本号。
+锁文件中的 Rollup [3.30.0](../../../patches/rollup@3.30.0.patch)、[4.63.0](../../../patches/rollup@4.63.0.patch)、[4.63.1](../../../patches/rollup@4.63.1.patch) 和 [4.63.5](../../../patches/rollup@4.63.5.patch) 使用 watcher 补丁：同一构建任务共用文件 watcher，transform dependency 单独记录失效语义。内置 Chokidar 的原生回调在 5ms 节流窗口内可能丢掉最后一次修改或删除；补丁合并通知后读取最终磁盘状态，并在 unwatch/close 时取消属于旧订阅的尾部任务。文件身份改变时，底层先重绑当前句柄再触发构建失效，避免 Linux/FreeBSD 上层异步 unwatch/add 留下监听空窗；不能把 BUNDLE_END 当作原生订阅就绪回执。
+
+[CJS/ESM 回归](./rollup-watch.test.mjs) 保留直接导入、虚拟消费方、连续修改、删除 ERROR 与重建产物检查；[节流与关闭回归](./rollup-native-delete.test.mjs) 和 [订阅连续性回归](./rollup-native-subscription.test.mjs) 固定边界时序。补丁仅随本仓库冻结依赖应用，不随 weapp-tailwindcss npm 包安装；[上游 Rollup FileWatcher](https://github.com/rollup/rollup/blob/v4.63.5/src/watch/fileWatcher.ts) 与其内置 Chokidar 发布等价修复后，必须对实际 demo 解析版本运行本目录全部 rollup-*.test.mjs，确认删除、重建、polling、关闭和原生身份回归通过，再移除对应补丁及锁文件登记。
 
 Nitro 2.13.4 的 [externals 补丁](../../../patches/nitropack@2.13.4.patch) 在匹配内联规则前规范化解析后的 module ID。原版只规范化原始 ID，Windows 原生反斜杠路径会漏掉 `nuxt/dist` 内联规则，让 Nuxt 4.6 的 SSR renderer 在 Node 中未经开发环境变换直接加载，导致 manifest 缺失和 HTTP 500。[发行包 resolver 回归](./nitro-externals.test.mjs) 覆盖 POSIX、Windows 盘符、根目录、UNC、pnpm 嵌套路径、相对导入及更具体的 external 规则；真实 Nuxt demo 继续验证 SSR、静态基线与连续 Web 更新。补丁仅随本仓库冻结安装生效，不随产品 npm 包发布；[上游 resolver](https://github.com/nitrojs/nitro/blob/v2.13.4/src/build/plugins/externals.ts) 发布等价修复后，先复验再移除补丁与锁文件登记。
 

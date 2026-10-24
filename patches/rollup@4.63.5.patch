@@ -20,25 +20,106 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  	          foreach(cont.listeners, (listener) => listener(path, curr));
  	        }
  	      })
-@@ -7806,7 +7807,7 @@
- 	        // Check that change event was not fired because of changed only accessTime.
+@@ -7797,42 +7798,82 @@
+ 	  // if the file is already being watched, do nothing
+ 	  if (parent.has(basename)) return;
+ 
++	  let active = false;
++	  let revision = 0;
++	  let retry;
++	  const cancelPending = () => {
++	    clearTimeout(retry);
++	    retry = undefined;
++	    const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++	    if (pending?.listener === listener) pending.clear();
++	  };
++	  const bindListener = () => {
++	    const closer = this._watchWithNodeFs(file, listener);
++	    if (!closer) return;
++	    // 同路径的新订阅不能继承上一代的节流窗口或尾部任务。
++	    this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file)?.clear();
++	    active = true;
++	    const installedRevision = ++revision;
++	    let disposed = false;
++	    return () => {
++	      if (disposed) return;
++	      disposed = true;
++	      if (revision === installedRevision) {
++	        active = false;
++	        cancelPending();
++	      }
++	      return closer();
++	    };
++	  };
+ 	  const listener = async (path, newStats) => {
+-	    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) return;
++	    if (!active || this.fsw.closed || this.fsw._isIgnored(file)) return;
++	    const throttle = this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5);
++	    if (!throttle) {
++	      // 原生事件可合并，但窗口内最后一次修改或删除仍须由真实 stat 对账。
++	      if (!retry) retry = setTimeout(() => {
++	        retry = undefined;
++	        listener(file);
++	      }, 5);
++	      return;
++	    }
++	    throttle.listener = listener;
++	    const observedRevision = revision;
+ 	    if (!newStats || newStats.mtimeMs === 0) {
+ 	      try {
+ 	        const newStats = await stat(file);
+-	        if (this.fsw.closed) return;
+-	        // Check that change event was not fired because of changed only accessTime.
++	        // 旧异步结果不能重新登记已经关闭或换代的监听。
++	        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
  	        const at = newStats.atimeMs;
  	        const mt = newStats.mtimeMs;
 -	        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-+	        if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
- 	          this.fsw._emit(EV_CHANGE, file, newStats);
+-	          this.fsw._emit(EV_CHANGE, file, newStats);
+-	        }
+-	        if (isLinux && prevStats.ino !== newStats.ino) {
+-	          this.fsw._closeFile(path);
++	        const changed = !at || at <= mt || fileStateChanged(newStats, prevStats);
++	        if (prevStats.dev !== newStats.dev || prevStats.ino !== newStats.ino) {
++	          // 先绑定当前身份，再通知构建器；不制造异步 unwatch/add 的监听空窗。
++	          this.fsw._closeFile(file);
+ 	          prevStats = newStats;
+-	          this.fsw._addPathCloser(path, this._watchWithNodeFs(file, listener));
++	          const closer = bindListener();
++	          if (!closer) {
++	            this.fsw._remove(dirname, basename);
++	            return;
++	          }
++	          this.fsw._addPathCloser(file, closer);
+ 	        } else {
+ 	          prevStats = newStats;
  	        }
- 	        if (isLinux && prevStats.ino !== newStats.ino) {
-@@ -7825,7 +7826,7 @@
- 	      // Check that change event was not fired because of changed only accessTime.
++	        if (changed) this.fsw._emit(EV_CHANGE, file, newStats);
+ 	      } catch (error) {
+-	        // Fix issues where mtime is null but file is still present
++	        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+ 	        this.fsw._remove(dirname, basename);
+ 	      }
+-	      // add is about to be emitted if file not already tracked in parent
+ 	    } else if (parent.has(basename)) {
+-	      // Check that change event was not fired because of changed only accessTime.
  	      const at = newStats.atimeMs;
  	      const mt = newStats.mtimeMs;
 -	      if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-+	      if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
- 	        this.fsw._emit(EV_CHANGE, file, newStats);
- 	      }
+-	        this.fsw._emit(EV_CHANGE, file, newStats);
+-	      }
++	      const changed = !at || at <= mt || fileStateChanged(newStats, prevStats);
  	      prevStats = newStats;
-@@ -9251,8 +9252,15 @@
++	      if (changed) this.fsw._emit(EV_CHANGE, file, newStats);
+ 	    }
+ 	  };
+ 	  // kick off the watcher
+-	  const closer = this._watchWithNodeFs(file, listener);
++	  const closer = bindListener();
+ 
+ 	  // emit an add event if we're supposed to
+ 	  if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
+@@ -9251,8 +9292,15 @@
  	  }
  
  	  if (event === EV_CHANGE) {
@@ -56,7 +137,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9617,50 +9625,43 @@
+@@ -9617,50 +9665,43 @@
  
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -103,7 +184,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux || isFreeBSD) {
-+            if ((isLinux || isFreeBSD) && (!watcher.options.usePolling || event !== 'update')) {
++            if ((isLinux || isFreeBSD) && event !== 'update') {
                  // unwatching and watching fixes an issue with chokidar where on certain systems,
                  // a file that was unlinked and immediately recreated would create a change event
                  // but then no longer any further events
@@ -123,7 +204,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -9832,6 +9833,7 @@
+@@ -9832,6 +9873,7 @@
          this.cache = { modules: [] };
          this.watchFiles = [];
          this.invalidated = true;
@@ -131,7 +212,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          this.watched = new Set();
          this.watchHooks = null;
          this.watcher = watcher;
-@@ -9863,6 +9865,7 @@
+@@ -9863,6 +9905,7 @@
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -139,7 +220,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -9880,6 +9883,8 @@
+@@ -9880,6 +9923,8 @@
          if (!this.invalidated || this.watcher.closed)
              return;
          this.invalidated = false;
@@ -148,7 +229,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -9941,6 +9946,12 @@
+@@ -9941,6 +9986,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -213,7 +294,7 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux || isFreeBSD) {
-+            if ((isLinux || isFreeBSD) && (!watcher.options.usePolling || event !== 'update')) {
++            if ((isLinux || isFreeBSD) && event !== 'update') {
                  // unwatching and watching fixes an issue with chokidar where on certain systems,
                  // a file that was unlinked and immediately recreated would create a change event
                  // but then no longer any further events
@@ -294,25 +375,106 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  	          foreach(cont.listeners, (listener) => listener(path, curr));
  	        }
  	      })
-@@ -7802,7 +7803,7 @@
- 	        // Check that change event was not fired because of changed only accessTime.
+@@ -7793,42 +7794,82 @@
+ 	  // if the file is already being watched, do nothing
+ 	  if (parent.has(basename)) return;
+ 
++	  let active = false;
++	  let revision = 0;
++	  let retry;
++	  const cancelPending = () => {
++	    clearTimeout(retry);
++	    retry = undefined;
++	    const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++	    if (pending?.listener === listener) pending.clear();
++	  };
++	  const bindListener = () => {
++	    const closer = this._watchWithNodeFs(file, listener);
++	    if (!closer) return;
++	    // 同路径的新订阅不能继承上一代的节流窗口或尾部任务。
++	    this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file)?.clear();
++	    active = true;
++	    const installedRevision = ++revision;
++	    let disposed = false;
++	    return () => {
++	      if (disposed) return;
++	      disposed = true;
++	      if (revision === installedRevision) {
++	        active = false;
++	        cancelPending();
++	      }
++	      return closer();
++	    };
++	  };
+ 	  const listener = async (path, newStats) => {
+-	    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) return;
++	    if (!active || this.fsw.closed || this.fsw._isIgnored(file)) return;
++	    const throttle = this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5);
++	    if (!throttle) {
++	      // 原生事件可合并，但窗口内最后一次修改或删除仍须由真实 stat 对账。
++	      if (!retry) retry = setTimeout(() => {
++	        retry = undefined;
++	        listener(file);
++	      }, 5);
++	      return;
++	    }
++	    throttle.listener = listener;
++	    const observedRevision = revision;
+ 	    if (!newStats || newStats.mtimeMs === 0) {
+ 	      try {
+ 	        const newStats = await stat(file);
+-	        if (this.fsw.closed) return;
+-	        // Check that change event was not fired because of changed only accessTime.
++	        // 旧异步结果不能重新登记已经关闭或换代的监听。
++	        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
  	        const at = newStats.atimeMs;
  	        const mt = newStats.mtimeMs;
 -	        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-+	        if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
- 	          this.fsw._emit(EV_CHANGE, file, newStats);
+-	          this.fsw._emit(EV_CHANGE, file, newStats);
+-	        }
+-	        if (isLinux && prevStats.ino !== newStats.ino) {
+-	          this.fsw._closeFile(path);
++	        const changed = !at || at <= mt || fileStateChanged(newStats, prevStats);
++	        if (prevStats.dev !== newStats.dev || prevStats.ino !== newStats.ino) {
++	          // 先绑定当前身份，再通知构建器；不制造异步 unwatch/add 的监听空窗。
++	          this.fsw._closeFile(file);
+ 	          prevStats = newStats;
+-	          this.fsw._addPathCloser(path, this._watchWithNodeFs(file, listener));
++	          const closer = bindListener();
++	          if (!closer) {
++	            this.fsw._remove(dirname, basename);
++	            return;
++	          }
++	          this.fsw._addPathCloser(file, closer);
+ 	        } else {
+ 	          prevStats = newStats;
  	        }
- 	        if (isLinux && prevStats.ino !== newStats.ino) {
-@@ -7821,7 +7822,7 @@
- 	      // Check that change event was not fired because of changed only accessTime.
++	        if (changed) this.fsw._emit(EV_CHANGE, file, newStats);
+ 	      } catch (error) {
+-	        // Fix issues where mtime is null but file is still present
++	        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+ 	        this.fsw._remove(dirname, basename);
+ 	      }
+-	      // add is about to be emitted if file not already tracked in parent
+ 	    } else if (parent.has(basename)) {
+-	      // Check that change event was not fired because of changed only accessTime.
  	      const at = newStats.atimeMs;
  	      const mt = newStats.mtimeMs;
 -	      if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-+	      if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
- 	        this.fsw._emit(EV_CHANGE, file, newStats);
- 	      }
+-	        this.fsw._emit(EV_CHANGE, file, newStats);
+-	      }
++	      const changed = !at || at <= mt || fileStateChanged(newStats, prevStats);
  	      prevStats = newStats;
-@@ -9247,8 +9248,15 @@
++	      if (changed) this.fsw._emit(EV_CHANGE, file, newStats);
+ 	    }
+ 	  };
+ 	  // kick off the watcher
+-	  const closer = this._watchWithNodeFs(file, listener);
++	  const closer = bindListener();
+ 
+ 	  // emit an add event if we're supposed to
+ 	  if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
+@@ -9247,8 +9288,15 @@
  	  }
  
  	  if (event === EV_CHANGE) {

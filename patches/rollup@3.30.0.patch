@@ -50,7 +50,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    return closer;
  }
  
-@@ -2774,26 +2778,72 @@
+@@ -2774,26 +2778,80 @@
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
  
@@ -79,7 +79,15 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +    return () => {
 +      if (disposed) return;
 +      disposed = true;
-+      if (revision === installedRevision) active = false;
++      if (revision === installedRevision) {
++        active = false;
++        // 关闭当前订阅时同步取消尾部对账，不能把旧回调留给同路径的新订阅。
++        const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++        if (pending) {
++          clearTimeout(pending.retry);
++          pending.clear();
++        }
++      }
 +      closer();
 +    };
 +  };
@@ -131,7 +139,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2802,14 +2852,27 @@
+@@ -2802,14 +2860,27 @@
        // Check that change event was not fired because of changed only accessTime.
        const at = newStats.atimeMs;
        const mt = newStats.mtimeMs;
@@ -161,7 +169,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2817,7 +2880,7 @@
+@@ -2817,7 +2888,7 @@
      this.fsw._emit(EV_ADD$2, file, stats);
    }
  
@@ -170,7 +178,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  }
  
  /**
-@@ -2976,10 +3039,60 @@
+@@ -2976,10 +3047,60 @@
  
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
@@ -235,7 +243,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -3001,9 +3114,9 @@
+@@ -3001,9 +3122,9 @@
   * @param {String=} target Child path actually targeted for watch
   * @returns {Promise}
   */
@@ -247,7 +255,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      ready();
      return false;
    }
-@@ -3017,9 +3130,10 @@
+@@ -3017,9 +3138,10 @@
    }
  
    // evaluate what is at the path we're being asked to watch
@@ -259,7 +267,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      if (this.fsw._isIgnored(wh.watchPath, stats)) {
        ready();
        return false;
-@@ -3030,28 +3144,38 @@
+@@ -3030,28 +3152,38 @@
      if (stats.isDirectory()) {
        const absPath = sysPath$2.resolve(path);
        const targetPath = follow ? await fsrealpath(path) : path;
@@ -302,7 +310,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      }
      ready();
  
-@@ -3059,8 +3183,11 @@
+@@ -3059,8 +3191,11 @@
      return false;
  
    } catch (error) {
@@ -314,7 +322,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
        return path;
      }
    }
-@@ -3896,6 +4023,8 @@
+@@ -3896,6 +4031,8 @@
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
@@ -323,7 +331,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
-@@ -4080,6 +4209,7 @@
+@@ -4080,6 +4217,7 @@
      }
  
      this._closePath(path);
@@ -331,7 +339,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  
      this._ignoredPaths.add(path);
      if (this._watched.has(path)) {
-@@ -4109,6 +4239,7 @@
+@@ -4109,6 +4247,7 @@
      const promise = closer();
      if (promise instanceof Promise) closers.push(promise);
    }));
@@ -339,7 +347,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    this._streams.forEach(stream => stream.destroy());
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4212,8 +4343,15 @@
+@@ -4212,8 +4351,15 @@
    }
  
    if (event === EV_CHANGE) {
@@ -357,7 +365,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4451,11 +4589,6 @@
+@@ -4451,11 +4597,6 @@
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -369,7 +377,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4491,12 +4624,23 @@
+@@ -4491,12 +4632,23 @@
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -397,7 +405,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  }
  
  /**
-@@ -4514,6 +4658,7 @@
+@@ -4514,6 +4666,7 @@
   * @param {Path} path
   */
  _closeFile(path) {
@@ -405,7 +413,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    const closers = this._closers.get(path);
    if (!closers) return;
    closers.forEach(closer => closer());
-@@ -4527,6 +4672,7 @@
+@@ -4527,6 +4680,7 @@
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
@@ -413,7 +421,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    let list = this._closers.get(path);
    if (!list) {
      list = [];
-@@ -4573,49 +4719,52 @@
+@@ -4573,49 +4727,52 @@
  
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -498,7 +506,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -4740,6 +4889,7 @@
+@@ -4740,6 +4897,7 @@
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -506,7 +514,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -4765,6 +4915,7 @@
+@@ -4765,6 +4923,7 @@
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -514,7 +522,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -4778,6 +4929,8 @@
+@@ -4778,6 +4937,8 @@
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -523,7 +531,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -4827,6 +4980,12 @@
+@@ -4827,6 +4988,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -588,7 +596,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    return closer;
  }
  
-@@ -2770,26 +2774,72 @@
+@@ -2770,26 +2774,80 @@
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
  
@@ -617,7 +625,15 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +    return () => {
 +      if (disposed) return;
 +      disposed = true;
-+      if (revision === installedRevision) active = false;
++      if (revision === installedRevision) {
++        active = false;
++        // 关闭当前订阅时同步取消尾部对账，不能把旧回调留给同路径的新订阅。
++        const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++        if (pending) {
++          clearTimeout(pending.retry);
++          pending.clear();
++        }
++      }
 +      closer();
 +    };
 +  };
@@ -669,7 +685,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2798,14 +2848,27 @@
+@@ -2798,14 +2856,27 @@
        // Check that change event was not fired because of changed only accessTime.
        const at = newStats.atimeMs;
        const mt = newStats.mtimeMs;
@@ -699,7 +715,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2813,7 +2876,7 @@
+@@ -2813,7 +2884,7 @@
      this.fsw._emit(EV_ADD$2, file, stats);
    }
  
@@ -708,7 +724,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  }
  
  /**
-@@ -2972,10 +3035,60 @@
+@@ -2972,10 +3043,60 @@
  
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
@@ -773,7 +789,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -2997,9 +3110,9 @@
+@@ -2997,9 +3118,9 @@
   * @param {String=} target Child path actually targeted for watch
   * @returns {Promise}
   */
@@ -785,7 +801,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      ready();
      return false;
    }
-@@ -3013,9 +3126,10 @@
+@@ -3013,9 +3134,10 @@
    }
  
    // evaluate what is at the path we're being asked to watch
@@ -797,7 +813,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      if (this.fsw._isIgnored(wh.watchPath, stats)) {
        ready();
        return false;
-@@ -3026,28 +3140,38 @@
+@@ -3026,28 +3148,38 @@
      if (stats.isDirectory()) {
        const absPath = sysPath$2.resolve(path);
        const targetPath = follow ? await fsrealpath(path) : path;
@@ -840,7 +856,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      }
      ready();
  
-@@ -3055,8 +3179,11 @@
+@@ -3055,8 +3187,11 @@
      return false;
  
    } catch (error) {
@@ -852,7 +868,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
        return path;
      }
    }
-@@ -3892,6 +4019,8 @@
+@@ -3892,6 +4027,8 @@
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
@@ -861,7 +877,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
-@@ -4076,6 +4205,7 @@
+@@ -4076,6 +4213,7 @@
      }
  
      this._closePath(path);
@@ -869,7 +885,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  
      this._ignoredPaths.add(path);
      if (this._watched.has(path)) {
-@@ -4105,6 +4235,7 @@
+@@ -4105,6 +4243,7 @@
      const promise = closer();
      if (promise instanceof Promise) closers.push(promise);
    }));
@@ -877,7 +893,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    this._streams.forEach(stream => stream.destroy());
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4208,8 +4339,15 @@
+@@ -4208,8 +4347,15 @@
    }
  
    if (event === EV_CHANGE) {
@@ -895,7 +911,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4447,11 +4585,6 @@
+@@ -4447,11 +4593,6 @@
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -907,7 +923,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4487,12 +4620,23 @@
+@@ -4487,12 +4628,23 @@
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -935,7 +951,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  }
  
  /**
-@@ -4510,6 +4654,7 @@
+@@ -4510,6 +4662,7 @@
   * @param {Path} path
   */
  _closeFile(path) {
@@ -943,7 +959,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    const closers = this._closers.get(path);
    if (!closers) return;
    closers.forEach(closer => closer());
-@@ -4523,6 +4668,7 @@
+@@ -4523,6 +4676,7 @@
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
