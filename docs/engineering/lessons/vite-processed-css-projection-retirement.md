@@ -31,7 +31,7 @@ collector 复制到来源或目标别名的记录显式带有物理产物 proven
 
 本轮在 macOS、Node 24.18.0、本任务独立 worktree 上验证，基于 `6747fa1d6db6e8e6b02e0cfcaacbfb6c054f72ef` 加本次改动；该提交本身不包含本次修复。
 
-- 修复前：真实 watch 的根样式末尾顺序稳定触发 `width: 29px` 残留；未放宽超时、断言或性能预算。
+- 修复前：真实 watch 的根样式末尾顺序在第二轮已有 `width: 29px` 时稳定触发 `width: 17px` 残留；远端首败则在第三轮已有 `width: 43px` 时残留 `width: 29px`。两者均为上一轮物理产物未退役；未放宽超时、断言或性能预算。
 - 修复后：使用 `CI=1`、`vitest run` 和 `--update=none` 验证两个持久回归文件及下述受影响测试。覆盖默认及根样式末尾顺序、连续新增/替换/删除、在途关闭及独立 build。
 - 受影响的 processed CSS、finalizer、remembered replay、来源输出关系、根样式提交等共 22 个文件、238 项回归通过。新增用例覆盖 POSIX / Windows / 盘符 / 根目录 / 相对路径、同来源多投影、多来源复合资产、别名减少、部分 bundle、来源删除、最终收尾登记及长期索引裁剪。
 - `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --noEmit`、`pnpm --filter weapp-tailwindcss build`、`pnpm architecture:check` 通过；17 个本次修改的 TypeScript 文件通过严格、无自动修复的 ESLint 检查。
