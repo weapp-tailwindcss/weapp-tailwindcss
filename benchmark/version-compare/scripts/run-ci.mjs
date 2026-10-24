@@ -12,6 +12,7 @@ import {
   requiresHmrMemoryConfirmation,
   toMarkdown,
 } from './ci-report.mjs'
+import { validateAllocationRequest } from './diagnostics/constants.mjs'
 import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
 import { assertBenchmarkMatrixRows, selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
@@ -285,7 +286,7 @@ async function patchPublishedRootOverrides(root) {
   await fs.writeFile(file, `${JSON.stringify(json, null, 2)}\n`, 'utf8')
 }
 
-async function prepareRoot({ root, role, baseline, baselineRef, resolverDependencies }) {
+async function prepareRoot({ root, role, baseline, baselineRef, resolverDependencies, allocationDirectory }) {
   if (role === 'base') {
     await copyRepoAtRef(root, baselineRef)
   }
@@ -295,6 +296,10 @@ async function prepareRoot({ root, role, baseline, baselineRef, resolverDependen
   if (role === 'published') {
     const patched = await patchPublishedRoot(root, baseline, resolverDependencies)
     process.stdout.write(`[benchmark] published baseline ${normalizePackageSpec(baseline)} patched projects: ${patched.join(', ')}\n`)
+  }
+  if (allocationDirectory) {
+    const { prepareAllocationRoot } = await import('./diagnostics/prepare.mjs')
+    await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role))
   }
   await run(root, 'pnpm', ['install', role === 'published' ? '--no-frozen-lockfile' : '--frozen-lockfile'])
   await run(root, 'pnpm', ['build:pkgs'])
@@ -465,17 +470,26 @@ async function main() {
     : `published:${normalizePackageSpec(baseline)}`
   const currentLabel = `current:${pkg.version}`
   const versionsPath = path.join(resultDir, 'versions.json')
+  const allocationDiagnostics = process.argv.includes('--allocation-diagnostics')
+  const inputDiagnostics = process.argv.includes('--input-diagnostics')
+  if (allocationDiagnostics && inputDiagnostics) {
+    throw new Error('输入证据与分配采样必须分开运行')
+  }
+  const instrumentationEnabled = allocationDiagnostics || inputDiagnostics
+  validateAllocationRequest({ enabled: instrumentationEnabled, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns })
+  const allocationDirectory = instrumentationEnabled ? path.join(resultDir, 'allocation-preparation') : undefined
 
   await fs.mkdir(resultDir, { recursive: true })
-  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, resolverDependencies })
+  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, resolverDependencies, allocationDirectory })
   await prepareRoot({
     root: baselineRoot,
     role: baselineRef ? 'base' : 'published',
     baseline,
     baselineRef,
     resolverDependencies,
+    allocationDirectory,
   })
-  const gcDiagnosticsEnabled = process.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS === '1'
+  const gcDiagnosticsEnabled = process.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS === '1' || instrumentationEnabled
   let diagnosticIdentity
   if (gcDiagnosticsEnabled) {
     try {
@@ -527,12 +541,38 @@ async function main() {
     if (gcDiagnosticsEnabled) {
       matrixArgs.push('--gc-diagnostic-dir', path.join(resultDir, 'gc-diagnostics', path.basename(outputFile, '.json')))
     }
+    if (allocationDiagnostics) {
+      matrixArgs.push('--allocation-diagnostics')
+    }
+    if (inputDiagnostics) {
+      matrixArgs.push('--input-diagnostics')
+    }
     await run(repoRoot, process.execPath, matrixArgs)
   }
   await runMatrix({ versionsFile: versionsPath, outputFile: rawPath, matrixBuildRuns: buildRuns })
 
   const raw = JSON.parse(await fs.readFile(rawPath, 'utf8'))
   assertBenchmarkMatrixRows(raw, selectedProjects, [baselineVersion, currentVersion], { buildRuns, hmrRuns })
+  if (instrumentationEnabled) {
+    const failed = raw.rows.filter(row => row.error)
+    if (failed.length) {
+      throw new Error(`分配诊断有失败或缺证：${JSON.stringify(failed.map(row => ({ version: row.version, error: row.error })))}`)
+    }
+    const { compareDiagnosticInputs } = await import('./diagnostics/compare.mjs')
+    const inputComparison = await compareDiagnosticInputs(path.join(resultDir, 'gc-diagnostics', path.basename(rawPath, '.json')))
+    await fs.writeFile(path.join(resultDir, 'diagnostic-input-comparison.json'), JSON.stringify(inputComparison, null, 2))
+    await fs.writeFile(path.join(resultDir, 'allocation-diagnostic.json'), JSON.stringify({
+      diagnosticOnly: true,
+      mode: allocationDiagnostics ? 'allocation' : 'inputs',
+      budgetAcceptance: false,
+      reason: '插桩与 inspector 观测的时间、RSS 只作诊断，不进入正式预算或反序确认',
+      versions: [baselineVersion, currentVersion],
+      rawPath,
+      buildRuns,
+      hmrRuns,
+    }, null, 2))
+    return
+  }
   const performanceChanges = baselineRef
     ? await classifyPerformanceChanges(repoRoot, baselineRef)
     : { relevant: true, relevantFiles: performanceRelevantPaths, ignoredReleaseMetadataFiles: [], ignoredNonPerformanceFiles: [] }

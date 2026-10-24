@@ -4,7 +4,8 @@ import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { createGcDiagnostics } from './gc-diagnostics.mjs'
+import { validateAllocationRequest } from './diagnostics/constants.mjs'
+import { createCaseDiagnostics } from './diagnostics/controller.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
 import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
@@ -481,13 +482,16 @@ async function runHmrRounds({
     const times = []
 
     for (let i = 0; i < rounds; i += 1) {
-      const marker = `twbench${Date.now()}${i}`
+      const marker = diagnostics?.mutationMarker?.(i + 1, original) ?? `twbench${Date.now()}${i}`
       const next = injectContent(original, marker, injectType)
       const roundLogs = logBuffer.beginRound()
       const start = now()
       diagnostics?.mark('mutation-write', i + 1)
       sourceDirty = true
       await fs.writeFile(sourcePath, next, 'utf8')
+      if (diagnostics?.source) {
+        await diagnostics.source('mutation-written', sourcePath, next, marker)
+      }
 
       const ok = await waitFor(async () => {
         if (child.exitCode != null) {
@@ -517,6 +521,9 @@ async function runHmrRounds({
       diagnostics?.mark('rollback-write', i + 1)
       await fs.writeFile(sourcePath, original, 'utf8')
       sourceDirty = false
+      if (diagnostics?.source) {
+        await diagnostics.source('rollback-written', sourcePath, original, marker)
+      }
       const rolledBack = await waitFor(async () => {
         for (const probePath of probePaths) {
           const text = await readText(probePath)
@@ -532,8 +539,14 @@ async function runHmrRounds({
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('rollback-observed', i + 1)
+      if (diagnostics?.source) {
+        await diagnostics.source('rollback-observed', sourcePath, original, marker)
+      }
     }
 
+    if (diagnostics?.beforeStop) {
+      await diagnostics.beforeStop()
+    }
     return {
       samples: times,
       memory: memorySampler.stop(),
@@ -541,9 +554,16 @@ async function runHmrRounds({
   }
   finally {
     memorySampler.stop()
-    await stopChild(child)
-    if (sourceDirty) {
-      await fs.writeFile(sourcePath, original, 'utf8')
+    try {
+      await stopChild(child)
+    }
+    finally {
+      if (sourceDirty) {
+        await fs.writeFile(sourcePath, original, 'utf8')
+        if (diagnostics?.source) {
+          await diagnostics.source('failure-restored', sourcePath, original)
+        }
+      }
     }
   }
 }
@@ -686,7 +706,7 @@ export async function runCase(versionMeta, projectMeta, options) {
   }
   else {
     for (let i = 0; i < options.buildRuns; i += 1) {
-      const diagnostics = await createGcDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'build', run: i + 1, env: projectMeta.buildEnv })
+      const diagnostics = await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'build', run: i + 1, env: projectMeta.buildEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
       let sample
       try {
         sample = await runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv, diagnostics)
@@ -734,7 +754,7 @@ export async function runCase(versionMeta, projectMeta, options) {
       hmrPluginTimings.push(...result.samples.flatMap(sample => sample.pluginTiming ? [sample.pluginTiming] : []))
     }
     else {
-      const diagnostics = await createGcDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv })
+      const diagnostics = await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
       let result
       try {
         result = await runHmrRounds({
@@ -812,8 +832,20 @@ async function main() {
   const output = parseString('--out', 'benchmark/version-compare/data/matrix-raw.json')
   const gcDiagnosticDir = parseString('--gc-diagnostic-dir', '')
   const versions = await parseVersions()
-
-  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}) }
+  const allocationDiagnostics = process.argv.includes('--allocation-diagnostics')
+  const inputDiagnostics = process.argv.includes('--input-diagnostics')
+  if (allocationDiagnostics && inputDiagnostics) {
+    throw new Error('输入证据与分配采样必须分开运行')
+  }
+  validateAllocationRequest({
+    enabled: allocationDiagnostics || inputDiagnostics,
+    guardMode: process.argv.includes('--guard'),
+    baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',
+    selectedProjects,
+    buildRuns,
+    hmrRuns,
+  })
+  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}), ...(allocationDiagnostics ? { allocationDiagnostics: true } : {}), ...(inputDiagnostics ? { inputDiagnostics: true } : {}) }
   const rows = []
 
   for (const projectMeta of selectedProjects) {

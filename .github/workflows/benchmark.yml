@@ -37,6 +37,14 @@ on:
         description: 为 only 指定的 Mpx 或 Uni Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.3
         type: boolean
         default: false
+      input_diagnostics:
+        description: 仅 Uni 的完整候选与来源证据，独立诊断，不启用 inspector，不参与正式预算
+        type: boolean
+        default: false
+      allocation_diagnostics:
+        description: 仅 Uni 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
+        type: boolean
+        default: false
       build_runs:
         description: 每个项目的 build 采样次数
         required: false
@@ -58,7 +66,7 @@ on:
         default: false
 
 concurrency:
-  group: benchmark-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
+  group: benchmark-${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && format('diagnostic-{0}', github.run_id) || inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -66,11 +74,13 @@ permissions:
 
 jobs:
   scope:
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Scope' || 'scope' }}
     uses: ./.github/workflows/ci-scope.yml
     with:
       full_verification: ${{ inputs.full_verification || false }}
 
   weekly-demo-cost:
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Weekly Cost' || 'weekly-demo-cost' }}
     if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost
     uses: ./.github/workflows/demo-performance-weekly.yml
     with:
@@ -80,7 +90,7 @@ jobs:
   synthetic-performance:
     needs: scope
     if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: Synthetic Performance Gate (ubuntu-latest, 22)
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Synthetic (ubuntu-latest, 22)' || 'Synthetic Performance Gate (ubuntu-latest, 22)' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -126,7 +136,7 @@ jobs:
   benchmark-matrix:
     needs: scope
     if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: Prepare benchmark matrix
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Prepare benchmark diagnostic matrix' || 'Prepare benchmark matrix' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -143,6 +153,10 @@ jobs:
         env:
           BENCH_DISPATCH_BASELINE_REF: ${{ inputs.baseline_ref }}
           BENCH_DISPATCH_GC_DIAGNOSTICS: ${{ inputs.gc_diagnostics }}
+          BENCH_DISPATCH_INPUT_DIAGNOSTICS: ${{ inputs.input_diagnostics }}
+          BENCH_DISPATCH_ALLOCATION_DIAGNOSTICS: ${{ inputs.allocation_diagnostics }}
+          BENCH_BUILD_RUNS: ${{ inputs.build_runs }}
+          BENCH_HMR_RUNS: ${{ inputs.hmr_runs }}
           BENCH_ONLY: ${{ inputs.only }}
         run: node benchmark/version-compare/scripts/dispatch-inputs.mjs
 
@@ -156,7 +170,7 @@ jobs:
           echo "include=$include" >> "$GITHUB_OUTPUT"
 
   benchmark-shard:
-    name: Benchmark shard (${{ matrix.case_name }})
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark diagnostic shard' || 'Benchmark shard' }} (${{ matrix.case_name }})
     needs: benchmark-matrix
     runs-on: ubuntu-latest
     timeout-minutes: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && 30 || 45 }}
@@ -173,6 +187,8 @@ jobs:
       BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
       BENCH_HMR_RUNS: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && '3' || github.event.inputs.hmr_runs || '5' }}
       BENCH_ONLY: ${{ matrix.bench_only }}
+      BENCH_INPUT_DIAGNOSTICS: ${{ github.event_name == 'workflow_dispatch' && inputs.input_diagnostics && 'true' || 'false' }}
+      BENCH_ALLOCATION_DIAGNOSTICS: ${{ github.event_name == 'workflow_dispatch' && inputs.allocation_diagnostics && 'true' || 'false' }}
       # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
       WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
       # 私有自然 GC 证据与原 RSS 门禁隔离，两侧及已有确认轮次使用相同 preload。
@@ -190,7 +206,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && '22.23.3' || '22' }}
+          node-version: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && '22.23.3' || '22' }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -219,14 +235,15 @@ jobs:
 
       - name: Run current vs published benchmark
         if: (github.event_name != 'pull_request' || inputs.full_verification)
-        run: >
-          pnpm bench:ci --
-          --build-runs "$BENCH_BUILD_RUNS"
-          --hmr-runs "$BENCH_HMR_RUNS"
-          --timeout 180000
-          --poll-interval 30
-          --only "$BENCH_ONLY"
-          --result-dir .tmp/benchmark-ci/result
+        run: |
+          benchmark_diagnostic_args=()
+          if [ "$BENCH_INPUT_DIAGNOSTICS" = true ]; then
+            benchmark_diagnostic_args+=(--input-diagnostics)
+          fi
+          if [ "$BENCH_ALLOCATION_DIAGNOSTICS" = true ]; then
+            benchmark_diagnostic_args+=(--allocation-diagnostics)
+          fi
+          pnpm bench:ci -- --build-runs "$BENCH_BUILD_RUNS" --hmr-runs "$BENCH_HMR_RUNS" --timeout 180000 --poll-interval 30 --only "$BENCH_ONLY" --result-dir .tmp/benchmark-ci/result "${benchmark_diagnostic_args[@]}"
 
       - name: Upload benchmark artifacts
         if: always()
@@ -237,7 +254,7 @@ jobs:
           if-no-files-found: error
 
   current-vs-published:
-    name: Performance guard and published trend
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Summary' || 'Performance guard and published trend' }}
     if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
     needs: [scope, benchmark-shard]
     runs-on: ubuntu-latest
