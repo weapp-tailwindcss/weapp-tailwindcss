@@ -18,7 +18,17 @@ regressions:
   - benchmark/version-compare/test/allocation-sampling.test.mjs
   - benchmark/version-compare/test/allocation-watch.test.mjs
   - benchmark/version-compare/test/taro-diagnostics.test.mjs
+  - benchmark/version-compare/test/mpx-instrumentation.test.mjs
+  - benchmark/version-compare/test/mpx-operations.test.mjs
+  - benchmark/version-compare/test/mpx-operation-evidence.test.mjs
+  - benchmark/version-compare/test/mpx-worker.test.mjs
 verification:
+  - claim: Mpx 诊断协议、受控源码执行及原有 benchmark 回归通过，尚不代表真实 Mpx 构建或性能归因
+    kind: unit
+    status: passed
+    sha: f4a240c4bd97dd7f6cc76fa3609f422b25db2c94
+    environment: macOS arm64，实际 Node 22.23.3，CI=1，24 文件 178 项，零跳过
+    command: node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1 --no-file-parallelism
   - claim: ab1aa7d 的正式 Mpx 首轮同时超过耗时及 RSS 预算，未触发仅 RSS 反序确认
     kind: ci
     status: failed
@@ -230,6 +240,16 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 后续准确 head `8f0d56a7b355a86fc11a9f23748ae88e8f7adb90` 自动创建的[正式 run `40067923070`、Mpx job `120795374942`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40067923070/job/120795374942) 在相同基线、三次冷构建、三轮 HMR 和原预算下通过，`blocking=true`、`passed=true`、`errors=[]`、`violations=[]`，未触发反序确认。门禁使用的 steady 插件耗时为 `401 → 377ms`，HMR peak RSS 为 `1951.32 → 1610.05MiB`，steady RSS 为 `1898.43 → 1585.04MiB`；耗时三项原样本为基线 `[398,379,401]`、当前 `[417,376,377]`，不能将全部三项中位数与剔除预热后的门禁值混用。
 
 该次工件 `12550681085` 的测试合并提交 `87ec517c25bf2a192a9708fabdb07ddd84a7bef2` 与 head 源码树同为 `859802a8301a86ded9b11a9a4ab15ff80fdc1a12`。`ab1aa7d` 到 `8f0d56a` 只修改四个测试和两份复盘文档，产品源码、性能脚本及预算相同；因此这是新 head 的独立正式采样通过，不是性能修复证据，也不抵销此前三项实际违规。两次首轮和原始样本并列保留，未为此次失败触发正式重跑；造成两轮差异的分配及输入因素仍未确定。
+
+### Mpx 操作诊断的身份与观测边界
+
+为补足首败中缺少的逐请求证据，`f4a240c4bd97dd7f6cc76fa3609f422b25db2c94` 将已有输入和分配诊断扩展至 Mpx。只有显式手动诊断使用此协议；正式工作负载、三次冷构建、三轮 HMR、预算和反序条件保持原行为。插桩仅写 benchmark 准备副本，全部 AST 锚点验证成功后才写入；服务池在历史基线中整文件不存在时登记为能力缺失，损坏锚点不能降级忽略。
+
+扫描器记录已有读取的来源全文，生成器记录实际候选、请求、生成 CSS 与 raw CSS；全文按 SHA-256 存储，不为采样额外读取源码。服务池分别观测匹配、取得和请求 key、来源快照、请求快照及结果复制。服务 entry、底层生成器、租约 facade 和 lease 使用不同身份，`service.acquire` 显式连接这些对象；相同 key 的退役前后两代服务不合并。实际生成器对象继续连接原生 pool 和 session。进程内弱身份只支持调用关联，不能证明跨 worker 的闭包或对象相等；比较只排除事件元数据顶层的身份字段，保留嵌套用户同名配置、实际全文哈希和不可比标记。
+
+Webpack 记录每个实际 compilation 的创建和完成，额外编译及 child 编译均保留；阶段快照只选择根编译，并携带实际 compilation 身份。child 先完成不占用根快照。快照数、编译数和生成调用数分别报告，不互相替代。停止采样不替产品关闭，只被动记录随后实际发生的释放；创建减释放不足以推断泄漏，更不能证明 V8 或原生内存已经归还。缺失、损坏、配对不完整或超过固定事件、身份、文件及总字节上限都会使诊断失败。
+
+新增受控源码执行先暴露了确定性插桩错误：无分号源码后的 `(globalThis...)` 被 ASI 解析为前一调用的继续，执行 `acquire` 报 `this.leases.set(...) is not a function`。显式分隔语句后，真实 service、scan、generator 和 native 源码在 stub 后端下通过。真实 Node worker 用例使用手工构造的 Mpx 对象及操作，验证协议和 child/root 顺序；它们没有运行真实 Mpx CLI。主树整合后在实际 Node 22.23.3 执行完整 benchmark 定向套件，24 文件、178 项通过，零跳过；修改文件严格 ESLint、actionlint 与 diff 检查通过。准确最终 head 的真实 Mpx 输入诊断及其工件复核仍待执行，整篇保持 `partial`，不能用这些测试解释此前 RSS 差额。
 
 ## 适用边界
 
