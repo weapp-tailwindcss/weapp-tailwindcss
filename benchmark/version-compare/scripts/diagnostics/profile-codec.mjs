@@ -1,10 +1,12 @@
-import { Buffer } from 'node:buffer'
+import { Buffer, isUtf8 } from 'node:buffer'
 import { limits } from './constants.mjs'
 import { evidenceLimitError, sha256 } from './evidence.mjs'
+import { compressAllocationEnvelope, compressedAllocationEncoding, decompressAllocationEnvelope } from './profile-compression.mjs'
+import { boundedJsonBytes } from './profile-json.mjs'
 
 export const allocationEncoding = 'weapp-tailwindcss.allocation-url-dictionary.v1'
 
-const jsonBytes = value => Buffer.byteLength(JSON.stringify(value))
+const jsonBytes = value => boundedJsonBytes(value, { filename: 'allocation.json', maximum: limits.maxTotalBytes })
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value)
 const integer = value => Number.isSafeInteger(value) && value >= 0
 
@@ -167,7 +169,9 @@ export function encodeAllocationEvidence(document, { filename = 'allocation.json
 }
 
 export function writeAllocationEvidence(writer, filename, document) {
-  const envelope = encodeAllocationEvidence(document, { filename, ...writer.accounting() })
+  const options = { filename, ...writer.accounting() }
+  const encoded = encodeAllocationEvidence(document, options)
+  const envelope = compressAllocationEnvelope(encoded, options)
   return writer.write(filename, envelope, limits.maxProfileBytes, envelope.statistics)
 }
 
@@ -180,9 +184,19 @@ export function decodeAllocationEvidence(raw, receipt, filename = 'allocation.js
   if (receipt && (receipt.bytes !== bytes.length || receipt.sha256 !== sha256(bytes))) {
     throw new Error(`分配证据文件尺寸或哈希不匹配：${filename}`)
   }
-  const value = JSON.parse(bytes.toString('utf8'))
+  if (!isUtf8(bytes)) {
+    invalid('文件不是合法 UTF-8')
+  }
+  let value = JSON.parse(bytes.toString('utf8'))
   if (!object(value)) {
     invalid('根对象')
+  }
+  const compressed = value.encoding === compressedAllocationEncoding ? value : undefined
+  if (compressed) {
+    value = decompressAllocationEnvelope(compressed, filename)
+    if (!object(value) || value.encoding !== allocationEncoding) {
+      invalid('压缩内容必须为已登记的 URL 字典版本')
+    }
   }
   const document = Object.hasOwn(value, 'encoding') ? value.document : value
   if (expectedKind && (expectedKind === 'profile' ? !object(document?.sampling) : expectedKind === 'frames' ? !Array.isArray(document?.allocationFrames) : true)) {
@@ -198,7 +212,8 @@ export function decodeAllocationEvidence(raw, receipt, filename = 'allocation.js
   }
   const statistics = inspectEnvelope(value)
   if (!object(value.statistics) || Object.keys(value.statistics).length !== Object.keys(statistics).length
-    || Object.entries(statistics).some(([key, count]) => value.statistics[key] !== count)) {
+    || Object.entries(statistics).some(([key, count]) => value.statistics[key] !== count)
+    || (compressed && (!object(compressed.statistics) || Object.keys(compressed.statistics).length !== Object.keys(statistics).length || Object.entries(statistics).some(([key, count]) => compressed.statistics[key] !== count)))) {
     invalid('statistics')
   }
   assertDecodedLimit(statistics, filename)

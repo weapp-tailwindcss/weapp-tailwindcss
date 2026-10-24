@@ -29,7 +29,7 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 - `allocation-preparation/*/instrumentation.json`：副本原文和插桩后的 SHA，以及唯一 AST 锚点。源码工作树和含 `.git` 的目录不能插桩。
 - `gc-diagnostics/*/*/allocation-controller.json`：准确执行命令、限定范围的构建环境、源码初始/修改/回滚实际 SHA、预期 SHA、marker 和阶段时间。marker 归一化 SHA 仅供辅助比较，实际 SHA 始终保留。
 - `inputs-N.json`：各来源层的完整候选和源码 SHA、UTF-8 字节数、UTF-16 长度、完整编译候选集合。每次冷构建 1 份；watch 包含首次构建、3 次修改、3 次回滚和结束共 8 份。最后一份来自停止采样，未发生新编译，因此不虚构编译候选集合。
-- `allocation-N.json`：从启动以来累计的完整统计分配 profile、采样参数和阶段，按下述无损 URL 字典协议保存。该数值不是存活堆或 RSS，不能直接和进程树 RSS 相减。源码映射缺失时保留生成模块身份并标记不可跨构建比较。
+- `allocation-N.json`：从启动以来累计的完整统计分配 profile、采样参数和阶段，按下述无损压缩协议保存。该数值不是存活堆或 RSS，不能直接和进程树 RSS 相减。源码映射缺失时保留生成模块身份并标记不可跨构建比较。
 - `allocation-frames-N.json`：原始 profile 对应的全部栈帧与映射；只读取准备副本内仓库模块的源码和 sourcemap。第三方 `node_modules`、副本外模块及越界符号链接保留原始函数名、模块身份和行列，明确标记未映射、不能跨构建比较。原始 profile 与 `inputs-N.json` 在映射前写入；映射失败保留这些首败证据，但状态仍失败，不产生完整验收结果。控制器同时核对原始 profile 和映射文件的哈希。
 - `diagnostic-input-comparison.json`：两侧对应阶段逐项比较候选和来源哈希，额外候选列出所属来源层及 SHA。仅来源 key 的已知项目根会归一化；源码中的根目录文字、marker 等内容差异保留。若实际输入不同，本轮分配差异不能解释原正式失败。
 - `allocation-diagnostic.json`：明确标记 `diagnosticOnly=true`、`budgetAcceptance=false`。这两个模式在正式预算和反序确认前返回，不产生正式通过报告。
@@ -38,13 +38,15 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 
 ## Profile 传输与读取
 
-新 profile 和栈映射文件使用 `weapp-tailwindcss.allocation-url-dictionary.v1` envelope。`urls` 保存每个完整 URL 一次，`document` 仅将 `sampling.profile` 树中的 `callFrame.url` 或映射记录中的 `originalUrl` 替换为字典下标。空字符串、data URL、Unicode、行列、节点顺序、样本和未知扩展字段均不归一化、不截断。采样器的原对象不改写；映射仍消费完整原始 URL。统计额外记录 `samplesWithoutNodeCount`：当前 head 无对应节点的样本仍完整保留，不丢弃、不补造栈。栈映射只覆盖 head 可取得的栈；无法关联的样本不归入任何模块、框架或泄漏结论。其他输入、操作和全文证据维持原协议。
+新 profile 和栈映射文件使用 `weapp-tailwindcss.allocation-gzip.v1` envelope，`data` 是标准 gzip 字节的规范 base64，`uncompressedBytes` 声明内层实际字节数，`statistics` 保留可复核统计。内层仍为 `weapp-tailwindcss.allocation-url-dictionary.v1`：`urls` 保存每个完整 URL 一次，`document` 仅将 `sampling.profile` 树中的 `callFrame.url` 或映射记录中的 `originalUrl` 替换为字典下标。gzip 同时压缩重复结构字段，避免只有短 URL 的大 profile 仍因重复 JSON 字段超限。
 
-控制器和离线消费者使用 `profile-files.mjs` 的 `readAllocationEvidenceFile(file, receipt, expectedKind)`，已读 Buffer 可使用 `profile-codec.mjs` 的 `decodeAllocationEvidence(raw, receipt, filename, expectedKind)`。读取器先限制实际文件大小，并明确指定 `profile` / `frames` 防止串用，按编码文件原始字节校验 receipt 的 bytes 和 SHA，再验证版本、全部引用、节点结构和重新计算的尺寸统计；兼容旧未编码 profile / 映射。不能直接以 `JSON.parse(...).sampling` 读取新文件，也不能只验证文件 hash 后跳过解码验证。
+空字符串、data URL、Unicode、行列、节点顺序、样本和未知 JSON 扩展字段均不归一化、不截断。采样器的原对象不改写；映射仍消费完整原始 URL。统计额外记录 `samplesWithoutNodeCount`：当前 head 无对应节点的样本仍完整保留，不丢弃、不补造栈。栈映射只覆盖 head 可取得的栈；无法关联的样本不归入任何模块、框架或泄漏结论。其他输入、操作和全文证据维持原协议。
 
-传输继续受每文件 16 MiB、会话总计 64 MiB 的既有预算约束。解码增加独立的 64 MiB 逻辑 JSON 大小上限：先按字典字符串的 JSON 转义后 UTF-8 字节与引用数计算完整原值尺寸，再还原字符串引用；不先序列化展开后的大对象，也不信任文件声明的统计。这个上限不会保证任意真实 profile 都能保存。编码后仍超限、逻辑展开超限或累计超限均失败，不拆分绕过预算。失败消息保留文件名、精确字节数、对应上限、已写累计、总上限以及可取得的节点/样本/唯一 URL/重复 URL 尺寸统计，保留此前已完成的证据文件。
+控制器和离线消费者使用 `profile-files.mjs` 的 `readAllocationEvidenceFile(file, receipt, expectedKind)`，已读 Buffer 可使用 `profile-codec.mjs` 的 `decodeAllocationEvidence(raw, receipt, filename, expectedKind)`。读取器先限制实际文件大小，按编码文件原始字节校验 receipt 的 bytes 和 SHA，再检查压缩版本、规范 base64、有界解压、实际解压尺寸与 UTF-8，最后验证内层版本、全部引用、节点结构和重新计算的内外层统计。明确指定 `profile` / `frames` 防止串用；兼容旧未编码和 URL 字典 v1 profile / 映射。不能直接以 `JSON.parse(...).sampling` 读取新文件，也不能只验证文件 hash 后跳过解码验证。
 
-字典化只减少重复 URL 的传输与序列化开销，不改变 inspector 采样参数、正式预算或采样终点。它不能证明某次未留下 profile 的失败由重复 data URL 引起，也不能据诊断 fixture 通过宣称真实框架 RSS 回归已修复。
+传输继续受每文件 16 MiB、会话总计 64 MiB 的既有预算约束，base64 与 envelope 也计入存储字节。序列化前先有界计算实际 JSON UTF-8 尺寸，内层压缩输入和完整原值 JSON 均不得超过 64 MiB；普通 JSON 数据之外的循环、自定义序列化对象立即失败。`gzipSync` 的 `maxOutputLength` 按扣除 base64 和 envelope 开销后的真实文件预算设置；`gunzipSync` 的实际输出硬界固定为 64 MiB，不使用声明尺寸分配。解压后再按字典字符串的 JSON 转义后 UTF-8 字节与引用数计算完整原值尺寸，验证后才还原字符串引用。这个上限不会保证任意真实 profile 都能保存。压缩、展开或累计超限均失败，不拆分绕过预算；zlib 提前终止时只报告确知的硬界与原因，不虚构未生成的完整压缩字节数。此前已完成的证据文件保持可审计。
+
+字典与 gzip 只改变诊断传输，不改变 inspector 采样参数、正式预算或采样终点。同步压缩、解压、字节计数和序列化都有 CPU 与内存观测开销，后续累计样本可能包含此前压缩；新诊断的 RSS 不能替代未插桩的正式预算比较。它不能证明某次未留下 profile 的失败由重复 data URL 引起，也不能据诊断 fixture 通过宣称真实框架 RSS 回归已修复。
 
 ## 固定范围
 

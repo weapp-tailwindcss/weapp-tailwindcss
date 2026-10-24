@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -91,8 +92,9 @@ describe('完整 profile 的有界 URL 字典传输', () => {
     expect(encoded.statistics.uniqueUrls).toBe(1)
     expect(decodeAllocationEvidence(raw, stored)).toEqual(original)
     const frames = { profileFile: 'allocation-1.json', profileReceipt: stored, allocationFrames: Array.from({ length: 20 }, (_, nodeId) => ({ nodeId, originalUrl: url, custom: { url } })) }
-    // 非 URL 槽不会被字典化，避免改变扩展字段协议。
-    expect(() => writeAllocationEvidence(writer, 'large-frames.json', frames)).toThrow('encoded-file')
+    // 非 URL 槽不做字典替换，gzip 仍保留扩展字段的完整内容。
+    const fullFrames = writeAllocationEvidence(writer, 'large-frames.json', frames)
+    expect(decodeAllocationEvidence(await fs.readFile(path.join(root, 'large-frames.json')), fullFrames)).toEqual(frames)
     const mapping = { ...frames, allocationFrames: frames.allocationFrames.map(({ custom, ...frame }) => frame) }
     const mapped = writeAllocationEvidence(writer, 'allocation-frames-1.json', mapping)
     expect(decodeAllocationEvidence(await fs.readFile(path.join(root, 'allocation-frames-1.json')), mapped)).toEqual(mapping)
@@ -152,13 +154,12 @@ describe('完整 profile 的有界 URL 字典传输', () => {
     expect(() => decodeAllocationEvidence(serialize(encoded))).toThrow('decoded-document')
   })
 
-  it('没有可压缩重复时仍执行原 16 MiB 文件上限，错误保留精确尺寸且不写半文件', async () => {
+  it('压缩实际输出越界仍执行原 16 MiB 文件上限，保留预算和统计且不写半文件', async () => {
     const root = await fixture()
     const writer = createEvidenceWriter(root)
     writer.write('prior.json', { retained: true })
-    const original = profile([`data:text/plain,${'x'.repeat(limits.maxProfileBytes)}`])
+    const original = profile([`data:text/plain,${randomBytes(limits.maxProfileBytes).toString('base64')}`])
     const encoded = encodeAllocationEvidence(original)
-    const expectedBytes = serialize(encoded).length
     let failure
     try {
       writeAllocationEvidence(writer, 'allocation-1.json', original)
@@ -166,22 +167,25 @@ describe('完整 profile 的有界 URL 字典传输', () => {
     catch (error) {
       failure = error.message
     }
-    expect(failure).toContain(`"filename":"allocation-1.json","bytes":${expectedBytes},"maximum":${limits.maxProfileBytes},"bytesWritten":${writer.accounting().bytesWritten}`)
+    expect(failure).toContain('分配证据压缩失败')
+    expect(failure).toContain('"filename":"allocation-1.json","maximumCompressedBytes":')
+    expect(failure).toContain(`"fileMaximum":${limits.maxProfileBytes}`)
+    expect(failure).toContain(`"bytesWritten":${writer.accounting().bytesWritten}`)
     expect(failure).toContain(`"totalMaximum":${limits.maxTotalBytes}`)
     expect(failure).toContain('"nodeCount":1')
     expect(await fs.readdir(root)).toEqual(['prior.json'])
     expect(() => decodeAllocationEvidence(serialize(encoded))).toThrow('encoded-read')
   })
 
-  it('字典化文件仍计入原会话总预算，超额失败保留此前文件', async () => {
+  it('压缩文件按实际存储字节计入原会话总预算，超额失败保留此前文件', async () => {
     const root = await fixture()
     const writer = createEvidenceWriter(root)
-    const original = profile(['x'.repeat(8 * 1024 * 1024)])
-    for (let i = 0; i < 7; i++) {
-      writeAllocationEvidence(writer, `allocation-${i}.json`, original)
+    for (let i = 0; i < 4; i++) {
+      writer.write(`prior-${i}.json`, { retained: 'x'.repeat(15 * 1024 * 1024) })
     }
-    expect(() => writeAllocationEvidence(writer, 'allocation-7.json', original)).toThrow('session-total')
-    expect(await fs.readdir(root)).toHaveLength(7)
+    const original = profile([randomBytes(4 * 1024 * 1024).toString('base64')])
+    expect(() => writeAllocationEvidence(writer, 'allocation-1.json', original)).toThrow('session-total')
+    expect(await fs.readdir(root)).toHaveLength(4)
     expect(writer.accounting().bytesWritten).toBeLessThan(limits.maxTotalBytes)
   })
 
