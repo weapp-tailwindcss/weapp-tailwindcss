@@ -4,10 +4,10 @@ import { diagnosticSymbol } from './constants.mjs'
 const observer = `(globalThis as any)[Symbol.for(${JSON.stringify(diagnosticSymbol)})]`
 const wrappers = new Set(['sync', 'async', 'observe'])
 const notifications = new Set(['emit', 'source'])
-const webpackNotifications = new Set(['webpackCreated', 'webpackCompleted'])
+const observerNotifications = new Set(['webpackCreated', 'webpackCompleted', 'compilation', 'registerStore'])
 
 /** 无观察器时保留原表达式与原函数体；已注册但损坏的协议必须继续失败。 */
-export function guardMpxObserver(source, relative) {
+export function guardDiagnosticObserver(source, relative) {
   const ast = ts.createSourceFile(relative, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
   function classify(node) {
     if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) {
@@ -18,7 +18,7 @@ export function guardMpxObserver(source, relative) {
     if (ts.isPropertyAccessExpression(receiver) && receiver.name.text === 'operations' && receiver.expression.getText(ast) === observer) {
       return { observer: receiver.expression, wrapper: wrappers.has(method), notification: notifications.has(method) }
     }
-    if (receiver.getText(ast) === observer && webpackNotifications.has(method)) {
+    if (receiver.getText(ast) === observer && observerNotifications.has(method)) {
       return { observer: receiver, notification: true }
     }
   }
@@ -44,7 +44,7 @@ export function guardMpxObserver(source, relative) {
         if (target?.notification) {
           guarded++
           const call = ts.visitEachChild(node.expression.expression, visit, context)
-          // Webpack 未注册观察器时不能因为 await undefined 增加微任务边界。
+          // 未注册观察器时不能因为 await undefined 增加微任务边界。
           return factory.createIfStatement(present(target.observer), factory.createBlock([
             factory.createExpressionStatement(factory.createAwaitExpression(call)),
           ], true))
@@ -58,7 +58,7 @@ export function guardMpxObserver(source, relative) {
         if (target.wrapper) {
           const callback = observed.arguments[2]
           if (!ts.isArrowFunction(callback) || ts.isBlock(callback.body)) {
-            throw new Error(`Mpx 观察器调用缺少可直通的表达式：${relative}`)
+            throw new Error(`诊断观察器调用缺少可直通的表达式：${relative}`)
           }
           direct = callback.body
         }
@@ -76,7 +76,7 @@ export function guardMpxObserver(source, relative) {
   }])
   try {
     if (!guarded) {
-      throw new Error(`Mpx 观察器惰性边界缺失：${relative}`)
+      throw new Error(`诊断观察器惰性边界缺失：${relative}`)
     }
     return ts.createPrinter().printFile(result.transformed[0])
   }

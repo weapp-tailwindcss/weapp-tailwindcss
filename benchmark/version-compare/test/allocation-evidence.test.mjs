@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { allocationProject, diagnosticMutationMarker, limits, validateAllocationRequest } from '../scripts/diagnostics/constants.mjs'
 import { candidateEvidence, compilationCandidates, createEvidenceWriter, rootRelativeKey, sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { annotateAllocationFrames } from '../scripts/diagnostics/frames.mjs'
@@ -48,8 +48,11 @@ describe('分配诊断输入和正式门禁隔离', () => {
   it('完整保留不同来源层和候选，哈希按实际 UTF-8，观测不改写 store', () => {
     const snapshot = { candidatesById: [['/base/a.vue', ['z', 'flex']]], scanSourceById: [['/base/a.vue', '中文 flex']], inlineIncludedCandidates: ['grid'], inlineExcludedCandidates: ['hidden'] }
     const before = structuredClone(snapshot)
-    const store = { snapshot: () => snapshot, values: () => new Set(['grid', 'flex', 'z']), getRevision: () => 7 }
-    const evidence = candidateEvidence(store, '/base')
+    const store = { snapshot: vi.fn(() => snapshot), values: () => new Set(['grid', 'flex', 'z']), getRevision: () => 7 }
+    const onSnapshot = vi.fn()
+    const evidence = candidateEvidence(store, '/base', onSnapshot)
+    expect(store.snapshot).toHaveBeenCalledOnce()
+    expect(onSnapshot).toHaveBeenCalledExactlyOnceWith(snapshot)
     expect(evidence.candidates).toEqual(['flex', 'grid', 'z'])
     expect(evidence.maps.scanSourceById).toEqual([{ key: '/base/a.vue', comparableKey: '<root>/a.vue', sha256: sha256(Buffer.from('中文 flex')), utf8Bytes: 11, utf16Length: 7 }])
     expect(snapshot).toEqual(before)

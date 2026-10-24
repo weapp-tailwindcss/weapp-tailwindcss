@@ -34,6 +34,7 @@ async function start() {
   let compilationId = 0
   let webpackCreatedCount = 0
   let webpackCompletedCount = 0
+  let viteCompletedCount = 0
   const webpackPhases = new WeakMap()
   const capturedPhases = new Set()
   let complete = false
@@ -42,7 +43,7 @@ async function start() {
   let lastCommand = 0
   const frameReceipts = []
   const startedAt = performance.now()
-  const operations = identity.project === mpxProject ? createOperationRecorder({ writer, root: identity.root, phase: stage }) : undefined
+  const operations = createOperationRecorder({ writer, root: identity.root, phase: stage })
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
     identity,
@@ -69,9 +70,10 @@ async function start() {
       pid: process.pid,
       complete,
       recordingError,
-      compilationCount: operations ? webpackCreatedCount : compilationId,
+      compilationCount: identity.project === mpxProject ? webpackCreatedCount : viteCompletedCount,
       snapshotCount: compilationId,
-      ...(operations ? { webpackCreatedCount, webpackCompletedCount, operations: operations.summary() } : {}),
+      ...(identity.project === mpxProject ? { webpackCreatedCount, webpackCompletedCount } : { viteCompletedCount }),
+      operations: operations.summary(),
       storeCount: storeId,
       frameReceipts,
       elapsedMs: performance.now() - startedAt,
@@ -90,7 +92,7 @@ async function start() {
     throw error
   }
 
-  async function capture(collections, stop = false, completedPhase, rootCompilationId) {
+  async function capture(collections, stop = false, completedPhase, rootCompilationId, finalizationId) {
     if (recordingError || complete) {
       throw new Error(recordingError ?? '诊断会话已关闭')
     }
@@ -103,7 +105,7 @@ async function start() {
     try {
       // 先取 profile，再序列化来源；观测自身分配会进入下一份累计 profile，按诊断栈单独标识。
       const sampling = await sampler?.capture(stop)
-      const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId: rootCompilationId })
+      const frames = persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId: rootCompilationId, finalizationId, operations })
       if (frames) {
         frameReceipts.push(frames)
       }
@@ -154,7 +156,17 @@ async function start() {
       stores.set(storeId, new WeakRef(store))
     },
     compilation(collections) {
-      queue = queue.then(() => capture(collections, identity.kind === 'build'))
+      const current = stage()
+      const phase = { ...current, type: current.type === 'watch-ready' ? 'watch-start' : current.type.replace(/-observed$/, '-write') }
+      const key = `${phase.type}:${phase.round ?? ''}`
+      const id = ++viteCompletedCount
+      const selectedForSnapshot = phase.type !== 'watch-stop' && !capturedPhases.has(key)
+      operations.emit('vite.completed', { finalizationId: id, selectedForSnapshot, collections }, undefined, undefined, phase)
+      if (!selectedForSnapshot) {
+        return queue
+      }
+      capturedPhases.add(key)
+      queue = queue.then(() => capture(collections, identity.kind === 'build', phase, undefined, id))
       return queue
     },
   }
@@ -192,7 +204,7 @@ async function start() {
         writeStatus()
       }
       catch (error) {
-        process.stderr.write(`Mpx 诊断末尾状态写入失败：${String(error)}\n`)
+        process.stderr.write(`操作诊断末尾状态写入失败：${String(error)}\n`)
       }
     })
   }

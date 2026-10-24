@@ -5,15 +5,16 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { diagnosticSymbol, mpxProject } from './constants.mjs'
+import { allocationProjects, diagnosticSymbol, mpxProject } from './constants.mjs'
 import { prepareAllocationRoot } from './prepare.mjs'
 
 /** 仅验证实际准备副本内的主包依赖链及 UI 消费链，不启动全面验收或性能 worker。 */
-export async function verifyPreparationBuild(root, sourceRoot, evidenceDirectory) {
+export async function verifyPreparationBuild(root, sourceRoot, evidenceDirectory, project = mpxProject) {
   root = await fs.realpath(root)
   evidenceDirectory = path.resolve(evidenceDirectory)
   assert.equal(globalThis[Symbol.for(diagnosticSymbol)], undefined, '准备构建不得预注册 observer')
-  await prepareAllocationRoot(root, sourceRoot, evidenceDirectory, mpxProject)
+  assert.ok(allocationProjects.includes(project), '准备构建只接受已登记的单个诊断项目')
+  await prepareAllocationRoot(root, sourceRoot, evidenceDirectory, project)
   const commands = []
   async function pnpm(buildArguments, name) {
     // 输入副本须先准备好依赖；此回归不让 pnpm 在构建前再次安装或改写依赖。
@@ -58,11 +59,11 @@ export async function verifyPreparationBuild(root, sourceRoot, evidenceDirectory
   }
   await pnpm(['--filter', '@weapp-tailwindcss/ui', 'run', 'build'], 'ui-build')
   assert.ok((await fs.stat(path.join(root, 'packages-runtime/ui/dist/index.css'))).size > 0)
-  return { root, commands, paths }
+  return { root, project, commands, paths }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [root, sourceRoot, evidenceDirectory] = process.argv.slice(2)
-  assert.ok(root && sourceRoot && evidenceDirectory, '用法：node verify-preparation-build.mjs <无 .git 准备副本> <源码工作树> <证据目录>')
-  await verifyPreparationBuild(root, sourceRoot, evidenceDirectory)
+  const [root, sourceRoot, evidenceDirectory, project] = process.argv.slice(2)
+  assert.ok(root && sourceRoot && evidenceDirectory, '用法：node verify-preparation-build.mjs <无 .git 准备副本> <源码工作树> <证据目录> [项目]')
+  await verifyPreparationBuild(root, sourceRoot, evidenceDirectory, project)
 }

@@ -8,6 +8,7 @@ import { diagnosticSymbol, validateAllocationRequest } from '../scripts/diagnost
 import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { createGcDiagnostics } from '../scripts/gc-diagnostics.mjs'
 import { createServiceFixture, mpxProject, versionFor } from './helpers/gc-service.mjs'
+import { viteOperationFixture } from './helpers/vite-operations.mjs'
 
 const roots = []
 const project = { ...mpxProject, key: 'demo-taro-vite-react-tailwindcss-v4__mp-weixin', sourceFile: 'source.tsx' }
@@ -61,6 +62,8 @@ if (!observer) throw new Error('runner preload absent');
 if (${JSON.stringify(mode)} === 'inputs' && process.moduleLoadList.includes('NativeModule inspector')) throw new Error('unexpected inspector');
 const store = { snapshot: () => ({ candidatesById: [['source.tsx', ['flex']]], sourceById: [['source.tsx', 'flex 中文']] }), values: () => new Set(['flex']), getRevision: () => 1 };
 observer.registerStore(store);
+${viteOperationFixture()}
+await diagnosticGenerate();
 const allocation = Array.from({length: 20000}, (_, i) => ({ values: new Array(32).fill(i) }));
 await observer.compilation({ sourceCandidates: store.values() });
 if (allocation.length !== 20000) throw new Error('fixture');
@@ -84,6 +87,7 @@ if (allocation.length !== 20000) throw new Error('fixture');
     await diagnostics.finish()
     const directory = JSON.parse(diagnostics.env.WEAPP_TW_BENCH_ALLOCATION_SESSION).sessionDirectory
     const start = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
+    expect(start).toMatchObject({ nodeVersion: process.version, executable: await fs.realpath(process.execPath) })
     expect(start.actualEntry).toBe(await fs.realpath(entry))
     expect(start.identity.project).toBe(project.key)
     const gc = JSON.parse(await fs.readFile(path.join(directory, 'controller.json'), 'utf8'))

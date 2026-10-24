@@ -68,7 +68,7 @@ describe('Mpx 操作完整性与跨工程比较', () => {
   })
 
   it('身份名单只排除事件顶层元数据，嵌套 options/source 同名输入和不透明引用仍保留', () => {
-    const identityFields = ['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId']
+    const identityFields = ['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'storeId', 'finalizationId']
     const details = value => ({ ...Object.fromEntries(identityFields.map(name => [name, value])), options: { ownerId: 7 }, source: { generatorId: 8 } })
     const base = controller('/base', 'linux', details(1))
     const current = controller('/head', 'linux', details(99))

@@ -32,6 +32,10 @@ describe('仅 benchmark 副本内的 AST 观测注入', () => {
     expect(store.getRevision()).toBe(1)
     delete globalThis[Symbol.for(diagnosticSymbol)]
     expect(module.createSourceCandidateStore().getRevision()).toBe(1)
+    for (const broken of [null, {}, { registerStore: undefined }]) {
+      globalThis[Symbol.for(diagnosticSymbol)] = broken
+      expect(() => module.createSourceCandidateStore()).toThrow()
+    }
   })
 
   it('Vite 完成边界等待完整观测，失败按原异步调用链传播', async () => {
@@ -53,6 +57,28 @@ describe('仅 benchmark 副本内的 AST 观测注入', () => {
     compilation.mockRejectedValueOnce(new Error('missing evidence'))
     await expect(module.finalizeGenerateBundle({ onEnd })).rejects.toThrow('missing evidence')
     expect(onEnd).toHaveBeenCalledOnce()
+  })
+
+  it('Vite 未注册观察器时没有额外 await，晚注册与损坏协议保持明确边界', async () => {
+    const module = await load(instrumentDiagnosticSource(bundleSource, bundleTarget).source)
+    const order = []
+    const options = { onEnd: () => order.push('end') }
+    const direct = module.finalizeGenerateBundle(options)
+    expect(order).toEqual(['end'])
+    await direct
+    const compilation = vi.fn(() => Promise.resolve())
+    globalThis[Symbol.for(diagnosticSymbol)] = { compilation }
+    await module.finalizeGenerateBundle(options)
+    expect(compilation).toHaveBeenCalledOnce()
+    delete globalThis[Symbol.for(diagnosticSymbol)]
+    const next = module.finalizeGenerateBundle(options)
+    expect(order).toEqual(['end', 'end', 'end'])
+    await next
+    for (const broken of [null, {}, { compilation: undefined }]) {
+      globalThis[Symbol.for(diagnosticSymbol)] = broken
+      await expect(module.finalizeGenerateBundle(options)).rejects.toThrow()
+    }
+    expect(order).toHaveLength(3)
   })
 
   it('锚点缺失、重复、返回契约变化及重复注入全部明确失败', () => {

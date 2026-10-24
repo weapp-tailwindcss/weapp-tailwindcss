@@ -67,4 +67,16 @@ node benchmark/version-compare/scripts/diagnostics/verify-preparation-build.mjs 
 
 每会话最多 4096 个操作事件、4096 个弱映射身份；仍共用每文件 16 MiB、会话 64 MiB 的写入预算，全文文件与操作事件均计入。未知候选迭代器不能被额外消费，诊断明确失败。观测会改变分配和时序，所有数据仅用于诊断，不能直接解释原正式 RSS 差异。
 
+## Vite 操作与来源全文
+
+Uni 和 Taro Vite 复用同一套生成器、原生会话、engine compile/build 与可选服务池 AST 插桩；Webpack 的创建、child 与根 compilation 校验继续由 Mpx 独立使用。准备阶段没有 observer 时，Vite finalizer 直接执行原流程，不增加 `await undefined` 微任务；store 直接返回原对象，不创建诊断包装闭包。运行中注册或移除 observer 立即生效，已注册但损坏的协议必须失败。
+
+每次实际 `finalizeGenerateBundle` 到达既有 `onEnd` 前记录 `vite.completed`，保存当下固定阶段、单调 `finalizationId` 和实际候选集合。同阶段额外完成全部入流，仅首个完成选为快照；`compilationCount` / `viteCompletedCount` 是实际完成次数，`snapshotCount` 仍为冷构建 1 或 watch 8。各 `inputs-N.json` 的完成身份、阶段和候选须对应唯一已选择事件；watch-stop 只有结束快照，不虚构完成身份或候选。
+
+`source.snapshot` 使用每阶段每个 store 已有的同一次 `snapshot()` 结果，保存各来源层、实际文件身份和来源全文引用，不另读源码或重复调用 snapshot。各层全文与 `inputs-N.json` 的 SHA、长度和 store/阶段身份逐项核对。相同内容共享 `text-<sha256>.json`，CRLF 和源码中的根目录文字均保持原样；store 与 finalizer 身份只在事件顶层视为进程内元数据，嵌套同名用户输入仍参与比较。生成请求、每次 CSS/rawCss 和实际生命周期同样保留调用顺序；汇总列出总次数及各阶段次数。
+
+以上事件和全文仍共用原有 4096 事件、16 MiB 单文件、64 MiB 会话预算，超限必须失败。验证器先核实际文件数量、总字节、全文引用和操作配对，再核构建器自己的完成关系。输入模式不加载 inspector；这些证据用于解释调用与输入差异，不表示 RSS 性能修复或正式预算通过。
+
+Vite 的无 observer 准备构建可在前述 `verify-preparation-build.mjs` 命令末尾追加 `demo-taro-vite-react-tailwindcss-v4__mp-weixin` 或 Uni 项目标识，默认仍验证 Mpx。该回归只构建已有依赖与 UI 消费链，不启动真实框架性能 workload。
+
 定向回归包含真实 Node 子进程中的 Mpx 诊断 worker 协议、手工构造的 compilation/store/操作，以及插桩后真实会话源码的受控依赖测试；这些不是实际 Mpx CLI 构建验收。真实框架行为仍需在集成后的准确 head 上单独运行 inputs 诊断，不能以协议 fixture 通过代替。

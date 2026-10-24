@@ -2,7 +2,7 @@ import { performance } from 'node:perf_hooks'
 import { candidateEvidence, compilationCandidates } from './evidence.mjs'
 import { annotateAllocationFrames } from './frames.mjs'
 
-export function persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId }) {
+export function persistCompilationEvidence({ identity, phase, index, sampling, stores, collections, writer, started, compilationId, finalizationId, operations }) {
   // 原始 profile 与输入先持久保存；归因失败仍保留首败数据，不把缺失映射当作成功。
   const profileFile = sampling ? `allocation-${index}.json` : undefined
   const framesFile = sampling ? `allocation-frames-${index}.json` : undefined
@@ -11,7 +11,14 @@ export function persistCompilationEvidence({ identity, phase, index, sampling, s
   for (const [id, reference] of stores) {
     const store = reference.deref()
     if (store) {
-      sources.push({ storeId: id, ...candidateEvidence(store, identity.root) })
+      sources.push({ storeId: id, ...candidateEvidence(store, identity.root, operations && (snapshot => operations.emit('source.snapshot', {
+        storeId: id,
+        snapshotIndex: index,
+        layers: Object.entries(snapshot).filter(([name]) => /^(?:sourceById|.*SourceById)$/.test(name)).map(([layer, entries]) => ({
+          layer,
+          files: entries.map(([file, source]) => ({ file, source })),
+        })),
+      }, undefined, undefined, phase))) })
     }
     else {
       stores.delete(id)
@@ -25,6 +32,7 @@ export function persistCompilationEvidence({ identity, phase, index, sampling, s
     phase,
     index,
     compilationId,
+    finalizationId,
     sources,
     compilationCandidates: collections ? compilationCandidates(collections) : undefined,
     profileFile,

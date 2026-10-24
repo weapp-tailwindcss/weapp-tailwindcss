@@ -8,6 +8,7 @@ import { diagnosticSymbol } from '../scripts/diagnostics/constants.mjs'
 import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
+import { viteOperationFixture } from './helpers/vite-operations.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -62,6 +63,8 @@ if (identity.mode === 'inputs' && process.moduleLoadList.includes('NativeModule 
 const key = path.join(identity.root, 'input.vue');
 const store = { snapshot: () => ({ candidatesById: [[key, ['flex', 'extra']]], sourceById: [[key, '中文 flex extra']], inlineIncludedCandidates: [], inlineExcludedCandidates: [] }), values: () => new Set(['extra', 'flex']), getRevision: () => 2 };
 globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})].registerStore(store);
+${viteOperationFixture(`globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})]`)}
+await diagnosticGenerate();
 function allocateFixture() { return Array.from({ length: 20000 }, (_, i) => ({ text: 'fixture-' + i, values: new Array(32).fill(i) })); }
 const allocation = allocateFixture();
 await globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})].compilation({ sourceCandidates: store.values(), runtime: new Set(['flex']), transformRuntime: new Set(['flex']), generatorRuntime: store.values() });
@@ -73,6 +76,8 @@ if (allocation.length !== 20000) throw new Error('fixture');
       await runNode(entry, diagnostics.env)
       await diagnostics.finish()
       const directory = JSON.parse(diagnostics.env.WEAPP_TW_BENCH_ALLOCATION_SESSION).sessionDirectory
+      const startup = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
+      expect(startup).toMatchObject({ nodeVersion: process.version, executable: await fs.realpath(process.execPath) })
       const controller = JSON.parse(await fs.readFile(path.join(directory, 'allocation-controller.json'), 'utf8'))
       const inputs = JSON.parse(await fs.readFile(path.join(directory, 'inputs-1.json'), 'utf8'))
       expect(controller).toMatchObject({ diagnosticOnly: true, status: { complete: true, compilationCount: 1 } })
@@ -88,7 +93,9 @@ if (allocation.length !== 20000) throw new Error('fixture');
         const frames = JSON.parse(await fs.readFile(path.join(directory, inputs.framesFile), 'utf8'))
         expect(frames.allocationFrames.length).toBeGreaterThan(0)
         expect(frames.profileReceipt).toEqual(inputs.profileReceipt)
-        await fs.writeFile(path.join(directory, inputs.framesFile), '{}')
+        const corrupted = await fs.readFile(path.join(directory, inputs.framesFile))
+        corrupted[0] = 91
+        await fs.writeFile(path.join(directory, inputs.framesFile), corrupted)
         await expect(diagnostics.finish()).rejects.toThrow('栈映射缺失或哈希不匹配')
       }
       controllers.push(controller)

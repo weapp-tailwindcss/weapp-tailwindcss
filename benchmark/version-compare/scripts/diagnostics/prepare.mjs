@@ -4,6 +4,8 @@ import path from 'node:path'
 import ts from 'typescript'
 import { diagnosticSymbol, mpxProject } from './constants.mjs'
 import { instrumentMpxSource, mpxTargets } from './mpx-instrumentation.mjs'
+import { guardDiagnosticObserver } from './observer-guard.mjs'
+import { generationTargets, instrumentOperationSource } from './operation-instrumentation.mjs'
 
 const targets = [
   { relative: 'packages/weapp-tailwindcss/src/project-sources/candidates/store.ts', kind: 'store', name: 'createSourceCandidateStore' },
@@ -40,7 +42,7 @@ export function instrumentDiagnosticSource(source, target) {
     }
     start = expression.getStart(ast)
     end = expression.end
-    replacement = `((store: any) => { ${observer}?.registerStore(store); return store })(${source.slice(start, end)})`
+    replacement = `${observer} === undefined ? ${source.slice(start, end)} : ((store: any) => { ${observer}.registerStore(store); return store })(${source.slice(start, end)})`
   }
   else {
     const endings = fn.body.statements.filter(node => ts.isExpressionStatement(node)
@@ -66,9 +68,10 @@ export function instrumentDiagnosticSource(source, target) {
       throw new Error('Vite 完成边界缺失实际候选集合')
     }
     start = end = endings[0].getStart(ast)
-    replacement = `await ${observer}?.compilation({ ${names.join(', ')} })\n  `
+    replacement = `await ${observer}.compilation({ ${names.join(', ')} })\n  `
   }
-  return { source: source.slice(0, start) + replacement + source.slice(end), anchor: { function: target.name, kind: target.kind, offset: start } }
+  const instrumented = source.slice(0, start) + replacement + source.slice(end)
+  return { source: target.kind === 'compilation' ? guardDiagnosticObserver(instrumented, target.relative) : instrumented, anchor: { function: target.name, kind: target.kind, offset: start } }
 }
 
 export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory, project) {
@@ -88,7 +91,7 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
   const prepared = []
   const selected = project === mpxProject
     ? [targets[0], ...mpxTargets.map(([kind, relative]) => ({ kind, relative }))]
-    : targets
+    : [...targets, ...generationTargets.map(([kind, relative]) => ({ kind, relative }))]
   const absentCapabilities = []
   for (const target of selected) {
     const file = path.resolve(realRoot, target.relative)
@@ -103,7 +106,7 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
       }
       throw error
     }
-    const transformed = target.name ? instrumentDiagnosticSource(source, target) : instrumentMpxSource(source, target.kind, target.relative)
+    const transformed = target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
     prepared.push({ target, file, original: source, ...transformed })
   }
   // 所有锚点均验证成功后再写入副本，不容许半套观测协议启动。

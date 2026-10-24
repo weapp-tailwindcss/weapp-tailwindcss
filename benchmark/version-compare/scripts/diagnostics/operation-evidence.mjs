@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { limits } from './constants.mjs'
+import { limits, mpxProject } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { verifyViteCompletions, verifyWebpackCompletions } from './operation-completions.mjs'
 import { verifyServiceEvidence } from './service-evidence.mjs'
 
 // 只排除事件 details 顶层的进程内身份；同名用户输入和不透明引用仍完整比较。
-const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey'])
+const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey', 'storeId', 'finalizationId'])
 
 /** 控制器逐份复核全文引用；不以缺失或截断记录证明没有操作。 */
 export async function verifyOperationEvidence(directory, status, identity = {}) {
@@ -15,16 +16,16 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     const size = (await fs.stat(path.join(directory, file))).size
     bytes += size
     if (size > limits.maxProfileBytes || bytes > limits.maxTotalBytes) {
-      throw new Error('Mpx 工件超过文件或会话总量上限')
+      throw new Error('操作工件超过文件或会话总量上限')
     }
   }
   if (bytes !== status.bytesWritten || files.length !== status.filesWritten) {
-    throw new Error('Mpx 工件总量与最后状态不一致')
+    throw new Error('操作工件总量与最后状态不一致')
   }
   const names = files.filter(name => /^operation-\d+\.json$/.test(name))
   names.sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]))
   if (!names.length || names.length > limits.maxOperationEvents || status.operations?.recordingError || names.length !== status.operations?.events) {
-    throw new Error('Mpx 操作记录缺失、超限或失败')
+    throw new Error('操作记录缺失、超限或失败')
   }
   const texts = new Map()
   const events = []
@@ -34,7 +35,7 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     }
     if (value.text?.file) {
       const reference = value.text
-      if (reference.file !== `text-${reference.sha256}.json`) {
+      if (!/^[a-f\d]{64}$/.test(reference.sha256) || reference.file !== `text-${reference.sha256}.json`) {
         throw new Error('来源全文引用路径不匹配')
       }
       if (!texts.has(reference.file)) {
@@ -46,7 +47,12 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
         if (typeof stored.text !== 'string' || stored.text.length !== reference.utf16Length || sha256(stored.text) !== reference.sha256) {
           throw new Error('来源全文内容哈希不匹配')
         }
-        texts.set(reference.file, reference.sha256)
+        texts.set(reference.file, { sha256: reference.sha256, receipt: { bytes: raw.length, sha256: sha256(raw) }, utf16Length: stored.text.length })
+      }
+      const stored = texts.get(reference.file)
+      if (reference.sha256 !== stored.sha256 || reference.utf16Length !== stored.utf16Length
+        || reference.receipt?.bytes !== stored.receipt.bytes || reference.receipt?.sha256 !== stored.receipt.sha256) {
+        throw new Error('来源全文重复引用元数据不匹配')
       }
     }
     for (const item of Object.values(value)) {
@@ -72,82 +78,52 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     }
     else if (/\.(?:success|failure)$/.test(event.name)) {
       if (pending.get(event.details.operationId) !== event.name.replace(/\.(?:success|failure)$/, '')) {
-        throw new Error('Mpx 操作完成缺少对应开始或重复完成')
+        throw new Error('操作完成缺少对应开始或重复完成')
       }
       pending.delete(event.details.operationId)
     }
   }
   if (pending.size) {
-    throw new Error('Mpx 操作缺少完成证据')
+    throw new Error('操作缺少完成证据')
   }
-  const requiredOperations = ['webpack.created', 'webpack.completed', 'scan.source', 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.success']
+  const webpack = identity.project === undefined || identity.project === mpxProject
+  const requiredOperations = [...(webpack ? ['webpack.created', 'webpack.completed', 'scan.source'] : ['vite.completed', 'source.snapshot']), 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.success']
   if (identity.capabilities?.compilerServicePool.available) {
     requiredOperations.push('service.lookup.start', 'service.create.start', 'service.acquire', 'acquire.key.success', 'request.key.success', 'acquire.sourceSnapshot.success', 'request.snapshot.success', 'result.copy.success')
   }
   for (const required of requiredOperations) {
     if (!events.some(event => event.name === required)) {
-      throw new Error(`Mpx 必需操作证据缺失：${required}`)
+      throw new Error(`必需操作证据缺失：${required}`)
     }
   }
   const count = name => events.filter(event => event.name === name).length
-  if (count('webpack.created') !== status.webpackCreatedCount || count('webpack.completed') !== status.webpackCompletedCount) {
-    throw new Error('Mpx 编译次数与最后状态不一致')
+  const snapshots = []
+  for (const file of files.filter(file => /^inputs-\d+\.json$/.test(file))) {
+    snapshots.push([file, JSON.parse(await fs.readFile(path.join(directory, file), 'utf8'))])
   }
-  const serviceEvidence = verifyServiceEvidence(events)
-  const compilations = new Map()
-  for (const event of events.filter(item => item.name === 'webpack.created' || item.name === 'webpack.completed')) {
-    const { compilationId, isChild } = event.details
-    if (event.name === 'webpack.created') {
-      if (!Number.isInteger(compilationId) || compilations.has(compilationId) || typeof isChild !== 'boolean') {
-        throw new Error('Webpack compilation 创建身份无效或重复')
-      }
-      compilations.set(compilationId, { isChild, completed: false })
-    }
-    else {
-      const creation = compilations.get(compilationId)
-      if (!creation || creation.completed || creation.isChild !== isChild) {
-        throw new Error('Webpack compilation 完成身份不匹配')
-      }
-      creation.completed = true
-    }
-  }
-  const selectedCompilations = new Map(events.filter(event => event.name === 'webpack.completed' && event.details.selectedForSnapshot).map(event => [event.details.compilationId, event]))
-  const rootSnapshots = []
-  const snapshots = files.filter(file => /^inputs-\d+\.json$/.test(file))
   if (snapshots.length !== status.snapshotCount) {
     throw new Error('阶段快照数量与最后状态不一致')
   }
-  for (const name of snapshots) {
-    const inputs = JSON.parse(await fs.readFile(path.join(directory, name), 'utf8'))
-    if (inputs.phase.type === 'watch-stop') {
-      if (inputs.compilationId !== undefined) {
-        throw new Error('停止采样不能虚构 compilation 身份')
-      }
-      continue
-    }
-    const completion = selectedCompilations.get(inputs.compilationId)
-    const creation = compilations.get(inputs.compilationId)
-    if (!completion || !creation || creation.isChild !== false || completion.details.isChild !== false
-      || completion.details.startedPhase.type !== inputs.phase.type || completion.details.startedPhase.round !== inputs.phase.round) {
-      throw new Error('阶段快照必须对应已完成的非 child 根 compilation')
-    }
-    rootSnapshots.push({ file: name, compilationId: inputs.compilationId })
-    selectedCompilations.delete(inputs.compilationId)
-  }
-  if (selectedCompilations.size) {
-    throw new Error('根 compilation 缺少对应阶段快照')
+  const completions = (webpack ? verifyWebpackCompletions : verifyViteCompletions)(events, snapshots, status)
+  const serviceEvidence = verifyServiceEvidence(events)
+  const phaseCounts = new Map()
+  for (const event of events) {
+    const key = `${event.phase.type}:${event.phase.round ?? ''}`
+    const entry = phaseCounts.get(key) ?? { phase: { type: event.phase.type, round: event.phase.round }, operations: {} }
+    entry.operations[event.name] = (entry.operations[event.name] ?? 0) + 1
+    phaseCounts.set(key, entry)
   }
   return {
     events: events.length,
     textFiles: texts.size,
-    webpackCreated: count('webpack.created'),
-    webpackCompleted: count('webpack.completed'),
+    ...completions,
+    operationCounts: Object.fromEntries([...new Set(events.map(event => event.name))].map(name => [name, count(name)])),
+    phaseCounts: [...phaseCounts.values()],
     snapshotCount: status.snapshotCount,
-    rootSnapshots,
     serviceEvidence,
     capabilities: identity.capabilities,
     lifecycleBoundary: '按实际调用记录；watch-stop 仅停止采样。关闭尾部可能缺失，不以创建减释放推断泄漏或原生内存释放。',
-    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature'].includes(event.name)).map(event => `operation-${event.sequence}.json`),
+    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature', 'source.snapshot', 'vite.completed'].includes(event.name)).map(event => `operation-${event.sequence}.json`),
   }
 }
 

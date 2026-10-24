@@ -43,7 +43,7 @@ function sortedCandidates(values) {
   return candidates
 }
 
-export function candidateEvidence(store, root) {
+export function candidateEvidence(store, root, onSnapshot) {
   const snapshot = store.snapshot()
   const result = { revision: store.getRevision(), candidates: sortedCandidates(store.values()), maps: {} }
   let count = 0
@@ -67,6 +67,7 @@ export function candidateEvidence(store, root) {
         : { candidates: sortedCandidates(value) }),
     })).sort((a, b) => a.key.localeCompare(b.key))
   }
+  onSnapshot?.(snapshot)
   return result
 }
 

@@ -5,7 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { createGcDiagnostics } from '../gc-diagnostics.mjs'
 import { appendNodeImport } from '../gc-paths.mjs'
-import { diagnosticMutationMarker, limits, mpxProject, mutationMarkerRule } from './constants.mjs'
+import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
 import { verifyOperationEvidence } from './operation-evidence.mjs'
 
@@ -21,7 +21,7 @@ export async function createCaseDiagnostics(options) {
     throw new Error('分配诊断无法取得实际 worker 身份')
   }
   const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), platform: process.platform, mode: options.allocation === 'inputs' ? 'inputs' : 'allocation' }
-  if (identity.project === mpxProject) {
+  {
     const serviceFile = path.join(identity.root, 'packages/weapp-tailwindcss/src/core/compiler/generator-service-pool.ts')
     const available = await fs.access(serviceFile).then(() => true, (error) => {
       if (error.code !== 'ENOENT') {
@@ -128,9 +128,7 @@ export async function createCaseDiagnostics(options) {
           || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (status.snapshotCount ?? status.compilationCount) !== expectedCount) {
           throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
         }
-        if (identity.project === mpxProject) {
-          operationEvidence = await verifyOperationEvidence(directory, status, identity)
-        }
+        operationEvidence = await verifyOperationEvidence(directory, status, identity)
         const expectedPhases = options.kind === 'build'
           ? [['build-start', undefined]]
           : [['watch-start', undefined], ...[1, 2, 3].flatMap(round => [['mutation-write', round], ['rollback-write', round]]), ['watch-stop', undefined]]
@@ -146,9 +144,11 @@ export async function createCaseDiagnostics(options) {
             }
             const frames = await fs.readFile(path.join(directory, inputs.framesFile))
             const receipt = status.frameReceipts?.[index]
+            if (receipt?.file !== inputs.framesFile || receipt.receipt.sha256 !== sha256(frames)) {
+              throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
+            }
             const mapping = JSON.parse(frames)
-            if (receipt?.file !== inputs.framesFile || receipt.receipt.sha256 !== sha256(frames)
-              || mapping.profileFile !== inputs.profileFile || mapping.profileReceipt.sha256 !== inputs.profileReceipt.sha256) {
+            if (mapping.profileFile !== inputs.profileFile || mapping.profileReceipt.sha256 !== inputs.profileReceipt.sha256) {
               throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
             }
           }

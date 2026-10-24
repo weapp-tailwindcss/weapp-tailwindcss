@@ -73,7 +73,7 @@ export function createOperationRecorder({ writer, root, phase }) {
     return Object.fromEntries(Object.entries(value).map(([name, item]) => [name, serialize(item, name, seen, depth + 1)]))
   }
 
-  function emit(name, details = {}, timing, startedPhase) {
+  function emit(name, details = {}, timing, startedPhase, recordedPhase) {
     try {
       if (recordingError) {
         throw new Error(recordingError)
@@ -82,7 +82,7 @@ export function createOperationRecorder({ writer, root, phase }) {
         throw new Error('诊断操作事件超过上限')
       }
       const started = performance.now()
-      const currentPhase = phase()
+      const currentPhase = recordedPhase ?? phase()
       const data = serialize(details)
       const totalKey = `${currentPhase.type}:${currentPhase.round ?? ''}:${name}`
       const total = totals.get(totalKey) ?? { phase: currentPhase, name, count: 0, durationMs: 0, maxDurationMs: 0 }
