@@ -3,9 +3,16 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417
 regressions:
+  - benchmark/version-compare/test/dispatch-inputs.test.mjs
   - benchmark/version-compare/test/gc-diagnostics.test.mjs
   - benchmark/version-compare/test/gc-workload-isolation.test.mjs
 verification:
+  - claim: Git 基线输入、Uni CLI 身份和双侧自然 GC 环境遵循既有统计与确认契约
+    kind: unit
+    status: passed
+    sha: 1067d215a5a7851f549c1b9f142380084015cf37
+    environment: macOS，Node 24.18.0，pnpm 12.14.0，CI=1，Git 与进程夹具
+    command: pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1
   - claim: Mpx 冷构建未通过原 RSS 预算
     kind: ci
     status: failed
@@ -47,6 +54,10 @@ verification:
 首败及反序工件保留，uni-app ZIP 的 SHA-256 为 `72d1198021d24f3e075b8cba46973c799ccc379682e9168e19ee1d96e3794162`。本地诊断的计数、自然 GC、来源对齐、出处和清理记录保存在任务的忽略工件中；全部二十个观察到的相关进程退出，工作树干净，未操作其他任务或 IDE。
 
 后续应固定 Linux、Node 22.23.3、准确 PR head 和上述 Git 基线，定向采集自然 GC 证据。诊断与正式放行分开：保留原 RSS 统计、预算、HMR 反序规则及失败退出；若仍无法解释差额，再对首次出现差异的阶段采集等量 allocation / retainer 证据。不能盲目重跑直到偶然通过，也不能用插桩运行取消既有首败。
+
+`1067d215a5a7851f549c1b9f142380084015cf37` 为已有 Benchmark 工作流补充可选 `baseline_ref` 和 `gc_diagnostics` 手动输入。前者为空时保持发布版比较；非空时必须为仓库中实际存在的完整 commit SHA，通过环境变量交给既有 Git 基线比较。后者默认关闭，启用时要求 `only` 显式选择登记的 Mpx / Uni Vite 项目，并固定采样 shard 的 Node 22.23.3。Uni 的诊断只在显式手动运行中启用，普通 PR 的原有 Mpx 诊断和全部门限保持原逻辑。
+
+GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校验包身份后复用原 preload，不把框架名或文件名当作进程身份。未知项目、错误包身份和错误 bin 有回归；workload 夹具覆盖两侧、冷构建、连续 HMR 及有无诊断的环境隔离。主树整合后的完整 benchmark 测试为十三文件 / 104 项通过，作者另有三文件 / 32 项定向验证及修改文件 ESLint 通过。正式 Linux 诊断尚未执行，不能将夹具测试记为真实性能样本。
 
 ## 适用边界
 
