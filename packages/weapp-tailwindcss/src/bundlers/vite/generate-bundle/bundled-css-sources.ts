@@ -9,6 +9,10 @@ export function selectUnbundledCssReplaySources(
   bundle: Readonly<OutputBundle>,
   onBundledSource: (sourceFile: string) => void,
 ) {
+  const rememberedSources = [...sources ?? []]
+  if (!rememberedSources.some(([, source]) => source.delivery === 'vite-module')) {
+    return rememberedSources
+  }
   const bundledSources = new Set<string>()
   for (const output of Object.values(bundle)) {
     if (output.type !== 'chunk') {
@@ -20,7 +24,7 @@ export function selectUnbundledCssReplaySources(
       }
     }
   }
-  return [...sources ?? []].filter(([, source]) => {
+  return rememberedSources.filter(([, source]) => {
     if (source.delivery !== 'vite-module' || !bundledSources.has(normalizeCssSourceIdentity(source.sourceFile))) {
       return true
     }

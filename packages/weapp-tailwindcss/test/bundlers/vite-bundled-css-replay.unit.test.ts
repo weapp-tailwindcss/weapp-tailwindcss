@@ -22,6 +22,31 @@ function sourceEntry(sourceFile: string, delivery: RememberedCssSource['delivery
 }
 
 describe('Vite 已提交样式模块与缺席来源回放', () => {
+  it('没有通过模块提交的来源时不读取模块图', () => {
+    const author = sourceEntry('/project/author.css')
+    author[1].delivery = undefined
+    const bundle: OutputBundle = {}
+    Object.defineProperty(bundle, 'entry.js', {
+      enumerable: true,
+      get() {
+        throw new Error('没有模块提交来源时不应读取 bundle')
+      },
+    })
+    expect(selectUnbundledCssReplaySources([author], bundle, vi.fn())).toEqual([author])
+  })
+
+  it('一次性来源迭代器只消费一遍，缺席来源仍保留', () => {
+    const present = sourceEntry('/project/present.css')
+    const absent = sourceEntry('/project/absent.css')
+    function* sources() {
+      yield present
+      yield absent
+    }
+    const onBundledSource = vi.fn()
+    expect(selectUnbundledCssReplaySources(sources(), bundleWithModules([present[1].sourceFile]), onBundledSource)).toEqual([absent])
+    expect(onBundledSource).toHaveBeenCalledExactlyOnceWith(present[1].sourceFile)
+  })
+
   it.each([
     ['/workspace/theme.css', '/workspace/theme.css?direct'],
     ['/theme.css', '/theme.css#build'],
