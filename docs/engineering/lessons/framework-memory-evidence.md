@@ -6,6 +6,11 @@ regressions:
   - benchmark/version-compare/test/dispatch-inputs.test.mjs
   - benchmark/version-compare/test/gc-diagnostics.test.mjs
   - benchmark/version-compare/test/gc-workload-isolation.test.mjs
+  - benchmark/version-compare/test/allocation-controller.test.mjs
+  - benchmark/version-compare/test/allocation-evidence.test.mjs
+  - benchmark/version-compare/test/allocation-instrumentation.test.mjs
+  - benchmark/version-compare/test/allocation-sampling.test.mjs
+  - benchmark/version-compare/test/allocation-watch.test.mjs
 verification:
   - claim: Git 基线输入、Uni CLI 身份和双侧自然 GC 环境遵循既有统计与确认契约
     kind: unit
@@ -25,6 +30,24 @@ verification:
     sha: 8e8f8ead4c5a1b5de38c63d74e847fa3a8ce3425
     environment: Ubuntu，Node 22.23.3，同一 watcher 连续三轮修改和回滚
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40032430975/job/120685419407
+  - claim: c3f5 正式 Uni HMR 同时超过耗时与内存预算，没有进入仅内存反序确认
+    kind: ci
+    status: failed
+    sha: c3f5e0884e783efda1948c9dff4480b1d25f95cc
+    environment: Ubuntu，Node 22，3 次 HMR 修改与回滚，2 个预热后 steady 样本
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40043575795/job/120721913856
+  - claim: c3f5 显式自然 GC 诊断通过原预算，但实际候选数量不同，不能解释正式首败
+    kind: ci
+    status: passed
+    sha: c3f5e0884e783efda1948c9dff4480b1d25f95cc
+    environment: Ubuntu，实际 worker Node 22.23.3，build 3 / HMR 3，显式自然 GC 诊断
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40043661543
+  - claim: 新输入证据和包含已回收对象的分配采样遵循固定阶段、检查名及预算隔离
+    kind: unit
+    status: passed
+    sha: d6a77403f88f037466d72bd8889e78d133fe02d2
+    environment: macOS arm64，校验官方 SHA256 的 Node 22.23.3，提交前相同代码内容，CI=1
+    command: pnpm exec node node_modules/vitest/vitest.mjs run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1
 ---
 
 # 框架隔离后的内存证据与诊断边界
@@ -39,6 +62,8 @@ verification:
 | uni-app HMR 首轮 | 9.03% / 100.23 MiB | 8.65% / 85.39 MiB |
 | uni-app HMR 反序确认 | 8.38% / 92.51 MiB | 6.83% / 67.82 MiB |
 
+后续 `c3f5e0884e783efda1948c9dff4480b1d25f95cc` 的正式 Uni job 仍首败：HMR plugin P95 从 148 到 162 ms（+9.459% / +14 ms），peak RSS 从 873.328 到 1205.570 MiB，steady RSS 从 794.020 到 1076.982 MiB。两侧实际执行 3 次修改与回滚；报告的 `2/2` 是剔除预热后的 steady 样本数，不能解释成缩短为两轮。该轮包含耗时违规，按既有 `requiresHmrMemoryConfirmation` 规则没有触发仅内存违规的反序确认。这是未通过的首轮，不能声称其反序确认失败，也不能扩大确认范围来规避耗时失败。
+
 ## 根因与纠正
 
 内存根因尚未确定。Mpx 的低内存基线轮次出现额外晚期 major GC，说明 GC 时序影响样本，但没有累计分配或保留路径证据，不能据此将失败归因于环境噪声。现有反序确认只适用于 HMR，没有冷构建确认，不扩大其含义。
@@ -49,6 +74,10 @@ verification:
 
 样式选项 fingerprint 含按进程分配的函数身份编号，跨进程 hash 不同不能证明配置语义不同。配置快照保留字符串值，只复制数据容器；候选约数百个，不能仅凭发现重复 Set / 数组就解释约百 MiB 差额。优化需先量化实际输入、累计分配和保留路径，不能恢复跨实例共享的可变 handler、AST 或 runtime。
 
+Linux 显式自然 GC 诊断 `40043661543` 使用同一 `c3f5` head、`fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 基线及 Node 22.23.3，结果通过原预算：HMR peak 1150.859 → 1001.293 MiB，steady 1133.934 → 982.965 MiB，冷构建 peak 中位数 632.047 → 646.133 MiB。但冷构建两侧 source/generator 候选为 287/391 和 289/393，修改阶段为 290/400 和 292/402；差异在首次构建已存在，不能归因于修改回滚残留。此前的正式 `c3f5` 失败两侧数量则均为冷构建 287/391、HMR 290/400。
+
+诊断两版本的完整 demo Git tree、入口原文以及配置文件相同，但没有采到完整候选名字、来源映射和运行时改写哈希，因此不能以静态 demo 相同证明实际生成输入等量。`knownCssSources` 长度多 18、remembered CSS 多 21 与两侧根路径长度差 3 有关系的可能性尚未验证。自然 GC 的 major/minor 计数为基线 4/365、当前 5/356，首次时序差异在启动阶段出现。最后一次当前 major 回调比事件延后约 506 ms，中间存在 minor GC；该回调的堆统计不能冒充同步 major 后存活堆。诊断成功不能取消原首败，也不足以归因为 GC 噪声。
+
 ## 验证
 
 首败及反序工件保留，uni-app ZIP 的 SHA-256 为 `72d1198021d24f3e075b8cba46973c799ccc379682e9168e19ee1d96e3794162`。本地诊断的计数、自然 GC、来源对齐、出处和清理记录保存在任务的忽略工件中；全部二十个观察到的相关进程退出，工作树干净，未操作其他任务或 IDE。
@@ -57,7 +86,17 @@ verification:
 
 `1067d215a5a7851f549c1b9f142380084015cf37` 为已有 Benchmark 工作流补充可选 `baseline_ref` 和 `gc_diagnostics` 手动输入。前者为空时保持发布版比较；非空时必须为仓库中实际存在的完整 commit SHA，通过环境变量交给既有 Git 基线比较。后者默认关闭，启用时要求 `only` 显式选择登记的 Mpx / Uni Vite 项目，并固定采样 shard 的 Node 22.23.3。Uni 的诊断只在显式手动运行中启用，普通 PR 的原有 Mpx 诊断和全部门限保持原逻辑。
 
-GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校验包身份后复用原 preload，不把框架名或文件名当作进程身份。未知项目、错误包身份和错误 bin 有回归；workload 夹具覆盖两侧、冷构建、连续 HMR 及有无诊断的环境隔离。主树整合后的完整 benchmark 测试为十三文件 / 104 项通过，作者另有三文件 / 32 项定向验证及修改文件 ESLint 通过。正式 Linux 诊断尚未执行，不能将夹具测试记为真实性能样本。
+GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校验包身份后复用原 preload，不把框架名或文件名当作进程身份。未知项目、错误包身份和错误 bin 有回归；workload 夹具覆盖两侧、冷构建、连续 HMR 及有无诊断的环境隔离。主树整合后的完整 benchmark 测试为十三文件 / 104 项通过，作者另有三文件 / 32 项定向验证及修改文件 ESLint 通过。这些是既有 GC 功能的回归，不覆盖后续新增输入和分配诊断。
+
+`c3f5` 正式 Uni 工件 ID 为 `12541206958`，ZIP SHA-256 为 `9e7329a7796dc9e2875373937f94181966d8fe32ea95e3b6d5e314c5b3ca352d`；显式自然 GC 工件 ID 为 `12540727932`，ZIP SHA-256 为 `27a90096bf5cd6e33b2f18ebd31b9e2dd7ffdf4a097ed651d5725b1235600e99`，与服务端 digest 相符。前者没有 GC 工件或 reverse 工件；后者 8 个 worker 记录均有完整行和写入计数，但 GC 记录结束时的 `complete:false` 仍保留，不能说包含进程终止后的全部事件。
+
+新诊断入口、固定范围和证据解释见 [Uni 输入与分配诊断](../../../benchmark/version-compare/scripts/diagnostics/README.md)。输入模式不加载 inspector；分配模式固定 256 KiB 采样间隔，包含已回收对象，不主动 GC。两侧只修改 benchmark 准备副本，用唯一 AST 锚点记录实际候选、来源层、源码哈希、修改和回滚。observer 使用弱引用，栈中标记自身及子调用分配；源码映射缺失时不把生成 chunk hash 当作函数身份。诊断运行的耗时和 RSS 不进入正式预算，不能触发或替代反序确认。
+
+所有显式诊断 dispatch（包括原自然 GC 模式）的 job 名与并发组独立于正式检查，包含 skipped job；否则同一提交后发的诊断成功或 skipped check 可能遮住正式失败。新输入/分配模式的修改 marker 由轮次确定，两侧使用相同实际内容，初始来源碰撞则失败；原正式及自然 GC 规则保持原样。
+
+新增诊断的首轮 watch fixture 暴露出夹具 owner 未保留 store：观测器只有 WeakRef，实际 GC 后如实报告空来源。夹具改为由持续编译的 owner 使用该 store，未将观测器改成强引用。固定 Node 22.23.3 的真实协议、双侧输入/分配 worker 和三轮 watch 回归随后 9 项通过；确定性 marker 修订后，完整 benchmark 回归最终为 18 文件 / 133 项通过，0 跳过。该测试执行于提交前相同代码内容之上，使用 `process.execPath` 启动实际 22.23.3 worker；输入模式确认 inspector 未加载，分配模式返回实际 profile，协议失败仍断开会话。
+
+修改文件 ESLint（显式关闭 `format/prettier`，不使用 Prettier）、`actionlint .github/workflows/benchmark.yml` 的实际工作流/schema/表达式检查及 `git diff --check` 均通过。独立旧基线的 `pnpm agents:check` 发现一处既有复盘链接目标缺失：`webpack-request-configuration.md` 已在集成树存在，但不在诊断分支；原失败保留。整合到 `774bb90f1` 后重新执行规则结构检查，69 份规则、390 份文档、1081 个命令条目、0 错误，diff 检查通过。新 Linux 输入/分配诊断尚未执行，不能用这些夹具测试代替真实分配归因或正式性能验收。
 
 ## 适用边界
 
@@ -65,4 +104,4 @@ GC 控制器通过登记的包名和 manifest 中的 bin 解析真实 CLI，校�
 
 ## 规则评估
 
-不新增 AGENTS 规则。已有“先测热点、保留首败、禁止放宽预算”的规则足够，使用明确的诊断输入、双侧身份校验和持久回归落实。
+新增诊断目录 [AGENTS](../../../benchmark/version-compare/scripts/diagnostics/AGENTS.md)，因副本 AST 插桩属于代码生成链路，明确唯一锚点、只写准备副本、固定边界和独立 check 身份。已有“先测热点、保留首败、禁止放宽预算”的根规则保持不变。
