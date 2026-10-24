@@ -3,8 +3,8 @@ import type { TailwindV4DesignSystem, TailwindV4Engine, TailwindV4GenerateOption
 import fs from 'node:fs'
 import { collectCustomPropertyValues, collectStaticCustomPropertyValues, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
 import { LRUCache } from 'lru-cache'
+import { useWebRpxCompatibility } from '@/compiler/style-capabilities'
 import { hasCssMacroTailwindV4Source, withCssMacroStyleOptions } from '@/css-macro/auto'
-import { shouldUseUniAppWebRpxCompatibility } from '@/runtime-branch/generator-target-env'
 import { stableSerialize } from '@/utils/stable-serialize'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '../candidates'
 import { loadTailwindV4DesignSystem } from '../design-system'
@@ -39,6 +39,7 @@ interface TailwindV4IncrementalGenerateCacheEntry {
 }
 
 interface TailwindV4IncrementalCacheSeedOptions {
+  cacheKey?: string | undefined
   compatibleSource: TailwindV4ResolvedSource
   generated: Awaited<ReturnType<TailwindV4Engine['generate']>>
   requestedCandidates: Set<string>
@@ -90,6 +91,7 @@ export function createIncrementalGenerateCacheKey(
     createTailwindV4SourceCacheKey(source),
     target,
     stableSerialize(styleOptions),
+    target === 'web' ? useWebRpxCompatibility(styleOptions) : false,
   ].join('\0')
 }
 
@@ -217,7 +219,7 @@ export function seedIncrementalGenerateCache(options: TailwindV4IncrementalCache
     return false
   }
 
-  const cacheKey = createIncrementalGenerateCacheKey(
+  const cacheKey = options.cacheKey ?? createIncrementalGenerateCacheKey(
     options.compatibleSource,
     options.target,
     options.styleOptions,
@@ -246,8 +248,7 @@ function shouldNormalizeRpxLengthCandidatesForTarget(
   if (target !== 'web') {
     return true
   }
-  const options = styleOptions as (Partial<IStyleHandlerOptions> & { appType?: string | undefined }) | undefined
-  return shouldUseUniAppWebRpxCompatibility(options?.appType)
+  return useWebRpxCompatibility(styleOptions)
 }
 
 export function normalizeTargetRpxLengthCandidates(

@@ -3,10 +3,12 @@ import type { RuntimeClassSetManager } from '../../shared/runtime-class-set'
 import type { IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
+import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
+import { runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { createDebug } from '@/debug'
 import { prependConfigDirective } from '@/generation/config-directive'
@@ -26,6 +28,7 @@ import {
   touchMapEntry,
 } from './create-native-framework-plugins/cache-state'
 import { createGulpFileTransforms } from './create-native-framework-plugins/file-transforms'
+import { createGulpPluginFacade } from './plugin-session'
 
 const debug = createDebug()
 const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
@@ -36,13 +39,19 @@ const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
  * @link https://tw.weapp.dev/docs/quick-start/frameworks/native
  */
 export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
+  return createGulpPluginFacade(createNativeGulpSession(options))
+}
+
+function createNativeGulpSession(options: UserDefinedOptions) {
   const hasInitialTailwindCssRoots = hasConfiguredTailwindV4CssRoots(options)
-  const opts = getCompilerContext({
+  const opts = createCompilerContext({
     ...options,
     __internalDeferMissingCssEntriesWarning: true,
   } as UserDefinedOptions)
 
   const { cache } = opts
+  // 兼容传入缓存实例；只有新创建的缓存允许由本编译实例整体修剪和清空。
+  const ownsCache = cache !== (options.cache as unknown)
   const initialTailwindRuntime = opts.tailwindRuntime
   const refreshTailwindcssRuntime = opts.refreshTailwindcssRuntime
 
@@ -396,8 +405,9 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
     return affectedScopes
   }
 
-  const transforms = createGulpFileTransforms({
+  const { release: releaseTransforms, ...transforms } = createGulpFileTransforms({
     cache,
+    ownsCache,
     createRuntimeSetHash,
     debug,
     generatedCssPreflightModeByFile,
@@ -420,15 +430,50 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
     resolveWxssUserHandlerOptions,
     runtimeState,
   })
+  let closing: Promise<void> | undefined
   return {
     ...transforms,
     beginCompilerShadowRun: () => beginShadowRun(runtimeState),
     completeCompilerShadowRun: (revision?: number) => finalizeCompilerShadowRun(runtimeState, { revision }),
-    async dispose() {
-      await disposeCompilerOwner(runtimeState)
-      await bundleRuntimeClassSetManager.reset()
-    },
+    dispose: () => closing ??= disposeCompilerOwner(runtimeState, {
+      async beforeDispose() {
+        const errors: unknown[] = []
+        const cleanups = [
+          () => bundleRuntimeClassSetManager.reset(),
+          ...(ownsCache
+            ? [
+                () => cache.instance.clear(),
+                () => cache.hashMap.clear(),
+              ]
+            : []),
+          releaseTransforms,
+          () => {
+            runtimeSourcesByFile.clear()
+            generatedCssPreflightModeByFile.clear()
+            compilationScopeBySourceFile.clear()
+            gulpProcessCacheKeys.clear()
+            defaultStyleHandlerOptionsCache.clear()
+            runtimeSet.clear()
+            cachedDefaultTemplateHandlerOptions = undefined
+            cachedDefaultTemplateRuntimeSet = undefined
+            cachedDefaultModuleGraphOptions = undefined
+            invalidateGulpSourceCandidates()
+          },
+        ]
+        for (const cleanup of cleanups) {
+          try {
+            await cleanup()
+          }
+          catch (error) {
+            errors.push(error)
+          }
+        }
+        if (errors.length > 0) {
+          throw new AggregateError(errors, 'Gulp 资源释放失败，已继续释放其余资源。')
+        }
+      },
+    }).finally(() => runtimeState.dispose()),
     getCompilerShadowRunSnapshot: () => getCompilerShadowRunSnapshot(runtimeState),
-    watchChange,
+    watchChange: (file: string, change?: Parameters<typeof watchChange>[1]) => runCompilerOwnerExternalActivity(runtimeState, () => watchChange(file, change)),
   }
 }

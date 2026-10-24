@@ -32,3 +32,33 @@ index 8c19bd1533ec53d98101c4e42dbdfbe814fc065a..914cb2b29b8aa42a9ca322d94fd23d88
      })
    })
  }
+diff --git a/utils/symlink.js b/utils/symlink.js
+--- a/utils/symlink.js
++++ b/utils/symlink.js
+@@ -35,9 +35,24 @@ module.exports.symlinkTargetConfig = function (api, target, webpackConfig) {
+       outputPath = path.resolve(outputPath, '../')
+     }
+     try {
++      const sourceConfigFile = api.resolve(path.join('static', target.mode, v))
+       const targetConfigFile = path.resolve(outputPath, v)
+-      if (fs.existsSync(targetConfigFile)) fs.unlinkSync(targetConfigFile)
+-      fs.linkSync(api.resolve(`static/${target.mode}/${v}`), targetConfigFile)
++      if (fs.existsSync(targetConfigFile)) {
++        const sourceStat = fs.lstatSync(sourceConfigFile, { bigint: true })
++        const targetStat = fs.lstatSync(targetConfigFile, { bigint: true })
++        // 已经共享同一正规文件时保留硬链接，避免重建引发 static 的 ctime 变化和空 watch 轮次。
++        if (
++          sourceStat.isFile() &&
++          targetStat.isFile() &&
++          sourceStat.ino !== 0n &&
++          sourceStat.ino === targetStat.ino &&
++          sourceStat.dev === targetStat.dev
++        ) {
++          return
++        }
++        fs.unlinkSync(targetConfigFile)
++      }
++      fs.linkSync(sourceConfigFile, targetConfigFile)
+     } catch (error) {
+       fs.copyFileSync(
+         api.resolve(`static/${target.mode}/${v}`),

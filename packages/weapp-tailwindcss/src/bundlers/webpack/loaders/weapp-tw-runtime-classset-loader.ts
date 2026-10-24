@@ -6,7 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { normalizeTailwindV4RuntimeCss } from '@weapp-tailwindcss/postcss/transform'
 import { isWebpackCssLoaderRuntimeSource } from '../shared/css-loader-runtime'
-import { getWebpackLoaderRuntime } from './runtime-registry'
+import { resolveWebpackLoaderRuntime } from './runtime-registry'
 import { registerWebpackWatchContext, registerWebpackWatchFile } from './watch-dependencies'
 
 interface RuntimeClassSetLoaderOptions extends WebpackRuntimeClassSetLoaderOptions {
@@ -75,53 +75,56 @@ const WeappTwRuntimeClassSetLoader: webpack.LoaderDefinitionFunction<RuntimeClas
     process.stdout.write(`[weapp-tw-runtime-classset-loader] executing for ${this.resourcePath}\n`)
   }
   const rawOptions = this.getOptions()
-  const runtime = getWebpackLoaderRuntime(rawOptions?.weappTailwindcssRuntimeKey)
+  const runtime = resolveWebpackLoaderRuntime(rawOptions?.weappTailwindcssRuntimeKey, this._compiler)
   const opt = runtime?.classSet ?? rawOptions
-  if (this.resourcePath) {
-    const sourceText = Buffer.isBuffer(source) ? source.toString('utf8') : source
-    if (!isWebpackCssLoaderRuntimeSource(sourceText)) {
-      opt?.updateGeneratedCss?.({
+  const execute = () => {
+    if (this.resourcePath) {
+      const sourceText = Buffer.isBuffer(source) ? source.toString('utf8') : source
+      if (!isWebpackCssLoaderRuntimeSource(sourceText)) {
+        opt?.updateGeneratedCss?.({
+          file: this.resourcePath,
+          css: sourceText,
+        })
+      }
+      opt?.registerCssSourceFile?.({
         file: this.resourcePath,
-        css: sourceText,
+        css: resolveRegisteredCssSource(this.resourcePath, source),
       })
     }
-    opt?.registerCssSourceFile?.({
-      file: this.resourcePath,
-      css: resolveRegisteredCssSource(this.resourcePath, source),
-    })
-  }
-  const maybePromise = opt?.getClassSet?.()
-  const applyWatchDependencies = (dependencies: RuntimeLoaderWatchDependencies | void) => {
-    const pending: Promise<void>[] = []
-    for (const file of dependencies?.files ?? []) {
-      const registration = registerWebpackWatchFile(this, file)
-      if (registration) {
-        pending.push(registration)
+    const maybePromise = opt?.getClassSet?.()
+    const applyWatchDependencies = (dependencies: RuntimeLoaderWatchDependencies | void) => {
+      const pending: Promise<void>[] = []
+      for (const file of dependencies?.files ?? []) {
+        const registration = registerWebpackWatchFile(this, file)
+        if (registration) {
+          pending.push(registration)
+        }
       }
+      for (const context of dependencies?.contexts ?? []) {
+        registerWebpackWatchContext(this, context)
+      }
+      return pending.length ? Promise.all(pending).then(() => {}) : undefined
     }
-    for (const context of dependencies?.contexts ?? []) {
-      registerWebpackWatchContext(this, context)
+    const resolveWatchDependencies = () => {
+      const dependencies = opt?.getWatchDependencies?.()
+      if (isPromiseLike<RuntimeLoaderWatchDependencies | void>(dependencies)) {
+        return Promise.resolve(dependencies).then(applyWatchDependencies)
+      }
+      return applyWatchDependencies(dependencies)
     }
-    return pending.length ? Promise.all(pending).then(() => {}) : undefined
-  }
-  const resolveWatchDependencies = () => {
-    const dependencies = opt?.getWatchDependencies?.()
-    if (isPromiseLike<RuntimeLoaderWatchDependencies | void>(dependencies)) {
-      return Promise.resolve(dependencies).then(applyWatchDependencies)
+    if (isPromiseLike<void>(maybePromise)) {
+      return Promise.resolve(maybePromise).then(async () => {
+        await resolveWatchDependencies()
+        return normalizeRuntimeCssSource(source)
+      })
     }
-    return applyWatchDependencies(dependencies)
+    const watchDependencies = resolveWatchDependencies()
+    if (watchDependencies) {
+      return watchDependencies.then(() => normalizeRuntimeCssSource(source))
+    }
+    return normalizeRuntimeCssSource(source)
   }
-  if (isPromiseLike<void>(maybePromise)) {
-    return Promise.resolve(maybePromise).then(async () => {
-      await resolveWatchDependencies()
-      return normalizeRuntimeCssSource(source)
-    })
-  }
-  const watchDependencies = resolveWatchDependencies()
-  if (watchDependencies) {
-    return watchDependencies.then(() => normalizeRuntimeCssSource(source))
-  }
-  return normalizeRuntimeCssSource(source)
+  return opt?.run ? opt.run(execute) : execute()
 }
 
 export default WeappTwRuntimeClassSetLoader

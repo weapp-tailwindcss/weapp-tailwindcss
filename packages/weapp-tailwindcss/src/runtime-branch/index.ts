@@ -1,17 +1,13 @@
 import type { RuntimeBranch, RuntimeBranchContext, RuntimeBranchGeneratorOptions } from './types'
+import type { FrameworkPolicy } from '@/compiler/framework-policy'
+import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { createMiniProgramRuntimeBranch } from './mini-program'
 import { createNativeAppRuntimeBranch } from './native-app'
-import { isRuntimeUniAppXEnabled, normalizeRuntimeUniUtsPlatform } from './platform'
+import { normalizeRuntimeUniUtsPlatform } from './platform'
 import { resolveTailwindcssBranchVersion } from './tailwind-version'
 import { createWebRuntimeBranch } from './web'
 
-function shouldUseNativeAppBranch(base: Pick<RuntimeBranchContext, 'appType' | 'uniAppX'>, uniUtsPlatform: ReturnType<typeof normalizeRuntimeUniUtsPlatform>) {
-  return base.appType === 'uni-app-x'
-    && isRuntimeUniAppXEnabled(base.uniAppX)
-    && uniUtsPlatform.isApp
-}
-
-export function resolveRuntimeBranch(context: RuntimeBranchContext): RuntimeBranch {
+export function resolveRuntimeBranch(context: RuntimeBranchContext, policy: FrameworkPolicy = resolveFrameworkPolicy(context)): RuntimeBranch {
   const uniUtsPlatform = normalizeRuntimeUniUtsPlatform(context.uniUtsPlatform)
   const base = {
     context,
@@ -22,7 +18,7 @@ export function resolveRuntimeBranch(context: RuntimeBranchContext): RuntimeBran
   if (context.generatorTarget === 'web') {
     return createWebRuntimeBranch(base)
   }
-  if (shouldUseNativeAppBranch(context, uniUtsPlatform)) {
+  if (policy.useNativeApp) {
     return createNativeAppRuntimeBranch(base)
   }
   return createMiniProgramRuntimeBranch(base)

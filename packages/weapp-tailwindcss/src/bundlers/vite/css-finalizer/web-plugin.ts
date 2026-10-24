@@ -3,7 +3,7 @@ import type { Plugin } from 'vite'
 import type { CssFinalizerContext } from './options'
 import path from 'node:path'
 import process from 'node:process'
-import { disposeCompilerOwner, finalizeCompilerShadowRun } from '@/compiler'
+import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
 import { finalizeWebCssAssets } from './web-assets'
 
@@ -17,15 +17,6 @@ export function createViteWebCssFinalizerOutputPlugin(context: CssFinalizerConte
   return {
     name: 'weapp-tailwindcss:adaptor:web-css-finalizer',
     enforce: 'post',
-    async closeBundle() {
-      if (context.getResolvedConfig()?.build?.watch != null) {
-        return
-      }
-      await disposeCompilerOwner(context.runtimeState)
-    },
-    async closeWatcher() {
-      await disposeCompilerOwner(context.runtimeState)
-    },
     generateBundle: {
       order: 'post',
       async handler(_options, bundle: OutputBundle) {

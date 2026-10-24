@@ -1,3 +1,4 @@
+import type { FrameworkBoundaryRegistration } from './framework-boundaries/ownership'
 import type { Graph } from './graph'
 import fs from 'node:fs'
 import { isBuiltin } from 'node:module'
@@ -5,11 +6,13 @@ import path from 'node:path'
 import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
 import { auditCssCompat } from './css-compat'
+import { auditFrameworkBoundariesDetailed } from './framework-boundaries'
+import { auditCoreFrameworkInputs } from './framework-boundaries/core-inputs'
 import { findCycles, findPath } from './graph'
 import { readImports } from './imports'
 import { inside, readWorkspace, resolveWorkspaceEntry } from './workspace'
 
-export function auditArchitecture(root: string) {
+export function auditArchitecture(root: string, options: { frameworks?: FrameworkBoundaryRegistration } = {}) {
   const packages = readWorkspace(root)
   const names = new Map(packages.map(pkg => [pkg.name, pkg]))
   const files = new Set(packages.flatMap(pkg => pkg.files))
@@ -94,7 +97,7 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  const coreDirs = ['framework', 'core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
+  const coreDirs = ['framework', 'framework-policies', 'core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
   const corePackages = ['env', 'source-scan', 'engine'].map(name => path.join(root, 'packages', name, 'src'))
   const postcssSource = path.join(root, 'packages', 'postcss', 'src')
   const starts = [...files].filter(file => corePackages.some(directory => inside(directory, file))
@@ -111,6 +114,7 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root))
-  return { errors, files: files.size, packages: packages.length }
+  const frameworkAudit = auditFrameworkBoundariesDetailed(root, all, options.frameworks)
+  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...frameworkAudit.errors, ...auditCoreFrameworkInputs(root, all))
+  return { errors, files: files.size, packages: packages.length, frameworkExceptions: frameworkAudit.exceptions }
 }

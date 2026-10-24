@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createViteCssMemory } from '@/bundlers/vite/css-memory'
 import { createFrameworkSourceScanSession } from '@/bundlers/vite/shared/framework-source-scan-session'
 import { createSourceCandidateCollector } from '@/bundlers/vite/source-candidates'
 
@@ -28,6 +29,7 @@ function createSession(options: {
   return {
     session: createFrameworkSourceScanSession({
       cssMemory: {
+        ...createViteCssMemory({ debug: vi.fn(), getSourceCandidateSource: sourceCandidateCollector.source }),
         refreshRememberedCssSourceByCurrentFile: vi.fn(async () => {}),
         refreshRememberedCssSourceBySourceFile: vi.fn(async () => {}),
       } as any,
@@ -104,6 +106,7 @@ describe('vite framework source scan session', () => {
     }
     const session = createFrameworkSourceScanSession({
       cssMemory: {
+        ...createViteCssMemory({ debug: vi.fn(), getSourceCandidateSource: sourceCandidateCollector.source }),
         refreshRememberedCssSourceByCurrentFile: vi.fn(async () => {}),
       } as any,
       debug: vi.fn(),
@@ -236,7 +239,7 @@ describe('vite framework source scan session', () => {
     await mkdir(path.dirname(file), { recursive: true })
     await writeFile(file, 'text-old')
     let releaseFirst!: () => void
-    const firstBlocked = new Promise<void>(resolve => {
+    const firstBlocked = new Promise<void>((resolve) => {
       releaseFirst = resolve
     })
     const extractor = vi.fn(async (source: string) => {

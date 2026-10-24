@@ -1,4 +1,3 @@
-export { createCompiler } from './compiler'
 export type {
   Compiler,
   CompilerCacheReuseState,
@@ -10,6 +9,7 @@ export type {
   CompilerSourcePattern,
   CompilerTarget,
   CompilerTemplateTransformOptions,
-  CreateCompilerOptions,
   CreateCompilerSnapshotRequest,
 } from './types'
+export { createCompiler } from '@/context/compiler'
+export type { CreateCompilerOptions } from '@/context/compiler-options'

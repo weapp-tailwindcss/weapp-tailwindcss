@@ -1,7 +1,8 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
+index dc419c2d423cdfa2479b2cd9c6343b05d936c741..dcf4231261867e33551ad77ad1b460d0e1c110ad 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
-@@ -2656,6 +2656,8 @@
+@@ -2656,6 +2656,8 @@ const FsWatchFileInstances = new Map();
   * @param {Object} handlers container for event listener functions
   * @returns {Function} closer
   */
@@ -10,7 +11,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  const setFsWatchFileListener = (path, fullPath, options, handlers) => {
    const {listener, rawEmitter} = handlers;
    let cont = FsWatchFileInstances.get(fullPath);
-@@ -2683,8 +2685,7 @@
+@@ -2683,8 +2685,7 @@ const setFsWatchFileListener = (path, fullPath, options, handlers) => {
          foreach(cont.rawEmitters, (rawEmitter) => {
            rawEmitter(EV_CHANGE$2, fullPath, {curr, prev});
          });
@@ -20,7 +21,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
            foreach(cont.listeners, (listener) => listener(path, curr));
          }
        })
-@@ -2726,12 +2727,11 @@
+@@ -2726,12 +2727,11 @@ constructor(fsW) {
   * @param {Function} listener on fs change
   * @returns {Function} closer for the watcher instance
   */
@@ -34,7 +35,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    const absolutePath = sysPath$2.resolve(path);
    const options = {persistent: opts.persistent};
    if (!listener) listener = EMPTY_FN$2;
-@@ -2747,10 +2747,14 @@
+@@ -2747,10 +2747,14 @@ _watchWithNodeFs(path, listener) {
    } else {
      closer = setFsWatchListener(path, absolutePath, options, {
        listener,
@@ -50,7 +51,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    return closer;
  }
  
-@@ -2774,26 +2778,72 @@
+@@ -2774,26 +2778,80 @@ _handleFile(file, stats, initialAdd) {
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
  
@@ -79,7 +80,15 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +    return () => {
 +      if (disposed) return;
 +      disposed = true;
-+      if (revision === installedRevision) active = false;
++      if (revision === installedRevision) {
++        active = false;
++        // 关闭当前订阅时同步取消尾部对账，不能把旧回调留给同路径的新订阅。
++        const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++        if (pending) {
++          clearTimeout(pending.retry);
++          pending.clear();
++        }
++      }
 +      closer();
 +    };
 +  };
@@ -131,7 +140,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2802,14 +2852,27 @@
+@@ -2802,14 +2860,27 @@ _handleFile(file, stats, initialAdd) {
        // Check that change event was not fired because of changed only accessTime.
        const at = newStats.atimeMs;
        const mt = newStats.mtimeMs;
@@ -161,7 +170,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2817,7 +2880,7 @@
+@@ -2817,7 +2888,7 @@ _handleFile(file, stats, initialAdd) {
      this.fsw._emit(EV_ADD$2, file, stats);
    }
  
@@ -170,14 +179,103 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
  }
  
  /**
-@@ -2976,10 +3039,60 @@
+@@ -2871,6 +2942,7 @@ async _handleSymlink(entry, directory, path, item) {
+ }
+ 
+ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
++  if (this.fsw.closed || this.fsw._isIgnored(directory)) return;
+   // Normalize the directory name on Windows
+   directory = sysPath$2.join(directory, EMPTY_STR$1);
+ 
+@@ -2887,7 +2959,7 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+     directoryFilter: entry => wh.filterDir(entry),
+     depth: 0
+   }).on(STR_DATA$1, async (entry) => {
+-    if (this.fsw.closed) {
++    if (this.fsw.closed || this.fsw._isIgnored(directory)) {
+       stream = undefined;
+       return;
+     }
+@@ -2899,7 +2971,7 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+       return;
+     }
+ 
+-    if (this.fsw.closed) {
++    if (this.fsw.closed || this.fsw._isIgnored(directory)) {
+       stream = undefined;
+       return;
+     }
+@@ -2916,38 +2988,27 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+     }
+   }).on(EV_ERROR$2, this._boundHandleError);
+ 
+-  return new Promise(resolve =>
+-    stream.once(STR_END$2, () => {
+-      if (this.fsw.closed) {
++  return new Promise(resolve => {
++    const activeStream = stream;
++    let settled = false;
++    const finish = (complete) => {
++      if (settled) return;
++      settled = true;
++      const wasThrottled = throttler ? throttler.clear() : false;
++      resolve();
++      if (!complete || this.fsw.closed || this.fsw._isIgnored(directory)) {
+         stream = undefined;
+         return;
+       }
+-      const wasThrottled = throttler ? throttler.clear() : false;
+-
+-      resolve();
+-
+-      // Files that absent in current directory snapshot
+-      // but present in previous emit `remove` event
+-      // and are removed from @watched[directory].
+-      previous.getChildren().filter((item) => {
+-        return item !== directory &&
+-          !current.has(item) &&
+-          // in case of intersecting globs;
+-          // a path may have been filtered out of this readdir, but
+-          // shouldn't be removed because it matches a different glob
+-          (!wh.hasGlob || wh.filterPath({
+-            fullPath: sysPath$2.resolve(directory, item)
+-          }));
+-      }).forEach((item) => {
+-        this.fsw._remove(directory, item);
+-      });
+-
++      previous.getChildren().filter(item => item !== directory && !current.has(item) &&
++        (!wh.hasGlob || wh.filterPath({ fullPath: sysPath$2.resolve(directory, item) }))
++      ).forEach(item => this.fsw._remove(directory, item));
+       stream = undefined;
+-
+-      // one more time for any missed in case changes came in extremely quickly
+       if (wasThrottled) this._handleRead(directory, false, wh, target, dir, depth, throttler);
+-    })
+-  );
++    };
++    activeStream.once(STR_END$2, () => finish(true));
++    activeStream.once('close', () => finish(false));
++  });
+ }
+ 
+ /**
+@@ -2962,6 +3023,8 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+  * @returns {Promise<Function>} closer for the watcher instance.
+  */
+ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
++  // 退役根的异步 realpath/read 完成后也不能重新登记目录。
++  if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
+   const parentDir = this.fsw._getWatchedDir(sysPath$2.dirname(dir));
+   const tracked = parentDir.has(sysPath$2.basename(dir));
+   if (!(initialAdd && this.fsw.options.ignoreInitial) && !target && !tracked) {
+@@ -2976,10 +3039,60 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
  
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
 -    if (!target) {
 -      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 -      if (this.fsw.closed) return;
--    }
 +    if (target) {
 +      const file = sysPath$2.join(dir, target);
 +      const key = sysPath$2.resolve(file);
@@ -229,13 +327,13 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +        throw error;
 +      }
 +      return;
-+    }
+     }
 +    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
-+    if (this.fsw.closed) return;
++    if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
  
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -3001,9 +3114,9 @@
+@@ -3001,9 +3114,9 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
   * @param {String=} target Child path actually targeted for watch
   * @returns {Promise}
   */
@@ -247,7 +345,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      ready();
      return false;
    }
-@@ -3017,9 +3130,10 @@
+@@ -3017,9 +3130,10 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
    }
  
    // evaluate what is at the path we're being asked to watch
@@ -255,19 +353,19 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    try {
      const stats = await statMethods$1[wh.statMethod](wh.watchPath);
 -    if (this.fsw.closed) return;
-+    if (this.fsw.closed || !isActive()) return;
++    if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
      if (this.fsw._isIgnored(wh.watchPath, stats)) {
        ready();
        return false;
-@@ -3030,28 +3144,38 @@
+@@ -3030,28 +3144,38 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
      if (stats.isDirectory()) {
        const absPath = sysPath$2.resolve(path);
        const targetPath = follow ? await fsrealpath(path) : path;
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        closer = await this._handleDir(wh.watchPath, stats, initialAdd, depth, target, wh, targetPath);
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) {
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) {
 +        closer?.();
 +        return;
 +      }
@@ -278,14 +376,14 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      } else if (stats.isSymbolicLink()) {
        const targetPath = follow ? await fsrealpath(path) : path;
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        const parent = sysPath$2.dirname(wh.watchPath);
        this.fsw._getWatchedDir(parent).add(wh.watchPath);
        this.fsw._emit(EV_ADD$2, wh.watchPath, stats);
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        closer = await this._handleDir(parent, stats, initialAdd, depth, path, wh, targetPath);
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) {
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) {
 +        closer?.();
 +        return;
 +      }
@@ -302,11 +400,11 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
      }
      ready();
  
-@@ -3059,8 +3183,11 @@
+@@ -3059,8 +3183,11 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
      return false;
  
    } catch (error) {
-+    if (!handlingFile && (this.fsw.closed || !isActive())) return;
++    if (!handlingFile && (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath))) return;
      if (this.fsw._handleError(error)) {
        ready();
 +      // 恢复对账不得把权限或资源错误当成缺失后无限重试。
@@ -314,32 +412,131 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
        return path;
      }
    }
-@@ -3896,6 +4023,8 @@
+@@ -3896,6 +4023,10 @@ constructor(_opts) {
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
 +  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +  this._pendingRecreations = new Map();
++  this._pendingClosures = new Set();
++  this._closeFailure = undefined;
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
-@@ -4080,6 +4209,7 @@
+@@ -4071,26 +4202,19 @@ unwatch(paths_) {
+   if (this.closed) return this;
+   const paths = unifyPaths(paths_);
+   const {cwd} = this.options;
+-
+-  paths.forEach((path) => {
+-    // convert to absolute path unless relative path already matches
++  const operations = [];
++  for (let path of paths) {
+     if (!sysPath.isAbsolute(path) && !this._closers.has(path)) {
+       if (cwd) path = sysPath.join(cwd, path);
+       path = sysPath.resolve(path);
      }
- 
-     this._closePath(path);
-+    this._closeRecreation(path);
- 
+-
+-    this._closePath(path);
+-
++    // 先撤销接纳权限，再释放句柄；异常不得恢复已退役路径。
      this._ignoredPaths.add(path);
-     if (this._watched.has(path)) {
-@@ -4109,6 +4239,7 @@
-     const promise = closer();
-     if (promise instanceof Promise) closers.push(promise);
-   }));
-+  for (const path of this._pendingRecreations.keys()) this._closeRecreation(path);
-   this._streams.forEach(stream => stream.destroy());
+-    if (this._watched.has(path)) {
+-      this._ignoredPaths.add(path + SLASH_GLOBSTAR);
+-    }
+-
+-    // reset the cached userIgnored anymatch fn
+-    // to make ignoredPaths changes effective
+-    this._userIgnored = undefined;
+-  });
+-
++    if (this._watched.has(sysPath.resolve(path))) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
++    operations.push(() => this._closePath(path), () => this._closeRecreation(path));
++  }
++  this._userIgnored = undefined;
++  this._throwCloseErrors(this._collectClose(operations));
+   return this;
+ }
+ 
+@@ -4101,27 +4225,65 @@ unwatch(paths_) {
+ close() {
+   if (this.closed) return this._closePromise;
+   this.closed = true;
+-
+-  // Memory management.
++  let complete;
++  let fail;
++  this._closePromise = new Promise((resolve, reject) => { complete = resolve; fail = reject; });
+   this.removeAllListeners();
+-  const closers = [];
+-  this._closers.forEach(closerList => closerList.forEach(closer => {
+-    const promise = closer();
+-    if (promise instanceof Promise) closers.push(promise);
+-  }));
+-  this._streams.forEach(stream => stream.destroy());
++  const operations = [
++    ...[...this._closers.keys()].map(path => () => this._closeFile(path)),
++    ...[...this._pendingRecreations.keys()].map(path => () => this._closeRecreation(path)),
++    ...[...this._streams].map(stream => () => stream.destroy()),
++    ...[...this._watched.values()].map(directory => () => directory.dispose())
++  ];
++  const errors = this._collectClose(operations);
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4212,8 +4343,15 @@
+   this._readyEmitted = false;
+-  this._watched.forEach(dirent => dirent.dispose());
+-  ['closers', 'watched', 'streams', 'symlinkPaths', 'throttled'].forEach(key => {
++  ['closers', 'pendingRecreations', 'watched', 'streams', 'symlinkPaths', 'throttled'].forEach(key => {
+     this[`_${key}`].clear();
+   });
+-
+-  this._closePromise = closers.length ? Promise.all(closers).then(() => undefined) : Promise.resolve();
++  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
++  const settle = async () => {
++    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
++    const failure = this._closeFailure;
++    this._closeFailure = undefined;
++    const count = errors.length + (failure?.count || 0);
++    if (failure) errors.push(failure.error);
++    this._throwCloseErrors(errors, count);
++  };
++  settle().then(complete, fail);
+   return this._closePromise;
+ }
+ 
++_collectClose(operations) {
++  const errors = [];
++  for (const operation of operations) {
++    try {
++      const result = operation();
++      if (result && typeof result.then === 'function') {
++        const pending = Promise.resolve(result).catch(error => {
++          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++          if (this._closeFailure) this._closeFailure.count++;
++          else this._closeFailure = { error, count: 1 };
++        }).then(() => this._pendingClosures.delete(pending));
++        this._pendingClosures.add(pending);
++      }
++    } catch (error) {
++      errors.push(error);
++    }
++  }
++  return errors;
++}
++
++_throwCloseErrors(errors, count = errors.length) {
++  if (count === 1) throw errors[0];
++  if (count > 1) {
++    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++    failure.errorCount = count;
++    throw failure;
++  }
++}
++
+ /**
+  * Expose list of watched paths
+  * @returns {Object} for chaining
+@@ -4212,8 +4374,15 @@ async _emit(event, path, val1, val2, val3) {
    }
  
    if (event === EV_CHANGE) {
@@ -357,7 +554,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4451,11 +4589,6 @@
+@@ -4451,11 +4620,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -369,7 +566,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4491,12 +4624,23 @@
+@@ -4491,12 +4655,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -379,13 +576,12 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
    if (!this.options.useFsEvents) {
      this._closePath(path);
--  }
 +    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
 +      this._closeRecreation(path);
 +      this._pendingRecreations.set(fullPath, {});
 +      this.add(directory, item, true);
 +    }
-+  }
+   }
 +  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
 +}
 +
@@ -393,74 +589,209 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +  const key = sysPath.resolve(path);
 +  const pending = this._pendingRecreations.get(key);
 +  this._pendingRecreations.delete(key);
-+  if (pending?.closer) pending.closer();
++  if (pending?.closer) this._throwCloseErrors(this._collectClose([() => pending.closer()]));
  }
  
  /**
-@@ -4514,6 +4658,7 @@
+@@ -4504,9 +4679,10 @@ _remove(directory, item, isDirectory) {
+  * @param {Path} path
+  */
+ _closePath(path) {
+-  this._closeFile(path);
+-  const dir = sysPath.dirname(path);
+-  this._getWatchedDir(dir).remove(sysPath.basename(path));
++  this._throwCloseErrors(this._collectClose([
++    () => this._closeFile(path),
++    () => this._getWatchedDir(sysPath.dirname(path)).remove(sysPath.basename(path))
++  ]));
+ }
+ 
+ /**
+@@ -4514,10 +4690,10 @@ _closePath(path) {
   * @param {Path} path
   */
  _closeFile(path) {
 +  path = normalizePathToUnix(path);
    const closers = this._closers.get(path);
-   if (!closers) return;
-   closers.forEach(closer => closer());
-@@ -4527,6 +4672,7 @@
+-  if (!closers) return;
+-  closers.forEach(closer => closer());
+   this._closers.delete(path);
++  if (closers) this._throwCloseErrors(this._collectClose(closers));
+ }
+ 
+ /**
+@@ -4527,6 +4703,12 @@ _closeFile(path) {
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
 +  path = normalizePathToUnix(path);
++  // 撤销目录后，迟到的异步发现不得重新安装已失去归属的句柄。
++  if (this.closed || this._isIgnored(path)) {
++    this._throwCloseErrors(this._collectClose([closer]));
++    return;
++  }
    let list = this._closers.get(path);
    if (!list) {
      list = [];
-@@ -4573,49 +4719,52 @@
+@@ -4538,17 +4720,11 @@ _addPathCloser(path, closer) {
+ _readdirp(root, opts) {
+   if (this.closed) return;
+   const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
+-  let stream = readdirp(root, options);
++  const stream = readdirp(root, options);
+   this._streams.add(stream);
+-  stream.once(STR_CLOSE, () => {
+-    stream = undefined;
+-  });
+-  stream.once(STR_END, () => {
+-    if (stream) {
+-      this._streams.delete(stream);
+-      stream = undefined;
+-    }
+-  });
++  const release = () => this._streams.delete(stream);
++  stream.once(STR_CLOSE, release);
++  stream.once(STR_END, release);
+   return stream;
+ }
  
+@@ -4571,58 +4747,166 @@ const watch = (paths, options) => {
+ 
+ chokidar.watch = watch;
+ 
++function isWatchPathWithin(parent, candidate) {
++    const relative = path.relative(parent, candidate);
++    return relative === '' || relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
++}
++
++function watchPathAncestors(key) {
++    const ancestors = [];
++    for (;;) {
++        ancestors.push(key);
++        const parent = path.dirname(key);
++        if (parent === key) return ancestors;
++        key = parent;
++    }
++}
++
++async function waitForWatchClose(operations) {
++    const results = await Promise.allSettled(operations);
++    const failure = results.find(result => result.status === 'rejected');
++    if (failure) throw failure.reason;
++}
++
  class FileWatcher {
      constructor(task, chokidarOptions) {
 -        this.transformWatchers = new Map();
 +        this.transformDependencies = new Set();
 +        this.fileAliases = new Map();
++        this.fileGroups = new Map();
++        this.watcherGroups = new Set();
++        this.pendingCloses = new Set();
++        this.closed = false;
          this.chokidarOptions = chokidarOptions;
          this.task = task;
 -        this.watcher = this.createWatcher(null);
-+        this.watcher = this.createWatcher();
++        this.watcher = this.createWatcherGroup().watcher;
      }
      close() {
-         this.watcher.close();
+-        this.watcher.close();
 -        for (const watcher of this.transformWatchers.values()) {
 -            watcher.close();
+-        }
++        if (this.closePromise) return this.closePromise;
++        this.closed = true;
++        this.fileAliases.clear();
++        this.transformDependencies.clear();
++        this.fileGroups.clear();
++        for (const group of this.watcherGroups) this.closeGroup(group);
++        this.closePromise = Promise.all([...this.pendingCloses]).then(() => {
++            if (this.closeFailure) throw this.closeFailure.error;
++        });
++        return this.closePromise;
 +    }
-+    unwatch(id) {
-+        const key = path.resolve(id);
-+        const aliases = this.fileAliases.get(key);
-+        this.transformDependencies.delete(id);
-+        if (!aliases) return;
-+        aliases.delete(id);
-+        // 同一文件可能同时来自规范化模块 ID 与原生路径，移除别名不能关闭仍被使用的文件。
-+        if (aliases.size === 0) {
-+            this.fileAliases.delete(key);
-+            this.watcher.unwatch(key);
-         }
++    closeGroup(group) {
++        this.watcherGroups.delete(group);
++        group.roots.clear();
++        group.descendants.clear();
++        let result;
++        try { result = group.watcher.close(); }
++        catch (error) { result = Promise.reject(error); }
++        // 退役时立即接住失败，最终关闭统一报告；不积累已完成的关闭任务。
++        const pending = Promise.resolve(result).catch(error => {
++            this.closeFailure ||= { error };
++        }).then(() => this.pendingCloses.delete(pending));
++        this.pendingCloses.add(pending);
      }
--    unwatch(id) {
+     unwatch(id) {
 -        this.watcher.unwatch(id);
 -        const transformWatcher = this.transformWatchers.get(id);
 -        if (transformWatcher) {
 -            this.transformWatchers.delete(id);
 -            transformWatcher.close();
--        }
++        const key = path.resolve(id);
++        const aliases = this.fileAliases.get(key);
++        this.transformDependencies.delete(id);
++        if (!aliases) return;
++        aliases.delete(id);
++        if (aliases.size > 0) return;
++        this.fileAliases.delete(key);
++        const group = this.fileGroups.get(key);
++        this.fileGroups.delete(key);
++        group.roots.delete(key);
++        for (const ancestor of watchPathAncestors(key)) {
++            const remaining = group.descendants.get(ancestor) - 1;
++            if (remaining) group.descendants.set(ancestor, remaining);
++            else group.descendants.delete(ancestor);
+         }
 -    }
-     watch(id, isTransformDependency) {
+-    watch(id, isTransformDependency) {
 -        if (isTransformDependency) {
 -            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
 -            watcher.add(id);
 -            this.transformWatchers.set(id, watcher);
--        }
++        // Chokidar 保留撤销路径的 ignore；旧组不再接纳新根，防止历史祖先污染。
++        group.sealed = true;
++        if (group.roots.size === 0) {
++            this.closeGroup(group);
++            return;
++        }
++        const watcher = group.watcher;
++        const operations = [() => watcher.unwatch(key)];
++        for (const stream of watcher._streams) {
++            if (isWatchPathWithin(key, path.resolve(stream._root))) operations.push(() => {
++                try { return stream.destroy(); }
++                finally { watcher._streams.delete(stream); }
++            });
++        }
++        // 组内根互不包含；每项释放独立执行，失败不会留下其余退役资源。
++        for (const watchedPath of watcher._closers.keys()) {
++            if (isWatchPathWithin(key, path.resolve(watchedPath))) operations.push(() => watcher._closeFile(watchedPath));
++        }
++        for (const watchedPath of watcher._pendingRecreations.keys()) {
++            if (isWatchPathWithin(key, path.resolve(watchedPath))) operations.push(() => watcher._closeRecreation(watchedPath));
++        }
++        for (const [watchedPath, directory] of watcher._watched) {
++            if (isWatchPathWithin(key, path.resolve(watchedPath))) operations.push(() => {
++                try { return directory.dispose(); }
++                finally { watcher._watched.delete(watchedPath); }
++            });
+         }
 -        else {
 -            this.watcher.add(id);
--        }
--    }
++        const errors = watcher._collectClose(operations);
++        try { watcher._throwCloseErrors(errors); }
++        catch (error) {
++            this.closeFailure ||= { error };
++            throw error;
+         }
+     }
 -    createWatcher(transformWatcherId) {
+-        const task = this.task;
+-        const isLinux = platform() === 'linux';
+-        const isTransformDependency = transformWatcherId !== null;
++    watch(id, isTransformDependency) {
++        if (this.closed) return;
 +        const key = path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
 +        const firstRegistration = !aliases;
@@ -468,13 +799,19 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +        aliases.add(id);
 +        if (isTransformDependency) this.transformDependencies.add(id);
 +        else this.transformDependencies.delete(id);
-+        // 底层负责文件重建；保留依赖时不能重复安装目录回调。
-+        if (firstRegistration) this.watcher.add(key);
++        // 构建轮次保留的根和路径别名继续使用原有物理订阅。
++        if (!firstRegistration) return;
++        const ancestors = watchPathAncestors(key);
++        let group = [...this.watcherGroups].find(candidate => !candidate.sealed && !candidate.descendants.has(key)
++            && ancestors.every(ancestor => !candidate.roots.has(ancestor)));
++        if (!group) group = this.createWatcherGroup();
++        group.roots.add(key);
++        for (const ancestor of ancestors) group.descendants.set(ancestor, (group.descendants.get(ancestor) || 0) + 1);
++        this.fileGroups.set(key, group);
++        group.watcher.add(key);
 +    }
-+    createWatcher() {
-         const task = this.task;
--        const isLinux = platform() === 'linux';
--        const isTransformDependency = transformWatcherId !== null;
++    createWatcherGroup() {
++        const group = { roots: new Set(), descendants: new Map(), sealed: false, watcher: null };
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux) {
@@ -483,22 +820,69 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 -                // but then no longer any further events
 -                watcher.unwatch(changedId);
 -                watcher.add(changedId);
++            if (this.closed) return;
 +            const key = path.resolve(id);
-+            // 文件系统身份用于管理句柄，原始依赖 ID 用于使对应模块缓存失效。
-+            for (const alias of this.fileAliases.get(key) || [id]) {
-+                task.invalidate(alias, { event, isTransformDependency: this.transformDependencies.has(alias) });
++            // 每个物理组只通知自身仍活跃的逻辑依赖，跨组父子事件不重复派发。
++            const ancestors = watchPathAncestors(key);
++            const root = ancestors.find(ancestor => group.roots.has(ancestor));
++            if (!root) return;
++            let emittedSource = false;
++            for (const alias of this.fileAliases.get(root) || []) {
++                const isTransformDependency = this.transformDependencies.has(alias);
++                if (isTransformDependency || root === key) {
++                    this.task.invalidate(alias, { event, isTransformDependency });
++                }
++                else if (!emittedSource) {
++                    // 普通目录保留源码 ID 事件；更近的登记根承担通知，防止父子组重复上报。
++                    const owner = ancestors.find(ancestor => [...(this.fileAliases.get(ancestor) || [])]
++                        .some(candidate => !this.transformDependencies.has(candidate)));
++                    if (owner === root) this.task.invalidate(id, { event, isTransformDependency: false });
++                    emittedSource = true;
++                }
              }
 -            task.invalidate(changedId, { event, isTransformDependency });
-+            for (const dependency of this.transformDependencies) {
-+                const relative = path.relative(path.resolve(dependency), key);
-+                if (relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)) {
-+                    task.invalidate(dependency, { event, isTransformDependency: true });
-+                }
-+            }
          };
-         const watcher = chokidar
+-        const watcher = chokidar
++        group.watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -4740,6 +4889,7 @@
+             .on('add', id => handleChange(id, 'create'))
+             .on('change', id => handleChange(id, 'update'))
+             .on('unlink', id => handleChange(id, 'delete'));
+-        return watcher;
++        if (this.watcherGroups.size === 0) this.watcher = group.watcher;
++        this.watcherGroups.add(group);
++        return group;
+     }
+ }
+ 
+@@ -4661,17 +4945,16 @@ class Watcher {
+         }
+         process$1.nextTick(() => this.run());
+     }
+-    async close() {
+-        if (this.closed)
+-            return;
++    close() {
++        if (this.closePromise) return this.closePromise;
+         this.closed = true;
+-        if (this.buildTimeout)
+-            clearTimeout(this.buildTimeout);
+-        for (const task of this.tasks) {
+-            task.close();
+-        }
+-        await this.emitter.emit('close');
+-        this.emitter.removeAllListeners();
++        if (this.buildTimeout) clearTimeout(this.buildTimeout);
++        // 保持先停止 Task 再触发 close hook 的顺序，等待所有释放且保留首个失败。
++        this.closePromise = waitForWatchClose([
++            ...this.tasks.map(task => Promise.resolve().then(() => task.close())),
++            Promise.resolve().then(() => this.emitter.emit('close'))
++        ]).finally(() => this.emitter.removeAllListeners());
++        return this.closePromise;
+     }
+     invalidate(file) {
+         if (file) {
+@@ -4740,6 +5023,7 @@ class Task {
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -506,7 +890,13 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -4765,6 +4915,7 @@
+@@ -4760,11 +5044,12 @@ class Task {
+     }
+     close() {
+         this.closed = true;
+-        this.fileWatcher.close();
++        return this.fileWatcher.close();
+     }
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -514,7 +904,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -4778,6 +4929,8 @@
+@@ -4778,6 +5063,8 @@ class Task {
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -523,7 +913,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -4827,6 +4980,12 @@
+@@ -4827,6 +5114,12 @@ class Task {
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -537,9 +927,10 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              this.watchFile(id);
          }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
+index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..b721b63f4fcc78ea001997ce6ae0cf7e7354fcc0 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
-@@ -2652,6 +2652,8 @@
+@@ -2652,6 +2652,8 @@ const FsWatchFileInstances = new Map();
   * @param {Object} handlers container for event listener functions
   * @returns {Function} closer
   */
@@ -548,7 +939,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  const setFsWatchFileListener = (path, fullPath, options, handlers) => {
    const {listener, rawEmitter} = handlers;
    let cont = FsWatchFileInstances.get(fullPath);
-@@ -2679,8 +2681,7 @@
+@@ -2679,8 +2681,7 @@ const setFsWatchFileListener = (path, fullPath, options, handlers) => {
          foreach(cont.rawEmitters, (rawEmitter) => {
            rawEmitter(EV_CHANGE$2, fullPath, {curr, prev});
          });
@@ -558,7 +949,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
            foreach(cont.listeners, (listener) => listener(path, curr));
          }
        })
-@@ -2722,12 +2723,11 @@
+@@ -2722,12 +2723,11 @@ constructor(fsW) {
   * @param {Function} listener on fs change
   * @returns {Function} closer for the watcher instance
   */
@@ -572,7 +963,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    const absolutePath = sysPath$2.resolve(path);
    const options = {persistent: opts.persistent};
    if (!listener) listener = EMPTY_FN$2;
-@@ -2743,10 +2743,14 @@
+@@ -2743,10 +2743,14 @@ _watchWithNodeFs(path, listener) {
    } else {
      closer = setFsWatchListener(path, absolutePath, options, {
        listener,
@@ -588,7 +979,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    return closer;
  }
  
-@@ -2770,26 +2774,72 @@
+@@ -2770,26 +2774,80 @@ _handleFile(file, stats, initialAdd) {
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
  
@@ -617,7 +1008,15 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +    return () => {
 +      if (disposed) return;
 +      disposed = true;
-+      if (revision === installedRevision) active = false;
++      if (revision === installedRevision) {
++        active = false;
++        // 关闭当前订阅时同步取消尾部对账，不能把旧回调留给同路径的新订阅。
++        const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++        if (pending) {
++          clearTimeout(pending.retry);
++          pending.clear();
++        }
++      }
 +      closer();
 +    };
 +  };
@@ -669,7 +1068,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2798,14 +2848,27 @@
+@@ -2798,14 +2856,27 @@ _handleFile(file, stats, initialAdd) {
        // Check that change event was not fired because of changed only accessTime.
        const at = newStats.atimeMs;
        const mt = newStats.mtimeMs;
@@ -699,7 +1098,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2813,7 +2876,7 @@
+@@ -2813,7 +2884,7 @@ _handleFile(file, stats, initialAdd) {
      this.fsw._emit(EV_ADD$2, file, stats);
    }
  
@@ -708,14 +1107,103 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
  }
  
  /**
-@@ -2972,10 +3035,60 @@
+@@ -2867,6 +2938,7 @@ async _handleSymlink(entry, directory, path, item) {
+ }
+ 
+ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
++  if (this.fsw.closed || this.fsw._isIgnored(directory)) return;
+   // Normalize the directory name on Windows
+   directory = sysPath$2.join(directory, EMPTY_STR$1);
+ 
+@@ -2883,7 +2955,7 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+     directoryFilter: entry => wh.filterDir(entry),
+     depth: 0
+   }).on(STR_DATA$1, async (entry) => {
+-    if (this.fsw.closed) {
++    if (this.fsw.closed || this.fsw._isIgnored(directory)) {
+       stream = undefined;
+       return;
+     }
+@@ -2895,7 +2967,7 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+       return;
+     }
+ 
+-    if (this.fsw.closed) {
++    if (this.fsw.closed || this.fsw._isIgnored(directory)) {
+       stream = undefined;
+       return;
+     }
+@@ -2912,38 +2984,27 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+     }
+   }).on(EV_ERROR$2, this._boundHandleError);
+ 
+-  return new Promise(resolve =>
+-    stream.once(STR_END$2, () => {
+-      if (this.fsw.closed) {
++  return new Promise(resolve => {
++    const activeStream = stream;
++    let settled = false;
++    const finish = (complete) => {
++      if (settled) return;
++      settled = true;
++      const wasThrottled = throttler ? throttler.clear() : false;
++      resolve();
++      if (!complete || this.fsw.closed || this.fsw._isIgnored(directory)) {
+         stream = undefined;
+         return;
+       }
+-      const wasThrottled = throttler ? throttler.clear() : false;
+-
+-      resolve();
+-
+-      // Files that absent in current directory snapshot
+-      // but present in previous emit `remove` event
+-      // and are removed from @watched[directory].
+-      previous.getChildren().filter((item) => {
+-        return item !== directory &&
+-          !current.has(item) &&
+-          // in case of intersecting globs;
+-          // a path may have been filtered out of this readdir, but
+-          // shouldn't be removed because it matches a different glob
+-          (!wh.hasGlob || wh.filterPath({
+-            fullPath: sysPath$2.resolve(directory, item)
+-          }));
+-      }).forEach((item) => {
+-        this.fsw._remove(directory, item);
+-      });
+-
++      previous.getChildren().filter(item => item !== directory && !current.has(item) &&
++        (!wh.hasGlob || wh.filterPath({ fullPath: sysPath$2.resolve(directory, item) }))
++      ).forEach(item => this.fsw._remove(directory, item));
+       stream = undefined;
+-
+-      // one more time for any missed in case changes came in extremely quickly
+       if (wasThrottled) this._handleRead(directory, false, wh, target, dir, depth, throttler);
+-    })
+-  );
++    };
++    activeStream.once(STR_END$2, () => finish(true));
++    activeStream.once('close', () => finish(false));
++  });
+ }
+ 
+ /**
+@@ -2958,6 +3019,8 @@ _handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
+  * @returns {Promise<Function>} closer for the watcher instance.
+  */
+ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
++  // 退役根的异步 realpath/read 完成后也不能重新登记目录。
++  if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
+   const parentDir = this.fsw._getWatchedDir(sysPath$2.dirname(dir));
+   const tracked = parentDir.has(sysPath$2.basename(dir));
+   if (!(initialAdd && this.fsw.options.ignoreInitial) && !target && !tracked) {
+@@ -2972,10 +3035,60 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
  
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
 -    if (!target) {
 -      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 -      if (this.fsw.closed) return;
--    }
 +    if (target) {
 +      const file = sysPath$2.join(dir, target);
 +      const key = sysPath$2.resolve(file);
@@ -767,13 +1255,13 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +        throw error;
 +      }
 +      return;
-+    }
+     }
 +    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
-+    if (this.fsw.closed) return;
++    if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
  
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -2997,9 +3110,9 @@
+@@ -2997,9 +3110,9 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
   * @param {String=} target Child path actually targeted for watch
   * @returns {Promise}
   */
@@ -785,7 +1273,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      ready();
      return false;
    }
-@@ -3013,9 +3126,10 @@
+@@ -3013,9 +3126,10 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
    }
  
    // evaluate what is at the path we're being asked to watch
@@ -793,19 +1281,19 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    try {
      const stats = await statMethods$1[wh.statMethod](wh.watchPath);
 -    if (this.fsw.closed) return;
-+    if (this.fsw.closed || !isActive()) return;
++    if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
      if (this.fsw._isIgnored(wh.watchPath, stats)) {
        ready();
        return false;
-@@ -3026,28 +3140,38 @@
+@@ -3026,28 +3140,38 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
      if (stats.isDirectory()) {
        const absPath = sysPath$2.resolve(path);
        const targetPath = follow ? await fsrealpath(path) : path;
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        closer = await this._handleDir(wh.watchPath, stats, initialAdd, depth, target, wh, targetPath);
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) {
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) {
 +        closer?.();
 +        return;
 +      }
@@ -816,14 +1304,14 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      } else if (stats.isSymbolicLink()) {
        const targetPath = follow ? await fsrealpath(path) : path;
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        const parent = sysPath$2.dirname(wh.watchPath);
        this.fsw._getWatchedDir(parent).add(wh.watchPath);
        this.fsw._emit(EV_ADD$2, wh.watchPath, stats);
-+      if (this.fsw.closed || !isActive()) return;
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) return;
        closer = await this._handleDir(parent, stats, initialAdd, depth, path, wh, targetPath);
 -      if (this.fsw.closed) return;
-+      if (this.fsw.closed || !isActive()) {
++      if (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath)) {
 +        closer?.();
 +        return;
 +      }
@@ -840,11 +1328,11 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
      }
      ready();
  
-@@ -3055,8 +3179,11 @@
+@@ -3055,8 +3179,11 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
      return false;
  
    } catch (error) {
-+    if (!handlingFile && (this.fsw.closed || !isActive())) return;
++    if (!handlingFile && (this.fsw.closed || !isActive() || this.fsw._isIgnored(wh.watchPath))) return;
      if (this.fsw._handleError(error)) {
        ready();
 +      // 恢复对账不得把权限或资源错误当成缺失后无限重试。
@@ -852,32 +1340,131 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
        return path;
      }
    }
-@@ -3892,6 +4019,8 @@
+@@ -3892,6 +4019,10 @@ constructor(_opts) {
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
 +  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
 +  this._pendingRecreations = new Map();
++  this._pendingClosures = new Set();
++  this._closeFailure = undefined;
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
  
-@@ -4076,6 +4205,7 @@
+@@ -4067,26 +4198,19 @@ unwatch(paths_) {
+   if (this.closed) return this;
+   const paths = unifyPaths(paths_);
+   const {cwd} = this.options;
+-
+-  paths.forEach((path) => {
+-    // convert to absolute path unless relative path already matches
++  const operations = [];
++  for (let path of paths) {
+     if (!sysPath.isAbsolute(path) && !this._closers.has(path)) {
+       if (cwd) path = sysPath.join(cwd, path);
+       path = sysPath.resolve(path);
      }
- 
-     this._closePath(path);
-+    this._closeRecreation(path);
- 
+-
+-    this._closePath(path);
+-
++    // 先撤销接纳权限，再释放句柄；异常不得恢复已退役路径。
      this._ignoredPaths.add(path);
-     if (this._watched.has(path)) {
-@@ -4105,6 +4235,7 @@
-     const promise = closer();
-     if (promise instanceof Promise) closers.push(promise);
-   }));
-+  for (const path of this._pendingRecreations.keys()) this._closeRecreation(path);
-   this._streams.forEach(stream => stream.destroy());
+-    if (this._watched.has(path)) {
+-      this._ignoredPaths.add(path + SLASH_GLOBSTAR);
+-    }
+-
+-    // reset the cached userIgnored anymatch fn
+-    // to make ignoredPaths changes effective
+-    this._userIgnored = undefined;
+-  });
+-
++    if (this._watched.has(sysPath.resolve(path))) this._ignoredPaths.add(path + SLASH_GLOBSTAR);
++    operations.push(() => this._closePath(path), () => this._closeRecreation(path));
++  }
++  this._userIgnored = undefined;
++  this._throwCloseErrors(this._collectClose(operations));
+   return this;
+ }
+ 
+@@ -4097,27 +4221,65 @@ unwatch(paths_) {
+ close() {
+   if (this.closed) return this._closePromise;
+   this.closed = true;
+-
+-  // Memory management.
++  let complete;
++  let fail;
++  this._closePromise = new Promise((resolve, reject) => { complete = resolve; fail = reject; });
+   this.removeAllListeners();
+-  const closers = [];
+-  this._closers.forEach(closerList => closerList.forEach(closer => {
+-    const promise = closer();
+-    if (promise instanceof Promise) closers.push(promise);
+-  }));
+-  this._streams.forEach(stream => stream.destroy());
++  const operations = [
++    ...[...this._closers.keys()].map(path => () => this._closeFile(path)),
++    ...[...this._pendingRecreations.keys()].map(path => () => this._closeRecreation(path)),
++    ...[...this._streams].map(stream => () => stream.destroy()),
++    ...[...this._watched.values()].map(directory => () => directory.dispose())
++  ];
++  const errors = this._collectClose(operations);
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4208,8 +4339,15 @@
+   this._readyEmitted = false;
+-  this._watched.forEach(dirent => dirent.dispose());
+-  ['closers', 'watched', 'streams', 'symlinkPaths', 'throttled'].forEach(key => {
++  ['closers', 'pendingRecreations', 'watched', 'streams', 'symlinkPaths', 'throttled'].forEach(key => {
+     this[`_${key}`].clear();
+   });
+-
+-  this._closePromise = closers.length ? Promise.all(closers).then(() => undefined) : Promise.resolve();
++  // 退役路径已移出索引，但其异步释放仍属于本实例，必须一并等待。
++  const settle = async () => {
++    while (this._pendingClosures.size) await Promise.all([...this._pendingClosures]);
++    const failure = this._closeFailure;
++    this._closeFailure = undefined;
++    const count = errors.length + (failure?.count || 0);
++    if (failure) errors.push(failure.error);
++    this._throwCloseErrors(errors, count);
++  };
++  settle().then(complete, fail);
+   return this._closePromise;
+ }
+ 
++_collectClose(operations) {
++  const errors = [];
++  for (const operation of operations) {
++    try {
++      const result = operation();
++      if (result && typeof result.then === 'function') {
++        const pending = Promise.resolve(result).catch(error => {
++          // 长期 watch 只保留首错及次数，不保留已完成失败的对象历史。
++          if (this._closeFailure) this._closeFailure.count++;
++          else this._closeFailure = { error, count: 1 };
++        }).then(() => this._pendingClosures.delete(pending));
++        this._pendingClosures.add(pending);
++      }
++    } catch (error) {
++      errors.push(error);
++    }
++  }
++  return errors;
++}
++
++_throwCloseErrors(errors, count = errors.length) {
++  if (count === 1) throw errors[0];
++  if (count > 1) {
++    const failure = new AggregateError(errors, `Watcher resource cleanup failed (${count} errors)`);
++    failure.errorCount = count;
++    throw failure;
++  }
++}
++
+ /**
+  * Expose list of watched paths
+  * @returns {Object} for chaining
+@@ -4208,8 +4370,15 @@ async _emit(event, path, val1, val2, val3) {
    }
  
    if (event === EV_CHANGE) {
@@ -895,7 +1482,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    }
  
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4447,11 +4585,6 @@
+@@ -4447,11 +4616,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
  
@@ -907,7 +1494,7 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4487,12 +4620,23 @@
+@@ -4487,12 +4651,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -917,13 +1504,12 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
    if (!this.options.useFsEvents) {
      this._closePath(path);
--  }
 +    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
 +      this._closeRecreation(path);
 +      this._pendingRecreations.set(fullPath, {});
 +      this.add(directory, item, true);
 +    }
-+  }
+   }
 +  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
 +}
 +
@@ -931,46 +1517,143 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +  const key = sysPath.resolve(path);
 +  const pending = this._pendingRecreations.get(key);
 +  this._pendingRecreations.delete(key);
-+  if (pending?.closer) pending.closer();
++  if (pending?.closer) this._throwCloseErrors(this._collectClose([() => pending.closer()]));
  }
  
  /**
-@@ -4510,6 +4654,7 @@
+@@ -4500,9 +4675,10 @@ _remove(directory, item, isDirectory) {
+  * @param {Path} path
+  */
+ _closePath(path) {
+-  this._closeFile(path);
+-  const dir = sysPath.dirname(path);
+-  this._getWatchedDir(dir).remove(sysPath.basename(path));
++  this._throwCloseErrors(this._collectClose([
++    () => this._closeFile(path),
++    () => this._getWatchedDir(sysPath.dirname(path)).remove(sysPath.basename(path))
++  ]));
+ }
+ 
+ /**
+@@ -4510,10 +4686,10 @@ _closePath(path) {
   * @param {Path} path
   */
  _closeFile(path) {
 +  path = normalizePathToUnix(path);
    const closers = this._closers.get(path);
-   if (!closers) return;
-   closers.forEach(closer => closer());
-@@ -4523,6 +4668,7 @@
+-  if (!closers) return;
+-  closers.forEach(closer => closer());
+   this._closers.delete(path);
++  if (closers) this._throwCloseErrors(this._collectClose(closers));
+ }
+ 
+ /**
+@@ -4523,6 +4699,12 @@ _closeFile(path) {
   */
  _addPathCloser(path, closer) {
    if (!closer) return;
 +  path = normalizePathToUnix(path);
++  // 撤销目录后，迟到的异步发现不得重新安装已失去归属的句柄。
++  if (this.closed || this._isIgnored(path)) {
++    this._throwCloseErrors(this._collectClose([closer]));
++    return;
++  }
    let list = this._closers.get(path);
    if (!list) {
      list = [];
+@@ -4534,17 +4716,11 @@ _addPathCloser(path, closer) {
+ _readdirp(root, opts) {
+   if (this.closed) return;
+   const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
+-  let stream = readdirp(root, options);
++  const stream = readdirp(root, options);
+   this._streams.add(stream);
+-  stream.once(STR_CLOSE, () => {
+-    stream = undefined;
+-  });
+-  stream.once(STR_END, () => {
+-    if (stream) {
+-      this._streams.delete(stream);
+-      stream = undefined;
+-    }
+-  });
++  const release = () => this._streams.delete(stream);
++  stream.once(STR_CLOSE, release);
++  stream.once(STR_END, release);
+   return stream;
+ }
+ 
 diff --git a/dist/shared/watch.js b/dist/shared/watch.js
+index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..bce0b2887143d0cc8ca6551465f8e770a043e577 100644
 --- a/dist/shared/watch.js
 +++ b/dist/shared/watch.js
-@@ -30,49 +30,52 @@
+@@ -28,58 +28,166 @@ require('os');
+ require('./fsevents-importer.js');
+ require('events');
  
++function isWatchPathWithin(parent, candidate) {
++    const relative = node_path.relative(parent, candidate);
++    return relative === '' || relative !== '..' && !relative.startsWith(`..${node_path.sep}`) && !node_path.isAbsolute(relative);
++}
++
++function watchPathAncestors(key) {
++    const ancestors = [];
++    for (;;) {
++        ancestors.push(key);
++        const parent = node_path.dirname(key);
++        if (parent === key) return ancestors;
++        key = parent;
++    }
++}
++
++async function waitForWatchClose(operations) {
++    const results = await Promise.allSettled(operations);
++    const failure = results.find(result => result.status === 'rejected');
++    if (failure) throw failure.reason;
++}
++
  class FileWatcher {
      constructor(task, chokidarOptions) {
 -        this.transformWatchers = new Map();
 +        this.transformDependencies = new Set();
 +        this.fileAliases = new Map();
++        this.fileGroups = new Map();
++        this.watcherGroups = new Set();
++        this.pendingCloses = new Set();
++        this.closed = false;
          this.chokidarOptions = chokidarOptions;
          this.task = task;
 -        this.watcher = this.createWatcher(null);
-+        this.watcher = this.createWatcher();
++        this.watcher = this.createWatcherGroup().watcher;
      }
      close() {
-         this.watcher.close();
+-        this.watcher.close();
 -        for (const watcher of this.transformWatchers.values()) {
 -            watcher.close();
 -        }
++        if (this.closePromise) return this.closePromise;
++        this.closed = true;
++        this.fileAliases.clear();
++        this.transformDependencies.clear();
++        this.fileGroups.clear();
++        for (const group of this.watcherGroups) this.closeGroup(group);
++        this.closePromise = Promise.all([...this.pendingCloses]).then(() => {
++            if (this.closeFailure) throw this.closeFailure.error;
++        });
++        return this.closePromise;
++    }
++    closeGroup(group) {
++        this.watcherGroups.delete(group);
++        group.roots.clear();
++        group.descendants.clear();
++        let result;
++        try { result = group.watcher.close(); }
++        catch (error) { result = Promise.reject(error); }
++        // 退役时立即接住失败，最终关闭统一报告；不积累已完成的关闭任务。
++        const pending = Promise.resolve(result).catch(error => {
++            this.closeFailure ||= { error };
++        }).then(() => this.pendingCloses.delete(pending));
++        this.pendingCloses.add(pending);
      }
      unwatch(id) {
 -        this.watcher.unwatch(id);
@@ -983,23 +1666,64 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
 +        this.transformDependencies.delete(id);
 +        if (!aliases) return;
 +        aliases.delete(id);
-+        // 同一文件可能同时来自规范化模块 ID 与原生路径，移除别名不能关闭仍被使用的文件。
-+        if (aliases.size === 0) {
-+            this.fileAliases.delete(key);
-+            this.watcher.unwatch(key);
++        if (aliases.size > 0) return;
++        this.fileAliases.delete(key);
++        const group = this.fileGroups.get(key);
++        this.fileGroups.delete(key);
++        group.roots.delete(key);
++        for (const ancestor of watchPathAncestors(key)) {
++            const remaining = group.descendants.get(ancestor) - 1;
++            if (remaining) group.descendants.set(ancestor, remaining);
++            else group.descendants.delete(ancestor);
          }
-     }
-     watch(id, isTransformDependency) {
+-    }
+-    watch(id, isTransformDependency) {
 -        if (isTransformDependency) {
 -            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
 -            watcher.add(id);
 -            this.transformWatchers.set(id, watcher);
--        }
++        // Chokidar 保留撤销路径的 ignore；旧组不再接纳新根，防止历史祖先污染。
++        group.sealed = true;
++        if (group.roots.size === 0) {
++            this.closeGroup(group);
++            return;
++        }
++        const watcher = group.watcher;
++        const operations = [() => watcher.unwatch(key)];
++        for (const stream of watcher._streams) {
++            if (isWatchPathWithin(key, node_path.resolve(stream._root))) operations.push(() => {
++                try { return stream.destroy(); }
++                finally { watcher._streams.delete(stream); }
++            });
++        }
++        // 组内根互不包含；每项释放独立执行，失败不会留下其余退役资源。
++        for (const watchedPath of watcher._closers.keys()) {
++            if (isWatchPathWithin(key, node_path.resolve(watchedPath))) operations.push(() => watcher._closeFile(watchedPath));
+         }
 -        else {
 -            this.watcher.add(id);
--        }
--    }
++        for (const watchedPath of watcher._pendingRecreations.keys()) {
++            if (isWatchPathWithin(key, node_path.resolve(watchedPath))) operations.push(() => watcher._closeRecreation(watchedPath));
++        }
++        for (const [watchedPath, directory] of watcher._watched) {
++            if (isWatchPathWithin(key, node_path.resolve(watchedPath))) operations.push(() => {
++                try { return directory.dispose(); }
++                finally { watcher._watched.delete(watchedPath); }
++            });
++        }
++        const errors = watcher._collectClose(operations);
++        try { watcher._throwCloseErrors(errors); }
++        catch (error) {
++            this.closeFailure ||= { error };
++            throw error;
+         }
+     }
 -    createWatcher(transformWatcherId) {
+-        const task = this.task;
+-        const isLinux = node_os.platform() === 'linux';
+-        const isTransformDependency = transformWatcherId !== null;
++    watch(id, isTransformDependency) {
++        if (this.closed) return;
 +        const key = node_path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
 +        const firstRegistration = !aliases;
@@ -1007,13 +1731,19 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
 +        aliases.add(id);
 +        if (isTransformDependency) this.transformDependencies.add(id);
 +        else this.transformDependencies.delete(id);
-+        // 底层负责文件重建；保留依赖时不能重复安装目录回调。
-+        if (firstRegistration) this.watcher.add(key);
++        // 构建轮次保留的根和路径别名继续使用原有物理订阅。
++        if (!firstRegistration) return;
++        const ancestors = watchPathAncestors(key);
++        let group = [...this.watcherGroups].find(candidate => !candidate.sealed && !candidate.descendants.has(key)
++            && ancestors.every(ancestor => !candidate.roots.has(ancestor)));
++        if (!group) group = this.createWatcherGroup();
++        group.roots.add(key);
++        for (const ancestor of ancestors) group.descendants.set(ancestor, (group.descendants.get(ancestor) || 0) + 1);
++        this.fileGroups.set(key, group);
++        group.watcher.add(key);
 +    }
-+    createWatcher() {
-         const task = this.task;
--        const isLinux = node_os.platform() === 'linux';
--        const isTransformDependency = transformWatcherId !== null;
++    createWatcherGroup() {
++        const group = { roots: new Set(), descendants: new Map(), sealed: false, watcher: null };
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux) {
@@ -1022,23 +1752,69 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
 -                // but then no longer any further events
 -                watcher.unwatch(changedId);
 -                watcher.add(changedId);
--            }
--            task.invalidate(changedId, { event, isTransformDependency });
++            if (this.closed) return;
 +            const key = node_path.resolve(id);
-+            // 文件系统身份用于管理句柄，原始依赖 ID 用于使对应模块缓存失效。
-+            for (const alias of this.fileAliases.get(key) || [id]) {
-+                task.invalidate(alias, { event, isTransformDependency: this.transformDependencies.has(alias) });
-+            }
-+            for (const dependency of this.transformDependencies) {
-+                const relative = node_path.relative(node_path.resolve(dependency), key);
-+                if (relative && relative !== '..' && !relative.startsWith(`..${node_path.sep}`) && !node_path.isAbsolute(relative)) {
-+                    task.invalidate(dependency, { event, isTransformDependency: true });
++            // 每个物理组只通知自身仍活跃的逻辑依赖，跨组父子事件不重复派发。
++            const ancestors = watchPathAncestors(key);
++            const root = ancestors.find(ancestor => group.roots.has(ancestor));
++            if (!root) return;
++            let emittedSource = false;
++            for (const alias of this.fileAliases.get(root) || []) {
++                const isTransformDependency = this.transformDependencies.has(alias);
++                if (isTransformDependency || root === key) {
++                    this.task.invalidate(alias, { event, isTransformDependency });
 +                }
-+            }
++                else if (!emittedSource) {
++                    // 普通目录保留源码 ID 事件；更近的登记根承担通知，防止父子组重复上报。
++                    const owner = ancestors.find(ancestor => [...(this.fileAliases.get(ancestor) || [])]
++                        .some(candidate => !this.transformDependencies.has(candidate)));
++                    if (owner === root) this.task.invalidate(id, { event, isTransformDependency: false });
++                    emittedSource = true;
++                }
+             }
+-            task.invalidate(changedId, { event, isTransformDependency });
          };
-         const watcher = index.chokidar
+-        const watcher = index.chokidar
++        group.watcher = index.chokidar
              .watch([], this.chokidarOptions)
-@@ -197,6 +200,7 @@
+             .on('add', id => handleChange(id, 'create'))
+             .on('change', id => handleChange(id, 'update'))
+             .on('unlink', id => handleChange(id, 'delete'));
+-        return watcher;
++        if (this.watcherGroups.size === 0) this.watcher = group.watcher;
++        this.watcherGroups.add(group);
++        return group;
+     }
+ }
+ 
+@@ -118,17 +226,16 @@ class Watcher {
+         }
+         process.nextTick(() => this.run());
+     }
+-    async close() {
+-        if (this.closed)
+-            return;
++    close() {
++        if (this.closePromise) return this.closePromise;
+         this.closed = true;
+-        if (this.buildTimeout)
+-            clearTimeout(this.buildTimeout);
+-        for (const task of this.tasks) {
+-            task.close();
+-        }
+-        await this.emitter.emit('close');
+-        this.emitter.removeAllListeners();
++        if (this.buildTimeout) clearTimeout(this.buildTimeout);
++        // 保持先停止 Task 再触发 close hook 的顺序，等待所有释放且保留首个失败。
++        this.closePromise = waitForWatchClose([
++            ...this.tasks.map(task => Promise.resolve().then(() => task.close())),
++            Promise.resolve().then(() => this.emitter.emit('close'))
++        ]).finally(() => this.emitter.removeAllListeners());
++        return this.closePromise;
+     }
+     invalidate(file) {
+         if (file) {
+@@ -197,6 +304,7 @@ class Task {
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -1046,7 +1822,13 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -222,6 +226,7 @@
+@@ -217,11 +325,12 @@ class Task {
+     }
+     close() {
+         this.closed = true;
+-        this.fileWatcher.close();
++        return this.fileWatcher.close();
+     }
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -1054,7 +1836,7 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -235,6 +240,8 @@
+@@ -235,6 +344,8 @@ class Task {
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -1063,7 +1845,7 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -284,6 +291,12 @@
+@@ -284,6 +395,12 @@ class Task {
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;

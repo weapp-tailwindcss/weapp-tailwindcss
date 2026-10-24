@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { expect, it, vi } from 'vitest'
 import { assertPublishedIdentity, captureIdentity } from './rollup-file-identity/fixture.mjs'
 import { preparePollingBaseline } from './rollup-polling-readiness.mjs'
+import { hasPollingReplacementReceipt } from './rollup-polling-receipt.mjs'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 
@@ -139,6 +140,8 @@ it.each(scenarios)('$demo / $format / $dependency / atime=$accessed / delayed=$d
     const beforeIdentity = captureIdentity(data)
     const stagedIdentity = captureIdentity(staged)
     expect(stagedIdentity.exact).not.toEqual(beforeIdentity.exact)
+    // 发布前证明输入 atime；rename 后真实构建读取可能立即推进它。
+    expect((await stat(staged)).atimeMs).toBe(atime.getTime())
     const rawOffset = raw.length
     const changeOffset = changes.length
     const invalidationOffset = invalidated.length
@@ -149,16 +152,26 @@ it.each(scenarios)('$demo / $format / $dependency / atime=$accessed / delayed=$d
     assertPublishedIdentity(beforeIdentity.exact, stagedIdentity.exact, publishedIdentity.exact)
     expect(after.size).toBe(before.size)
     expect(after.mtimeMs).toBe(before.mtimeMs)
-    expect(after.atimeMs).toBe(atime.getTime())
-    // Number inode 可能碰撞；身份由上方 BigInt 回执证明，raw 必须匹配本次真实快照。
-    await expect.poll(() => ({
-      matched: raw.slice(rawOffset).some(({ curr, prev }) => fields.every(key => curr[key] === after[key] && prev[key] === before[key])
-        && curr.size === prev.size && curr.mtimeMs === prev.mtimeMs && curr.atimeMs === atime.getTime()),
-      before: state(before),
-      after: state(after),
-      identities: { before: beforeIdentity, staged: stagedIdentity, published: publishedIdentity },
-      raw: raw.slice(rawOffset).map(({ curr, prev }) => ({ curr: state(curr), prev: state(prev) })),
-    }), { timeout: 5000, interval: 1 }).toMatchObject({ matched: true })
+    // Number inode 可能碰撞；BigInt 发布身份、连续 raw 与真实构建产物共同证明替换。
+    await expect.poll(async () => {
+      const result = await import(`${pathToFileURL(output).href}?inspection=${++inspection}`)
+      return {
+        matched: hasPollingReplacementReceipt({
+          before,
+          after,
+          identities: replacement.identities,
+          raw,
+          rawOffset,
+          output: result,
+          expectedOutput: 6,
+        }),
+        before: state(before),
+        after: state(after),
+        identities: replacement.identities,
+        raw: raw.slice(rawOffset).map(({ curr, prev }) => ({ curr: state(curr), prev: state(prev) })),
+        output: { value: result.default, observedMtime: result.observedMtime },
+      }
+    }, { timeout: 5000, interval: 1 }).toMatchObject({ matched: true })
     // raw 已收到本次替换；接下来的 change 与真实构建不能被前置 stat 过滤吞掉。
     await expect.poll(() => changes.slice(changeOffset), { timeout: 5000, interval: 1 }).toContain(data)
     if (!demo.startsWith('taro-')) {

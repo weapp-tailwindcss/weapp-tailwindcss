@@ -1,10 +1,22 @@
+const callbackIdentities = new WeakMap<object, number>()
+let nextCallbackIdentity = 0
+
+function getCallbackIdentity(callback: object) {
+  let identity = callbackIdentities.get(callback)
+  if (identity === undefined) {
+    identity = ++nextCallbackIdentity
+    callbackIdentities.set(callback, identity)
+  }
+  return identity
+}
+
 /** 统一生成缓存的配置身份；映射顺序和正则游标不改变配置语义。 */
 export function stableSerialize(value: unknown, stack = new WeakSet<object>()): string {
   if (value == null || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') {
     return JSON.stringify(value)
   }
   if (typeof value === 'function') {
-    return `[Function:${value.name}]`
+    return `[Function:${getCallbackIdentity(value)}]`
   }
   if (typeof value !== 'object') {
     return String(value)
@@ -20,6 +32,9 @@ export function stableSerialize(value: unknown, stack = new WeakSet<object>()): 
   if (value instanceof Map) {
     const entries = [...value].map(([key, item]) => `[${stableSerialize(key, stack)},${stableSerialize(item, stack)}]`)
     serialized = `Map(${entries.sort().join(',')})`
+  }
+  else if (value instanceof Set) {
+    serialized = `Set(${[...value].map(item => stableSerialize(item, stack)).sort().join(',')})`
   }
   else if (Array.isArray(value)) {
     serialized = `[${value.map(item => stableSerialize(item, stack)).join(',')}]`

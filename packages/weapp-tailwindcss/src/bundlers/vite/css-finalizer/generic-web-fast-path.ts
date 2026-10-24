@@ -6,6 +6,7 @@ import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-mark
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../css-output'
 import { collectMatchingGeneratedCssMarkerFiles, resolveViteProcessedCssAssetSource } from '../processed-css-assets/markers-imports'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { shouldUseGenericWebFinalizerFastPath } from '../shared/generic-web-production-fast-path'
 import { finalizeWebCss } from './options'
 
@@ -148,7 +149,7 @@ export function tryFinalizeGenericWebCss(
   const processedCssResults = [...(context.getViteProcessedCssAssetResults?.() ?? [])]
   if (!shouldUseGenericWebFinalizerFastPath({
     command: resolvedConfig?.command,
-    frameworkName: context.frameworkName ?? '',
+    allowWebProductionFastPath: context.allowWebProductionFastPath === true,
     hasFrameworkRootImportShells: (context.frameworkRootImportShellTargetByFile?.size ?? 0) > 0,
     hasProcessedCss: processedCssResults.length > 0,
     isHarmonyAppStyleTarget: options.isHarmonyAppStyleTarget,
@@ -175,7 +176,7 @@ export function tryFinalizeGenericWebCss(
     const finalCssSource = processed.useAssetSource ? original : processed.css
     const generated = finalizeWebCss(
       stripBundlerGeneratedCssMarkers(finalCssSource),
-      { ...options.createCssPipelineContext(file), file },
+      extendFrameworkCssContext(options.createCssPipelineContext(file), { file }),
       context.cssPipelineStrategy,
     )
     options.recordTiming('finalizeWebCss', finalizeStartedAt)

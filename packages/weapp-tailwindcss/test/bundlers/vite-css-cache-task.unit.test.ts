@@ -22,6 +22,35 @@ function createOutputAsset(): OutputAsset {
 }
 
 describe('vite css cache task', () => {
+  it.each([
+    '.card{width:11rpx}',
+    '@import "../framework.acss";.card[data-v-current]{width:11rpx}',
+    '@import "../framework.acss";',
+  ])('普通兼容产物命中缓存也不能被登记为作者生成来源：%s', (generatorRawSource) => {
+    const applyCssResult = vi.fn()
+    const rememberCssSource = vi.fn()
+    const lastCssResultByFile = new Map<string, string>()
+    const lastCssSourceHashByFile = new Map<string, string>()
+    const source = '.framework{color:blue}'
+    applyViteCssCacheResult({
+      applyCssResult,
+      cssRuntimeAffectingHash: 'source-hash',
+      generatorRawSource,
+      generatorSourceFile: '/project/card.css',
+      lastCssResultByFile,
+      lastCssSourceHashByFile,
+      originalSource: createOutputAsset(),
+      outputFile: 'feature/card.acss',
+      rememberedCssRuntimeSignature: 'runtime-signature',
+      rememberedSourcesCount: 0,
+      rememberCssSource,
+      vitePipelineCssInjectionOutputFile: 'feature/card.acss',
+    }, source)
+    expect(applyCssResult).toHaveBeenCalledWith(source)
+    expect(lastCssResultByFile.get('feature/card.acss')).toBe(source)
+    expect(rememberCssSource).not.toHaveBeenCalled()
+  })
+
   it('invalidates aggregate web CSS when an ordinary module changes with stable candidates', async () => {
     const cache = createCache()
     const sharedResultCache = new Map<string, Promise<string>>()
@@ -33,7 +62,6 @@ describe('vite css cache task', () => {
         cssRuntimeAffectingHash: 'unchanged-tailwind-source',
         cssBundleSourceHash: cache.computeHash(source),
         cssShareScope: 'web-root',
-        linkedImpactSignature: '',
         outputFile: 'assets/index.css',
         runtimeSignature: 'runtime',
         scopedGeneratorCandidateSignature: 'flex',
@@ -92,6 +120,7 @@ describe('vite css cache task', () => {
     expect(lastCssSourceHashByFile.get('pages/index.acss')).toBe('source-hash')
     expect(markCssAssetProcessed).toHaveBeenCalledOnce()
     expect(rememberCssSource).toHaveBeenCalledWith({
+      kind: 'generation',
       outputFile: 'app.acss',
       rawSource: '@import "tailwindcss";',
       sourceFile: '/project/src/app.css',
@@ -184,7 +213,6 @@ describe('vite css cache task', () => {
         cssIsMainChunk: false,
         cssRuntimeAffectingHash: 'source-hash',
         cssShareScope: 'scope',
-        linkedImpactSignature: '',
         outputFile: 'pages/index.wxss',
         runtimeSignature: 'runtime',
         scopedGeneratorCandidateSignature: source,

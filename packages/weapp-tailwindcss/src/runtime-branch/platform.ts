@@ -2,9 +2,7 @@ import type { NativeAppPlatform, RuntimeBranchContext } from './types'
 import type { UniUtsPlatformInfo } from '@/utils'
 import { resolveUniUtsPlatform } from '@/utils'
 
-export function isRuntimeUniAppXEnabled(value: RuntimeBranchContext['uniAppX']) {
-  return value === true || (typeof value === 'object' && value?.enabled !== false)
-}
+export { isRuntimeUniAppXEnabled } from '@/framework-policies/resolve'
 
 export function normalizeRuntimeUniUtsPlatform(value: RuntimeBranchContext['uniUtsPlatform']) {
   return typeof value === 'object' && value !== null

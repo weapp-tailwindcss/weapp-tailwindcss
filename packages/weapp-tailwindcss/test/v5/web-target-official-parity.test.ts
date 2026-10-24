@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WeappTailwindcss as createGulpPlugins } from '@/gulp'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from '@/generator'
 import { WeappTailwindcss as createVitePlugins } from '@/vite'
-import { generateCssByGenerator } from '@/generation/index'
+import { generateCssByGenerator } from '@/context/generation'
 import {
   createContext,
   createRollupAsset,
@@ -25,7 +25,7 @@ import {
   FakeConcatSource,
   createAssetsFromStore,
   createContext as createWebpackContext,
-  getCompilerContextMock as getWebpackCompilerContextMock,
+  createCompilerContextMock as createWebpackCompilerContextMock,
   getWebpackLoaderRuntime,
   path as webpackPath,
   testState as webpackTestState,
@@ -532,7 +532,7 @@ async function generateWebpackPluginCss(root: string, cssEntry: string, css: str
       },
     },
   } as any)
-  getWebpackCompilerContextMock.mockClear()
+  createWebpackCompilerContextMock.mockClear()
 
   const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
   let loaderHandler: ((loaderContext: any, module: { loaders: Array<{ loader: string, options?: Record<string, any> }>, resource?: string }) => void) | undefined

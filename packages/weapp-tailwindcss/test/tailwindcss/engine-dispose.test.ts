@@ -6,5 +6,5 @@ it('主包释放校验引擎持有的会话', async () => {
   const engine = createTailwindV4Engine(source)
   expect(await engine.validateCandidates(['flex'])).toEqual(new Set(['flex']))
   engine.dispose?.()
-  await expect(engine.validateCandidates(['grid'])).rejects.toThrow('disposed')
+  await expect(engine.validateCandidates(['grid'])).rejects.toThrow('已释放')
 })

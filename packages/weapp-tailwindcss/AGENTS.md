@@ -13,6 +13,7 @@
   - `src/wxml/`：模板类名处理链路。
   - `src/js/`：JS AST 与模块图相关转译。
   - `src/context/`：上下文、缓存与配置汇总。
+  - `src/framework-policies/`：与构建器无关的框架配置解析；核心消费 `compiler/framework-policy` 的中立策略契约。
   - `src/project-sources/`：与构建器无关的入口发现、配置来源、扫描缓存与候选状态。
   - `src/generation/`：来源准备、生成会话协调、revision 与 CSS 结果组装；旧构建器内部路径仅保留兼容重导出。
   - `test/`：单测、集成、回归、性能相关用例。
@@ -34,6 +35,8 @@
 ## 开发与变更要求
 
 - 核心不得通过值引用、类型引用或聚合导出反向引用构建器实现；改动依赖关系后执行仓库根的 architecture:check 脚本。
+- 框架专属逻辑由策略模块与 `bundlers/*/frameworks` 拥有；共享生命周期、产物处理与 loader 流程通过窄接口调用，不能直接或经聚合导出引用具体框架实现。框架之间不得横向依赖；真实共享协议放入明确的公共模块。
+- 新增框架或兼容解析入口时，补 `test/ci/framework-boundaries.test.ts` 与相应行为回归。旧路径重导出不豁免依赖检查，框架分派只允许存在于明确的组装入口；不得通过扩大目录豁免绕过门禁。
 - 路径身份、glob 与来源匹配复用 `@weapp-tailwindcss/source-scan`；扫描入口复用测试辅助层的共享契约。
 
 - 修改 `src/js/**`、`src/wxml/**`、`src/context/**` 时，必须补对应回归测试。

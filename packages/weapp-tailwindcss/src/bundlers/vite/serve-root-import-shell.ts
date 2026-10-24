@@ -20,12 +20,8 @@ export function resolveViteServeRootMiniProgramImportShell(options: {
     css,
     file: outputFile,
     isWebGeneratorTarget,
-    matchesCss: cssPipelineContext.opts?.cssMatcher?.(outputFile) ?? true,
-    shouldKeep: () => cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-      ...cssPipelineContext,
-      css,
-      file: outputFile,
-    }),
+    matchesCss: cssPipelineContext.matchesCss(outputFile),
+    shouldKeep: () => (cssPipelineStrategy?.styles?.rootImportShell !== undefined),
   })
   return shouldPreserve
     ? normalizeMiniProgramImportShell(css)

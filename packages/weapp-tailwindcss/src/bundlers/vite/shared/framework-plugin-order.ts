@@ -17,3 +17,9 @@ export function orderFrameworkSourceCandidatePlugins(
     ...extraPlugins.slice(anchor),
   ]
 }
+
+/** 先提交框架专属资产，再执行具有 post 元数据的生成与收尾阶段。 */
+export function insertFrameworkAssetPlugins(plugins: Plugin[], assetPlugins: Plugin[]) {
+  const outputIndex = plugins.findIndex(plugin => typeof plugin.generateBundle === 'object' && plugin.generateBundle.order === 'post')
+  plugins.splice(outputIndex < 0 ? plugins.length : outputIndex, 0, ...assetPlugins)
+}

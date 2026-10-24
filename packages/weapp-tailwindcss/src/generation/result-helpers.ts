@@ -1,4 +1,4 @@
-import type { normalizeWeappTailwindcssGeneratorOptions } from '@/generator/index'
+import type { ResolvedGeneratorOptions } from '@/compiler/compilation-profile'
 import { normalizeWebCssCompatOptions, transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { collectGeneratedRawSourceCandidates } from './class-selectors'
 import { finalizeMiniProgramGeneratorCss } from './generation-helpers'
@@ -39,7 +39,7 @@ export function resolveGeneratedCssClassSet(
 export function finalizeWebGeneratorCss(
   css: string,
   target: string,
-  webCompat: ReturnType<typeof normalizeWeappTailwindcssGeneratorOptions>['webCompat'],
+  webCompat: ResolvedGeneratorOptions['webCompat'],
   deferPropertyFallback = false,
 ) {
   return target === 'web'
@@ -54,7 +54,7 @@ export function finalizeIncrementalGeneratorCss(
   majorVersion: number | undefined,
   cssPreflight: Parameters<typeof finalizeMiniProgramGeneratorCss>[3],
   options: Parameters<typeof finalizeMiniProgramGeneratorCss>[4],
-  webCompat: ReturnType<typeof normalizeWeappTailwindcssGeneratorOptions>['webCompat'],
+  webCompat: ResolvedGeneratorOptions['webCompat'],
   deferPropertyFallback = false,
 ) {
   const finalizedIncrementalCss = finalizeMiniProgramGeneratorCss(

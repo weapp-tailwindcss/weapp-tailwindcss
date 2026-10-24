@@ -13,18 +13,21 @@ const WeappTwCssGenerationLoader: webpack.LoaderDefinitionFunction<WebpackCssImp
   this: webpack.LoaderContext<WebpackCssImportRewriteLoaderOptions>,
   source: string | Buffer,
 ) {
-  const options = resolveWebpackCssPipelineLoaderOptions(this.getOptions())
-  const input = normalizeResolvedTailwindcssImports(
-    Buffer.isBuffer(source) ? source.toString('utf-8') : source,
-    options?.tailwindcssImportRewrite?.pkgDir,
-  )
-  const shouldGenerate = hasTailwindRootDirectives(input, { importFallback: true })
-    || hasTailwindApplyDirective(input)
-  if (!shouldGenerate) {
-    return source
+  const options = resolveWebpackCssPipelineLoaderOptions(this.getOptions(), this._compiler)
+  const execute = async () => {
+    const input = normalizeResolvedTailwindcssImports(
+      Buffer.isBuffer(source) ? source.toString('utf-8') : source,
+      options?.tailwindcssImportRewrite?.pkgDir,
+    )
+    const shouldGenerate = hasTailwindRootDirectives(input, { importFallback: true })
+      || hasTailwindApplyDirective(input)
+    if (!shouldGenerate) {
+      return source
+    }
+    await registerWebpackCssGeneratorSource(input, this.resourcePath, options)
+    return await generateCssForWebpackPipeline(input, this, options) ?? source
   }
-  await registerWebpackCssGeneratorSource(input, this.resourcePath, options)
-  return await generateCssForWebpackPipeline(input, this, options) ?? source
+  return options?.tailwindcssImportRewrite?.run ? options.tailwindcssImportRewrite.run(execute) : execute()
 }
 
 export default WeappTwCssGenerationLoader

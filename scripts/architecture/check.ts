@@ -12,3 +12,7 @@ if (result.errors.length) {
 else {
   console.log(`架构检查通过：${result.packages} 个包，${result.files} 个源码文件。`)
 }
+console.log(`框架边界登记：${result.frameworkExceptions.filter(edge => edge.kind === 'assembly').length} 条组装边，${result.frameworkExceptions.filter(edge => edge.kind === 'compatibility').length} 条兼容边。`)
+for (const edge of result.frameworkExceptions.filter(edge => edge.kind === 'compatibility')) {
+  console.log(`兼容边：${edge.from} -> ${edge.to}；原因：${edge.reason}；内部替代：${edge.replacement}`)
+}

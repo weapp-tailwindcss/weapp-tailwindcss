@@ -83,6 +83,8 @@ export function resolveViteCssTransformDecisionPlan(
     )
   const strippedViteProcessedCss = stripBundlerGeneratedCssMarkers(options.rawSource)
   const shouldPreserveStaleGeneratedCssAsset = options.hasStaleViteProcessedCssSource
+    // 作者已删除生成指令时必须采用新来源，旧生成标记不能保活被移除的样式。
+    && (options.rememberedRawSource == null || hasRememberedTailwindGenerationSource)
     && shouldPreserveCollectedViteCssAsset
     && strippedViteProcessedCss.trim().length > 0
     && options.cssAssetIdentityKind !== 'generator-placeholder'
@@ -122,7 +124,6 @@ export interface ResolveViteCssTransformCachePlanOptions {
   cssIsMainChunk: boolean
   cssRuntimeAffectingHash: string
   cssShareScope: string
-  linkedImpactSignature: string
   outputFile: string
   runtimeSignature: string
   scopedGeneratorCandidateSignature: string
@@ -167,32 +168,13 @@ export function resolveViteCssTransformCachePlan(
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
+    // 来源文本仅通过候选与来源标注影响样式；全局 HTML/JS 内容不能使无关 CSS 失效。
     cssTaskHash: [
       options.cssRuntimeAffectingHash,
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
-      options.linkedImpactSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
     rememberedCssRuntimeSignature,
   }
-}
-
-export interface ResolveViteCssLinkedImpactSignatureOptions {
-  changedHtmlFiles: ReadonlySet<string>
-  changedJsFiles: ReadonlySet<string>
-  runtimeAffectingSignatureByFile: ReadonlyMap<string, string>
-}
-
-export function resolveViteCssLinkedImpactSignature(
-  options: ResolveViteCssLinkedImpactSignatureOptions,
-) {
-  return [
-    ...[...options.changedHtmlFiles]
-      .sort()
-      .map(file => options.runtimeAffectingSignatureByFile.get(file) ?? ''),
-    ...[...options.changedJsFiles]
-      .sort()
-      .map(file => options.runtimeAffectingSignatureByFile.get(file) ?? ''),
-  ].join(':')
 }

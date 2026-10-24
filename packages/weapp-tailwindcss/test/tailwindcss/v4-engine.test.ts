@@ -859,7 +859,7 @@ describe('tailwindcss v4 engine', () => {
     expect(second.css).toContain('.wx_cbg-red-500')
   })
 
-  it('dedupes concurrent v4 incremental generation for identical requests', async () => {
+  it.each([true, false])('shares concurrent requests only within the same engine: %s', async (sharedEngine) => {
     vi.resetModules()
     const generate = vi.fn(async () => {
       await new Promise(resolve => setTimeout(resolve, 10))
@@ -904,8 +904,10 @@ describe('tailwindcss v4 engine', () => {
       projectRoot: process.cwd(),
     } satisfies TailwindV4ResolvedSource
 
+    const firstEngine = createMockedTailwindV4Engine(source)
+    const secondEngine = sharedEngine ? firstEngine : createMockedTailwindV4Engine(source)
     const [first, second] = await Promise.all([
-      createMockedTailwindV4Engine(source).generate({
+      firstEngine.generate({
         candidates: ['text-[88rpx]'],
         incrementalCache: true,
         scanSources: false,
@@ -913,7 +915,7 @@ describe('tailwindcss v4 engine', () => {
           isMainChunk: false,
         },
       }),
-      createMockedTailwindV4Engine(source).generate({
+      secondEngine.generate({
         candidates: ['text-[88rpx]'],
         incrementalCache: true,
         scanSources: false,
@@ -923,7 +925,7 @@ describe('tailwindcss v4 engine', () => {
       }),
     ])
 
-    expect(generate).toHaveBeenCalledTimes(1)
+    expect(generate).toHaveBeenCalledTimes(sharedEngine ? 1 : 2)
     expect(first.css).toContain('.text-_b88rpx_B')
     expect(second.css).toContain('.text-_b88rpx_B')
   })

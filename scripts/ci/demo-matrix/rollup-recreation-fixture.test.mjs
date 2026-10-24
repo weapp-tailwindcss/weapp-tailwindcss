@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import { expect, it, vi } from 'vitest'
-import { fixtureReadiness, recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { fixtureReadiness, recoveryFixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-it.for(['cjs', 'esm'].flatMap(format => ['release', 'pending'].map(gate => ({ format, gate }))))('settles an aborted fixture before the next native watcher starts ($format, $gate)', async ({ format, gate }, context) => {
+it.for(recoveryFormats.flatMap(format => ['release', 'pending'].map(gate => ({ format, gate }))))('settles an aborted fixture before the next native watcher starts ($format, $gate)', async ({ format, gate }, context) => {
   const originalWatch = fs.watch
   const controller = new AbortController()
   const ready = Promise.withResolvers()

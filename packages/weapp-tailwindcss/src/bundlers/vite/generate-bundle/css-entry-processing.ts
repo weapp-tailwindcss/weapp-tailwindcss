@@ -1,6 +1,7 @@
 import type { RememberedCssSource } from './types'
 import { readDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeMiniProgramImportShell } from '../../../generation/output-import-shell'
+import { createCssAssetPipelineContext } from '../processed-css-assets/markers-imports'
 import { processViteCssEntryTransform } from './css-entry-transform'
 import { prepareFrameworkRootStyle, preserveFrameworkRootImportShell } from './framework-root-style'
 
@@ -90,7 +91,7 @@ export async function processViteCssBundleEntry(options: any) {
       })
   const rawSource = normalizeRelativeCssConfigDirectives(outputSource, assetSourceFile, outDir, opts)
   const currentRawSourceHasExplicitScanContext = rawSource.includes('@source') || rawSource.includes('@config')
-  const cssPipelineContext2 = { ...createInitialCssPipelineContext(file), bundle }
+  const cssPipelineContext2 = createCssAssetPipelineContext({ createCssPipelineContext: createInitialCssPipelineContext }, file, bundle)
   const rootImportShellOutputFile = resolveReplayCssOutputFile(outDir, originalSource.fileName || file)
   const { rootImportShellPlan, canClaimConfiguredOutput } = prepareFrameworkRootStyle({
     ...options,
@@ -131,11 +132,7 @@ export async function processViteCssBundleEntry(options: any) {
     rootImportShellOutputFile,
     rootImportShellTarget: rootImportShellPlan.isCurrentImportShell ? rootImportShellPlan.targetToRemember : rootImportShellPlan.reusableTarget,
     shouldPreserveAppCssExtension,
-    shouldReuseRootImportShell: () => shouldKeepRootMiniProgramStyleAsImportShell(context.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-      ...cssPipelineContext2,
-      css: rawSource,
-      file: rootImportShellOutputFile,
-    })),
+    shouldReuseRootImportShell: () => shouldKeepRootMiniProgramStyleAsImportShell((context.cssPipelineStrategy?.styles?.rootImportShell !== undefined)),
   })
   let outputFile = cssAssetOutputPlan.outputFile
   const resolveMatchedOutputFileForCurrentAsset = (sourceFile: string) => {
@@ -249,6 +246,7 @@ export async function processViteCssBundleEntry(options: any) {
   }
   const cssCompositionPlan = resolveViteCssCompositionPlan({
     assetSourceFile,
+    generatedSourceFiles: options.generatedSourceFiles,
     configuredSourceFileKeys: configuredTailwindV4CssSourceFileKeysForScope,
     cssEntries: opts.cssEntries,
     cssMatcher: opts.cssMatcher,
@@ -270,15 +268,8 @@ export async function processViteCssBundleEntry(options: any) {
     resolvedFromTemporarySource: resolvedFromTemporaryCssAsset,
     rootImportShellOutputFile,
     shouldKeepImportedCssShell: isCssImportOnlyBundleAsset(bundle, file, rawSource),
-    shouldKeepRootImportShell: shouldKeepRootMiniProgramStyleAsImportShell(context.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-      ...cssPipelineContext2,
-      css: rawSource,
-      file: rootImportShellOutputFile,
-    })),
-    shouldMoveRootImportShellToOrigin: shouldMoveRootMiniProgramStyleToImportShellOrigin(context.cssPipelineStrategy?.shouldMoveRootMiniProgramStyleToImportShellOrigin?.({
-      ...cssPipelineContext2,
-      file: rootImportShellOutputFile,
-    })),
+    shouldKeepRootImportShell: shouldKeepRootMiniProgramStyleAsImportShell((context.cssPipelineStrategy?.styles?.rootImportShell !== undefined)),
+    shouldMoveRootImportShellToOrigin: shouldMoveRootMiniProgramStyleToImportShellOrigin((context.cssPipelineStrategy?.styles?.rootImportShell === 'extract')),
     shouldSkipRememberedSource: (remembered: RememberedCssSource) => {
       const shouldSkip = shouldSkipRawRememberedCssSource(remembered.rawSource, remembered.sourceFile)
       if (shouldSkip) {

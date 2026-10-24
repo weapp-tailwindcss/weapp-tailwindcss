@@ -58,7 +58,7 @@ wx-root-portal-content {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
-/*tokens: template-corpus-apply <= pages/index/index.vue */
+/*! tokens: template-corpus-apply <= pages/index/index.vue */
 .template-corpus-apply {
   display: inline-flex;
   align-items: center;
@@ -79,19 +79,19 @@ wx-root-portal-content {
   font-size: 26rpx;
   color: var(--color-white);
 }
-/*tokens: mt-2 <= pages/index/index.vue */
+/*! tokens: mt-2 <= pages/index/index.vue */
 .mt-2 {
   margin-top: calc(var(--spacing) * 2);
 }
-/*tokens: mt-4 <= pages/index/index.vue */
+/*! tokens: mt-4 <= pages/index/index.vue */
 .mt-4 {
   margin-top: calc(var(--spacing) * 4);
 }
-/*tokens: mt-[19px] <= <tailwind generated> */
+/*! tokens: mt-[19px] <= <tailwind generated> */
 .mt-_b19px_B {
   margin-top: 19px;
 }
-/*tokens: i-[mdi--github-circle] <= <tailwind generated> */
+/*! tokens: i-[mdi--github-circle] <= <tailwind generated> */
 .i-_bmdi--github-circle_B {
   display: inline-block;
   width: 1em;
@@ -105,7 +105,7 @@ wx-root-portal-content {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2'/%3E%3C/svg%3E");
 }
-/*tokens: i-[mdi--star] <= <tailwind generated> */
+/*! tokens: i-[mdi--star] <= <tailwind generated> */
 .i-_bmdi--star_B {
   display: inline-block;
   width: 1em;
@@ -119,7 +119,7 @@ wx-root-portal-content {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2L9.19 8.62L2 9.24l5.45 4.73L5.82 21z'/%3E%3C/svg%3E");
 }
-/*tokens: i-[svg-spinners--180-ring-with-bg] <= <tailwind generated> */
+/*! tokens: i-[svg-spinners--180-ring-with-bg] <= <tailwind generated> */
 .i-_bsvg-spinners--180-ring-with-bg_B {
   display: inline-block;
   width: 1em;
@@ -133,46 +133,46 @@ wx-root-portal-content {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='black' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
-/*tokens: flex <= pages/index/index.vue */
+/*! tokens: flex <= pages/index/index.vue */
 .flex {
   display: flex;
 }
 .inline-flex {
   display: inline-flex;
 }
-/*tokens: h-16 <= pages/index/index.vue */
+/*! tokens: h-16 <= pages/index/index.vue */
 .h-16 {
   height: calc(var(--spacing) * 16);
 }
-/*tokens: h-[6rem] <= pages/index/index.vue */
+/*! tokens: h-[6rem] <= pages/index/index.vue */
 .h-_b6rem_B {
   height: 192rpx;
 }
-/*tokens: h-[41px] <= <tailwind generated> */
+/*! tokens: h-[41px] <= <tailwind generated> */
 .h-_b41px_B {
   height: 41px;
 }
-/*tokens: h-[45px] <= pages/index/index.vue */
+/*! tokens: h-[45px] <= pages/index/index.vue */
 .h-_b45px_B {
   height: 45px;
 }
-/*tokens: w-32 <= pages/index/index.vue */
+/*! tokens: w-32 <= pages/index/index.vue */
 .w-32 {
   width: calc(var(--spacing) * 32);
 }
-/*tokens: w-[120px] <= pages/index/index.vue */
+/*! tokens: w-[120px] <= pages/index/index.vue */
 .w-_b120px_B {
   width: 120px;
 }
-/*tokens: w-[173px] <= <tailwind generated> */
+/*! tokens: w-[173px] <= <tailwind generated> */
 .w-_b173px_B {
   width: 173px;
 }
-/*tokens: w-[323px] <= pages/index/index.vue */
+/*! tokens: w-[323px] <= pages/index/index.vue */
 .w-_b323px_B {
   width: 323px;
 }
-/*tokens: flex-col <= pages/index/index.vue */
+/*! tokens: flex-col <= pages/index/index.vue */
 .flex-col {
   flex-direction: column;
 }
@@ -182,11 +182,11 @@ wx-root-portal-content {
 .gap-2 {
   gap: calc(var(--spacing) * 2);
 }
-/*tokens: gap-3 <= pages/index/index.vue */
+/*! tokens: gap-3 <= pages/index/index.vue */
 .gap-3 {
   gap: calc(var(--spacing) * 3);
 }
-/*tokens: space-y-2 <= pages/index/index.vue */
+/*! tokens: space-y-2 <= pages/index/index.vue */
 .space-y-2 > view + view,
 .space-y-2 > view + text,
 .space-y-2 > text + view,
@@ -197,64 +197,64 @@ wx-root-portal-content {
   margin-top: calc((var(--spacing) * 2) * (1 - var(--tw-space-y-reverse)));
   margin-top: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
 }
-/*tokens: rounded <= pages/index/index.vue */
+/*! tokens: rounded <= pages/index/index.vue */
 .rounded {
   border-radius: 8rpx;
 }
-/*tokens: rounded-[20rpx] <= pages/index/index.vue */
+/*! tokens: rounded-[20rpx] <= pages/index/index.vue */
 .rounded-_b20rpx_B {
   border-radius: 20rpx;
 }
-/*tokens: rounded-[28rpx] <= pages/index/index.vue */
+/*! tokens: rounded-[28rpx] <= pages/index/index.vue */
 .rounded-_b28rpx_B {
   border-radius: 28rpx;
 }
-/*tokens: border <= pages/index/index.vue */
+/*! tokens: border <= pages/index/index.vue */
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
 }
-/*tokens: border-slate-200/80 <= pages/index/index.vue */
+/*! tokens: border-slate-200/80 <= pages/index/index.vue */
 .border-slate-200_f80 {
   border-color: rgba(226, 232, 240, 0.8);
 }
-/*tokens: !bg-[gray] <= pages/index/index.vue */
+/*! tokens: !bg-[gray] <= pages/index/index.vue */
 ._ebg-_bgray_B {
   background-color: gray !important;
 }
-/*tokens: bg-[#3b0764] <= <tailwind generated> */
+/*! tokens: bg-[#3b0764] <= <tailwind generated> */
 .bg-_b_h3b0764_B {
   background-color: #3b0764;
 }
-/*tokens: bg-[#68c828] <= pages/index/index.vue */
+/*! tokens: bg-[#68c828] <= pages/index/index.vue */
 .bg-_b_h68c828_B {
   background-color: #68c828;
 }
-/*tokens: bg-[#0977ee] <= pages/index/index.vue */
+/*! tokens: bg-[#0977ee] <= pages/index/index.vue */
 .bg-_b_h0977ee_B {
   background-color: #0977ee;
 }
-/*tokens: bg-[#102938] <= <tailwind generated> */
+/*! tokens: bg-[#102938] <= <tailwind generated> */
 .bg-_b_h102938_B {
   background-color: #102938;
 }
-/*tokens: bg-[#123456] <= pages/index/index.vue */
+/*! tokens: bg-[#123456] <= pages/index/index.vue */
 .bg-_b_h123456_B {
   background-color: #123456;
 }
-/*tokens: bg-green-200/70 <= pages/index/index.vue */
+/*! tokens: bg-green-200/70 <= pages/index/index.vue */
 .bg-green-200_f70 {
   background-color: rgba(185, 248, 207, 0.7);
 }
-/*tokens: bg-white <= pages/index/index.vue */
+/*! tokens: bg-white <= pages/index/index.vue */
 .bg-white {
   background-color: var(--color-white);
 }
-/*tokens: bg-white/70 <= pages/index/index.vue */
+/*! tokens: bg-white/70 <= pages/index/index.vue */
 .bg-white_f70 {
   background-color: rgba(255, 255, 255, 0.7);
 }
-/*tokens: bg-gradient-to-br <= pages/index/index.vue */
+/*! tokens: bg-gradient-to-br <= pages/index/index.vue */
 .bg-gradient-to-br {
   --tw-gradient-position: to bottom right;
   background-image: linear-gradient(var(--tw-gradient-stops));
@@ -263,7 +263,7 @@ wx-root-portal-content {
   --tw-gradient-position: to right;
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
-/*tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= pages/index/index.vue */
+/*! tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= pages/index/index.vue */
 .bg-_bradial-gradient_pcircle_at_18_v_20_v_m_he0f2fe_m_hfdf4ff_70_v_P_B {
   background-image: radial-gradient(circle at 18% 20%, #e0f2fe, #fdf4ff 70%);
 }
@@ -272,11 +272,11 @@ wx-root-portal-content {
   --tw-gradient-stops:
     var(--tw-gradient-via-stops, var(--tw-gradient-position)), var(--tw-gradient-from) var(--tw-gradient-from-position,), var(--tw-gradient-to) var(--tw-gradient-to-position,);
 }
-/*tokens: from-slate-900/95 <= pages/index/index.vue */
+/*! tokens: from-slate-900/95 <= pages/index/index.vue */
 .from-slate-900_f95 {
   --tw-gradient-from: rgba(15, 23, 43, 0.95);
 }
-/*tokens: from-slate-900/95 <= pages/index/index.vue */
+/*! tokens: from-slate-900/95 <= pages/index/index.vue */
 .from-slate-900_f95 {
   --tw-gradient-stops:
     var(--tw-gradient-via-stops, var(--tw-gradient-position)), var(--tw-gradient-from) var(--tw-gradient-from-position,), var(--tw-gradient-to) var(--tw-gradient-to-position,);
@@ -286,25 +286,25 @@ wx-root-portal-content {
   --tw-gradient-stops:
     var(--tw-gradient-via-stops, var(--tw-gradient-position)), var(--tw-gradient-from) var(--tw-gradient-from-position,), var(--tw-gradient-to) var(--tw-gradient-to-position,);
 }
-/*tokens: to-slate-700/95 <= pages/index/index.vue */
+/*! tokens: to-slate-700/95 <= pages/index/index.vue */
 .to-slate-700_f95 {
   --tw-gradient-to: rgba(49, 65, 88, 0.95);
 }
-/*tokens: to-slate-700/95 <= pages/index/index.vue */
+/*! tokens: to-slate-700/95 <= pages/index/index.vue */
 .to-slate-700_f95 {
   --tw-gradient-stops:
     var(--tw-gradient-via-stops, var(--tw-gradient-position)), var(--tw-gradient-from) var(--tw-gradient-from-position,), var(--tw-gradient-to) var(--tw-gradient-to-position,);
 }
-/*tokens: p-4 <= pages/index/index.vue */
+/*! tokens: p-4 <= pages/index/index.vue */
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
-/*tokens: px-3 <= pages/index/index.vue */
+/*! tokens: px-3 <= pages/index/index.vue */
 .px-3 {
   padding-left: calc(var(--spacing) * 3);
   padding-right: calc(var(--spacing) * 3);
 }
-/*tokens: px-4 <= pages/index/index.vue */
+/*! tokens: px-4 <= pages/index/index.vue */
 .px-4 {
   padding-left: calc(var(--spacing) * 4);
   padding-right: calc(var(--spacing) * 4);
@@ -313,27 +313,27 @@ wx-root-portal-content {
   padding-left: 18rpx;
   padding-right: 18rpx;
 }
-/*tokens: px-[29rpx] <= pages/index/index.vue */
+/*! tokens: px-[29rpx] <= pages/index/index.vue */
 .px-_b29rpx_B {
   padding-left: 29rpx;
   padding-right: 29rpx;
 }
-/*tokens: px-[48px] <= pages/index/index.vue */
+/*! tokens: px-[48px] <= pages/index/index.vue */
 .px-_b48px_B {
   padding-left: 48px;
   padding-right: 48px;
 }
-/*tokens: py-1 <= pages/index/index.vue */
+/*! tokens: py-1 <= pages/index/index.vue */
 .py-1 {
   padding-top: var(--spacing);
   padding-bottom: var(--spacing);
 }
-/*tokens: py-2 <= pages/index/index.vue */
+/*! tokens: py-2 <= pages/index/index.vue */
 .py-2 {
   padding-top: calc(var(--spacing) * 2);
   padding-bottom: calc(var(--spacing) * 2);
 }
-/*tokens: py-3 <= pages/index/index.vue */
+/*! tokens: py-3 <= pages/index/index.vue */
 .py-3 {
   padding-top: calc(var(--spacing) * 3);
   padding-bottom: calc(var(--spacing) * 3);
@@ -342,20 +342,20 @@ wx-root-portal-content {
   padding-top: 10rpx;
   padding-bottom: 10rpx;
 }
-/*tokens: py-[24rpx] <= pages/index/index.vue */
+/*! tokens: py-[24rpx] <= pages/index/index.vue */
 .py-_b24rpx_B {
   padding-top: 24rpx;
   padding-bottom: 24rpx;
 }
-/*tokens: text-[26rpx] <= pages/index/index.vue */
+/*! tokens: text-[26rpx] <= pages/index/index.vue */
 .text-_b26rpx_B {
   font-size: 26rpx;
 }
-/*tokens: text-[31rpx] <= pages/index/index.vue */
+/*! tokens: text-[31rpx] <= pages/index/index.vue */
 .text-_b31rpx_B {
   font-size: 31rpx;
 }
-/*tokens: text-[100rpx] <= pages/index/index.vue */
+/*! tokens: text-[100rpx] <= pages/index/index.vue */
 .text-_b100rpx_B {
   font-size: 100rpx;
 }
@@ -363,95 +363,95 @@ wx-root-portal-content {
   --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
 }
-/*tokens: text-[#123456] <= pages/index/index.vue */
+/*! tokens: text-[#123456] <= pages/index/index.vue */
 .text-_b_h123456_B {
   color: #123456;
 }
-/*tokens: text-[#888800] <= pages/index/index.vue */
+/*! tokens: text-[#888800] <= pages/index/index.vue */
 .text-_b_h888800_B {
   color: #888800;
 }
-/*tokens: text-[#f7fbff] <= <tailwind generated> */
+/*! tokens: text-[#f7fbff] <= <tailwind generated> */
 .text-_b_hf7fbff_B {
   color: #f7fbff;
 }
-/*tokens: text-[#fef08a] <= <tailwind generated> */
+/*! tokens: text-[#fef08a] <= <tailwind generated> */
 .text-_b_hfef08a_B {
   color: #fef08a;
 }
-/*tokens: text-slate-700 <= pages/index/index.vue */
+/*! tokens: text-slate-700 <= pages/index/index.vue */
 .text-slate-700 {
   color: var(--color-slate-700);
 }
-/*tokens: text-slate-900 <= pages/index/index.vue */
+/*! tokens: text-slate-900 <= pages/index/index.vue */
 .text-slate-900 {
   color: var(--color-slate-900);
 }
-/*tokens: text-white <= pages/index/index.vue */
+/*! tokens: text-white <= pages/index/index.vue */
 .text-white {
   color: var(--color-white);
 }
-/*tokens: shadow-xl <= pages/index/index.vue */
+/*! tokens: shadow-xl <= pages/index/index.vue */
 .shadow-xl {
   --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
-/*tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
+/*! tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x5f00_u_x59cb_u_x795e_u_x5947_u_x7684__tailwindcss_u_x5f00_u_x53d1_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
   content: var(--tw-content);
 }
-/*tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
+/*! tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x7ee7_u_x7eed_u_x795e_u_x5947_u_x7684__tailwindcss_HMR_u_x56de_u_x5f52_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
   content: var(--tw-content);
 }
-/*tokens: after:!content-['good_work!'] <= pages/index/index.vue */
+/*! tokens: after:!content-['good_work!'] <= pages/index/index.vue */
 .after_c_econtent-_b_agood_work_e_a_B::after {
   content: var(--tw-content);
   --tw-content: 'good work!' !important;
   content: var(--tw-content) !important;
 }
-/*tokens: dark:bg-zinc-900 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
+/*! tokens: dark:bg-zinc-900 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
 .dark_cbg-zinc-900.theme-dark {
   background-color: var(--color-zinc-900);
 }
-/*tokens: theme-dark <= pages/index/index.vue | dark:bg-zinc-900 <= pages/index/index.vue */
+/*! tokens: theme-dark <= pages/index/index.vue | dark:bg-zinc-900 <= pages/index/index.vue */
 .theme-dark .dark_cbg-zinc-900 {
   background-color: var(--color-zinc-900);
 }
-/*tokens: dark:bg-zinc-950 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
+/*! tokens: dark:bg-zinc-950 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
 .dark_cbg-zinc-950.theme-dark {
   background-color: var(--color-zinc-950);
 }
-/*tokens: theme-dark <= pages/index/index.vue | dark:bg-zinc-950 <= pages/index/index.vue */
+/*! tokens: theme-dark <= pages/index/index.vue | dark:bg-zinc-950 <= pages/index/index.vue */
 .theme-dark .dark_cbg-zinc-950 {
   background-color: var(--color-zinc-950);
 }
-/*tokens: dark:text-zinc-50 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
+/*! tokens: dark:text-zinc-50 <= pages/index/index.vue | theme-dark <= pages/index/index.vue */
 .dark_ctext-zinc-50.theme-dark {
   color: var(--color-zinc-50);
 }
-/*tokens: theme-dark <= pages/index/index.vue | dark:text-zinc-50 <= pages/index/index.vue */
+/*! tokens: theme-dark <= pages/index/index.vue | dark:text-zinc-50 <= pages/index/index.vue */
 .theme-dark .dark_ctext-zinc-50 {
   color: var(--color-zinc-50);
 }
 @media (prefers-color-scheme: dark) {
-  /*tokens: system-dark:bg-slate-900 <= pages/index/index.vue */
+  /*! tokens: system-dark:bg-slate-900 <= pages/index/index.vue */
   .system-dark_cbg-slate-900 {
     background-color: var(--color-slate-900);
   }
-  /*tokens: system-dark:text-slate-100 <= pages/index/index.vue */
+  /*! tokens: system-dark:text-slate-100 <= pages/index/index.vue */
   .system-dark_ctext-slate-100 {
     color: var(--color-slate-100);
   }
 }
-/*tokens: wx:bg-blue-500 <= pages/index/index.vue */
+/*! tokens: wx:bg-blue-500 <= pages/index/index.vue */
 .wx_cbg-blue-500 {
   background-color: var(--color-blue-500);
 }
 @media not all {
-  /*tokens: not-wx:bg-red-500 <= pages/index/index.vue */
+  /*! tokens: not-wx:bg-red-500 <= pages/index/index.vue */
   .not-wx_cbg-red-500 {
     background-color: var(--color-red-500);
   }

@@ -4,13 +4,14 @@ import type {
   CompilerGenerateRequest,
   CompilerGenerateResult,
   CompilerSnapshot,
-  CreateCompilerOptions,
 } from './types'
-import type { UserDefinedOptions } from '@/types'
+import type { CacheTelemetryCollector } from '@/compiler/cache-telemetry'
+import type { CompilerTransformServices } from '@/compiler/transform-services'
 import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot } from '@weapp-tailwindcss/postcss/transform'
-import { createWeappTailwindcssGenerator } from '@/generator'
+import { snapshotConfiguration } from '@/compiler/configuration-snapshot'
 import { createCompilerGenerationCacheKey, isSameCompilerGenerationCacheKey, reuseCompilerGenerationResult } from './generation-cache'
 import { commitCompilerGeneration, prepareCompilerGeneration } from './generation-state'
+import { createCompilerGeneratorServices } from './generator-services'
 import { CompilerRootStore } from './root-store'
 import {
   createImmutableSet,
@@ -23,11 +24,21 @@ import { createCompilerTransforms } from './transforms'
 
 const DEFAULT_MAX_ROOTS = 128
 
-export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
-  const { compiler: compilerOptions, ...userOptions } = options
+export interface ResolvedCompilerOptions {
+  transforms: CompilerTransformServices
+  compiler?: {
+    maxRoots?: number | undefined
+    onRootEvicted?: ((id: string) => void) | undefined
+    cacheTelemetry?: CacheTelemetryCollector | undefined
+  } | undefined
+}
+
+export function createResolvedCompiler(options: ResolvedCompilerOptions): Compiler {
+  const compilerOptions = options.compiler
   const maxRoots = Math.max(1, Math.floor(compilerOptions?.maxRoots ?? DEFAULT_MAX_ROOTS))
   const cacheTelemetry = compilerOptions?.cacheTelemetry
   const rootStore = new CompilerRootStore(maxRoots, compilerOptions?.onRootEvicted)
+  const generatorServices = createCompilerGeneratorServices(rootStore)
   const activeTasks = new Set<Promise<unknown>>()
   let lifecycle: 'active' | 'disposing' | 'disposed' = 'active'
   let disposePromise: Promise<void> | undefined
@@ -49,11 +60,12 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
 
   const {
     clearCache: clearTransformCache,
+    dispose: disposeTransforms,
     ...transforms
   } = createCompilerTransforms({
     ensureActive,
     track,
-    userOptions: userOptions as UserDefinedOptions,
+    services: options.transforms,
   })
 
   async function runGenerate(entry: CompilerRootSession, request: CompilerGenerateRequest): Promise<CompilerGenerateResult> {
@@ -64,10 +76,6 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     const engineInvalidation = entry.engineInvalidation
     const { source, sourceFingerprint, sourceInputFingerprint } = await resolveCompilerSource(entry, request, engineInvalidation)
     const sourceReused = entry.sourceFingerprint === sourceFingerprint
-    const engineReused = sourceReused
-      && entry.generator !== undefined
-      && entry.appliedEngineInvalidation === engineInvalidation
-    const generator = engineReused ? entry.generator! : createWeappTailwindcssGenerator(source)
     const target = request.target ?? 'weapp'
     const {
       id: _id,
@@ -82,6 +90,13 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
       source,
       !sourceReused || entry.appliedInvalidation !== invalidation,
     )
+    const generationOptions = {
+      ...generateOptions,
+      ...(prepared.explicitCandidates ? { candidates: prepared.compilation.candidates } : {}),
+      incrementalCache: generateOptions.incrementalCache ?? true,
+      target: target === 'tailwind' ? 'web' as const : target,
+    }
+    const { generator, reused: engineReused } = generatorServices.select(entry, source, engineInvalidation, generationOptions)
     const generationCacheKey = createCompilerGenerationCacheKey(
       request,
       prepared.compilation.candidates,
@@ -108,12 +123,7 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     try {
       const generated = reusableGeneration
         ? reuseCompilerGenerationResult(reusableGeneration)
-        : await generator.generate({
-            ...generateOptions,
-            ...(prepared.explicitCandidates ? { candidates: prepared.compilation.candidates } : {}),
-            incrementalCache: generateOptions.incrementalCache ?? true,
-            target: target === 'tailwind' ? 'web' : target,
-          })
+        : await generator.generate(generationOptions)
       if (!entry.active) {
         throw new Error(`Compiler root 已被移除：${entry.id}`)
       }
@@ -156,7 +166,7 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
       rootStore.attachDependencies(entry, dependencies)
       rootStore.attachSources(entry, snapshot.sources)
       if (!engineReused && previousGenerator !== generator) {
-        previousGenerator?.dispose?.()
+        rootStore.retireGenerator(previousGenerator)
       }
       const css = target === 'tailwind' ? generated.rawCss : generated.css
       const incrementalCss = target === 'tailwind' ? generated.incrementalRawCss : generated.incrementalCss
@@ -179,8 +189,13 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
       }
     }
     catch (error) {
-      if (!engineReused) {
-        generator.dispose?.()
+      if (!engineReused && entry.generator !== generator) {
+        try {
+          await generator.dispose?.()
+        }
+        catch (cleanupError) {
+          throw new AggregateError([error, cleanupError], '生成失败且生成器释放失败。')
+        }
       }
       throw error
     }
@@ -190,29 +205,10 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     return entry.latestSnapshot?.roots[0]?.revision
   }
 
-  function snapshotCompilerGenerateRequest(request: CompilerGenerateRequest): CompilerGenerateRequest {
-    const styleOptions = request.styleOptions
-    const cssOptions = styleOptions?.cssOptions
-    const preserveWebkitProperties = cssOptions?.preserveWebkitProperties
-    if (!Array.isArray(preserveWebkitProperties)) {
-      return request
-    }
-    return {
-      ...request,
-      styleOptions: {
-        ...styleOptions,
-        cssOptions: {
-          ...cssOptions,
-          preserveWebkitProperties: [...preserveWebkitProperties],
-        },
-      },
-    }
-  }
-
   function generate(request: CompilerGenerateRequest) {
     ensureActive()
     const entry = rootStore.get(request.id)
-    const stableRequest = snapshotCompilerGenerateRequest(request)
+    const stableRequest = snapshotConfiguration(request.candidates ? { ...request, candidates: [...request.candidates] } : request)
     entry.pendingCount += 1
     const execution = entry.pending.then(() => runGenerate(entry, stableRequest))
     const settled = execution.finally(() => {
@@ -266,8 +262,13 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     disposePromise = (async () => {
       await Promise.allSettled([...activeTasks])
       clearTransformCache()
-      await rootStore.dispose()
-      lifecycle = 'disposed'
+      try {
+        await generatorServices.dispose()
+      }
+      finally {
+        disposeTransforms()
+        lifecycle = 'disposed'
+      }
     })()
     return disposePromise
   }

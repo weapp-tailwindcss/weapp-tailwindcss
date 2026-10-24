@@ -51,8 +51,7 @@ describe('TailwindV4NativeSessionPool', () => {
 
     expect(first.dispose).toHaveBeenCalledTimes(1)
     expect(create).toHaveBeenCalledTimes(2)
-    pool.dispose()
-    await Promise.resolve()
+    await pool.dispose()
     expect(second.dispose).toHaveBeenCalledTimes(1)
   })
 
@@ -115,7 +114,7 @@ describe('TailwindV4NativeSessionPool', () => {
       expect(create).toHaveBeenCalledTimes(4)
     }
     finally {
-      pool.dispose()
+      await pool.dispose()
     }
   })
 })

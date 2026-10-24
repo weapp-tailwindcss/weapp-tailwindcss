@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { createViteFrameworkProfileState, resolveGulpFrameworkProfile, resolveViteFrameworkProfile, resolveWebpackFrameworkProfile } from '@/bundlers/framework-selector'
+import { bundlerFrameworkNames, frameworkCatalog, normalizeFrameworkName } from '@/framework/catalog'
 
 describe('bundler framework selector', () => {
+  it('注册数据保留别名、支持组合和不支持框架的既有 fallback', () => {
+    expect(normalizeFrameworkName('uni-app-vite')).toBe('uni-app')
+    expect(normalizeFrameworkName('unknown-framework')).toBeUndefined()
+    expect(frameworkCatalog['uni-app-x'].family).toBe('uni')
+    expect(bundlerFrameworkNames.vite).not.toContain('mpx')
+    expect(bundlerFrameworkNames.webpack).not.toContain('uni-app-x')
+    expect(resolveViteFrameworkProfile({ appType: 'mpx' }).frameworkName).toBe('generic')
+    expect(resolveWebpackFrameworkProfile({ appType: 'uni-app-x' }).frameworkName).toBe('uni-app')
+    expect(resolveWebpackFrameworkProfile({ appType: 'taro', uniAppX: true }).frameworkName).toBe('taro')
+    expect(resolveWebpackFrameworkProfile({ appType: 'mpx', uniAppX: true }).frameworkName).toBe('mpx')
+    expect(resolveViteFrameworkProfile({ appType: 'taro', uniAppX: true }).frameworkName).toBe('uni-app-x')
+  })
+
   it('keeps explicit appType ahead of package detection', () => {
     const profile = resolveViteFrameworkProfile({
       appType: 'taro',

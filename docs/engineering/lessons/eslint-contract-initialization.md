@@ -34,6 +34,32 @@ pnpm agents:check
 
 此处验证的是仓库真实 ESLint 配置的忽略合同，不是性能门禁；完整配置仍在每个测试进程内首次加载，未宣称缩短其成本。此次未对首次失败样本进行细粒度跟踪，不能把该次耗时波动归因于特定插件、CPU 负载或缓存。修复后完整扩展流程由主工作流重新预检验收，本提交仅运行定向工程测试，不操作 IDE、设备或浏览器。未改变公开包或 demo，无需 change intent 或 static 基线更新。
 
+## 隐式格式化器的配置合同
+
+[PR #1316](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316) 的验收准备中发现：不传 `--fix` 只能保证 ESLint 不写回文件，不能保证它不调用格式化器。`repoctl/tooling` 转发的 `@icebreakers/monorepo@5.10.3` 与 `@icebreakers/eslint-config@8.0.9` 默认启用格式化器；真实 CSS 文件的最终配置包含 `format/prettier`，该规则在普通 lint 中也会调用 `prettier.format` 进行内存比较。这与仓库禁止使用 Prettier 的规则冲突。
+
+根配置显式设置 `formatters: false`，保留原有脚本和 TypeScript 检查范围。回归先确认两份仓库 CSS 文件真实存在，再通过同一个 ESLint 实例解析最终配置，拒绝启用的 Prettier 规则；不运行 formatter，也不以检查根配置字符串替代真实解析。关闭格式化器后，CSS 可以没有 ESLint 配置，此合同不额外引入 CSS 检查器。
+
+旧配置下两个新增用例均失败；修复提交 `175e88451` 的定向合同为 1 文件、13 项通过，命令为 `CI=1 pnpm exec vitest run -c scripts/agents/vitest.config.mts scripts/agents/eslint-scope.test.mjs --update=none`。此结果只证明格式化器和路径范围合同，不代表 PR 的完整验收或 CI 已通过。
+
+## 关闭格式化器后的独立样式边界
+
+后续提交 `6a2e909970939dc006fba54399592c97664dda2e` 的 [PR quality and unit tests (1)](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40091306034/job/120866681403) 在 `pnpm lint` 首次失败，尚未执行单测。Node 为 `22.23.3`，61 个 CSS/SCSS 文件被 JavaScript parser 拒绝，另有 4 项原有 `no-console` warning。完整首次日志与准确提交已保存，未通过重跑替代诊断。
+
+`@icebreakers/eslint-config@8.0.9` 在关闭格式化器后仍无条件追加覆盖 CSS、SCSS、Sass、Less、PCSS、PostCSS 和 JSON 的 `style/eol-last: off` 配置。这个覆写本身会让 ESLint 扫描独立样式；失去 formatter 的 plain parser 后，它们落入默认 Espree。仅断言 Prettier 规则关闭无法发现错误的语言分派。
+
+根配置显式把这六种独立样式排除在 ESLint 的脚本与配置检查范围之外，继续关闭 formatter，不引入空 parser 或调整检查规则严重度。JSON 仍使用原有语义检查；Vue 等文件内嵌样式的宿主解析范围不变。独立样式原先由 formatter 检查格式，不存在可保留的 ESLint CSS 语义规则；其样式生成、转换和兼容性继续由仓库已有样式合同验证。
+
+回归覆盖四个 CI 首败中的真实 CSS/SCSS 文件及六种样式后缀，同时明确保留 `package.json` 和维护中的脚本、TypeScript、native 构建脚本。使用真实 ESLint 配置，未 mock parser 或复制配置内容；另外解析忽略规则之前的完整配置图，防止 CSS 被忽略后掩盖意外注册的 Prettier 规则。修复前新增十个范围用例全部失败；修复后 Node `22.23.3` 的范围合同 25 项通过，工程规则域为 3 文件、78 项通过，`CI=1 pnpm lint` 返回 0，仅保留同样四项 warning。定向命令为：
+
+```sh
+pnpm exec cross-env CI=1 pnpm exec vitest run -c scripts/agents/vitest.config.mts scripts/agents/eslint-scope.test.mjs --update=none
+pnpm exec cross-env CI=1 pnpm agents:test --update=none
+pnpm exec cross-env CI=1 pnpm lint
+```
+
+这些证据仅确认 lint 配置修复，不代表该提交的其他 CI 或全面设备验收已通过。未修改公开包、demo 或样式产物，无需 change intent 或 static 基线更新。
+
 ## 规则评估
 
 不新增 AGENTS 规则。保留真实配置覆盖，并在现有回归中明确共享初始化与单项断言的生命周期即可。

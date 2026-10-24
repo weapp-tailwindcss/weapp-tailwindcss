@@ -1,3 +1,4 @@
+import { initializeFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import fs from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -7,9 +8,14 @@ import { createCache } from '@/cache'
 import { upsertTailwindV4CssSource } from '@/tailwindcss/v4/css-sources'
 
 let currentContext: TestContext
-const getCompilerContextMock = vi.fn<(options?: unknown) => TestContext>(() => currentContext)
+const createCompilerContextMock = vi.fn<(options?: unknown) => TestContext>(() => currentContext)
 vi.mock('@/context', () => ({
-  getCompilerContext: (options?: unknown) => getCompilerContextMock(options),
+  createCompilerContext: (options?: unknown) => {
+    const context = createCompilerContextMock(options)
+    initializeFrameworkEnvironment(context)
+    initializeFrameworkEnvironment(context.tailwindRuntime, context)
+    return context
+  },
 }))
 
 const { WeappTailwindcss } = await import('@/bundlers/webpack/BaseUnifiedPlugin/v5')
@@ -120,7 +126,7 @@ describe('bundlers/webpack v5 runtime metadata', () => {
 
   beforeEach(() => {
     currentContext = createContext()
-    getCompilerContextMock.mockClear()
+    createCompilerContextMock.mockClear()
     existsSyncSpy = vi.spyOn(fs as any, 'existsSync')
     existsSyncSpy.mockReturnValue(true)
   })

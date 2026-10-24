@@ -3,6 +3,8 @@ import type { OutputAsset, PluginContext } from 'rollup'
 import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteProcessedCssAssetOutputsReplacer } from '../processed-css-assets/output-ownership'
+import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types'
@@ -10,9 +12,10 @@ import path from 'node:path'
 import { logger } from '@weapp-tailwindcss/logger'
 import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { hasLocalCssImport, hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../generation/directives'
 import { hasTailwindGeneratedCssMarkers } from '../../../generation/index'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
 
 interface RememberedMainCssSource {
@@ -21,7 +24,7 @@ interface RememberedMainCssSource {
 }
 
 export interface CssFinalizerContext {
-  frameworkName?: string | undefined
+  allowWebProductionFastPath?: boolean | undefined
   opts: InternalUserDefinedOptions
   getFinalCssCalcOptions?: (() => Partial<IStyleHandlerOptions> | undefined) | undefined
   runtimeState: {
@@ -30,12 +33,14 @@ export interface CssFinalizerContext {
   }
   ensureRuntimeClassSet: (force?: boolean) => Promise<Set<string>>
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   isCssAssetProcessed: (asset: OutputAsset, file?: string) => boolean
   markCssAssetProcessed: (asset: OutputAsset, file?: string) => void
   debug: (format: string, ...args: unknown[]) => void
   getResolvedConfig: () => ResolvedConfig | undefined
   recordCssAssetResult?: (file: string, css: string) => void
   recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined }) => void
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   getViteProcessedCssAssetResults?: () => Iterable<[string, string | { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined }]>
   getRecordedGeneratorCandidates?: () => Set<string> | undefined
   getSourceCandidates?: () => Set<string>
@@ -131,12 +136,12 @@ export function shouldGenerateCssByGenerator(
   rawSource: string,
   processed: boolean,
 ) {
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
+  const generatorOptions = resolveContextGeneratorConfiguration(opts, {
     appType: opts.appType,
     platform: opts.cssOptions?.platform ?? opts.platform,
     tailwindcssMajorVersion: majorVersion,
     uniAppX: opts.uniAppX,
-  })
+  }).options
   if (!generatorOptions.enabled) {
     return false
   }
@@ -179,10 +184,9 @@ export function finalizeWebCss(
     resolveViteWebCssCompatOptions(context),
     { deferPropertyFallback: true },
   )
-  return cssPipelineStrategy?.transformGeneratedCss?.(css, {
-    ...context,
+  return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(context, {
     defaultWebCssCompat,
-    removeScopedPreflight: value => value,
+    removeScopedPreflight: (value: string) => value,
     shouldApplyWebCssCompat,
-  }) ?? (shouldApplyWebCssCompat ? defaultWebCssCompat(css) : css)
+  })) ?? (shouldApplyWebCssCompat ? defaultWebCssCompat(css) : css)
 }

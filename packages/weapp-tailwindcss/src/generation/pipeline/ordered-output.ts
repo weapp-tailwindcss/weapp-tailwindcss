@@ -14,13 +14,13 @@ import { reorderMarkedUserLayerComponentsCss, wrapUserLayerComponentsCss } from 
 export async function finalizeOrderedGeneratorCss(
   context: GeneratorPipelineOutputContext,
 ): Promise<GenerateCssByGeneratorResult | undefined> {
-  const { configuredContainerCompat, cssHandlerOptions, cssUserHandlerOptions, file, filterGeneratedApplyOnlyCss, finalizeGeneratorCss, generated, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasDistinctUserRawSource, hasGeneratedCss, hasGeneratedMarkers, hasMatchedCssSourceFile, hasSourceDirectives, hasWebUserCssFallbackSource, isolateCurrentCssCandidates, legacyCompatUserCssRawSource, localImports, majorVersion, options, opts, preflightMode, prepareFinalGeneratorCss, runtime, runtimeWithCurrentCss, shouldFilterApplyOnlyCss, shouldPreserveLegacyCompatSelectorOverrides, styleHandler, userCssOrderSource, userCssRawSource, userRawSourceProcessed } = context
+  const { configuredContainerCompat, cssHandlerOptions, cssUserHandlerOptions, file, filterGeneratedApplyOnlyCss, finalizeGeneratorCss, generated, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasDistinctUserRawSource, hasGeneratedCss, hasGeneratedMarkers, hasMatchedCssSourceFile, hasSourceDirectives, hasWebUserCssFallbackSource, isolateCurrentCssCandidates, legacyCompatUserCssRawSource, localImports, majorVersion, options, profile, preflightMode, prepareFinalGeneratorCss, runtime, runtimeWithCurrentCss, shouldFilterApplyOnlyCss, shouldPreserveLegacyCompatSelectorOverrides, styleHandler, userCssOrderSource, userCssRawSource, userRawSourceProcessed } = context
   const canAppendIncrementalCss = canAppendGeneratorCss(generated.target, generatorOptions.webCompat)
     && (generated.target !== 'weapp' || !hasUserCssLayerBlocks(generatorRawSource))
   if (canAppendIncrementalCss && typeof options.previousCss === 'string' && typeof generated.incrementalCss === 'string') {
     const incrementalCss = stripTailwindBanner(generated.incrementalCss)
     const css = incrementalCss.trim().length > 0
-      ? finalizeIncrementalGeneratorCss(options.previousCss, incrementalCss, generated.target, majorVersion, opts.cssPreflight, {
+      ? finalizeIncrementalGeneratorCss(options.previousCss, incrementalCss, generated.target, majorVersion, profile.cssPreflight, {
           injectPreflight: false,
           removeEmptyAtRuleAncestors: false,
           styleOptions: generatorStyleOptions,
@@ -31,7 +31,7 @@ export async function finalizeOrderedGeneratorCss(
       : finalizeWebGeneratorCss(restoreLocalCssImports(css, localImports, { outputFile: file }), generated.target, generatorOptions.webCompat, options.deferWebCssPropertyFallback)
     return {
       css: finalCss,
-      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, opts.escapeMap, options.previousClassSet),
+      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, profile.escapeMap, options.previousClassSet),
       target: generated.target,
       source: 'generator',
       dependencies: [...generated.dependencies],
@@ -167,7 +167,7 @@ export async function finalizeOrderedGeneratorCss(
     })
     return {
       css: finalCss,
-      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, opts.escapeMap, options.previousClassSet),
+      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, profile.escapeMap, options.previousClassSet),
       target: generated.target,
       source: 'generator',
       dependencies: [...generated.dependencies],

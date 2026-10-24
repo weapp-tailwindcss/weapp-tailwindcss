@@ -16,7 +16,10 @@ const TEST_TIMEOUT_MS = 30000
 
 async function loadWeappTailwindcssPlugin() {
   const mod = await import('@/bundlers/vite')
-  return mod.WeappTailwindcss
+  return (options: Parameters<typeof mod.WeappTailwindcss>[0] = {}) => mod.WeappTailwindcss({
+    appType: 'uni-app',
+    ...options,
+  })
 }
 
 function getGenerateBundleHandler(plugin: Plugin) {

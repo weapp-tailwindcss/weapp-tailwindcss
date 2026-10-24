@@ -2,11 +2,11 @@ import fs from 'node:fs'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
-import { recoveryFixture as fixture } from './rollup-recreation-fixture.mjs'
+import { recoveryFixture as fixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-it.for(['cjs', 'esm'])('releases recovery subscriptions over repeated delete/recreate cycles (%s)', async (format, context) => {
+it.for(recoveryFormats)('releases recovery subscriptions over repeated delete/recreate cycles (%s)', async (format, context) => {
   await fixture(format, context, async ({ waitFor, watcher, data, events, bindings }) => {
     for (const value of [1, 2, 3]) {
       events.length = 0
@@ -21,7 +21,7 @@ it.for(['cjs', 'esm'])('releases recovery subscriptions over repeated delete/rec
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'])('does not rebind from a file stat completed after unwatch (%s)', async (format, context) => {
+it.for(recoveryFormats)('does not rebind from a file stat completed after unwatch (%s)', async (format, context) => {
   await fixture(format, context, async ({ task, watcher, data, events, listeners }) => {
     // 同步替换后立即进入真实异步 stat，在它返回前取消订阅。
     const replacement = path.join(path.dirname(data), 'replacement.json')
@@ -36,29 +36,25 @@ it.for(['cjs', 'esm'])('does not rebind from a file stat completed after unwatch
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'])('keeps one directory subscription when subsequent builds retain the dependency (%s)', async (format, context) => {
-  await fixture(format, context, async ({ settle, trackSpy, task, watcher, dataDir }) => {
-    const handler = watcher._nodeFsHandler
-    const add = handler._addToNodeFs
-    const registrations = []
-    const spy = trackSpy(vi.spyOn(handler, '_addToNodeFs')).mockImplementation(function (...args) {
-      const result = add.apply(this, args)
-      registrations.push(result)
-      return result
-    })
+it.for(recoveryFormats)('keeps one directory subscription when subsequent builds retain the dependency (%s)', async (format, context) => {
+  await fixture(format, context, async ({ waitFor, watcherFor, trackSpy, task, dataDir }) => {
+    task.fileWatcher.watch(dataDir, true)
+    const watcher = watcherFor(dataDir)
+    await waitFor(() => getWatchPathEntry(watcher._closers, dataDir), 'directory owner subscription')
+    const spy = trackSpy(vi.spyOn(watcher, 'add'))
     try {
       for (let build = 0; build < 4; build++) {
         task.fileWatcher.watch(dataDir, true)
-        await settle(Promise.all(registrations))
       }
+      expect(spy).not.toHaveBeenCalled()
       expect(getWatchPathEntry(watcher._closers, dataDir)).toHaveLength(1)
     }
     finally { spy.mockRestore() }
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'].flatMap(format => ['unwatch', 'close'].map(action => ({ format, action }))))('cancels a paused recovery without installing late handles ($format, $action)', async ({ format, action }, context) => {
-  await fixture(format, context, async ({ settle, waitFor, trackSpy, onStop, task, watcher, data, dataDir, events }) => {
+it.for(recoveryFormats.flatMap(format => ['unwatch', 'close'].map(action => ({ format, action }))))('cancels a paused recovery without installing late handles ($format, $action)', async ({ format, action }, context) => {
+  await fixture(format, context, async ({ settle, waitFor, watcherFor, trackSpy, onStop, task, watcher, data, dataDir, events }) => {
     const release = Promise.withResolvers()
     onStop(release.resolve)
     const finished = Promise.withResolvers()
@@ -96,7 +92,8 @@ it.for(['cjs', 'esm'].flatMap(format => ['unwatch', 'close'].map(action => ({ fo
       expect(getWatchPathEntry(watcher._closers, data)).toBeUndefined()
       if (action === 'unwatch') {
         task.fileWatcher.watch(data, true)
-        await waitFor(() => getWatchPathEntry(watcher._closers, data), 'file subscription')
+        await waitFor(() => getWatchPathEntry(watcherFor(data)._closers, data), 'file subscription')
+        expect(getWatchPathEntry(watcher._closers, data)).toBeUndefined()
         await replaceSourceFile(data, '22')
         await waitFor(() => events.some(x => x.id === data && x.event === 'update'), 'update')
       }
@@ -108,7 +105,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['unwatch', 'close'].map(action => ({ fo
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'].flatMap(format => ['add', 'change'].map(event => ({ format, event }))))('allows synchronous cancellation from a real file event ($format, $event)', async ({ format, event }, context) => {
+it.for(recoveryFormats.flatMap(format => ['add', 'change'].map(event => ({ format, event }))))('allows synchronous cancellation from a real file event ($format, $event)', async ({ format, event }, context) => {
   await fixture(format, context, async ({ waitFor, task, watcher, data, bindings }) => {
     let cancelled = false
     watcher.on(event, (file) => {
@@ -134,7 +131,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['add', 'change'].map(event => ({ format
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'])('keeps recovery live when the file disappears between stat and native binding (%s)', async (format, context) => {
+it.for(recoveryFormats)('keeps recovery live when the file disappears between stat and native binding (%s)', async (format, context) => {
   await fixture(format, context, async ({ waitFor, beforeNativeWatch, watcher, data, dataDir, events }) => {
     await rm(data)
     await waitFor(() => typeof watcher._pendingRecreations.get(data)?.closer === 'function', 'recovery handle')
@@ -160,7 +157,7 @@ it.for(['cjs', 'esm'])('keeps recovery live when the file disappears between sta
   })
 }, 20_000)
 
-it.for(['cjs', 'esm'])('new file generation is not suppressed by a delayed add throttle (%s)', async (format, context) => {
+it.for(recoveryFormats)('new file generation is not suppressed by a delayed add throttle (%s)', async (format, context) => {
   await fixture(format, context, async ({ waitFor, onStop, watcher, data, events, record }) => {
     let previousAdd
     watcher.on('add', (file) => {

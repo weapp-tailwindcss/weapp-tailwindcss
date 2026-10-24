@@ -8,7 +8,7 @@ export function shouldApplyViteWebCssCompat(
   context: ViteFrameworkCssPipelineContext,
   strategy: ViteFrameworkCssPipelineStrategy | undefined,
 ) {
-  if (strategy?.shouldApplyWebCssCompat?.(context) !== true) {
+  if (strategy?.generation?.shouldApplyWebCssCompat?.(context) !== true) {
     return false
   }
   return !context.currentGeneratorBranch.isWeb

@@ -4,7 +4,7 @@ import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css
 
 const sourceCss = '@layer utilities{.rounded-full{border-radius:calc(infinity * 1px)}.w-4{width:16px}}'
 const generateTailwindV4Css = vi.hoisted(() => vi.fn())
-vi.mock('@/generation/service', () => ({ generateTailwindV4Css }))
+vi.mock('@/context/generation', () => ({ generateTailwindV4Css }))
 
 describe('webpack infinite radius handoff', () => {
   afterEach(() => vi.clearAllMocks())

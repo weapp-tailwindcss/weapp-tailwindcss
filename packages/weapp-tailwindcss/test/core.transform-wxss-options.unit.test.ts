@@ -6,7 +6,7 @@ const jsHandler = vi.fn()
 const refreshTailwindcssRuntime = vi.fn()
 const ensureRuntimeClassSet = vi.fn(async () => new Set<string>())
 const createTailwindRuntimeReadyPromise = vi.fn(() => Promise.resolve())
-const getCompilerContext = vi.fn(() => ({
+const createCompilerContext = vi.fn(() => ({
   templateHandler,
   styleHandler,
   jsHandler,
@@ -18,7 +18,7 @@ const getCompilerContext = vi.fn(() => ({
 }))
 
 vi.mock('@/context', () => ({
-  getCompilerContext,
+  createCompilerContext,
 }))
 
 vi.mock('@/tailwindcss/runtime', () => ({
@@ -36,7 +36,7 @@ describe('core transformWxss option reuse', () => {
     refreshTailwindcssRuntime.mockClear()
     ensureRuntimeClassSet.mockClear()
     createTailwindRuntimeReadyPromise.mockClear()
-    getCompilerContext.mockClear()
+    createCompilerContext.mockClear()
   })
 
   it('reuses the default main chunk options object when overrides are omitted', async () => {
@@ -101,7 +101,7 @@ describe('core transformWxml option reuse', () => {
     refreshTailwindcssRuntime.mockClear()
     ensureRuntimeClassSet.mockClear()
     createTailwindRuntimeReadyPromise.mockClear()
-    getCompilerContext.mockClear()
+    createCompilerContext.mockClear()
   })
 
   it('reuses the default template options object when runtimeSet is stable', async () => {
@@ -169,7 +169,7 @@ describe('core transformJs option reuse', () => {
     refreshTailwindcssRuntime.mockClear()
     ensureRuntimeClassSet.mockClear()
     createTailwindRuntimeReadyPromise.mockClear()
-    getCompilerContext.mockClear()
+    createCompilerContext.mockClear()
   })
 
   it('reuses the default js handler options object when overrides are omitted', async () => {

@@ -7,6 +7,8 @@ import path from 'node:path'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../css-output'
+import { createFrameworkAssetAccess } from '../shared/framework-assets'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { collectConfiguredTailwindV4CssSourceEntries } from './configured-css-sources'
 import { normalizeRelativeCssConfigDirectives } from './css-config-directives'
 import { resolveOutputFileFromMatchedCssSource } from './css-output-helpers'
@@ -162,11 +164,10 @@ export function createConfiguredCssRootResolvers(
     if (!options.opts.cssMatcher(outputFile) || !isRootStyleOutputFile(outputFile)) {
       return false
     }
-    return options.cssPipelineStrategy?.shouldSelectConfiguredCssEntryRootSource?.({
-      ...options.cssPipelineContext,
+    return options.cssPipelineStrategy?.styles?.shouldSelectConfiguredCssEntryRootSource?.(extendFrameworkCssContext(options.cssPipelineContext, {
       isRootStyleOutputFile,
       outputFile,
-    }) === true || options.cssPipelineContext.currentGeneratorBranch.isWeb
+    })) === true || options.cssPipelineContext.currentGeneratorBranch.isWeb
   }
   const selectSourceEntry = (
     outputFile: string,
@@ -219,17 +220,13 @@ export function createConfiguredCssRootResolvers(
     }
     return undefined
   }
-  const shouldKeepRootImportShell = (outputFile: string, css?: string | undefined) => {
+  const shouldKeepRootImportShell = (outputFile: string, _css?: string | undefined) => {
     const normalizedOutputFile = normalizeOutputPathKey(outputFile.replace(/[?#].*$/, ''))
     return options.opts.cssMatcher(outputFile)
       && isMiniProgramStyleOutputFile(outputFile)
       && !normalizedOutputFile.includes('/')
       && shouldKeepRootMiniProgramStyleAsImportShell(
-        options.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-          ...options.cssPipelineContext,
-          css: css as string,
-          file: outputFile,
-        }),
+        (options.cssPipelineStrategy?.styles?.rootImportShell !== undefined),
       )
   }
 
@@ -270,16 +267,15 @@ export function createConfiguredCssRootResolvers(
       ) {
         return undefined
       }
-      return options.cssPipelineStrategy?.resolveConfiguredCssEntryRootInjectionTarget?.({
-        ...options.cssPipelineContext,
-        bundle: options.bundle,
-        isConfiguredCssEntryFile: file => typeof file === 'string'
+      return options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.(extendFrameworkCssContext(options.cssPipelineContext, {
+        get assets() { return createFrameworkAssetAccess(options.bundle).read() },
+        isConfiguredCssEntryFile: (file: string | undefined) => typeof file === 'string'
           && explicitFileKeys.has(normalizeEntryFile(file)),
         isMiniProgramStyleOutputFile,
         isRootStyleOutputFile,
         outputFile,
         sourceFile,
-      })
+      }))
     },
     resolveConfiguredRootCssSourceStyle: (
       outputFile: string,

@@ -51,7 +51,7 @@ describe('compiler mutable generation inputs', () => {
     expect([...changed.classSet]).toEqual(['p-10%'])
     expect(changed.css).toMatch(/padding:\s*10%/)
     expect(changed.css).not.toMatch(/padding:\s*10px/)
-    expect(changed.cache).toEqual({ engine: true, output: false, source: true })
+    expect(changed.cache).toEqual({ engine: false, output: false, source: true })
 
     const equivalent = await compiler.generate({
       ...request,
@@ -71,7 +71,7 @@ describe('compiler mutable generation inputs', () => {
     expect([...changed.classSet]).toEqual(['w-[20px]'])
     expect(changed.css).toMatch(/width:\s*20px/)
     expect(changed.css).not.toMatch(/width:\s*10px/)
-    expect(changed.cache).toEqual({ engine: true, output: false, source: true })
+    expect(changed.cache).toEqual({ engine: false, output: false, source: true })
 
     const equivalent = await compiler.generate(structuredClone(request))
     expect(equivalent.cache.output).toBe(true)
@@ -150,5 +150,31 @@ describe('compiler mutable generation inputs', () => {
     const legacy = await compiler.generate(request)
     expect([...legacy.classSet]).toEqual(['w-[10px]'])
     expect(legacy.cache.output).toBe(false)
+  })
+  it('invalidates generated output for callbacks with identical source and different captures', async () => {
+    const { compiler, request } = createCase()
+    const createPlugin = (opacity: string) => ({
+      postcssPlugin: 'captured-opacity',
+      Declaration(declaration: { prop: string, value: string }) {
+        if (declaration.prop === 'opacity') {
+          declaration.value = opacity
+        }
+      },
+    })
+    const firstPlugin = createPlugin('0.2')
+    const secondPlugin = createPlugin('0.7')
+    expect(firstPlugin.Declaration.toString()).toBe(secondPlugin.Declaration.toString())
+    const generate = (plugin: ReturnType<typeof createPlugin>) => compiler.generate({
+      ...request,
+      target: 'weapp',
+      candidates: ['opacity-[0.5]'],
+      styleOptions: { postcssOptions: { plugins: [plugin] } },
+    })
+    const first = await generate(firstPlugin)
+    const second = await generate(secondPlugin)
+    expect(first.css).toMatch(/opacity:\s*0?\.2/)
+    expect(second.css).toMatch(/opacity:\s*0?\.7/)
+    expect(second.cache.output).toBe(false)
+    expect((await generate(secondPlugin)).cache.output).toBe(true)
   })
 })

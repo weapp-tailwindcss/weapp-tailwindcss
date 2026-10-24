@@ -1,6 +1,12 @@
+import { discardedViteCssSource } from '../css-memory/source-lifecycle'
 import { recordViteCssContribution } from './css-transform-result'
 
 export function scheduleViteCssTransform(options: any) {
+  const assertCurrentSource = () => {
+    if (options.isSourceCurrent?.() === false) {
+      throw discardedViteCssSource
+    }
+  }
   const {
     addWatchFile,
     annotateCss,
@@ -26,6 +32,7 @@ export function scheduleViteCssTransform(options: any) {
     generatorPlatform,
     generatorRawSource,
     generatorSourceFile,
+    generatorSourceKind,
     generatorUserLayerRawSource,
     getLastCssResult,
     hasRuntimeAffectingChanges,
@@ -68,6 +75,7 @@ export function scheduleViteCssTransform(options: any) {
   } = options
 
   const runTransform = async () => {
+    assertCurrentSource()
     const start = performance.now()
     const previousCss = !vitePipelineCssAsset
       && useIncrementalMode
@@ -103,6 +111,7 @@ export function scheduleViteCssTransform(options: any) {
       usesConfiguredTailwindV4FallbackSource,
       vitePipelineCssAsset,
     })
+    assertCurrentSource()
     const css = applyViteCssTransformTaskResult({
       addWatchFile,
       debug,
@@ -126,59 +135,76 @@ export function scheduleViteCssTransform(options: any) {
     return css
   }
 
-  cssTaskFactories.push(() => timeTask('css', () => processViteCssCacheTask({
-    applyResult(source: string) {
-      applyViteCssCacheResult({
-        applyCssResult,
-        recordCssResult: vitePipelineCssAsset
-          ? (css: string) => {
-              recordCssAssetResult?.(outputFile, css)
-              recordViteCssContribution({
-                file,
-                outputIsMainChunk: outputCssHandlerOptions.isMainChunk === true,
-                recordViteProcessedCssAssetResult,
-                shouldRecordVitePipelineCssByOutput,
-                shouldInjectVitePipelineCssIntoMain,
-                vitePipelineCssAsset,
-                vitePipelineCssInjectionOutputFile,
-              }, css)
-            }
-          : undefined,
-        cssRuntimeAffectingHash,
-        generatorRawSource,
-        generatorSourceFile,
-        lastCssResultByFile,
-        lastCssSourceHashByFile,
-        markCssAssetProcessed,
-        originalSource,
-        outputFile,
-        rememberedCssRuntimeSignature,
-        rememberedSourcesCount: rememberedCssSources.length,
-        rememberCssSource,
-        vitePipelineCssInjectionOutputFile,
-      }, source)
-    },
-    cache,
-    cacheKey: cssCacheKey,
-    hashKey: cssHashKey,
-    onCacheHit() {
-      metrics.css.cacheHits++
-      debug('css cache hit: %s', file)
-    },
-    onSharedCacheHit() {
-      metrics.css.cacheHits++
-      debug('css shared hit: %s', file)
-    },
-    onSharedResult(sharedCss: string) {
-      onUpdate(file, rawSource, sharedCss)
-    },
-    onTransformResult(css: string) {
-      onUpdate(outputFile, rawSource, css)
-      debug('css handle: %s', outputFile)
-    },
-    sharedCacheKey: cssSharedCacheKey,
-    sharedResultCache: sharedCssResultCache,
-    taskHash: cssTaskHash,
-    transform: runTransform,
-  })))
+  cssTaskFactories.push(() => timeTask('css', async () => {
+    try {
+      assertCurrentSource()
+      await processViteCssCacheTask({
+        applyResult(source: string) {
+          assertCurrentSource()
+          applyViteCssCacheResult({
+            applyCssResult,
+            recordCssResult: vitePipelineCssAsset
+              ? (css: string) => {
+                  recordCssAssetResult?.(outputFile, css)
+                  recordViteCssContribution({
+                    file,
+                    outputIsMainChunk: outputCssHandlerOptions.isMainChunk === true,
+                    recordViteProcessedCssAssetResult,
+                    shouldRecordVitePipelineCssByOutput,
+                    shouldInjectVitePipelineCssIntoMain,
+                    vitePipelineCssAsset,
+                    vitePipelineCssInjectionOutputFile,
+                  }, css)
+                }
+              : undefined,
+            cssRuntimeAffectingHash,
+            generatorRawSource,
+            generatorSourceFile,
+            generatorSourceKind,
+            lastCssResultByFile,
+            lastCssSourceHashByFile,
+            markCssAssetProcessed,
+            originalSource,
+            outputFile,
+            rememberedCssRuntimeSignature,
+            rememberedSourcesCount: rememberedCssSources.length,
+            rememberCssSource,
+            vitePipelineCssInjectionOutputFile,
+          }, source)
+        },
+        cache,
+        cacheKey: cssCacheKey,
+        hashKey: cssHashKey,
+        onCacheHit() {
+          metrics.css.cacheHits++
+          debug('css cache hit: %s', file)
+        },
+        onSharedCacheHit() {
+          metrics.css.cacheHits++
+          debug('css shared hit: %s', file)
+        },
+        onSharedResult(sharedCss: string) {
+          assertCurrentSource()
+          onUpdate(file, rawSource, sharedCss)
+        },
+        onTransformResult(css: string) {
+          assertCurrentSource()
+          onUpdate(outputFile, rawSource, css)
+          debug('css handle: %s', outputFile)
+        },
+        sharedCacheKey: cssSharedCacheKey,
+        sharedResultCache: sharedCssResultCache,
+        taskHash: cssTaskHash,
+        transform: runTransform,
+      })
+    }
+    catch (error) {
+      if (error !== discardedViteCssSource) {
+        throw error
+      }
+    }
+    finally {
+      options.isSourceCurrent?.release()
+    }
+  }))
 }

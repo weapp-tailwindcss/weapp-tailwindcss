@@ -1,5 +1,5 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import type { CompilerGenerateResult, CompilerSnapshot } from '@/core/compiler/index'
+import type { CompilerGenerateResult, CompilerSnapshot } from '@/core/compiler/types'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../directives'
 import { splitGeneratorPlaceholderCssBySourceOrder, splitTailwindGeneratedCssByBanner, splitTailwindV4GeneratedCssBySourceOrder } from '../markers'
 import { deduplicateGeneratedCssRules } from './source-order'

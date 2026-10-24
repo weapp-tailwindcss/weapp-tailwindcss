@@ -16,3 +16,20 @@ export function rollupTestRequire(demo) {
   const demoRequire = createRequire(path.join(repo, 'demo', demo, 'package.json'))
   return createRequire(demoRequire.resolve('vite/package.json'))
 }
+
+// 以消费方的实际解析结果覆盖四个冻结版本，不从 pnpm 存储目录猜测运行时。
+export function rollupTestVariants() {
+  const debugRequire = createRequire(path.join(repo, 'packages', 'debug-uni-app-x', 'package.json'))
+  const runtimes = [
+    ...['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'taro-vite-react-tailwindcss-v4'].map(runtime => ({
+      runtime,
+      require: rollupTestRequire(runtime),
+    })),
+    { runtime: 'debug-uni-app-x', require: createRequire(debugRequire.resolve('vite/package.json')) },
+  ]
+  return runtimes.flatMap(runtime => ['cjs', 'esm'].map(format => ({
+    ...runtime,
+    format,
+    version: runtime.require('rollup').VERSION,
+  })))
+}

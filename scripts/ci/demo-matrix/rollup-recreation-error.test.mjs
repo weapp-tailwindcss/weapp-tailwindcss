@@ -1,10 +1,10 @@
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
-import { recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { recoveryFixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-it.for(['cjs', 'esm'].flatMap(format => ['EACCES', 'EMFILE'].map(code => ({ format, code }))))('恢复绑定的非缺失错误只报告一次，不进入定时重试 ($format, $code)', async ({ format, code }, context) => {
+it.for(recoveryFormats.flatMap(format => ['EACCES', 'EMFILE'].map(code => ({ format, code }))))('恢复绑定的非缺失错误只报告一次，不进入定时重试 ($format, $code)', async ({ format, code }, context) => {
   await recoveryFixture(format, context, async ({ watcher, data, dataDir, beforeNativeWatch, settle, waitFor }) => {
     const timers = []
     const schedule = globalThis.setTimeout
@@ -54,7 +54,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['EACCES', 'EMFILE'].map(code => ({ form
   })
 }, 15_000)
 
-it.for(['cjs', 'esm'])('成功绑定后的同步异常不会被已消费的 pending 吞掉 (%s)', async (format, context) => {
+it.for(recoveryFormats)('成功绑定后的同步异常不会被已消费的 pending 吞掉 (%s)', async (format, context) => {
   await recoveryFixture(format, context, async ({ watcher, data, waitFor }) => {
     const failure = new Error('file handler failed after binding')
     const errors = []

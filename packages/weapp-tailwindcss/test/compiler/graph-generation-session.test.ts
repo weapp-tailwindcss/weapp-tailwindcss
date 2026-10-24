@@ -57,7 +57,7 @@ function createOptions(runtimeState: object, candidates: string[]) {
 describe('graph generation compilation session', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.resetModules()
   })
 
@@ -77,8 +77,8 @@ describe('graph generation compilation session', () => {
         root: null,
       }
     })
-    vi.doMock('@/generator', () => createGeneratorModule(generate))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    vi.doMock('@/generator/runtime', () => createGeneratorModule(generate))
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const runtimeState = {
       tailwindRuntime: { majorVersion: 4 },
       readyPromise: Promise.resolve(),
@@ -88,10 +88,10 @@ describe('graph generation compilation session', () => {
     const second = await generateTailwindV4Css(createOptions(runtimeState, ['m-2']))
 
     expect(generate).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      candidates: new Set(['p-4']),
+      candidates: ['p-4'],
     }))
     expect(generate).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      candidates: new Set(['m-2']),
+      candidates: ['m-2'],
     }))
     expect(first?.snapshot).toBeDefined()
     expect([...(first?.snapshot?.classSet ?? [])]).toEqual(['p-4'])
@@ -104,7 +104,7 @@ describe('graph generation compilation session', () => {
     expect(second?.classSet).toEqual(new Set(['m-2']))
   })
 
-  it('discards a stale generation result after a newer revision commits', async () => {
+  it.each([false, true])('新 revision 已接受后丢弃旧结果（同源服务串行：%s）', async (sameSource) => {
     vi.stubEnv('WEAPP_TAILWINDCSS_COMPILER', 'graph')
     let releaseFirst: (() => void) | undefined
     let markFirstStarted: (() => void) | undefined
@@ -132,16 +132,28 @@ describe('graph generation compilation session', () => {
         root: null,
       }
     })
-    vi.doMock('@/generator', () => createGeneratorModule(generate))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    vi.doMock('@/generator/runtime', () => createGeneratorModule(generate))
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const runtimeState = {
       tailwindRuntime: { majorVersion: 4 },
       readyPromise: Promise.resolve(),
     }
 
+    const { FrameworkCompilerSession } = await import('@/compiler')
+    const compilerGenerate = vi.spyOn(FrameworkCompilerSession.prototype, 'generate')
     const staleResult = generateTailwindV4Css(createOptions(runtimeState, ['p-4']))
     await firstStarted
-    const currentResult = await generateTailwindV4Css(createOptions(runtimeState, ['m-2']))
+    const currentOptions = createOptions(runtimeState, ['m-2'])
+    const currentPending = generateTailwindV4Css({
+      ...currentOptions,
+      rawSource: sameSource ? currentOptions.rawSource : `${currentOptions.rawSource} .changed { color: red; }`,
+    })
+    if (sameSource) {
+      await vi.waitFor(() => expect(compilerGenerate).toHaveBeenCalledTimes(2))
+      expect(generate).toHaveBeenCalledTimes(1)
+      releaseFirst?.()
+    }
+    const currentResult = await currentPending
     releaseFirst?.()
 
     expect(currentResult?.metadata.revision).toBe(2)
@@ -166,9 +178,9 @@ describe('graph generation compilation session', () => {
         root: null,
       }
     })
-    vi.doMock('@/generator', () => createGeneratorModule(generate))
+    vi.doMock('@/generator/runtime', () => createGeneratorModule(generate))
     const compiler = await import('@/compiler')
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const runtimeState = {
       tailwindRuntime: { majorVersion: 4 },
       readyPromise: Promise.resolve(),
@@ -205,8 +217,8 @@ describe('graph generation compilation session', () => {
       sources: [],
       root: null,
     }))
-    vi.doMock('@/generator', () => createGeneratorModule(generate))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    vi.doMock('@/generator/runtime', () => createGeneratorModule(generate))
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const runtimeState = {
       tailwindRuntime: { majorVersion: 4 },
       readyPromise: Promise.resolve(),

@@ -18,7 +18,7 @@ vi.mock('@/tailwindcss/runtime-factory', () => ({
   createTailwindcssRuntime,
 }))
 
-vi.mock('@/context/workspace', () => ({
+vi.mock('@/utils/package-root', () => ({
   findNearestPackageRoot,
 }))
 

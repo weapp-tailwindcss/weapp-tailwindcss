@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 const generateTailwindV4Css = vi.fn()
 
-vi.mock('@/generation/service', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/generation/service')>()
+vi.mock('@/context/generation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/context/generation')>()
   return {
     ...actual,
     generateTailwindV4Css,

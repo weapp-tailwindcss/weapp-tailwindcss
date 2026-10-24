@@ -1,5 +1,5 @@
 import type { TailwindGenerationSessionPool } from '@/compiler/tailwind-generation-session-pool'
-import type { TailwindResolvedSource } from '@/generator/index'
+import type { TailwindResolvedSource } from '@/generator/runtime'
 import { compileTailwindAuthorFunctions, createTailwindAuthorFunctionProbe } from '@weapp-tailwindcss/postcss/transform'
 import { md5Hash } from '@/cache/md5'
 

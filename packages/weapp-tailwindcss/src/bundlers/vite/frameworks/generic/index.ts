@@ -1,10 +1,12 @@
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
-import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { createGenericViteStyleInjector } from '@/style-injector/vite/generic'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
+import { genericViteRuntimeStrategy } from './runtime-strategy'
 
 export function createGenericVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
   return createViteFrameworkPlugins(options, {
     frameworkName: 'generic',
-    styleInjectorDelegate: viteStyleInjectorDelegates.generic,
+    runtimeStrategy: genericViteRuntimeStrategy,
+    styleInjectorDelegate: createGenericViteStyleInjector,
   })
 }

@@ -15,7 +15,7 @@ export {
 export const BORDER_PREFLIGHT_CLASS = UNI_APP_X_BORDER_PREFLIGHT_CLASS
 
 export function resolveUniAppXBorderPreflightOptions(
-  options: { cssPreflight?: CssPreflightOptions, cssPreflightRange?: 'all' },
+  options: { cssPreflight?: CssPreflightOptions | undefined, cssPreflightRange?: 'all' | undefined },
   isWeb: boolean,
 ) {
   const borderPreflight = isWeb ? undefined : createUniAppXBorderPreflight(options.cssPreflight)

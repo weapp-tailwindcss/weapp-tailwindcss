@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  resolveViteCssLinkedImpactSignature,
   resolveViteCssTransformCachePlan,
   resolveViteCssTransformDecisionPlan,
 } from '../../src/bundlers/vite/generate-bundle/css-transform-decision-plan'
@@ -31,6 +30,16 @@ function createDecisionOptions() {
 }
 
 describe('vite css transform decision plan', () => {
+  it('已知作者源删除生成指令后不复用旧生成载荷', () => {
+    const plan = resolveViteCssTransformDecisionPlan({
+      ...createDecisionOptions(),
+      generatorRawSource: '.clean{display:block}',
+      rememberedRawSource: '.clean{display:block}',
+    })
+    expect(plan.shouldPreserveStaleGeneratedCssAsset).toBe(false)
+    expect(plan.shouldReuseProcessedCss).toBe(false)
+  })
+
   it('reuses stable stale generated css without tracking the generator', () => {
     const plan = resolveViteCssTransformDecisionPlan(createDecisionOptions())
 
@@ -82,7 +91,6 @@ describe('vite css transform cache plan', () => {
       cssIsMainChunk: true,
       cssRuntimeAffectingHash: 'raw-hash',
       cssShareScope: 'scope',
-      linkedImpactSignature: 'linked',
       outputFile: 'app.acss',
       runtimeSignature: 'runtime',
       scopedGeneratorCandidateSignature: 'candidates',
@@ -93,7 +101,7 @@ describe('vite css transform cache plan', () => {
       cssHashKey: 'app.acss:css:runtime:candidates:4',
       cssRuntimeSignature: 'runtime:candidates',
       cssSharedCacheKey: 'scope:runtime:candidates:4:1:raw-hash:candidates:trace',
-      cssTaskHash: 'raw-hash:candidates:trace:linked',
+      cssTaskHash: 'raw-hash:candidates:trace',
       rememberedCssRuntimeSignature: 'runtime:candidates:raw-hash',
     })
   })
@@ -103,7 +111,6 @@ describe('vite css transform cache plan', () => {
       cssIsMainChunk: false,
       cssRuntimeAffectingHash: 'raw-hash',
       cssShareScope: 'scope',
-      linkedImpactSignature: '',
       outputFile: 'pages/index.wxss',
       runtimeSignature: 'runtime',
       scopedGeneratorCandidateSignature,
@@ -119,16 +126,22 @@ describe('vite css transform cache plan', () => {
     expect(updated.cssTaskHash).not.toBe(initial.cssTaskHash)
   })
 
-  it('sorts linked html and js changes before resolving signatures', () => {
-    expect(resolveViteCssLinkedImpactSignature({
-      changedHtmlFiles: new Set(['b.wxml', 'a.wxml']),
-      changedJsFiles: new Set(['d.js', 'c.js']),
-      runtimeAffectingSignatureByFile: new Map([
-        ['a.wxml', 'html-a'],
-        ['b.wxml', 'html-b'],
-        ['c.js', 'js-c'],
-        ['d.js', 'js-d'],
-      ]),
-    })).toBe('html-a:html-b:js-c:js-d')
+  it('invalidates identical source and candidates when the runtime configuration changes', () => {
+    const createPlan = (runtimeSignature: string) => resolveViteCssTransformCachePlan({
+      cssIsMainChunk: true,
+      cssRuntimeAffectingHash: 'raw-hash',
+      cssShareScope: 'scope',
+      outputFile: 'app.acss',
+      runtimeSignature,
+      scopedGeneratorCandidateSignature: 'candidates',
+      sourceTraceSignature: 'trace',
+      tailwindcssMajorVersion: 4,
+    })
+    const initial = createPlan('config-v1')
+    const updated = createPlan('config-v2')
+
+    expect(updated.cssCacheKey).not.toBe(initial.cssCacheKey)
+    expect(updated.cssSharedCacheKey).not.toBe(initial.cssSharedCacheKey)
+    expect(updated.rememberedCssRuntimeSignature).not.toBe(initial.rememberedCssRuntimeSignature)
   })
 })

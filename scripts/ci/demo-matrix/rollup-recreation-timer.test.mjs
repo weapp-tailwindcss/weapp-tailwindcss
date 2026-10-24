@@ -1,9 +1,9 @@
 import { rm } from 'node:fs/promises'
 import { expect, it, vi } from 'vitest'
-import { fixtureReadiness, recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { fixtureReadiness, recoveryFixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-const scenarios = ['cjs', 'esm'].flatMap(format =>
+const scenarios = recoveryFormats.flatMap(format =>
   ['recover', 'unwatch', 'close', 'abort'].flatMap(action =>
     [true, false].map(persistent => ({ format, action, persistent })),
   ),

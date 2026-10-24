@@ -20,6 +20,7 @@ export interface NativeSessionSourcePreparation extends TailwindGenerationSessio
 }
 
 interface NativeSessionEntry {
+  disposal?: Promise<void> | undefined
   pending: Promise<void>
   sourceKey: string
   preparationKey: string | undefined
@@ -27,8 +28,10 @@ interface NativeSessionEntry {
 }
 
 export class TailwindV4NativeSessionPool {
+  private readonly releases = new Set<Promise<void>>()
   private readonly sessions = new Map<TailwindV4GenerateTarget, NativeSessionEntry>()
   private disposed = false
+  private disposal: Promise<void> | undefined
 
   constructor(
     private readonly createSession: CreateTailwindGenerationSession = createTailwindGenerationSession,
@@ -48,11 +51,22 @@ export class TailwindV4NativeSessionPool {
   }
 
   dispose() {
+    if (this.disposal) {
+      return this.disposal
+    }
+    this.disposed = true
     for (const entry of this.sessions.values()) {
       this.disposeEntry(entry)
     }
     this.sessions.clear()
-    this.disposed = true
+    this.disposal = Promise.allSettled([...this.releases]).then((results) => {
+      this.releases.clear()
+      const failures = results.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
+      if (failures.length) {
+        throw new AggregateError(failures, '原生生成会话释放失败，已继续释放其余会话。')
+      }
+    })
+    return this.disposal
   }
 
   get size() {
@@ -82,7 +96,17 @@ export class TailwindV4NativeSessionPool {
   }
 
   private disposeEntry(entry: NativeSessionEntry) {
-    void entry.pending.then(() => entry.session.dispose())
+    if (!entry.disposal) {
+      const release = entry.pending.then(() => entry.session.dispose())
+      entry.disposal = release
+      this.releases.add(release)
+      void release.then(
+        () => this.releases.delete(release),
+        // 替换会话的清理失败保留到最终关闭；后台任务不能产生游离拒绝。
+        () => undefined,
+      )
+    }
+    return entry.disposal
   }
 }
 

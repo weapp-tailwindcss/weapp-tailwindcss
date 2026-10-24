@@ -1,7 +1,7 @@
 import type { CompilerRootSession } from './root-store'
 import type { CompilerGenerateRequest } from './types'
 import type { CompilationGraphSnapshot, CompilationResult, SourceGraphNode, SourceScope } from '@/compiler/types'
-import type { TailwindV4ResolvedSource } from '@/generator'
+import type { TailwindV4ResolvedSource } from '@/generator/runtime'
 
 export interface CompilerCompilationCacheEntry {
   candidateSignature: string

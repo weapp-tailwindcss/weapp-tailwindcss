@@ -5,19 +5,17 @@ import type {
   Result as PostcssResult,
   Root,
 } from '@weapp-tailwindcss/postcss/transform'
-import type { CacheTelemetryCollector } from '@/compiler/cache-telemetry'
 import type {
   TailwindV4ResolvedSource,
   TailwindV4SourceOptions,
   WeappTailwindcssGenerateOptions,
   WeappTailwindcssGenerateResult,
-} from '@/generator'
+} from '@/generator/runtime'
 import type {
   CreateJsHandlerOptions,
   ITemplateHandlerOptions,
   JsHandlerResult,
-  UserDefinedOptions,
-} from '@/types'
+} from '@/types/compilation'
 
 export type CompilerTarget = 'tailwind' | 'weapp' | 'web'
 
@@ -92,17 +90,6 @@ export type CompilerTemplateTransformOptions = Omit<ITemplateHandlerOptions, 'cl
 export type CompilerCssTransformOptions = Partial<IStyleHandlerOptions> & {
   /** 是否在样式兼容转换后执行小程序 CSS 最终化。 */
   finalize?: boolean | undefined
-}
-
-export type CreateCompilerOptions = UserDefinedOptions & {
-  compiler?: {
-    /** 长期未使用且没有进行中任务的 root 会话上限。 */
-    maxRoots?: number | undefined
-    /** root 因超过 maxRoots 被淘汰并释放后触发。 */
-    onRootEvicted?: ((id: string) => void) | undefined
-    /** 可选的缓存遥测采集器。 */
-    cacheTelemetry?: CacheTelemetryCollector | undefined
-  } | undefined
 }
 
 export interface Compiler {

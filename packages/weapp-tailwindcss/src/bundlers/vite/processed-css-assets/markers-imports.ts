@@ -1,10 +1,14 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
+import type { FrameworkAssets } from '../shared/framework-assets'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
+import type { ViteProcessedCssAssetOutputsReplacer } from './output-ownership'
 import type { InternalUserDefinedOptions } from '@/types'
 import { collectImportedCssFiles, isStyleImportRequest, normalizeInjectableCssWithImports } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
 import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
+import { createFrameworkAssetAccess } from '../shared/framework-assets'
+import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { isCssOutputFile, isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isCssOutputFile } from './style-files'
@@ -21,6 +25,8 @@ interface CssAssetProcessedMarker {
 interface CssAssetResultRecordOptions {
   injectIntoMain?: boolean | undefined
   outputFile?: string | undefined
+  sourceAsset?: string | undefined
+  mergeSourceAssets?: boolean | undefined
 }
 
 export interface CssAssetResultRecorder {
@@ -39,6 +45,7 @@ export interface CollectViteProcessedCssAssetOptions {
   markCssAssetProcessed?: CssAssetProcessedMarker | undefined
   recordCssAssetResult?: CssAssetResultRecorder | undefined
   recordViteProcessedCssAssetResult?: CssAssetResultRecorder | undefined
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   resolveViteProcessedCssOutputFile?: ((file: string) => string | undefined) | undefined
   onAssetWrite?: ((file: string) => void) | undefined
   subpackageRoots?: Set<string> | undefined
@@ -64,9 +71,14 @@ export function createCssAssetPipelineContext(
   options: Pick<CollectViteProcessedCssAssetOptions & InjectViteProcessedCssAssetOptions, 'createCssPipelineContext'>,
   file: string,
   bundle: OutputBundle,
-) {
+): (ViteFrameworkCssPipelineContext & { readonly assets: FrameworkAssets }) | undefined {
   const context = options.createCssPipelineContext?.(file)
-  return context ? { ...context, bundle } : undefined
+  if (!context) {
+    return
+  }
+  return extendFrameworkCssContext(context, {
+    get assets() { return createFrameworkAssetAccess(bundle).read() },
+  })
 }
 
 export function getAssetFile(bundleFile: string, asset: OutputAsset) {

@@ -1,5 +1,5 @@
 @import '../index.wxss';
-/* tokens: independent-page-local <= src/sub-independent/pages/index.vue */
+/*! tokens: independent-page-local <= src/sub-independent/pages/index.vue */
 .independent-page-local {
   border-width: 5rpx;
 }

@@ -26,7 +26,6 @@ export function resolveCssBundleOutputFile(options: {
     file,
     isWebGeneratorTarget,
     opts,
-    pipelineContext,
     cssPipelineStrategy,
     shouldPreserveAppCssExtension,
   } = options
@@ -36,10 +35,7 @@ export function resolveCssBundleOutputFile(options: {
     && normalizeOutputPathKey(options.assetOutputFile ?? file) === normalizeOutputPathKey(file)
     && isRootMiniProgramStyleOutputFile(file)
     && shouldMoveRootMiniProgramStyleToImportShellOrigin(
-      cssPipelineStrategy?.shouldMoveRootMiniProgramStyleToImportShellOrigin?.({
-        ...pipelineContext,
-        file,
-      }),
+      (cssPipelineStrategy?.styles?.rootImportShell === 'extract'),
     )
   ) {
     outputFile = createRootMiniProgramOriginStyleOutputFile(file)
@@ -253,7 +249,6 @@ export function applyCssResultToBundle(options: {
     file,
     originalSource,
     outputFile,
-    pipelineContext,
     source,
     viteProcessedCssAsset,
   } = options
@@ -271,11 +266,7 @@ export function applyCssResultToBundle(options: {
   const shouldKeepSourceAsImportShell = isRootMiniProgramStyleOutputFile(file)
     && isRootMiniProgramStyleOutputFile(outputFile)
     && shouldKeepRootMiniProgramStyleAsImportShell(
-      cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-        ...pipelineContext,
-        css: source,
-        file,
-      }),
+      (cssPipelineStrategy?.styles?.rootImportShell !== undefined),
     )
   const importShellSource = shouldKeepSourceAsImportShell
     ? createCssImportShell(file, outputFile)

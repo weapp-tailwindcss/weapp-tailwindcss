@@ -1,4 +1,4 @@
-import type { ITemplateHandlerOptions } from '../types'
+import type { ITemplateHandlerOptions } from '../types/compilation'
 import { escape, MappingChars2String } from '@weapp-tailwindcss/escape'
 import { omitUndefined } from '../utils/object'
 

@@ -8,8 +8,8 @@ const { annotateCssSourceTrace, generateTailwindV4Css, getCompilationScopeDepend
   getCompilationScopeDependencyRevision: vi.fn(() => 0),
 }))
 
-vi.mock('@/generation/service', async importOriginal => ({
-  ...await importOriginal<typeof import('@/generation/service')>(),
+vi.mock('@/context/generation', async importOriginal => ({
+  ...await importOriginal<typeof import('@/context/generation')>(),
   generateTailwindV4Css,
 }))
 vi.mock('@/bundlers/shared/css-source-trace', async importOriginal => ({
@@ -106,6 +106,22 @@ describe('bundlers/vite remembered css replay cache', () => {
     expect(options.markCssAssetProcessed).toHaveBeenCalledTimes(3)
     expect(options.metrics.css.cacheHits).toBe(2)
     expect(options.addWatchFile.mock.calls).toEqual(Array.from({ length: 3 }, () => [['/repo/config/nested.cjs'], ['/repo/plugins/utility.cjs']]).flat())
+  })
+
+  it('已交还 Vite 但本轮模块缺席时仍发射产物，并复用干净生成缓存', async () => {
+    const { options, remembered, rebuild } = createReplayCase()
+    Object.assign(remembered, { delivery: 'vite-module', outputFile: 'theme.css' })
+    options.isWebGeneratorTarget = true
+    options.defaultStyleOutputExtension = '.css'
+    options.opts.cssMatcher = file => file.endsWith('.css')
+    generateTailwindV4Css.mockResolvedValue({ css: '.generated{}', dependencies: [] })
+    expect(await rebuild()).toBe(1)
+    expect(await rebuild()).toBe(1)
+    expect(generateTailwindV4Css).toHaveBeenCalledTimes(1)
+    expect(options.emitOrReplayCssAsset.mock.calls).toEqual([
+      ['theme.css', '.generated{}'],
+      ['theme.css', '.generated{}'],
+    ])
   })
 
   it('does not prepare disabled source trace on either generation or cached emission', async () => {

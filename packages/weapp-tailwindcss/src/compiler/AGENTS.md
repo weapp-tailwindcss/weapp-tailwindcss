@@ -14,6 +14,8 @@
 - AST 必须有明确所有者；缓存或跨 adapter 使用时必须 clone。
 - `classSet` 必须来自生成器验证结果，禁止启发式补充。
 - 不得导入 Vite、Webpack、Rollup、Vinyl 等 bundler 类型。
+- 内部实现只消费已解析 profile 和请求，不依赖 UserDefinedOptions、InternalUserDefinedOptions、环境解析入口或公开兼容 facade；类型别名和聚合导出同样受门禁约束。
+- 编译状态按实例持有，关闭遵循 active → closing → closed；排空已接收任务后释放，关闭后不隐式重建。
 - 不得直接写文件或扫描构建输出目录。
 
 ## 测试要求
