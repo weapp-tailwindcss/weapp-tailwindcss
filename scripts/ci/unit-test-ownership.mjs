@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -72,30 +75,67 @@ export function verifyTestOwnership(all, shards, integration, repoRoot, paths = 
   return { total: owned.size, shards: shardCounts, integration: selected.keys.size }
 }
 
-export async function collectTestOwnership(repoRoot) {
+async function collectTestFiles(repoRoot, argv) {
   const { createVitest } = await import('vitest/node')
-  const collections = []
-  for (const argv of ownershipCollections()) {
-    const { options, filters } = await parseOwnershipCommand(argv)
-    const ctx = await createVitest({ ...options, root: repoRoot, watch: false })
-    try {
-      // 复用 filesOnly 的真实文件发现，不加载或执行测试用例。
-      let specs = await ctx.getRelevantTestSpecifications(filters.map(file => path.resolve(repoRoot, file)))
-      if (ctx.config.shard) {
-        // list --filesOnly 不执行分片，必须复用实际执行阶段的已解析 sequencer。
-        const Sequencer = ctx.config.sequence.sequencer
-        specs = await new Sequencer(ctx).shard(Array.from(specs))
-      }
-      collections.push(specs.map(spec => ({ file: spec.moduleId, projectName: spec.project.name })))
+  const { options, filters } = await parseOwnershipCommand(argv)
+  const ctx = await createVitest({ ...options, root: repoRoot, watch: false })
+  try {
+    // 复用 filesOnly 的真实文件发现，不加载或执行测试用例。
+    let specs = await ctx.getRelevantTestSpecifications(filters.map(file => path.resolve(repoRoot, file)))
+    if (ctx.config.shard) {
+      // list --filesOnly 不执行分片，必须复用实际执行阶段的已解析 sequencer。
+      const Sequencer = ctx.config.sequence.sequencer
+      specs = await new Sequencer(ctx).shard(Array.from(specs))
     }
-    finally {
-      await ctx.close()
-    }
+    return specs.map(spec => ({ file: spec.moduleId, projectName: spec.project.name }))
   }
-  return verifyTestOwnership(collections[0], collections.slice(1, 4), collections[4], repoRoot)
+  finally {
+    await ctx.close()
+  }
+}
+
+export async function collectTestOwnership(repoRoot) {
+  // Vite 会规范化符号链接根目录，比较身份之前先统一 /var 与 /private/var 等别名。
+  const root = realpathSync(repoRoot)
+  const temporary = mkdtempSync(path.join(tmpdir(), 'weapp-unit-ownership-'))
+  try {
+    const collections = ownershipCollections().map((argv, index) => {
+      const output = path.join(temporary, `${index}.json`)
+      // 每个真实 CI 作业独立解析配置；子进程也隔离 Vitest 的可变默认数组。
+      try {
+        execFileSync(process.execPath, [fileURLToPath(import.meta.url), '--collect', root, JSON.stringify(argv), output], {
+          cwd: root,
+          env: process.env,
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'pipe'],
+          timeout: 120_000,
+          maxBuffer: 8 * 1024 * 1024,
+        })
+      }
+      catch (error) {
+        const diagnostics = [error.stdout, error.stderr].filter(Boolean).join('\n')
+        throw new Error(`测试文件收集子进程失败（集合 ${index}）\n${diagnostics}`, { cause: error })
+      }
+      return JSON.parse(readFileSync(output, 'utf8'))
+    })
+    return verifyTestOwnership(collections[0], collections.slice(1, 4), collections[4], root)
+  }
+  finally {
+    rmSync(temporary, { recursive: true, force: true })
+  }
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
-  const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
-  console.log(JSON.stringify(await collectTestOwnership(repoRoot)))
+  if (process.argv[2] === '--collect') {
+    assert.equal(process.argv.length, 6, '文件收集子进程必须接收根目录、参数和输出文件')
+    const argv = JSON.parse(process.argv[4])
+    assert.ok(Array.isArray(argv) && argv.every(arg => typeof arg === 'string'), '文件收集参数必须是字符串数组')
+    assert.ok(ownershipCollections().some(command => JSON.stringify(command) === JSON.stringify(argv)), '子进程只能收集已登记的测试集合')
+    writeFileSync(process.argv[5], JSON.stringify(await collectTestFiles(process.argv[3], argv)))
+  }
+  else {
+    assert.equal(process.argv.length, 2, '所有权检查入口不接受额外参数')
+    const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
+    console.log(JSON.stringify(await collectTestOwnership(repoRoot)))
+  }
 }

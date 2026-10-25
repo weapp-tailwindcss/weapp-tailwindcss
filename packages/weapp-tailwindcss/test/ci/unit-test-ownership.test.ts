@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -16,8 +16,9 @@ describe('单测与 Vite 集成测试的文件所有权', () => {
     expect(commands).toEqual(original)
   })
 
-  it('真实多项目发现按 CLI 排除目标，并通过真实 sequencer 形成互斥分片', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'weapp-unit-ownership-'))
+  it('独立子进程按 CLI 排除目标，连续收集保持真实分片和项目配置隔离', async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), 'weapp unit ownership-'))
+    const root = path.join(temporary, 'project')
     try {
       const project = path.join(root, 'packages', 'weapp-tailwindcss')
       const other = path.join(root, 'packages', 'other')
@@ -44,11 +45,16 @@ describe('单测与 Vite 集成测试的文件所有权', () => {
       expect(result.integration).toBe(1)
       expect(result.shards).toHaveLength(3)
       expect(result.shards.reduce((sum: number, count: number) => sum + count, 0)).toBe(4)
+      const alias = path.join(temporary, 'project-alias')
+      await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir')
+      expect(await collectTestOwnership(alias)).toEqual(result)
+      await writeFile(path.join(root, 'vitest.config.mjs'), 'throw new Error("所有权子进程配置失败证据")\n')
+      await expect(collectTestOwnership(root)).rejects.toThrow('所有权子进程配置失败证据')
     }
     finally {
-      await rm(root, { recursive: true, force: true })
+      await rm(temporary, { recursive: true, force: true })
     }
-  })
+  }, 180_000)
 
   it.each([
     { platform: 'POSIX', paths: path.posix, root: '/workspace/repo' },
