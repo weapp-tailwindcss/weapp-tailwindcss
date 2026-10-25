@@ -1,11 +1,13 @@
 import type { ChildProcess } from 'node:child_process'
+import type { NativeProcessSampleResult } from '../native-command/sample'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { StringDecoder } from 'node:string_decoder'
-import { execa } from 'execa'
-import { captureNativeHost } from './native-command-host'
+import { sampleNativeProcess } from '../native-command/sample'
+
+export { sampleNativeProcess } from '../native-command/sample'
 
 const outputLimit = 16 * 1024
 
@@ -13,44 +15,9 @@ export interface CommandDiagnostics {
   file: string
 }
 
-interface SampleResult {
-  status: string
-  stdout?: string
-  stderr?: string
-  exitCode?: number
-  timedOut?: boolean
-  file?: string
-  host?: Awaited<ReturnType<typeof captureNativeHost>>
-}
-
 interface ObserverOptions {
   sampleAfterMs?: number
-  sampleProcess?: (pid: number, signal: AbortSignal) => Promise<SampleResult>
-}
-
-export async function sampleNativeProcess(pid: number, cancelSignal: AbortSignal, file: string, executable = { file: 'sample', args: [] as string[] }): Promise<SampleResult> {
-  // 只采样本轮原命令的 PID，不另发 simctl 查询或干预共享服务。
-  const sampling = execa(executable.file, [...executable.args, String(pid), '2', '10', '-file', file], {
-    cancelSignal,
-    timeout: 5000,
-    killSignal: 'SIGKILL',
-    maxBuffer: 256 * 1024,
-    reject: false,
-  })
-  // 与 sample 并行且共用取消信号；sample 无输出时仍保留主机和进程状态。
-  const [result, host] = await Promise.all([
-    sampling,
-    process.platform === 'darwin' ? captureNativeHost(pid, cancelSignal) : undefined,
-  ])
-  return {
-    status: result.isCanceled ? 'canceled' : result.failed ? 'failed' : 'complete',
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode,
-    timedOut: result.timedOut,
-    file: path.basename(file),
-    host,
-  }
+  sampleProcess?: (pid: number, signal: AbortSignal) => Promise<NativeProcessSampleResult>
 }
 
 function capturedOutput() {
@@ -80,7 +47,7 @@ export function observeNativeCommand(child: ChildProcess, file: string, options:
   const controller = new AbortController()
   const record = (name: string, detail: Record<string, unknown> = {}) => events.push({ name, atMs: performance.now() - start, ...detail })
   let timer: ReturnType<typeof setTimeout> | undefined
-  let sampling: Promise<SampleResult> | undefined
+  let sampling: Promise<NativeProcessSampleResult> | undefined
   let exited = false
   let spawned = false
   let firstStdout = true

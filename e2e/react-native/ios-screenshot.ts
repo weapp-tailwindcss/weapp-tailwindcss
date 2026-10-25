@@ -1,7 +1,9 @@
+import type { IosScreenshotSample } from './ios-screenshot-sample'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
+import { createIosScreenshotSampleOwner } from './ios-screenshot-sample'
 
 interface ProcessEvent {
   atMs: number
@@ -17,6 +19,7 @@ interface ScreenshotDiagnostic {
   status: 'pending' | 'succeeded' | 'failed'
   elapsedMs: number
   pid?: number
+  sample?: IosScreenshotSample
   spawnedAtMs?: number
   exit?: ProcessEvent
   stdioClosed?: ProcessEvent
@@ -68,8 +71,9 @@ function observeEventLoop(elapsed: () => number, record: ScreenshotDiagnostic) {
   }
 }
 
-/** 截图关键路径只记录内存；复用原命令和 stat，全部诊断在采集 owner 排空后统一落盘。 */
-export function createIosScreenshotDiagnostics(artifacts: string, runId: string) {
+/** 复用原命令和 stat；慢截图仅触发一次有界只读采样，最终统一排空并保存诊断。 */
+export function createIosScreenshotDiagnostics(artifacts: string, runId: string, options?: Parameters<typeof createIosScreenshotSampleOwner>[1]) {
+  const samples = createIosScreenshotSampleOwner(artifacts, options)
   const records: Array<{ record: ScreenshotDiagnostic, snapshot: () => void }> = []
 
   return {
@@ -90,7 +94,9 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string)
         record.elapsedMs = record.settledAtMs ?? elapsed()
         eventLoop.snapshot()
       } })
+      let stopSample: (() => void) | undefined
       const onAbort = () => {
+        stopSample?.()
         record.cancelled = { atMs: elapsed(), reason: String(cancelSignal?.reason) }
       }
       cancelSignal?.addEventListener('abort', onAbort, { once: true })
@@ -99,6 +105,12 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string)
       }
       try {
         const command = execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { ...(cancelSignal ? { cancelSignal } : {}), forceKillAfterDelay: 1_000 })
+        stopSample = samples.observe(command, record.index, elapsed, (sample) => {
+          record.sample = sample
+        })
+        if (cancelSignal?.aborted) {
+          stopSample()
+        }
         if (command.pid !== undefined) {
           record.pid = command.pid
         }
@@ -149,10 +161,18 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string)
       finally {
         record.settledAtMs = record.elapsedMs = elapsed()
         eventLoop.stop()
+        stopSample?.()
         cancelSignal?.removeEventListener('abort', onAbort)
       }
     },
     async flush() {
+      let cleanupFailure: unknown
+      try {
+        await samples.drain()
+      }
+      catch (error) {
+        cleanupFailure = error
+      }
       for (const item of records) {
         item.snapshot()
       }
@@ -166,6 +186,9 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string)
         clock: 'performance.now',
         records: records.map(item => item.record),
       }, null, 2)}\n`, 'utf8')
+      if (cleanupFailure !== undefined) {
+        throw cleanupFailure
+      }
     },
   }
 }

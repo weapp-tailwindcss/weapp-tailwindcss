@@ -68,7 +68,7 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
     await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
     const deviceId = device.id
     const appPath = path.join(derivedData, 'Build', 'Products', 'Debug-iphonesimulator', 'LynxCompatibilityHost.app')
-    await command('xcrun', ['simctl', 'install', deviceId, appPath], hostDir, 120_000)
+    await command('xcrun', ['simctl', 'install', deviceId, appPath], hostDir, 120_000, { file: path.join(artifactDir, 'install-command.json') })
     const container = await resolveIosAppContainer(deviceId, applicationId, hostDir, async (error) => {
       const detail = error instanceof Error ? error.stack : String(error)
       await fs.writeFile(path.join(artifactDir, 'container-query-timeout.txt'), `${detail}\n`)
