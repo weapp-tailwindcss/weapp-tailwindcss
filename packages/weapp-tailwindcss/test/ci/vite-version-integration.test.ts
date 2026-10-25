@@ -23,7 +23,7 @@ interface Step {
 describe('Vite 版本集成测试的独立必需作业', () => {
   it('复用同提交的构建和工具链，保持核心范围与原有内存预算', () => {
     expect(integration.needs).toEqual(['scope', 'prepare-build'])
-    expect(integration.if).toBe("needs.scope.outputs.core == 'true'")
+    expect(integration.if).toBe('needs.scope.outputs.core == \'true\'')
     expect(integration.if).toBe(unit.if)
     expect(integration['runs-on']).toBe(unit['runs-on'])
     expect(integration['timeout-minutes']).toBe(unit['timeout-minutes'])
@@ -33,8 +33,7 @@ describe('Vite 版本集成测试的独立必需作业', () => {
     expect(test.run).toBe(`pnpm ci:memory --label pr-gate-vite-integration --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run ${viteIntegrationFile} --maxWorkers=2 --update=none`)
     expect(test['continue-on-error']).toBeUndefined()
     expect(test.if).toBeUndefined()
-    expect(integration.steps.filter((step: Step) => step.run).map((step: Step) => step.run).join('\n'))
-      .not.toMatch(/pnpm (?:build|install)|--(?:shard|exclude|testNamePattern|passWithNoTests)/)
+    expect(integration.steps.filter((step: Step) => step.run).map((step: Step) => step.run).join('\n')).not.toMatch(/pnpm (?:build|install)|--(?:shard|exclude|testNamePattern|passWithNoTests)/)
   })
 
   it('三单测分片仅迁出一个文件，实际清单门禁与运行参数保持相同选择', () => {
@@ -47,9 +46,9 @@ describe('Vite 版本集成测试的独立必需作业', () => {
     expect(ownership['continue-on-error']).toBeUndefined()
     expect(unit.steps.indexOf(ownership)).toBeLessThan(unit.steps.indexOf(test))
     expect(ownershipCollections()).toEqual([
-      { options: {}, filters: [] },
-      ...[1, 2, 3].map(shard => ({ options: { shard: `${shard}/3`, exclude: [viteIntegrationExclude] }, filters: [] })),
-      { options: {}, filters: [viteIntegrationFile] },
+      ['vitest', 'run', '--maxWorkers=2', '--update=none'],
+      ...[1, 2, 3].map(shard => ['vitest', 'run', `--shard=${shard}/3`, '--exclude', viteIntegrationExclude, '--maxWorkers=2', '--update=none']),
+      ['vitest', 'run', viteIntegrationFile, '--maxWorkers=2', '--update=none'],
     ])
   })
 

@@ -7,11 +7,27 @@ export const viteIntegrationFile = 'packages/weapp-tailwindcss/test/bundlers/vit
 export const viteIntegrationExclude = '**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts'
 
 export function ownershipCollections() {
+  const common = ['--maxWorkers=2', '--update=none']
   return [
-    { options: {}, filters: [] },
-    ...[1, 2, 3].map(shard => ({ options: { shard: `${shard}/3`, exclude: [viteIntegrationExclude] }, filters: [] })),
-    { options: {}, filters: [viteIntegrationFile] },
+    ['vitest', 'run', ...common],
+    ...[1, 2, 3].map(shard => ['vitest', 'run', `--shard=${shard}/3`, '--exclude', viteIntegrationExclude, ...common]),
+    ['vitest', 'run', viteIntegrationFile, ...common],
   ]
+}
+
+/** 按公开 CLI 解析参数，并保留实际 CLI 追加到各项目的排除语义。 */
+export async function parseOwnershipCommand(argv) {
+  const { parseCLI } = await import('vitest/node')
+  const { filter, options } = parseCLI([...argv])
+  if (options.exclude) {
+    // parseCLI 不包含 CLI 启动阶段的 exclude → cliExclude 归一化。
+    options.cliExclude = [
+      ...(options.cliExclude ?? []),
+      ...(Array.isArray(options.exclude) ? options.exclude : [options.exclude]),
+    ]
+    delete options.exclude
+  }
+  return { filters: filter, options }
 }
 
 function fileIdentity(entry, repoRoot, paths) {
@@ -59,11 +75,12 @@ export function verifyTestOwnership(all, shards, integration, repoRoot, paths = 
 export async function collectTestOwnership(repoRoot) {
   const { createVitest } = await import('vitest/node')
   const collections = []
-  for (const { options, filters } of ownershipCollections()) {
-    const ctx = await createVitest({ root: repoRoot, run: true, watch: false, maxWorkers: 2, update: 'none', ...options })
+  for (const argv of ownershipCollections()) {
+    const { options, filters } = await parseOwnershipCommand(argv)
+    const ctx = await createVitest({ ...options, root: repoRoot, watch: false })
     try {
       // 复用 filesOnly 的真实文件发现，不加载或执行测试用例。
-      let specs = await ctx.getRelevantTestSpecifications(filters)
+      let specs = await ctx.getRelevantTestSpecifications(filters.map(file => path.resolve(repoRoot, file)))
       if (ctx.config.shard) {
         // list --filesOnly 不执行分片，必须复用实际执行阶段的已解析 sequencer。
         const Sequencer = ctx.config.sequence.sequencer

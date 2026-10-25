@@ -151,7 +151,7 @@ describe('ci workflows', () => {
     expect(run).toContain('--shard=${{ matrix.shard }}/3')
     expect(run).toContain('--maxWorkers=2')
     expect(run).toContain('--update=none')
-    expect(run.match(/--exclude\s+'([^']+)'/g)).toEqual(["--exclude '**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts'"])
+    expect(run.match(/--exclude\s+'([^']+)'/g)).toEqual(['--exclude \'**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts\''])
     expect(run.match(/--exclude/g)).toHaveLength(1)
     expect(run).not.toMatch(/--(?:testNamePattern|passWithNoTests)/)
     expect(quality['continue-on-error']).toBeUndefined()

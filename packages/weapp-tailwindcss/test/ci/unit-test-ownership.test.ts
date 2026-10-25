@@ -1,8 +1,55 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { verifyTestOwnership, viteIntegrationFile } from '../../../../scripts/ci/unit-test-ownership.mjs'
+import { collectTestOwnership, ownershipCollections, parseOwnershipCommand, verifyTestOwnership, viteIntegrationExclude, viteIntegrationFile } from '../../../../scripts/ci/unit-test-ownership.mjs'
 
 describe('单测与 Vite 集成测试的文件所有权', () => {
+  it('精确解析执行命令，并将 CLI 排除追加到每个项目', async () => {
+    const commands = ownershipCollections()
+    const original = structuredClone(commands)
+    const parsed = await parseOwnershipCommand(commands[1]!)
+    expect(parsed.filters).toEqual([])
+    expect(parsed.options).toMatchObject({ run: true, shard: '1/3', maxWorkers: 2, update: 'none', cliExclude: [viteIntegrationExclude] })
+    expect(parsed.options.exclude).toBeUndefined()
+    expect((await parseOwnershipCommand(commands[4]!)).filters).toEqual([viteIntegrationFile])
+    expect(commands).toEqual(original)
+  })
+
+  it('真实多项目发现按 CLI 排除目标，并通过真实 sequencer 形成互斥分片', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-unit-ownership-'))
+    try {
+      const project = path.join(root, 'packages', 'weapp-tailwindcss')
+      const other = path.join(root, 'packages', 'other')
+      const target = path.join(root, viteIntegrationFile)
+      await Promise.all([
+        mkdir(path.dirname(target), { recursive: true }),
+        mkdir(path.join(other, 'test'), { recursive: true }),
+      ])
+      const projectConfig = (name: string) => `import { fileURLToPath } from 'node:url'\nexport default { root: fileURLToPath(new URL('.', import.meta.url)), test: { name: '${name}', include: ['test/**/*.test.ts'] } }\n`
+      await Promise.all([
+        writeFile(path.join(root, 'vitest.config.mjs'), 'export default { test: { projects: ["./packages/weapp-tailwindcss", "./packages/other"] } }\n'),
+        writeFile(path.join(project, 'vitest.config.mjs'), projectConfig('weapp-tailwindcss')),
+        writeFile(path.join(other, 'vitest.config.mjs'), projectConfig('another-project')),
+        ...[
+          target,
+          path.join(project, 'test', 'postcss.test.ts'),
+          path.join(project, 'test', 'compiler.test.ts'),
+          path.join(other, 'test', 'postcss.test.ts'),
+          path.join(other, 'test', 'extra.test.ts'),
+        ].map(file => writeFile(file, 'throw new Error("所有权检查只能发现文件，不能执行测试模块")\n')),
+      ])
+      const result = await collectTestOwnership(root)
+      expect(result.total).toBe(5)
+      expect(result.integration).toBe(1)
+      expect(result.shards).toHaveLength(3)
+      expect(result.shards.reduce((sum: number, count: number) => sum + count, 0)).toBe(4)
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it.each([
     { platform: 'POSIX', paths: path.posix, root: '/workspace/repo' },
     { platform: 'Windows 盘符', paths: path.win32, root: 'D:\\workspace\\repo' },
