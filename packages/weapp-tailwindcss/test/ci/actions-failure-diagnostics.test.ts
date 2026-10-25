@@ -27,7 +27,7 @@ describe('Actions 失败回归与证据上传', () => {
     const job = readWorkflow('pr-gate.yml').jobs.quality!
     const unit = job.steps.find(step => step.name === 'Unit tests')!
     expect(unit['continue-on-error']).not.toBe(true)
-    expect(unit.run).toBe('pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --maxWorkers=2 --update=none')
+    expect(unit.run).toBe('pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --exclude \'**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts\' --maxWorkers=2 --update=none')
     const summary = job.steps.find(step => step.name === 'Summarize unit memory diagnostics')!
     expect(summary).toBeDefined()
     expect(summary.if).toBe('always()')
