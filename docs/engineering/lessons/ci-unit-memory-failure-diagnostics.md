@@ -14,6 +14,12 @@ verification:
     sha: 535294e2f0536f566180e19e3ddbaca5bb52bb5b
     environment: macOS arm64、Node 24.18.0、pnpm 12.14.0
     command: pnpm --config.verifyDepsBeforeRun=false exec vitest run packages/weapp-tailwindcss/test/ci/actions-failure-diagnostics.test.ts packages/weapp-tailwindcss/test/ci/ci-memory-guard.test.ts packages/weapp-tailwindcss/test/ci/ci-memory-sampling.test.ts packages/weapp-tailwindcss/test/ci/ci-memory-windows-command.test.ts packages/weapp-tailwindcss/test/ci/benchmark-report.test.ts packages/weapp-tailwindcss/test/watch-hmr-regression.unit.test.ts packages/weapp-tailwindcss/test/watch-hmr-memory-sampler.unit.test.ts --update=none --maxWorkers=2
+  - claim: Linux 单测分片保留全部旧文件并首轮通过，峰值快照定位到两个并行 Node worker
+    kind: ci
+    status: passed
+    sha: 0dc860f353988267a7b1f20984b9e379bb0a47c4
+    environment: Ubuntu 26.04.1、Node 22.23.3、runner image 20261012.163.1
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40223216548/job/121261456690
 ---
 
 # 单测 RSS 门禁失败后的证据留存
@@ -41,6 +47,16 @@ PR #1316 的同一提交在 PR Gate 单测分片 1 连续两次通过 3,988 项�
 新增回归先在原实现下观察失败，再验证修复；独立工作树 20 项定向测试及严格 lint 通过。集成到主工作树后，7 个相关文件共 181 项通过、1 项既有跳过，严格 lint 通过。上述 verification 记录的是诊断代码提交；本文随后新增，不把文档视为已包含在该提交中。
 
 macOS 的真实 CLI 预算失败用例确认：子命令成功时，guard 仍按原预算退出 1，并在退出前保留 JSON、Markdown 和 stdout 摘要。Windows 当前验证了命令构造、PID 边界和回包解析，不能替代真实 PowerShell 验证。
+
+后续 head `0dc860f353988267a7b1f20984b9e379bb0a47c4` 的 Linux 分片 1 首轮通过 3,992 项断言，保留 1 文件 / 14 测试跳过。实际 checkout 为 merge `becb825064fd0814b14e1ae98e21e5a6db589a57`，与 head 源码树一致。分片保留此前两轮全部 370 个文件，只新增 guard 回归文件；Vite 多版本 HMR 和 PostCSS 仍在同一分片。
+
+本轮 baseline 272 MB、峰值 4,652 MB、delta 4,380 MB，距离原增量预算仅 228 MB。峰值时间为 `2026-10-25T19:09:54.938Z`，快照完整记录 8 个进程、无省略；两个兄弟 Node worker 分别为 2,629 MB 和 1,551 MB，合计占树 RSS 的 89.85%。可执行文件和父子关系不能把某个 worker 直接映射到某个测试文件。
+
+按文件完成日志减 Vitest 文件耗时推算，HMR 窗口为 `19:09:10.426–19:15:06.980`，PostCSS 为 `19:09:10.582–19:10:00.250`，峰值位于两者交集。HMR 中五个版本串行执行，按各用例耗时进一步推算，峰值也位于 Vite 4 阶段。该模型不包含 import、setup、worker 启动或日志缓冲的精确边界，只支持并发资源叠加的调查方向，不能证明产品泄漏。
+
+PostCSS 完成前后的相邻采样从 4,624 MB 降至 2,133 MB，但进程数仍为 8；由于只保存峰值时逐 PID 快照，不能将下降归因于某个 PID 退出或 GC。报告的最大单进程 RSS、最大进程数分别来自其他时刻，不能混入树峰值解释；steady 是末尾有效样本中位数，也不是退出后的常驻内存。
+
+本次首轮通过不能解释此前两次越界，不能宣称诊断改动降低了 RSS。真实构建矩阵适合按集成测试职责独立调度；若迁移，必须保留原五个 Vite 用例、全部单测文件、预算与必需门禁，并实际核对三分片和集成文件的并集、互斥及恰好执行一次。
 
 为集成诊断，旧 head 的本地完整流程在第 14/23 阶段正常取消；取消前已完成阶段仍仅计为该 head 的部分验证。测试源码恢复、登记进程退出和预检服务结束另行复核，不能把该次取消写成完整验收通过。后续完整验收需重新预检。
 
