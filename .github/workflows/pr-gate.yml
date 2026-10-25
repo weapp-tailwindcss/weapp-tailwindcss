@@ -87,6 +87,23 @@ jobs:
         run: pnpm exec playwright install chromium chromium-headless-shell
       - name: Unit tests
         run: pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --maxWorkers=2 --update=none
+      - name: Summarize unit memory diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for report in e2e/benchmark/ci-memory/*.md; do
+            if test -f "$report"; then
+              cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+      - name: Upload unit memory diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-gate-unit-memory-${{ matrix.shard }}-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/benchmark/ci-memory/**
+          if-no-files-found: warn
+          retention-days: 14
 
   core-smoke:
     name: Ubuntu core smoke
