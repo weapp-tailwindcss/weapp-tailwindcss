@@ -269,10 +269,19 @@ function normalizeOptionsValue(
     return {
       __type: 'Opaque',
       identity: callbackIdentity(rawValue),
-      value: normalizeOptionsValue(rawValue, stack),
+      // 只跳过当前实例的重复包装，后代仍须按同一模式保留不透明身份。
+      value: normalizeOptionsObjectValue(rawValue, stack, preserveOpaqueIdentity),
     }
   }
 
+  return normalizeOptionsObjectValue(rawValue, stack, preserveOpaqueIdentity)
+}
+
+function normalizeOptionsObjectValue(
+  rawValue: unknown,
+  stack: WeakSet<object>,
+  preserveOpaqueIdentity: boolean,
+): NormalizedOptionsValue {
   if (Array.isArray(rawValue)) {
     return withCircularGuard(rawValue, stack, () => rawValue.map(item => normalizeOptionsValue(item, stack, preserveOpaqueIdentity)))
   }
