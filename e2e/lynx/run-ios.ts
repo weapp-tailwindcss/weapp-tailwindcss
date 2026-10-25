@@ -87,11 +87,11 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
         async () => fs.readFile(reportPath, 'utf8').catch(() => undefined),
         async () => fs.readFile(path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'failure.json'), 'utf8').catch(() => undefined),
       )
-      await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
       await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
       const report = JSON.parse(source) as NativePlatformReport
       const directory = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'artifacts')
       await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
+      await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
       return source
     })
   }, process.env, () => setStage('device-readiness'))
