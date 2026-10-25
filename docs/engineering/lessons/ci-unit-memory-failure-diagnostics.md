@@ -7,6 +7,8 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/ci-memory-guard.test.ts
   - packages/weapp-tailwindcss/test/ci/ci-memory-sampling.test.ts
   - packages/weapp-tailwindcss/test/ci/ci-memory-windows-command.test.ts
+  - packages/weapp-tailwindcss/test/ci/unit-test-ownership.test.ts
+  - packages/weapp-tailwindcss/test/ci/vite-version-integration.test.ts
 verification:
   - claim: 失败后报告、峰值快照及既有内存统计的定向回归通过
     kind: unit
@@ -20,6 +22,18 @@ verification:
     sha: 0dc860f353988267a7b1f20984b9e379bb0a47c4
     environment: Ubuntu 26.04.1、Node 22.23.3、runner image 20261012.163.1
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40223216548/job/121261456690
+  - claim: 测试所有权实收清单通过
+    kind: unit
+    status: passed
+    sha: 1903b7da2202de677c8e278038eed6e870ab8e18
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0
+    command: CI=1 node scripts/ci/unit-test-ownership.mjs
+  - claim: 独立 Vite 集成矩阵保留全部五个用例并通过原内存预算
+    kind: integration
+    status: passed
+    sha: 7f8e379a7a564accc6bb9aba909b8dfd1d9b656b
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0
+    command: pnpm --config.verifyDepsBeforeRun=false ci:memory --label local-vite-integration-7f8e379a7 --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm --config.verifyDepsBeforeRun=false exec vitest run packages/weapp-tailwindcss/test/bundlers/vite-plugin.hmr-version-matrix.test.ts --maxWorkers=2 --update=none
 ---
 
 # 单测 RSS 门禁失败后的证据留存
@@ -56,7 +70,15 @@ macOS 的真实 CLI 预算失败用例确认：子命令成功时，guard 仍按
 
 PostCSS 完成前后的相邻采样从 4,624 MB 降至 2,133 MB，但进程数仍为 8；由于只保存峰值时逐 PID 快照，不能将下降归因于某个 PID 退出或 GC。报告的最大单进程 RSS、最大进程数分别来自其他时刻，不能混入树峰值解释；steady 是末尾有效样本中位数，也不是退出后的常驻内存。
 
-本次首轮通过不能解释此前两次越界，不能宣称诊断改动降低了 RSS。真实构建矩阵适合按集成测试职责独立调度；若迁移，必须保留原五个 Vite 用例、全部单测文件、预算与必需门禁，并实际核对三分片和集成文件的并集、互斥及恰好执行一次。
+本次首轮通过不能解释此前两次越界，不能宣称诊断改动降低了 RSS。随后按真实构建矩阵的集成职责新增独立必需作业，保持五个 Vite 用例、原预算、2 个 worker、禁止更新快照和失败报告；原三单测分片只迁出这个文件。新作业与单测保持相同 core 范围、构建依赖、checkout 与工具链，汇总门禁显式要求其成功。
+
+迁移前的 1,113 个文件全部保留，只新增两个所有权与作业契约回归。实际 CLI 收集结果为默认 1,115、单测 1,114、集成 1，两个集合无交集、并集无遗漏。所有权脚本进一步复用真实配置的 sequencer，实收三个分片为 372 / 371 / 371，目标集成文件恰好归属一次；该脚本在 quality 分片 1 中强制运行。
+
+清单门禁自身也通过真实执行纠正了三处语义问题：Vitest 5 的 `list --filesOnly` 不应用 `--shard`，需要调用已解析的 sequencer；公开 `parseCLI` 不包含启动阶段的 `exclude → cliExclude` 归一化，直接将 exclude 交给 Node API 无法向各 project 追加排除；同一进程内多个上下文会因默认 exclude 数组被追加而污染后续配置。因此每个集合在独立 Node 进程中创建、关闭一个真实上下文，保留 CLI 参数语义，不修改 Vitest 的全局默认值。入口统一真实根路径，避免 macOS `/var` 与 `/private/var` 别名导致文件被误判在仓库外。
+
+持久回归用两个真实 project 和不能被执行的 throw 模块连续收集两轮，第二轮经过含空格路径的 symlink/junction，并覆盖失败诊断与清理。相关 7 文件 / 162 项断言、脚本真实执行、新脚本与新回归的严格 lint、规则检查及 diff 检查通过；既有 workflows 测试文件的严格 lint 与原 head 对照均为 47 项旧问题，新增为 0，未放宽其规则。仓库正常 lint 保持原配置。
+
+独立矩阵在本地五项通过，baseline 416 MB、峰值 3,328 MB、delta 2,912 MB，原预算通过。该结果来自 macOS / Node 24，不能替代新 head 的 Linux 正式作业，也不能用于证明生产内存泄漏已解决。
 
 为集成诊断，旧 head 的本地完整流程在第 14/23 阶段正常取消；取消前已完成阶段仍仅计为该 head 的部分验证。测试源码恢复、登记进程退出和预检服务结束另行复核，不能把该次取消写成完整验收通过。后续完整验收需重新预检。
 
