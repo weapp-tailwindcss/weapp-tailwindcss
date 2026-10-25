@@ -14,8 +14,8 @@ export type GenerateCssByGeneratorOptions = LegacyInput<ResolvedGenerationInput>
 export type TailwindV4GenerationCoreInput = LegacyInput<ResolvedCoreInput>
 export type ValidateCandidatesByGeneratorOptions = LegacyInput<ResolvedValidationInput>
 
-function snapshotRuntime(runtime: TailwindcssRuntimeLike): TailwindcssRuntimeLike {
-  const options = snapshotConfiguration(runtime.options)
+function snapshotRuntime(runtime: TailwindcssRuntimeLike, snapshots: WeakMap<object, unknown>): TailwindcssRuntimeLike {
+  const options = snapshotConfiguration(runtime.options, snapshots)
   return new Proxy(runtime, {
     get(target, key) {
       if (key === 'options') {
@@ -29,6 +29,8 @@ function snapshotRuntime(runtime: TailwindcssRuntimeLike): TailwindcssRuntimeLik
 
 function resolveInput<T extends LegacyInput<ResolvedGenerationInput> | LegacyInput<ResolvedValidationInput>>(input: T) {
   const { opts, ...request } = input
+  // 同次请求共享复制记录以保留来源别名，跨请求仍创建独立快照。
+  const snapshots = new WeakMap<object, unknown>()
   const { profile, isCurrent } = resolveCompilationProfile(opts, input.runtimeState, {
     platform: input.generatorPlatform,
     nativeStyle: input.cssHandlerOptions.uniAppX === true,
@@ -42,20 +44,20 @@ function resolveInput<T extends LegacyInput<ResolvedGenerationInput> | LegacyInp
           candidates: new Set(input.candidates),
           generatedCssSources: input.generatedCssSources ? [...input.generatedCssSources] : undefined,
         }),
-    cssSources: snapshotConfiguration(input.cssSources),
+    cssSources: snapshotConfiguration(input.cssSources, snapshots),
     sourceCandidates: input.sourceCandidates ? new Set(input.sourceCandidates) : undefined,
     previousClassSet: input.previousClassSet ? new Set(input.previousClassSet) : undefined,
-    compilation: snapshotConfiguration(input.compilation),
-    ...('scope' in input ? { scope: snapshotConfiguration(input.scope) } : {}),
-    ...('compilationChanges' in input ? { compilationChanges: snapshotConfiguration(input.compilationChanges) } : {}),
-    cssHandlerOptions: snapshotConfiguration(input.cssHandlerOptions),
-    cssUserHandlerOptions: snapshotConfiguration(input.cssUserHandlerOptions),
+    compilation: snapshotConfiguration(input.compilation, snapshots),
+    ...('scope' in input ? { scope: snapshotConfiguration(input.scope, snapshots) } : {}),
+    ...('compilationChanges' in input ? { compilationChanges: snapshotConfiguration(input.compilationChanges, snapshots) } : {}),
+    cssHandlerOptions: snapshotConfiguration(input.cssHandlerOptions, snapshots),
+    cssUserHandlerOptions: snapshotConfiguration(input.cssUserHandlerOptions, snapshots),
     profile,
     compilerTransforms: createCompilerTransformServices(opts),
     isConfigurationCurrent: isCurrent,
     frameworkPostcssOwner: 'frameworkPostcssOwner' in input ? input.frameworkPostcssOwner : opts,
     sourceRuntimeState: {
-      tailwindRuntime: snapshotRuntime(input.runtimeState.tailwindRuntime),
+      tailwindRuntime: snapshotRuntime(input.runtimeState.tailwindRuntime, snapshots),
     },
   }
 }

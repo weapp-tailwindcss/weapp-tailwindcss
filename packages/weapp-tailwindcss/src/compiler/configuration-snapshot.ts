@@ -1,3 +1,12 @@
+/** 不透明插件与实例保留调用身份；其它支持的配置容器会被复制。 */
+export function isOpaqueConfigurationObject(value: object) {
+  if (Array.isArray(value) || value instanceof RegExp || value instanceof Date || value instanceof Map || value instanceof Set) {
+    return false
+  }
+  const prototype = Object.getPrototypeOf(value)
+  return (prototype !== Object.prototype && prototype !== null) || 'postcssPlugin' in value
+}
+
 function immutableCollection<T extends Map<unknown, unknown> | Set<unknown>>(target: T): T {
   const view = new Proxy(target, {
     get(collection, key) {
@@ -60,8 +69,7 @@ export function snapshotConfiguration<T>(value: T, seen = new WeakMap<object, un
     copy.push(...value.map(item => snapshotConfiguration(item, seen)))
     return Object.freeze(copy) as T
   }
-  const prototype = Object.getPrototypeOf(value)
-  if ((prototype !== Object.prototype && prototype !== null) || 'postcssPlugin' in value) {
+  if (isOpaqueConfigurationObject(value)) {
     return value
   }
   const copy: Record<PropertyKey, unknown> = {}

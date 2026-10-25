@@ -1,4 +1,5 @@
 import { disposeCompilationChangeCoordinator } from './compilation-change-coordinator'
+import { disposeCompilationProfileCache } from './compilation-profile-cache'
 import { disposeCompilationSessionPool } from './compilation-session-pool'
 import { runCompilerOwnerDisposal } from './compiler-owner-state'
 import { disposeFrameworkCompilerSession } from './framework-compiler-session'
@@ -13,6 +14,7 @@ async function disposeCompilerOwnerResources(owner: object, options: DisposeComp
     () => disposeFrameworkCompilerSession(owner),
     () => disposeTailwindGenerationSessionPool(owner),
     () => disposeCompilerShadowReportSession(owner),
+    () => disposeCompilationProfileCache(owner),
   ]
   const errors: unknown[] = []
   for (const cleanup of cleanups) {

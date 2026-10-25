@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
 import { md5Hash } from '@/cache/md5'
+import { isOpaqueConfigurationObject } from '@/compiler/configuration-snapshot'
 import { generatorTargetEnvKeys } from '@/runtime-branch/generator-target-env'
 
 const PAREN_CONTENT_RE = /\(([^)]+)\)/u
@@ -205,8 +206,9 @@ interface ComparableNormalizedValue {
 function createComparableNormalizedValue(
   rawValue: unknown,
   stack: WeakSet<object>,
+  preserveOpaqueIdentity = false,
 ): ComparableNormalizedValue {
-  const normalized = normalizeOptionsValue(rawValue, stack)
+  const normalized = normalizeOptionsValue(rawValue, stack, preserveOpaqueIdentity)
   return {
     normalized,
     sortKey: serializeNormalizedValue(normalized),
@@ -223,6 +225,7 @@ function getRuntimeCacheScopeValue(opts?: UserDefinedOptions) {
 function normalizeOptionsValue(
   rawValue: unknown,
   stack: WeakSet<object> = new WeakSet<object>(),
+  preserveOpaqueIdentity = false,
 ): NormalizedOptionsValue {
   if (rawValue === null) {
     return null
@@ -262,8 +265,16 @@ function normalizeOptionsValue(
     return encodeTaggedValue('Function', callbackIdentity(rawValue as object))
   }
 
+  if (preserveOpaqueIdentity && rawValue && typeof rawValue === 'object' && isOpaqueConfigurationObject(rawValue)) {
+    return {
+      __type: 'Opaque',
+      identity: callbackIdentity(rawValue),
+      value: normalizeOptionsValue(rawValue, stack),
+    }
+  }
+
   if (Array.isArray(rawValue)) {
-    return withCircularGuard(rawValue, stack, () => rawValue.map(item => normalizeOptionsValue(item, stack)))
+    return withCircularGuard(rawValue, stack, () => rawValue.map(item => normalizeOptionsValue(item, stack, preserveOpaqueIdentity)))
   }
   if (rawValue instanceof Date) {
     return encodeTaggedValue('Date', rawValue.toISOString())
@@ -288,7 +299,7 @@ function normalizeOptionsValue(
   }
   if (rawValue instanceof Set) {
     return withCircularGuard(rawValue, stack, () => {
-      const normalizedEntries = Array.from(rawValue, element => createComparableNormalizedValue(element, stack))
+      const normalizedEntries = Array.from(rawValue, element => createComparableNormalizedValue(element, stack, preserveOpaqueIdentity))
       normalizedEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       return {
         __type: 'Set',
@@ -299,11 +310,11 @@ function normalizeOptionsValue(
   if (rawValue instanceof Map) {
     return withCircularGuard(rawValue, stack, () => {
       const normalizedEntries = Array.from(rawValue.entries(), ([key, entryValue]) => {
-        const normalizedKey = createComparableNormalizedValue(key, stack)
+        const normalizedKey = createComparableNormalizedValue(key, stack, preserveOpaqueIdentity)
         return {
           key: normalizedKey.normalized,
           sortKey: normalizedKey.sortKey,
-          value: normalizeOptionsValue(entryValue, stack),
+          value: normalizeOptionsValue(entryValue, stack, preserveOpaqueIdentity),
         }
       })
       normalizedEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
@@ -340,7 +351,7 @@ function normalizeOptionsValue(
       const entries = Object.entries(rawValue as Record<string, unknown>)
       entries.sort(([a], [b]) => a.localeCompare(b))
       for (const [key, entryValue] of entries) {
-        result[key] = normalizeOptionsValue(entryValue, stack)
+        result[key] = normalizeOptionsValue(entryValue, stack, preserveOpaqueIdentity)
       }
       return result
     })
@@ -348,9 +359,9 @@ function normalizeOptionsValue(
   return encodeTaggedValue(typeof rawValue, String(rawValue))
 }
 
-/** 配置快照指纹不读取全局环境，回调通过对象身份区分。 */
-export function createCompilerConfigurationFingerprint(value: unknown): string {
-  return md5Hash(serializeNormalizedValue(normalizeOptionsValue(value)))
+/** 配置快照指纹不读取全局环境，回调及可选的不透明实例通过身份区分。 */
+export function createCompilerConfigurationFingerprint(value: unknown, options: { preserveOpaqueIdentity?: boolean } = {}): string {
+  return md5Hash(serializeNormalizedValue(normalizeOptionsValue(value, undefined, options.preserveOpaqueIdentity)))
 }
 
 export function createCompilerContextCacheKey(opts?: UserDefinedOptions): string | undefined {
