@@ -318,6 +318,8 @@ HMR 必须满足三件事：增量产物包含新 class、运行时页面发生�
 
 普通 uni-app Vue3 的 App 用例显式使用 `updateMode: 'native-reload'`：HBuilderX 5.26 在 `app-service.js` 变化时可能全量同步并重启应用生命周期。这类结果单独作为平台原生热重载验收，仍检查本轮产物、运行时和截图，报告记录 `App Launch` 次数，不计入纯 HMR 步数。默认模式仍是 `hmr`，uni-app x 与 Harmony 不自动放宽；两种模式均拒绝更新失败和重装。实现及回归见 `e2e/hbuilderx-local/hmr-lifecycle.ts`、`e2e/hbuilderx-hmr-lifecycle.test.ts` 和 `e2e/demo-visual-update-mode.test.ts`。
 
+uni-app x 仅 `uni-app-x-vdom-tailwindcss-v4 android` 用例显式声明 `native-reload`，依据[本轮无插件原生对照](../docs/engineering/lessons/pr1316-android-native-reload.md)单独记录平台更新能力；uni-app x 的 iOS、Harmony VDOM/Vapor 及其他未声明用例保持原有模式，不自动继承该声明。
+
 ## 5. VDOM、Vapor 和 Harmony 特别规则
 
 - HBuilderX 日志中的 `VDOM模式` 或明确的 Vapor 标识才是模式证据；不要根据文件名猜测模式。

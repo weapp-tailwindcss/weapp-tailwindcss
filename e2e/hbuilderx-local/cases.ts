@@ -609,6 +609,7 @@ export const uniAppXAppCases: AppCase[] = [
   {
     name: 'uni-app-x-vdom-tailwindcss-v4 android',
     platform: 'app-android',
+    updateMode: 'native-reload',
     projectDir: 'demo/uni-app-x-vdom-tailwindcss-v4',
     outputDir: '.debug/bundle-post/asset',
     outputDirCandidates: [
