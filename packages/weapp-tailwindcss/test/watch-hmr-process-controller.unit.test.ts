@@ -3,7 +3,6 @@ import type { ProcessIdentity } from '../../../scripts/demo-e2e-workflow/process
 import { EventEmitter } from 'node:events'
 import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import * as command from '../../../scripts/demo-e2e-workflow/process-command'
 import { createWatchProcessController, WEB_STOP_PHASES } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-controller'
 
 const platform = process.platform
@@ -105,20 +104,19 @@ describe('watch owned process shutdown', () => {
     expect(f.child.kill).toHaveBeenCalledWith('SIGKILL')
     expect(vi.getTimerCount()).toBe(0)
   })
-  it('verifies each Windows PID again and invokes taskkill without recursive expansion', async () => {
+  it('verifies registered Windows identities in a batch before native single-PID signals', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' })
     const f = fixture()
     await f.controller.capture()
     f.close()
     f.setRows([{ ...worker, parent: 1 }])
-    const taskkill = vi.spyOn(command, 'runProcessCommand').mockImplementation(async () => {
+    const kill = vi.spyOn(process, 'kill').mockImplementation(() => {
       f.setRows([])
-      return ''
+      return true
     })
     await f.controller.stop()
-    expect(taskkill).toHaveBeenCalledExactlyOnceWith('taskkill', ['/pid', '200', '/f'], expect.any(Number), expect.any(AbortSignal))
+    expect(kill).toHaveBeenCalledExactlyOnceWith(200, 'SIGINT')
     expect(f.subset).toHaveBeenCalledWith(undefined, [200], expect.any(Number), expect.any(AbortSignal))
-    expect(taskkill.mock.calls[0]![2]).toBeLessThanOrEqual(2000)
   })
   it('keeps the Web 3000ms total window and rejects unconfirmed descendants after its final kill', async () => {
     Object.defineProperty(process, 'platform', { value: 'linux' })
@@ -166,20 +164,21 @@ it('a stalled per-PID verification cannot exceed the original stop deadline or s
   expect(vi.getTimerCount()).toBe(0)
 })
 
-it('a failed Windows termination probe prevents subsequent process queries', async () => {
+it('a failed Windows batch identity query prevents subsequent process queries', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' })
   vi.useFakeTimers()
   const f = fixture()
   await f.controller.capture()
   f.close()
   f.setRows([{ ...worker, parent: 1 }])
-  const failure = new Error('taskkill close not confirmed')
-  const taskkill = vi.spyOn(command, 'runProcessCommand').mockRejectedValue(failure)
+  const failure = new Error('Windows identity batch close not confirmed')
+  f.subset.mockRejectedValue(failure)
+  const kill = vi.spyOn(process, 'kill').mockReturnValue(true)
   const stop = f.controller.stop().catch(error => error)
   await vi.advanceTimersByTimeAsync(8000)
   expect((await stop).errors).toContain(failure)
-  expect(taskkill).toHaveBeenCalledOnce()
-  expect(f.subset).toHaveBeenCalledTimes(2)
+  expect(kill).not.toHaveBeenCalled()
+  expect(f.subset).toHaveBeenCalledTimes(1)
 })
 
 it('a caller cannot mutate the internal ownership snapshot', async () => {

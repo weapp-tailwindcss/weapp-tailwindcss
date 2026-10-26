@@ -1,7 +1,6 @@
 import type { ChildProcess } from 'node:child_process'
 import type { ProcessIdentity } from '../../../../scripts/demo-e2e-workflow/process-table'
 import process from 'node:process'
-import { runProcessCommand } from '../../../../scripts/demo-e2e-workflow/process-command'
 import { createProcessOwnershipTracker } from '../../../../scripts/demo-e2e-workflow/process-ownership'
 import { readProcessSubset, readProcessTable } from '../../../../scripts/demo-e2e-workflow/process-table'
 
@@ -130,31 +129,41 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
         continue
       }
       try {
-        await captureAt(until)
+        const drainExisting = process.platform === 'win32' && ownership.capturing
+        let latest = await captureAt(until)
+        if (drainExisting) {
+          // 停止前已开始的编译采集可能持有旧快照；同一截止内排空后重读，不能拿旧身份发信号。
+          latest = await captureAt(until)
+        }
         verified = true
         if (complete()) {
           break
         }
-        // 每次终止前重新核对出生身份，不按历史 PPID、命令名或 cwd 扩大范围。
-        for (const identity of [...ownership.current.values()].reverse()) {
+        const identities = [...latest.values()]
+        // capture 已批量重读并匹配登记的出生身份；Windows 在同一同步续体逐 PID 发信号，避免为每个后代冷启动 PowerShell/taskkill。
+        // 身份快照到信号仍非原子操作；不按历史 PPID、命令名或 cwd 扩大范围。
+        const windowsLatest = process.platform === 'win32'
+          ? latest
+          : undefined
+        for (const identity of identities.reverse()) {
+          if (!Number.isInteger(identity.pid) || identity.pid <= 0) {
+            continue
+          }
           const remaining = until - Date.now()
-          if (remaining <= 1001) {
+          if (remaining <= (windowsLatest ? 0 : 1001)) {
             break
           }
-          const rows = await bounded(until, (available, signal) => observer.subset(undefined, [identity.pid], queryBudget(available), signal))
-          const current = rows.find(row => row.pid === identity.pid && row.started === identity.started && !row.zombie)
-          if (!current || Date.now() >= until) {
+          const current = windowsLatest
+            ? windowsLatest.get(identity.pid)
+            : (await bounded(until, (available, signal) => observer.subset(undefined, [identity.pid], queryBudget(available), signal))).find(row => row.pid === identity.pid)
+          if (!current || current.started !== identity.started || current.zombie || Date.now() >= until) {
             continue
           }
           try {
-            if (process.platform === 'win32') {
-              await bounded(until, (available, signal) => runProcessCommand('taskkill', ['/pid', String(current.pid), '/f'], queryBudget(available), signal))
-            }
-            else {
-              process.kill(current.pid, phase.signal)
-              if (current.pid === child.pid) {
-                requestedRootSignals.add(phase.signal)
-              }
+            // Windows 的 SIGINT/TERM/KILL 均为单进程强制终止，与原 taskkill /pid /f 一致，不递归扩张。
+            process.kill(current.pid, phase.signal)
+            if (current.pid === child.pid) {
+              requestedRootSignals.add(phase.signal)
             }
           }
           catch (error) {

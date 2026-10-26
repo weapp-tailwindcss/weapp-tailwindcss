@@ -4,6 +4,7 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38117
 baseline: 4581346f478e40c8952a059e9f434891e3ab957b
 regressions:
   - packages/weapp-tailwindcss/test/watch-hmr-process-controller.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-windows-stop.unit.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-session-cleanup.unit.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-session-process.integration.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-memory-sampler.unit.test.ts
@@ -44,6 +45,7 @@ Web 收尾复用已有逐项清理器，依次恢复本轮模板与 CSS、关闭
 - 2026-10-26，macOS、Node 24.18.0、Vitest 5.0.4，`f00fe6858e1f3280f27fab37117d8b9af14afd46` 加本轮未提交改动：新回归在原实现有 3 项预期失败。修复后执行 `CI=1 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindcss exec vitest run test/watch-hmr-memory-probe-kill.unit.test.ts test/watch-hmr-memory-sampler.unit.test.ts test/watch-hmr-memory-source.unit.test.ts test/watch-hmr-web-cleanup.unit.test.ts --update=none`，4 文件 50 项通过、1 项既有 Windows 专属跳过；严格 ESLint、规则和 diff 检查通过。纯内存 fixture 使用原 1000ms/1000ms 截止，确认原事件通道会丢失 deadline 并再次采样；它没有启动真实探针。额外独立进程会话分别保留了无有效 PID 仍 kill 的 SIGKILL 首败，以及不发信号后 ENOENT/close 正常完成的对照。
 
 - 后续 Watch 后代收尾纠正：macOS、Node 24.18.0，本地定向 9 文件 194 项通过、1 项既有 Windows 专属跳过；共享 workflow 的身份、单飞、短命令、退出与截止回归 5 文件 34 项通过。新增停止模块和共享 tracker 的严格 TypeScript、全部修改代码/fixture 的严格 ESLint、规则与 diff 检查通过。真实 PNPM 的根仍活、根先退出、根先退出且采样终态错误三种情况都在兜底前确认登记身份为空；终态采样错误按原对象拒绝，不被当作会话成功。此结果不替代完整本地 23 阶段，也不证明实际 Windows/CIM 行为或历史 App/ps/RSS 根因。
+- Windows 停止调度纠正：`c0010d1648c05eeb75a7de1d1e699d108891482c` 加本轮改动，主包 10 文件 203 passed / 1 既有 Windows skip，共享 workflow 5 文件 34 passed，合计 237 passed / 1 skip；新增九项合成边界回归。新增测试格式调整后另跑该文件九项通过，严格类型、`--no-ignore --max-warnings=0` ESLint、规则及 diff 检查通过。真实父子 fixture 三例均未用兜底且确认登记身份消失；此次仍为 macOS 与 Windows 合成回归，准确新提交的 Windows 实测和完整本地验收待执行，不把缩减外部命令数说成所有冷查询都能按时完成。
 
 ## 适用边界
 
@@ -57,7 +59,13 @@ Web 收尾复用已有逐项清理器，依次恢复本轮模板与 CSS、关闭
 
 正常 Watch 保留 SIGINT 3000ms、SIGTERM 2500ms、SIGKILL 2500ms，共 8000ms 的绝对截止。Web 原先 TERM 等待 3000ms 后发 KILL，随即毁管道且不确认退出；现在保持 3000ms 总窗，在其中分配 TERM1500ms 与 KILL1500ms，为最终出生身份复核和退出确认预留后半段。此处缩短 TERM 机会而未延长总预算，不能称 Web 各阶段行为完全未变。
 
-身份查询、逐 PID 复核及 Windows 单 PID taskkill 都共享该次停止的固定截止，执行预算为剩余时间减原有 1000ms 探针回收期；在飞采集被收紧时提前取消，取消后的结果和迟到结果不能回写或触发终止。查询关闭未确认后不再调度新探针。根 close 加最新可信空集合才可成功；最终耗尽时只向本次仍有正 PID 的活 ChildProcess 句柄补最后 SIGKILL，不再扫描、等待或扩大范围，仍报告未确认。
+身份查询与逐 PID 复核共享该次停止的固定截止，执行预算为剩余时间减原有 1000ms 探针回收期；在飞采集被收紧时提前取消，取消后的结果和迟到结果不能回写或触发终止。查询关闭未确认后不再调度新探针。根 close 加最新可信空集合才可成功；最终耗尽时只向本次仍有正 PID 的活 ChildProcess 句柄补最后 SIGKILL，不再扫描、等待或扩大范围，仍报告未确认。
+
+`c0010d1648c05eeb75a7de1d1e699d108891482c` 的 [Windows 启动首败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40334635202/job/121616326317) 又暴露了停止调度成本：每个登记 PID 分别冷启动 PowerShell 查询，再启动单 PID `taskkill /f`。日志确认其中 PID 852 的身份查询被阶段截止取消，最终根 close 已到达，但最后登记的八个 PID 尚未确认退出。这不是八个进程仍存活的证据；中途 wrapper 的 exit 1 位于停止区间，也不能另判为产品启动失败。
+
+Windows 现在直接使用停止采集刚返回并匹配登记出生身份的批量结果，在同一同步续体内逐 PID 发信号，不在信号之间等待或再启动 PowerShell/taskkill。Node 在 Windows 对 SIGINT/TERM/KILL 均执行单进程强制终止，与原单 PID `/f` 保持范围一致；没有 `/t` 或按名称终止。停止前已有的编译采集先在原截止内排空，再查询一次，不能复用已知的停止前快照发信号。POSIX 继续逐 PID 复核；每次信号前仍检查正数 PID 和截止。身份查询到信号仍有 TOCTOU，不能宣称原子地免疫 PID 复用。
+
+合成延迟回归分别验证 Watch 八个后代、Windows Web 原 3000ms 窗口、出生身份变化/缺失/zombie、停止前采集、迟到数据与信号错误。Web 两次 200ms 查询可落在原阶段执行窗口；两次 300ms 查询会超过原 1500ms 阶段中扣除 1000ms 回收后的窗口，仍按原规则失败。这不是放宽超时，也不证明实际 Windows 冷查询总能按时完成。原 Windows 首败和修复前合成失败均保留，真实行为必须由新提交的 Windows CI 另行验证。
 
 会话停止单飞，内存采样器与 watcher 收尾均执行，主错、两个收尾副错及其原对象/文本继续穿透至 runner/Web 的失败报告。初始化归属失败也进入收尾。真实隔离 PNPM fixture 覆盖根仍活与根先退出：先确认生产登记已完成，再独立核对根退出后 worker 同出生身份仍活；生产 stop 后、任何 UUID 文件兜底之前确认根 close 和全部登记身份消失。fixture 查询、元数据或终态缺失不能当作空集合；失败证据保留。启动和初次编译时新增身份查询有非零观测成本，不能宣称对时间或内存指标零扰动。
 

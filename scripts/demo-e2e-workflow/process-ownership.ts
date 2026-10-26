@@ -123,6 +123,7 @@ export function createProcessOwnershipTracker(child: ChildProcess, closed: Promi
     get current() { return new Map([...owned].map(([pid, row]) => [pid, { ...row }])) },
     get group() { return group },
     get didClose() { return didClose },
+    get capturing() { return pending !== undefined },
     get failure() { return captureError },
     get identityError() { return identityError },
   }
