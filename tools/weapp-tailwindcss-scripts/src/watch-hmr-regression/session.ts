@@ -9,6 +9,8 @@ import { createLogLineBuffer, createPollingCompileTracker } from './compile-stat
 import { createSpawnEnv, createWatchProcessEnv } from './environment'
 import { createMemorySampler } from './memory/sampler'
 import { spawnWithWatchMemorySource } from './memory/source'
+import { createWatchProcessController } from './process-controller'
+import { createWatchResourceStop } from './process-stop'
 
 export { createSpawnEnv } from './environment'
 export { createWindowsProcessTreeMemoryScript, sampleProcessTreeMemory } from './memory/process-tree'
@@ -23,17 +25,6 @@ const NEWLINE_SPLIT_RE = /\r?\n/
 const ERROR_RE = /error/i
 const EMFILE_RE = /emfile/i
 const WHITESPACE_RE = /\s+/
-const FIRST_WHITESPACE_RE = /\s/
-const WATCH_COMMAND_PATTERNS = [
-  /weapp-vite(?:\.js)?\s+dev/i,
-  /taro-build-guard\.mjs\s+--watch/i,
-  /taro-build-runner\.mjs\s+build\s+--type\s+\S+\s+--watch/i,
-  /run-mpx-cli-service\.js\s+serve/i,
-  /webpack(?:\.js)?\s+--watch/i,
-  /gulp[\s\S]+gulpfile\.ts/i,
-  /\bnpm\b[\s\S]+build:weapp[\s\S]+--watch/i,
-  /hbuilderx[\s\S]+launch[\s\S]+mp-weixin/i,
-] as const
 const HMR_TIMING_PREFIX = '[weapp-tailwindcss:hmr]'
 
 const sassDeprecationLinePatterns = [
@@ -319,69 +310,6 @@ export function killProcessTreeOnPosix(pid: number, signal: NodeJS.Signals) {
   }
 }
 
-function listMatchingWatchPidsByCwd(cwd: string) {
-  const result = spawnSync('ps', ['-Ao', 'pid=,command='], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-
-  if (result.status !== 0 || typeof result.stdout !== 'string') {
-    return []
-  }
-
-  const normalizedCwd = path.resolve(cwd)
-  const matched = new Set<number>()
-
-  for (const line of result.stdout.split(NEWLINE_SPLIT_RE)) {
-    const normalized = line.trim()
-    if (!normalized) {
-      continue
-    }
-
-    const firstWhitespace = normalized.search(FIRST_WHITESPACE_RE)
-    if (firstWhitespace <= 0) {
-      continue
-    }
-
-    const pid = Number(normalized.slice(0, firstWhitespace))
-    const command = normalized.slice(firstWhitespace).trim()
-    if (!Number.isInteger(pid) || pid <= 0) {
-      continue
-    }
-    if (pid === process.pid) {
-      continue
-    }
-    if (!command.includes(normalizedCwd)) {
-      continue
-    }
-    if (!WATCH_COMMAND_PATTERNS.some(pattern => pattern.test(command))) {
-      continue
-    }
-    matched.add(pid)
-  }
-
-  return [...matched]
-}
-
-function cleanupExistingWatchProcesses(cwd: string) {
-  const pids = listMatchingWatchPidsByCwd(cwd)
-  if (pids.length === 0) {
-    return
-  }
-
-  process.stdout.write(
-    `[watch-hmr] cleanup stale watch processes for ${path.relative(process.cwd(), cwd) || '.'}: ${pids.join(', ')}\n`,
-  )
-
-  for (const pid of pids) {
-    if (process.platform === 'win32') {
-      killProcessTreeOnWindows(pid)
-      continue
-    }
-    killProcessTreeOnPosix(pid, 'SIGKILL')
-  }
-}
-
 function isProcessAlive(pid: number | undefined) {
   if (pid == null) {
     return false
@@ -480,9 +408,9 @@ export async function createWatchCommandSession(
   args: string[],
   options: Pick<CliOptions, 'quietSass'>,
   env: Record<string, string> = {},
+  dependencies: { controller?: typeof createWatchProcessController, sampler?: typeof createMemorySampler } = {},
 ): Promise<WatchSession> {
   assertWatchCommandActive()
-  cleanupExistingWatchProcesses(cwd)
   const lines: string[] = []
   const pluginProcessSamples: PluginProcessSample[] = []
   const memoryDebugSamples: HmrMemoryDebugSample[] = []
@@ -495,7 +423,9 @@ export async function createWatchCommandSession(
     detached: process.platform !== 'win32',
     stdio: 'pipe',
   }))
-  const memorySampler = createMemorySampler({
+  const controller = (dependencies.controller ?? createWatchProcessController)(child)
+  const initialOwnership = controller.capture()
+  const memorySampler = (dependencies.sampler ?? createMemorySampler)({
     probe: signal => memorySource.sample(child.pid, signal),
     close: () => memorySource.close(),
     onSample(sample) {
@@ -510,25 +440,6 @@ export async function createWatchCommandSession(
   child.once('close', (_code, signal) => {
     exitSignal = signal
   })
-
-  const killWatchProcess = (signal: NodeJS.Signals) => {
-    const childPid = child.pid
-    if (childPid != null && process.platform === 'win32') {
-      killProcessTreeOnWindows(childPid)
-      return
-    }
-
-    if (childPid != null && process.platform !== 'win32') {
-      killProcessTreeOnPosix(childPid, signal)
-      return
-    }
-
-    try {
-      child.kill(signal)
-    }
-    catch {
-    }
-  }
 
   const closePipes = () => {
     try {
@@ -553,6 +464,7 @@ export async function createWatchCommandSession(
     }
   }
 
+  let capturedInitialCompile = false
   let collecting = true
   const compileTracker = createPollingCompileTracker()
   const rawCollect = createLineCollector('watch', lines, 240, {
@@ -564,6 +476,11 @@ export async function createWatchCommandSession(
     }
     if (line) {
       const at = Date.now()
+      if (!capturedInitialCompile && isCompileSuccessLine(line)) {
+        capturedInitialCompile = true
+        // 初次编译完成是后代启动后的明确登记点，不增加周期探针或复用 RSS 数据。
+        void initialOwnership.then(() => controller.capture()).catch(() => { /* controller 已锁存原始错误，由 ensureRunning/stop 传播。 */ })
+      }
       compileTracker.observe(normalizeLogLine(line), at)
       const compileState = compileTracker.current()
       if (compileState) {
@@ -625,6 +542,7 @@ export async function createWatchCommandSession(
   child.stderr.on('end', collectStderr.flush)
 
   const ensureRunning = () => {
+    controller.ensureRunning()
     assertWatchCommandActive()
     if (compileFatalError) {
       throw new Error(`watch process reported fatal error: ${compileFatalError}`)
@@ -640,53 +558,19 @@ export async function createWatchCommandSession(
     }
   }
 
-  const stopWatch = async () => {
-    const waitForExit = async (timeoutMs: number) => {
-      const startedAt = Date.now()
-      while (Date.now() - startedAt < timeoutMs) {
-        if (child.exitCode != null || exitSignal != null) {
-          return true
-        }
-        await sleep(100)
-      }
-      return child.exitCode != null || exitSignal != null
-    }
-
-    if (child.exitCode != null || exitSignal != null) {
-      cleanupSessionResources()
-      closePipes()
-      return
-    }
-
+  const stop = createWatchResourceStop(memorySampler, controller, () => {
     cleanupSessionResources()
-
-    killWatchProcess('SIGINT')
-    if (await waitForExit(3000)) {
-      closePipes()
-      return
-    }
-
-    killWatchProcess('SIGTERM')
-    if (await waitForExit(2500)) {
-      closePipes()
-      return
-    }
-
-    killWatchProcess('SIGKILL')
-    await waitForExit(2500)
     closePipes()
+  })
+  try {
+    await initialOwnership
   }
-
-  const stop = async () => {
-    const stoppingMemory = memorySampler.stop().then(() => undefined, error => error as Error)
-    const watchError = await stopWatch().then(() => undefined, error => error as Error)
-    const memoryError = await stoppingMemory
-    if (watchError && memoryError) {
-      throw new AggregateError([watchError, memoryError], 'watch process and memory probe cleanup failed')
+  catch (error) {
+    try {
+      await stop()
     }
-    if (watchError || memoryError) {
-      throw watchError ?? memoryError
-    }
+    catch (cleanupError) { throw new AggregateError([error, cleanupError], 'watch 归属初始化及收尾失败。') }
+    throw error
   }
 
   return {

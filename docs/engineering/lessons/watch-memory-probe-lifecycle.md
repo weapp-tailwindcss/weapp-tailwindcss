@@ -3,6 +3,9 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38117853346
 baseline: 4581346f478e40c8952a059e9f434891e3ab957b
 regressions:
+  - packages/weapp-tailwindcss/test/watch-hmr-process-controller.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-session-cleanup.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-session-process.integration.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-memory-sampler.unit.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-memory-probe-kill.unit.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-web-cleanup.unit.test.ts
@@ -40,13 +43,23 @@ Web 收尾复用已有逐项清理器，依次恢复本轮模板与 CSS、关闭
 - 逐项 Web 收尾补充后的真实验证约 11.3 秒通过，采集 7 个有效样本，RSS peak 为 739 MB，源码和任务资源全部回收。合入主工作树后，Web Iconify、实际候选、快照来源、Watch、memory sampler 与 Web cleanup 的 6 文件定向复验为 177 项通过、1 项 Windows 专属协议未执行；修改模块严格 ESLint 和规则检查通过。
 - 2026-10-26，macOS、Node 24.18.0、Vitest 5.0.4，`f00fe6858e1f3280f27fab37117d8b9af14afd46` 加本轮未提交改动：新回归在原实现有 3 项预期失败。修复后执行 `CI=1 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindcss exec vitest run test/watch-hmr-memory-probe-kill.unit.test.ts test/watch-hmr-memory-sampler.unit.test.ts test/watch-hmr-memory-source.unit.test.ts test/watch-hmr-web-cleanup.unit.test.ts --update=none`，4 文件 50 项通过、1 项既有 Windows 专属跳过；严格 ESLint、规则和 diff 检查通过。纯内存 fixture 使用原 1000ms/1000ms 截止，确认原事件通道会丢失 deadline 并再次采样；它没有启动真实探针。额外独立进程会话分别保留了无有效 PID 仍 kill 的 SIGKILL 首败，以及不发信号后 ENOENT/close 正常完成的对照。
 
+- 后续 Watch 后代收尾纠正：macOS、Node 24.18.0，本地定向 9 文件 194 项通过、1 项既有 Windows 专属跳过；共享 workflow 的身份、单飞、短命令、退出与截止回归 5 文件 34 项通过。新增停止模块和共享 tracker 的严格 TypeScript、全部修改代码/fixture 的严格 ESLint、规则与 diff 检查通过。真实 PNPM 的根仍活、根先退出、根先退出且采样终态错误三种情况都在兜底前确认登记身份为空；终态采样错误按原对象拒绝，不被当作会话成功。此结果不替代完整本地 23 阶段，也不证明实际 Windows/CIM 行为或历史 App/ps/RSS 根因。
+
 ## 适用边界
 
 普通 HMR 未配置内存预算时，遥测不可用可以明确记录，不能替代 HMR 断言。探针清理失败始终传播为失败。采样仅查询内存，不能扩展进程清理范围；微信 IDE 登录态、用户浏览器和现有任务资源归属均不改变。
 
 本轮真实 weapp-vite 诊断的内存探针错误链只有 deadline，没有 EPERM；此次修复不能解释其实际 `ps` 超时或更早的 App 截图就绪超时。后续真实采证仍需记录原探针的 PID、spawn/exit/close、流状态、kill 返回值与截止时状态，不用定向单测代替完整本地验收。
 
-另一个真实临时进程 fixture 已确认外层 Watch 会话存在独立缺口：pnpm 根退出后 `stop()` 在约 1ms 内成功返回，已登记后代的 heartbeat 仍继续递增。fixture 后代已核对唯一 token、PID、出生时间和命令后定向清理，并确认退出。该外层会话的归属跟踪与后代退出确认尚未修复，不能把此次探针错误分类修复当作 Watch 进程树清理已完整，也没有证据证明这就是此前真实遗留进程的具体路径。
+另一个真实临时进程 fixture 已确认外层 Watch 会话存在独立缺口：pnpm 根退出后 `stop()` 在约 1ms 内成功返回，fixture 独立确认身份的后代 heartbeat 仍继续递增。fixture 后代已核对唯一 token、PID、出生时间和命令后定向清理，并确认退出。旧会话没有生产身份登记，不能把 fixture 的外部身份核对说成旧实现已登记。该缺口在基线同样存在，没有证据证明它就是此前真实遗留进程的具体路径。
+
+后续纠正复用 workflow 的出生身份登记算法，并将登记与停止策略分离。Watch 在启动与首次编译完成后各登记一次；首次编译 checkpoint 排在启动采集完成之后，避免单飞复用旧快照。停止前再核对，根 close 后仍保留已登记、已经重新挂接父进程的同出生身份。测试驱动只读取生产 snapshot，不替生产补做 capture。RSS 样本、工作目录、命令名称和无匹配身份锚的 PGID 均不用于认领；从未登记、已脱离父子链和原进程组的 double-fork 仍不在确认范围。
+
+正常 Watch 保留 SIGINT 3000ms、SIGTERM 2500ms、SIGKILL 2500ms，共 8000ms 的绝对截止。Web 原先 TERM 等待 3000ms 后发 KILL，随即毁管道且不确认退出；现在保持 3000ms 总窗，在其中分配 TERM1500ms 与 KILL1500ms，为最终出生身份复核和退出确认预留后半段。此处缩短 TERM 机会而未延长总预算，不能称 Web 各阶段行为完全未变。
+
+身份查询、逐 PID 复核及 Windows 单 PID taskkill 都共享该次停止的固定截止，执行预算为剩余时间减原有 1000ms 探针回收期；在飞采集被收紧时提前取消，取消后的结果和迟到结果不能回写或触发终止。查询关闭未确认后不再调度新探针。根 close 加最新可信空集合才可成功；最终耗尽时只向本次仍有正 PID 的活 ChildProcess 句柄补最后 SIGKILL，不再扫描、等待或扩大范围，仍报告未确认。
+
+会话停止单飞，内存采样器与 watcher 收尾均执行，主错、两个收尾副错及其原对象/文本继续穿透至 runner/Web 的失败报告。初始化归属失败也进入收尾。真实隔离 PNPM fixture 覆盖根仍活与根先退出：先确认生产登记已完成，再独立核对根退出后 worker 同出生身份仍活；生产 stop 后、任何 UUID 文件兜底之前确认根 close 和全部登记身份消失。fixture 查询、元数据或终态缺失不能当作空集合；失败证据保留。启动和初次编译时新增身份查询有非零观测成本，不能宣称对时间或内存指标零扰动。
 
 ## 规则评估
 

@@ -9,8 +9,12 @@ import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runWebHmr } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web'
 
-const mocks = vi.hoisted(() => ({ spawn: vi.fn(), browser: vi.fn(), sampler: vi.fn(), source: vi.fn(), mutate: vi.fn() }))
+const mocks = vi.hoisted(() => ({ spawn: vi.fn(), browser: vi.fn(), sampler: vi.fn(), source: vi.fn(), mutate: vi.fn(), controller: vi.fn() }))
 
+vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-controller', () => ({
+  createWatchProcessController: () => mocks.controller(),
+  WEB_STOP_PHASES: [],
+}))
 vi.mock('playwright', () => ({ chromium: { launch: () => mocks.browser() } }))
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session', async importOriginal => ({
   ...await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session')>(),
@@ -39,6 +43,7 @@ describe('Web watch source and owned resource cleanup', () => {
   let directory: string
   beforeEach(async () => {
     vi.resetAllMocks()
+    mocks.controller.mockReturnValue({ capture: vi.fn(async () => new Map()), stop: vi.fn(async () => {}) })
     mocks.source.mockResolvedValue({ sample: vi.fn(), close: vi.fn(async () => {}) })
     directory = await mkdtemp(path.join(os.tmpdir(), 'web-watch-cleanup-'))
   })
@@ -56,6 +61,11 @@ describe('Web watch source and owned resource cleanup', () => {
     const restoreError = new Error('source restore denied')
     const browserError = new Error('browser close failed')
     const stopError = new Error('memory probe close not confirmed')
+    const processError = new Error('watch descendants remain alive')
+    const controller = mocks.controller()
+    if (failure === 'all') {
+      controller.stop.mockRejectedValue(processError)
+    }
     const browser = { newPage: vi.fn(async () => ({ goto: vi.fn(), locator: () => ({ waitFor: vi.fn() }) })), close: vi.fn(async () => {}) }
     const sampler = { stop: vi.fn(async () => {}) }
     if (failure === 'browser' || failure === 'all') {
@@ -100,7 +110,10 @@ describe('Web watch source and owned resource cleanup', () => {
     expect(error.message).toContain('original HMR failure')
     expect(browser.close).toHaveBeenCalledOnce()
     expect(sampler.stop).toHaveBeenCalledOnce()
-    expect(child.kill).toHaveBeenCalledOnce()
+    expect(controller.stop).toHaveBeenCalledOnce()
+    if (failure === 'all') {
+      expect(errorTree(error)).toContain(processError)
+    }
     expect(await readFile(css)).toEqual(Buffer.from(original))
     if (failure === 'restore' || failure === 'all') {
       expect(errorTree(error)).toContain(restoreError)
@@ -138,5 +151,43 @@ describe('Web watch source and owned resource cleanup', () => {
       expect(error.errors).toEqual([primary, closeError])
     }
     else { expect(error).toBe(primary) }
+  })
+  it('preserves initialization failure while closing the watcher and memory source', async () => {
+    const sourceFile = path.join(directory, 'index.tsx')
+    await writeFile(sourceFile, 'original')
+    const primary = new Error('initial identity capture failed')
+    const processError = new Error('watch cleanup failed')
+    const memoryError = new Error('memory cleanup failed')
+    const child = Object.assign(new EventEmitter(), {
+      pid: 42,
+      exitCode: null,
+      signalCode: null,
+      stdin: new PassThrough(),
+      stdout: new PassThrough(),
+      stderr: new PassThrough(),
+    })
+    const controller = mocks.controller()
+    controller.capture.mockRejectedValue(primary)
+    controller.stop.mockRejectedValue(processError)
+    const sampler = { stop: vi.fn(async () => {
+      throw memoryError
+    }) }
+    mocks.sampler.mockReturnValue(sampler)
+    mocks.spawn.mockReturnValue(child)
+    const watchCase = {
+      name: 'taro-vite-react-tailwindcss-v4',
+      label: 'web initialization',
+      cwd: directory,
+      webHmr: { sourceFile, devScript: 'dev', mutate: (value: string) => `${value} changed` },
+    } as WatchCase
+    const error = await runWebHmr(watchCase, {} as CliOptions, new Map([[sourceFile, 'original']])).catch(error => error)
+    for (const failure of [primary, processError, memoryError]) {
+      expect(errorTree(error)).toContain(failure)
+    }
+    expect(controller.stop).toHaveBeenCalledOnce()
+    expect(sampler.stop).toHaveBeenCalledOnce()
+    expect(mocks.browser).not.toHaveBeenCalled()
+    expect(await readFile(sourceFile, 'utf8')).toBe('original')
+    expect(child.stdout.destroyed).toBe(true)
   })
 })

@@ -8,11 +8,11 @@ import { chromium } from 'playwright'
 import { createWatchCaseCleanup } from './cleanup'
 import { createMemorySampler } from './memory/sampler'
 import { spawnWithWatchMemorySource } from './memory/source'
+import { createWatchProcessController, WEB_STOP_PHASES } from './process-controller'
+import { createWatchResourceStop } from './process-stop'
 import {
   createLineCollector,
   createSpawnEnv,
-  killProcessTreeOnPosix,
-  killProcessTreeOnWindows,
   normalizeLogLine,
   parsePluginProcessSample,
   sleep,
@@ -687,6 +687,8 @@ export async function runWebHmr(
     stdio: 'pipe',
   }))
 
+  const controller = createWatchProcessController(child, { phases: WEB_STOP_PHASES })
+  const initialOwnership = controller.capture()
   const memorySampler = createMemorySampler({
     probe: signal => memorySource.sample(child.pid, signal),
     close: () => memorySource.close(),
@@ -699,6 +701,7 @@ export async function runWebHmr(
     onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
   })
 
+  let capturedInitialCompile = false
   const collectLine = createLineCollector('web-watch', lines, 240, {
     quietSass: options.quietSass,
   })
@@ -714,6 +717,10 @@ export async function runWebHmr(
         url = matchedUrl
       }
       if (isWebCompileReadyLogLine(normalized)) {
+        if (!capturedInitialCompile) {
+          capturedInitialCompile = true
+          void initialOwnership.then(() => controller.capture()).catch(() => { /* 原始归属错误在 controller 中保留，收尾继续执行。 */ })
+        }
         readyAt = Date.now()
       }
       if (isWebCompileDoneLogLine(normalized)) {
@@ -806,49 +813,7 @@ export async function runWebHmr(
     await waitForWebCompileSettled(settleOptions)
   }
 
-  const stopWatch = async () => {
-    if (child.exitCode != null) {
-      cleanupProcessResources()
-      return
-    }
-    const kill = (signal: NodeJS.Signals) => {
-      const childPid = child.pid
-      if (childPid != null && process.platform === 'win32') {
-        killProcessTreeOnWindows(childPid)
-        return
-      }
-      if (childPid != null) {
-        killProcessTreeOnPosix(childPid, signal)
-        return
-      }
-      try {
-        child.kill(signal)
-      }
-      catch {
-      }
-    }
-    kill('SIGTERM')
-    const stopStartedAt = Date.now()
-    while (child.exitCode == null && Date.now() - stopStartedAt < 3000) {
-      await sleep(100)
-    }
-    if (child.exitCode == null) {
-      kill('SIGKILL')
-    }
-    cleanupProcessResources()
-  }
-
-  const stop = async () => {
-    const stoppingMemory = memorySampler.stop().then(() => undefined, error => error as Error)
-    const watchError = await stopWatch().then(() => undefined, error => error as Error)
-    const memoryError = await stoppingMemory
-    if (watchError && memoryError) {
-      throw new AggregateError([watchError, memoryError], 'watch process and memory probe cleanup failed')
-    }
-    if (watchError || memoryError) {
-      throw watchError ?? memoryError
-    }
-  }
+  const stop = createWatchResourceStop(memorySampler, controller, cleanupProcessResources)
 
   let browser: Browser | undefined
   const ownedSources = new Map([[config.sourceFile, sourceOriginal]])
@@ -857,6 +822,7 @@ export async function runWebHmr(
   }
   const cleanup = createWatchCaseCleanup(watchCase.label, ownedSources)
   try {
+    await initialOwnership
     await waitFor(
       async () => {
         if (child.exitCode != null) {
