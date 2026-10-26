@@ -367,7 +367,26 @@ current 三次冷构建各四个服务和四个租约均有实际 release、serv
 
 四条 Taro watch 序列均为九个进程，四条 Mpx 序列均为六个进程，差额集中在各自主 Node，而非新增子进程。Mpx 插件 HMR 门禁值为 `317 → 315ms`，不是时间违规；两次 baseline 均观测到七次 major GC，current 均为六次。baseline 第三次 mutation 后多发生一次 major，后段 heapUsed / arrayBuffers 与 current 明显不同。这些是继续定位活跃分配和自然 GC 调度的线索，不是 retained heap、泄漏或关闭失败的证明；禁止主动 GC、放宽预算或重复正式采样获取绿灯。
 
-首轮及内置反序的 ZIP、raw、summary 和 Mpx GC 原件均保留。两个独立 allocation dispatch：[Taro `40265247856`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265247856)、[Mpx `40265636008`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265636008)，都已核对固定在上述 head，采用原完整基线、三次冷构建和三轮 HMR。尚待工件，不能据诊断启动或完成宣称解释了正式 RSS 差额。本轮网站测试作用域修复不修改产品源码，后续 head 的自然成功同样不能当作性能根因修复；此前 f358684 的一次正式 Mpx 复测额度不再使用。
+首轮及内置反序的 ZIP、raw、summary 和 Mpx GC 原件均保留。两个独立 allocation dispatch：[Taro `40265247856`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265247856)、[Mpx `40265636008`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265636008)，都已核对固定在上述 head，采用原完整基线、三次冷构建和三轮 HMR。本轮网站测试作用域修复不修改产品源码，后续 head 的自然成功同样不能当作性能根因修复；此前 f358684 的一次正式 Mpx 复测额度不再使用。
+
+### 完整诊断工件与 `5240e40` 的后续证据
+
+上述 allocation 两项最终均失败。完整 ZIP 已核对服务器字节数和 SHA-256，保留传输首败与原始文件：Taro 为 44,420,816 字节、`fd4b7fa21ba126db0f2568ccea3b17b91a7b9a3f1a1b2f8954dc874aed6df14f`；Mpx 为 37,246,480 字节、`5dc051b1ebfb592c9c3370e0db116598615e122db6cd18e17cbe7b6fcb22f241`。不能把仅取得 ZIP 前缀或 local entry CRC 通过当成下载验证完成。
+
+两侧 watch 均触发既有 64 MiB 栈映射文档展开上限，不是正式 RSS 门禁，也不是落盘总额用完：
+
+| 项目 | baseline 失败文件及展开字节 | current 失败文件及展开字节 |
+| --- | --- | --- |
+| Taro Vite | frames-6：69,326,009 | frames-6：68,949,005 |
+| Mpx | frames-6：75,136,507 | frames-5：68,428,710 |
+
+使用仓库严格 reader 验证现存 profile/frames 的 receipt、压缩、解码及结构：Taro 共 18/16 份，Mpx 共 11/9 份通过。两侧最后 profile 已写入而对应 frames 缺失，watch `complete=false`，没有完成全部 8 阶段和 stop；不据此推断最终释放或 retained 内存。观测器自身的映射、序列化和压缩分配进入后续累计采样；缺少 source map 的栈也不能按构建 hash 跨版本定责。
+
+`5240e401d422ef5e9700a4007422d76fd2124811` 的[正式 Benchmark `40266549370`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40266549370) 再次确认 Mpx HMR RSS 失败：首轮 peak/steady 为 +16.22%/+5.08%，内置反序为 +14.79%/+13.80%；Taro 本轮通过。该提交仅改测试及复盘，没有产品修复，不能将 Taro 自然通过表述为根因已消除，也不额外重跑正式 Mpx 门禁。
+
+为移除 inspector 观测开销对调用次数的干扰，各执行一次独立 input 诊断：[Mpx `40269368099`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40269368099)、[Taro `40269370344`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40269370344)，准确 head 为 `5240e40`，基线与 build 3/HMR 3 保持不变。两项终态成功，完整工件已验证服务器字节数与 SHA；它们不能替代正式预算。
+
+Mpx 8 个会话均 `complete=true`，watch 两侧各 8 快照、7 次完成、14 次 compilation 创建；全部 18 次 generate 的实际 CSS/rawCss 全文 hash 逐次相同，候选集合相同，生成及 compile 次数相同。部分 options 的中立能力字段和候选顺序不同，不能称原始请求逐字节相同。聚合来源快照包含通过 WeakRef 观察到的旧 store，历史条目受自然 GC 时机影响；这类差异不能直接当作当前生成来源丢失。allocation 中 current 首构建多一次同源 web 扫描在 input 本轮未出现，尚不足以作为正式 RSS 失败的根因。保留失败、成功及未证假设，继续沿真实生命周期与内存归属定位，不改预算或强制 GC。
 
 ## 适用边界
 
