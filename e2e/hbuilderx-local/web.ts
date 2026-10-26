@@ -27,7 +27,7 @@ import { readRuntimeStyles, waitForHmrMarker, waitForInitialPageText, waitForRun
 import { createWebSession } from './web/session'
 import { rewriteHmrMarker } from './web/source'
 
-export { clearDevProcess, getDevProcess } from './web/dev-server'
+export { stopDevServer } from './web/dev-server'
 
 async function waitForUrl(url: string, session: WebServerSession, logs: string[], timeoutMs = serverTimeoutMs) {
   let lastError: unknown

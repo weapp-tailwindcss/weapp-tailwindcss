@@ -1,12 +1,11 @@
 import type { Buffer } from 'node:buffer'
-import type { ChildProcess } from 'node:child_process'
 import type { AttachedWebServer } from './attached'
 import { appendFileSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import { setTimeout as delay } from 'node:timers/promises'
-import { collectProcessOutput, findFreePort, killProcessTree, runPnpm, serverTimeoutMs } from '../process'
+import { findFreePort, runPnpm, serverTimeoutMs } from '../process'
 import { checkAttachedIdentity, readAttachedLog } from './attached'
-import { clearDevProcess, createDevServer, createHBuilderXDevServer } from './dev-server'
+import { createDevServer, createHBuilderXDevServer } from './dev-server'
 
 export interface WebServerSession {
   baseUrl: string
@@ -33,6 +32,7 @@ export async function createWebSession(projectRoot: string, launchWithHBuilderX:
       },
       async readLogs() {
         await checkAttachedIdentity(attached, await fs.realpath(projectRoot), `${identityPath}?complete=${encodeURIComponent(attached.runId)}`)
+        // eslint-disable-next-line no-console -- 连接模式需要提示操作者导出本轮 IDE 日志。
         console.log(`浏览器断言已完成，请将本次 IDE 完整控制台日志导出到：${attached.logFile}（等待最多 5 分钟）`)
         const deadline = Date.now() + 300_000
         let error: unknown
@@ -59,8 +59,8 @@ export async function createWebSession(projectRoot: string, launchWithHBuilderX:
   await runPnpm(projectRoot, ['run', 'predev:h5'], serverTimeoutMs)
   const port = await findFreePort()
   const launch = launchWithHBuilderX ? await createHBuilderXDevServer(projectRoot) : undefined
-  const child: ChildProcess = launch?.child ?? createDevServer(projectRoot, port)
-  const logs = launch?.logs ?? collectProcessOutput(child)
+  const server = launch ?? createDevServer(projectRoot, port)
+  const { child, logs } = server
   let bytes = 0
   let logError: unknown
   const capture = (chunk: Buffer) => {
@@ -96,15 +96,7 @@ export async function createWebSession(projectRoot: string, launchWithHBuilderX:
       return fs.readFile(logFile, 'utf8')
     },
     async stop() {
-      try {
-        if (launch) {
-          await launch.stop()
-        }
-        else {
-          killProcessTree(child)
-        }
-      }
-      finally { clearDevProcess() }
+      await server.stop()
     },
     async closeProject() { await launch?.cleanup() },
   }

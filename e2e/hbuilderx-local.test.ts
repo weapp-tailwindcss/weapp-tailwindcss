@@ -2,9 +2,9 @@ import { afterEach, describe, it } from 'vitest'
 
 import { miniProgramCases, resolveAppHmrSteps, uniAppAppCases, uniAppXAppCases, webCases } from './hbuilderx-local/cases'
 import { filterHBuilderXCases, parseCaseNameFilters } from './hbuilderx-local/filters'
-import { hbuilderxAppTimeoutMs, hbuilderxTimeoutMs, killProcessTree, serverTimeoutMs } from './hbuilderx-local/process'
+import { hbuilderxAppTimeoutMs, hbuilderxTimeoutMs, serverTimeoutMs } from './hbuilderx-local/process'
 import { compileMiniProgramWithHBuilderX, verifyAppHmrWithHBuilderX, verifyWebHmr } from './hbuilderx-local/runner'
-import { clearDevProcess, getDevProcess } from './hbuilderx-local/web'
+import { stopDevServer } from './hbuilderx-local/web'
 
 const describeLocalHBuilderX = process.env['E2E_HBUILDERX_LOCAL'] === '1' ? describe : describe.skip
 const caseGroupFilter = process.env['E2E_HBUILDERX_CASE_GROUP']
@@ -29,13 +29,7 @@ const maxAppHmrSteps = Math.max(1, ...filteredAppCases.map(item => resolveAppHmr
 const appTestTimeoutMs = hbuilderxAppTimeoutMs * (maxAppHmrSteps + 1) + 30_000
 
 describeLocalHBuilderX('HBuilderX demo local e2e', () => {
-  afterEach(() => {
-    const devProcess = getDevProcess()
-    if (devProcess) {
-      killProcessTree(devProcess)
-      clearDevProcess()
-    }
-  })
+  afterEach(stopDevServer)
 
   miniProgramTest.each(filteredMiniProgramCases)('用 HBuilderX 编译小程序产物：$name', async (item) => {
     await compileMiniProgramWithHBuilderX(item)
