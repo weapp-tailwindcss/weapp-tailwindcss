@@ -105,6 +105,20 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
   }
   const captureAt = (deadline: number) => bounded(deadline, () => ownership.capture(deadline), reason => ownership.abortPending(reason))
   const requestedRootSignals = new Set<NodeJS.Signals>()
+  const waitForRootClose = async (deadline: number) => {
+    let timer: NodeJS.Timeout | undefined
+    try {
+      await Promise.race([
+        closed,
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, Math.max(0, deadline - Date.now()))
+        }),
+      ])
+    }
+    finally {
+      clearTimeout(timer)
+    }
+  }
   const signalRootHandle = (signal: NodeJS.Signals) => {
     if (!Number.isInteger(child.pid) || child.pid! <= 0 || didClose || child.exitCode !== null || child.signalCode !== null || requestedRootSignals.has(signal)) {
       return
@@ -181,6 +195,11 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
         }
       }
       while (Date.now() < until) {
+        if (!didClose) {
+          // 根 close 是成功的必要条件；此前等待本次活句柄或原阶段结束，避免无意义扫描压缩探针执行窗。
+          await waitForRootClose(until)
+          continue
+        }
         const remaining = until - Date.now()
         if (remaining > 1001 && !trackingError) {
           try {

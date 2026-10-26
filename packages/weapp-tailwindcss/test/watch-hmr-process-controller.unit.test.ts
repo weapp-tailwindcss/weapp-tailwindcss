@@ -231,3 +231,53 @@ it('still requests final SIGKILL on its held live root when the last identity qu
   expect(kill.mock.calls).toEqual([[100, 'SIGINT'], [100, 'SIGTERM']])
   expect(vi.getTimerCount()).toBe(0)
 })
+
+it.each([
+  { label: 'POSIX INT grace', platform: 'linux', signal: 'SIGINT', closeAfterMs: 2400, expected: ['SIGINT'], web: false },
+  { label: 'Windows INT grace', platform: 'win32', signal: 'SIGINT', closeAfterMs: 2400, expected: ['SIGINT'], web: false },
+  { label: 'POSIX TERM escalation', platform: 'linux', signal: 'SIGTERM', closeAfterMs: 100, expected: ['SIGINT', 'SIGTERM'], web: false },
+  { label: 'POSIX KILL escalation', platform: 'linux', signal: 'SIGKILL', closeAfterMs: 40, expected: ['SIGINT', 'SIGTERM', 'SIGKILL'], web: false },
+  { label: 'Web TERM grace', platform: 'linux', signal: 'SIGTERM', closeAfterMs: 1000, expected: ['SIGTERM'], web: true },
+])('waits for root close in the original $label without cancelling healthy queries', async (scenario) => {
+  Object.defineProperty(process, 'platform', { value: scenario.platform })
+  vi.useFakeTimers()
+  const f = fixture()
+  f.setRows([root])
+  const controller = scenario.web
+    ? createWatchProcessController(f.child, { phases: WEB_STOP_PHASES, observer: { table: f.table, subset: f.subset } })
+    : f.controller
+  await controller.capture()
+  const start = Date.now()
+  const queries: Array<{ at: number, budget: number, aborted?: boolean }> = []
+  const query = (budget: number, signal?: AbortSignal) => new Promise<ProcessIdentity[]>((resolve, reject) => {
+    const entry = { at: Date.now() - start, budget, aborted: false }
+    queries.push(entry)
+    const done = () => {
+      signal?.removeEventListener('abort', abort)
+      resolve(f.getRows())
+    }
+    const timer = setTimeout(done, 40)
+    const abort = () => {
+      entry.aborted = true
+      clearTimeout(timer)
+      reject(signal!.reason)
+    }
+    signal?.addEventListener('abort', abort, { once: true })
+  })
+  f.table.mockImplementation((budget, signal) => query(budget!, signal))
+  f.subset.mockImplementation((_group, _pids, budget, signal) => query(budget!, signal))
+  const kill = vi.spyOn(process, 'kill').mockImplementation((_pid, signal) => {
+    if (signal === scenario.signal) {
+      setTimeout(() => {
+        f.setRows([])
+        f.close()
+      }, scenario.closeAfterMs)
+    }
+    return true
+  })
+  const stop = controller.stop().catch(error => error)
+  await vi.advanceTimersByTimeAsync(8000)
+  expect({ result: await stop, aborted: queries.filter(query => query.aborted) }).toEqual({ result: undefined, aborted: [] })
+  expect(kill.mock.calls).toEqual(scenario.expected.map(signal => [100, signal]))
+  expect(vi.getTimerCount()).toBe(0)
+})
