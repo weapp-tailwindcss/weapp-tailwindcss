@@ -11,7 +11,7 @@ import { readFixtureProcessState, stopFixtureProcess } from './test-process-stat
 export const fixtureHtml = '<!doctype html><html><body>本轮网站构建</body></html>'
 
 /** 使用真实合成进程验证归属与退出；不启动 Wrangler、浏览器或设备。 */
-export async function workerFixture(mode = 'ready') {
+export async function workerFixture(mode = 'ready', descendantLifetimeMs = 10_000) {
   const token = randomUUID()
   const identities = new Map<string, ProcessIdentity>()
   const root = await mkdtemp(path.join(tmpdir(), 'website worker 中文 & '))
@@ -33,7 +33,7 @@ export async function workerFixture(mode = 'ready') {
       if (process.send) { process.send('ready'); process.disconnect() }
     })
     process.on('SIGTERM', stop)
-    setTimeout(stop, 10000).unref()
+    setTimeout(stop, ${descendantLifetimeMs}).unref()
   `)
   const spawnDescendant = (name: string, detached = false) => `require('node:child_process').spawn(process.execPath, [${JSON.stringify(descendantScript)}, ${JSON.stringify(name)}], { cwd: process.cwd(), detached: ${detached}, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] })`
   const script = path.join(root, 'worker fixture.cjs')

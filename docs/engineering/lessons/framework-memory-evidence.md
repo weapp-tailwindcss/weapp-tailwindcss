@@ -356,6 +356,19 @@ current 三次冷构建各四个服务和四个租约均有实际 release、serv
 
 同 head 自动触发的[正式 Benchmark `40083216980`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40083216980) 中，Synthetic、Mpx、Taro Vite、Taro Webpack、Uni Vite、weapp-vite 五个框架分片及 Performance guard 聚合均成功。此结果来自正式性能检查，不能与 inputs-only 诊断混用；它证明该准确 head 在原门禁下通过，不解释历史 Synthetic/RSS 首败，也不替代后续新增缓存修正 head 的独立 CI。
 
+### cbd42f4 的正式 RSS 首败与独立分配诊断
+
+[正式 run `40262111538`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40262111538) 绑定 head `cbd42f4770a702e3d5ac90da885a5803ff58cb56` 与原基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417`。Mpx 工件记录的实际 checkout 是测试合并提交 `728d49544b2abe3e7e671ffb3c9a95e3a5a43fce`；GitHub commit 对象核对父提交依次为该基线和 head，合并提交与 head 的源码树均为 `84d3f7633ab72beca845b01e53120909573789fd`。两项失败均只有 HMR RSS 违规，已有门禁实际执行并保留反序确认，不能当作一次波动放行：
+
+| 项目 | 首轮 peak / steady 增幅 | 反序确认 peak / steady 增幅 |
+| --- | --- | --- |
+| Taro Vite | 8.77% / 9.97% | 10.18% / 7.56% |
+| Mpx | 39.87% / 25.58% | 45.00% / 28.94% |
+
+四条 Taro watch 序列均为九个进程，四条 Mpx 序列均为六个进程，差额集中在各自主 Node，而非新增子进程。Mpx 插件 HMR 门禁值为 `317 → 315ms`，不是时间违规；两次 baseline 均观测到七次 major GC，current 均为六次。baseline 第三次 mutation 后多发生一次 major，后段 heapUsed / arrayBuffers 与 current 明显不同。这些是继续定位活跃分配和自然 GC 调度的线索，不是 retained heap、泄漏或关闭失败的证明；禁止主动 GC、放宽预算或重复正式采样获取绿灯。
+
+首轮及内置反序的 ZIP、raw、summary 和 Mpx GC 原件均保留。两个独立 allocation dispatch：[Taro `40265247856`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265247856)、[Mpx `40265636008`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40265636008)，都已核对固定在上述 head，采用原完整基线、三次冷构建和三轮 HMR。尚待工件，不能据诊断启动或完成宣称解释了正式 RSS 差额。本轮网站测试作用域修复不修改产品源码，后续 head 的自然成功同样不能当作性能根因修复；此前 f358684 的一次正式 Mpx 复测额度不再使用。
+
 ## 适用边界
 
 本记录仅约束上述未解决的性能失败。配置版本与 CSS 来源并发问题已有独立[修复与回归](webpack-request-configuration.md)，没有证据证明该修复解释 RSS 增幅。完整验收、环境中断和其他框架证据见[框架隔离记录](framework-isolation.md)。

@@ -57,6 +57,14 @@ pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/local-worker/la
 
 整合修复 `7a612c604` 将测试自身的取消与清理归属集中到 `test-scope`：Vitest 取消后向真实命令传递信号，先排空已接收工作，再恢复 mock 和删除夹具；等待 PID 标记时同时观察命令提前退出和取消。测试外层期限由已有启动、业务与清理预算组成，生产截止时间不变。ANSI 断言使用标准库去除控制字符，cwd 双方均经 realpath 核对真实目录。新增 10 项作用域回归进入四组 CI，覆盖取消、失败和排空顺序。主工作树 `57486ba32` 在 macOS / Node 24.18.0 的七文件 70 项全部通过，包含强制彩色输出的真实 Playwright 首错回归；同轮 workflow 与 compiler 回归三文件 13 项通过。真实 Windows 结果仍待本修复的新 head 验证。
 
+### 后代退出回归的作用域遗漏
+
+`cbd42f4770a702e3d5ac90da885a5803ff58cb56` 的 [Windows Node 22 job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40262111487/job/121378024027) 在 `surviving-detached` 回归触发 Vitest 默认 5000ms 整例超时，其余 77 项通过。这只能证明测试截止时间耗尽，不能证明生产进程树清理失败。`process-lifecycle.test.ts` 尚未迁入已有 `test-scope`：内部登记等待本身允许 5000ms，之后还要请求退出、排空进程树和核对真实出生身份及端口；外层超时后旧代码会提前恢复 spy、清理目录，与在途任务竞争。
+
+本轮将三个用例的整个异步任务交给现有作用域，包含命令结束后的系统身份与端口断言。Vitest 的取消信号传入实际命令，收尾先排空完整任务，再恢复 mock、处理全部夹具；部分清理失败仍收尾其他夹具并聚合报告。整例截止时间由现有启动、业务、身份查询和清理预算组合，生产截止时间保持原值。合成后代的自退安全阀仅在这三个测试中晚于整例及收尾预算，避免自然退出替代被测清理；其他夹具默认仍为 10 秒。
+
+在上述 head 加本轮未提交改动上，macOS / Node 22.22.3 / Vitest 5.0.4 执行与 CI 相同的八文件、78 项全部通过，零跳过，严格 ESLint 与 diff 检查通过。命令为 `CI=1 pnpm --config.verifyDepsBeforeRun=false --filter @weapp-tailwindcss/website exec vitest run scripts/local-worker/launch-gate.test.ts scripts/local-worker/launch-gate-options.test.ts scripts/local-worker/process-lifecycle.test.ts scripts/local-worker/windows-lifecycle.test.ts scripts/local-worker/command.test.ts scripts/local-worker/server.test.ts scripts/local-worker/test-scope.test.ts scripts/local-worker/test-process-state.test.ts --update=none --maxWorkers=1`；JSON 保存在 `.tmp/framework-isolation/lifecycle-cbd42f4-fix.json`。原 Windows 首败保持，真实 Windows 验证仍需修订 head 的 CI，不能用本机通过推断其结果。
+
 ## 适用边界
 
 握手仅用于网站脚本实际使用的 `process.execPath` Node CLI，不把任意系统命令变成通用受管进程协议，也不改变共享编译核心、HBuilderX runner 或框架插件。未登记且已经失去活身份锚的独立后代仍不在可确认范围内，不用本次修复扩大清理权限。
