@@ -54,7 +54,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('stops eight registered Windows descendants using one batch verification and synchronous signals within the original first phase', async () => {
+it('confirms eight registered Windows descendants at the next phase entry before escalating', async () => {
   const f = fixture(600)
   await f.controller.capture()
   f.closeRoot()
@@ -65,7 +65,7 @@ it('stops eight registered Windows descendants using one batch verification and 
   }, error => error)
   await vi.advanceTimersByTimeAsync(8000)
   expect(await result).toBeUndefined()
-  expect(completedAt! - start).toBeLessThan(3000)
+  expect(completedAt! - start).toBe(3600)
   expect(f.kill.mock.calls).toEqual([...workers].reverse().map(row => [row.pid, 'SIGINT']))
   expect(f.taskkill).not.toHaveBeenCalled()
   expect(f.subset.mock.calls).toHaveLength(2)
@@ -89,14 +89,50 @@ it('separately confirms Windows Web descendants within its unchanged 3000ms tota
   expect(f.taskkill).not.toHaveBeenCalled()
 })
 
-it('keeps the Web phase execution/reap deadline when two 300ms snapshots cannot both fit before its original cutoff', async () => {
+it('gives healthy Web confirmation its next original phase window before escalating', async () => {
   const f = fixture(300, true)
+  await f.controller.capture()
+  f.closeRoot()
+  const start = Date.now()
+  let completedAt: number | undefined
+  const result = f.controller.stop().then(() => {
+    completedAt = Date.now()
+  }, error => error)
+  await vi.advanceTimersByTimeAsync(3000)
+  expect(await result).toBeUndefined()
+  expect(completedAt! - start).toBe(1800)
+  expect(f.kill.mock.calls).toEqual([...workers].reverse().map(row => [row.pid, 'SIGTERM']))
+  expect(f.subset).toHaveBeenCalledTimes(2)
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('keeps an actual first Web query failure terminal even with another phase remaining', async () => {
+  const f = fixture(600, true)
   await f.controller.capture()
   f.closeRoot()
   const result = f.controller.stop().catch(error => error)
   await vi.advanceTimersByTimeAsync(3000)
-  expect(await result).toBeInstanceOf(Error)
-  expect(f.subset).toHaveBeenCalledTimes(2)
+  expect((await result).message).toContain('停止未确认')
+  expect(f.subset).toHaveBeenCalledOnce()
+  expect(f.kill).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('still rejects when final Web signal and confirmation cannot both fit before the original cutoff', async () => {
+  const f = fixture(300, true)
+  await f.controller.capture()
+  f.closeRoot()
+  f.kill.mockImplementation((pid, signal) => {
+    if (signal === 'SIGKILL') {
+      f.setRows(f.getRows().filter(row => row.pid !== pid))
+    }
+    return true
+  })
+  const result = f.controller.stop().catch(error => error)
+  await vi.advanceTimersByTimeAsync(3000)
+  expect((await result).message).toContain('停止未确认')
+  expect(f.kill.mock.calls).toEqual(['SIGTERM', 'SIGKILL'].flatMap(signal => [...workers].reverse().map(row => [row.pid, signal])))
+  expect(f.subset).toHaveBeenCalledTimes(3)
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -196,4 +232,51 @@ it('accepts ESRCH only after a fresh empty confirmation and never signals nonpos
   expect(await result).toBeUndefined()
   expect(f.kill.mock.calls.map(([pid]) => pid).every(pid => pid > 0)).toBe(true)
   expect(f.subset).toHaveBeenCalledTimes(2)
+})
+
+it('waits for a closed-root descendant to exit during the original grace before confirming at the next entry', async () => {
+  const f = fixture(40)
+  await f.controller.capture()
+  f.closeRoot()
+  f.kill.mockImplementation(() => {
+    setTimeout(() => f.setRows([]), 2440)
+    return true
+  })
+  const start = Date.now()
+  let completedAt: number | undefined
+  const result = f.controller.stop().then(() => {
+    completedAt = Date.now()
+  }, error => error)
+  await vi.advanceTimersByTimeAsync(8000)
+  expect(await result).toBeUndefined()
+  expect(completedAt! - start).toBe(3040)
+  expect(f.kill.mock.calls).toEqual([...workers].reverse().map(row => [row.pid, 'SIGINT']))
+  expect(f.subset).toHaveBeenCalledTimes(2)
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('does not escalate against identities whose birth changed during the preceding grace', async () => {
+  const f = fixture(0)
+  await f.controller.capture()
+  f.closeRoot()
+  f.kill.mockImplementation(() => {
+    setTimeout(() => f.setRows(f.getRows().map(row => ({ ...row, started: 'reused' }))), 100)
+    return true
+  })
+  const result = f.controller.stop().catch(error => error)
+  await vi.advanceTimersByTimeAsync(8000)
+  expect(await result).toBeUndefined()
+  expect(f.kill.mock.calls).toEqual([...workers].reverse().map(row => [row.pid, 'SIGINT']))
+  expect(f.subset).toHaveBeenCalledTimes(2)
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('keeps root close mandatory even when later phase entries confirm an empty set', async () => {
+  const f = fixture(0)
+  await f.controller.capture()
+  const result = f.controller.stop().catch(error => error)
+  await vi.advanceTimersByTimeAsync(8000)
+  expect((await result).message).toContain('close=false')
+  expect(f.getRows()).toEqual([])
+  expect(vi.getTimerCount()).toBe(0)
 })

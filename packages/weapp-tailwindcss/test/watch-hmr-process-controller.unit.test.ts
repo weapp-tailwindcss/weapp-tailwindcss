@@ -30,6 +30,7 @@ afterEach(() => {
 describe('watch owned process shutdown', () => {
   it('waits for registered reparented descendants after root close and shares the final stop promise', async () => {
     Object.defineProperty(process, 'platform', { value: 'linux' })
+    vi.useFakeTimers()
     const f = fixture()
     expect((await f.controller.capture()).has(200)).toBe(true)
     f.close()
@@ -40,6 +41,7 @@ describe('watch owned process shutdown', () => {
     })
     const stop = f.controller.stop()
     expect(f.controller.stop()).toBe(stop)
+    await vi.advanceTimersByTimeAsync(8000)
     await stop
     expect(kill).toHaveBeenCalledExactlyOnceWith(200, 'SIGINT')
     expect(f.controller.stop()).toBe(stop)
@@ -106,6 +108,7 @@ describe('watch owned process shutdown', () => {
   })
   it('verifies registered Windows identities in a batch before native single-PID signals', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' })
+    vi.useFakeTimers()
     const f = fixture()
     await f.controller.capture()
     f.close()
@@ -114,7 +117,9 @@ describe('watch owned process shutdown', () => {
       f.setRows([])
       return true
     })
-    await f.controller.stop()
+    const stop = f.controller.stop()
+    await vi.advanceTimersByTimeAsync(8000)
+    await stop
     expect(kill).toHaveBeenCalledExactlyOnceWith(200, 'SIGINT')
     expect(f.subset).toHaveBeenCalledWith(undefined, [200], expect.any(Number), expect.any(AbortSignal))
   })

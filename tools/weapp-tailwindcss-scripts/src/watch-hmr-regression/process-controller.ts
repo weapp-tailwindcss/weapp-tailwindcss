@@ -137,7 +137,7 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
     let until = started
     let verified = false
     const complete = () => didClose && verified && ownership.current.size === 0
-    for (const phase of phases) {
+    for (const [index, phase] of phases.entries()) {
       until += phase.waitMs
       if (until <= Date.now()) {
         continue
@@ -193,6 +193,12 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
         if (Date.now() < until) {
           signalRootHandle(phase.signal)
         }
+      }
+      if (index < phases.length - 1) {
+        // 非最终阶段给本轮信号保留原宽限；下阶段先重新确认身份，再决定是否升级。
+        // 不在阶段尾部重复查询，也不能用等待前的身份集合或根 close 直接放行。
+        await delay(Math.max(0, until - Date.now()))
+        continue
       }
       while (Date.now() < until) {
         if (!didClose) {
