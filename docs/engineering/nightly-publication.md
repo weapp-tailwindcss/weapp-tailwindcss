@@ -3,6 +3,7 @@ status: partial
 baseline: 60aca0b2377457a29ac7dc23309abb6690b25c6e
 regressions:
   - packages/weapp-tailwindcss/test/ci/release-nightly/native-inputs.test.ts
+  - packages/weapp-tailwindcss/test/ci/release-nightly/producer.test.ts
   - packages/weapp-tailwindcss/test/ci/release-nightly/consumer.test.ts
   - packages/weapp-tailwindcss/test/ci/release-nightly/route.test.ts
   - packages/weapp-tailwindcss/test/ci/release-nightly/workflow.test.ts
@@ -20,6 +21,8 @@ Release 工作流每天北京时间 04:00（UTC `0 20 * * *`）检查 main，支
 
 nightly 先运行现有八平台原生矩阵，在真实 ABI 检查完成后记录准确 commit、Git tree、工作流 run/attempt、二进制 metadata、sourceDigest 和许可证哈希。只有 nightly 显式启用此清单；恢复旧稳定提交不要求旧源码具备新脚本。
 
+Linux 在最后一次 PostCSS Node 20.19 ABI 校验成功的同一个容器内采集清单，避免 root 创建的 bindings 目录阻止宿主 runner 写入。Git 通过单次 `-c safe.directory` 仅信任当前 checkout，采集时再次核对原始工作流 SHA；不改全局 Git 配置或目录属主。macOS 和 Windows 在原宿主采集。
+
 repoctl 隔离安装并改写 snapshot manifest 后，调用 `prepareSource`。仓库 helper 先验证全部八个平台和两个内核的输入，再复制二进制。metadata 仅更新版本；二进制、源码摘要和许可证保持与生产矩阵一致。返回的新增文件清单包含 SHA-256 receipt，repoctl 校验原文件、路径、符号链接和新增产物完整性后才构建、打包。
 
 两个 Tailwind 子模块仅作参考源码，由 `referenceGitlinks` 明确省略。准确 gitlink OID 和原始 tree 进入回执；默认拒绝子模块的上游行为保持，不能将依赖指向省略目录。
@@ -36,6 +39,8 @@ repoctl 隔离安装并改写 snapshot manifest 后，调用 `prepareSource`。�
 
 若上传已确认而消费者失败，必须记录为“已发布、验收失败”；后续定时任务可能因同提交完整发布而跳过，不能用跳过代替消费者验收。
 
+平台安装仅对已确认批次内的准确版本尚未在 npm 可见的结构化 pnpm 错误有限重试，最多 6 次、总计 300 秒，使用消费者专属缓存并保留安装 JSON。认证、完整性、未知错误和批次外缺失不重试；详情见[安装可见性记录](lessons/nightly-installation-visibility.md)。
+
 原生产物和消费者严格绑定 run ID 与 attempt。GitHub 的“仅重新运行失败作业”会复用旧 attempt 的成功产物，因此会被拒绝；恢复时重新运行**全部作业**，或从 main 手动触发新的 Release → nightly。新 attempt 会获得新的 snapshot 身份，旧批次证据保留。上传入口仍先对账当前准确版本，已存在且身份和 integrity 相同的版本不重复上传，冲突或未知状态阻断；不得手工放宽 receipt 接受任意旧 artifact。
 
 ## 本地验证
@@ -43,6 +48,8 @@ repoctl 隔离安装并改写 snapshot manifest 后，调用 `prepareSource`。�
 2026-10-27 在 macOS / Node 24.22.1 / pnpm 12.14.0 执行发布、版本 PR、metadata、workspace、工作流和真实 Git hook 定向回归：30 个文件、554 项通过；新增 nightly 路由、输入完整性与消费回执测试包含在内。冻结安装、脚本 ESLint、`pnpm agents:check` 和 `git diff --check` 通过。
 
 额外使用上游构建后的公开 API 与仓库 `prepareNativeSource` 做外部 Git fixture 集成：真实归档、冻结安装、10 个公开包、2 个参考 gitlink，验证 install → prepareSource → build 顺序，生成 72 条唯一文件回执及 10 个 tarball，全部包检查通过。原 checkout 的文件 SHA-256、权限、HEAD、tree 与状态均未改变。宿主使用第三方真实 N-API 模块验证加载；其他平台为 fixture 字节，只证明 API、身份和打包管线，不证明本项目原生 ABI。
+
+后续补充的安装恢复、producer SHA 与 Linux 容器边界回归共 7 个文件、102 项通过。真实 Docker 先复现宿主 UID 1001 写入 root bindings 的 `EACCES`，以及 root 读取其他属主 checkout 的 `dubious ownership`；修复后准确的 Node 20.19.0 Alpine 容器成功采集。此实验使用合成二进制，仅证明权限、采集与 Node 兼容，不能替代八平台真实 ABI 验收。
 
 [main 原发布工作流的 OIDC 审计](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40510156079)在准确源码 `60aca0b2377457a29ac7dc23309abb6690b25c6e` 上成功，40 个公开包的凭据交换均返回 201。此结果只证明当前交换权限；真实 nightly 上传、provenance 和发布后消费仍需首次完整运行确认。
 
