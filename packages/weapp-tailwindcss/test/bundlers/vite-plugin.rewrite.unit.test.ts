@@ -1,10 +1,11 @@
-import type { Plugin, TransformResult } from 'vite'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Plugin, ResolvedConfig, TransformResult } from 'vite'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { slash } from '@/bundlers/vite/utils'
 import { createRewriteCssImportsPlugins } from '@/bundlers/vite/rewrite-css-imports'
 import { vitePluginName } from '@/constants'
 import { resolvePackageDir } from '@/utils/resolve-package'
 import {
+  createCompilerContextMock,
   createContext,
   getCurrentContext,
   resetVitePluginTestContext,
@@ -12,6 +13,22 @@ import {
 } from './vite-plugin.testkit'
 
 const TEST_TIMEOUT_MS = 30000
+const configuredPlugins: Plugin[][] = []
+
+async function resolvePlugins(plugins: Plugin[]) {
+  configuredPlugins.push(plugins)
+  const config = {
+    command: 'serve',
+    root: '/virtual/weapp-tailwindcss-vite-test',
+    plugins: [],
+    css: { postcss: { plugins: [] } },
+    build: { outDir: 'dist' },
+  } as ResolvedConfig
+  for (const plugin of plugins) {
+    const hook = plugin.configResolved
+    await (typeof hook === 'function' ? hook : hook?.handler)?.call(plugin, config)
+  }
+}
 
 async function loadWeappTailwindcssPlugin() {
   const mod = await import('@/bundlers/vite')
@@ -36,11 +53,21 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
     resetVitePluginTestContext()
   })
 
+  afterEach(async () => {
+    for (const plugins of configuredPlugins.splice(0)) {
+      for (const plugin of plugins) {
+        const hook = plugin.closeWatcher
+        await (typeof hook === 'function' ? hook : hook?.handler)?.call(plugin)
+      }
+    }
+  })
+
   it('keeps tailwindcss imports unresolved by default while retaining generator transform ownership', async () => {
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
     const currentContext = getCurrentContext()
     currentContext.tailwindRuntime.majorVersion = 4
-    const plugins = WeappTailwindcss()
+    const plugins = WeappTailwindcss({ appType: 'uni-app' })
+    await resolvePlugins(plugins!)
     const rewritePlugin = plugins?.find(plugin => plugin.name === `${vitePluginName}:rewrite-css-imports`)
     expect(rewritePlugin).toBeTruthy()
 
@@ -58,7 +85,8 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
     const currentContext = getCurrentContext()
     currentContext.tailwindRuntime.majorVersion = 4
     currentContext.rewriteCssImports = true
-    const plugins = WeappTailwindcss()
+    const plugins = WeappTailwindcss({ appType: 'uni-app', rewriteCssImports: true })
+    await resolvePlugins(plugins!)
     const rewritePlugin = plugins?.find(plugin => plugin.name === `${vitePluginName}:rewrite-css-imports`)
     expect(rewritePlugin).toBeTruthy()
 
@@ -382,19 +410,15 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
 
   it('does not keep tailwindcss imports resolvable by default when plugin is disabled for tailwind v4 projects', async () => {
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const currentContext = createContext({ disabled: true })
-    setCurrentContext(currentContext)
-    currentContext.tailwindRuntime.majorVersion = 4
-    const plugins = WeappTailwindcss()
+    const plugins = WeappTailwindcss({ disabled: true })
     expect(plugins).toBeUndefined()
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
   it('keeps tailwindcss imports resolvable when plugin is disabled and css import rewrite is enabled', async () => {
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const currentContext = createContext({ disabled: true, rewriteCssImports: true })
-    setCurrentContext(currentContext)
-    currentContext.tailwindRuntime.majorVersion = 4
-    const plugins = WeappTailwindcss()
+    const plugins = WeappTailwindcss({ disabled: true, rewriteCssImports: true })
+    await resolvePlugins(plugins!)
     expect(plugins?.length).toBe(1)
     const rewritePlugin = plugins?.[0]
     expect(rewritePlugin?.name).toBe(`${vitePluginName}:rewrite-css-imports`)
@@ -405,6 +429,7 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
     const result = await transform?.('@import "tailwindcss";', '/src/app.css') as TransformResult
     const pkgDir = slash(resolvePackageDir('weapp-tailwindcss'))
     expect(result?.code).toContain(`@import "${pkgDir}/index.css";`)
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
   it('supports trailing package directories and importer-less resolution in rewrite factory', async () => {
@@ -594,6 +619,7 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
       disabled: { plugin: true },
     })
     expect(plugins).toBeUndefined()
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
   it('keeps css import rewrite plugin when main plugin is disabled and css import rewrite is enabled', async () => {

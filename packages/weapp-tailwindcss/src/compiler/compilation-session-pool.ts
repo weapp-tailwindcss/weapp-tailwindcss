@@ -21,6 +21,7 @@ export interface CompilationScopeGenerationResult {
 
 export interface CompilationScopeRequest {
   scope: SourceScope
+  isCurrent?: (() => boolean) | undefined
   outputId: string
   sources: CompilationScopeSource[]
   changes?: CompilationDependencyChange[] | undefined
@@ -185,7 +186,7 @@ export class CompilationSessionPool {
     let committed = false
     let committedCompilation: CompilationScopeState | undefined
     await this.enqueue(entry, () => {
-      if (!entry.active || entry.latest?.revision !== prepared.compilation.revision) {
+      if (!entry.active || request.isCurrent?.() === false || entry.latest?.revision !== prepared.compilation.revision) {
         return
       }
       if (generatedDependencies) {

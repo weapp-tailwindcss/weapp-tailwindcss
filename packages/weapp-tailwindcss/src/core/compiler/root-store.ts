@@ -1,7 +1,7 @@
 import type { CompilerGenerationCacheEntry } from './generation-cache'
 import type { CompilerCompilationCacheEntry } from './generation-state'
 import type { CompilerSnapshot, CompilerSourcePattern } from './types'
-import type { TailwindV4ResolvedSource, WeappTailwindcssGenerator } from '@/generator'
+import type { TailwindV4ResolvedSource, WeappTailwindcssGenerator } from '@/generator/runtime'
 import { DefaultCompilationSession } from '@/compiler/session'
 import { isFileMatchedByTailwindSourceEntries } from '@/tailwindcss/source-scan'
 
@@ -29,13 +29,15 @@ export interface CompilerRootSession {
 }
 
 function disposeGenerator(generator: WeappTailwindcssGenerator | undefined) {
-  generator?.dispose?.()
+  return generator?.dispose?.()
 }
 
 export class CompilerRootStore {
+  private readonly backgroundReleases = new Set<Promise<void>>()
   private readonly dependencyRoots = new Map<string, Set<string>>()
   private readonly releasing = new Map<string, Promise<void>>()
   private readonly roots = new Map<string, CompilerRootSession>()
+  private disposal: Promise<void> | undefined
 
   constructor(
     private readonly maxRoots: number,
@@ -43,6 +45,9 @@ export class CompilerRootStore {
   ) {}
 
   get(id: string) {
+    if (this.disposal) {
+      throw new Error('Compiler root store 已释放。')
+    }
     if (!id) {
       throw new Error('Compiler root id 不能为空。')
     }
@@ -61,7 +66,7 @@ export class CompilerRootStore {
     if (this.roots.size >= this.maxRoots) {
       const oldest = [...this.roots.values()].find(entry => entry.pendingCount === 0)
       if (oldest) {
-        void this.remove(oldest.id, true)
+        this.evict(oldest.id)
       }
     }
     const entry: CompilerRootSession = {
@@ -142,7 +147,7 @@ export class CompilerRootStore {
       if (!oldest) {
         return
       }
-      void this.remove(oldest.id, true)
+      this.evict(oldest.id)
     }
   }
 
@@ -158,18 +163,22 @@ export class CompilerRootStore {
     entry.accepting = false
     this.roots.delete(id)
     this.detachDependencies(entry)
-    const release = entry.pending.then(() => {
+    const release = entry.pending.then(async () => {
       entry.active = false
       entry.compilation.dispose()
       entry.compilationCache = undefined
-      disposeGenerator(entry.generator)
-      entry.generator = undefined
-      entry.generationCache = undefined
-      entry.latestSnapshot = undefined
-      entry.source = undefined
-      entry.sourceInputFingerprint = undefined
-      entry.sourceFingerprint = undefined
-      entry.sources = []
+      try {
+        await disposeGenerator(entry.generator)
+      }
+      finally {
+        entry.generator = undefined
+        entry.generationCache = undefined
+        entry.latestSnapshot = undefined
+        entry.source = undefined
+        entry.sourceInputFingerprint = undefined
+        entry.sourceFingerprint = undefined
+        entry.sources = []
+      }
       if (notifyEvicted) {
         this.onRootEvicted?.(id)
       }
@@ -180,12 +189,43 @@ export class CompilerRootStore {
     return release
   }
 
-  async dispose() {
-    await Promise.all([
+  retireGenerator(generator: WeappTailwindcssGenerator | undefined) {
+    if (!generator) {
+      return
+    }
+    this.trackBackgroundRelease(Promise.resolve().then(() => disposeGenerator(generator)))
+  }
+
+  dispose() {
+    return this.disposal ??= this.close()
+  }
+
+  private async close() {
+    const tasks = new Set([
       ...[...this.roots.keys()].map(id => this.remove(id)),
       ...this.releasing.values(),
+      ...this.backgroundReleases,
     ])
+    const settled = await Promise.allSettled(tasks)
+    this.backgroundReleases.clear()
     this.dependencyRoots.clear()
+    const errors = settled.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
+    if (errors.length) {
+      throw new AggregateError(errors, '编译来源释放失败，已继续释放其余来源。')
+    }
+  }
+
+  private evict(id: string) {
+    this.trackBackgroundRelease(this.remove(id, true))
+  }
+
+  private trackBackgroundRelease(release: Promise<void>) {
+    this.backgroundReleases.add(release)
+    void release.then(
+      () => this.backgroundReleases.delete(release),
+      // 后台淘汰立即接住异常，失败记录保留到实例关闭时统一报告。
+      () => undefined,
+    )
   }
 
   private detachDependencies(entry: CompilerRootSession) {

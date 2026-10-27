@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { readFile, rm } from 'node:fs/promises'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, getCompilerContextMock, getWebpackLoaderRuntime, isCssImportRewriteLoader, mkdir, mkdtemp, os, path, testState, WeappTailwindcss, writeFile } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createCompilerContextMock, getWebpackLoaderRuntime, isCssImportRewriteLoader, mkdir, mkdtemp, os, path, testState, WeappTailwindcss, writeFile } from './shared'
 
 async function runFinalWebCssAssetRegenerationCase(options: {
   assetCss: string[]
@@ -38,7 +38,7 @@ async function runFinalWebCssAssetRegenerationCase(options: {
     },
     tailwindcssBasedir: root,
   } as any)
-  getCompilerContextMock.mockReturnValue(testState.currentContext)
+  createCompilerContextMock.mockReturnValue(testState.currentContext)
 
   const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
   let currentAssetStore: Record<string, string> = {}
@@ -141,7 +141,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         majorVersion: 4,
       },
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -246,7 +246,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         target: 'web',
       },
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     const rootCompiler = {
@@ -318,7 +318,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
       htmlMatcher: (file: string) => file.endsWith('.html'),
       jsMatcher: (file: string) => file.endsWith('.js'),
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -413,7 +413,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         majorVersion: 4,
       },
     } as any)
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -532,7 +532,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
       },
       tailwindcssBasedir: root,
     } as any)
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -632,7 +632,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         reset: vi.fn(),
       },
     } as any)
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -747,7 +747,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
       },
       tailwindcssBasedir: root,
     } as any)
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -976,7 +976,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         },
         tailwindcssBasedir: root,
       } as any)
-      getCompilerContextMock.mockReturnValue(testState.currentContext)
+      createCompilerContextMock.mockReturnValue(testState.currentContext)
 
       const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
       let loaderHandler: ((loaderContext: any, module: any) => void) | undefined
@@ -1124,7 +1124,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets web target', () => 
         },
         tailwindcssBasedir: root,
       } as any)
-      getCompilerContextMock.mockReturnValue(testState.currentContext)
+      createCompilerContextMock.mockReturnValue(testState.currentContext)
 
       const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
       let loaderHandler: ((loaderContext: any, module: any) => void) | undefined

@@ -4,8 +4,8 @@ import path from 'node:path'
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { describe, expect, it, vi } from 'vitest'
 import { captureFrameworkPostcssOptions } from '@/generation/framework-postcss'
-import { generateTailwindV4Css } from '@/generation/service'
-import { getCompilerContext } from '@/context'
+import { generateTailwindV4Css } from '@/context/generation'
+import { createCompilerContext } from '@/context'
 
 describe('framework CSS composition', () => {
   it.each([
@@ -23,7 +23,7 @@ describe('framework CSS composition', () => {
       const source = `@import "./vendor.css";\n@import "tailwindcss";\npage{--text-base:1rem;--radius-lg:.5rem}\n${padding}`
       await writeFile(path.join(directory, 'vendor.css'), vendor)
       await writeFile(file, source)
-      const opts = getCompilerContext({
+      const opts = createCompilerContext({
         tailwindcssBasedir: process.cwd(),
         generator: { target: 'weapp' },
         cssPreflight: false,

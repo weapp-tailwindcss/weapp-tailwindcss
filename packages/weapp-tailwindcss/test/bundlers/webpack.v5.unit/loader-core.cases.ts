@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { LoaderModule } from './shared'
-import { setupWebpackV5UnitTest, FakeConcatSource, createCompilerWithLoaderTracking, createContext, getCompilerContextMock, getWebpackLoaderRuntime, isCssGenerationLoader, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createCompilerWithLoaderTracking, createContext, createCompilerContextMock, getWebpackLoaderRuntime, isCssGenerationLoader, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
 import RuntimeClassSetLoader from '@/bundlers/webpack/loaders/weapp-tw-runtime-classset-loader'
 import { getCompilerShadowReportSession } from '@/compiler'
 describe('bundlers/webpack WeappTailwindcss / loader core wiring', () => {
@@ -107,7 +107,7 @@ describe('bundlers/webpack WeappTailwindcss / loader core wiring', () => {
         majorVersion: 4,
       },
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
     const plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
     const module: LoaderModule = {
@@ -149,7 +149,7 @@ describe('bundlers/webpack WeappTailwindcss / loader core wiring', () => {
       },
     } as any)
     testState.currentContext.tailwindRuntime.majorVersion = 4
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
     const { compiler, getLoaderHandler } = createCompilerWithLoaderTracking()
     new WeappTailwindcss().apply(compiler as any)
 
@@ -192,7 +192,7 @@ describe('bundlers/webpack WeappTailwindcss / loader core wiring', () => {
     expect(runtimeState).toBeDefined()
     const shadowSession = getCompilerShadowReportSession(runtimeState!)
 
-    cleanupRuntime?.()
+    await cleanupRuntime?.()
 
     expect(getWebpackLoaderRuntime(runtimeKey)).toBeUndefined()
     await vi.waitFor(() => {

@@ -5,9 +5,9 @@ import process from 'node:process'
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { captureFrameworkPostcssOptions } from '@/generation/framework-postcss'
-import { generateTailwindV4Css } from '@/generation/service'
+import { generateTailwindV4Css } from '@/context/generation'
 
 const modes = ['legacy', 'graph'].flatMap(compiler => [false, true].map(deferred => ({ compiler, deferred })))
 
@@ -26,7 +26,7 @@ async function createContext(deferred: boolean) {
   const entries = [path.join(directory, 'alpha.css'), path.join(directory, 'beta.css')]
   const sources = ['alpha', 'beta'].map((name, index) => `@import 'tailwindcss' source(none); @theme { --spacing: ${index + 1}rpx; } @utility source-${name} { z-index: ${(index + 1) * 101}; }`)
   await Promise.all(entries.map((file, index) => writeFile(file, sources[index]!)))
-  const opts = getCompilerContext({
+  const opts = createCompilerContext({
     tailwindcssBasedir: process.cwd(),
     cssEntries: entries,
     generator: { target: 'weapp' },

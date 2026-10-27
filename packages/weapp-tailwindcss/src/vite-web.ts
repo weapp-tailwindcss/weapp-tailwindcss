@@ -1,6 +1,5 @@
 import type { UserDefinedOptions } from './types'
-import { createGenericWebVitePlugins } from './bundlers/vite/frameworks/generic/web'
-import { createConfigScopedPlugins } from './bundlers/vite/shared/config-scoped-plugins'
+import { WeappTailwindcss } from './bundlers/vite'
 
 /**
  * 创建面向普通 Vite Web 项目的 Tailwind 插件。
@@ -12,13 +11,13 @@ export function WeappTailwindcssWeb(options: UserDefinedOptions = {}) {
   const generator = options.generator && typeof options.generator === 'object'
     ? { ...options.generator, target: 'web' as const }
     : { target: 'web' as const }
-  return createConfigScopedPlugins(() => createGenericWebVitePlugins({
+  return WeappTailwindcss({
     ...options,
     appType: undefined,
     platform: 'web',
     generator,
     __internalViteForceGenericWeb: true,
-  } as UserDefinedOptions & { __internalViteForceGenericWeb: true }))
+  } as UserDefinedOptions & { __internalViteForceGenericWeb: true })
 }
 
 /** 小写别名，兼容函数式 Vite 配置风格。 */

@@ -25,7 +25,7 @@ function generated(candidates: Iterable<string> = [], target = 'weapp') {
 
 describe('createCompiler lifecycle', () => {
   afterEach(() => {
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.doUnmock('@/context')
     vi.resetModules()
   })
@@ -36,7 +36,7 @@ describe('createCompiler lifecycle', () => {
     const blocked = new Promise<void>((resolve) => {
       releaseFirst = resolve
     })
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => ({
         dispose: vi.fn(),
@@ -69,7 +69,7 @@ describe('createCompiler lifecycle', () => {
 
   it('keeps the previous successful engine after a replacement fails', async () => {
     const disposals = new Map<string, ReturnType<typeof vi.fn>>()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => {
         const dispose = vi.fn()
@@ -105,7 +105,7 @@ describe('createCompiler lifecycle', () => {
   it('replaces the engine after exact dependency invalidation', async () => {
     const generations = vi.fn()
     const disposals: Array<ReturnType<typeof vi.fn>> = []
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => {
         const dispose = vi.fn()
@@ -132,14 +132,14 @@ describe('createCompiler lifecycle', () => {
 
     expect(regenerated.cache).toMatchObject({ engine: false, output: false })
     expect(generations).toHaveBeenCalledTimes(2)
-    expect(disposals[0]).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(disposals[0]).toHaveBeenCalledTimes(1))
     await compiler.dispose()
     expect(disposals[1]).toHaveBeenCalledTimes(1)
   })
 
   it('reuses equal generation options and detects in-place option changes', async () => {
     const generate = vi.fn(async (options: { candidates?: Iterable<string>, target?: string }) => generated(options.candidates, options.target))
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => ({
         dispose: vi.fn(),
@@ -178,7 +178,7 @@ describe('createCompiler lifecycle', () => {
     })
     const started = vi.fn()
     const disposeGenerator = vi.fn()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => ({
         dispose: disposeGenerator,
@@ -211,7 +211,7 @@ describe('createCompiler lifecycle', () => {
 
   it('bounds idle root sessions and releases evicted generators', async () => {
     const disposals = new Map<string, ReturnType<typeof vi.fn>>()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => {
         const dispose = vi.fn()
@@ -238,7 +238,7 @@ describe('createCompiler lifecycle', () => {
 
   it('notifies after automatic root eviction but not explicit removal', async () => {
     const evicted = vi.fn()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => ({
         dispose: vi.fn(),
@@ -260,13 +260,16 @@ describe('createCompiler lifecycle', () => {
 
   it('passes template filename context to custom handlers', async () => {
     const templateHandler = vi.fn(async (source: string) => source)
-    vi.doMock('@/context', () => ({
-      getCompilerContext: () => ({
-        jsHandler: vi.fn(),
-        styleHandler: Object.assign(vi.fn(), { transformRoot: vi.fn() }),
-        templateHandler,
-      }),
-    }))
+    vi.doMock('@/context', async (importOriginal) => {
+      const original = await importOriginal<typeof import('@/context')>()
+      return {
+        ...original,
+        createCompilerContext: (...args: Parameters<typeof original.createCompilerContext>) => Object.assign(
+          original.createCompilerContext(...args),
+          { templateHandler },
+        ),
+      }
+    })
     const { createCompiler } = await import('@/core/compiler')
     const compiler = createCompiler()
     const snapshot = compiler.createSnapshot({ classSet: [], id: 'template-root' })
@@ -282,7 +285,7 @@ describe('createCompiler lifecycle', () => {
       releaseFirst = resolve
     })
     const disposals = new Map<string, ReturnType<typeof vi.fn>>()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => {
         const dispose = vi.fn()
@@ -319,7 +322,7 @@ describe('createCompiler lifecycle', () => {
       release = resolve
     })
     const disposeGenerator = vi.fn()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async importOriginal => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: (source: typeof sourceA) => ({
         dispose: disposeGenerator,

@@ -6,11 +6,12 @@ import {
   hasTailwindSourceDirectives,
 } from '../../../generation/directives'
 import { hasUserCssLayerBlocks } from '../../../generation/user-css'
+import { hasBundlerGeneratedCssMarker, parseBundlerGeneratedCssMarkerBlocks } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { normalizeCssSourceForCompare } from '../css-output'
 import { mergeRememberedCssSources } from './remembered-css'
 import { hasScopedSourceDirectives } from './scoped-generator-sources'
-import { hasTailwindGenerationSource } from './sfc-style-source'
+import { hasTailwindGenerationSource, normalizeSfcSourceFileForCompare } from './sfc-style-source'
 
 export interface CssCompositionHandlerOptions {
   isMainChunk?: boolean | undefined
@@ -27,6 +28,7 @@ export interface ResolveViteCssCompositionPlanOptions<HandlerOptions extends Css
   cssMatcher: (file: string) => boolean
   explicitSourceFileKeys: ReadonlySet<string>
   file: string
+  generatedSourceFiles?: readonly string[] | undefined
   getCssHandlerOptions: (file: string) => HandlerOptions
   getOriginalCssLayerSource: ((file: string) => string | undefined) | undefined
   isRootStyleOutputFile: (file: string) => boolean
@@ -54,6 +56,7 @@ export interface ViteCssCompositionPlan<HandlerOptions extends CssCompositionHan
   generatorCssHandlerOptions: HandlerOptions
   generatorRawSource: string
   generatorSourceFile: string
+  generatorSourceKind: RememberedCssSource['kind']
   generatorUserLayerRawSource: string | undefined
   hasCurrentTailwindGenerationDirective: boolean
   hasRememberedApplySource: boolean
@@ -106,19 +109,32 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
     && !options.shouldMoveRootImportShellToOrigin
     ? outputFile
     : undefined
-  const useRememberedCssSource = !options.shouldKeepImportedCssShell
+  // 本轮生成标记及来源身份共同证明旧生成载荷，允许删完指令后清除旧结果。
+  const generatedSourceFiles = options.generatedSourceFiles
+    ?? (hasBundlerGeneratedCssMarker(options.rawSource)
+      ? parseBundlerGeneratedCssMarkerBlocks(options.rawSource)
+          .filter(marker => marker.bundler === 'vite' && marker.file != null)
+          .map(marker => marker.file!)
+      : [])
+  const hasMatchingGeneratedSource = generatedSourceFiles.some(file =>
+    rememberedSources.some(source =>
+      normalizeSfcSourceFileForCompare(file) === normalizeSfcSourceFileForCompare(source.sourceFile),
+    ),
+  )
+  const hasOwnedImportShell = rememberedSource?.kind === 'output-import-shell'
+  // 来源关联与已处理标记只证明资产归属，不能单独恢复作者输入。
+  // 普通样式以本轮 bundle 为准，保留框架编译、作用域及 injector 的贡献。
+  const restoreRememberedGenerationSource = !options.shouldKeepImportedCssShell
     && rememberedSource != null
+    && (hasTailwindGenerationSource(rememberedSource.rawSource) || hasMatchingGeneratedSource || hasOwnedImportShell)
     && (
-      normalizeOutputPathKey(rememberedSource.sourceFile) !== normalizeOutputPathKey(options.file)
-      || (
-        !hasTailwindGenerationSource(options.rawSource)
-        && hasTailwindGenerationSource(rememberedSource.rawSource)
-      )
+      options.viteProcessedCssAsset
+      || normalizeOutputPathKey(rememberedSource.sourceFile) !== normalizeOutputPathKey(options.file)
+      || !hasTailwindGenerationSource(options.rawSource)
     )
-  const vitePipelineCssAsset = options.viteProcessedCssAsset || useRememberedCssSource
-  const resolvedGeneratorRawSource = vitePipelineCssAsset
-    ? rememberedSource?.rawSource ?? options.rawSource
-    : options.rawSource
+  const vitePipelineCssAsset = options.viteProcessedCssAsset || restoreRememberedGenerationSource
+  const restoredGenerationSource = restoreRememberedGenerationSource ? rememberedSource : undefined
+  const resolvedGeneratorRawSource = restoredGenerationSource?.rawSource ?? options.rawSource
   const generatorRawSource = options.normalizeGeneratorSource(resolvedGeneratorRawSource, outputFile)
   const hasCurrentTailwindGenerationDirective = hasTailwindSourceDirectives(options.rawSource, { importFallback: true })
     || hasTailwindRootDirectives(options.rawSource, { importFallback: true })
@@ -144,10 +160,12 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
       hasCurrentTailwindGenerationDirective
       || hasRememberedApplyDirective
       || hasRememberedTailwindGenerationSource
+      || hasMatchingGeneratedSource
     )
-  const generatorSourceFile = vitePipelineCssAsset
-    ? rememberedSource?.sourceFile ?? options.assetSourceFile
-    : options.assetSourceFile
+  const generatorSourceFile = restoredGenerationSource?.sourceFile ?? options.assetSourceFile
+  const generatorSourceKind = restoreRememberedGenerationSource
+    ? hasOwnedImportShell ? 'output-import-shell' : 'generation'
+    : hasTailwindGenerationSource(generatorRawSource) ? 'generation' : undefined
   const originalGeneratorLayerSource = vitePipelineCssAsset
     ? options.getOriginalCssLayerSource?.(generatorSourceFile)
     : undefined
@@ -212,6 +230,7 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
     generatorCssHandlerOptions,
     generatorRawSource,
     generatorSourceFile,
+    generatorSourceKind,
     generatorUserLayerRawSource,
     hasCurrentTailwindGenerationDirective,
     hasRememberedApplySource,

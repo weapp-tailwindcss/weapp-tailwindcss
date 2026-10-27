@@ -10,11 +10,14 @@ import { collectBundleAssetFiles, collectImportedBundleCssSources, findBundleAss
 import { collectSingleViteGeneratedCssMarkerFile, prepareImportedCssCoverage, removeCssCoveredByRootStyleBundleSources, shouldFilterRootGeneratedCssMarkerForScopedAsset } from './coverage'
 import { isRootStyleOutputFile, isViteProcessedCssResultCoveredByImportedBundleAsset, isViteProcessedCssResultImported, removeCoveredInjectedSourceAssets, removeCssCoveredByImportedViteResults, removeCssRulesCoveredBySources, resolvePreservedImportShellInjectionTarget, shouldInjectViteProcessedCssResult, shouldPreserveMiniProgramImportShell, shouldReplayViteProcessedCssIntoMainCss, shouldUseCssAssetAsMainInjectionTarget } from './injection-plan'
 import { appendCss, clearAssetSource, collectImportedStyleFiles, collectMatchingGeneratedCssMarkerFiles, dedupeViteCssResults, getAssetFile, hasNonCommentCss, isCssOutputFile, normalizeInjectableCssForTarget, normalizeInjectableCssForTargetWithImports, readAssetSource, removeTailwindEntryDirectivesFromCss, resolveViteProcessedCssAssetSource } from './markers-imports'
+import { collectViteProcessedCssAssetOutputs } from './output-ownership'
 
 export function collectViteProcessedCssAssetResults(
   bundle: OutputBundle,
   options: CollectViteProcessedCssAssetOptions,
 ) {
+  // 在覆盖过滤和资产搬移之前一次性登记本轮归属，避免枚举顺序决定旧产物寿命。
+  options.replaceViteProcessedCssAssetOutputs?.(collectViteProcessedCssAssetOutputs(bundle))
   let collected = 0
   const existingAssetFiles = collectBundleAssetFiles(bundle)
   for (const [bundleFile, output] of Object.entries(bundle)) {
@@ -93,6 +96,8 @@ export function collectViteProcessedCssAssetResults(
         options.recordCssAssetResult?.(file, '')
         options.recordViteProcessedCssAssetResult?.(resolvedOutputFile, targetNextCss, {
           outputFile: resolvedOutputFile,
+          sourceAsset: file,
+          mergeSourceAssets: true,
         })
         if (isCoveredViteGeneratedSourceAsset(file, existingAssetFiles, options.resolveViteProcessedCssOutputFile)) {
           delete bundle[bundleFile]
@@ -116,11 +121,13 @@ export function collectViteProcessedCssAssetResults(
     options.recordViteProcessedCssAssetResult?.(file, nextCss, {
       injectIntoMain: shouldReplayIntoMainCss || undefined,
       outputFile: recordOutputFile,
+      sourceAsset: file,
     })
     if (normalizeOutputPathKey(recordOutputFile) !== normalizeOutputPathKey(file)) {
       options.recordViteProcessedCssAssetResult?.(recordOutputFile, nextCss, {
         injectIntoMain: shouldReplayIntoMainCss || undefined,
         outputFile: recordOutputFile,
+        sourceAsset: file,
       })
     }
     for (const markerFile of collectMatchingGeneratedCssMarkerFiles(
@@ -134,6 +141,7 @@ export function collectViteProcessedCssAssetResults(
       options.recordViteProcessedCssAssetResult?.(markerFile, nextCss, {
         injectIntoMain: shouldReplayIntoMainCss || undefined,
         outputFile: recordOutputFile,
+        sourceAsset: file,
       })
       if (
         normalizeOutputPathKey(recordOutputFile) !== normalizeOutputPathKey(markerFile)
@@ -142,6 +150,7 @@ export function collectViteProcessedCssAssetResults(
         options.recordViteProcessedCssAssetResult?.(recordOutputFile, nextCss, {
           injectIntoMain: shouldReplayIntoMainCss || undefined,
           outputFile: recordOutputFile,
+          sourceAsset: file,
         })
       }
     }
@@ -197,7 +206,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       continue
     }
     let originalSource = readAssetSource(output)
-    if (shouldPreserveMiniProgramImportShell(options, bundle, file, originalSource)) {
+    if (shouldPreserveMiniProgramImportShell(options, file, originalSource)) {
       const importedTargetFile = resolvePreservedImportShellInjectionTarget(options, bundle, file, originalSource)
       if (typeof importedTargetFile === 'string') {
         options.debug?.('preserve mini-program css import shell asset: %s -> %s', file, importedTargetFile)

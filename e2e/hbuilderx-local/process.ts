@@ -78,7 +78,7 @@ export function spawnPnpm(projectRoot: string, args: string[], env: Record<strin
     cwd: projectRoot,
     args,
     env,
-  }).child
+  })
 }
 
 export async function runPnpm(projectRoot: string, args: string[], timeoutMs: number, env: Record<string, string | undefined> = {}) {

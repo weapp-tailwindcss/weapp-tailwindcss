@@ -1,59 +1,20 @@
 import type { Plugin } from 'vite'
 import path from 'node:path'
-import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
-import { removeTailwindPostcssPlugins, resolvePostcssConfig } from '@weapp-tailwindcss/postcss/transform'
+import { removeTailwindPostcssPlugins } from '@weapp-tailwindcss/postcss/transform'
 import { vitePluginName } from '@/constants'
 import { captureFrameworkPostcssOptions } from '../../../generation/framework-postcss'
-import { disableAndRemoveTailwindVitePlugins, removeTailwindVitePlugins } from '../official-tailwind-plugins'
+import { removeTailwindVitePlugins } from '../official-tailwind-plugins'
 import { resolveImplicitAppTypeFromViteRoot } from '../resolve-app-type'
 import { resolveImplicitTailwindcssBasedirFromViteRoot } from '../tailwind-basedir'
 import { installFrameworkCssEmission } from './framework-css-emission'
+import { createGenerationConfigHook } from './generation-config-hook'
 
 export function createFrameworkPostPlugin(options: any): Plugin {
   const plugin: Plugin & { api?: unknown } = {
     name: `${vitePluginName}:post`,
     enforce: 'post',
-    config(config) {
-      if (!options.shouldOwnTailwindGeneration) {
-        return
-      }
-      if (Array.isArray(config.plugins)) {
-        const removed = disableAndRemoveTailwindVitePlugins(config.plugins)
-        if (removed > 0) {
-          logger.warn('检测到 @tailwindcss/vite，生成模式下已移除该插件以避免 Tailwind CSS 重复生成。')
-          options.debug('disable official tailwind vite plugins in generator mode: %d', removed)
-        }
-      }
-      const root = config.root ? path.resolve(config.root) : process.cwd()
-      const baseConfig = {
-        resolve: {
-          alias: [{ find: /^tailwindcss$/, replacement: options.generatorPlaceholderCssFile }],
-        },
-      }
-      if (config.css?.postcss !== undefined) {
-        return baseConfig
-      }
-      return resolvePostcssConfig(root).then((postcssConfig) => {
-        if (!postcssConfig) {
-          return baseConfig
-        }
-        const plugins = [...postcssConfig.plugins]
-        const removed = removeTailwindPostcssPlugins(plugins)
-        if (removed > 0) {
-          options.debug('inline filtered postcss config without official tailwind plugins in generator mode: %d', removed)
-        }
-        return {
-          ...baseConfig,
-          css: {
-            postcss: {
-              ...postcssConfig.options,
-              plugins,
-            },
-          },
-        }
-      })
-    },
+    config: createGenerationConfigHook(options),
     async configResolved(config) {
       await options.hmrTimingRecorder.measure('configResolved', async () => {
         options.setResolvedConfig(config)
@@ -86,7 +47,7 @@ export function createFrameworkPostPlugin(options: any): Plugin {
           }
         }
         if (
-          options.frameworkName === 'generic'
+          options.defaultToWebTarget === true
           && !options.hasExplicitGeneratorTarget
           && options.opts.generator !== false
           && options.opts.appType === undefined

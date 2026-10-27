@@ -2,8 +2,70 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
+import { createNativeCaptureBudget, NATIVE_CAPTURE_DRAIN_TIMEOUT, NATIVE_CAPTURE_TIMEOUT } from './react-native/capture-budget'
 import { publishAfterCapture } from './react-native/capture-cleanup'
 import { createRuntimeArtifacts } from './react-native/runtime-artifacts'
+
+it.each(['resolve', 'reject'] as const)('首次清理超时必须随最终归档保留，即使真实操作迟到 %s', async (outcome) => {
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-cleanup-history-'))
+  const destination = path.join(workspace, 'archived')
+  const session = await createRuntimeArtifacts(destination, { version: 1, runId: 'cleanup-history', target: 'react-native-ios', producer: 'react-native', invocationId: 'unit' })
+  const budget = createNativeCaptureBudget(2)
+  let release!: () => void
+  const lateFailure = new Error('late screenshot stream failed')
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
+  try {
+    const captured = budget.capture(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      if (outcome === 'reject') {
+        throw lateFailure
+      }
+    }).catch(error => error)
+    await vi.advanceTimersByTimeAsync(NATIVE_CAPTURE_TIMEOUT)
+    expect(await captured).toEqual(new Error('Native semantic host capture exceeded 10000ms'))
+    const firstDrain = budget.drain().catch(error => error)
+    await vi.advanceTimersByTimeAsync(NATIVE_CAPTURE_DRAIN_TIMEOUT)
+    const firstFailure = await firstDrain
+    expect(firstFailure).toEqual(new Error('Native capture cleanup exceeded 5000ms; owned operation is still pending'))
+    expect(budget.pending()).toBe(true)
+    await expect(budget.capture(async () => {})).rejects.toThrow('already pending')
+    const restore = vi.fn(async () => {
+      expect(budget.pending()).toBe(false)
+    })
+    const publishing = publishAfterCapture(session, { drain: () => budget.drain(), capturePending: budget.pending }, restore).catch(error => error)
+    await vi.advanceTimersByTimeAsync(100)
+    expect(budget.pending()).toBe(true)
+    expect(restore).not.toHaveBeenCalled()
+    release()
+    const finalFailure = await publishing
+    if (outcome === 'reject') {
+      expect(finalFailure).toBeInstanceOf(AggregateError)
+      expect(finalFailure.errors).toHaveLength(2)
+      expect(finalFailure.errors[0]).toBe(firstFailure)
+      expect(finalFailure.errors[1]).toBe(lateFailure)
+      expect(finalFailure.cause).toBe(firstFailure)
+    }
+    else {
+      expect(finalFailure).toBe(firstFailure)
+    }
+    expect(budget.pending()).toBe(false)
+    expect(restore).toHaveBeenCalledOnce()
+    const saved = JSON.parse(await fs.readFile(path.join(destination, 'capture-cleanup.json'), 'utf8'))
+    expect(saved).toMatchObject({ pending: false, status: 'failed', error: expect.stringContaining(firstFailure.message) })
+    if (outcome === 'reject') {
+      expect(saved.error).toContain(lateFailure.message)
+    }
+    expect(vi.getTimerCount()).toBe(0)
+  }
+  finally {
+    release?.()
+    vi.useRealTimers()
+    await fs.rm(workspace, { recursive: true, force: true })
+    await fs.rm(session.directory, { recursive: true, force: true })
+  }
+})
 
 it.each([false, true])('最终 drain 才结束时先恢复本轮状态再归档，迟到拒绝仍失败：%s', async (lateFailure) => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-late-restore-'))

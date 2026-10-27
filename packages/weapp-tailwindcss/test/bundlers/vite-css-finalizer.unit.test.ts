@@ -3,13 +3,14 @@ import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
 import { createViteCssFinalizerOutputPlugin } from '@/bundlers/vite/css-finalizer'
+import { createUniAppXAssetPipeline } from '@/bundlers/vite/frameworks/uni-app-x/asset-pipeline'
 import { UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER, withUniAppXWebPreflightReset } from '@/uni-app-x/web-preflight-reset'
 
 const mocks = vi.hoisted(() => ({
   generateTailwindV4Css: vi.fn(),
 }))
 
-vi.mock('@/generation/service', () => ({
+vi.mock('@/context/generation', () => ({
   generateTailwindV4Css: mocks.generateTailwindV4Css,
 }))
 
@@ -80,15 +81,13 @@ function createContext(overrides: Record<string, any> = {}) {
   }
 }
 
-const uniAppXFinalizerStrategy = {
-  isHarmonyAppStyleTarget: () => true,
-  transformGeneratedCss(css: string, context: any) {
+const uniAppXFinalizerStrategy = { generation: { isHarmonyAppStyleTarget: () => true,
+transformGeneratedCss(css: string, context: any) {
     const webCss = context.shouldApplyWebCssCompat
       ? context.defaultWebCssCompat(css)
       : css
     return withUniAppXWebPreflightReset(webCss, context.currentGeneratorBranch.isWeb)
-  },
-}
+  } } }
 
 describe('vite css finalizer output plugin', () => {
   beforeEach(() => {
@@ -128,7 +127,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -138,7 +137,7 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'web' },
       },
-      cssPipelineStrategy: { transformGeneratedCss },
+      cssPipelineStrategy: { generation: { transformGeneratedCss } },
       hmrTimingRecorder,
       getViteProcessedCssAssetResults: vi.fn(() => records.entries()),
       isViteProcessedCssAsset: vi.fn((_asset: OutputAsset, file?: string) => file?.endsWith('.css') === true),
@@ -197,7 +196,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -227,7 +226,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -265,7 +264,7 @@ describe('vite css finalizer output plugin', () => {
       ['/project/src/style.css', { css: '.generated{color:red}', outputFile: 'src/style.css' }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -694,9 +693,7 @@ describe('vite css finalizer output plugin', () => {
           target: 'weapp',
         },
       },
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-      },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' as const } },
       frameworkRootImportShellTargetByFile: new Map([
         ['app.wxss', 'main.wxss'],
       ]),
@@ -729,9 +726,7 @@ describe('vite css finalizer output plugin', () => {
           target: 'weapp',
         },
       },
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-      },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' as const } },
       frameworkRootImportShellTargetByFile: new Map([
         ['framework.wxss', 'generated.wxss'],
       ]),
@@ -770,9 +765,7 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'weapp' },
       },
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-      },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' as const } },
       frameworkRootImportShellTargetByFile: new Map([
         ['framework.wxss', 'generated.wxss'],
       ]),
@@ -818,9 +811,7 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'weapp' },
       },
-      cssPipelineStrategy: {
-        shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-      },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' as const } },
       frameworkRootImportShellTargetByFile: new Map([
         ['app.wxss', 'app-origin.wxss'],
       ]),
@@ -851,6 +842,7 @@ describe('vite css finalizer output plugin', () => {
       dependencies: [],
     })
     const { context } = createContext({
+      assetPipelineStrategy: createUniAppXAssetPipeline({ appType: 'uni-app-x' }),
       opts: {
         appType: 'uni-app-x',
         cssMatcher: (file: string) => file.endsWith('.css'),

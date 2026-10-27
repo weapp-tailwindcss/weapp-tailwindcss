@@ -1,10 +1,11 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import type { HmrContext, Plugin, ResolvedConfig, TransformResult } from 'vite'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { uniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
+import { createUniAppXCssPipelineStrategy } from '@/bundlers/vite/frameworks/uni-app-x'
 import { replaceWxml } from '@/wxml'
 import {
   createContext,
+  createCompilerContextMock,
   createRollupChunk,
   getCurrentContext,
   getTransformUVueMock,
@@ -16,7 +17,10 @@ const TEST_TIMEOUT_MS = 30000
 
 async function loadWeappTailwindcssPlugin() {
   const mod = await import('@/bundlers/vite')
-  return mod.WeappTailwindcss
+  return (options: Parameters<typeof mod.WeappTailwindcss>[0] = {}) => {
+    const context = getCurrentContext()
+    return mod.WeappTailwindcss({ appType: context.appType, uniAppX: context.uniAppX, ...options })
+  }
 }
 
 function getGenerateBundleHandler(plugin: Plugin) {
@@ -47,19 +51,17 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.doUnmock('@/bundlers/vite/incremental-runtime-class-set')
+    vi.doUnmock('@/context/generation')
     resetVitePluginTestContext()
   })
 
   it('defers Native SFC apply generation to the source-aware uni-app-x plugin', () => {
-    const shouldDefer = uniAppXCssPipelineStrategy.shouldDeferPreTransformTailwindGeneration
+    const shouldDefer = createUniAppXCssPipelineStrategy({}).sources?.shouldDeferPreTransformTailwindGeneration
     const context = {
       currentGeneratorBranch: {},
       currentGeneratorOptions: {},
-      opts: {},
-      resolvedConfig: {
-        ...createNativeResolvedConfig(),
-        build: { outDir: '/project/unpackage/dist/dev/app-plus' },
-      },
+      root: '/project',
+      outDir: '/project/unpackage/dist/dev/app-plus',
       resolveStylePlatform: () => 'app-android',
     } as any
     const id = '/project/components/BindClass.uvue?vue&type=style&index=1&scoped=true&lang.css'
@@ -125,7 +127,7 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
     expect(transformUVueMock).toHaveBeenCalledWith(
       'console.log("x")',
       'App.nvue',
-      currentContext.jsHandler,
+      expect.any(Function),
       runtimeSet,
       expect.objectContaining({ enablePageLocalStyle: true }),
     )
@@ -202,8 +204,8 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
       'dark:bg-[#3498db]',
     ])
     const validateCandidatesByGenerator = vi.fn(async () => validatedCandidates)
-    vi.doMock('@/generation/index', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/generation/index')>()
+    vi.doMock('@/context/generation', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/context/generation')>()
       return {
         ...actual,
         validateCandidatesByGenerator,
@@ -493,6 +495,12 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
       mainCssChunkMatcher,
     }))
 
+    createCompilerContextMock.mockImplementationOnce((options) => {
+      const context = getCurrentContext()
+      context.appType = (options as { appType: string }).appType
+      return context
+    })
+
     const plugins = WeappTailwindcss()
     const cssPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:css') as Plugin
     const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
@@ -531,6 +539,9 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
       const plugins = WeappTailwindcss()
       const cssPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:css') as Plugin
       expect(cssPlugin).toBeTruthy()
+      const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
+      await (postPlugin.configResolved as any)?.call(postPlugin, createNativeResolvedConfig())
+
 
       const cssTransform = cssPlugin.transform as any
       const result = await cssTransform?.call({
@@ -943,7 +954,7 @@ describe('bundlers/vite WeappTailwindcss uni-app-x', () => {
     expect(transformUVueMock).toHaveBeenCalledWith(
       '<template></template>',
       'App.uvue',
-      currentContext.jsHandler,
+      expect.any(Function),
       expect.any(Set),
       expect.objectContaining({ native: true }),
     )

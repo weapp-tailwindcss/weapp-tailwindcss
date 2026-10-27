@@ -4,7 +4,7 @@ import type { InternalUserDefinedOptions } from '@/types'
 import { createStyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import { createViteCssCalcStage } from '@/bundlers/vite/css-calc-stage'
 import { finalizeCssCalc } from '@/bundlers/vite/css-finalizer/css-calc'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
 
 function asset(fileName: string, source: string): OutputAsset {
@@ -24,8 +24,8 @@ function fixture(cssCalc?: InternalUserDefinedOptions['cssCalc']) {
 }
 
 it('未配置和显式 false 在平台尚未确定时仍可区分', () => {
-  expect(getCompilerContext({ logLevel: 'silent' }).cssCalc).toBeUndefined()
-  expect(getCompilerContext({ cssCalc: false, logLevel: 'silent' }).cssCalc).toBe(false)
+  expect(createCompilerContext({ logLevel: 'silent' }).cssCalc).toBeUndefined()
+  expect(createCompilerContext({ cssCalc: false, logLevel: 'silent' }).cssCalc).toBe(false)
 })
 
 it('默认微信模式延后到完整产物图，watch 根据作者覆盖重新计算', async () => {

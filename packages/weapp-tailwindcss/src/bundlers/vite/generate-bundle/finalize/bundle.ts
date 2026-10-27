@@ -1,15 +1,15 @@
 import type { ViteFrameworkCssPipelineContext } from '../../shared/framework-strategy'
 import type { FinalizeGenerateBundleOptions } from './root-import-shell'
-import { injectUniAppXHarmonyBundleStyles } from '@/uni-app-x/style-asset'
 import { runWithConcurrency } from '../../../../utils/run-tasks'
 import { updateBundleBuildState } from '../../bundle-state'
 import { removeCssCoveredByRootStyleAssets, removeDuplicateUnlinkedRootCssAssetsReferencedByHtml } from '../../processed-css-assets'
+import { extendFrameworkCssContext } from '../../shared/framework-css-context'
+import { createFrameworkStyleAssetContext } from '../../shared/framework-style-assets'
 import { normalizeBundleFileNameKeysForTest } from '../bundle-file-names'
 import { finalizeMiniProgramCssAssets } from '../final-css-assets'
 import { resolveViteMemoryDebugStats } from '../memory-debug'
 import { formatCacheHitRate, formatMs } from '../metrics'
 import { collectMiniProgramSubpackageRoots } from '../subpackages'
-import { handleUniAppXPostCssTasks } from '../uni-app-x-postprocess'
 import { pruneLastCssResults, resolveViteCssTaskConcurrency } from '../vite-css-cache'
 import { finalizeWebviewCssCompat, normalizeRootMiniProgramImportShellAssets } from './root-import-shell'
 import { syncProcessedCss } from './sync-processed-css'
@@ -24,6 +24,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cache,
     cssTaskFactories,
     cssPipelineStrategy,
+    assetPipelineStrategy,
     createCssPipelineContext,
     debug,
     formatIteration,
@@ -86,12 +87,10 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   for (const apply of pendingLinkedUpdates) {
     apply()
   }
-  const uniAppXPostCssStartedAt = performance.now()
-  const applyStyleSources = await handleUniAppXPostCssTasks({
+  const frameworkPostCssStartedAt = performance.now()
+  const afterCssSync = await assetPipelineStrategy?.afterTransform?.(createFrameworkStyleAssetContext({
     bundle,
     debug,
-    deferStylePlaceholderInjection: opts.appType === 'uni-app-x',
-    generatorRuntime,
     getCssHandlerOptions,
     getSourceCandidateSourcesForEntries,
     getSourceCandidatesForEntries,
@@ -101,17 +100,12 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     onUpdate,
     opts,
     runtimeState,
-    styleHandler,
-  })
-  recordTimingDetail('finalize.uniAppXPostCss', uniAppXPostCssStartedAt)
+  }))
+  recordTimingDetail('finalize.frameworkPostCss', frameworkPostCssStartedAt)
   const processedCssStartedAt = performance.now()
   syncProcessedCss(options)
-  if (isHarmonyAppStyleTarget && applyStyleSources.length > 0) {
-    const viteProcessedCssSources = [...(getViteProcessedCssAssetResults?.() ?? [])]
-      .map(([, record]) => typeof record === 'string' ? record : record.css)
-    if (injectUniAppXHarmonyBundleStyles(bundle, { cssSources: viteProcessedCssSources })) {
-      debug('uni-app-x harmony bundle styles inject after css assets')
-    }
+  if (afterCssSync) {
+    afterCssSync()
     syncProcessedCss(options)
   }
   recordTimingDetail('finalize.processedCss', processedCssStartedAt)
@@ -122,7 +116,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssMatcher: opts.cssMatcher,
     debug,
     enabled: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(finalizeCssPipelineContext) === true,
+      && (cssPipelineStrategy?.styles?.rootImportShell === 'extract') === true,
     onUpdate,
     recordCssAssetResult,
   })
@@ -131,12 +125,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssMatcher: opts.cssMatcher,
     debug,
     includeTailwindGeneratedCssAssets: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.includeTailwindGeneratedCssAssetsInRootCoverage?.({
-        ...finalizeCssPipelineContext,
+      && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
         bundleFiles,
         isWebGeneratorTarget,
         outDir,
-      }) === true,
+      })) === true,
     isViteProcessedCssAsset,
     onUpdate,
     recordCssAssetResult,
@@ -144,12 +137,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   })
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.({
-      ...finalizeCssPipelineContext,
+    && cssPipelineStrategy?.assets?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,
       outDir,
-    }) === true
+    })) === true
   ) {
     removeDuplicateUnlinkedRootCssAssetsReferencedByHtml(bundle, { debug })
   }
@@ -169,12 +161,11 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   const webCompatStartedAt = performance.now()
   if (
     finalizeCssPipelineContext !== undefined
-    && cssPipelineStrategy?.shouldApplyFinalWebviewCssCompat?.({
-      ...finalizeCssPipelineContext,
+    && cssPipelineStrategy?.assets?.shouldApplyFinalWebviewCssCompat?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
       bundleFiles: Object.keys(bundle),
       isWebGeneratorTarget,
       outDir,
-    }) === true
+    })) === true
   ) {
     finalizeWebviewCssCompat(bundle, {
       debug,

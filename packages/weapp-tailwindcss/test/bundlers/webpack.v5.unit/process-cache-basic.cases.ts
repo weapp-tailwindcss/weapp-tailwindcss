@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { LoaderModule } from './shared'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, getCompilerContextMock, getWebpackLoaderRuntime, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createCompilerContextMock, getWebpackLoaderRuntime, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
 describe('bundlers/webpack WeappTailwindcss / process cache basic', () => {
   setupWebpackV5UnitTest()
   it('wires runtime loader, processes assets and caches results', async () => {
@@ -94,7 +94,7 @@ describe('bundlers/webpack WeappTailwindcss / process cache basic', () => {
       tap: vi.fn(() => {}),
     }
 
-    expect(getCompilerContextMock).toHaveBeenCalledTimes(1)
+    expect(createCompilerContextMock).toHaveBeenCalledTimes(1)
     expect(testState.currentContext.onLoad).toHaveBeenCalledTimes(1)
 
     const module: LoaderModule = {

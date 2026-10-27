@@ -34,7 +34,7 @@ export interface FinalizeCompilerShadowRunOptions {
 }
 
 export function resolveCompilerShadowGateMode(
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv,
 ): CompilerShadowGateMode {
   const value = env[COMPILER_SHADOW_GATE_ENV]?.trim().toLowerCase()
   return value === 'report' || value === 'error' ? value : 'off'
@@ -70,7 +70,7 @@ export function finalizeCompilerShadowRun(
   owner: object,
   options: FinalizeCompilerShadowRunOptions = {},
 ) {
-  const env = options.env ?? process.env
+  const env = options.env ?? {}
   if (resolveCompilerMode(env) !== 'shadow') {
     return undefined
   }

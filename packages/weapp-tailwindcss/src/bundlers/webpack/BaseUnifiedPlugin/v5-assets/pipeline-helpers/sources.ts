@@ -1,7 +1,5 @@
 import type { TailwindV4CssSource } from '../../../../../generation/source-resolver/types'
 import type { WebpackCssHandlerOptions } from './preflight-runtime'
-import type { InternalUserDefinedOptions } from '@/types'
-import path from 'node:path'
 import { collectRawSourceClassSelectors } from '../../../../../generation/class-selectors'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../../../generation/directives'
 import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives } from '../../../../../generation/index'
@@ -103,68 +101,6 @@ export function normalizeWebpackGeneratorCssSources(cssSources: TailwindV4CssSou
   }
   const normalized = cssSources.filter(source => typeof source?.css === 'string' && source.css.length > 0)
   return normalized.length > 0 ? normalized : undefined
-}
-
-export function scopeWebpackGeneratorOptionsToCssSource(
-  compilerOptions: InternalUserDefinedOptions,
-  sourceFile: string | undefined,
-  options: { disableUnmatchedCssEntries?: boolean | undefined } = {},
-) {
-  const withoutCssEntries = () => ({
-    ...compilerOptions,
-    ...(compilerOptions.cssEntries?.length ? { cssEntries: [] } : {}),
-    tailwindcss: {
-      ...compilerOptions.tailwindcss,
-      v4: {
-        ...compilerOptions.tailwindcss?.v4,
-        ...(compilerOptions.tailwindcss?.v4?.cssEntries?.length || compilerOptions.cssEntries?.length
-          ? { cssEntries: [] }
-          : {}),
-      },
-    },
-  })
-  if (!sourceFile) {
-    if (options.disableUnmatchedCssEntries !== true) {
-      return compilerOptions
-    }
-    if (!compilerOptions.cssEntries?.length && !compilerOptions.tailwindcss?.v4?.cssEntries?.length) {
-      return compilerOptions
-    }
-    return withoutCssEntries()
-  }
-  const resolvedSourceFile = path.resolve(sourceFile)
-  if (options.disableUnmatchedCssEntries === true) {
-    const configuredEntries = [
-      ...(compilerOptions.cssEntries ?? []),
-      ...(compilerOptions.tailwindcss?.v4?.cssEntries ?? []),
-    ]
-    if (configuredEntries.length > 0 && !configuredEntries.some(entry => path.resolve(entry) === resolvedSourceFile)) {
-      return withoutCssEntries()
-    }
-  }
-  const cssEntries = compilerOptions.cssEntries?.filter(entry => path.resolve(entry) === resolvedSourceFile)
-  const runtimeCssEntries = compilerOptions.tailwindcss?.v4?.cssEntries?.filter(entry => path.resolve(entry) === resolvedSourceFile)
-  const hasScopedCssEntries = Boolean(cssEntries?.length)
-  const hasScopedRuntimeCssEntries = Boolean(runtimeCssEntries?.length)
-  if (!hasScopedCssEntries && !hasScopedRuntimeCssEntries) {
-    return compilerOptions
-  }
-  const scoped = {
-    ...compilerOptions,
-    ...(hasScopedCssEntries ? { cssEntries } : {}),
-    tailwindcss: {
-      ...compilerOptions.tailwindcss,
-      v4: {
-        ...compilerOptions.tailwindcss?.v4,
-        ...(hasScopedRuntimeCssEntries
-          ? { cssEntries: runtimeCssEntries }
-          : hasScopedCssEntries
-            ? { cssEntries }
-            : {}),
-      },
-    },
-  }
-  return scoped
 }
 
 export function hasProcessedCssAssetUrl(css: string) {

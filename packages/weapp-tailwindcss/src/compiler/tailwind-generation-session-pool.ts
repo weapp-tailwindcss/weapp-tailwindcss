@@ -1,6 +1,6 @@
-import type { TailwindResolvedSource, WeappTailwindcssGenerateOptions, WeappTailwindcssGenerateResult, WeappTailwindcssGenerator } from '@/generator'
+import type { TailwindResolvedSource, WeappTailwindcssGenerateOptions, WeappTailwindcssGenerateResult, WeappTailwindcssGenerator } from '@/generator/runtime'
 import { md5Hash } from '@/cache/md5'
-import { createWeappTailwindcssGenerator } from '@/generator'
+import { createWeappTailwindcssGenerator } from '@/generator/runtime'
 import { ensureCompilerOwnerActive } from './compiler-owner-state'
 
 const SESSION_ENGINE_CACHE_MAX = 32
@@ -20,48 +20,45 @@ function createSourceKey(source: TailwindResolvedSource) {
   ].join('\0'))
 }
 
-function disposeGenerator(generator: WeappTailwindcssGenerator | undefined) {
-  generator?.dispose?.()
-}
-
 interface GeneratorEntry {
   generator: WeappTailwindcssGenerator
   dependencies: Set<string>
   complete: boolean
   pending: number
+  tasks: Set<Promise<unknown>>
   uncertainty: number
 }
 
 export class TailwindGenerationSessionPool {
   private readonly generators = new Map<string, GeneratorEntry>()
+  private readonly releases = new Set<Promise<void>>()
   private disposed = false
+  private disposal: Promise<void> | undefined
 
   async generate(
     source: TailwindResolvedSource,
     options?: WeappTailwindcssGenerateOptions,
   ): Promise<WeappTailwindcssGenerateResult> {
     const entry = this.getGenerator(source)
-    const uncertainty = entry.uncertainty
-    entry.pending++
-    try {
-      const result = await entry.generator.generate(options)
-      // 归属跟随实例；被失效或淘汰的异步结果不能污染替代实例。
-      if (result?.dependencies && entry.uncertainty === uncertainty) {
-        for (const dependency of result.dependencies) {
-          entry.dependencies.add(dependency)
+    return this.run(entry, async () => {
+      const uncertainty = entry.uncertainty
+      try {
+        const result = await entry.generator.generate(options)
+        // 归属跟随实例；被失效或淘汰的异步结果不能污染替代实例。
+        if (result?.dependencies && entry.uncertainty === uncertainty) {
+          for (const dependency of result.dependencies) {
+            entry.dependencies.add(dependency)
+          }
+          entry.complete = true
         }
-        entry.complete = true
+        return result
       }
-      return result
-    }
-    catch (error) {
-      entry.complete = false
-      entry.uncertainty++
-      throw error
-    }
-    finally {
-      entry.pending--
-    }
+      catch (error) {
+        entry.complete = false
+        entry.uncertainty++
+        throw error
+      }
+    })
   }
 
   async validateCandidates(source: TailwindResolvedSource, candidates: Iterable<string>) {
@@ -69,13 +66,7 @@ export class TailwindGenerationSessionPool {
     // 校验接口不返回实际加载的依赖，不能借用生成接口的完整性结论。
     entry.complete = false
     entry.uncertainty++
-    entry.pending++
-    try {
-      return await entry.generator.validateCandidates(candidates)
-    }
-    finally {
-      entry.pending--
-    }
+    return this.run(entry, () => entry.generator.validateCandidates(candidates))
   }
 
   invalidate(change: TailwindGenerationPoolChange) {
@@ -89,7 +80,7 @@ export class TailwindGenerationSessionPool {
       if (known) {
         for (const [key, entry] of this.generators) {
           if (!entry.complete || entry.pending > 0 || [...paths].some(id => entry.dependencies.has(id))) {
-            disposeGenerator(entry.generator)
+            this.retire(entry)
             this.generators.delete(key)
           }
         }
@@ -98,26 +89,65 @@ export class TailwindGenerationSessionPool {
     }
     if (change.type === 'all' || change.type === 'dependencies') {
       for (const entry of this.generators.values()) {
-        disposeGenerator(entry.generator)
+        this.retire(entry)
       }
       this.generators.clear()
       return
     }
     const key = createSourceKey(change.source)
-    disposeGenerator(this.generators.get(key)?.generator)
+    this.retire(this.generators.get(key))
     this.generators.delete(key)
   }
 
   dispose() {
-    for (const entry of this.generators.values()) {
-      disposeGenerator(entry.generator)
+    if (this.disposal) {
+      return this.disposal
     }
-    this.generators.clear()
     this.disposed = true
+    const entries = [...this.generators.values()]
+    this.generators.clear()
+    for (const entry of entries) {
+      this.retire(entry)
+    }
+    this.disposal = Promise.allSettled([...this.releases]).then((results) => {
+      this.releases.clear()
+      const errors = results.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
+      if (errors.length) {
+        throw new AggregateError(errors, '生成器释放失败，已继续释放其余生成器。')
+      }
+    })
+    return this.disposal
   }
 
   get size() {
     return this.generators.size
+  }
+
+  private run<T>(entry: GeneratorEntry, operation: () => Promise<T>) {
+    entry.pending++
+    const task = (async () => operation())()
+    entry.tasks.add(task)
+    const complete = () => {
+      entry.pending--
+      entry.tasks.delete(task)
+    }
+    void task.then(complete, complete)
+    return task
+  }
+
+  private retire(entry: GeneratorEntry | undefined) {
+    if (!entry) {
+      return
+    }
+    const dispose = async () => entry.generator.dispose?.()
+    // 空闲生成器保留同步关闭入口；在途生成器先排空已接受任务。
+    const release = entry.tasks.size === 0 ? dispose() : Promise.allSettled([...entry.tasks]).then(dispose)
+    this.releases.add(release)
+    void release.then(
+      () => this.releases.delete(release),
+      // 失效与淘汰只结束当前归属；释放失败由最终关闭统一报告。
+      () => undefined,
+    )
   }
 
   private getGenerator(source: TailwindResolvedSource) {
@@ -136,6 +166,7 @@ export class TailwindGenerationSessionPool {
       dependencies: new Set(source.dependencies),
       complete: false,
       pending: 0,
+      tasks: new Set(),
       uncertainty: 0,
     }
     this.generators.set(key, entry)
@@ -144,7 +175,7 @@ export class TailwindGenerationSessionPool {
       if (oldest === undefined) {
         break
       }
-      disposeGenerator(this.generators.get(oldest)?.generator)
+      this.retire(this.generators.get(oldest))
       this.generators.delete(oldest)
     }
     return entry
@@ -169,5 +200,5 @@ export function disposeTailwindGenerationSessionPool(owner: object) {
     return
   }
   sessionPools.delete(owner)
-  pool.dispose()
+  return pool.dispose()
 }

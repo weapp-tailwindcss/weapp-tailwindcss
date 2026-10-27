@@ -1,10 +1,11 @@
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
-import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { createGenericViteStyleInjector } from '@/style-injector/vite/generic'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 
 export function createWeappVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
   return createViteFrameworkPlugins(options, {
     frameworkName: 'weapp-vite',
-    styleInjectorDelegate: viteStyleInjectorDelegates.generic,
+    runtimeStrategy: { splitGenerateBundlePhases: facts => facts?.mode !== 'production' },
+    styleInjectorDelegate: createGenericViteStyleInjector,
   })
 }

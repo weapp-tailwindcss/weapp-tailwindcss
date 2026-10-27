@@ -5,14 +5,14 @@ import process from 'node:process'
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { describe, expect, it } from 'vitest'
 import { captureFrameworkPostcssOptions } from '@/generation/framework-postcss'
-import { generateTailwindV4Css } from '@/generation/service'
+import { generateTailwindV4Css } from '@/context/generation'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 
 describe('generator author function replay', () => {
   it.each([false, true])('compiles every replayed declaration using its theme context (processed=%s)', async (processed) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-author-functions-'))
-    const opts = getCompilerContext({
+    const opts = createCompilerContext({
       tailwindcssBasedir: process.cwd(),
       generator: { target: 'weapp' },
       cssPreflight: false,

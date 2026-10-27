@@ -40,17 +40,17 @@ describe('local ordering shares the generation session design system', () => {
   it('tracks target normalization options in the preparation identity and snapshots mutable options', async () => {
     const source = await resolveTailwindV4Source({ base: process.cwd(), css: '@import "tailwindcss"; /*! weapp-tailwindcss local-utility */ .rpx{@apply text-[23rpx];} /*! weapp-tailwindcss local-utility */ .bare{@apply p-10%;}' })
     const bare = { units: ['%'] }
-    const options = { appType: 'uni-app-x' }
+    const options = { webRpxCompatibility: true }
     const preparation = createLocalUtilitySourcePreparation(source, 'web', options, bare)!
     const getClassOrder = vi.fn((candidates: string[]): Array<[string, bigint | null]> => candidates.map((candidate, index) => [candidate, BigInt(index)]))
     const system = { getClassOrder, parseCandidate: () => [], candidatesToCss: () => [] }
     bare.units[0] = 'px'
-    options.appType = 'other'
+    options.webRpxCompatibility = false
     preparation.prepareSource!(source, system)
     expect(getClassOrder).toHaveBeenCalledExactlyOnceWith(['text-[length:23rpx]', 'p-[10%]'])
-    expect(preparation.key).toBe(createLocalUtilitySourcePreparation(source, 'web', { appType: 'uni-app-x' }, { units: ['%'] })?.key)
+    expect(preparation.key).toBe(createLocalUtilitySourcePreparation(source, 'web', { webRpxCompatibility: true }, { units: ['%'] })?.key)
     expect(preparation.key).not.toBe(createLocalUtilitySourcePreparation(source, 'web', options, bare)?.key)
-    expect(preparation.key).not.toBe(createLocalUtilitySourcePreparation(source, 'weapp', { appType: 'uni-app-x' }, { units: ['%'] })?.key)
-    expect(preparation.key).not.toBe(createLocalUtilitySourcePreparation(source, 'web', { appType: 'uni-app-x' }, false)?.key)
+    expect(preparation.key).not.toBe(createLocalUtilitySourcePreparation(source, 'weapp', { webRpxCompatibility: true }, { units: ['%'] })?.key)
+    expect(preparation.key).not.toBe(createLocalUtilitySourcePreparation(source, 'web', { webRpxCompatibility: true }, false)?.key)
   })
 })

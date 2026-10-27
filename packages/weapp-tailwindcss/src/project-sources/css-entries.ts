@@ -1,7 +1,7 @@
 import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { TailwindV4EntrySourceAnalysis } from '@weapp-tailwindcss/postcss/transform'
+import type { TailwindCssOptions, TailwindCssRuntimeOptions } from '@/tailwindcss/runtime-types'
 import type { TailwindInlineSourceCandidates, TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import type { UserDefinedOptions } from '@/types'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import path from 'node:path'
@@ -17,6 +17,12 @@ import {
 import { isTailwindV4CssEntry } from '@/tailwindcss/v4/css-entries'
 import { filterTailwindV4CssSourceRoots } from '@/tailwindcss/v4/css-sources'
 import { readStaticConfigContent } from './static-config-content'
+
+interface SourceScanConfiguration {
+  cssEntries?: string[] | undefined
+  tailwindcss?: TailwindCssOptions | undefined
+  tailwindcssRuntimeOptions?: TailwindCssRuntimeOptions | undefined
+}
 
 const SOURCE_CANDIDATE_PATTERN = FULL_SOURCE_SCAN_PATTERN
 const TAILWIND_CSS_ENTRY_PATTERN = '**/*.css'
@@ -233,7 +239,7 @@ export async function resolveTailwindV4CssDependencies(css: string, base: string
   return resolved?.dependencies ?? []
 }
 
-export function collectExistingCssEntries(options: UserDefinedOptions) {
+export function collectExistingCssEntries(options: SourceScanConfiguration) {
   return [
     ...(options.cssEntries ?? []),
     ...(options.tailwindcss?.v4?.cssEntries ?? []),
@@ -357,7 +363,7 @@ export async function discoverTailwindV4CssEntries(root: string, outDir: string 
   return entries
 }
 
-export function collectConfiguredCssSources(options: UserDefinedOptions) {
+export function collectConfiguredCssSources(options: SourceScanConfiguration) {
   return filterTailwindV4CssSourceRoots([
     ...(options.tailwindcss?.v4?.cssSources ?? []),
     ...(((options.tailwindcssRuntimeOptions as any)?.tailwindcss?.v4?.cssSources ?? []) as TailwindV4CssSource[]),

@@ -292,6 +292,11 @@ export function createWebpackSourceCandidateScanCache() {
   }
 
   return {
+    clear() {
+      scans.clear()
+      lastHit = false
+      lastSignatureHash = undefined
+    },
     getMemoryStats,
     resolve,
   }

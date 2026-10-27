@@ -1,47 +1,39 @@
 import type { Plugin, ResolvedConfig } from 'vite'
+import type { ViteFrameworkName } from '../framework-selector'
 import type { ViteCapabilityProfile } from './capability-profile'
 import type { WeappTailwindcssVitePlugin } from './shared/create-framework-plugins'
+import type { VitePluginSlot } from './shared/plugin-slots'
 import type { UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { logger } from '@weapp-tailwindcss/logger'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
+import { createDebug } from '@/debug'
 import { logRuntimeTailwindcssVersion } from '@/tailwindcss/runtime-logs'
 import { logTailwindcssTarget } from '@/tailwindcss/targets'
+import { resolvePluginDisabledState } from '@/utils/disabled'
+import { resolvePackageDir } from '@/utils/resolve-package'
 import { resolveViteFrameworkProfile } from '../framework-selector'
 import { createGenericWebViteCapabilityProfile, frameworkViteCapabilityProfile } from './capability-profile'
 import { createGenericVitePlugins } from './frameworks/generic'
+import { pluginSlots as genericPluginSlots } from './frameworks/generic/plugin-descriptors'
 import { createGenericWebVitePlugins } from './frameworks/generic/web'
+import { webPluginSlots } from './frameworks/generic/web-plugin-descriptors'
 import { createTaroVitePlugins } from './frameworks/taro'
+import { pluginSlots as taroPluginSlots } from './frameworks/taro/plugin-descriptors'
 import { createUniAppVitePlugins } from './frameworks/uni-app'
 import { createUniAppXVitePlugins } from './frameworks/uni-app-x'
+import { pluginSlots as uniXPluginSlots } from './frameworks/uni-app-x/plugin-descriptors'
+import { pluginSlots as uniPluginSlots } from './frameworks/uni-app/plugin-descriptors'
 import { createWeappVitePlugins } from './frameworks/weapp-vite'
+import { pluginSlots as weappPluginSlots } from './frameworks/weapp-vite/plugin-descriptors'
 import { resolveImplicitAppTypeFromViteRoot } from './resolve-app-type'
-import { createConfigScopedPlugins } from './shared/config-scoped-plugins'
+import { createRewriteCssImportsPlugins } from './rewrite-css-imports'
+import { createGenerationConfigHook } from './shared/generation-config-hook'
+import { rewriteCssImportsSlot } from './shared/plugin-descriptors'
+import { createDeferredVitePlugins, mergeVitePluginSlots } from './shared/plugin-slots'
+import { slash } from './utils'
 
 export type { WeappTailwindcssVitePlugin } from './shared/create-framework-plugins'
-
-type HookName = 'config' | 'configResolved' | 'buildStart' | 'buildEnd' | 'resolveId' | 'load' | 'transform'
-  | 'configureServer' | 'handleHotUpdate' | 'watchChange' | 'generateBundle' | 'writeBundle' | 'closeBundle' | 'closeWatcher' | 'moduleParsed' | 'shouldTransformCachedModule'
-
-const hookNames: HookName[] = [
-  'config',
-  'configResolved',
-  'buildStart',
-  'buildEnd',
-  'resolveId',
-  'load',
-  'transform',
-  'configureServer',
-  'handleHotUpdate',
-  'watchChange',
-  'generateBundle',
-  'writeBundle',
-  'closeBundle',
-  'closeWatcher',
-  'moduleParsed',
-  'shouldTransformCachedModule',
-]
 
 function platformFamily(platform: string | undefined): ViteCapabilityProfile['platformFamily'] {
   const value = platform?.trim().toLowerCase()
@@ -125,19 +117,8 @@ function resolveViteProfile(options: UserDefinedOptions, config: ResolvedConfig,
   return { frameworkName, appType, capability, isGenericWeb }
 }
 
-function invokeHook(plugin: Plugin | undefined, hookName: HookName, thisArg: unknown, args: unknown[]) {
-  const hook = plugin?.[hookName]
-  if (typeof hook === 'function') {
-    return Reflect.apply(hook, thisArg, args)
-  }
-  if (hook && typeof hook === 'object' && 'handler' in hook && typeof hook.handler === 'function') {
-    return Reflect.apply(hook.handler, thisArg, args)
-  }
-  return undefined
-}
-
 function emitDeferredRuntimeLogs(
-  opts: ReturnType<typeof getCompilerContext>,
+  opts: ReturnType<typeof createCompilerContext>,
   profile: { isGenericWeb: boolean },
   rawOptions: UserDefinedOptions,
 ) {
@@ -157,158 +138,71 @@ function emitDeferredRuntimeLogs(
   )
 }
 
-function createDispatcher(options: UserDefinedOptions): WeappTailwindcssVitePlugin[] | undefined {
-  const opts = getCompilerContext({ ...options, __internalDeferMissingCssEntriesWarning: true, __internalViteDeferRuntimeLogs: true } as UserDefinedOptions)
-  ;(opts as any).__internalViteRawOptions = options
-  ;(opts as any).__internalViteRawExplicitAppType = typeof options.appType === 'string' && options.appType.trim().length > 0
-  ;(opts as any).__internalViteRawExplicitTailwindcssBasedir = typeof options.tailwindcssBasedir === 'string' && options.tailwindcssBasedir.trim().length > 0
-  ;(opts as any).__internalViteRawExplicitGeneratorTarget = Boolean(options.generator && typeof options.generator === 'object' && Object.hasOwn(options.generator, 'target'))
-
-  // 显式 basedir 是可信的项目边界，可在工厂阶段避免重复构造 runtime；其余情况等待真实 Vite root。
-  const forceGenericWeb = (options as UserDefinedOptions & { __internalViteForceGenericWeb?: boolean }).__internalViteForceGenericWeb === true
-  const initialProfile = resolveViteFrameworkProfile({
-    appType: forceGenericWeb ? undefined : opts.appType,
-    detectEnv: true,
-    env: process.env,
-    root: typeof options.tailwindcssBasedir === 'string' && options.tailwindcssBasedir.trim().length > 0
-      ? path.resolve(options.tailwindcssBasedir)
-      : undefined,
-    searchUp: false,
-    uniAppX: opts.uniAppX,
-  })
-  const initialFramework = forceGenericWeb ? 'generic' : initialProfile.frameworkName
-  ;(opts as any).__internalViteCapabilityProfile = forceGenericWeb
-    ? createGenericWebViteCapabilityProfile(options)
-    : { ...frameworkViteCapabilityProfile }
-  const initialFactory = {
-    'generic': createGenericVitePlugins,
-    'taro': createTaroVitePlugins,
-    'uni-app': createUniAppVitePlugins,
-    'uni-app-x': createUniAppXVitePlugins,
-    'weapp-vite': createWeappVitePlugins,
-  }[initialFramework]
-  const initialPlugins = initialFactory(opts)
-  if (!initialPlugins) {
-    return undefined
-  }
-  if ((opts as any).__internalViteRawExplicitTailwindcssBasedir && initialFramework !== 'generic') {
-    // 显式 basedir 已给出可信项目边界，保留原 framework 链路的 hook 身份与调用开销。
-    emitDeferredRuntimeLogs(opts, { isGenericWeb: false }, options)
-    return initialPlugins
-  }
-  const knownFrameworkPlugins: Plugin[] = [
-    {
-      name: 'weapp-tailwindcss:taro-alipay-browserslist-asset',
-      enforce: 'pre',
-      generateBundle() {},
-    },
-    {
-      name: 'weapp-tailwindcss:uni-app-x:css:pre',
-      enforce: 'pre',
-      transform() {},
-    },
-    {
-      name: 'weapp-tailwindcss:uni-app-x:css',
-      transform() {},
-    },
-    {
-      name: 'weapp-tailwindcss:uni-app-x:nvue',
-      enforce: 'pre',
-      buildStart() {},
-      transform: { order: 'pre', handler() {} },
-      handleHotUpdate: { order: 'post', handler() {} },
-      watchChange() {},
-    },
-    {
-      name: 'weapp-tailwindcss:uni-app-x:style-placeholder',
-      enforce: 'post',
-      generateBundle: { order: 'post', handler() {} },
-    },
-  ]
-  const initialNames = new Set(initialPlugins.map(plugin => plugin.name))
-  const genericWebPlugins = initialFramework === 'generic' && !forceGenericWeb && !opts.appType
-    ? (createGenericWebVitePlugins(opts) ?? [])
-    : []
-  const pluginTemplates = [
-    ...initialPlugins,
-    ...genericWebPlugins,
-    ...(initialFramework === 'generic' && !forceGenericWeb && !opts.appType && initialPlugins.length > 1
-      ? knownFrameworkPlugins.filter(plugin => !initialNames.has(plugin.name))
-      : []),
-  ].filter((plugin, index, plugins) => plugins.findIndex(candidate => candidate.name === plugin.name) === index)
-  let activePlugins = initialPlugins as Plugin[]
-  let resolved = false
-
-  const ensureBranch = (config: ResolvedConfig, context: unknown) => {
-    if (resolved) {
-      return
-    }
-    resolved = true
-    const environmentName = resolveEnvironmentName(context)
-    const effectiveGenerator = options.generator ?? opts.generator
-    const effectiveAppType = options.appType
-      ?? (effectiveGenerator && typeof effectiveGenerator === 'object' && effectiveGenerator.target === 'web' ? undefined : opts.appType)
-    const profile = resolveViteProfile({ ...options, appType: effectiveAppType, generator: effectiveGenerator, platform: options.platform ?? opts.platform, cssOptions: options.cssOptions ?? opts.cssOptions, uniAppX: options.uniAppX ?? opts.uniAppX }, config, environmentName)
-    emitDeferredRuntimeLogs(opts, profile, options)
-    if (profile.appType
-      && profile.appType !== initialProfile.appType
-      && !options.appType
-      && effectiveAppType === undefined) {
-      opts.appType = profile.appType
-      logger.debug('根据 Vite 项目根目录自动推断 appType -> %s', profile.appType)
-    }
-    if (profile.isGenericWeb
-      && (opts.generator === undefined || (typeof opts.generator === 'object' && !Object.hasOwn(opts.generator, 'target')))
-      && !options.platform
-      && !options.cssOptions?.platform
-      && !process.env['UNI_PLATFORM']
-      && !process.env['UNI_UTS_PLATFORM']) {
-      opts.generator = { target: 'web' }
-    }
-    const capability = (opts as any).__internalViteCapabilityProfile as ViteCapabilityProfile | undefined
-    if (capability) {
-      Object.assign(capability, profile.capability)
-    }
-    else {
-      ;(opts as any).__internalViteCapabilityProfile = profile.capability
-    }
-    const factory = profile.capability.cssOnly
-      ? createGenericWebVitePlugins
-      : {
-          'generic': createGenericVitePlugins,
-          'taro': createTaroVitePlugins,
-          'uni-app': createUniAppVitePlugins,
-          'uni-app-x': createUniAppXVitePlugins,
-          'weapp-vite': createWeappVitePlugins,
-        }[profile.frameworkName]
-    if (profile.frameworkName !== initialFramework || profile.capability.cssOnly) {
-      activePlugins = (factory(opts) ?? []) as Plugin[]
-    }
-  }
-
-  const byName = (name: string | undefined) => activePlugins.find(plugin => plugin.name === name)
-  return pluginTemplates.map((template) => {
-    const proxy: any = { ...template }
-    for (const hookName of hookNames) {
-      if (!(hookName in template)) {
-        continue
-      }
-      const originalHook = template[hookName]
-      const handler = function (this: unknown, ...args: unknown[]) {
-        if (hookName === 'configResolved') {
-          ensureBranch(args[0] as ResolvedConfig, this)
-        }
-        return invokeHook(byName(template.name), hookName, this, args)
-      }
-      proxy[hookName] = originalHook && typeof originalHook === 'object'
-        ? { ...originalHook, handler }
-        : handler
-    }
-    return proxy
-  })
+interface ViteFrameworkRegistration {
+  readonly slots: readonly VitePluginSlot[]
+  readonly create: typeof createGenericVitePlugins
 }
 
-/** Vite 单一入口。框架分支在 Vite 完成配置解析后选择，保持原有导入和注册方式。 */
+const frameworkRegistry = {
+  'generic': { slots: genericPluginSlots, create: createGenericVitePlugins },
+  'taro': { slots: taroPluginSlots, create: createTaroVitePlugins },
+  'uni-app': { slots: uniPluginSlots, create: createUniAppVitePlugins },
+  'uni-app-x': { slots: uniXPluginSlots, create: createUniAppXVitePlugins },
+  'weapp-vite': { slots: weappPluginSlots, create: createWeappVitePlugins },
+} satisfies Record<ViteFrameworkName, ViteFrameworkRegistration>
+
+/** Vite 完成配置解析后才创建选定框架的独立编译实例。 */
 export function WeappTailwindcss(options: UserDefinedOptions = {}): WeappTailwindcssVitePlugin[] | undefined {
-  return createConfigScopedPlugins(() => createDispatcher(options))
+  if (resolvePluginDisabledState(options.disabled).plugin) {
+    if (options.rewriteCssImports !== true) {
+      return
+    }
+    return createDeferredVitePlugins([rewriteCssImportsSlot], (config, context) => createRewriteCssImportsPlugins({
+      appType: resolveViteProfile(options, config, resolveEnvironmentName(context)).appType,
+      shouldRewrite: true,
+      weappTailwindcssDirPosix: slash(resolvePackageDir('weapp-tailwindcss')),
+    }))
+  }
+  const forceGenericWeb = (options as UserDefinedOptions & { __internalViteForceGenericWeb?: boolean }).__internalViteForceGenericWeb === true
+  const explicitFramework = resolveViteFrameworkProfile(options).frameworkName
+  const selected = options.appType || explicitFramework !== 'generic'
+    ? frameworkRegistry[explicitFramework].slots
+    : undefined
+  const candidates = forceGenericWeb
+    ? webPluginSlots
+    : selected ?? mergeVitePluginSlots([...Object.values(frameworkRegistry).map(entry => entry.slots), webPluginSlots])
+  const slots = options.styleInjector ? candidates : candidates.filter(slot => !slot.name.includes('style-injector'))
+  const plugins = createDeferredVitePlugins(slots, (config, context) => {
+    const profile = resolveViteProfile(options, config, resolveEnvironmentName(context))
+    const generator = profile.isGenericWeb && options.generator !== false
+      ? { ...(typeof options.generator === 'object' ? options.generator : {}), target: profile.capability.generatorTarget ?? 'web' }
+      : options.generator
+    const opts = createCompilerContext({
+      ...options,
+      appType: profile.appType,
+      tailwindcssBasedir: options.tailwindcssBasedir ?? config.root,
+      generator,
+      __internalDeferMissingCssEntriesWarning: true,
+      __internalViteDeferRuntimeLogs: true,
+    } as UserDefinedOptions)
+    Object.assign(opts, {
+      __internalViteRawOptions: options,
+      __internalViteRawExplicitAppType: typeof options.appType === 'string' && options.appType.trim().length > 0,
+      __internalViteRawExplicitTailwindcssBasedir: typeof options.tailwindcssBasedir === 'string' && options.tailwindcssBasedir.trim().length > 0,
+      __internalViteRawExplicitGeneratorTarget: Boolean(options.generator && typeof options.generator === 'object' && Object.hasOwn(options.generator, 'target')),
+      __internalViteCapabilityProfile: profile.capability,
+    })
+    emitDeferredRuntimeLogs(opts, profile, options)
+    const factory = profile.capability.cssOnly ? createGenericWebVitePlugins : frameworkRegistry[profile.frameworkName].create
+    return (factory(opts) ?? []) as Plugin[]
+  })
+  const post = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post')
+  if (post) {
+    post.config = createGenerationConfigHook({
+      shouldOwnTailwindGeneration: options.generator !== false && options.disabled !== true && !(typeof options.disabled === 'object' && options.disabled.plugin === true),
+      generatorPlaceholderCssFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'),
+      debug: createDebug(),
+    })
+  }
+  return plugins
 }

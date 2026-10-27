@@ -136,7 +136,7 @@ describe('ci workflows', () => {
       expect.objectContaining({ runner_label: 'windows' }),
     ]))
     expect(platformDevJob.steps.some((step: Record<string, unknown>) => String(step.run ?? '').includes('e2e:dev:smoke'))).toBe(true)
-    expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'tailwind-capabilities', 'env'])
+    expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'vite-integration', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'tailwind-capabilities', 'env'])
     expect(source).toContain('test "$result" = success')
     expect(source).toContain('pr-gate-package-build-${{ github.run_id }}')
   })
@@ -151,7 +151,9 @@ describe('ci workflows', () => {
     expect(run).toContain('--shard=${{ matrix.shard }}/3')
     expect(run).toContain('--maxWorkers=2')
     expect(run).toContain('--update=none')
-    expect(run).not.toMatch(/--(?:exclude|testNamePattern|passWithNoTests)/)
+    expect(run.match(/--exclude\s+'([^']+)'/g)).toEqual(['--exclude \'**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts\''])
+    expect(run.match(/--exclude/g)).toHaveLength(1)
+    expect(run).not.toMatch(/--(?:testNamePattern|passWithNoTests)/)
     expect(quality['continue-on-error']).toBeUndefined()
   })
 

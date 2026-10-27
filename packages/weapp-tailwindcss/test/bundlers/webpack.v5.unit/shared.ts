@@ -1,3 +1,4 @@
+import { initializeFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import nodeFs from 'node:fs'
 import nodeOs from 'node:os'
 import nodePath from 'node:path'
@@ -29,9 +30,11 @@ export const testState: {
   projectRoot?: string
 } = {} as any
 
-export const getCompilerContextMock = vi.fn<(options?: unknown) => TestContext>(() => testState.currentContext)
+export const createCompilerContextMock = vi.fn<(options?: unknown) => TestContext>(() => testState.currentContext)
+vi.mock('@/framework-policies/environment-snapshot', async importOriginal => importOriginal())
+
 vi.mock('@/context', () => ({
-  getCompilerContext: (options?: unknown) => getCompilerContextMock(options),
+  createCompilerContext: (options?: unknown) => createCompilerContextMock(options),
 }))
 
 export class FakeConcatSource {
@@ -112,7 +115,7 @@ export function createContext(overrides: Partial<TestContext> = {}): TestContext
   const projectRoot = testState.projectRoot ?? path.join(os.tmpdir(), 'weapp-tw-webpack-v5-unit')
   const runtimeSet = new Set(['beta'])
 
-  return {
+  const context: TestContext = {
     disabled: false,
     onLoad: vi.fn(),
     onStart: vi.fn(),
@@ -143,6 +146,9 @@ export function createContext(overrides: Partial<TestContext> = {}): TestContext
     appType: overrides.appType,
     ...overrides,
   }
+  initializeFrameworkEnvironment(context)
+  initializeFrameworkEnvironment(context.tailwindRuntime, context)
+  return context
 }
 
 export function createCompilerWithLoaderTracking() {
@@ -213,7 +219,7 @@ export function setupWebpackV5UnitTest() {
   beforeEach(async () => {
     testState.projectRoot = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-webpack-v5-unit-'))
     testState.currentContext = createContext()
-    getCompilerContextMock.mockClear()
+    createCompilerContextMock.mockClear()
     testState.existsSyncSpy = vi.spyOn(nodeFs as any, 'existsSync')
     testState.existsSyncSpy.mockReturnValue(true)
   })

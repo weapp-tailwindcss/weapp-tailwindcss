@@ -1,8 +1,7 @@
 import type { GeneratorSourceRecord } from '../source-resolver'
 import type { GeneratorPipelineExecutionContext } from './context'
 import type { CompilationScopeDependency } from '@/compiler/index'
-import process from 'node:process'
-import { shouldUseMiniProgramCssBranch } from '@/runtime-branch'
+import { shouldUseMiniProgramCssBranch } from '@/compiler/target'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
 import { runWithConcurrency } from '../../utils/run-tasks'
 import { collectGeneratorCssCandidates } from '../candidates'
@@ -12,11 +11,6 @@ import { hasConfiguredContainerCompatSources } from '../legacy-compat'
 import { removeMatchingLocalCssImports } from '../local-imports'
 import { resolveGeneratorSourceEntries, resolveGeneratorSources } from '../source-resolver'
 import { isSourceStyleRequest } from '../style-requests'
-
-function resolveGeneratorSourceConcurrency() {
-  const configured = Number.parseInt(process.env['WEAPP_TW_GENERATOR_SOURCE_CONCURRENCY'] ?? '', 10)
-  return Number.isFinite(configured) && configured > 0 ? configured : 1
-}
 
 function resolveScopedRuntimeCandidates(sourceCandidates: Set<string> | undefined, sourceScopedRuntime: Set<string> | undefined) {
   if (!sourceCandidates) {
@@ -62,9 +56,8 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
     normalizeGeneratorSource,
     normalizedCssSources,
     options,
-    opts,
+    profile,
     runtime,
-    runtimeState,
     useMiniProgramCssBranch,
   } = context
   const currentCssCandidates = collectGeneratorCssCandidates(generatorRawSource)
@@ -84,13 +77,13 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
   )
   const sourceRecords = await resolveGeneratorSources(
     majorVersion,
-    runtimeState,
+    options.sourceRuntimeState,
     generatorRawSource,
     file,
     cssHandlerOptions,
     generatorOptions,
     {
-      cssEntries: cssHandlerOptions.sourceOptions?.cssEntries ?? opts.cssEntries,
+      cssEntries: cssHandlerOptions.sourceOptions?.cssEntries ?? (profile.cssEntries ? [...profile.cssEntries] : undefined),
       cssSources: normalizedCssSources,
       getSourceCandidatesForEntries,
       runtime: runtimeWithCurrentCss,
@@ -102,11 +95,11 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
         source: normalizeGeneratorSource(record.source),
       }))
     : sourceRecords
-  const generatorStyleOptions = resolveGeneratorStyleOptions(opts, cssHandlerOptions, generatorOptions.styleOptions)
+  const generatorStyleOptions = resolveGeneratorStyleOptions(profile, cssHandlerOptions, generatorOptions.styleOptions)
   const configuredContainerCompat = hasConfiguredContainerCompatSources(
     generatorSourceRecords.map(record => record.source),
   )
-  const sourceConcurrency = resolveGeneratorSourceConcurrency()
+  const sourceConcurrency = profile.sourceConcurrency
   const preparedGenerationInputs = (await runWithConcurrency(generatorSourceRecords.map((record, index) => async () => {
     const { metadata: sourceMetadata, source } = record
     const sourceCss = options.deferCssAdaptation
@@ -131,7 +124,7 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
       ? collectGeneratorCssCandidates(sourceMetadata.sourceCss ?? source.css)
       : currentCssCandidates
     const sourceEntries = getSourceCandidatesForEntries
-      ? await resolveGeneratorSourceEntries(record, runtimeState)
+      ? await resolveGeneratorSourceEntries(record, options.sourceRuntimeState)
       : undefined
     const hasOwnedSourceScope = sourceEntries !== undefined
       && (sourceEntries.length > 0 || sourceMetadata.isolateCssSource === true)

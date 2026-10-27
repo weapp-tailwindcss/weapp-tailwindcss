@@ -4,6 +4,7 @@ import { createBuiltinViteWebStyleInjectorPlugins } from '@/style-injector/vite-
 import { createGenericWebViteCapabilityProfile } from '../../capability-profile'
 import { createCssOnlyVitePlugins } from '../../shared/create-css-only-plugins-runtime'
 import { createViteSourceOutputRelationOwner, withViteSourceOutputRelationOwner } from '../../source-output-relations'
+import { genericViteRuntimeStrategy } from './runtime-strategy'
 
 /** Generic Web CSS-only profile，供 `vite/web` 入口直接使用。 */
 export function createGenericWebVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
@@ -14,16 +15,17 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
     __internalViteCapabilityProfile: capability,
     __internalViteWebStyleInjectorFactory: createBuiltinViteWebStyleInjectorPlugins,
   }
-  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions))
+  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions, genericViteRuntimeStrategy, owner.dispose))
   if (!plugins) {
     owner.dispose()
     return undefined
   }
   return plugins.map((plugin) => {
-    const wrapped: Plugin = { ...plugin }
+    // 插件由本轮工厂创建，包装钩子时保留清理桥与属性描述符。
+    const wrapped: Plugin = plugin
     if (plugin.watchChange) {
       const hook = plugin.watchChange
-      wrapped.watchChange = async function (id, change) {
+      const handler: Extract<Plugin['watchChange'], (...args: any[]) => any> = function (id, change) {
         if (change?.event === 'delete') {
           owner.removeSource(id)
         }
@@ -32,27 +34,18 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
         }
         return typeof hook === 'function' ? hook.call(this, id, change) : hook.handler.call(this, id, change)
       }
+      wrapped.watchChange = typeof hook === 'function' ? handler : { ...hook, handler }
     }
     if (plugin.handleHotUpdate) {
       const hook = plugin.handleHotUpdate
-      wrapped.handleHotUpdate = async function (context) {
+      const handler: Extract<Plugin['handleHotUpdate'], (...args: any[]) => any> = function (context) {
         const file = context.file
         if (typeof file === 'string') {
           owner.observeSource(file)
         }
         return typeof hook === 'function' ? hook.call(this, context) : hook.handler.call(this, context)
       }
-    }
-    if (plugin.closeBundle) {
-      const hook = plugin.closeBundle
-      wrapped.closeBundle = async function () {
-        try {
-          return typeof hook === 'function' ? await hook.call(this) : await hook.handler.call(this)
-        }
-        finally {
-          owner.dispose()
-        }
-      }
+      wrapped.handleHotUpdate = typeof hook === 'function' ? handler : { ...hook, handler }
     }
     return wrapped
   })

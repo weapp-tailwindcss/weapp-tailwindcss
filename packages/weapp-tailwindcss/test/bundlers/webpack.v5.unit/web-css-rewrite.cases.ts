@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { LoaderModule } from './shared'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, getCompilerContextMock, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createCompilerContextMock, isCssImportRewriteLoader, path, testState, WeappTailwindcss } from './shared'
 describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
   setupWebpackV5UnitTest()
   it('propagates linked js asset updates', async () => {
@@ -85,7 +85,7 @@ describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
         return { code }
       }),
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
@@ -161,7 +161,7 @@ describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
 
     const ctxV4 = createContext()
     ctxV4.tailwindRuntime.majorVersion = 4
-    getCompilerContextMock.mockImplementationOnce(() => ctxV4)
+    createCompilerContextMock.mockImplementationOnce(() => ctxV4)
     let plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
     const v4Module: LoaderModule = {
@@ -177,7 +177,7 @@ describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
       },
     })
     ctxV4Web.tailwindRuntime.majorVersion = 4
-    getCompilerContextMock.mockImplementationOnce(() => ctxV4Web)
+    createCompilerContextMock.mockImplementationOnce(() => ctxV4Web)
     loaderHandler = undefined
     plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
@@ -205,7 +205,7 @@ describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
         },
       },
     })
-    getCompilerContextMock.mockImplementationOnce(() => ctxV4WebCssEntries)
+    createCompilerContextMock.mockImplementationOnce(() => ctxV4WebCssEntries)
     loaderHandler = undefined
     plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
@@ -221,7 +221,7 @@ describe('bundlers/webpack WeappTailwindcss / web css rewrite loader', () => {
       rewriteCssImports: true,
     })
     ctxV4Rewrite.tailwindRuntime.majorVersion = 4
-    getCompilerContextMock.mockImplementationOnce(() => ctxV4Rewrite)
+    createCompilerContextMock.mockImplementationOnce(() => ctxV4Rewrite)
     loaderHandler = undefined
     plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)

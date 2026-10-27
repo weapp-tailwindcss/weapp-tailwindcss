@@ -214,7 +214,6 @@ describe('bundlers/vite js processing', () => {
       transformFilterSignature: 'include:none;exclude:none',
       transformRuntime: new Set(['text-red-500']),
       transformRuntimeSignature: runtimeSignature,
-      uniAppX: undefined,
       useIncrementalMode: true,
     })
 
@@ -309,7 +308,6 @@ describe('bundlers/vite js processing', () => {
       transformFilterSignature: createTransformFilterSignature({ exclude: ['src/generated/**'] }),
       transformRuntime: new Set(['text-red-500']),
       transformRuntimeSignature: 'runtime:stable',
-      uniAppX: undefined,
       useIncrementalMode: false,
     })
 
@@ -386,7 +384,6 @@ describe('bundlers/vite js processing', () => {
       }),
       transformFilterSignature: createTransformFilterSignature({ include: ['src/pages/**'] }),
       transformRuntime: new Set(['text-red-500']),
-      uniAppX: undefined,
       useIncrementalMode: false,
     })
 
@@ -445,7 +442,6 @@ describe('bundlers/vite js processing', () => {
       }),
       transformFilterSignature: 'include:none;exclude:none',
       transformRuntime: new Set(['text-red-500']),
-      uniAppX: undefined,
       useIncrementalMode: false,
     })
 

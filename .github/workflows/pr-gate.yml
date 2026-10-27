@@ -83,10 +83,65 @@ jobs:
       - name: Architecture contract
         if: matrix.shard == 1
         run: pnpm architecture:check
+      - name: Verify unit and integration test ownership
+        if: matrix.shard == 1
+        run: node scripts/ci/unit-test-ownership.mjs
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium chromium-headless-shell
       - name: Unit tests
-        run: pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --maxWorkers=2 --update=none
+        run: pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --exclude '**/test/bundlers/vite-plugin.hmr-version-matrix.test.ts' --maxWorkers=2 --update=none
+      - name: Summarize unit memory diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for report in e2e/benchmark/ci-memory/*.md; do
+            if test -f "$report"; then
+              cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+      - name: Upload unit memory diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-gate-unit-memory-${{ matrix.shard }}-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/benchmark/ci-memory/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  vite-integration:
+    name: Vite version integration
+    needs: [scope, prepare-build]
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-gate-package-build-${{ github.run_id }}
+          path: .
+      - name: Vite version integration tests
+        run: pnpm ci:memory --label pr-gate-vite-integration --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run packages/weapp-tailwindcss/test/bundlers/vite-plugin.hmr-version-matrix.test.ts --maxWorkers=2 --update=none
+      - name: Summarize Vite integration memory diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for report in e2e/benchmark/ci-memory/*.md; do
+            if test -f "$report"; then
+              cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+      - name: Upload Vite integration memory diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-gate-vite-integration-memory-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/benchmark/ci-memory/**
+          if-no-files-found: warn
+          retention-days: 14
 
   core-smoke:
     name: Ubuntu core smoke
@@ -200,7 +255,7 @@ jobs:
   windows-utilities:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    name: Default utilities (${{ matrix.os }}, Node ${{ matrix.node }})
+    name: Platform utilities and command lifecycle (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -224,6 +279,33 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build package on this OS
         run: pnpm --filter weapp-tailwindcss... --filter @weapp-tailwindcss/postcss-calc run build
+      - name: Verify local command lifecycle on this OS
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .tmp/local-worker-ci
+          pnpm --filter @weapp-tailwindcss/website exec vitest run \
+            scripts/local-worker/launch-gate.test.ts \
+            scripts/local-worker/launch-gate-options.test.ts \
+            scripts/local-worker/process-lifecycle.test.ts \
+            scripts/local-worker/windows-lifecycle.test.ts \
+            scripts/local-worker/command.test.ts \
+            scripts/local-worker/server.test.ts \
+            scripts/local-worker/test-scope.test.ts \
+            scripts/local-worker/test-process-state.test.ts \
+            --update=none --maxWorkers=1 \
+            --reporter=default --reporter=json --outputFile.json=../.tmp/local-worker-ci/vitest.json \
+            2>&1 | tee .tmp/local-worker-ci/run.log
+      - name: Upload local command lifecycle diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-command-lifecycle-${{ matrix.os }}-node${{ matrix.node }}
+          path: .tmp/local-worker-ci/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+          overwrite: true
       - name: Check CSS import paths and source generation
         run: pnpm --filter weapp-tailwindcss exec vitest run test/tailwindcss/v4-import-paths.test.ts test/tailwindcss/v4-engine.test.ts
       - name: Reproduce published version and verify packed fix
@@ -270,13 +352,14 @@ jobs:
   pr-gate:
     name: ${{ inputs.full_verification && 'Version PR checks' || github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
     if: always() && !cancelled()
-    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat, tailwind-capabilities, env]
+    needs: [scope, quality, vite-integration, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat, tailwind-capabilities, env]
     runs-on: ubuntu-latest
     steps:
       - name: Require enabled PR checks
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           QUALITY_RESULT: ${{ needs.quality.result }}
+          VITE_INTEGRATION_RESULT: ${{ needs.vite-integration.result }}
           SMOKE_RESULT: ${{ needs.core-smoke.result }}
           PLATFORM_RESULT: ${{ needs.platform-watch.result }}
           WATCH_ENABLED: ${{ needs.scope.outputs.watch }}
@@ -297,7 +380,7 @@ jobs:
             test "$CSS_COMPAT_RESULT" = success
             test "$TAILWIND_RESULT" = success
             test "$ENV_RESULT" = success
-            for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$DEV_RESULT" "$UTILITIES_RESULT"; do
+            for result in "$QUALITY_RESULT" "$VITE_INTEGRATION_RESULT" "$SMOKE_RESULT" "$DEV_RESULT" "$UTILITIES_RESULT"; do
               test "$result" = success
             done
           fi

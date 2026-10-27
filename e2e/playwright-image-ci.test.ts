@@ -10,12 +10,14 @@ import { parse, parseAllDocuments } from 'yaml'
 const read = (file: string) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8')
 const website = parse(read('.github/workflows/website-seo-quality.yml')).jobs['visual-baseline-pipeline']
 const expo = parse(read('.github/workflows/react-native-compatibility.yml')).jobs.web
+const css = parse(read('.github/workflows/css-compat.yml')).jobs.semantics
+const browserJobs = [website, expo, css]
 const lock = parseAllDocuments(read('pnpm-lock.yaml')).map(doc => doc.toJSON()).find(doc => doc.importers?.['.']?.devDependencies)
 
-it('网站与 Expo 在固定预装环境运行，拒绝版本漂移及现场冷装浏览器依赖', () => {
+it('网站、Expo 与 CSS 语义在固定预装环境运行，拒绝版本漂移及现场冷装浏览器依赖', () => {
   const version = lock.importers['.'].devDependencies.playwright.version
   expect(lock.importers.website.devDependencies['@playwright/test'].version).toBe(version)
-  for (const [job, budget] of [[website, 10], [expo, 25]] as const) {
+  for (const [job, budget] of [[website, 10], [expo, 25], [css, 25]] as const) {
     expect(job.container?.image).toMatch(/^mcr\.microsoft\.com\/playwright:v[\d.]+-noble@sha256:[a-f0-9]{64}$/)
     expect(job.container?.image).toContain(`:v${version}-noble@`)
     expect(job.container).toEqual(website.container)
@@ -34,7 +36,7 @@ it('网站与 Expo 在固定预装环境运行，拒绝版本漂移及现场冷�
   }
 })
 
-it('预装环境不省略网站三引擎管线或 Expo 的实际语义验收', () => {
+it('预装环境不省略网站、Expo 与 CSS 的实际语义验收', () => {
   const websiteCommands = website.steps.map((step: { run?: string }) => step.run).filter(Boolean)
   expect(websiteCommands).toContain('node scripts/ci/verify-playwright-image.mjs chromium firefox webkit')
   expect(websiteCommands).toContain('pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts --update=none')
@@ -44,16 +46,26 @@ it('预装环境不省略网站三引擎管线或 Expo 的实际语义验收', (
   for (const command of ['pnpm e2e:react-native-compatibility', 'pnpm e2e:react-native:web']) {
     expect(expoCommands).toContain(command)
   }
+  const cssCommands = css.steps.map((step: { run?: string }) => step.run).filter(Boolean)
+  for (const command of [
+    'node scripts/ci/verify-playwright-image.mjs chromium firefox webkit',
+    'pnpm --filter @weapp-tailwindcss/postcss... run build',
+    'pnpm --filter @weapp-tailwindcss/css-compat properties:check',
+    'pnpm --filter @weapp-tailwindcss/css-compat test:consumers',
+    'pnpm --filter @weapp-tailwindcss/css-compat test:browser',
+  ]) {
+    expect(cssCommands).toContain(command)
+  }
 })
 
 it('Firefox 使用与容器实际 root 用户归属一致的 HOME', () => {
-  for (const job of [website, expo]) {
+  for (const job of browserJobs) {
     expect(job.env.HOME).toBe('/root')
   }
 })
 
 it.skipIf(process.platform === 'win32')('容器只信任当前挂载工作区，其他归属异常的仓库仍被拒绝', async () => {
-  for (const job of [website, expo]) {
+  for (const job of browserJobs) {
     const stepIndex = job.steps.findIndex((step: { name?: string }) => step.name === 'Trust container workspace')
     expect(stepIndex).toBeGreaterThan(job.steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('actions/checkout@')))
     expect(stepIndex).toBeLessThan(job.steps.findIndex((step: { uses?: string }) => step.uses?.includes('pnpm')))
@@ -87,10 +99,11 @@ it.skipIf(process.platform === 'win32')('容器只信任当前挂载工作区，
   }
 })
 
-it('仅修改预装环境探针也触发两条工作流', () => {
+it('仅修改预装环境探针也触发三条工作流', () => {
   const expoPaths = parse(read('.github/workflows/react-native-compatibility.yml')).on.pull_request.paths
   const websitePaths = parse(read('.github/workflows/website-seo-quality.yml')).on.push.paths
-  for (const paths of [expoPaths, websitePaths]) {
+  const cssPaths = parse(read('.github/workflows/css-compat.yml')).on.push.paths
+  for (const paths of [expoPaths, websitePaths, cssPaths]) {
     expect(paths).toContain('scripts/ci/verify-playwright-image.mjs')
     expect(paths).toContain('.github/actions/setup-process-tools/action.yml')
     expect(paths).toContain('e2e/playwright-image*.test.ts')

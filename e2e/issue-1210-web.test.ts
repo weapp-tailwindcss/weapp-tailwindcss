@@ -6,7 +6,7 @@ import { chromium } from 'playwright'
 import { normalizePath } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { cleanupHBuilderXResources } from '../scripts/hbuilderx-project-resources'
-import { collectProcessOutput, findFreePort, killProcessTree, resolveBaseUrls } from './hbuilderx-local/process'
+import { collectProcessOutput, findFreePort, resolveBaseUrls } from './hbuilderx-local/process'
 import { cleanupWebHmrSession } from './hbuilderx-local/web/cleanup'
 import { createDevServer, createHBuilderXDevServer } from './hbuilderx-local/web/dev-server'
 
@@ -87,7 +87,9 @@ describe.runIf(enabled)('issue #1210 uni-app x Web', () => {
         }
         else {
           const port = await findFreePort()
-          child = createDevServer(projectRoot, port)
+          const server = createDevServer(projectRoot, port)
+          child = server.child
+          stopServer = () => server.stop()
           baseUrl = `http://127.0.0.1:${port}`
         }
         logs = collectProcessOutput(child, 2000)
@@ -175,9 +177,6 @@ describe.runIf(enabled)('issue #1210 uni-app x Web', () => {
             stopServer: async () => {
               if (stopServer) {
                 await stopServer()
-              }
-              else if (child) {
-                killProcessTree(child)
               }
             },
             restoreSource: async () => {

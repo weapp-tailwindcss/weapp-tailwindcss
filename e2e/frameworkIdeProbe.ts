@@ -4,6 +4,7 @@ import process from 'node:process'
 import path from 'pathe'
 import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
 import { Launcher } from '../scripts/wechat/automator'
+import { frameworkIdeProbeExitCode } from './framework-ide/probe-failure'
 import { withFrameworkIdeProject } from './framework-ide/project-lifecycle'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 import { withFrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
@@ -143,5 +144,5 @@ main().then(() => {
     process.stderr.write(`[e2e:ide] failed to collect diagnostics: ${diagnosticError instanceof Error ? diagnosticError.stack : String(diagnosticError)}\n`)
   }
   process.stderr.write(`${formatWorkflowError(error)}\n`)
-  process.exit(1)
+  process.exit(frameworkIdeProbeExitCode(error))
 })

@@ -20,8 +20,8 @@ async function publishSourceFile(temporary, file) {
   }
 }
 
-export async function replaceSourceFile(file, content) {
-  const temporary = path.join(path.dirname(file), `.${path.basename(file)}.${randomUUID()}.tmp`)
+export async function replaceSourceFile(file, content, { stagingDirectory = path.dirname(file) } = {}) {
+  const temporary = path.join(stagingDirectory, `.${path.basename(file)}.${randomUUID()}.tmp`)
   const mode = await stat(file).then(info => info.mode, (error) => {
     if (error.code !== 'ENOENT') {
       throw error

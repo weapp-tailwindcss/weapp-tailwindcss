@@ -30,7 +30,7 @@ describe('vite compiler shadow run boundary', () => {
     expect(runtimeHandler).toHaveBeenCalledTimes(2)
   })
 
-  it('keeps compiler sessions between watch builds and disposes them when the watcher closes', async () => {
+  it('keeps compiler sessions between watch builds until the lifecycle owner closes', async () => {
     const { getTailwindGenerationSessionPool } = await import('@/compiler')
     const { createViteCssFinalizerOutputPlugin } = await import('@/bundlers/vite/css-finalizer/plugin')
     const runtimeState = {
@@ -49,8 +49,9 @@ describe('vite compiler shadow run boundary', () => {
     await plugin.closeBundle?.()
     expect(getTailwindGenerationSessionPool(runtimeState)).toBe(generationPool)
 
-    await plugin.closeWatcher?.()
-    expect(getTailwindGenerationSessionPool(runtimeState)).not.toBe(generationPool)
+    const { disposeCompilerOwner } = await import('@/compiler')
+    await disposeCompilerOwner(runtimeState)
+    expect(() => getTailwindGenerationSessionPool(runtimeState)).toThrow('已释放')
   })
 
   it('completes the current shadow run after the post css finalizer', async () => {
@@ -99,8 +100,9 @@ describe('vite compiler shadow run boundary', () => {
     ))
 
     const shadowSession = getCompilerShadowReportSession(runtimeState)
-    await plugin.closeBundle?.()
+    const { disposeCompilerOwner } = await import('@/compiler')
+    await disposeCompilerOwner(runtimeState)
     expect(() => shadowSession.snapshot()).toThrow('已释放')
-    expect(getCompilerShadowReportSession(runtimeState)).not.toBe(shadowSession)
+    expect(() => getCompilerShadowReportSession(runtimeState)).toThrow('已释放')
   })
 })

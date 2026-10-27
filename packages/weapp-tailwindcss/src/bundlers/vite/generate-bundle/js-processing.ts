@@ -1,15 +1,14 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import type { BundleSnapshot, BundleStateEntry } from '../bundle-state'
+import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { BundleMetrics } from './metrics'
 import type { GenerateBundleContext } from './types'
 import type { CreateJsHandlerOptions, LinkedJsModuleResult } from '@/types'
 import path from 'node:path'
 import { logger } from '@/logger'
-import { createUniAppXBundleAssetSourceGetter, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
-import { createUniAppXAssetTask } from '@/uni-app-x/vite'
 import { processCachedTask } from '../../shared/cache'
 import { shouldSkipViteJsTransform } from '../js-precheck'
-import { resolveUniAppXJsTransformEnabled } from './js-handler-options'
+import { createFrameworkJsAssetContext } from './framework-js-asset-context'
 import { collectLinkedFileNames } from './js-linking'
 import { measureElapsed } from './metrics'
 import { createJsHashSalt, createLinkedImpactSignature, getSnapshotHash } from './signatures'
@@ -23,7 +22,7 @@ interface ProcessJsBundleEntryOptions {
   disableJsPrecheck: boolean
   entry: BundleStateEntry
   getJsEntry: ReturnType<typeof import('./js-entries').createJsEntryResolver>
-  deferUniAppXStylePlaceholder?: boolean
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   jsHandler: GenerateBundleContext['opts']['jsHandler']
   jsTaskFactories: Array<() => Promise<void>>
   linkedByEntry: Map<string, Set<string>> | undefined
@@ -40,7 +39,6 @@ interface ProcessJsBundleEntryOptions {
   transformRuntime: Set<string>
   transformRuntimeSignature: string
   transformFilterSignature: string
-  uniAppX: GenerateBundleContext['opts']['uniAppX']
   useIncrementalMode: boolean
 }
 
@@ -88,7 +86,7 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
     disableJsPrecheck,
     entry,
     getJsEntry,
-    deferUniAppXStylePlaceholder,
+    assetPipelineStrategy,
     jsHandler,
     jsTaskFactories,
     linkedByEntry,
@@ -105,7 +103,6 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
     transformRuntime,
     transformRuntimeSignature,
     transformFilterSignature,
-    uniAppX,
     useIncrementalMode,
   } = options
   const { file, output: originalSource, source: originalEntrySource } = entry
@@ -214,75 +211,42 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
       })
     })
   }
-  else if (uniAppX && originalSource.type === 'asset') {
+  else if (originalSource.type === 'asset' && assetPipelineStrategy?.createJsAssetTask) {
     const linkedSet = useIncrementalMode ? new Set<string>() : undefined
+    const hashKey = `${file}:js`
+    const factory = assetPipelineStrategy.createJsAssetTask(createFrameworkJsAssetContext({
+      asset: originalSource,
+      bundle,
+      file,
+      source: originalEntrySource,
+      outDir,
+      cache,
+      hashKey,
+      hashSalt: createJsHashSalt(runtimeSignature, useIncrementalMode
+        ? createLinkedImpactSignature(file, snapshot.linkedImpactsByEntry, snapshot.sourceHashByFile)
+        : undefined),
+      createHandlerOptions,
+      debug,
+      disableJsPrecheck,
+      jsHandler,
+      onUpdate,
+      runtimeSet: transformRuntime,
+      shouldTransform: shouldTransformJs,
+      applyLinkedResults(linked) {
+        collectLinkedFileNames(linked, getJsEntry, linkedSet)
+        applyLinkedUpdates(linked)
+      },
+    }))
+    if (!factory) {
+      return
+    }
+    rememberProcessCacheKey(file, hashKey)
     if (linkedByEntry && linkedSet) {
       linkedByEntry.set(file, linkedSet)
     }
-
-    const wrappedApplyLinkedUpdates = (linked?: Record<string, LinkedJsModuleResult>) => {
-      collectLinkedFileNames(linked, getJsEntry, linkedSet)
-      applyLinkedUpdates(linked)
-    }
-
-    const uniAppXJsHashKey = `${file}:js`
-    rememberProcessCacheKey(file, uniAppXJsHashKey)
-    const factory = createUniAppXAssetTask(
-      file,
-      originalSource,
-      outDir,
-      {
-        cache,
-        hashKey: uniAppXJsHashKey,
-        hashSalt: createJsHashSalt(
-          runtimeSignature,
-          [
-            UNI_APP_X_STYLE_PLACEHOLDER_VERSION,
-            useIncrementalMode
-              ? createLinkedImpactSignature(
-                  file,
-                  snapshot.linkedImpactsByEntry,
-                  snapshot.sourceHashByFile,
-                )
-              : undefined,
-          ].filter(Boolean).join(':'),
-        ),
-        createHandlerOptions,
-        debug,
-        getAssetSource: createUniAppXBundleAssetSourceGetter(bundle),
-        injectStylePlaceholder: !deferUniAppXStylePlaceholder,
-        jsHandler,
-        onUpdate,
-        runtimeSet: transformRuntime,
-        applyLinkedResults: wrappedApplyLinkedUpdates,
-        uniAppX,
-      },
-    )
-
     jsTaskFactories.push(async () => {
       await timeTask('js', async () => {
         const start = performance.now()
-        if (!shouldTransformJs) {
-          debug('js skip transform (clean, uni-app-x), replay cache: %s', file)
-          await factory()
-          metrics.js.elapsed += measureElapsed(start)
-          metrics.js.transformed++
-          return
-        }
-        const currentSource = originalEntrySource
-        const absoluteFile = path.resolve(outDir, file)
-        const precheckOptions = createHandlerOptions(absoluteFile, {
-          uniAppX: resolveUniAppXJsTransformEnabled(uniAppX),
-          babelParserOptions: {
-            plugins: ['typescript'],
-            sourceType: 'unambiguous',
-          },
-        })
-        if (!disableJsPrecheck && shouldSkipViteJsTransform(currentSource, precheckOptions)) {
-          metrics.js.elapsed += measureElapsed(start)
-          metrics.js.transformed++
-          return
-        }
         await factory()
         metrics.js.elapsed += measureElapsed(start)
         metrics.js.transformed++

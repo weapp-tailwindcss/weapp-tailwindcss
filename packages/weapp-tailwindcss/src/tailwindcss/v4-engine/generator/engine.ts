@@ -11,10 +11,37 @@ import { generateRawArtifact, transformGeneratedArtifact } from './raw-generatio
 import { restoreRpxLengthCssSelectors } from './rpx-candidates'
 import { hasChangedCssCalcContext, hasChangedCustomPropertyCompatibilityContext, resolveGenerationStyleContext, resolveIncrementalStyleContext } from './style-context'
 
+let nextEngineIdentity = 0
+
 export function createTailwindV4Engine(source: TailwindV4ResolvedSource): TailwindV4Engine {
+  const engineIdentity = ++nextEngineIdentity
   const generationSessions = new TailwindV4NativeSessionPool()
   const incrementalCacheKeys = new Set<string>()
   const validationEngine = createEngineTailwindV4Engine(source)
+  const activeTasks = new Set<Promise<unknown>>()
+  let disposed = false
+  let disposal: Promise<void> | undefined
+
+  function ensureActive() {
+    if (disposed) {
+      throw new Error('TailwindV4Engine 已释放。')
+    }
+  }
+
+  const seedCache: typeof seedIncrementalGenerateCache = options => !disposed && seedIncrementalGenerateCache(options)
+
+  function track<T>(task: Promise<T>) {
+    activeTasks.add(task)
+    void task.then(() => activeTasks.delete(task), () => activeTasks.delete(task))
+    return task
+  }
+
+  function clearCache() {
+    for (const cacheKey of incrementalCacheKeys) {
+      incrementalGenerateCache.delete(cacheKey)
+    }
+    incrementalCacheKeys.clear()
+  }
 
   async function generateOnce(generateSource: TailwindV4ResolvedSource, options: TailwindV4GenerateOptions = {}, preparedSource?: PreparedTailwindV4Source) {
     return transformGeneratedArtifact(await generateRawArtifact(generationSessions, generateSource, options, preparedSource))
@@ -31,23 +58,17 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       return generateOnce(cssMacroSource, options, preparedSource)
     }
 
-    const cacheKey = createIncrementalGenerateCacheKey(
+    const cacheKey = `${engineIdentity}\0${createIncrementalGenerateCacheKey(
       compatibleSource,
       target,
       styleOptions,
-    )
+    )}`
     incrementalCacheKeys.add(cacheKey)
 
     if (options.scanSources === true) {
       return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
         const generated = await generateOnce(cssMacroSource, options, preparedSource)
-        const admitted = seedIncrementalGenerateCache({
-          compatibleSource,
-          generated,
-          requestedCandidates,
-          styleOptions,
-          target,
-        })
+        const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
         if (!admitted) {
           incrementalGenerateCache.delete(cacheKey)
         }
@@ -60,13 +81,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       if (hasRemovedCandidates(cached.seenCandidates, requestedCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
           const generated = await generateOnce(cssMacroSource, options, preparedSource)
-          const admitted = seedIncrementalGenerateCache({
-            compatibleSource,
-            generated,
-            requestedCandidates,
-            styleOptions,
-            target,
-          })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -95,13 +110,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       if (shouldRebuildIncrementalEntry(cached, requestedCandidates, missingCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
           const generated = await generateOnce(cssMacroSource, options, preparedSource)
-          const admitted = seedIncrementalGenerateCache({
-            compatibleSource,
-            generated,
-            requestedCandidates,
-            styleOptions,
-            target,
-          })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -134,7 +143,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
         if (needsFullTransform
           || (compatibilityValues && hasChangedCustomPropertyCompatibilityContext(cached.compatibilityValues, compatibilityValues))) {
           const generated = await transformGeneratedArtifact(artifact)
-          const admitted = seedIncrementalGenerateCache({ compatibleSource, generated, requestedCandidates, styleOptions, target })
+          const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
             incrementalGenerateCache.delete(cacheKey)
           }
@@ -176,35 +185,53 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
     return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
       const generated = await generateOnce(cssMacroSource, options, preparedSource)
-      seedIncrementalGenerateCache({
-        compatibleSource,
-        generated,
-        requestedCandidates,
-        styleOptions,
-        target,
-      })
+      seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
       return generated
     })
   }
 
   async function generate(options: TailwindV4GenerateOptions = {}) {
-    return options.incrementalCache && options.scanMode !== 'compiled'
+    ensureActive()
+    return track(options.incrementalCache && options.scanMode !== 'compiled'
       ? generateWithIncrementalCache(options)
-      : generateOnce(source, options)
+      : generateOnce(source, options))
   }
 
   const engine = {
     source,
-    loadDesignSystem: validationEngine.loadDesignSystem,
-    validateCandidates: validationEngine.validateCandidates,
+    async loadDesignSystem() {
+      ensureActive()
+      return track(validationEngine.loadDesignSystem())
+    },
+    async validateCandidates(candidates: Iterable<string>) {
+      ensureActive()
+      return track(validationEngine.validateCandidates(candidates))
+    },
     generate,
     dispose() {
-      validationEngine.dispose?.()
-      generationSessions.dispose()
-      for (const cacheKey of incrementalCacheKeys) {
-        incrementalGenerateCache.delete(cacheKey)
+      if (disposal) {
+        return disposal
       }
-      incrementalCacheKeys.clear()
+      disposed = true
+      clearCache()
+      disposal = (async () => {
+        await Promise.allSettled([...activeTasks])
+        const failures: unknown[] = []
+        for (const release of [() => generationSessions.dispose(), () => validationEngine.dispose?.()]) {
+          try {
+            await release()
+          }
+          catch (error) {
+            failures.push(error)
+          }
+        }
+        activeTasks.clear()
+        clearCache()
+        if (failures.length) {
+          throw new AggregateError(failures, '生成器释放失败，已继续释放其余资源。')
+        }
+      })()
+      return disposal
     },
   }
   return engine

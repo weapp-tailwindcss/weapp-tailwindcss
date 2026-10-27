@@ -5,6 +5,7 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { vitePluginName } from '@/constants'
 import {
+  createCompilerContextMock,
   createContext,
   getTransformUVueMock,
   resetVitePluginTestContext,
@@ -13,11 +14,14 @@ import {
 
 const mocks = vi.hoisted(() => ({
   generateTailwindV4Css: vi.fn(),
+  validateCandidatesByGenerator: vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => new Set(candidates)),
 }))
 const createdDirs: string[] = []
+const configuredPlugins: Plugin[][] = []
 
-vi.mock('@/generation/service', () => ({
+vi.mock('@/context/generation', () => ({
   generateTailwindV4Css: mocks.generateTailwindV4Css,
+  validateCandidatesByGenerator: mocks.validateCandidatesByGenerator,
 }))
 
 async function loadWeappTailwindcssPlugin() {
@@ -40,13 +44,23 @@ function getPlugin(plugins: Plugin[], suffix: string) {
   return plugins.find(plugin => plugin.name === `${vitePluginName}:${suffix}`) as Plugin
 }
 
-describe('bundlers/vite WeappTailwindcss hook coverage', () => {
-  afterEach(async () => {
-    await Promise.all(
-      createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
-    )
-  })
+async function resolvePlugins(plugins: Plugin[], overrides: Partial<ResolvedConfig> = {}) {
+  configuredPlugins.push(plugins)
+  const config = {
+    command: 'serve',
+    root: '/project',
+    plugins: [],
+    css: { postcss: { plugins: [] } },
+    build: { outDir: 'dist' },
+    ...overrides,
+  } as ResolvedConfig
+  for (const plugin of plugins) {
+    const hook = plugin.configResolved
+    await (typeof hook === 'function' ? hook : hook?.handler)?.call(plugin, config)
+  }
+}
 
+describe('bundlers/vite WeappTailwindcss hook coverage', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.doUnmock('@/bundlers/vite/shared/configured-css-entry-observer')
@@ -58,6 +72,18 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       classSet: new Set(['generated']),
       target: 'weapp',
     })
+  })
+
+  afterEach(async () => {
+    for (const plugins of configuredPlugins.splice(0)) {
+      for (const plugin of plugins) {
+        const hook = plugin.closeWatcher
+        await (typeof hook === 'function' ? hook : hook?.handler)?.call(plugin)
+      }
+    }
+    await Promise.all(
+      createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
+    )
   })
 
   it('observes configured web css entries only when Vite transforms their style modules', async () => {
@@ -73,7 +99,7 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       createConfiguredCssEntryDiagnostics: vi.fn(() => ({
         observer,
         plugin: {
-          name: `${vitePluginName}:configured-css-entry-observer`,
+          name: 'weapp-tailwindcss:configured-css-entry-observer',
           transform(_code: string, id: string) {
             observer.observe(id)
           },
@@ -88,7 +114,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins)
     const css = '@import "tailwindcss";'
     const serveCssPlugin = getPlugin(plugins, 'generate:serve')
 
@@ -99,7 +126,7 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     )
     expect(observer.observe).not.toHaveBeenCalled()
 
-    const entryObserverPlugin = getPlugin(plugins, 'configured-css-entry-observer')
+    const entryObserverPlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:configured-css-entry-observer')!
     await getTransformHandler(entryObserverPlugin)?.call(entryObserverPlugin, css, `${cssFile}?direct`)
     expect(observer.observe).toHaveBeenCalledOnce()
     expect(observer.observe).toHaveBeenCalledWith(`${cssFile}?direct`)
@@ -113,10 +140,25 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
     const sourcePlugin = plugins.find(plugin => plugin.name === `${vitePluginName}:source-candidates`) as Plugin
     const postPlugin = plugins.find(plugin => plugin.name === `${vitePluginName}:post`) as Plugin
 
+    const configResult = await postPlugin.config?.({
+      plugins: [
+        { name: '@tailwindcss/vite:generate:serve' },
+        { name: 'other' },
+      ],
+      root: '/project',
+    } as any, { command: 'build', mode: 'production' } as any)
+
+    expect(configResult).toMatchObject({
+      resolve: {
+        alias: expect.any(Array),
+      },
+    })
+
+    await resolvePlugins(plugins)
     expect(sourcePlugin).toBeTruthy()
     expect(postPlugin).toBeTruthy()
 
@@ -142,20 +184,6 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     await sourcePlugin.buildStart?.call({
       addWatchFile: vi.fn(),
     } as any)
-
-    const configResult = await postPlugin.config?.({
-      plugins: [
-        { name: '@tailwindcss/vite:generate:serve' },
-        { name: 'other' },
-      ],
-      root: '/project',
-    } as any, { command: 'build', mode: 'production' } as any)
-
-    expect(configResult).toMatchObject({
-      resolve: {
-        alias: expect.any(Array),
-      },
-    })
   })
 
   it('ignores null Vite module identities while recording root css hot modules', async () => {
@@ -166,10 +194,9 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
     const sourcePlugin = getPlugin(plugins, 'source-candidates')
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:uni' }],
@@ -229,9 +256,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:uni' }],
@@ -302,9 +328,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'build',
       root,
       plugins: [{ name: 'vite:uni' }],
@@ -337,9 +362,10 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       })
       setCurrentContext(context)
       const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-      const plugins = WeappTailwindcss()!
+      const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
       const sourcePlugin = getPlugin(plugins, 'source-candidates')
 
+      await resolvePlugins(plugins)
       expect(sourcePlugin.transform).toMatchObject({ order: 'pre' })
 
       const result = await getTransformHandler(sourcePlugin)?.call(
@@ -386,9 +412,10 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
     const uvuePlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:nvue') as Plugin | undefined
 
+    await resolvePlugins(plugins)
     expect(uvuePlugin).toBeTruthy()
 
     const result = await getTransformHandler(uvuePlugin!)?.call(
@@ -400,7 +427,7 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     expect(getTransformUVueMock()).toHaveBeenCalledWith(
       '<template><view class="text-[#f7fbff]">Hello</view></template>',
       '/project/pages/index/index.uvue',
-      context.jsHandler,
+      expect.any(Function),
       expect.any(Set),
       expect.objectContaining({
         enablePageLocalStyle: true,
@@ -408,6 +435,10 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       }),
     )
     expect(result?.code).toContain('uvue:/project/pages/index/index.uvue:')
+    const transformJs = getTransformUVueMock().mock.calls[0]![2] as typeof context.jsHandler
+    const code = 'const cls = "alpha"'
+    expect(transformJs(code)).toEqual({ code: `js:${code}` })
+    expect(context.jsHandler).toHaveBeenCalledWith(code, undefined, undefined)
   })
 
   it('infers mini-program platform from vite output directory for early CSS macro compilation', async () => {
@@ -420,9 +451,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       })
       setCurrentContext(context)
       const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-      const plugins = WeappTailwindcss()!
-      const postPlugin = getPlugin(plugins, 'post')
-      await (postPlugin.configResolved as any)?.call(postPlugin, {
+      const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+      await resolvePlugins(plugins, {
         command: 'serve',
         root: '/project',
         plugins: [],
@@ -469,9 +499,9 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
         tailwindcssBasedir: '/project',
         cssPreflight: {
           'box-sizing': 'border-box',
-          margin: '0',
-          padding: '0',
-          border: '0 solid',
+          'margin': '0',
+          'padding': '0',
+          'border': '0 solid',
         },
         cssSelectorReplacement: {
           root: ['page', '.tw-root', 'wx-root-portal-content'],
@@ -480,10 +510,9 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       })
       setCurrentContext(context)
       const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-      const plugins = WeappTailwindcss()!
-      const postPlugin = getPlugin(plugins, 'post')
+      const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
 
-      await (postPlugin.configResolved as any)?.call(postPlugin, {
+      await resolvePlugins(plugins, {
         command: 'serve',
         root: '/project',
         plugins: [],
@@ -493,9 +522,9 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
 
       expect(context.cssPreflight).toMatchObject({
         'box-sizing': 'border-box',
-        margin: '0',
-        padding: '0',
-        border: '0 solid',
+        'margin': '0',
+        'padding': '0',
+        'border': '0 solid',
       })
       expect(context.cssSelectorReplacement?.root).toStrictEqual(['page', '.tw-root', 'wx-root-portal-content'])
     }
@@ -530,9 +559,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [],
@@ -586,9 +614,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       })
       setCurrentContext(context)
       const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-      const plugins = WeappTailwindcss()!
-      const postPlugin = getPlugin(plugins, 'post')
-      await (postPlugin.configResolved as any)?.call(postPlugin, {
+      const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+      await resolvePlugins(plugins, {
         command: 'serve',
         root,
         plugins: [],
@@ -630,14 +657,27 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     }
   })
 
-  it('keeps post config inert when plugin ownership is disabled', async () => {
-    setCurrentContext(createContext({
-      disabled: { plugin: true },
-    }))
+  it.each([true, { plugin: true }])('keeps disabled ownership inert without creating a compiler (%j)', async (disabled) => {
+    const context = createContext({ disabled })
+    setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()
+    const plugins = WeappTailwindcss({ disabled })
 
     expect(plugins).toBeUndefined()
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
+  })
+
+  it.each([true, { plugin: true }])('keeps disabled import rewriting independent of a compiler (%j)', async (disabled) => {
+    const WeappTailwindcss = await loadWeappTailwindcssPlugin()
+    const plugins = WeappTailwindcss({ disabled, rewriteCssImports: true, appType: 'uni-app' })!
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
+    expect(plugins.map(plugin => plugin.name)).toEqual([`${vitePluginName}:rewrite-css-imports`])
+    await resolvePlugins(plugins)
+    const result = await getTransformHandler(plugins[0]!)?.call(plugins[0], '@import "tailwindcss";', '/project/main.css')
+    expect(result?.code).toContain('tailwindcss')
+    expect(result?.code).not.toContain('@import "tailwindcss";')
+    expect(createCompilerContextMock).not.toHaveBeenCalled()
+    expect(mocks.generateTailwindV4Css).not.toHaveBeenCalled()
   })
 
   it('generates vite serve css, hmr css modules, and serve js transforms', async () => {
@@ -649,9 +689,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -735,9 +774,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
 
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -779,9 +817,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'build',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -795,9 +832,13 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     const sourcePlugin = plugins[sourcePluginIndex] as Plugin
     const buildPlugin = plugins[buildPluginIndex] as Plugin
 
-    const applySourceCandidates = sourcePlugin.apply
-    expect(applySourceCandidates).toBeTypeOf('function')
-    expect(typeof applySourceCandidates === 'function' && applySourceCandidates({ build: {} }, { command: 'build', mode: 'production' })).toBe(false)
+    const read = vi.fn(async () => '<view class="text-red-500"/>')
+    await getHandleHotUpdateHandler(sourcePlugin)?.call(sourcePlugin, {
+      file: '/project/src/page.vue',
+      modules: [],
+      read,
+    } as any)
+    expect(read).not.toHaveBeenCalled()
     expect(buildPlugin).toMatchObject({
       apply: 'build',
       enforce: 'pre',
@@ -852,23 +893,33 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
     const sourcePlugin = getPlugin(plugins, 'source-candidates')
 
-    const applySourceCandidates = sourcePlugin.apply
-    expect(applySourceCandidates).toBeTypeOf('function')
-    expect(typeof applySourceCandidates === 'function' && applySourceCandidates({ build: {} }, { command: 'build', mode: 'production' })).toBe(true)
+    await resolvePlugins(plugins, { command: 'build', build: { outDir: 'dist/web' } } as ResolvedConfig)
+    const read = vi.fn(async () => '<view class="text-red-500"/>')
+    await getHandleHotUpdateHandler(sourcePlugin)?.call(sourcePlugin, {
+      file: '/project/src/page.vue',
+      modules: [],
+      read,
+      server: {
+        config: { root: '/project' },
+        moduleGraph: { getModuleById: vi.fn(), getModulesByFile: vi.fn(), invalidateModule: vi.fn() },
+        ws: { send: vi.fn() },
+      },
+    } as any)
+    expect(read).toHaveBeenCalledOnce()
   })
 
   it('keeps mini-program build css generation in the final asset pipeline', async () => {
-    setCurrentContext(createContext({
+    const context = createContext({
       appType: 'uni-app',
       tailwindcssBasedir: '/project',
-    }))
+    })
+    setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'build',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -902,9 +953,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:uni' }],
@@ -1016,9 +1066,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
         target: 'weapp',
       }
     })
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:uni' }],
@@ -1068,9 +1117,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -1101,9 +1149,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:css' }],
@@ -1130,9 +1177,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [{ name: 'vite:uni' }],
@@ -1169,9 +1215,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
-    const postPlugin = getPlugin(plugins, 'post')
-    await (postPlugin.configResolved as any)?.call(postPlugin, {
+    const plugins = WeappTailwindcss({ appType: context.appType, generator: context.generator, uniAppX: context.uniAppX })!
+    await resolvePlugins(plugins, {
       command: 'serve',
       root: '/project',
       plugins: [],

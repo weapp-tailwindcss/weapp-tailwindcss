@@ -1,5 +1,5 @@
 import type { CompilerGenerateRequest, CompilerTarget } from './types'
-import type { WeappTailwindcssGenerateResult } from '@/generator'
+import type { WeappTailwindcssGenerateResult } from '@/generator/runtime'
 import { createCompilerValueFingerprint } from './source-fingerprint'
 
 export interface CompilerGenerationCacheEntry {

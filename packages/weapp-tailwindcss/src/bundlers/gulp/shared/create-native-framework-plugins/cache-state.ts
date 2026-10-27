@@ -1,4 +1,4 @@
-import type { getCompilerContext } from '@/context'
+import type { createCompilerContext } from '@/context'
 import type { IStyleHandlerOptions } from '@/types'
 import process from 'node:process'
 import { getTailwindV4IncrementalGenerateCacheStats } from '@/tailwindcss/v4-engine'
@@ -43,7 +43,7 @@ export function rememberGulpProcessCacheKey(cacheKeys: Set<string>, key: string)
 }
 
 export function pruneGulpProcessCache(
-  cache: ReturnType<typeof getCompilerContext>['cache'],
+  cache: ReturnType<typeof createCompilerContext>['cache'],
   cacheKeys: Set<string>,
 ) {
   cache.prune?.({
@@ -53,7 +53,7 @@ export function pruneGulpProcessCache(
 }
 
 export function resolveGulpMemoryDebugStats(context: {
-  cache: ReturnType<typeof getCompilerContext>['cache']
+  cache: ReturnType<typeof createCompilerContext>['cache']
   defaultStyleHandlerOptionsCache: Map<number | 'unknown', Partial<IStyleHandlerOptions>>
   gulpProcessCacheKeys: Set<string>
   phase: string

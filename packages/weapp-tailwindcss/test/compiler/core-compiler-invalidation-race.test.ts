@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('生成期间的后续失效不得被提交覆盖', () => {
   afterEach(() => {
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.resetModules()
   })
 
@@ -12,7 +12,7 @@ describe('生成期间的后续失效不得被提交覆盖', () => {
     const source = { base: '/repo', baseFallbacks: [], css: '@tailwind utilities;', dependencies: [], projectRoot: '/repo' }
     const disposals: ReturnType<typeof vi.fn>[] = []
     const calls = vi.fn()
-    vi.doMock('@/generator', async (importOriginal) => ({
+    vi.doMock('@/generator/runtime', async (importOriginal) => ({
       ...await importOriginal<typeof import('@/generator')>(),
       createWeappTailwindcssGenerator: () => {
         const dispose = vi.fn()

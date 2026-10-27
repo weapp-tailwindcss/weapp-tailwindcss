@@ -1,6 +1,7 @@
 import process from 'node:process'
 import { execa } from 'execa'
 import { IDE_CLEANUP_FAILURE_MARKER } from './framework-ide/cleanup'
+import { frameworkIdeProbeExitCode, IDE_PROBE_BLOCKED_EXIT_CODE } from './framework-ide/probe-failure'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 
 const wait = (timeout: number) => new Promise(resolve => setTimeout(resolve, timeout))
@@ -17,9 +18,18 @@ function isTransientIdeError(error: unknown) {
     return false
   }
   const candidate = error as {
+    exitCode?: number
+    timedOut?: boolean
+    isCanceled?: boolean
+    signal?: string
     message?: string
     stderr?: string
     shortMessage?: string
+  }
+  // 环境阻断或父进程强制终止都没有可重试的已清理会话；保留产品错误原有重试规则。
+  if (candidate.exitCode === IDE_PROBE_BLOCKED_EXIT_CODE || candidate.timedOut || candidate.isCanceled
+    || candidate.signal || frameworkIdeProbeExitCode(error) === IDE_PROBE_BLOCKED_EXIT_CODE) {
+    return false
   }
   const text = [
     candidate.message,
@@ -48,7 +58,9 @@ async function runFrameworkIdeProbe(entryName: string, timeoutMs: number, relaun
   }
   catch (error) {
     if (error instanceof Error && !('stderr' in error && typeof error.stderr === 'string' && error.stderr.includes('[e2e:ide] diagnostics'))) {
-      const diagnostics = await collectFrameworkIdeDiagnostics(entryName)
+      const diagnostics = await collectFrameworkIdeDiagnostics(entryName).catch(diagnosticError =>
+        `[e2e:ide] failed to collect diagnostics\n${formatProbeFailure(diagnosticError)}`,
+      )
       error.message = `${error.message}\n${diagnostics}`
     }
     throw error

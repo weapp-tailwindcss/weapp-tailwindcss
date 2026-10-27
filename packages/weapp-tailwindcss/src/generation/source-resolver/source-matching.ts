@@ -1,6 +1,6 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GeneratorSourceSelectionOptions, TailwindV4CssSource, TailwindV4SourceOptions } from './types'
-import type { resolveTailwindV4SourceOptionsFromRuntime } from '@/generator/index'
+import type { resolveTailwindV4SourceOptionsFromRuntime } from '@/generator/runtime'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { isSameTailwindV4CssSource, resolveTailwindV4CssEntrySource } from './configuration'

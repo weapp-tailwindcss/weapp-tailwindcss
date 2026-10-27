@@ -44,6 +44,7 @@ export function runMemoryProbe(command: string, args: string[], options: {
     let failure: Error | undefined
     let closeTimer: ReturnType<typeof setTimeout> | undefined
     let settled = false
+    let killing = false
     const cleanup = () => {
       clearTimeout(deadline)
       clearTimeout(closeTimer)
@@ -64,16 +65,29 @@ export function runMemoryProbe(command: string, args: string[], options: {
         resolve(value ?? '')
       }
     }
+    const recordKillFailure = (killError: unknown) => {
+      const cause = failure
+        ? new AggregateError([failure, killError], '内存探针失败且终止失败。')
+        : killError
+      failure = new MemoryProbeCleanupError(`memory probe kill failed; launch=${diagnostic}`, { cause })
+    }
     const terminate = (error: Error) => {
       if (settled || closeTimer) {
         return
       }
-      failure = error
+      failure ??= error
       try {
-        child.kill('SIGKILL')
+        // 启动失败的句柄可能尚未释放；没有有效 PID 时不发信号，仍等待 close。
+        if (child.pid != null && child.pid > 0) {
+          killing = true
+          child.kill('SIGKILL')
+        }
       }
       catch (killError) {
-        failure = new MemoryProbeCleanupError(`memory probe kill failed; launch=${diagnostic}`, { cause: killError })
+        recordKillFailure(killError)
+      }
+      finally {
+        killing = false
       }
       closeTimer = setTimeout(() => {
         finish(new MemoryProbeCleanupError(`memory probe close was not confirmed after termination; launch=${diagnostic}`, { cause: failure }))
@@ -99,8 +113,12 @@ export function runMemoryProbe(command: string, args: string[], options: {
     child.stdout?.on('error', onStreamError)
     child.stderr?.on('error', onStreamError)
     child.once('error', (error) => {
-      if (!(failure instanceof MemoryProbeCleanupError)) {
-        failure = error
+      // kill 可直接抛错，也可同步发出 error；两者都必须保留首错并终止采样。
+      if (killing || (error as NodeJS.ErrnoException).syscall === 'kill') {
+        recordKillFailure(error)
+      }
+      else {
+        failure ??= error
       }
     })
     child.once('close', (code) => {

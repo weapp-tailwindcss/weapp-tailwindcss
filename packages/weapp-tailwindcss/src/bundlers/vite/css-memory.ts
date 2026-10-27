@@ -2,6 +2,7 @@ import type { RememberedCssSource } from './generate-bundle'
 import path from 'node:path'
 import { isSourceStyleRequest, stripRequestQuery } from '../../generation/style-requests'
 import { normalizeOutputPathKey } from '../shared/module-graph'
+import { createViteCssSourceLifecycle, normalizeViteCssSourceOwner } from './css-memory/source-lifecycle'
 import { pruneMapToMaxSize, touchMapEntry } from './map-cache'
 import { parseVueRequest } from './query'
 import { getActiveViteSourceOutputRelationOwner } from './source-output-relations'
@@ -113,8 +114,12 @@ export function createViteCssMemory(options: {
   const rememberedCssSignatureByFile = new Map<string, string>()
   const knownCssSources = new Map<string, string>()
   const knownSfcSources = new Map<string, string>()
+  const sourceLifecycle = createViteCssSourceLifecycle()
 
   const rememberKnownSfcSource = (id: string, code: string) => {
+    if (!sourceLifecycle.isActive(id)) {
+      return
+    }
     if (id.search(/[?#]/) >= 0) {
       return
     }
@@ -130,6 +135,9 @@ export function createViteCssMemory(options: {
   }
 
   const getKnownSfcSource = (file: string) => {
+    if (!sourceLifecycle.isActive(file)) {
+      return undefined
+    }
     const scanSource = options.getSourceCandidateSource(file)
     if (scanSource && hasSfcStyleBlocks(scanSource)) {
       return scanSource
@@ -151,6 +159,9 @@ export function createViteCssMemory(options: {
   }
 
   const rememberCssSource = (entry: RememberedCssSource, cssRuntimeSignature?: string) => {
+    if (!sourceLifecycle.isActive(entry.sourceFile)) {
+      return
+    }
     getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(entry.sourceFile, entry.outputFile)
     const outputKey = normalizeOutputPathKey(entry.outputFile)
     const normalizedSourceFile = normalizeCssSourceIdentity(entry.sourceFile)
@@ -166,6 +177,8 @@ export function createViteCssMemory(options: {
     for (const [rememberedKey, remembered] of relatedRememberedEntries) {
       touchMapEntry(rememberedCssSources, rememberedKey, {
         ...remembered,
+        kind: entry.kind,
+        delivery: entry.delivery,
         outputFile: entry.outputFile,
         rawSource: entry.rawSource,
         sourceFile: entry.sourceFile,
@@ -189,11 +202,13 @@ export function createViteCssMemory(options: {
     sourceFile: string,
     rawSource: string,
   ) => {
-    if (remembered.rawSource === rawSource && remembered.sourceFile === sourceFile) {
+    if (remembered.kind !== 'output-import-shell' && remembered.rawSource === rawSource && remembered.sourceFile === sourceFile) {
       return remembered
     }
     const nextRemembered = {
       ...remembered,
+      // 生命周期刷新提供作者源码，不能继承旧输出导入壳的回放权限。
+      kind: remembered.kind === 'output-import-shell' ? undefined : remembered.kind,
       rawSource,
       sourceFile,
     }
@@ -203,6 +218,9 @@ export function createViteCssMemory(options: {
   }
 
   const refreshRememberedCssSourceBySourceFile = (sourceFile: string, rawSource: string) => {
+    if (!sourceLifecycle.isActive(sourceFile)) {
+      return
+    }
     touchMapEntry(knownCssSources, normalizeCssSourceIdentity(sourceFile), rawSource)
     const normalizedSourceFile = normalizeCssSourceIdentity(sourceFile)
     const relatedRememberedEntries = [...rememberedCssSources].filter(([, remembered]) =>
@@ -250,7 +268,7 @@ export function createViteCssMemory(options: {
     if (matchedRememberedSources.length === 0) {
       return
     }
-    const source = await resolveCurrentStyleSource(file)
+    const source = resolveCurrentStyleSource(file)
     if (source == null) {
       options.debug('refresh remembered css source skipped: missing cached source for %s', file)
       return
@@ -302,8 +320,31 @@ export function createViteCssMemory(options: {
     pruneMapToMaxSize(knownSfcSources, VITE_KNOWN_SFC_SOURCE_CACHE_MAX)
   }
 
+  const removeSource = (file: string) => {
+    const sourceKey = sourceLifecycle.remove(file)
+    const outputs = new Set<string>()
+    for (const [key, remembered] of rememberedCssSources) {
+      if (normalizeViteCssSourceOwner(remembered.sourceFile) === sourceKey) {
+        outputs.add(remembered.outputFile)
+        rememberedCssSources.delete(key)
+        rememberedCssSignatureByFile.delete(key)
+      }
+    }
+    for (const key of knownCssSources.keys()) {
+      if (normalizeViteCssSourceOwner(key) === sourceKey) {
+        knownCssSources.delete(key)
+      }
+    }
+    knownSfcSources.delete(normalizeKnownSfcSourceKey(file))
+    return outputs
+  }
+
   return {
+    captureSource: sourceLifecycle.capture,
+    restoreSource: sourceLifecycle.restore,
+    removeSource,
     dispose() {
+      sourceLifecycle.dispose()
       rememberedCssSources.clear()
       rememberedCssSignatureByFile.clear()
       knownCssSources.clear()
@@ -315,6 +356,7 @@ export function createViteCssMemory(options: {
     getRememberedCssSourceEntry: (file: string) => rememberedCssSources.get(normalizeOutputPathKey(file)),
     getRememberedCssSources: () => rememberedCssSources,
     getStats: () => ({
+      ...sourceLifecycle.getStats(),
       rememberedCssSources: rememberedCssSources.size,
       rememberedCssSourcesRaw: summarizeRememberedCssSources(rememberedCssSources),
       rememberedCssSignatureByFile: rememberedCssSignatureByFile.size,

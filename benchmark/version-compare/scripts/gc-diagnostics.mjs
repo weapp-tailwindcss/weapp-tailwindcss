@@ -7,10 +7,10 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { appendNodeImport, sameFilesystemPath } from './gc-paths.mjs'
+import { getGcDiagnosticService } from './gc-projects.mjs'
 
 const preloadSourcePath = fileURLToPath(new URL('./gc-preload.mjs', import.meta.url))
 const pathHelperSourcePath = fileURLToPath(new URL('./gc-paths.mjs', import.meta.url))
-const mpxProject = 'demo-mpx-tailwindcss-v4__mp-weixin'
 const maxBoundaries = 256
 
 function reportFailure(error) {
@@ -67,7 +67,8 @@ async function inspectProcessFile(sessionDirectory, file, expectedEntry, preload
 }
 
 export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, directory, kind, run, env = {} }) {
-  if (!directory || projectMeta.key !== mpxProject) {
+  const serviceMetadata = getGcDiagnosticService(projectMeta.key)
+  if (!directory || !serviceMetadata) {
     return undefined
   }
 
@@ -104,9 +105,16 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
 
   try {
     const require = createRequire(path.join(cwd, 'package.json'))
-    const packagePath = require.resolve('@mpxjs/mpx-cli-service/package.json')
+    const packagePath = require.resolve(`${serviceMetadata.packageName}/package.json`)
     const service = JSON.parse(await fs.readFile(packagePath, 'utf8'))
-    expectedEntry = await fs.realpath(path.resolve(path.dirname(packagePath), service.bin['mpx-cli-service']))
+    const entry = service.bin?.[serviceMetadata.binName]
+    if (service.name !== serviceMetadata.packageName || typeof entry !== 'string' || !entry) {
+      throw new Error(`GC 诊断 service 身份或 bin 不匹配：${serviceMetadata.packageName}`)
+    }
+    // Taro runner 在加载 CLI 前改写 argv；preload 必须绑定 Node 最初执行的仓库入口。
+    expectedEntry = await fs.realpath(serviceMetadata.repositoryEntry
+      ? path.resolve(versionMeta.root, serviceMetadata.repositoryEntry)
+      : path.resolve(path.dirname(packagePath), entry))
     await fs.copyFile(preloadSourcePath, preloadPath)
     await fs.copyFile(pathHelperSourcePath, path.join(sessionDirectory, 'gc-paths.mjs'))
     preloadSha256 = createHash('sha256').update(await fs.readFile(preloadPath)).digest('hex')

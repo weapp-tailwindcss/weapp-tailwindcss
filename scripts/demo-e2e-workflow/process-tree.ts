@@ -4,7 +4,7 @@ import type { ProcessIdentity } from './process-table'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { runProcessCommand } from './process-command'
-import { collectOwnedProcesses, readProcessSubset, readProcessTable } from './process-table'
+import { createProcessOwnershipTracker, remainingProbeBudget } from './process-ownership'
 
 interface CleanupOptions {
   cooperativeMs?: number
@@ -12,116 +12,18 @@ interface CleanupOptions {
   observer?: Pick<WorkflowProcessObserver, 'table' | 'subset'>
 }
 
-function remainingProbeBudget(deadline: number) {
-  const remaining = deadline - Date.now()
-  // 只剩最后一个毫秒时不能再建立有界探针；所有实际调度入口必须重新核对，
-  // 不能沿用外层检查后已被调度开销消耗的预算。
-  if (!Number.isFinite(remaining) || remaining <= 1) {
-    throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
-  }
-  return remaining
-}
-
 /** 仅清理独立组和已证明身份的后代；未登记的 double-fork 不属于确认范围。 */
 export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<unknown>, options: CleanupOptions = {}) {
-  let group = process.platform === 'win32' ? undefined : child.pid
-  let owned = new Map<number, ProcessIdentity>()
-  let initialized = false
+  const ownership = createProcessOwnershipTracker(child, closed, options)
+  const capture = ownership.capture
   let stopping: Promise<void> | undefined
-  let didClose = false
-  let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
-  let identityError: unknown
-  const readTable = (timeoutMs: number, signal: AbortSignal) => options.observer
-    ? options.observer.table(timeoutMs, signal)
-    : readProcessTable(timeoutMs, signal)
-  const readSubset = (group: number | undefined, pids: number[], timeoutMs: number, signal?: AbortSignal) => options.observer
-    ? options.observer.subset(pids, timeoutMs, signal)
-    : readProcessSubset(group, pids, timeoutMs, signal)
-  void closed.then(() => {
-    didClose = true
-  })
-  const capture = (deadline = Date.now() + 5000) => {
-    if (pending) {
-      pending.budget.deadline = Math.min(pending.budget.deadline, deadline)
-      return pending.promise
-    }
-    const controller = new AbortController()
-    const budget = { deadline }
-    const assertCurrent = () => {
-      controller.signal.throwIfAborted()
-      if (Date.now() > budget.deadline) {
-        throw new Error('进程归属扫描结果超过截止时间，不能更新身份。')
-      }
-    }
-    const scan = async () => {
-      controller.signal.throwIfAborted()
-      const remaining = remainingProbeBudget(budget.deadline)
-      const exited = child.exitCode !== null || child.signalCode !== null
-      const rows = initialized && (didClose || exited)
-        ? await readSubset(group, [...owned.keys()], remaining, controller.signal)
-        : await readTable(remaining, controller.signal)
-      assertCurrent()
-      return rows
-    }
-    const promise = (async () => {
-      if (!child.pid) {
-        return new Map<number, ProcessIdentity>()
-      }
-      const running = () => child.exitCode === null && child.signalCode === null
-      const wasRunning = running()
-      let rows = await scan()
-      if (!initialized) {
-        // 系统快照可能先观察到退出，ChildProcess 的 close/exit 尚未进入 JS；同一绝对预算内等待身份或退出。
-        while (running() && !rows.some(row => row.pid === child.pid && !row.zombie)) {
-          const remaining = budget.deadline - Date.now()
-          if (remaining <= 0) {
-            throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
-          }
-          await Promise.race([closed, delay(Math.min(25, remaining))])
-          assertCurrent()
-          if (running()) {
-            if (Date.now() >= budget.deadline) {
-              throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
-            }
-            rows = await scan()
-          }
-        }
-      }
-      if (!initialized && wasRunning && !running() && group && rows.some(row => row.group === group && !row.zombie)) {
-        // 首次扫描跨越本体退出时，旧快照不能证明根身份；同一预算内重采，仅空组可自然收尾。
-        rows = await scan()
-      }
-      assertCurrent()
-      if (!initialized) {
-        const root = rows.find(row => row.pid === child.pid && !row.zombie)
-        if (root && running()) {
-          owned.set(root.pid, root)
-        }
-        initialized = true
-      }
-      const current = collectOwnedProcesses(rows, owned, group)
-      const groupRows = group ? rows.filter(row => row.group === group && !row.zombie) : []
-      if (groupRows.length && ![...current.values()].some(row => row.group === group)) {
-        identityError = new Error(`本轮进程组缺少仍匹配的身份锚，不能重新领取 PGID=${group}；清理范围未确认。`)
-        throw identityError
-      }
-      if (!groupRows.length) {
-        group = undefined
-      }
-      owned = current
-      return current
-    })().finally(() => {
-      pending = undefined
-    })
-    pending = { promise, controller, budget }
-    return promise
-  }
   const stop = async (cooperative: boolean) => {
     if (!child.pid) {
       return
     }
     const errors: unknown[] = []
     const sent: Array<{ pid: number, started?: string, method: string }> = []
+    const requestedSignals = new Set<'SIGTERM' | 'SIGKILL'>()
     const fail = (message: string): never => {
       const targets = sent.map(item => `pid=${item.pid} started=${item.started ?? '未采集（本次 spawn 身份）'} method=${item.method}`).join('；')
       const termination = sent.length
@@ -129,23 +31,38 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         : []
       throw new AggregateError([...errors, ...termination], message)
     }
-    let current = owned
+    const terminateSpawnedChild = (signal: 'SIGTERM' | 'SIGKILL') => {
+      if (ownership.didClose || child.exitCode !== null || child.signalCode !== null || requestedSignals.has(signal) || sent.some(item => item.pid === child.pid && item.method === signal)) {
+        return
+      }
+      requestedSignals.add(signal)
+      // 探针失败不能撤销本次 spawn 的活句柄；不使用旧 PID 或进程组快照扩大清理范围。
+      try {
+        if (!child.kill(signal)) {
+          throw new Error(`本轮子进程 pid=${child.pid} 未接受 ${signal}`)
+        }
+        sent.push({ pid: child.pid!, method: signal })
+      }
+      catch (error) {
+        errors.push(error)
+      }
+    }
+    let current = ownership.current
     let verified = false
-    const read = async (deadline: number) => {
+    const read = async (probeDeadline: number) => {
       let remaining: number
       try {
-        remaining = remainingProbeBudget(deadline)
+        remaining = remainingProbeBudget(probeDeadline)
       }
       catch {
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
-      const task = capture(deadline)
-      const controller = pending?.controller
-      const timer = setTimeout(() => controller?.abort(new Error('进程归属扫描超过清理截止时间。')), remaining)
+      const task = capture(probeDeadline)
+      const timer = setTimeout(() => ownership.abortPending(new Error('进程归属扫描超过清理截止时间。')), remaining)
       try {
         current = await task
-        if (Date.now() > deadline) {
+        if (Date.now() > probeDeadline) {
           throw new Error('进程归属扫描结果超过清理截止时间，不能确认按时完成。')
         }
         verified = true
@@ -153,7 +70,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       }
       catch (error) {
         verified = false
-        errors.push(error)
+        if (!errors.includes(error)) {
+          errors.push(error)
+        }
+        terminateSpawnedChild(Date.now() >= deadline ? 'SIGKILL' : 'SIGTERM')
         return false
       }
       finally {
@@ -161,11 +81,11 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       }
     }
     const complete = () => {
-      if (!didClose || !verified || current.size !== 0) {
+      if (!ownership.didClose || !verified || current.size !== 0) {
         return false
       }
-      if (identityError && !errors.includes(identityError)) {
-        errors.push(identityError)
+      if (ownership.identityError && !errors.includes(ownership.identityError)) {
+        errors.push(ownership.identityError)
       }
       if (sent.length || errors.length) {
         fail('阶段子进程清理未正常完成；清理未成功。')
@@ -176,6 +96,9 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     const cleanupMs = options.cleanupMs ?? 2000
     const deadline = cooperativeDeadline + cleanupMs
     const graceDeadline = cooperativeDeadline + Math.floor(cleanupMs / 2)
+    if (ownership.failure !== undefined) {
+      terminateSpawnedChild('SIGTERM')
+    }
     while (Date.now() < cooperativeDeadline) {
       // 合作窗口决定何时强制终止，不是身份查询预算；跨边界查询仍消耗预先固定的总截止。
       if (!await read(Math.min(Date.now() + 5000, deadline))) {
@@ -200,22 +123,13 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       if (Date.now() >= deadline) {
         break
       }
-      if (!available && !didClose && child.exitCode === null && child.signalCode === null) {
-        // 进程表不可用时仅停止本次 spawn 的本体，归属失败仍保留。
-        try {
-          if (!child.kill(value)) {
-            throw new Error(`本轮子进程 pid=${child.pid} 未接受 ${value}`)
-          }
-          sent.push({ pid: child.pid, method: value })
-        }
-        catch (error) {
-          errors.push(error)
-        }
+      if (!available) {
+        terminateSpawnedChild(value)
       }
       else if (available) {
         let latestRows: ProcessIdentity[] = []
         try {
-          latestRows = await readSubset(group, [...current.keys()], remainingProbeBudget(deadline))
+          latestRows = await ownership.readSubset(ownership.group, [...current.keys()], remainingProbeBudget(deadline))
         }
         catch (error) {
           errors.push(error)
@@ -261,13 +175,17 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         }
       }
     }
-    fail(`阶段子进程有界清理未成功；close=${didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
+    // 预算耗尽不再新建探针或等待；仍活的本次句柄不能因观察失败遗漏最后的终止请求。
+    if (errors.length) {
+      terminateSpawnedChild('SIGKILL')
+    }
+    fail(`阶段子进程有界清理未成功；close=${ownership.didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
   }
   return {
     capture() {
       // 停止后不再接受周期扫描；只有 stop 内部可以继续核对本轮身份。
       if (stopping) {
-        return Promise.resolve(owned)
+        return Promise.resolve(ownership.current)
       }
       return capture()
     },

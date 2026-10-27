@@ -10,6 +10,7 @@ export function createNativeCaptureBudget(registeredCases: number) {
   let stopped = false
   let controller: AbortController | undefined
   let completion: Promise<void> | undefined
+  let cleanupDeadlineFailure: Error | undefined
   let cleanupFailure: unknown
   return {
     pending: () => inFlight,
@@ -23,9 +24,19 @@ export function createNativeCaptureBudget(registeredCases: number) {
         await Promise.race([
           completion,
           new Promise<never>((_resolve, reject) => {
-            timer = setTimeout(() => reject(new Error(`Native capture cleanup exceeded ${timeout}ms; owned operation is still pending`)), timeout)
+            timer = setTimeout(() => {
+              // 迟到结束只改变在途状态，不能把已经违反的收尾期限改写为成功。
+              cleanupDeadlineFailure ??= new Error(`Native capture cleanup exceeded ${timeout}ms; owned operation is still pending`)
+              reject(cleanupDeadlineFailure)
+            }, timeout)
           }),
         ])
+        if (cleanupDeadlineFailure !== undefined) {
+          if (cleanupFailure !== undefined) {
+            throw new AggregateError([cleanupDeadlineFailure, cleanupFailure], 'Native capture cleanup failed after exceeding its deadline', { cause: cleanupDeadlineFailure })
+          }
+          throw cleanupDeadlineFailure
+        }
         if (cleanupFailure !== undefined) {
           throw cleanupFailure
         }
@@ -47,6 +58,7 @@ export function createNativeCaptureBudget(registeredCases: number) {
       }
       captures++
       started = performance.now()
+      const deadline = started + NATIVE_CAPTURE_TIMEOUT
       const activeController = controller = new AbortController()
       inFlight = true
       completion = undefined
@@ -73,11 +85,19 @@ export function createNativeCaptureBudget(registeredCases: number) {
         const result = await Promise.race([
           owned,
           new Promise<never>((_resolve, reject) => {
-            timer = setTimeout(() => {
+            const expire = () => {
               const error = new Error(`Native semantic host capture exceeded ${NATIVE_CAPTURE_TIMEOUT}ms`)
               activeController.abort(error)
               reject(error)
-            }, NATIVE_CAPTURE_TIMEOUT)
+            }
+            // 同步启动与诊断前奏同样占用本次预算，不能从 operation 返回后重新计时。
+            const remaining = Math.max(0, deadline - performance.now())
+            if (remaining === 0) {
+              expire()
+            }
+            else {
+              timer = setTimeout(expire, Math.ceil(remaining))
+            }
           }),
         ])
         activeController.signal.throwIfAborted()

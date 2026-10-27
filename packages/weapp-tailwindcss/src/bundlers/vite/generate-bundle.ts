@@ -2,6 +2,7 @@ import type { OutputAsset, OutputChunk } from 'rollup'
 import type { GenerateBundleContext, GenerateBundleThis } from './generate-bundle/types'
 import { beginCompilerShadowRun } from '@/compiler'
 import { runWithRemovedBundleFiles } from './bundle-state'
+import { createViteCssSourceTaskScope } from './css-memory/source-task-scope'
 import { createFrameworkStyleMemory } from './generate-bundle/framework-style-memory'
 import { createGenerateBundleHook as createRuntimeGenerateBundleHook } from './generate-bundle/runtime'
 import {
@@ -23,6 +24,7 @@ export function createGenerateBundleHook(context: GenerateBundleContext) {
   const rememberCssSource = context.rememberCssSource
   const frameworkRootImportShellTargetByFile = context.frameworkRootImportShellTargetByFile ?? new Map<string, string>()
   const frameworkStyleMemory = createFrameworkStyleMemory(frameworkRootImportShellTargetByFile)
+  const sourceTaskScope = createViteCssSourceTaskScope(context.captureCssSource)
   const runtimeHandler = createRuntimeGenerateBundleHook({
     ...context,
     frameworkRootImportShellTargetByFile,
@@ -42,10 +44,10 @@ export function createGenerateBundleHook(context: GenerateBundleContext) {
     const removedFiles = removalConsumer?.consume(Object.keys(bundle)) ?? []
     const rememberFrameworkStyles = frameworkStyleMemory.prepare(bundle, removedFiles)
     beginCompilerShadowRun(context.runtimeState)
-    const runRuntime = () => runWithRemovedBundleFiles(
+    const runRuntime = () => sourceTaskScope.run(captureCssSource => runWithRemovedBundleFiles(
       removedFiles,
-      () => runtimeHandler.call(this, options, bundle),
-    )
+      () => runtimeHandler.call(this, options, bundle, { captureCssSource }),
+    ))
     await (relationOwner
       ? withViteSourceOutputRelationOwner(relationOwner, runRuntime)
       : runRuntime())

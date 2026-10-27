@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { IDE_PROBE_BLOCKED_EXIT_CODE } from './framework-ide/probe-failure'
 import { runFrameworkIdeProbeWithRetry } from './frameworkIdeProbeRunner'
 
 const { execa, diagnostics } = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ vi.mock('./frameworkIdeDiagnostics', () => ({ collectFrameworkIdeDiagnostics: di
 afterEach(() => {
   execa.mockReset()
   diagnostics.mockClear()
+  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
 
@@ -75,5 +77,52 @@ describe('framework IDE probe retries', () => {
     execa.mockRejectedValue(error)
     await expect(runFrameworkIdeProbeWithRetry('fixture', timing)).rejects.toBe(error)
     expect(execa).toHaveBeenCalledOnce()
+  })
+
+  it.each(['0', '1'])('子进程明确报告环境阻断后不重试，debug=%s', async (debug) => {
+    vi.stubEnv('E2E_IDE_DEBUG', debug)
+    const error = Object.assign(new Error('DevTools did not respond to protocol method App.captureScreenshot within 1812ms'), {
+      exitCode: IDE_PROBE_BLOCKED_EXIT_CODE,
+      ...(debug === '0' ? { stderr: 'WechatEnvironmentError: 本轮协议请求超时\nDevTools did not respond to protocol method App.captureScreenshot within 1812ms' } : {}),
+    })
+    execa.mockRejectedValueOnce(error).mockResolvedValueOnce({ stdout: '' })
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+
+    await expect(runFrameworkIdeProbeWithRetry('fixture', timing)).rejects.toBe(error)
+
+    expect(execa).toHaveBeenCalledOnce()
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  it('补充诊断失败不能覆盖已确认的子进程阻断终态和首次证据', async () => {
+    const error = Object.assign(new Error('DevTools did not respond to protocol method App.captureScreenshot'), {
+      exitCode: IDE_PROBE_BLOCKED_EXIT_CODE,
+      stdout: 'first watch evidence',
+      stderr: 'first protocol failure',
+    })
+    diagnostics.mockRejectedValueOnce(new Error('diagnostics failed'))
+    execa.mockRejectedValueOnce(error).mockResolvedValueOnce({ stdout: '' })
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+
+    await expect(runFrameworkIdeProbeWithRetry('fixture', timing)).rejects.toBe(error)
+
+    expect(error.message).toContain('diagnostics failed')
+    expect(error.stdout).toBe('first watch evidence')
+    expect(error.stderr).toBe('first protocol failure')
+    expect(execa).toHaveBeenCalledOnce()
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  it.each(['timedOut', 'isCanceled', 'signal'])('父进程%s后收尾未确认，不能按先前日志重试', async (field) => {
+    const error = Object.assign(new Error('Framework IDE probe reLaunch timed out'), {
+      [field]: field === 'signal' ? 'SIGKILL' : true,
+    })
+    execa.mockRejectedValueOnce(error).mockResolvedValueOnce({ stdout: '' })
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+
+    await expect(runFrameworkIdeProbeWithRetry('fixture', timing)).rejects.toBe(error)
+
+    expect(execa).toHaveBeenCalledOnce()
+    expect(write).not.toHaveBeenCalled()
   })
 })

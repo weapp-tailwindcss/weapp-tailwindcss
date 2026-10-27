@@ -238,10 +238,36 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
     }
   }
   catch (error) {
-    await writeFile(path.join(artifactDir, 'browser-errors.json'), JSON.stringify(events, null, 2))
-    await writeFile(path.join(artifactDir, 'browser-failure.html'), await page.content()).catch(() => {})
-    await page.screenshot({ path: path.join(artifactDir, 'browser-failure.png') }).catch(() => {})
-    await browser.close()
-    throw error
+    // 单测临时目录随后会被清理，关键就绪状态也必须进入 CI 错误链。
+    const state = {
+      documentVersion,
+      pageUrl: page.url(),
+      documentResponse: documentResponse && { url: documentResponse.url(), status: documentResponse.status() },
+      pendingModules: [...pendingModules].map(request => request.url()),
+      transportReady,
+      transientModuleFailure,
+      startupReloads,
+      events,
+    }
+    const failure = new Error(`${error?.message ?? String(error)}\nBrowser startup state: ${JSON.stringify(state)}`, { cause: error })
+    const failures = [failure]
+    // 任一证据写入失败也继续采集其余证据并关闭本次浏览器。
+    for (const task of [
+      () => writeFile(path.join(artifactDir, 'browser-errors.json'), JSON.stringify(events, null, 2)),
+      async () => writeFile(path.join(artifactDir, 'browser-failure.html'), await page.content()),
+      () => page.screenshot({ path: path.join(artifactDir, 'browser-failure.png') }),
+      () => browser.close(),
+    ]) {
+      try {
+        await task()
+      }
+      catch (error) {
+        failures.push(error)
+      }
+    }
+    if (failures.length === 1) {
+      throw failure
+    }
+    throw new AggregateError(failures, `${failure.message}\nBrowser evidence/cleanup errors:\n${failures.slice(1).map(error => error?.stack ?? String(error)).join('\n')}`)
   }
 }

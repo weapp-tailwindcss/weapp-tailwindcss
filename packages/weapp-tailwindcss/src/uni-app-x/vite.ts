@@ -61,18 +61,19 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     tailwindRootCssModuleIds = [],
     generateCss,
     hmrCssModuleVersions,
+    beginSfcStyleUpdate,
     jsHandler,
     ensureRuntimeClassSet,
     getResolvedConfig,
     isEnabled = () => true,
     isNativeAppStyleTarget = () => false,
-    isWebGeneratorTarget = () => resolveUniUtsPlatform().isWeb,
+    isWebGeneratorTarget = () => utsPlatform.isWeb,
     uniAppX,
     viteProcessedCssSourceFiles = [],
     webCssEntryDiagnostics,
   } = options
   const resolvedUniAppXOptions = resolveUniAppXOptions(uniAppX)
-  const utsPlatform = resolveUniUtsPlatform()
+  const utsPlatform = options.uniUtsPlatform ?? resolveUniUtsPlatform()
   const isIosPlatform = providedIosPlatform ?? utsPlatform.isAppIos
   const cssHandlerOptionsCache = new Map<string, {
     isMainChunk: boolean
@@ -96,11 +97,11 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
   const webSfcHmr = createUniAppXWebSfcHmr({
     isEnabled: () => isEnabled() && isWebGeneratorTarget() && getResolvedConfig()?.command === 'serve',
     transform: (source, id) => runTransformSfc(source, id, {}),
-    hmrCssModuleVersions,
+    beginSfcStyleUpdate,
   })
   const webLocalStyle = createUniAppXWebLocalStyleBridge(isWebGeneratorTarget, hmrCssModuleVersions)
   let componentLocalStyleEnabled: boolean | undefined
-  const isNativeAppBuildTarget = createUniAppXNativeBuildTargetResolver(getResolvedConfig)
+  const isNativeAppBuildTarget = createUniAppXNativeBuildTargetResolver(getResolvedConfig, utsPlatform)
   const nativeHmrReloader = createUniAppXNativeHmrReloader({
     ensureRuntimeClassSet,
     isNativeAppBuildTarget,
@@ -129,7 +130,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     return resolvedUniAppXOptions.componentLocalStyles.enabled && (isNativeAppBuildTarget(id) || isPageLocalStyleFile(id, resolvedUniAppXOptions.componentLocalStyles.pageMatcher))
   }
   function isHarmonyBuildTarget() {
-    if (resolveUniUtsPlatform().isAppHarmony) {
+    if (utsPlatform.isAppHarmony) {
       return true
     }
     return isUniAppXHarmonyOutDir(getResolvedConfig()?.build?.outDir)
@@ -309,7 +310,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     const runtimeSet = await ensureRuntimeClassSet()
     const currentRuntimeSet: Set<string> = moduleGraphCandidates?.size
       ? new Set([...runtimeSet, ...moduleGraphCandidates])
-      : runtimeSet
+      : new Set(runtimeSet)
     nativeHmrReloader.remember(currentRuntimeSet)
     const transformUVue = await loadTransformUVue()
     const transformOptions = omitUndefined({
@@ -404,9 +405,6 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         webCssEntryDiagnostics?.flush()
       }
     },
-    closeBundle() {
-      webCssEntryDiagnostics?.dispose()
-    },
   }
 
   const stylePlaceholderPlugin: Plugin = {
@@ -418,7 +416,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         if (!isEnabled()) {
           return
         }
-        const currentUtsPlatform = resolveUniUtsPlatform()
+        const currentUtsPlatform = utsPlatform
         const canInferHarmonyTarget = !currentUtsPlatform.normalized || currentUtsPlatform.isApp
         const isHarmonyTarget = currentUtsPlatform.isAppHarmony || (canInferHarmonyTarget && isHarmonyBuildTarget())
         if (!isNativeAppBuildTarget() && !isHarmonyTarget) {

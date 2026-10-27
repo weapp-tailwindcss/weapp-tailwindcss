@@ -105,6 +105,34 @@ describe('React Native runtime wait state', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
+  it.each([100, NATIVE_CAPTURE_TIMEOUT + 1])('同步启动耗时 %dms 仍占用原绝对截止时间', async (prelude) => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(1)
+    let signal!: AbortSignal
+    let release!: () => void
+    const result = budget.capture((input) => {
+      signal = input
+      vi.advanceTimersByTime(prelude)
+      return new Promise<void>((resolve) => {
+        release = resolve
+      })
+    }).catch(error => error)
+    try {
+      await vi.advanceTimersByTimeAsync(Math.max(0, NATIVE_CAPTURE_TIMEOUT - prelude))
+      expect(signal.aborted).toBe(true)
+      expect(await result).toEqual(new Error('Native semantic host capture exceeded 10000ms'))
+      expect(budget.pending()).toBe(true)
+      expect(budget.elapsed()).toBe(NATIVE_CAPTURE_TIMEOUT)
+    }
+    finally {
+      release()
+      await result
+      await budget.drain()
+    }
+    expect(budget.pending()).toBe(false)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
   it('deadline 取消真实所属截图子进程，退出后不能再写入迟到产物', async () => {
     vi.useFakeTimers()
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-capture-cancel-'))
@@ -176,13 +204,24 @@ describe('React Native runtime wait state', () => {
     const failed = expect(capturing).rejects.toThrow(/host capture.*10000ms/)
     await vi.advanceTimersByTimeAsync(10_000)
     await failed
-    const drained = expect(budget.drain(100)).rejects.toThrow(/cleanup.*100ms/)
+    const drained = budget.drain(100).catch(error => error)
+    const concurrent = budget.drain(100).catch(error => error)
     await vi.advanceTimersByTimeAsync(100)
-    await drained
+    const firstFailure = await drained
+    expect(firstFailure).toEqual(new Error('Native capture cleanup exceeded 100ms; owned operation is still pending'))
+    expect(await concurrent).toBe(firstFailure)
+    const repeated = budget.drain(100).catch(error => error)
+    await vi.advanceTimersByTimeAsync(100)
+    expect(await repeated).toBe(firstFailure)
     expect(budget.pending()).toBe(true)
     const late = new Error('late native failure')
     reject(late)
-    await expect(budget.drain(100)).rejects.toBe(late)
+    const finalFailure = await budget.drain(100).catch(error => error)
+    expect(finalFailure).toBeInstanceOf(AggregateError)
+    expect(finalFailure.errors).toHaveLength(2)
+    expect(finalFailure.errors[0]).toBe(firstFailure)
+    expect(finalFailure.errors[1]).toBe(late)
+    expect(finalFailure.cause).toBe(firstFailure)
     expect(budget.pending()).toBe(false)
     expect(budget.elapsed()).toBe(10_000)
     expect(vi.getTimerCount()).toBe(0)

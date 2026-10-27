@@ -5,10 +5,10 @@ import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { disposeCompilerOwner } from '@/compiler'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { captureFrameworkPostcssOptions } from '@/generation/framework-postcss'
-import { generateTailwindV4Css } from '@/generation/service'
+import { generateTailwindV4Css } from '@/context/generation'
 
 describe('rpx warning with real Tailwind generation', () => {
   afterEach(() => {
@@ -30,7 +30,7 @@ describe('rpx warning with real Tailwind generation', () => {
   it.each(scenarios.flatMap(scenario => ['legacy', 'graph'].map(compiler => ({ ...scenario, compiler }))))('keeps output semantics and warning policy: %j', async (scenario) => {
     vi.stubEnv('WEAPP_TAILWINDCSS_COMPILER', scenario.compiler)
     const directory = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-rpx-warning-'))
-    const opts = getCompilerContext({
+    const opts = createCompilerContext({
       tailwindcssBasedir: process.cwd(),
       generator: { target: scenario.target },
       platform: scenario.platform,

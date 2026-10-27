@@ -1,5 +1,6 @@
 import type { Browser, Page } from 'playwright'
-import type { CliOptions, WatchCase, WatchSession } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types.ts'
+import type { IdeWatchCase } from '../../e2e/frameworkIdeHotUpdateArtifacts.ts'
+import type { CliOptions, WatchSession } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types.ts'
 import type { StyleIsolationVariant } from './style-isolation.ts'
 import type { CaseResult, MiniProgramHmrMutation, MiniProgramHmrVisualConfig, MiniProgramThemeExpectation, RuntimeContext, VisualHmrStepResult } from './types.ts'
 import fs from 'node:fs/promises'
@@ -16,6 +17,7 @@ import {
 } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/index.ts'
 import { createWatchSession, runPnpmCommand, sleep } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session.ts'
 import { closeMiniProgramAndCleanup, launchMiniProgramInCleanDevTools } from './ide.ts'
+import { readMiniProgramProject, resolveMiniProgramWatchProject } from './mini-program-project.ts'
 import { captureMiniProgramViewport, readMiniProgramWindowMetrics } from './mini-program-screenshot'
 import { findFreePort, killProcessTree, spawnPnpm, waitForUrl } from './process.ts'
 import { resolveHmrScreenshotPath, resolveHmrStepScreenshotPath, resolveScreenshotPath, resolveThemeScreenshotPath } from './screenshots.ts'
@@ -460,7 +462,11 @@ async function runMiniProgramHmrCase(
     await waitForOutputsReady(watchCase, options, session, sessionStartedAt)
     await waitForInitialWarmup(watchCase, options, session, sessionStartedAt)
 
-    const projectPath = await resolveMiniProgramWatchProjectPath(watchCase, item, context)
+    const { projectPath, miniprogramRoot } = await resolveMiniProgramWatchProject(
+      watchCase.outputWxml,
+      createMiniProgramProjectPathCandidates(item, context),
+    )
+    const ideWatchCase: IdeWatchCase = { ...watchCase, miniprogramRoot }
     ownedProjectPath = projectPath
     restoreProjectConfig = await disableDevToolsCompileHotReload(projectPath)
     const launched = await launchMiniProgramInCleanDevTools(item.name, projectPath, port, caseTimeoutMs)
@@ -480,7 +486,7 @@ async function runMiniProgramHmrCase(
     const beforePage = beforeRelaunch.page
     await withTimeout(`${item.name} waitFor before`, 10_000, beforePage?.waitFor?.(1000) ?? Promise.resolve())
 
-    const { artifacts: baselineArtifacts, mtimes } = await collectArtifactMtimes(watchCase)
+    const { artifacts: baselineArtifacts, mtimes } = await collectArtifactMtimes(ideWatchCase)
     if (watchCase.initialMutationDelayMs) {
       await sleep(watchCase.initialMutationDelayMs)
     }
@@ -513,7 +519,7 @@ async function runMiniProgramHmrCase(
         options,
         session,
         mutationStartedAt,
-        async () => hasAnyNeedle(await readArtifacts(watchCase), [mutation!.marker, mutation!.classLiteral]),
+        async () => hasAnyNeedle(await readArtifacts(ideWatchCase), [mutation!.marker, mutation!.classLiteral]),
       )
       await waitForMarkerState(watchCase, mutation.marker, 'present', options, session, mutationStartedAt)
 
@@ -565,7 +571,7 @@ async function runMiniProgramHmrCase(
           liveReadStatus: livePage.liveReadStatus,
         },
       })
-      currentMtimes = (await collectArtifactMtimes(watchCase)).mtimes
+      currentMtimes = (await collectArtifactMtimes(ideWatchCase)).mtimes
     }
     if (stepResults.length === 0) {
       throw new Error(`${item.name} 小程序 visual HMR 没有产生截图步骤`)
@@ -613,7 +619,7 @@ async function runMiniProgramHmrCase(
           steps: stepResults,
         },
         liveContentPreview: liveContent.slice(0, 800),
-        outputChangedCount: (await readArtifacts(watchCase)).filter((artifact) => {
+        outputChangedCount: (await readArtifacts(ideWatchCase)).filter((artifact) => {
           const baseline = baselineArtifacts.find(item => item.file === artifact.file)
           return baseline?.content !== artifact.content
         }).length,
@@ -756,7 +762,11 @@ export function miniProgramPageMatchesRoute(page: any, route: string) {
 
 export async function miniProgramProjectStartsAtRoute(projectPath: string, route: string) {
   try {
-    const appConfig = JSON.parse(await fs.readFile(path.resolve(projectPath, 'app.json'), 'utf8')) as { pages?: unknown }
+    const project = await readMiniProgramProject(projectPath)
+    if (!project) {
+      return false
+    }
+    const appConfig = JSON.parse(await fs.readFile(path.resolve(project.miniprogramRoot, 'app.json'), 'utf8')) as { pages?: unknown }
     return Array.isArray(appConfig.pages)
       && typeof appConfig.pages[0] === 'string'
       && appConfig.pages[0].replace(/^\//, '') === route.replace(/^\//, '')
@@ -940,64 +950,6 @@ async function resolveMiniProgramProjectPath(
     }
   }
   return candidates[0]
-}
-
-async function resolveMiniProgramWatchProjectPath(
-  watchCase: WatchCase,
-  item: { name: string, projectPath: string },
-  context: RuntimeContext,
-) {
-  for (const candidate of createMiniProgramProjectPathCandidates(item, context)) {
-    if (await isProjectConfigCoveringOutput(candidate, watchCase.outputWxml)) {
-      return candidate
-    }
-  }
-  const outputProjectPath = await findAncestorWithProjectConfig(path.dirname(watchCase.outputWxml))
-  if (outputProjectPath) {
-    return outputProjectPath
-  }
-  return await resolveMiniProgramProjectPath(item, context)
-}
-
-async function isProjectConfigCoveringOutput(projectPath: string, outputFile: string) {
-  const projectConfigFile = path.resolve(projectPath, 'project.config.json')
-  let projectConfig: { miniprogramRoot?: string, srcMiniprogramRoot?: string }
-  try {
-    projectConfig = JSON.parse(await fs.readFile(projectConfigFile, 'utf8'))
-  }
-  catch {
-    return false
-  }
-
-  const roots = [
-    projectPath,
-    projectConfig.miniprogramRoot ? path.resolve(projectPath, projectConfig.miniprogramRoot) : undefined,
-    projectConfig.srcMiniprogramRoot ? path.resolve(projectPath, projectConfig.srcMiniprogramRoot) : undefined,
-  ].filter((item): item is string => Boolean(item))
-
-  return roots.some(root => isPathInside(outputFile, root))
-}
-
-function isPathInside(file: string, dir: string) {
-  const relative = path.relative(path.resolve(dir), path.resolve(file))
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
-}
-
-async function findAncestorWithProjectConfig(startDir: string) {
-  let current = path.resolve(startDir)
-  while (true) {
-    try {
-      await fs.access(path.resolve(current, 'project.config.json'))
-      return current
-    }
-    catch {
-    }
-    const parent = path.dirname(current)
-    if (parent === current) {
-      return undefined
-    }
-    current = parent
-  }
 }
 
 function createMiniProgramProjectPathCandidates(

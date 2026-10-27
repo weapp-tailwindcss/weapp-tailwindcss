@@ -14,7 +14,7 @@ describe('Vite 状态所有权', () => {
   it('watch 中间轮次保留状态，关闭 watcher 后仅释放一次', async () => {
     const dispose = vi.fn(async () => {})
     const plugin = createFrameworkRuntimeLifecycle({
-      getResolvedConfig: () => ({ build: { watch: {} } } as ResolvedConfig),
+      getResolvedConfig: () => ({ command: 'build', build: { watch: {} } } as ResolvedConfig),
       dispose,
     })
     await hook(plugin, 'closeBundle')()
@@ -26,7 +26,7 @@ describe('Vite 状态所有权', () => {
   it('普通构建完成后释放状态', async () => {
     const dispose = vi.fn(async () => {})
     const plugin = createFrameworkRuntimeLifecycle({
-      getResolvedConfig: () => ({ build: {} } as ResolvedConfig),
+      getResolvedConfig: () => ({ command: 'build', build: {} } as ResolvedConfig),
       dispose,
     })
     await hook(plugin, 'closeBundle')()

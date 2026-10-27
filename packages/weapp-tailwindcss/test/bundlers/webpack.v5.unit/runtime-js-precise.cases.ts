@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createJsHandler, getCompilerContextMock, mkdir, mkdtemp, os, path, replaceWxml, rm, testState, WeappTailwindcss, writeFile } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createContext, createJsHandler, createCompilerContextMock, mkdir, mkdtemp, os, path, replaceWxml, rm, testState, WeappTailwindcss, writeFile } from './shared'
 describe('bundlers/webpack WeappTailwindcss / runtime js precise matching', () => {
   setupWebpackV5UnitTest()
   it('keeps precise matching by default and still escapes classes when runtime set is fresh', async () => {
@@ -17,7 +17,7 @@ describe('bundlers/webpack WeappTailwindcss / runtime js precise matching', () =
         majorVersion: 4,
       },
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}
@@ -161,7 +161,7 @@ describe('bundlers/webpack WeappTailwindcss / runtime js precise matching', () =
           },
         } as any,
       })
-      getCompilerContextMock.mockReturnValue(testState.currentContext)
+      createCompilerContextMock.mockReturnValue(testState.currentContext)
 
       const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
       let currentAssetStore: Record<string, string> = {}

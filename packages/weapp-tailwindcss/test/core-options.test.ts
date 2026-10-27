@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => {
   const tailwindRuntime = {
     majorVersion: 4 as number | undefined,
   }
-  const getCompilerContext = vi.fn(() => ({
+  const createCompilerContext = vi.fn(() => ({
     templateHandler,
     styleHandler,
     jsHandler,
@@ -31,7 +31,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     ensureRuntimeClassSet,
-    getCompilerContext,
+    createCompilerContext,
     jsHandler,
     refreshTailwindcssRuntime,
     createTailwindRuntimeReadyPromise,
@@ -43,7 +43,7 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('@/context', () => ({
-  getCompilerContext: mocks.getCompilerContext,
+  createCompilerContext: mocks.createCompilerContext,
 }))
 
 vi.mock('@/tailwindcss/runtime', () => ({

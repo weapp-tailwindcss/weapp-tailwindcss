@@ -159,9 +159,9 @@ vi.mock('@/uni-app-x', async (importOriginal) => {
   }
 })
 
-export const getCompilerContextMock = vi.fn<(options?: unknown) => InternalContext>(() => currentContext)
+export const createCompilerContextMock = vi.fn<(options?: unknown) => InternalContext>(() => currentContext)
 vi.mock('@/context', () => ({
-  getCompilerContext: (options?: unknown) => getCompilerContextMock(options),
+  createCompilerContext: (options?: unknown) => createCompilerContextMock(options),
 }))
 
 export function setCurrentContext(nextContext: InternalContext) {
@@ -174,7 +174,7 @@ export function getCurrentContext() {
 
 export function resetVitePluginTestContext() {
   setCurrentContext(createContext())
-  getCompilerContextMock.mockClear()
+  createCompilerContextMock.mockClear()
   postcssHtmlTransformMock.mockClear()
   transformUVueMock.mockClear()
 }

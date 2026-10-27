@@ -64,4 +64,18 @@ describe('compiler calc configuration cache', () => {
     expect(insensitive.cache.output).toBe(false)
     expect(insensitive.css).toMatch(/width:\s*32rpx/)
   })
+
+  it('captures mapped configuration when a generation request is accepted', async () => {
+    const { compiler, request } = await createCase()
+    const values = new Map([['--spacing', '1rpx']])
+    const generate = () => compiler.generate({
+      ...request,
+      styleOptions: { cssCalc: ['--spacing'], customPropertyValues: values },
+    })
+    const accepted = generate()
+    values.set('--spacing', '2rpx')
+    expect((await accepted).css).toMatch(/width:\s*32rpx/)
+    expect((await generate()).css).toMatch(/width:\s*64rpx/)
+    expect(Object.isFrozen(values)).toBe(false)
+  })
 })

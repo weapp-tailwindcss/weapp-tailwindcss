@@ -73,7 +73,6 @@ async function runLocationCacheTasks(css: string, files: string[], transformResu
       cssIsMainChunk: false,
       cssRuntimeAffectingHash: cache.computeHash(css),
       cssShareScope: createCssTransformShareScope(outputFile, css),
-      linkedImpactSignature: '',
       outputFile,
       runtimeSignature: 'runtime',
       scopedGeneratorCandidateSignature: 'stable',

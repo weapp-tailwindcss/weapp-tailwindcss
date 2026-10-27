@@ -2,7 +2,7 @@ import type { TailwindcssRuntimeFactoryOptions } from '@/tailwindcss/v4'
 import type { InternalUserDefinedOptions } from '@/types'
 import { logger } from '@weapp-tailwindcss/logger'
 import { findWorkspaceRoot } from '@/context/workspace'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import {
   createTailwindcssRuntimeForBase,
   groupCssEntriesByBase,
@@ -23,7 +23,7 @@ export function createTailwindcssRuntimeFromContext(ctx: InternalUserDefinedOpti
     appType,
     arbitraryValues,
   } = ctx
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(ctx.generator, {
+  const { options: generatorOptions } = resolveContextGeneratorConfiguration(ctx, {
     appType,
     platform: ctx.cssOptions?.platform ?? ctx.platform,
     uniAppX: ctx.uniAppX,

@@ -7,7 +7,7 @@ import { shouldPreserveFrameworkRootMiniProgramImportShell } from '../generate-b
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
 import { isSourceRootPrefixedOutputFile, restoreCssImportAtRules } from './cleanup'
 import { prepareImportedCssCoverage } from './coverage'
-import { clearAssetSource, collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, hasNonCommentCss, isCssOutputFile, readAssetSource } from './markers-imports'
+import { clearAssetSource, collectImportedStyleFiles, getAssetFile, hasNonCommentCss, isCssOutputFile, readAssetSource } from './markers-imports'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
@@ -77,22 +77,17 @@ export function shouldReplayViteProcessedCssIntoMainCss(
 
 export function shouldPreserveMiniProgramImportShell(
   options: Pick<InjectViteProcessedCssAssetOptions, 'cssPipelineStrategy' | 'createCssPipelineContext' | 'opts'>,
-  bundle: OutputBundle,
   file: string,
   css: string,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   return context !== undefined
     && shouldPreserveFrameworkRootMiniProgramImportShell({
       css,
       file,
       isWebGeneratorTarget: context.currentGeneratorBranch?.isWeb === true,
       matchesCss: options.opts.cssMatcher(file),
-      shouldKeep: () => options.cssPipelineStrategy?.shouldKeepRootMiniProgramStyleAsImportShell?.({
-        ...context,
-        css,
-        file,
-      }),
+      shouldKeep: () => (options.cssPipelineStrategy?.styles?.rootImportShell !== undefined),
     })
 }
 
@@ -102,10 +97,10 @@ export function resolvePreservedImportShellInjectionTarget(
   file: string,
   css: string,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   if (
     context === undefined
-    || options.cssPipelineStrategy?.shouldNormalizeRootMiniProgramImportShell?.(context) !== true
+    || (options.cssPipelineStrategy?.styles?.rootImportShell === 'extract') !== true
   ) {
     return
   }
@@ -138,7 +133,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
   options: Pick<InjectViteProcessedCssAssetOptions, 'cssPipelineStrategy' | 'createCssPipelineContext'>,
   bundle: OutputBundle,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   const fileKey = normalizeOutputPathKey(file)
   if (
     !isRootStyleOutputFile(file)
@@ -168,11 +163,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
   )
   if (
     context !== undefined
-    && options.cssPipelineStrategy?.shouldPreferMatchedRootWebOutputTarget?.({
-      ...context,
-      file,
-      matchedRootWebOutputTargets,
-    }) === true
+    && (options.cssPipelineStrategy?.styles?.preferMatchedRootWebTarget === true) === true
     && !isMiniProgramStyleOutputFile(file)
     && matchedRootWebOutputTargets.length > 0
   ) {
@@ -203,12 +194,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
     )
   if (
     context !== undefined
-    && options.cssPipelineStrategy?.shouldPreferExplicitWebCssTargets?.({
-      ...context,
-      explicitRootTargets,
-      explicitWebCssTargets,
-      file,
-    }) === true
+    && (options.cssPipelineStrategy?.styles?.preferExplicitWebTargets === true) === true
     && !isMiniProgramStyleOutputFile(file)
     && explicitWebCssTargets.length > 0
   ) {

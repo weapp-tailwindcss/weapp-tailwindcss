@@ -4,6 +4,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
 import { md5Hash } from '@/cache/md5'
+import { isOpaqueConfigurationObject } from '@/compiler/configuration-snapshot'
+import { generatorTargetEnvKeys } from '@/runtime-branch/generator-target-env'
 
 const PAREN_CONTENT_RE = /\(([^)]+)\)/u
 const AT_LOCATION_RE = /at\s+(\S.*)$/u
@@ -21,13 +23,18 @@ type NormalizedOptionsValue
     | NormalizedOptionsArray
     | NormalizedOptionsRecord
 
-interface GlobalCompilerContextCacheHolder {
-  __WEAPP_TW_COMPILER_CONTEXT_CACHE__?: Map<string, InternalUserDefinedOptions>
+const callbackIdentities = new WeakMap<object, number>()
+let nextCallbackIdentity = 0
+
+function callbackIdentity(callback: object) {
+  let identity = callbackIdentities.get(callback)
+  if (identity === undefined) {
+    identity = ++nextCallbackIdentity
+    callbackIdentities.set(callback, identity)
+  }
+  return identity
 }
 
-const globalCacheHolder = globalThis as GlobalCompilerContextCacheHolder
-const compilerContextCache: Map<string, InternalUserDefinedOptions> = globalCacheHolder.__WEAPP_TW_COMPILER_CONTEXT_CACHE__
-  ?? (globalCacheHolder.__WEAPP_TW_COMPILER_CONTEXT_CACHE__ = new Map())
 const compilerContextKeyCacheByOptions = new WeakMap<UserDefinedOptions, Map<string, string | undefined>>()
 const compilerContextKeyCacheWithoutOptions = new Map<string, string | undefined>()
 
@@ -131,6 +138,8 @@ function detectCallerLocation() {
 }
 
 function getRuntimeCacheScope(opts?: UserDefinedOptions) {
+  // 显式项目根目录只固定来源身份，框架平台与生成目标仍会随本轮环境变化。
+  const generatorEnvironment = Object.fromEntries(generatorTargetEnvKeys.map(key => [key, process.env[key]]))
   // 为什么把 runtime scope 纳入 cache key：
   // 在 e2e/watch 场景中，同一个 Node 进程会连续构建多个 demo 项目。
   // 有些调用方依赖隐式 basedir 推导（未显式传 tailwindcssBasedir），
@@ -139,11 +148,13 @@ function getRuntimeCacheScope(opts?: UserDefinedOptions) {
   if (hasExplicitOptionBasedir(opts)) {
     return {
       caller: undefined as string | undefined,
+      generatorEnvironment,
     }
   }
 
   const runtimeScope = {
     caller: undefined as string | undefined,
+    generatorEnvironment,
     cwd: process.cwd(),
     init_cwd: process.env['INIT_CWD'],
     npm_config_local_prefix: process.env['npm_config_local_prefix'],
@@ -195,8 +206,9 @@ interface ComparableNormalizedValue {
 function createComparableNormalizedValue(
   rawValue: unknown,
   stack: WeakSet<object>,
+  preserveOpaqueIdentity = false,
 ): ComparableNormalizedValue {
-  const normalized = normalizeOptionsValue(rawValue, stack)
+  const normalized = normalizeOptionsValue(rawValue, stack, preserveOpaqueIdentity)
   return {
     normalized,
     sortKey: serializeNormalizedValue(normalized),
@@ -213,6 +225,7 @@ function getRuntimeCacheScopeValue(opts?: UserDefinedOptions) {
 function normalizeOptionsValue(
   rawValue: unknown,
   stack: WeakSet<object> = new WeakSet<object>(),
+  preserveOpaqueIdentity = false,
 ): NormalizedOptionsValue {
   if (rawValue === null) {
     return null
@@ -249,11 +262,28 @@ function normalizeOptionsValue(
     return encodeTaggedValue('Symbol', symbolValue.description ?? String(symbolValue))
   }
   if (type === 'function') {
-    return encodeTaggedValue('Function', (rawValue as (...args: unknown[]) => unknown).toString())
+    return encodeTaggedValue('Function', callbackIdentity(rawValue as object))
   }
 
+  if (preserveOpaqueIdentity && rawValue && typeof rawValue === 'object' && isOpaqueConfigurationObject(rawValue)) {
+    return {
+      __type: 'Opaque',
+      identity: callbackIdentity(rawValue),
+      // 只跳过当前实例的重复包装，后代仍须按同一模式保留不透明身份。
+      value: normalizeOptionsObjectValue(rawValue, stack, preserveOpaqueIdentity),
+    }
+  }
+
+  return normalizeOptionsObjectValue(rawValue, stack, preserveOpaqueIdentity)
+}
+
+function normalizeOptionsObjectValue(
+  rawValue: unknown,
+  stack: WeakSet<object>,
+  preserveOpaqueIdentity: boolean,
+): NormalizedOptionsValue {
   if (Array.isArray(rawValue)) {
-    return withCircularGuard(rawValue, stack, () => rawValue.map(item => normalizeOptionsValue(item, stack)))
+    return withCircularGuard(rawValue, stack, () => rawValue.map(item => normalizeOptionsValue(item, stack, preserveOpaqueIdentity)))
   }
   if (rawValue instanceof Date) {
     return encodeTaggedValue('Date', rawValue.toISOString())
@@ -278,7 +308,7 @@ function normalizeOptionsValue(
   }
   if (rawValue instanceof Set) {
     return withCircularGuard(rawValue, stack, () => {
-      const normalizedEntries = Array.from(rawValue, element => createComparableNormalizedValue(element, stack))
+      const normalizedEntries = Array.from(rawValue, element => createComparableNormalizedValue(element, stack, preserveOpaqueIdentity))
       normalizedEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       return {
         __type: 'Set',
@@ -289,11 +319,11 @@ function normalizeOptionsValue(
   if (rawValue instanceof Map) {
     return withCircularGuard(rawValue, stack, () => {
       const normalizedEntries = Array.from(rawValue.entries(), ([key, entryValue]) => {
-        const normalizedKey = createComparableNormalizedValue(key, stack)
+        const normalizedKey = createComparableNormalizedValue(key, stack, preserveOpaqueIdentity)
         return {
           key: normalizedKey.normalized,
           sortKey: normalizedKey.sortKey,
-          value: normalizeOptionsValue(entryValue, stack),
+          value: normalizeOptionsValue(entryValue, stack, preserveOpaqueIdentity),
         }
       })
       normalizedEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
@@ -330,7 +360,7 @@ function normalizeOptionsValue(
       const entries = Object.entries(rawValue as Record<string, unknown>)
       entries.sort(([a], [b]) => a.localeCompare(b))
       for (const [key, entryValue] of entries) {
-        result[key] = normalizeOptionsValue(entryValue, stack)
+        result[key] = normalizeOptionsValue(entryValue, stack, preserveOpaqueIdentity)
       }
       return result
     })
@@ -338,9 +368,14 @@ function normalizeOptionsValue(
   return encodeTaggedValue(typeof rawValue, String(rawValue))
 }
 
+/** 配置快照指纹不读取全局环境，回调及可选的不透明实例通过身份区分。 */
+export function createCompilerConfigurationFingerprint(value: unknown, options: { preserveOpaqueIdentity?: boolean } = {}): string {
+  return md5Hash(serializeNormalizedValue(normalizeOptionsValue(value, undefined, options.preserveOpaqueIdentity)))
+}
+
 export function createCompilerContextCacheKey(opts?: UserDefinedOptions): string | undefined {
   try {
-    const runtimeCacheScopeKey = createRuntimeCacheScopeKey(opts)
+    const runtimeCacheScopeKey = `${createRuntimeCacheScopeKey(opts)}:${createCompilerConfigurationFingerprint(opts)}`
     const keyStore = getCompilerContextKeyCacheStore(opts)
     const cached = keyStore.get(runtimeCacheScopeKey)
     if (cached !== undefined) {
@@ -365,19 +400,7 @@ export function withCompilerContextCache(
   opts: UserDefinedOptions | undefined,
   factory: () => InternalUserDefinedOptions,
 ): InternalUserDefinedOptions {
-  const cacheKey = createCompilerContextCacheKey(opts)
-  if (cacheKey) {
-    const cached = compilerContextCache.get(cacheKey)
-    if (cached) {
-      touchMapValue(compilerContextCache, cacheKey, cached)
-      return cached
-    }
-  }
-
-  const ctx = factory()
-  if (cacheKey) {
-    touchMapValue(compilerContextCache, cacheKey, ctx)
-    pruneMapToMaxSize(compilerContextCache, resolveCompilerContextCacheMax(DEFAULT_COMPILER_CONTEXT_CACHE_MAX))
-  }
-  return ctx
+  // 兼容旧内部入口，但可变编译状态永远属于新实例。
+  void opts
+  return factory()
 }

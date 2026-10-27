@@ -8,7 +8,7 @@ export {
   getTailwindV4IncrementalGenerateCacheStats,
   getTailwindV4IncrementalGenerateCacheStatsForTest,
 } from './generator'
-export { transformTailwindV4CssByTarget, transformTailwindV4CssToWeapp } from './miniprogram'
+export { transformTailwindV4CssToWeapp } from './miniprogram'
 export {
   resolveTailwindV4Source,
   resolveTailwindV4SourceFromRuntime,
@@ -25,3 +25,4 @@ export type {
   TailwindV4ResolvedSource,
   TailwindV4SourceOptions,
 } from './types'
+export { transformTailwindV4CssByTarget } from '@/context/generator-runtime'

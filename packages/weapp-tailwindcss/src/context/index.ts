@@ -3,19 +3,18 @@ import { rm } from 'node:fs/promises'
 import { logger } from '@weapp-tailwindcss/logger'
 import { initializeCache } from '@/cache'
 import { getDefaultOptions, resolveDefaultCssPreflight } from '@/defaults'
-import { resolveMpxPlatform } from '@/framework'
-import { normalizeFrameworkStylePlatform } from '@/framework/platform'
+import { initializeFrameworkEnvironment, resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
+import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { invalidateRuntimeClassSet, refreshTailwindcssRuntimeSymbol } from '@/tailwindcss/runtime'
 import { logRuntimeTailwindcssVersion } from '@/tailwindcss/runtime-logs'
 import { logTailwindcssTarget } from '@/tailwindcss/targets'
 import { applyV4CssCalcDefaults, warnMissingCssEntries } from '@/tailwindcss/v4'
-import { resolveUniAppXOptions } from '@/uni-app-x/options'
 import { resolveUnocssBareArbitraryValues } from '@/unocss'
 import { defuOverrideArray } from '@/utils'
-import { withCompilerContextCache } from './compiler-context-cache'
 import { toCustomAttributesEntities } from './custom-attributes'
 import { createHandlersFromContext } from './handlers'
 import { applyLoggerLevel } from './logger'
+import { getCompilerContextSourceOptions, registerCompilerContextSourceOptions } from './source-options'
 import { createTailwindcssRuntimeFromContext } from './tailwindcss'
 
 interface ClearTailwindcssRuntimeCacheOptions {
@@ -25,25 +24,22 @@ interface ClearTailwindcssRuntimeCacheOptions {
 function resolveContextCssPreflight(opts: UserDefinedOptions | undefined, ctx: InternalUserDefinedOptions, majorVersion: number | undefined): CssPreflightOptions {
   const userCssPreflight = opts?.cssOptions?.cssPreflight ?? opts?.cssPreflight
   const cssPreflight = resolveDefaultCssPreflight(userCssPreflight, majorVersion)
-  const shouldUseUniAppXPreflight = ctx.appType === 'uni-app-x' || resolveUniAppXOptions(ctx.uniAppX).enabled
-  if (cssPreflight === false || !shouldUseUniAppXPreflight) {
+  const defaults = resolveFrameworkPolicy(ctx, resolveFrameworkEnvironment(ctx)).preflight.defaults
+  if (cssPreflight === false || !defaults) {
     return cssPreflight
   }
   const userCssPreflightObject = userCssPreflight && typeof userCssPreflight === 'object'
     ? userCssPreflight
     : undefined
-  return {
-    ...cssPreflight,
-    'border-width': userCssPreflightObject && 'border-width' in userCssPreflightObject
-      ? (cssPreflight['border-width'] ?? false)
-      : '0',
-    'border-style': userCssPreflightObject && 'border-style' in userCssPreflightObject
-      ? (cssPreflight['border-style'] ?? false)
-      : false,
-    'border': userCssPreflightObject && 'border' in userCssPreflightObject
-      ? (cssPreflight['border'] ?? false)
-      : false,
-  }
+  return Object.fromEntries([
+    ...Object.entries(cssPreflight),
+    ...Object.entries(defaults).map(([property, value]) => [
+      property,
+      userCssPreflightObject && property in userCssPreflightObject
+        ? (cssPreflight[property] ?? false)
+        : value,
+    ]),
+  ])
 }
 
 function syncCssOptionsToLegacyFields(ctx: InternalUserDefinedOptions) {
@@ -101,13 +97,11 @@ function syncLegacyFieldsToCssOptions(ctx: InternalUserDefinedOptions) {
 }
 
 function applyFrameworkPlatformDefaults(ctx: InternalUserDefinedOptions) {
-  if (ctx.cssOptions?.platform || ctx.platform) {
-    ctx.platform = normalizeFrameworkStylePlatform(ctx.cssOptions?.platform ?? ctx.platform, ctx.appType) ?? ctx.platform
-    return
-  }
-  if (ctx.appType === 'mpx') {
-    ctx.platform = normalizeFrameworkStylePlatform(resolveMpxPlatform().normalized, ctx.appType) ?? ctx.platform
-  }
+  const policy = resolveFrameworkPolicy({
+    appType: ctx.appType,
+    platform: ctx.cssOptions?.platform ?? ctx.platform,
+  }, resolveFrameworkEnvironment(ctx))
+  Object.assign(ctx, policy.contextDefaults)
 }
 
 export async function clearTailwindcssRuntimeCache(
@@ -168,7 +162,11 @@ export async function clearTailwindcssRuntimeCache(
   }
 }
 
-function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
+const originalCacheConfigurations = new WeakMap<object, UserDefinedOptions['cache']>()
+
+/** 为一个编译实例创建独立的可变上下文；配置相同也不共享运行时。 */
+export function createCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
+  const sourceOptions = getCompilerContextSourceOptions(opts)
   const ctx = defuOverrideArray<InternalUserDefinedOptions, Partial<InternalUserDefinedOptions>[]>(
     opts as InternalUserDefinedOptions,
     getDefaultOptions() as InternalUserDefinedOptions,
@@ -176,6 +174,7 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   )
 
   ctx.arbitraryValues = resolveUnocssBareArbitraryValues(ctx.arbitraryValues, ctx.unocss)
+  initializeFrameworkEnvironment(ctx)
   ctx.escapeMap = ctx.customReplaceDictionary
   syncCssOptionsToLegacyFields(ctx)
   applyFrameworkPlatformDefaults(ctx)
@@ -183,6 +182,7 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   applyLoggerLevel(ctx.logLevel)
 
   const tailwindRuntime = createTailwindcssRuntimeFromContext(ctx) as TailwindcssRuntimeLike
+  initializeFrameworkEnvironment(tailwindRuntime, ctx)
   if ((opts as any)?.__internalViteDeferRuntimeLogs !== true) {
     logTailwindcssTarget(tailwindRuntime, ctx.tailwindcssBasedir)
     logRuntimeTailwindcssVersion(
@@ -216,7 +216,12 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   ctx.jsHandler = jsHandler
   ctx.templateHandler = templateHandler
 
-  ctx.cache = initializeCache(ctx.cache)
+  const priorRuntime = (opts as Partial<InternalUserDefinedOptions> | undefined)?.tailwindRuntime
+  const cacheConfiguration = priorRuntime && originalCacheConfigurations.has(priorRuntime)
+    ? originalCacheConfigurations.get(priorRuntime)
+    : opts?.cache
+  ctx.cache = initializeCache(cacheConfiguration)
+  originalCacheConfigurations.set(tailwindRuntime, cacheConfiguration)
   ctx.tailwindRuntime = tailwindRuntime
   const refreshTailwindcssRuntime = async (
     options?: RefreshTailwindcssRuntimeOptions,
@@ -236,6 +241,7 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
     value: refreshTailwindcssRuntime,
     configurable: true,
   })
+  registerCompilerContextSourceOptions(ctx, sourceOptions)
   return ctx
 }
 
@@ -245,5 +251,5 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
  * @returns 返回一个包含内部用户定义选项的对象，包括样式、JS 和模板处理程序，以及 Tailwind CSS 运行时。
  */
 export function getCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
-  return withCompilerContextCache(opts, () => createInternalCompilerContext(opts))
+  return createCompilerContext(opts)
 }

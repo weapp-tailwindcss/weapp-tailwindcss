@@ -16,7 +16,7 @@ describe('bundlers/webpack WeappTailwindcss / runtime js main updates', () => {
         root: null,
       }
     })
-    vi.doMock('@/generator', async (importOriginal) => {
+    vi.doMock('@/generator/runtime', async (importOriginal) => {
       const actual = await importOriginal<typeof import('@/generator')>()
       return {
         ...actual,

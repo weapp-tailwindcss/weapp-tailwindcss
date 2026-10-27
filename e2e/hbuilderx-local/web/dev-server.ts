@@ -1,17 +1,59 @@
-import type { ChildProcess } from 'node:child_process'
+import type { SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
 import process from 'node:process'
 import { createHBuilderXProjectAlias } from '../../../scripts/hbuilderx-project-alias.mjs'
 import { closeHBuilderXProjectAlias, withHBuilderXProjectCleanup } from '../../../scripts/hbuilderx-project-lifecycle'
 import { createLocalHBuilderXRunner, pollIntervalMs, serverTimeoutMs, spawnPnpm, wait } from '../process'
 
-let devProcess: ChildProcess | undefined
+let devServer: SpawnedHBuilderXCommand | undefined
 
-export function getDevProcess() {
-  return devProcess
+function assertReleased() {
+  if (devServer) {
+    throw new Error(`上轮 Web 服务尚未确认停止，不能覆盖 pid=${devServer.child.pid} 的受管句柄。`)
+  }
 }
 
-export function clearDevProcess() {
-  devProcess = undefined
+/** 会话和 afterEach 共用同一次严格收尾；失败时保留句柄，禁止覆盖。 */
+function ownDevServer(command: SpawnedHBuilderXCommand, persistentCli = false): SpawnedHBuilderXCommand {
+  let stopping: Promise<void> | undefined
+  const owned = {
+    ...command,
+    stop(signal?: NodeJS.Signals) {
+      if (stopping) {
+        return stopping
+      }
+      const child = command.child
+      const earlyExit = persistentCli && (child.exitCode !== null || child.signalCode !== null)
+        ? new Error(`Web 服务在停止前已退出：${child.signalCode ?? child.exitCode}\n${command.logs.join('')}`)
+        : undefined
+      let cleanup: Promise<void>
+      try {
+        // 状态检查与 stop 之间不能 await：底层须在根仍有效时保存本轮进程组。
+        cleanup = command.stop(signal)
+      }
+      catch (error) {
+        cleanup = Promise.reject(error)
+      }
+      stopping = cleanup.then(() => {
+        if (earlyExit) {
+          throw earlyExit
+        }
+        if (devServer === owned) {
+          devServer = undefined
+        }
+      }, (error) => {
+        throw earlyExit
+          ? Object.assign(new AggregateError([earlyExit, error], 'Web 服务提前退出且收尾失败。'), { cause: earlyExit })
+          : error
+      })
+      return stopping
+    },
+  }
+  devServer = owned
+  return owned
+}
+
+export async function stopDevServer() {
+  await devServer?.stop()
 }
 
 function unsetVitestEnv(env: Record<string, string | undefined>) {
@@ -25,6 +67,7 @@ function unsetVitestEnv(env: Record<string, string | undefined>) {
 }
 
 export function createDevServer(projectRoot: string, port: number) {
+  assertReleased()
   const childEnv = unsetVitestEnv({
     BROWSER: 'none',
     BROWSERSLIST_ENV: 'development',
@@ -40,7 +83,7 @@ export function createDevServer(projectRoot: string, port: number) {
     CHOKIDAR_INTERVAL: process.env['CHOKIDAR_INTERVAL'] ?? '50',
   })
 
-  const child = spawnPnpm(projectRoot, [
+  const command = spawnPnpm(projectRoot, [
     'exec',
     'cross-env',
     'WEAPP_TW_HMR_TIMING=1',
@@ -51,11 +94,11 @@ export function createDevServer(projectRoot: string, port: number) {
     '--port',
     String(port),
   ], childEnv)
-  devProcess = child
-  return child
+  return ownDevServer(command, true)
 }
 
 export async function createHBuilderXDevServer(projectRoot: string) {
+  assertReleased()
   const env = unsetVitestEnv({
     BROWSER: 'none',
     WEAPP_TW_HMR_TIMING: '1',
@@ -87,8 +130,7 @@ export async function createHBuilderXDevServer(projectRoot: string) {
       cwd: projectRoot,
       env,
     })
-    devProcess = launch.child
-    return { ...launch, cleanup }
+    return { ...ownDevServer(launch), cleanup }
   }
   catch (error) {
     return await withHBuilderXProjectCleanup(identity, async () => {

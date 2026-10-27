@@ -1,10 +1,10 @@
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it } from 'vitest'
-import { recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { recoveryFixture, recoveryFormats } from './rollup-recreation-fixture.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-it.for(['cjs', 'esm'])('文件在首次缺失对账之后、原生目录订阅生效之前重建仍可恢复 (%s)', async (format, context) => {
+it.for(recoveryFormats)('文件在首次缺失对账之后、原生目录订阅生效之前重建仍可恢复 (%s)', async (format, context) => {
   await recoveryFixture(format, context, async ({ watcher, data, dataDir, events, waitFor, settle }) => {
     const handler = watcher._nodeFsHandler
     const bind = handler._watchWithNodeFs

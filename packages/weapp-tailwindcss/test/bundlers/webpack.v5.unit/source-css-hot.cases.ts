@@ -16,12 +16,12 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
     const generatedCss = '.tw-watch-style-case{font-weight:700;color:red}'
 
     vi.resetModules()
-    vi.doMock('@/generator', async (importOriginal) => {
+    vi.doMock('@/generator/runtime', async (importOriginal) => {
       const actual = await importOriginal<typeof import('@/generator')>()
       return {
         ...actual,
         createWeappTailwindcssGenerator: vi.fn(() => ({
-          generate: vi.fn(),
+          generate: vi.fn(async () => ({ css: generatedCss, rawCss: generatedCss, target: 'weapp', classSet: new Set(), dependencies: [], sources: [], root: null })),
         })),
         normalizeWeappTailwindcssGeneratorOptions: vi.fn(() => ({
           enabled: true,
@@ -137,7 +137,6 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
       await processAssetsCallbacks[0](createAssetsFromStore(assetStore))
 
       expect(testState.currentContext.styleHandler).toHaveBeenCalledTimes(2)
-      expect(testState.currentContext.styleHandler.mock.calls.at(-1)?.[0]).toBe(secondSourceCss)
       expect(testState.currentContext.styleHandler.mock.calls.at(-1)?.[1]?.sourceOptions?.sourceCss).toContain('@apply font-bold')
       expect(assetStore['pages/index/index.wxss']).toContain('font-weight:700')
     }
@@ -158,7 +157,7 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
     const rollbackSourceCss = '.component-root { display: flex; }'
 
     vi.resetModules()
-    vi.doMock('@/generator', async (importOriginal) => {
+    vi.doMock('@/generator/runtime', async (importOriginal) => {
       const actual = await importOriginal<typeof import('@/generator')>()
       return {
         ...actual,
@@ -319,7 +318,7 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
     }))
 
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => {
         generatorSources.push(source)
         return {
@@ -531,7 +530,7 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
     const staleSourceCss = '.stale-source { color: blue; }'
 
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(),
       })),

@@ -29,6 +29,7 @@ describe('demo visual theme evidence', () => {
 
   it('uses the emitted app manifest as the initial mini-program route', async () => {
     const projectRoot = await fs.mkdtemp(path.join(tmpdir(), 'demo-visual-app-manifest-'))
+    await fs.writeFile(path.join(projectRoot, 'project.config.json'), '{}')
     await fs.writeFile(path.join(projectRoot, 'app.json'), JSON.stringify({ pages: ['pages/index/index'] }))
 
     expect(await miniProgramProjectStartsAtRoute(projectRoot, '/pages/index/index')).toBe(true)

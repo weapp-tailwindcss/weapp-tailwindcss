@@ -8,7 +8,7 @@ import { isCSSRequest } from '../utils'
 
 export function createFrameworkSourceCandidatesPluginForCssOnly(options: any): Plugin {
   return {
-    name: `${vitePluginName}:source-candidates`,
+    name: `${vitePluginName}:web-source-candidates`,
     enforce: 'pre',
     async transform(code, id) {
       if (!options.sourceCandidateCollector || !isSourceCandidateRequest(id)) {
@@ -20,7 +20,10 @@ export function createFrameworkSourceCandidatesPluginForCssOnly(options: any): P
       }
       await options.sourceCandidateCollector.merge(id, code)
     },
-    async watchChange(id) {
+    async watchChange(id, change) {
+      if (change.event === 'delete') {
+        options.removeViteProcessedCssSource?.(id)
+      }
       options.invalidateRecordedGeneratorCandidates()
       options.sourceScanSession.invalidate()
       await options.sourceScanSession.syncChangedFile(id)

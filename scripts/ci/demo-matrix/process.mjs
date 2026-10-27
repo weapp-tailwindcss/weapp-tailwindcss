@@ -99,15 +99,28 @@ export function startProcess(command, args, cwd, env, logFile) {
 export async function until(check, session, timeout = 180_000) {
   const deadline = Date.now() + timeout
   let lastError
+  let hasLastError = false
   while (Date.now() < deadline) {
-    session?.ensureRunning()
+    try {
+      session?.ensureRunning()
+    }
+    catch (error) {
+      if (!hasLastError) {
+        throw error
+      }
+      // 会话终止仍立即失败，同时保留此前被轮询捕获的真实就绪错误。
+      throw new AggregateError([error, lastError], `${error?.message ?? String(error)}\nLast readiness error:\n${lastError?.stack ?? String(lastError)}\n${session?.log?.() ?? ''}`)
+    }
     try {
       return await check()
     }
-    catch (error) { lastError = error }
+    catch (error) {
+      lastError = error
+      hasLastError = true
+    }
     await delay(300)
   }
-  throw new Error(`${lastError?.stack}\n${session?.log() ?? ''}`)
+  throw new Error(`${lastError?.stack}\n${session?.log?.() ?? ''}`, { cause: lastError })
 }
 
 export function assertViteWatchBuildComplete(log, offset = 0) {

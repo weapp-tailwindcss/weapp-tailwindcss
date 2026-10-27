@@ -80,4 +80,19 @@ it('keeps the default virtual-module watcher idle and accepts genuine module upd
   const result = JSON.parse(stdout)
   expect(result.initialBuilds).toBeGreaterThan(0)
   expect(result.updatedBuilds).toBeGreaterThan(result.initialBuilds)
+  for (const graph of result.dependencyGraphs) {
+    expect(graph.files).toContain(result.projectRoot)
+    expect(graph.missing).toEqual([])
+  }
+}, 20_000)
+
+it('rejects virtual-module polling rebuild loops after project initialization', async () => {
+  const result = await execa(process.execPath, [path.join(repo, 'scripts/ci/demo-matrix/fixtures/virtual-watch.cjs')], {
+    cwd: repo,
+    env: developmentEnvironment({ WATCHPACK_POLLING: '100' }),
+    reject: false,
+  })
+  expect(result.exitCode).not.toBe(0)
+  expect(result.stderr).toMatch(/Idle virtual module repeatedly rebuilt:|Virtual module update did not settle/)
+  expect(result.stderr).toContain('Virtual watcher evidence:')
 }, 20_000)

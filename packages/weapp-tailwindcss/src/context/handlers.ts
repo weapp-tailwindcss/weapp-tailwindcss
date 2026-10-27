@@ -1,7 +1,6 @@
 import type { ICustomAttributesEntities, InternalUserDefinedOptions } from '@/types'
 import { createStyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import { createJsHandler } from '@/js'
-import { resolveUniAppXOptions } from '@/uni-app-x/options'
 import { createTemplateHandler } from '@/wxml'
 import { resolveRuntimePackageReplacements } from './runtime-package-replacements'
 import { normalizeStyleHandlerMajorVersion, resolveStyleOptionsFromContext } from './style-options'
@@ -16,7 +15,6 @@ export function createHandlersFromContext(
     escapeMap,
     injectAdditionalCssVarScope,
     postcssOptions,
-    uniAppX,
     arbitraryValues,
     jsPreserveClass,
     babelParserOptions,
@@ -27,7 +25,6 @@ export function createHandlersFromContext(
     disabledDefaultTemplateHandler,
     replaceRuntimePackages,
   } = ctx
-  const resolvedUniAppXOptions = resolveUniAppXOptions(uniAppX)
   const styleOptions = resolveStyleOptionsFromContext(ctx, tailwindcssMajorVersion)
   const resolvedInjectAdditionalCssVarScope = styleOptions.cssOptions?.injectAdditionalCssVarScope
     ?? injectAdditionalCssVarScope
@@ -40,7 +37,7 @@ export function createHandlersFromContext(
     escapeMap,
     injectAdditionalCssVarScope: resolvedInjectAdditionalCssVarScope,
     postcssOptions,
-    uniAppXUnsupported: resolvedUniAppXOptions.uvueUnsupported,
+    uniAppXUnsupported: styleOptions.uniAppXUnsupported,
     cssCalc: styleOptions.cssCalc ?? cssCalcOptions,
     majorVersion: normalizeStyleHandlerMajorVersion(tailwindcssMajorVersion),
   })

@@ -18,11 +18,14 @@ on:
       - packages/weapp-tailwindcss/test/ci/css-compat-workflow.test.ts
       - packages/weapp-tailwindcss/test/ci/ensure-built-css-compat.test.ts
       - scripts/ensure-weapp-tailwindcss-built.mjs
+      - scripts/ci/verify-playwright-image.mjs
       - scripts/architecture/**
+      - 'e2e/playwright-image*.test.ts'
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - .github/actions/setup-pnpm/**
+      - .github/actions/setup-process-tools/action.yml
       - .github/workflows/css-compat.yml
       - .github/workflows/pr-gate.yml
 
@@ -71,10 +74,20 @@ jobs:
     name: CSS compatibility semantics (ubuntu-latest, Node 24)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --init --ipc=host
+    defaults:
+      run:
+        shell: bash
+    env:
+      HOME: /root
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - name: Trust container workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: 24
@@ -84,8 +97,10 @@ jobs:
         run: pnpm --filter @weapp-tailwindcss/css-compat properties:check
       - name: Verify real CSS generator consumers
         run: pnpm --filter @weapp-tailwindcss/css-compat test:consumers
-      - name: Install three browser engines
-        run: pnpm exec playwright install --with-deps chromium chromium-headless-shell firefox webkit
+      - uses: ./.github/actions/setup-process-tools
+        timeout-minutes: 2
+      - name: Verify preinstalled Playwright browsers
+        run: node scripts/ci/verify-playwright-image.mjs chromium firefox webkit
       - name: Compare native cascade layer semantics
         run: pnpm --filter @weapp-tailwindcss/css-compat test:browser
       - name: Record CSS compatibility benchmark

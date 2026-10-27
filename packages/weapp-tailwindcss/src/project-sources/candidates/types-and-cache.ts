@@ -5,6 +5,7 @@ import { LRUCache } from 'lru-cache'
 import { md5Hash } from '@/cache/md5'
 import { extractCandidatesFromSource } from '@/tailwindcss/candidates'
 import { FULL_SOURCE_SCAN_EXTENSION_RE, resolveSourceScanPath } from '@/tailwindcss/source-scan'
+import { stableSerialize } from '@/utils/stable-serialize'
 
 export interface SourceCandidateStore {
   syncSource: (id: string, source: string) => Promise<void>
@@ -26,6 +27,8 @@ export interface SourceCandidateStore {
   sourcesForEntries: (entries: TailwindSourceEntry[] | undefined, options?: SourceCandidateFilterOptions) => Map<string, Set<string>>
   snapshot: () => SourceCandidateCollectorSnapshot
   restore: (snapshot: SourceCandidateCollectorSnapshot) => void
+  restoreScan: (files: readonly PreparedSourceCandidateFile[]) => void
+  getPreparationKey: () => string
   clearScan: () => void
   resetScan: () => void
   clear: () => void
@@ -33,6 +36,12 @@ export interface SourceCandidateStore {
 }
 
 export interface SourceCandidateCollector extends SourceCandidateStore {}
+
+export interface PreparedSourceCandidateFile {
+  readonly id: string
+  readonly source: string
+  readonly candidates: readonly string[]
+}
 
 export interface SourceCandidateChange {
   addedCandidates: Set<string>
@@ -105,7 +114,7 @@ export function createSourceCandidateContentCacheKey(
     JSON.stringify(bareArbitraryValues ?? false),
     createCustomAttributesCacheSignature(customAttributesEntities),
     disabledDefaultTemplateHandler === true ? 'default-template:off' : 'default-template:on',
-    extractor ? 'custom' : 'default',
+    extractor ? stableSerialize(extractor) : 'default',
     md5Hash(source),
   ].join('\0')
 }
@@ -182,4 +191,16 @@ export function diffCandidateSets(previous: Set<string>, next: Set<string>): Sou
     addedCandidates,
     removedCandidates,
   }
+}
+
+export function areSetsEqual(left: Set<string> | undefined, right: Set<string>) {
+  if (!left || left.size !== right.size) {
+    return false
+  }
+  for (const value of right) {
+    if (!left.has(value)) {
+      return false
+    }
+  }
+  return true
 }

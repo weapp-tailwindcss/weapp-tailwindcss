@@ -2,7 +2,7 @@ import type { CompilationDiagnosticEvent } from './compiler/events'
 import type { CreateJsHandlerOptions, IStyleHandlerOptions, ITemplateHandlerOptions, UserDefinedOptions } from './types'
 import { performance } from 'node:perf_hooks'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
-import { getCompilerContext } from '@/context'
+import { createCompilerContext } from '@/context'
 import { shouldSkipJsTransform } from '@/js/precheck'
 import { createTailwindRuntimeReadyPromise, ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from './compiler/events'
@@ -69,7 +69,7 @@ function resolveTransformWxssOptions(options?: Partial<IStyleHandlerOptions>) {
  * @returns 返回一个包含 transformWxss、transformWxml 和 transformJs 方法的对象
  */
 export function createContext(options: UserDefinedOptions = {}) {
-  const opts = getCompilerContext(options)
+  const opts = createCompilerContext(options)
   const { templateHandler, styleHandler, jsHandler } = opts
   const initialTailwindRuntime = opts.tailwindRuntime
   const refreshTailwindcssRuntime = opts.refreshTailwindcssRuntime

@@ -3,10 +3,17 @@ import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { BundleSnapshot } from '../bundle-state'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteProcessedCssAssetOutputsReplacer } from '../processed-css-assets/output-ownership'
+import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types'
+
+/** 单次产物处理的来源能力，不存入跨轮次构建状态。 */
+export interface GenerateBundleRoundServices {
+  readonly captureCssSource: GenerateBundleContext['captureCssSource']
+}
 
 export interface GenerateBundleContext {
   onSkipProcessBundle?: (() => void | Promise<void>) | undefined
@@ -37,7 +44,8 @@ export interface GenerateBundleContext {
   isViteProcessedCssAsset?: (asset: OutputAsset, file?: string) => boolean
   resolveCssAssetIdentity?: (asset: OutputAsset, file?: string) => ViteCssAssetIdentity
   recordCssAssetResult?: (file: string, css: string) => void
-  recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined }) => void
+  recordViteProcessedCssAssetResult?: (file: string, css: string, options?: { injectIntoMain?: boolean | undefined, outputFile?: string | undefined, sourceAsset?: string | undefined, mergeSourceAssets?: boolean | undefined }) => void
+  replaceViteProcessedCssAssetOutputs?: ViteProcessedCssAssetOutputsReplacer | undefined
   getViteProcessedCssAssetResults?: () => Iterable<[string, string | { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined }]>
   getViteProcessedCssAssetResult?: (file: string) => { css: string, injectIntoMain?: boolean | undefined, outputFile?: string | undefined } | undefined
   getSourceCandidates?: () => Set<string>
@@ -49,6 +57,7 @@ export interface GenerateBundleContext {
   waitForSourceCandidateSyncs?: () => Promise<void>
   rememberCssSource?: ((entry: RememberedCssSource, cssRuntimeSignature?: string) => void) | undefined
   getRememberedCssSources?: () => Iterable<[string, RememberedCssSource]>
+  captureCssSource?: ((file: string) => import('../css-memory/source-lifecycle').ViteCssSourceLease) | undefined
   getRememberedCssSignature?: (file: string) => string | undefined
   setRememberedCssSignature?: (file: string, cssRuntimeSignature: string) => void
   getKnownCssSource?: (file: string) => string | undefined
@@ -62,10 +71,15 @@ export interface GenerateBundleContext {
   getViteCssCacheStats?: () => Record<string, unknown>
   hmrTimingRecorder?: HmrTimingRecorder
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   frameworkRootImportShellTargetByFile?: Map<string, string> | undefined
 }
 
 export interface RememberedCssSource {
+  /** 生成输入与已解析的输出导入壳分别登记，资产处理标记不提供此权限。 */
+  kind?: 'generation' | 'output-import-shell' | undefined
+  /** 已经通过样式模块交还 Vite；当前模块在图内时不能另行回放独立产物。 */
+  delivery?: 'vite-module' | undefined
   outputFile: string
   rawSource: string
   sourceFile: string

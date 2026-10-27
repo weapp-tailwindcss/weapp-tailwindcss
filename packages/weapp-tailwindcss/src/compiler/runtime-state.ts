@@ -1,5 +1,5 @@
 import type { CompilationEventBus, CompilationEventListener } from './events'
-import type { RefreshTailwindcssRuntimeOptions, TailwindcssRuntimeLike } from '@/types'
+import type { RefreshTailwindcssRuntimeOptions, TailwindcssRuntimeLike } from '@/types/compilation'
 import { createCompilationEventBus } from './events'
 
 export interface CompilerRuntimeState {

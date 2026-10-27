@@ -5,6 +5,7 @@ import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { availablePort } from '../e2e-preflight/probes/port'
 import { closeWechatProject } from '../wechat-project-cleanup'
 import { WechatEnvironmentError } from './errors'
+import { withWechatLaunchDiagnostics } from './launch-diagnostics'
 import { assertWechatLogin, existingWechatService, wechatRequest } from './service'
 
 const guarded = new WeakSet<MiniProgram>()
@@ -64,43 +65,46 @@ export class Launcher {
       }
       return ms
     }
-    const service = await existingWechatService(options.cliPath)
-    await assertWechatLogin(service.httpPort, remaining())
-    const port = options.port ?? await availablePort()
-    const result = await wechatRequest(service.httpPort, { kind: 'auto', project: projectPath, port }, remaining())
-    let mini: MiniProgram | undefined
-    try {
-      if (result.autoPort !== port) {
-        throw new WechatEnvironmentError('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
-      }
-      await assertWechatLogin(service.httpPort, remaining())
-      while (!mini) {
-        const timeout = Math.min(3000, remaining())
+    return withWechatLaunchDiagnostics(deadline, async (diagnostics) => {
+      const service = await diagnostics.stage('discovery', () => existingWechatService(options.cliPath))
+      await diagnostics.stage('login-before-auto', () => assertWechatLogin(service.httpPort, remaining()))
+      const port = options.port ?? await availablePort()
+      const result = await diagnostics.stage('auto', () => wechatRequest(service.httpPort, { kind: 'auto', project: projectPath, port }, remaining()))
+      let mini: MiniProgram | undefined
+      try {
+        if (result.autoPort !== port) {
+          throw new WechatEnvironmentError('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
+        }
+        await diagnostics.stage('login-after-auto', () => assertWechatLogin(service.httpPort, remaining()))
+        while (!mini) {
+          const timeout = Math.min(3000, remaining())
+          try {
+            mini = await diagnostics.stage('connect', () => this.connect({ wsEndpoint: `ws://127.0.0.1:${port}`, timeout }))
+          }
+          catch (error) {
+            // 上游握手与断连同时失败会聚合异常，资源未确认释放时禁止再连。
+            if (error instanceof AggregateError || Date.now() >= deadline) {
+              throw new WechatEnvironmentError('本轮微信自动化握手或连接资源未确认，停止后续项目请求', { cause: error })
+            }
+            await delay(Math.min(100, remaining()))
+          }
+        }
+        const connectedMini = mini
         try {
-          mini = await this.connect({ wsEndpoint: `ws://127.0.0.1:${port}`, timeout })
+          await diagnostics.stage('readiness', () => connectedMini.waitForAppReady(remaining()))
         }
         catch (error) {
-          // 上游握手与断连同时失败会聚合异常，资源未确认释放时禁止再连。
-          if (error instanceof AggregateError || Date.now() >= deadline) {
-            throw new WechatEnvironmentError('本轮微信自动化握手或连接资源未确认，停止后续项目请求', { cause: error })
+          if (error instanceof WechatEnvironmentError) {
+            throw error
           }
-          await delay(Math.min(100, remaining()))
+          throw new WechatEnvironmentError('微信 App 域就绪未确认；停止本轮请求，保留登录态并重新预检。', { cause: error })
         }
-      }
-      try {
-        await mini.waitForAppReady(remaining())
+        remaining()
+        return mini
       }
       catch (error) {
-        if (error instanceof WechatEnvironmentError) {
-          throw error
-        }
-        throw new WechatEnvironmentError('微信 App 域就绪未确认；停止本轮请求，保留登录态并重新预检。', { cause: error })
+        return runWithCleanup(() => Promise.reject(error), () => closeWechatProject(projectPath, mini, 10_000, service.httpPort))
       }
-      remaining()
-      return mini
-    }
-    catch (error) {
-      return runWithCleanup(() => Promise.reject(error), () => closeWechatProject(projectPath, mini, 10_000, service.httpPort))
-    }
+    })
   }
 }

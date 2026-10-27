@@ -10,7 +10,7 @@ function isStyleModule(mod: ModuleNode) {
 
 export function createUniAppXWebLocalStyleBridge(
   isEnabled: () => boolean,
-  hmrCssModuleVersions?: ViteHmrCssModuleVersionTracker,
+  hmrCssModuleVersions?: Omit<ViteHmrCssModuleVersionTracker, 'clear'>,
 ) {
   const rulesByFile = new Map<string, string>()
 

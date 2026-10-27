@@ -14,7 +14,7 @@ import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { withNativeFailureEvidence } from './failure-evidence'
 import { androidFailureReaders } from './failure-evidence-readers'
-import { readPreparedIosBuildTarget } from './ios-build-target'
+import { readPreparedIosBuild } from './ios-build-target'
 import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
@@ -138,7 +138,8 @@ async function main() {
   }
   const artifactDir = options.outputDir ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native', `${platform}-${Date.now()}`)
   return withNativeArtifacts(platform, artifactDir, async (setStage) => {
-    const target = (platform === 'ios' ? await readPreparedIosBuildTarget(repoRoot) : undefined)
+    const prepared = platform === 'ios' ? await readPreparedIosBuild(repoRoot) : undefined
+    const target = prepared?.target
       ?? await resolveNativeDevice(platform, fixtureDir, process.env, { file: path.join(artifactDir, 'device-discovery-command.json') })
     setStage('host-preparation')
     const temporaryRoot = process.env['LYNX_NATIVE_WORK_DIR']
@@ -182,7 +183,7 @@ async function main() {
     setStage('native-run')
     const execution = target.platform === 'android'
       ? { device: target, result: await runAndroid(hostDir, artifactDir, target, context) }
-      : await runIos(hostDir, artifactDir, target, context, options, setStage)
+      : await runIos(hostDir, artifactDir, target, context, options, setStage, prepared?.hostLogs)
     const { device, result: reportSource } = execution
     if (options.captureOnly) {
       process.stdout.write(`${JSON.stringify({ platform, artifactDir, captureDurationSeconds: options.captureDurationSeconds }, null, 2)}\n`)

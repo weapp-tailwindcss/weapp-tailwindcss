@@ -1143,6 +1143,7 @@ describe('uni-app-x vite plugins', () => {
       viteProcessedCssSourceFiles: new Set(['/project/main.css']),
       webCssEntryDiagnostics,
       hmrCssModuleVersions,
+      beginSfcStyleUpdate: () => hmrCssModuleVersions.clear(),
     })
     const nvuePlugin = plugins.find((p): p is Plugin => p.name === 'weapp-tailwindcss:uni-app-x:nvue')
     const cssPrePlugin = plugins.find((p): p is Plugin => p.name === 'weapp-tailwindcss:uni-app-x:css:pre')
@@ -1197,7 +1198,7 @@ describe('uni-app-x vite plugins', () => {
     await nvuePlugin!.buildEnd?.()
     await nvuePlugin!.closeBundle?.()
     expect(webCssEntryDiagnostics.flush).toHaveBeenCalledTimes(1)
-    expect(webCssEntryDiagnostics.dispose).toHaveBeenCalledTimes(1)
+    expect(webCssEntryDiagnostics.dispose).not.toHaveBeenCalled()
   })
 
   it('waits for concurrent SFC local style collection before transforming its style module', async () => {

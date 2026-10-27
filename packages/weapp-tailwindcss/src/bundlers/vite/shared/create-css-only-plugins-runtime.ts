@@ -1,16 +1,20 @@
 import type { Plugin, ResolvedConfig } from 'vite'
+import type { ViteFrameworkRuntimeStrategy } from './framework-runtime-strategy'
+import type { VitePluginConstruction } from './plugin-construction'
 import type { CssStage } from '@/compiler'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { getCompilerContext } from '@/context'
+import { disposeCompilerOwner } from '@/compiler'
+import { createCompilerContext } from '@/context'
+import { generateTailwindV4Css } from '@/context/generation'
+import { resolveContextViteRuntimeRefresh } from '@/context/vite-environment'
 import { createDebug } from '@/debug'
 import { normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
 import { normalizeEmptyTailwindCustomVariants } from '@/generation/user-css'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
+import { resolvePluginDisabledState } from '@/utils/disabled'
 import { resolvePackageDir } from '@/utils/resolve-package'
-import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { createBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
 import { createHmrTimingRecorder } from '../../shared/hmr-timing'
@@ -34,27 +38,49 @@ import { createFrameworkProcessedCssRegistry } from './framework-processed-css-r
 import { createFrameworkRuntimeLifecycle } from './framework-runtime-lifecycle'
 import { createFrameworkSourceScanSession } from './framework-source-scan-session'
 import { createFrameworkTailwindRootCss } from './framework-tailwind-root-css'
+import { viteConstructionCleanupOrder as cleanupOrder, createVitePluginConstruction, registerConstructedVitePlugins } from './plugin-construction'
 
 const debug = createDebug()
 
 function resolveWebGeneratorOptions(opts: InternalUserDefinedOptions) {
-  return normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
+  return resolveContextGeneratorConfiguration(opts, {
     appType: undefined,
     platform: 'web',
     tailwindcssMajorVersion: opts.tailwindRuntime.majorVersion,
     uniAppX: false,
-  })
+  }).options
 }
 
 /** 创建不含 JS/template、分包和小程序 bundle 处理的 Generic Web Vite 插件。 */
 export function createCssOnlyVitePlugins(
   options: UserDefinedOptions | InternalUserDefinedOptions = {},
+  runtimeStrategy: ViteFrameworkRuntimeStrategy = {},
+  disposeRelations: () => void = () => {},
 ): Plugin[] | undefined {
+  if (resolvePluginDisabledState(options.disabled).plugin) {
+    disposeRelations()
+    return createRewriteCssImportsPlugins({
+      appType: undefined,
+      shouldRewrite: options.rewriteCssImports === true,
+      rootImport: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css').replaceAll(path.sep, '/'),
+      weappTailwindcssDirPosix: path.dirname(path.resolve(process.cwd(), 'generator-placeholder.css')).replaceAll(path.sep, '/'),
+    })
+  }
+  const construction = createVitePluginConstruction()
+  construction.addCleanup(disposeRelations, cleanupOrder.relations)
+  return construction.run(() => createRuntimePlugins(options, runtimeStrategy, construction))
+}
+
+function createRuntimePlugins(
+  options: UserDefinedOptions | InternalUserDefinedOptions,
+  runtimeStrategy: ViteFrameworkRuntimeStrategy,
+  construction: VitePluginConstruction,
+): Plugin[] {
   const rawOptions = options as UserDefinedOptions
   let resolvedConfig: ResolvedConfig | undefined
   const originalOpts = 'tailwindRuntime' in options
     ? options as InternalUserDefinedOptions
-    : getCompilerContext({
+    : createCompilerContext({
         ...rawOptions,
         appType: undefined,
         platform: 'web',
@@ -74,18 +100,22 @@ export function createCssOnlyVitePlugins(
     disabledDefaultTemplateHandler: opts.disabledDefaultTemplateHandler,
   })
   const cssMemory = createViteCssMemory({ debug, getSourceCandidateSource: file => sourceCandidateCollector.source(file) })
+  construction.addCleanup(() => cssMemory.dispose(), cleanupOrder.assets)
   const hmrCssModuleVersions = createViteHmrCssModuleVersionTracker()
   const hmrTimingRecorder = createHmrTimingRecorder('vite')
   const runtimeClassSet = createViteRuntimeClassSet({
     opts,
+    forceRuntimeRefresh: resolveContextViteRuntimeRefresh(originalOpts),
     initialTailwindRuntime: opts.tailwindRuntime,
     refreshTailwindcssRuntime: opts.refreshTailwindcssRuntime,
-    uniAppXEnabled: false,
+    runtimeClassSetFeatureEnabled: false,
     customAttributesEntities: opts.customAttributesEntities,
     disabledDefaultTemplateHandler: opts.disabledDefaultTemplateHandler,
     debug,
   })
   const { runtimeState, refreshRuntimeState } = runtimeClassSet
+  construction.addCleanup(() => disposeCompilerOwner(runtimeState), cleanupOrder.compiler)
+  construction.addCleanup(() => runtimeState.dispose(), cleanupOrder.runtime)
   const hmrCandidateState = createViteHmrCandidateState({
     cleanGeneratedCssByFile: new Map(),
     generatedClassSetByFile: new Map(),
@@ -95,6 +125,7 @@ export function createCssOnlyVitePlugins(
   })
   let recordedCandidates: Set<string> | undefined
   const processedCssRegistry = createFrameworkProcessedCssRegistry()
+  construction.addCleanup(() => processedCssRegistry.dispose(), cleanupOrder.assets)
   const processedCssAssets = new WeakSet<object>()
   const sourceScanSession = createFrameworkSourceScanSession({
     cssMemory,
@@ -108,6 +139,7 @@ export function createCssOnlyVitePlugins(
     shouldOwnTailwindGeneration: shouldGenerate,
     sourceCandidateCollector,
   })
+  construction.addCleanup(() => sourceScanSession.dispose(), cleanupOrder.scan)
   async function collectCssSourceCandidates() {
     await runtimeState.readyPromise
     await sourceScanSession.waitForPendingSyncs()
@@ -123,6 +155,7 @@ export function createCssOnlyVitePlugins(
     shouldOwnTailwindGeneration: shouldGenerate,
     sourceScanSession,
   })
+  construction.addCleanup(() => tailwindRootCss.dispose(), cleanupOrder.roots)
   const { moduleIds: tailwindRootCssModuleIds, refreshSource: refreshTailwindRootCssSource, register: registerTailwindRootCss, rememberModule: rememberTailwindRootCssModule } = tailwindRootCss
   const cssHandlerOptions = createCssHandlerOptionsCache({
     getAppType: () => undefined,
@@ -131,6 +164,10 @@ export function createCssOnlyVitePlugins(
     getOutputRoot: () => resolvedConfig?.root,
   })
   const generatedCssByFile = new Map<string, string>()
+  construction.addCleanup(() => {
+    generatedCssByFile.clear()
+    recordedCandidates = undefined
+  }, cleanupOrder.candidates)
   const generateCss = createFrameworkCssGenerationQueue(
     id => cleanUrl(id),
     async (id: string, code: string, hookContext?: { sourceCandidates?: Iterable<string>, cssStage?: CssStage | undefined, addWatchFile?: (file: string) => void }) => {
@@ -178,6 +215,7 @@ export function createCssOnlyVitePlugins(
       return `${createBundlerGeneratedCssMarker('vite', file)}\n${tracedCss}`
     },
   )
+  construction.addCleanup(() => generateCss.dispose(), cleanupOrder.generation)
   const rewritePlugins = createRewriteCssImportsPlugins({
     getAppType: () => undefined,
     generateTailwindCss: generateCss,
@@ -190,9 +228,6 @@ export function createCssOnlyVitePlugins(
     shouldRewrite: opts.rewriteCssImports === true,
     weappTailwindcssDirPosix: path.dirname(path.resolve(process.cwd(), 'generator-placeholder.css')).replaceAll(path.sep, '/'),
   })
-  if (disabled) {
-    return rewritePlugins
-  }
   const sourceCandidatesPlugin = createFrameworkSourceCandidatesPluginForCssOnly({
     cssMemory,
     hmrCandidateState,
@@ -203,13 +238,14 @@ export function createCssOnlyVitePlugins(
     refreshRuntimeStateForAutoCssSources: async () => { await refreshRuntimeState(true) },
     refreshTailwindRootCssSource,
     rememberTailwindRootCssModule,
-    resolveCurrentGeneratorBranch: () => resolveGeneratorRuntimeBranch(resolveWebGeneratorOptions(opts), { appType: undefined, platform: 'web', tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion, uniAppX: false }),
+    resolveCurrentGeneratorBranch: () => resolveWebGeneratorOptions(opts).branch,
     resolveCurrentGeneratorOptions: () => resolveWebGeneratorOptions(opts),
     runtimeState,
     sourceCandidateCollector,
     sourceScanSession,
     tailwindRootCssModuleIds,
     viteProcessedCssSourceFiles: processedCssRegistry.sourceFiles,
+    removeViteProcessedCssSource: processedCssRegistry.removeSource,
   })
   const postPlugin = createFrameworkPostPlugin({
     debug,
@@ -217,7 +253,7 @@ export function createCssOnlyVitePlugins(
     generatorPlaceholderCssFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'),
     hasExplicitTailwindcssBasedir: false,
     hasExplicitGeneratorTarget: true,
-    frameworkName: 'generic',
+    defaultToWebTarget: runtimeStrategy.defaultToWebTarget === true,
     hmrTimingRecorder,
     opts,
     resolveViteStylePlatform: () => 'web',
@@ -233,7 +269,7 @@ export function createCssOnlyVitePlugins(
     runtimeState,
     ensureRuntimeClassSet: collectCssSourceCandidates,
     debug,
-    frameworkName: 'generic',
+    allowWebProductionFastPath: runtimeStrategy.allowWebProductionFastPath === true,
     getResolvedConfig: () => resolvedConfig,
     markCssAssetProcessed: (asset) => { processedCssAssets.add(asset) },
     isCssAssetProcessed: asset => processedCssAssets.has(asset),
@@ -241,6 +277,7 @@ export function createCssOnlyVitePlugins(
     resolveCssAssetIdentity: createViteCssAssetIdentityResolver({ generatorPlaceholderFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'), getProjectRoot: () => resolvedConfig?.root, isKnownProcessedSource: processedCssRegistry.matchesIdentity }),
     recordCssAssetResult: (file, css) => { generatedCssByFile.set(file, css) },
     recordViteProcessedCssAssetResult: processedCssRegistry.record,
+    replaceViteProcessedCssAssetOutputs: processedCssRegistry.replaceOutputs,
     getViteProcessedCssAssetResults: processedCssRegistry.entries,
     getRecordedGeneratorCandidates: () => recordedCandidates,
     getSourceCandidates: () => sourceCandidateCollector.values(),
@@ -253,30 +290,17 @@ export function createCssOnlyVitePlugins(
     ...rewritePlugins,
     sourceCandidatesPlugin,
     ...createViteCssGenerationPlugins({ generateCss, getCommand: () => resolvedConfig?.command, onTailwindRootCss: registerTailwindRootCss, shouldGenerate: () => shouldGenerate, shouldGenerateBuild: () => true }),
-    postPlugin,
-    finalizer,
-    createViteHmrCssModuleVersionFilterPlugin(hmrCssModuleVersions),
   ]
   const styleInjectorFactory = (options as any).__internalViteWebStyleInjectorFactory
   if (opts.styleInjector !== undefined && typeof styleInjectorFactory === 'function') {
-    plugins.push(...styleInjectorFactory(opts.styleInjector))
+    const injectors = styleInjectorFactory(opts.styleInjector)
+    registerConstructedVitePlugins(construction, injectors)
+    plugins.push(...injectors)
   }
+  plugins.push(postPlugin, finalizer, createViteHmrCssModuleVersionFilterPlugin(hmrCssModuleVersions))
   plugins.push(createFrameworkRuntimeLifecycle({
     getResolvedConfig: () => resolvedConfig,
-    async dispose() {
-      await generateCss.dispose()
-      try {
-        await sourceScanSession.dispose()
-      }
-      finally {
-        tailwindRootCss.dispose()
-        runtimeState.dispose()
-        cssMemory.dispose()
-        processedCssRegistry.dispose()
-        generatedCssByFile.clear()
-        recordedCandidates = undefined
-      }
-    },
+    dispose: construction.dispose,
   }))
   return plugins
 }

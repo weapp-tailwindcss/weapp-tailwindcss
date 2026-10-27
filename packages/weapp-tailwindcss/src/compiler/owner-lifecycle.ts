@@ -1,18 +1,39 @@
 import { disposeCompilationChangeCoordinator } from './compilation-change-coordinator'
+import { disposeCompilationProfileCache } from './compilation-profile-cache'
 import { disposeCompilationSessionPool } from './compilation-session-pool'
 import { runCompilerOwnerDisposal } from './compiler-owner-state'
 import { disposeFrameworkCompilerSession } from './framework-compiler-session'
 import { disposeCompilerShadowReportSession } from './shadow-report-session'
 import { disposeTailwindGenerationSessionPool } from './tailwind-generation-session-pool'
 
-async function disposeCompilerOwnerResources(owner: object) {
-  disposeCompilationChangeCoordinator(owner)
-  await disposeCompilationSessionPool(owner)
-  await disposeFrameworkCompilerSession(owner)
-  disposeTailwindGenerationSessionPool(owner)
-  disposeCompilerShadowReportSession(owner)
+async function disposeCompilerOwnerResources(owner: object, options: DisposeCompilerOwnerOptions) {
+  const cleanups = [
+    () => options.beforeDispose?.(),
+    () => disposeCompilationChangeCoordinator(owner),
+    () => disposeCompilationSessionPool(owner),
+    () => disposeFrameworkCompilerSession(owner),
+    () => disposeTailwindGenerationSessionPool(owner),
+    () => disposeCompilerShadowReportSession(owner),
+    () => disposeCompilationProfileCache(owner),
+  ]
+  const errors: unknown[] = []
+  for (const cleanup of cleanups) {
+    try {
+      await cleanup()
+    }
+    catch (error) {
+      errors.push(error)
+    }
+  }
+  if (errors.length > 0) {
+    throw new AggregateError(errors, '编译会话释放失败，已继续释放其余资源。')
+  }
 }
 
-export function disposeCompilerOwner(owner: object) {
-  return runCompilerOwnerDisposal(owner, () => disposeCompilerOwnerResources(owner))
+export interface DisposeCompilerOwnerOptions {
+  beforeDispose?: (() => void | Promise<void>) | undefined
+}
+
+export function disposeCompilerOwner(owner: object, options: DisposeCompilerOwnerOptions = {}) {
+  return runCompilerOwnerDisposal(owner, () => disposeCompilerOwnerResources(owner, options))
 }

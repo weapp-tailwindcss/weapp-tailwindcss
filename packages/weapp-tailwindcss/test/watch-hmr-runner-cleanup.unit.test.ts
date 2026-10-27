@@ -5,6 +5,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { formatWatchFailure } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/error-report'
 import { runCase, runMainStyleOnlyCase, runSubPackagesOnlyCase, runWebOnlyCase, WatchHmrPartialMetricsError } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
 
 const mocks = vi.hoisted(() => ({
@@ -138,7 +139,9 @@ describe('watch runner 收尾失败保留与资源释放', () => {
     const readError = Object.assign(new Error('restore read denied'), { code: 'EACCES' })
     const writeError = new Error('restore write denied')
     const monitorError = new Error('monitor stop rejected')
-    const sessionError = new Error('session stop rejected')
+    const watchError = new Error('owned descendant cleanup rejected')
+    const memoryError = new Error('memory source cleanup rejected')
+    const sessionError = new AggregateError([watchError, memoryError], 'session stop rejected')
     let denyRead = false
     const originalRead = fs.readFile
     vi.spyOn(fs, 'readFile').mockImplementation((...args) => {
@@ -185,6 +188,10 @@ describe('watch runner 收尾失败保留与资源释放', () => {
     if (name !== 'Web') {
       expect(session.stop).toHaveBeenCalledOnce()
       expect(errors).toContain(sessionError)
+      expect(errors).toContain(watchError)
+      expect(errors).toContain(memoryError)
+      expect(formatWatchFailure(error)).toContain(watchError.message)
+      expect(formatWatchFailure(error)).toContain(memoryError.message)
       expect(error.stack).toContain('session stop rejected')
     }
   })

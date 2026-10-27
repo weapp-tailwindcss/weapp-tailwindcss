@@ -33,16 +33,11 @@ function opts() {
 
 const createCssPipelineContext = () => ({}) as any
 
-const uniAppWebviewCssStrategy = {
-  resolveConfiguredCssEntryRootInjectionTarget: () => 'app.css',
-  shouldPreferExplicitWebCssTargets: () => true,
-  shouldPreferMatchedRootWebOutputTarget: () => true,
-}
+const uniAppWebviewCssStrategy = { styles: { resolveConfiguredCssEntryRootInjectionTarget: () => 'app.css',
+preferExplicitWebTargets: true,
+preferMatchedRootWebTarget: true } }
 
-const taroImportShellStrategy = {
-  shouldKeepRootMiniProgramStyleAsImportShell: () => true,
-  shouldNormalizeRootMiniProgramImportShell: () => true,
-}
+const taroImportShellStrategy = { styles: { rootImportShell: 'extract' as const } }
 
 describe('vite processed css assets', () => {
   it('collects marker scoped css and removes covered generated source assets', () => {
@@ -600,9 +595,7 @@ describe('vite processed css assets', () => {
         cssEntries: [sourceFile],
         mainCssChunkMatcher: (file: string) => file === 'app.css',
       },
-      cssPipelineStrategy: {
-        resolveConfiguredCssEntryRootInjectionTarget: () => undefined,
-      },
+      cssPipelineStrategy: { styles: { resolveConfiguredCssEntryRootInjectionTarget: () => undefined } },
       createCssPipelineContext,
       isViteProcessedCssAsset: (_asset, file) => file === 'src/main.css',
       recordViteProcessedCssAssetResult(file, css, options) {

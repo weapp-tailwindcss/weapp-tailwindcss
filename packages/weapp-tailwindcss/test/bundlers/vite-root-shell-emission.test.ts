@@ -39,7 +39,7 @@ describe('framework root shell emission in Rollup rebuilds', () => {
       getResolvedConfig: () => ({
         command: 'build', root: process.cwd(), build: { outDir: 'dist', watch: {} },
       } as ResolvedConfig),
-      cssPipelineStrategy: { shouldKeepRootMiniProgramStyleAsImportShell: () => true },
+      cssPipelineStrategy: { styles: { rootImportShell: 'preserve' } },
       frameworkRootImportShellTargetByFile: relations,
       getViteProcessedCssAssetResults: () => records.entries(),
     }

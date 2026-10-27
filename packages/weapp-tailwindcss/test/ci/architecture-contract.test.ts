@@ -81,7 +81,7 @@ describe('架构边界契约', () => {
       'src/uni-app-x/style-asset.ts',
       'src/uni-app-x/vite/harmony-apply.ts',
       'src/tailwindcss/v4-engine/generator/incremental-cache.ts',
-      'src/tailwindcss/v4/rpx-theme-warning.ts',
+      'src/compiler/rpx-theme-diagnostics.ts',
       'src/generation/scoped-rules.ts',
       'src/generation/user-layer-order.ts',
       'src/generation/user-css/apply-only.ts',

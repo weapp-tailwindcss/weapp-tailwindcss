@@ -51,7 +51,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
     await writeFile(moduleCWxml, '<view class="module-c-only"></view>')
     await writeFile(subNormalWxml, '<view class="normal-only"></view>')
 
-    const generateMock = vi.fn(async ({ candidates, source }: { candidates: Set<string>, source?: { css?: string } }) => {
+    const generateMock = vi.fn(async ({ candidates, source }: { candidates: Iterable<string>, source?: { css?: string } }) => {
       const shouldEmitPreflight = source?.css?.includes('tailwindcss/base') === true
         || /@import\s+["']tailwindcss["']/.test(source?.css ?? '')
       const css = [
@@ -69,7 +69,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       }
     })
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,
@@ -244,7 +244,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       }
       await processAssetsCallbacks[0](createAssetsFromStore(assetStore))
 
-      const callsByFile = new Map<string, Set<string>>()
+      const callsByFile = new Map<string, string[]>()
       for (const call of generateMock.mock.calls) {
         const source = call[0]?.source
         const config = source?.config
@@ -256,12 +256,12 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
           ]
             .map(file => path.join(dir, file))
             .find(file => source?.css?.includes(toPosixPath(file)) || source?.css?.includes(file))
-        callsByFile.set(config ? toPosixPath(config) : config, call[0]?.candidates as Set<string>)
+        callsByFile.set(config ? toPosixPath(config) : config, [...call[0]!.candidates].sort())
       }
-      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.js')))).toEqual(new Set(['app-only']))
-      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-b.js')))).toEqual(new Set(['module-b-only']))
-      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-c.js')))).toEqual(new Set(['module-c-only']))
-      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-normal.js')))).toEqual(new Set(['normal-only']))
+      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.js')))).toEqual(['app-only'])
+      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-b.js')))).toEqual(['module-b-only'])
+      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-c.js')))).toEqual(['module-c-only'])
+      expect(callsByFile.get(toPosixPath(path.join(dir, 'tailwind.config.sub-normal.js')))).toEqual(['normal-only'])
     }
     finally {
       vi.doUnmock('@/generator')
@@ -299,7 +299,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
     await writeFile(appWxml, '<view class="main-only"></view>')
     await writeFile(subNormalWxml, '<view class="bg-normal-subpackage-marker sub-only"></view>')
 
-    const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
+    const generateMock = vi.fn(async ({ candidates }: { candidates: Iterable<string> }) => ({
       css: [
         'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid}',
         ...[...candidates].sort().map(candidate => `.${candidate}{display:block}`),
@@ -315,7 +315,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       root: null,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,
@@ -481,8 +481,8 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       await processAssetsCallbacks[0](createAssetsFromStore(assetStore))
 
       expect(generateMock.mock.calls).toHaveLength(2)
-      expect(generateMock.mock.calls[0]?.[0]?.candidates).toEqual(new Set(['main-only']))
-      expect(generateMock.mock.calls[1]?.[0]?.candidates).toEqual(new Set(['bg-normal-subpackage-marker', 'sub-only']))
+      expect([...generateMock.mock.calls[0]![0].candidates]).toEqual(['main-only'])
+      expect([...generateMock.mock.calls[1]![0].candidates].sort()).toEqual(['bg-normal-subpackage-marker', 'sub-only'])
       expect(appWxss).toContain('.main-only')
       expect(assetStore['sub-normal/pages/index.wxss']).toContain('.bg-normal-subpackage-marker')
       expect(assetStore['sub-normal/pages/index.wxss']).toContain('.sub-only')
@@ -525,7 +525,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
     await writeFile(subAWxml, '<view class="sub-a-only"></view>')
     await writeFile(subBWxml, '<view class="sub-b-only"></view>')
 
-    const generateMock = vi.fn(async ({ candidates, source }: { candidates: Set<string>, source: { css?: string } }) => ({
+    const generateMock = vi.fn(async ({ candidates, source }: { candidates: Iterable<string>, source: { css?: string } }) => ({
       css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
@@ -536,7 +536,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       sourceCss: source.css,
     }))
     vi.resetModules()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: any) => ({
         generate: (options: any) => generateMock({
           ...options,
@@ -783,8 +783,8 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       expect(subBWxss).not.toContain('.main-only')
       expect(subBWxss).not.toContain('.sub-a-only')
       expect(generateMock).toHaveBeenCalledTimes(3)
-      const subACall = generateMock.mock.calls.find(call => call[0]?.candidates?.has('sub-a-only'))
-      const subBCall = generateMock.mock.calls.find(call => call[0]?.candidates?.has('sub-b-only'))
+      const subACall = generateMock.mock.calls.find(call => [...call[0].candidates].includes('sub-a-only'))
+      const subBCall = generateMock.mock.calls.find(call => [...call[0].candidates].includes('sub-b-only'))
       expect(subACall?.[0]?.scanSources).toBe(false)
       expect(subBCall?.[0]?.scanSources).toBe(false)
     }

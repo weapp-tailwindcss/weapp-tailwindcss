@@ -12,7 +12,7 @@ import { reorderMarkedUserLayerComponentsCss, wrapUserLayerComponentsCss } from 
 export async function finalizeDeferredGeneratorCss(
   context: GeneratorPipelineOutputContext,
 ): Promise<GenerateCssByGeneratorResult | undefined> {
-  const { cssUserHandlerOptions, file, filterGeneratedApplyOnlyCss, generated, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasMatchedCssSourceFile, localImports, majorVersion, options, opts, preflightMode, runtimeWithCurrentCss, styleHandler, userCssOrderSource, userRawSourceProcessed } = context
+  const { cssUserHandlerOptions, file, filterGeneratedApplyOnlyCss, generated, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasMatchedCssSourceFile, localImports, majorVersion, options, profile, preflightMode, runtimeWithCurrentCss, styleHandler, userCssOrderSource, userRawSourceProcessed } = context
   if (options.deferCssAdaptation) {
     const normalizeDeferredGeneratedCss = async (css: string) => {
       const rawCss = stripTailwindBanner(css)
@@ -102,7 +102,7 @@ export async function finalizeDeferredGeneratorCss(
         generated.classSet,
         runtimeWithCurrentCss,
         css,
-        opts.escapeMap,
+        profile.escapeMap,
         options.previousClassSet,
       ),
       target: generated.target,

@@ -1,1 +1,1 @@
-export * from '../../../generation/validate'
+export { validateCandidatesByGenerator } from '@/context/generation'

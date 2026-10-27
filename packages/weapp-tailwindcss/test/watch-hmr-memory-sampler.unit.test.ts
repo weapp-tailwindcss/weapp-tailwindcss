@@ -23,7 +23,7 @@ function deferred<T>() {
 }
 
 function createProbeChild() {
-  const child = new EventEmitter() as ChildProcess
+  const child = Object.assign(new EventEmitter(), { pid: 42 }) as ChildProcess
   child.stdout = new PassThrough()
   child.stderr = new PassThrough()
   child.kill = vi.fn(() => true)

@@ -6,7 +6,7 @@ import { compileString } from 'sass'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { disposeCompilerOwner } from '@/compiler'
 import { getCompilerContext } from '@/context'
-import { generateTailwindV4Css } from '@/generation/service'
+import { generateTailwindV4Css } from '@/context/generation'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from '@/generator'
 import { createLocalUtilitySourcePreparation } from '@/tailwindcss/v4-engine/generator/local-utility-order'
 

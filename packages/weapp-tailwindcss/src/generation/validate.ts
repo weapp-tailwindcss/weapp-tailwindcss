@@ -1,7 +1,6 @@
 import type { GenerateCssByGeneratorOptions } from './types'
 import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { getTailwindGenerationSessionPool } from '@/compiler/tailwind-generation-session-pool'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator/index'
 import { collectGeneratedRawSourceCandidates } from './class-selectors'
 import { resolveGeneratorSources } from './source-resolver'
 
@@ -32,7 +31,7 @@ async function validateCandidatesByGeneratorWithOwner(
     cssHandlerOptions,
     debug,
     file,
-    opts,
+    profile,
     rawSource,
     runtimeState,
   } = options
@@ -42,20 +41,17 @@ async function validateCandidatesByGeneratorWithOwner(
   }
   const classSet = new Set<string>()
   try {
-    const generatorOptions = {
-      ...normalizeWeappTailwindcssGeneratorOptions(opts.generator),
-      bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
-    }
+    const generatorOptions = profile.generator
     if (generatorOptions.enabled) {
       const sourceRecords = await resolveGeneratorSources(
         majorVersion,
-        runtimeState,
+        options.sourceRuntimeState,
         rawSource,
         file,
         cssHandlerOptions,
         generatorOptions,
         {
-          cssEntries: opts.cssEntries,
+          cssEntries: profile.cssEntries ? [...profile.cssEntries] : undefined,
           runtime: candidates,
         },
       )
@@ -69,12 +65,12 @@ async function validateCandidatesByGeneratorWithOwner(
   }
   catch {
   }
-  const rawSourceCandidates = collectGeneratedRawSourceCandidates(candidates, rawSource, opts.escapeMap)
+  const rawSourceCandidates = collectGeneratedRawSourceCandidates(candidates, rawSource, profile.escapeMap)
   for (const candidate of rawSourceCandidates) {
     classSet.add(candidate)
   }
   for (const generatedCss of options.generatedCssSources ?? []) {
-    for (const candidate of collectGeneratedRawSourceCandidates(candidates, generatedCss, opts.escapeMap)) {
+    for (const candidate of collectGeneratedRawSourceCandidates(candidates, generatedCss, profile.escapeMap)) {
       classSet.add(candidate)
     }
   }
@@ -84,5 +80,5 @@ async function validateCandidatesByGeneratorWithOwner(
     candidates.size,
     classSet.size,
   )
-  return classSet
+  return options.isConfigurationCurrent() ? classSet : new Set()
 }

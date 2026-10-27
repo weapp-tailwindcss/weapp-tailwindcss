@@ -4,7 +4,7 @@ const source = (id: string) => ({ projectRoot: '/workspace', base: '/workspace',
 
 async function setup() {
   const instances: any[] = []
-  vi.doMock('@/generator', () => ({
+  vi.doMock('@/generator/runtime', () => ({
     createWeappTailwindcssGenerator: vi.fn((input) => {
       const instance = {
         source: input,
@@ -21,7 +21,7 @@ async function setup() {
 }
 
 describe('生成会话的依赖失效边界', () => {
-  afterEach(() => { vi.doUnmock('@/generator'); vi.resetModules() })
+  afterEach(() => { vi.doUnmock('@/generator/runtime'); vi.resetModules() })
 
   it.each(['/repo/theme.css', 'C:\\repo\\theme.css', 'C:\\', '/', './theme.css', '../theme.css', 'virtual:theme?raw'])('仅失效精确依赖 %s 的会话', async (id) => {
     const { pool, instances } = await setup()

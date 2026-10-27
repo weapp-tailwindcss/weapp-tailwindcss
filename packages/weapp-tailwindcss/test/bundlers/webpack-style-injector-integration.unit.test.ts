@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createContext, FakeConcatSource, getCompilerContextMock, testState, WeappTailwindcss } from './webpack.v5.unit/shared'
+import { createContext, FakeConcatSource, createCompilerContextMock, testState, WeappTailwindcss } from './webpack.v5.unit/shared'
 
 function createCompilerHarness() {
   const processAssetsCallbacks: Array<() => void> = []
@@ -85,7 +85,7 @@ describe('bundlers/webpack builtin styleInjector', () => {
         imports: ['shared.wxss'],
       },
     } as any)
-    getCompilerContextMock.mockClear()
+    createCompilerContextMock.mockClear()
     const harness = createCompilerHarness()
 
     new WeappTailwindcss().apply(harness.compiler as any)
@@ -107,7 +107,7 @@ describe('bundlers/webpack builtin styleInjector', () => {
       disabled: { plugin: true },
       styleInjector: true,
     } as any)
-    getCompilerContextMock.mockClear()
+    createCompilerContextMock.mockClear()
     const harness = createCompilerHarness()
 
     new WeappTailwindcss().apply(harness.compiler as any)

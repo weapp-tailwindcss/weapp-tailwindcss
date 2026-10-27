@@ -9,10 +9,10 @@ import { filterExistingCssRules, normalizeTailwindcssV4InfinityRadiusCss, rewrit
 import { ensurePosix } from '@weapp-tailwindcss/shared'
 import { rewriteTailwindcssImportsInCode } from '@/bundlers/shared/css-imports'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
+import { generateTailwindV4Css } from '@/context/generation'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindRootImportDirectives, normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } from '@/generation/directives'
-import { generateTailwindV4Css } from '@/generation/service'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolveTailwindV4EntriesFromCssCached } from '@/project-sources'
 import { createSourceCandidateStore, isSourceCandidateRequest } from '@/project-sources/candidates'
 import { forEachSourceCandidateFile } from '@/project-sources/candidates/file-io'
@@ -20,14 +20,13 @@ import { resolveSourceCandidateScanFiles } from '@/project-sources/candidates/sc
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
 import { collectWebpackBareSelectorUserCss } from '../BaseUnifiedPlugin/v5-assets/pipeline-helpers'
-import { getLatestWebpackLoaderRuntime, getWebpackLoaderRuntime } from './runtime-registry'
+import { resolveWebpackLoaderRuntime } from './runtime-registry'
 import { registerWebpackSourceContexts, registerWebpackWatchFile } from './watch-dependencies'
 
 interface CssImportRewriteLoaderOptions extends WebpackCssImportRewriteLoaderOptions {}
 
-export function resolveWebpackCssPipelineLoaderOptions(options: CssImportRewriteLoaderOptions | undefined): CssImportRewriteLoaderOptions | undefined {
-  const runtime = (getWebpackLoaderRuntime(options?.tailwindcssImportRewriteRuntimeKey)
-    ?? getLatestWebpackLoaderRuntime())?.cssImportRewrite
+export function resolveWebpackCssPipelineLoaderOptions(options: CssImportRewriteLoaderOptions | undefined, compiler?: object): CssImportRewriteLoaderOptions | undefined {
+  const runtime = resolveWebpackLoaderRuntime(options?.tailwindcssImportRewriteRuntimeKey, compiler)?.cssImportRewrite
   return runtime
     ? {
         ...options,
@@ -168,7 +167,7 @@ export async function generateCssForWebpackPipeline(
   }
   await runtimeState.readyPromise
   const runtime = await getRuntimeSet()
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
+  const { options: generatorOptions } = resolveContextGeneratorConfiguration(compilerOptions, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
     tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
@@ -307,55 +306,58 @@ const WeappTwCssImportRewriteLoader: webpack.LoaderDefinitionFunction<CssImportR
   if (process.env['WEAPP_TW_LOADER_DEBUG']) {
     process.stdout.write(`[weapp-tw-css-import-rewrite-loader] executing for ${this.resourcePath}\n`)
   }
-  const opt = resolveWebpackCssPipelineLoaderOptions(this.getOptions())
-  const input = Buffer.isBuffer(source) ? source.toString('utf-8') : source
-  const hasTailwindGeneratorSource = typeof input === 'string' && (
-    hasTailwindRootDirectives(input, { importFallback: true })
-    || hasTailwindApplyDirective(input)
-  )
-  const isLynxPipeline = opt?.tailwindcssImportRewrite?.compilerOptions?.platform === 'lynx'
-  const hasLynxEntrySource = !isLynxPipeline || (
-    hasTailwindRootImportDirectives(input, { importFallback: true })
-    || hasTailwindApplyDirective(input)
-  )
-  const shouldRegisterGeneratorSource = hasTailwindGeneratorSource
-    && hasLynxEntrySource
-    && (!isLynxPipeline || opt?.generateCss === true)
-  const register = shouldRegisterGeneratorSource
-    ? () => registerWebpackCssGeneratorSource(input, this.resourcePath, opt)
-    : undefined
-  const transform = () => {
-    const transformed = transformCssImportRewriteSource(source, opt)
-    if (typeof transformed === 'string') {
-      return normalizeCssConfigDirectives(transformed, this.resourcePath)
+  const opt = resolveWebpackCssPipelineLoaderOptions(this.getOptions(), this._compiler)
+  const execute = () => {
+    const input = Buffer.isBuffer(source) ? source.toString('utf-8') : source
+    const hasTailwindGeneratorSource = typeof input === 'string' && (
+      hasTailwindRootDirectives(input, { importFallback: true })
+      || hasTailwindApplyDirective(input)
+    )
+    const isLynxPipeline = opt?.tailwindcssImportRewrite?.compilerOptions?.platform === 'lynx'
+    const hasLynxEntrySource = !isLynxPipeline || (
+      hasTailwindRootImportDirectives(input, { importFallback: true })
+      || hasTailwindApplyDirective(input)
+    )
+    const shouldRegisterGeneratorSource = hasTailwindGeneratorSource
+      && hasLynxEntrySource
+      && (!isLynxPipeline || opt?.generateCss === true)
+    const register = shouldRegisterGeneratorSource
+      ? () => registerWebpackCssGeneratorSource(input, this.resourcePath, opt)
+      : undefined
+    const transform = () => {
+      const transformed = transformCssImportRewriteSource(source, opt)
+      if (typeof transformed === 'string') {
+        return normalizeCssConfigDirectives(transformed, this.resourcePath)
+      }
+      return transformed
     }
-    return transformed
-  }
-  const canGenerate = opt?.generateCss === true
-    && hasTailwindGeneratorSource
-    && hasLynxEntrySource
-    && opt?.tailwindcssImportRewrite?.compilerOptions
-    && opt.tailwindcssImportRewrite.runtimeState
-    && opt.tailwindcssImportRewrite.getRuntimeSet
-  const generate = canGenerate
-    ? async () => {
-      const generated = await generateCssForWebpackPipeline(input, this, opt)
-      return generated ?? transform()
+    const canGenerate = opt?.generateCss === true
+      && hasTailwindGeneratorSource
+      && hasLynxEntrySource
+      && opt?.tailwindcssImportRewrite?.compilerOptions
+      && opt.tailwindcssImportRewrite.runtimeState
+      && opt.tailwindcssImportRewrite.getRuntimeSet
+    const generate = canGenerate
+      ? async () => {
+        const generated = await generateCssForWebpackPipeline(input, this, opt)
+        return generated ?? transform()
+      }
+      : undefined
+    if (generate) {
+      return Promise.resolve().then(async () => {
+        await register?.()
+        return generate()
+      })
     }
-    : undefined
-  if (generate) {
-    return Promise.resolve().then(async () => {
-      await register?.()
-      return generate()
-    })
+    const registerTask = register?.()
+    if (registerTask && typeof (registerTask as PromiseLike<void>).then === 'function') {
+      return Promise.resolve(registerTask).then(async () => {
+        return transform()
+      })
+    }
+    return transform()
   }
-  const registerTask = register?.()
-  if (registerTask && typeof (registerTask as PromiseLike<void>).then === 'function') {
-    return Promise.resolve(registerTask).then(async () => {
-      return transform()
-    })
-  }
-  return transform()
+  return opt?.tailwindcssImportRewrite?.run ? opt.tailwindcssImportRewrite.run(execute) : execute()
 }
 
 export default WeappTwCssImportRewriteLoader

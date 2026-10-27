@@ -3,18 +3,17 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, it, vi } from 'vitest'
-import { rollupTestRequire } from './rollup-test-runtime.mjs'
+import { rollupTestVariants } from './rollup-test-runtime.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-const require = rollupTestRequire('taro-vite-react-tailwindcss-v4')
-const dist = path.dirname(require.resolve('rollup'))
-const scenarios = ['cjs', 'esm'].flatMap(format =>
+const scenarios = rollupTestVariants().flatMap(runtime =>
   [true, false].flatMap(atomic => ['file', 'parent'].flatMap(barrier =>
-    ['file', 'directory'].map(dependency => ({ format, atomic, barrier, dependency })))),
+    ['file', 'directory'].map(dependency => ({ ...runtime, atomic, barrier, dependency })))),
 )
 
-it.each(scenarios)('reconciles a dependency recreated during native subscription ($format, atomic=$atomic, $barrier, $dependency)', async ({ format, atomic, barrier, dependency }) => {
+it.each(scenarios)('reconciles a dependency recreated during native subscription ($version, $format, atomic=$atomic, $barrier, $dependency)', async ({ require, format, atomic, barrier, dependency }) => {
+  const dist = path.dirname(require.resolve('rollup'))
   const rollup = format === 'cjs'
     ? require('rollup')
     : await import(pathToFileURL(path.join(dist, 'es/rollup.js')).href)

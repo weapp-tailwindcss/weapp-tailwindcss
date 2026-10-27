@@ -2,7 +2,8 @@ import type { GeneratorPipelineOutputContext } from '@/generation/pipeline/conte
 import type { UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
-import { generateCssByGenerator } from '@/generation'
+import { resolveCompilationProfile } from '@/context/compilation-profile'
+import { generateCssByGenerator } from '@/context/generation'
 import { finalizeDeferredGeneratorCss } from '@/generation/pipeline/deferred-output'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 
@@ -16,8 +17,10 @@ it.each([
 ])('uses $name in full and incremental deferred generation', async ({ options, selector }) => {
   const runtimeState = { tailwindRuntime: { majorVersion: 4 } as any, readyPromise: Promise.resolve() }
   const file = path.resolve('test/fixtures/deferred-group.css')
+  const opts = { ...options, generator: { target: 'weapp' } } as UserDefinedOptions as any
+  const { profile } = resolveCompilationProfile(opts, runtimeState)
   const generate = (candidates: string[]) => generateCssByGenerator({
-    opts: { ...options, generator: { target: 'weapp' } } as UserDefinedOptions as any,
+    opts,
     runtimeState,
     runtime: new Set(candidates),
     rawSource: '@import "tailwindcss" source(none);',
@@ -36,7 +39,7 @@ it.each([
   // 引擎可按级联风险选择全量重建；这里将真实生成的 delta 交给增量组装边界。
   const incremental = await finalizeDeferredGeneratorCss({
     options: { deferCssAdaptation: true, previousCss: '.flex{display:flex}', previousClassSet: new Set(['flex']) },
-    opts: {},
+    profile,
     file,
     filterGeneratedApplyOnlyCss: (css: string) => css,
     generated: { target: 'weapp', rawCss: full!.metadata!.rawCss, incrementalRawCss: full!.metadata!.rawCss, classSet: full!.classSet, dependencies: [] },

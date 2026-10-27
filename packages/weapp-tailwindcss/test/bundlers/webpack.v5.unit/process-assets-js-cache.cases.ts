@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { LoaderModule } from './shared'
-import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createCompilerWithLoaderTracking, createContext, getCompilerContextMock, path, testState, WeappTailwindcss } from './shared'
+import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createCompilerWithLoaderTracking, createContext, createCompilerContextMock, path, testState, WeappTailwindcss } from './shared'
 describe('bundlers/webpack WeappTailwindcss / process assets js cache', () => {
   setupWebpackV5UnitTest()
   it('uses the CSS loader boundary when postcss loader is missing', () => {
@@ -23,7 +23,7 @@ describe('bundlers/webpack WeappTailwindcss / process assets js cache', () => {
     testState.currentContext = createContext({
       wxsMatcher: (file: string) => file.endsWith('.wxs'),
     })
-    getCompilerContextMock.mockReturnValue(testState.currentContext)
+    createCompilerContextMock.mockReturnValue(testState.currentContext)
 
     const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
     let currentAssetStore: Record<string, string> = {}

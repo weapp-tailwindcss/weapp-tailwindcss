@@ -1,1 +1,1 @@
-export * from '../../generation/service'
+export * from '@/context/generation'
