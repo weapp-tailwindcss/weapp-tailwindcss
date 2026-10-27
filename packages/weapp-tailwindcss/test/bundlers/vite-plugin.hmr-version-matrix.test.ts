@@ -2,8 +2,9 @@ import type { Plugin } from 'vite'
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WeappTailwindcss } from '@/bundlers/vite'
+import { generateRawArtifact } from '@/tailwindcss/v4-engine/generator/raw-generation'
 
 interface ViteBuildWatcher {
   close: () => Promise<void> | void
@@ -15,6 +16,15 @@ interface ViteBuildModule {
   build: (config: Record<string, unknown>) => Promise<ViteBuildWatcher>
 }
 
+vi.mock('@/tailwindcss/v4-engine/generator/raw-generation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tailwindcss/v4-engine/generator/raw-generation')>()
+  return {
+    ...actual,
+    generateRawArtifact: vi.fn(actual.generateRawArtifact),
+  }
+})
+
+const foreignCandidate = `z-[${process.pid}]`
 const require = createRequire(import.meta.url)
 const tailwindcss4Basedir = path.dirname(require.resolve('tailwindcss/package.json'))
 const createdDirs: string[] = []
@@ -36,6 +46,9 @@ async function createFixtureRoot() {
   await mkdir(tmpRoot, { recursive: true })
   const root = await mkdtemp(path.join(tmpRoot, 'case-'))
   createdDirs.push(root)
+  const foreignRoot = await mkdtemp(path.join(process.cwd(), 'test', 'vite-hmr-foreign-'))
+  createdDirs.push(foreignRoot)
+  await writeFile(path.join(foreignRoot, 'foreign.html'), `<view class="${foreignCandidate}"></view>`)
   const srcDir = path.join(root, 'src')
   await mkdir(srcDir, { recursive: true })
 
@@ -158,6 +171,10 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
         appType: 'weapp-vite',
         cssEntries: [cssFile],
         tailwindcssBasedir: tailwindcss4Basedir,
+        tailwindcssRuntimeOptions: {
+          // Tailwind 包复用仓库安装，源码身份限定为本轮临时项目。
+          projectRoot: root,
+        },
         tailwindcss: {
           packageName: 'tailwindcss',
           v4: {
@@ -200,6 +217,13 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
     const replayedCss = await waitForBuiltStyle(distDir)
     expect(replayedCss).toContain('.pt-_b12rpx_B')
     expect(replayedCss).not.toContain('.pt-\\[12rpx\\]')
+
+    // 真实生成仍执行；相邻 fixture 的候选不能进入当前运行时。
+    const generation = vi.mocked(generateRawArtifact)
+    expect(generation).toHaveBeenCalled()
+    const artifacts = await Promise.all(generation.mock.results.map(result => result.value))
+    expect(artifacts.some(artifact => artifact.classSet.has('mt-[10rpx]'))).toBe(true)
+    expect(artifacts.some(artifact => artifact.classSet.has(foreignCandidate))).toBe(false)
   }
   finally {
     await closeWatcher(watcher)
@@ -208,6 +232,7 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
 
 describe('bundlers/vite hmr version matrix', () => {
   afterEach(async () => {
+    vi.mocked(generateRawArtifact).mockClear()
     await Promise.all(
       createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
     )
