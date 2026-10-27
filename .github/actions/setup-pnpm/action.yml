@@ -12,6 +12,7 @@ runs:
     - uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
+        check-latest: true
         cache: pnpm
         cache-dependency-path: pnpm-lock.yaml
     - name: Cache Playwright browsers

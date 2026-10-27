@@ -105,6 +105,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -207,6 +208,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && '22.23.4' || '22' }}
+          check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 

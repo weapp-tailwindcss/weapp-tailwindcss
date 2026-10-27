@@ -121,6 +121,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # 此处只消费路由结果；正式 job 在自身 checkout 重新规划和验证。
@@ -188,6 +189,7 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
 
       - name: Install Dependencies
@@ -317,6 +319,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Audit npm OIDC
@@ -345,6 +348,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - id: plan
@@ -390,6 +394,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Download native artifacts from this run

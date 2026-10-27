@@ -77,6 +77,7 @@ jobs:
         id: node
         with:
           node-version: 24
+          check-latest: true
           cache: ${{ matrix.image == '' && 'pnpm' || '' }}
 
       - name: Cache host Cargo downloads

@@ -58,6 +58,7 @@ jobs:
         if: matrix.image == ''
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - name: Install and verify published native packages
         if: matrix.image == ''

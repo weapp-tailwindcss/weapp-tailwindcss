@@ -30,6 +30,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          check-latest: true
       - run: node scripts/ci/demo-matrix/fixtures/output-copy-race.cjs
   watch:
     name: Repeated watch (${{ matrix.os || 'windows-latest' }}, Node ${{ matrix.node || 24 }}, ${{ matrix.case }})
