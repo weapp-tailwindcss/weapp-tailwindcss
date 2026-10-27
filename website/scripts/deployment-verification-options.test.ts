@@ -2,29 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { parseDeploymentVerificationOptions } from './deployment-verification-options'
 
 describe('parseDeploymentVerificationOptions', () => {
-  it('默认使用待验证站点作为 canonical origin', () => {
-    expect(parseDeploymentVerificationOptions(['--', 'https://tw.weapp.dev'])).toEqual({
-      canonicalOrigin: 'https://tw.weapp.dev',
-      siteUrl: new URL('https://tw.weapp.dev'),
+  it.each([
+    ['production', 'https://tw.weapp.dev'],
+    ['next', 'https://next.tw.weapp.dev'],
+  ])('显式验证 %s 的 canonical origin', (target, origin) => {
+    expect(parseDeploymentVerificationOptions(['--', origin, '--target', target])).toEqual({
+      target,
+      canonicalOrigin: origin,
+      siteUrl: new URL(origin),
     })
   })
 
-  it('允许为 Worker 预览地址指定生产 canonical origin', () => {
+  it('允许 Worker 预览和本地地址验证指定目标的 canonical', () => {
     expect(parseDeploymentVerificationOptions([
-      'https://migration-weapp-tailwindcss.example.workers.dev',
-      '--canonical-origin',
-      'https://tw.weapp.dev/',
+      'http://127.0.0.1:45678',
+      '--target=next',
+      '--canonical-origin=https://next.tw.weapp.dev/',
     ])).toEqual({
-      canonicalOrigin: 'https://tw.weapp.dev',
-      siteUrl: new URL('https://migration-weapp-tailwindcss.example.workers.dev'),
+      target: 'next',
+      canonicalOrigin: 'https://next.tw.weapp.dev',
+      siteUrl: new URL('http://127.0.0.1:45678'),
     })
   })
 
-  it('支持等号形式的 canonical origin 参数', () => {
-    expect(parseDeploymentVerificationOptions([
-      'https://weapp-tw.icebreaker.top',
-      '--canonical-origin=https://tw.weapp.dev',
-    ]).canonicalOrigin).toBe('https://tw.weapp.dev')
+  it('拒绝未指定目标、未知目标或混用两个官方站点', () => {
+    expect(() => parseDeploymentVerificationOptions(['https://tw.weapp.dev'])).toThrow('必须显式')
+    expect(() => parseDeploymentVerificationOptions(['https://tw.weapp.dev', '--target=preview'])).toThrow('--target 必须')
+    expect(() => parseDeploymentVerificationOptions(['https://tw.weapp.dev', '--target=next'])).toThrow('不匹配')
+    expect(() => parseDeploymentVerificationOptions(['https://example.workers.dev', '--target=next', '--canonical-origin', 'https://tw.weapp.dev'])).toThrow('next canonical origin')
   })
 
   it('拒绝缺少值和未知参数', () => {

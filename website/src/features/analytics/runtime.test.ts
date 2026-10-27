@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { isCanonicalOrigin } from './runtime'
+import { isProductionAnalyticsOrigin } from './runtime'
 
-describe('统计的 canonical origin 边界', () => {
+describe('统计的正式主域边界', () => {
   it.each([
     ['https://tw.weapp.dev', 'https://tw.weapp.dev', true],
     ['https://tw.weapp.dev', 'https://tw.weapp.dev/docs/options/reset', true],
@@ -12,10 +12,10 @@ describe('统计的 canonical origin 边界', () => {
     ['https://tw.weapp.dev.example.test', 'https://tw.weapp.dev', false],
     ['http://localhost:4000', 'https://tw.weapp.dev', false],
     ['http://127.0.0.1:4000', 'https://tw.weapp.dev', false],
-    ['https://next.tw.weapp.dev', 'https://next.tw.weapp.dev/docs/', true],
+    ['https://next.tw.weapp.dev', 'https://next.tw.weapp.dev/docs/', false],
     ['https://tw.weapp.dev', 'https://next.tw.weapp.dev', false],
     ['null', 'file:///docs/index.html', false],
   ])('运行来源 %s 与配置 %s 的匹配结果是 %s', (origin, url, expected) => {
-    expect(isCanonicalOrigin(origin, url)).toBe(expected)
+    expect(isProductionAnalyticsOrigin(origin, url)).toBe(expected)
   })
 })

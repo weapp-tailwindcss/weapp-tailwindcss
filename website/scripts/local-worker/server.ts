@@ -1,4 +1,5 @@
 import type { HBuilderXCommandOptions, SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
+import type { DeploymentTarget } from '../../config/deploymentTarget'
 import type { LocalWorkerResponse } from './http'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -20,6 +21,7 @@ export interface LocalWorkerContext {
 
 export interface LocalWorkerOptions {
   websiteRoot: string
+  target?: DeploymentTarget
   signal?: AbortSignal
   readyTimeoutMs?: number
   requestTimeoutMs?: number
@@ -95,7 +97,7 @@ export async function withLocalWorker<T>(action: (context: LocalWorkerContext) =
     controller.signal.throwIfAborted()
     const expectedHtml = await readFile(path.join(options.websiteRoot, 'build', 'index.html'), 'utf8')
     const port = await availablePort()
-    const invocation = await (options.createCommand ?? resolveWranglerCommand)(options.websiteRoot, port)
+    const invocation = await (options.createCommand ? options.createCommand(options.websiteRoot, port) : resolveWranglerCommand(options.websiteRoot, port, options.target))
     controller.signal.throwIfAborted()
     const trackWorker = (worker: SpawnedHBuilderXCommand, isStopping: () => boolean) => {
       command = worker

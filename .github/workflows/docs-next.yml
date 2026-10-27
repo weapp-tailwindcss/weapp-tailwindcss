@@ -1,0 +1,93 @@
+name: Deploy Next Docs Worker
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-worker-next
+  cancel-in-progress: false
+
+jobs:
+  deploy-next:
+    name: Build, validate and deploy next
+    if: github.repository == 'weapp-tailwindcss/weapp-tailwindcss' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE_URL: https://next.tw.weapp.dev
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test deployment guards
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/docs-next-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/deployment-verification-options.test.ts scripts/deployment-indexing-policy.test.ts scripts/deployment-verification.test.ts scripts/metadata-environment.test.ts --update=none
+
+      - name: Check docs audience
+        run: pnpm --filter @weapp-tailwindcss/website check:docs-audience
+
+      - name: Run few_keywords gate
+        run: pnpm --filter @weapp-tailwindcss/website seo:few-keywords
+
+      - name: Build website
+        run: pnpm --filter @weapp-tailwindcss/website build:next
+
+      - name: Run SEO/GEO quality gate
+        run: pnpm --filter @weapp-tailwindcss/website seo:quality:strict
+
+      - name: Verify Worker routing locally
+        run: pnpm --filter @weapp-tailwindcss/website test:worker -- --target next
+
+      - name: Validate Worker bundle
+        run: pnpm --filter @weapp-tailwindcss/website deploy:worker:next:dry-run
+
+      - name: Require latest main before deployment
+        id: latest
+        run: pnpm exec tsx scripts/deploy-docs-gate.ts
+
+      - name: Deploy next Worker
+        id: deploy
+        if: steps.latest.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm exec tsx scripts/deploy-docs-gate.ts --credentials
+          pnpm --filter @weapp-tailwindcss/website exec wrangler deployments list --config wrangler.jsonc --env next
+          pnpm deploy:docs:worker:next
+
+      - name: Verify deployed next assets
+        if: steps.deploy.outcome == 'success'
+        run: pnpm --filter @weapp-tailwindcss/website verify:deployment -- https://next.tw.weapp.dev --target next
+
+      - name: Record deployment result
+        if: always()
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          {
+            echo '## Next documentation'
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Upload: $DEPLOY_OUTCOME"
+            echo '- Site: https://next.tw.weapp.dev'
+            echo '- Worker versions before and after upload are recorded in the deployment step log.'
+            echo '- The job succeeds only after deployed assets pass verification.'
+          } >> "$GITHUB_STEP_SUMMARY"

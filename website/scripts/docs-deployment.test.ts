@@ -61,7 +61,7 @@ describe('生产文档部署工作流', () => {
     })
     const verification = steps[deployIndex + 1]
     expect(verification.if).toBe('steps.deploy.outcome == \'success\'')
-    expect(verification.run).toContain('verify:deployment -- https://tw.weapp.dev')
+    expect(verification.run).toContain('verify:deployment -- https://tw.weapp.dev --target production')
     expect(verification['continue-on-error']).toBeUndefined()
     expect(steps.map(step => step.run ?? '').join('\n')).not.toMatch(/deploy:worker:next|build:next|--env next/)
   })

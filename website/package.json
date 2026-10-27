@@ -28,6 +28,7 @@
     "deploy:worker": "wrangler deploy --config wrangler.jsonc --env=\"\"",
     "deploy:worker:next": "wrangler deploy --config wrangler.jsonc --env next",
     "deploy:worker:dry-run": "wrangler deploy --config wrangler.jsonc --env=\"\" --dry-run",
+    "deploy:worker:next:dry-run": "wrangler deploy --config wrangler.jsonc --env next --dry-run",
     "swizzle": "cross-env NO_UPDATE_NOTIFIER=1 docusaurus swizzle",
     "clear": "cross-env NO_UPDATE_NOTIFIER=1 docusaurus clear",
     "serve": "cross-env NO_UPDATE_NOTIFIER=1 docusaurus serve",

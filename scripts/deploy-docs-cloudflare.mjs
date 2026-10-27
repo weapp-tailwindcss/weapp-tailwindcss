@@ -8,13 +8,13 @@ const packageManager = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 
 export const productionDeploymentSteps = [
   ['--filter', '@weapp-tailwindcss/website', 'deploy:worker'],
-  ['--filter', '@weapp-tailwindcss/website', 'verify:deployment', '--', 'https://tw.weapp.dev'],
+  ['--filter', '@weapp-tailwindcss/website', 'verify:deployment', '--', 'https://tw.weapp.dev', '--target', 'production'],
 ]
 
 export const nextDeploymentSteps = [
   ['--filter', '@weapp-tailwindcss/website', 'build:next'],
   ['--filter', '@weapp-tailwindcss/website', 'deploy:worker:next'],
-  ['--filter', '@weapp-tailwindcss/website', 'verify:deployment', '--', 'https://next.tw.weapp.dev'],
+  ['--filter', '@weapp-tailwindcss/website', 'verify:deployment', '--', 'https://next.tw.weapp.dev', '--target', 'next'],
 ]
 
 const deploymentSteps = {
