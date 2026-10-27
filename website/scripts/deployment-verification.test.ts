@@ -87,6 +87,31 @@ describe('双语部署产物验证', () => {
     await expect(verifyDeploymentAssets(options, assets)).rejects.toThrow(`${pathname} does not match this build`)
   })
 
+  it.each([
+    ['production', undefined],
+    ['production', 'public, max-age=0, must-revalidate'],
+    ['next', undefined],
+    ['next', 'public, max-age=0, must-revalidate'],
+  ] as const)('%s 拒绝中文资源缺失或错误的 immutable 缓存头：%s', async (target, cacheControl) => {
+    const pathname = '/zh-cn/assets/js/main.123.js'
+    const { assets } = fixture(target, {
+      extraPaths: [pathname],
+      respondAsset(asset, response) {
+        if (asset.pathname === pathname) {
+          if (cacheControl === undefined) {
+            response.headers.delete('cache-control')
+          }
+          else {
+            response.headers.set('cache-control', cacheControl)
+          }
+        }
+        return response
+      },
+    })
+    const options = parseDeploymentVerificationOptions(['http://127.0.0.1:12345', '--target', target])
+    await expect(verifyDeploymentAssets(options, assets)).rejects.toThrow(`${pathname} immutable cache policy is missing or incorrect`)
+  })
+
   it('并发上限覆盖完整响应体读取，且允许未被首页引用的页面 CSS', async () => {
     let active = 0
     let maximum = 0

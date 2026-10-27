@@ -1,5 +1,6 @@
 import type { HashedDeploymentAsset } from './deployment-assets'
 import type { DeploymentVerificationOptions } from './deployment-verification-options'
+import { getLocalePrefix, siteLocales } from '../src/i18n/locale'
 import { digest } from './deployment-assets'
 import { verifyIndexingHeaders, verifyIndexingHtml, verifyRobotsPolicy } from './deployment-indexing-policy'
 
@@ -110,7 +111,7 @@ async function verifyHashedAssets(options: DeploymentVerificationOptions, assets
       const asset = assets[next++]
       try {
         const response = await request(asset.pathname, 200)
-        if (asset.pathname.startsWith('/assets/')) {
+        if (siteLocales.some(locale => asset.pathname.startsWith(`${getLocalePrefix(locale)}/assets/`))) {
           assert(response.headers.get('cache-control') === 'public, max-age=31536000, immutable', `${asset.pathname} immutable cache policy is missing or incorrect`)
         }
         const remoteSha256 = digest(new Uint8Array(await response.arrayBuffer()))

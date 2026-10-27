@@ -2,3 +2,5 @@
   X-Robots-Tag: noindex, nofollow
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+/zh-cn/assets/*
+  Cache-Control: public, max-age=31536000, immutable
