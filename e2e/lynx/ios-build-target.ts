@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { iosSimulatorDestination, requestedIosTarget } from '../../scripts/e2e-preflight/targets'
+import { bindIosHostLogs } from './ios-host-log-source'
 import { command } from './native-command'
 import { resolveNativeDevice, selectIosBuildTarget } from './native-device'
 
@@ -41,7 +42,7 @@ export async function prepareIosBuildTarget(cwd: string, file: string, env: Node
 }
 
 /** 本地默认仍发现已 Booted 设备；提供了 CI 准备文件时，任何无效证据均直接阻断。 */
-export async function readPreparedIosBuildTarget(cwd: string, env: NodeJS.ProcessEnv = process.env): Promise<IosBuildTarget | undefined> {
+export async function readPreparedIosBuild(cwd: string, env: NodeJS.ProcessEnv = process.env) {
   const file = env['LYNX_IOS_BUILD_TARGET_FILE']
   if (!file) {
     return undefined
@@ -56,7 +57,12 @@ export async function readPreparedIosBuildTarget(cwd: string, env: NodeJS.Proces
   if (!manifest.target || Object.entries(target).some(([key, value]) => manifest.target[key] !== value)) {
     throw new Error('iOS 构建目标与启动前记录的身份、runtime 或 destination 不一致。')
   }
-  return target
+  return { target, hostLogs: bindIosHostLogs(manifest.inventory, target, identity, manifest.sha) }
+}
+
+/** 兼容只需要执行身份的调用者，不额外查询库存或 checkout。 */
+export async function readPreparedIosBuildTarget(cwd: string, env: NodeJS.ProcessEnv = process.env): Promise<IosBuildTarget | undefined> {
+  return (await readPreparedIosBuild(cwd, env))?.target
 }
 
 /** 构建与运行分别消费构建身份和当前在线身份，不重试或更换设备。 */

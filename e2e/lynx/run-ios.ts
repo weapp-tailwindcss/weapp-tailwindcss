@@ -1,4 +1,5 @@
 import type { NativeEvidenceContext, NativePlatformReport } from '../../examples/react-lynx/src/compatibility/types'
+import type { IosHostLogSource } from './ios-host-log-source'
 import type { NativeRunStage } from './native-artifacts'
 import type { IosBuildTarget } from './native-device'
 import type { NativeRunOptions } from './native-options'
@@ -11,6 +12,7 @@ import { withNativeFailureEvidence } from './failure-evidence'
 import { iosFailureReaders } from './failure-evidence-readers'
 import { withBuiltIosDevice } from './ios-build-target'
 import { resolveIosAppContainer } from './ios-container'
+import { collectIosLaunchHostLogs } from './ios-launch-host-logs'
 import { command } from './native-command'
 import { iosPodInstallArguments } from './native-options'
 import { waitForReportOrFailure } from './native-report'
@@ -25,7 +27,7 @@ async function recordIosVideo(deviceId: string, artifactDir: string, duration: n
   await recording
 }
 
-export async function runIos(hostDir: string, artifactDir: string, target: IosBuildTarget, context: NativeEvidenceContext, options: NativeRunOptions, setStage: (stage: NativeRunStage) => void) {
+export async function runIos(hostDir: string, artifactDir: string, target: IosBuildTarget, context: NativeEvidenceContext, options: NativeRunOptions, setStage: (stage: NativeRunStage) => void, hostLogs?: IosHostLogSource) {
   setStage('native-build')
   if (process.env['LYNX_IOS_SKIP_PROJECT_GENERATION'] !== '1') {
     await command('xcodegen', ['generate'], hostDir, 60_000)
@@ -75,8 +77,15 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       process.stderr.write('iOS 应用容器查询超时；已保留原始错误，等待指定模拟器就绪后仅再查询一次。\n')
     }, target.state === 'Shutdown')
     const reportPath = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'report.json')
+    let launchStepFailed = false
     return withNativeFailureEvidence(artifactDir, context, iosFailureReaders(container, context), async () => {
-      await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000, { file: path.join(artifactDir, 'launch-command.json') })
+      try {
+        await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000, { file: path.join(artifactDir, 'launch-command.json') })
+      }
+      catch (error) {
+        launchStepFailed = true
+        throw error
+      }
       if (options.captureOnly) {
         await new Promise(resolve => setTimeout(resolve, 2200))
         await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
@@ -93,6 +102,6 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
       await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
       return source
-    })
+    }, () => launchStepFailed ? collectIosLaunchHostLogs(artifactDir, device, hostLogs) : Promise.resolve())
   }, process.env, () => setStage('device-readiness'))
 }

@@ -46,17 +46,19 @@ async function collectFailureEvidence(artifactDir: string, context: NativeEviden
 }
 
 /** 失败时仅导出固定白名单的原始文件；独立目录永远不能作为通过回执或 crops。 */
-export async function withNativeFailureEvidence<T>(artifactDir: string, context: NativeEvidenceContext, read: NativeFailureReaders, run: () => Promise<T>): Promise<T> {
+export async function withNativeFailureEvidence<T>(artifactDir: string, context: NativeEvidenceContext, read: NativeFailureReaders, run: () => Promise<T>, diagnose?: () => Promise<void>): Promise<T> {
   validateEvidenceContext(context)
   try {
     return await run()
   }
   catch (failure) {
-    try {
-      await collectFailureEvidence(artifactDir, context, read)
-    }
-    catch (diagnosticFailure) {
-      throw new AggregateError([failure, diagnosticFailure], '原生执行失败，且部分失败证据无法导出')
+    const results = await Promise.allSettled([
+      collectFailureEvidence(artifactDir, context, read),
+      ...(diagnose ? [Promise.resolve().then(diagnose)] : []),
+    ])
+    const diagnosticFailures = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (diagnosticFailures.length) {
+      throw new AggregateError([failure, ...diagnosticFailures], '原生执行失败，且部分失败证据无法导出')
     }
     throw failure
   }

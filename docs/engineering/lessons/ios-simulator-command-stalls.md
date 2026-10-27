@@ -14,6 +14,9 @@ regressions:
   - e2e/react-native-native-wait.test.ts
   - e2e/react-native-runtime-artifacts.test.ts
   - e2e/lynx-ios-install-diagnostics.test.ts
+  - e2e/lynx-ios-host-log-source.test.ts
+  - e2e/lynx-ios-host-logs.test.ts
+  - e2e/lynx-ios-launch-logs.test.ts
 verification:
   - claim: Expo 首次运行在 TSX HMR 的 shadow 双帧采集耗尽原 10 秒总预算
     kind: ci
@@ -101,6 +104,20 @@ Execa 9.6.1 在根进程退出后仍等待所拥有的 stdio 完成；`forceKill
 
 组合回归确认了独立的报告缺口：首次 `drain()` 超时没有保存到 owner，操作随后成功结束时，最终归档可以写成 `status:settled`；操作迟到失败时，最终归档只记录晚错误。整个作业原有错误聚合已经保留首次超时，没有误放行，但独立归档缺少该历史。负责预算的 owner 现在保留首次清理超时；最终归档仍等待真实结束，随后交付同一超时，若存在晚拒绝则同时保留两个原始错误。重复或并发 drain 不复制等价超时，不改变原 10000ms / 5000ms、取消、进程终止或在途锁的边界。
 
+### 同一设备的宿主日志取证
+
+作者 head `a7dabe522f6a6729a429e6d3845cc0c03ed26751` 的 [Lynx iOS 首败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40440534943/job/121980045814) 再次在原 60000ms 的 launch 步骤失败。准确 PID、父进程、出生时间与 Mach-O 映像匹配的采样显示，客户端 worker 在该采样窗口等待 `host_support_mig_launch_app` 回复；它不覆盖全部 60 秒，也不能说明服务端或 App 为何没有返回。原 41 项 App 诊断文件全部缺失，不能用缺少本轮原生输出的 App 容器代替宿主日志。
+
+同轮的真实 `simctl list --json` 库存包含选定 UDID 的 `logPath`，但此前 runner 仅保留执行身份，没有失败时的日志读取入口。现在在原准备文件的 run、attempt、checkout、唯一设备与 runtime 校验完成后，一次性生成独立的可选日志来源，并保存库存原文 SHA。来源缺失不会改变设备可用性；失败时不重新查询 git、设备或共享服务。
+
+仅原 launch 步骤未成功交付时，才在命令真实 settle 后导出该目录中的原始文件尾部。步骤失败也可能来自命令诊断侧车写入错误，不能仅凭触发标识推断 simctl 的退出结果。读取非递归，最多枚举 64 项、尝试 8 个普通文件，每文件至多 64KiB，总请求读取量至多 256KiB；读取或导出失败仍消耗预算。输出独立标记 `diagnostic-only`，不进入报告、crops 或通过回执，原 41 项白名单保持独立。
+
+目录及叶子链接不跟随；canonical 解析、枚举、打开及读取前分别核对原目录身份，文件描述符再核普通文件及 dev/ino。每份尾部记录偏移、请求和实际字节数、前后 stat、截断、变化与尾部 SHA，不把尾部摘要称全文摘要。目录和文件句柄均显式收尾，读取与关闭双错保留两个原始对象；两类取证互不阻断，原 launch 错误仍是聚合首项。
+
+这补齐了已证实的取证覆盖缺口，未证明底层 launch 迟滞已修复。目录可能为空、只有子目录或没有对应请求；尾部可能漏掉原命令窗口。必须在实际内容中进一步匹配设备、App 与时间后才能讨论请求归因。字节和数量限制不是文件系统耗时上限，Node 路径检查也不是抵抗恶意目录替换的完整沙箱；不扩大到全局目录，不增加子进程、采样、重试或等待，不调整启动、截图或清理预算。
+
+同 head 的 [Expo 首败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40440535017/job/121980222833) 在 baseline `layout-aspect/default` 第二帧被取消，取消到 exit 约 19ms，exit 到 Execa settle 约 2ms，三条 stdio 均已关闭；本轮没有长尾 stdio 或独立 5000ms drain 超时，不能据历史 fixture 解释此次失败。第一帧通过不代替双帧门禁。Metro 的唯一已观察 bundle 响应在截图前约 4.747 秒完成宿主写入记录，也不证明设备已经收齐或执行。
+
 ## 验证
 
 上述 `verification` 的历史定向命令已在诊断提交 `63d113218ee093e29993551b36f06661bd060c17` 上执行，8 文件、69 项全部通过；该阶段随后仅新增文档，没有重复运行这组测试。回归覆盖快命令零采样、一轮最多一次、原截图子进程退出/取消/PID 变化后拒绝迟到身份、身份超时仍保留快照、成功截图不等待诊断、flush 排空及失败保留。安装回归调用真实 `runIos` 入口并模拟外部服务，验证指定设备、原 120 秒预算、独立诊断路径以及安装失败立即阻断后续阶段，不把模拟命令视为真实设备通过。
@@ -118,6 +135,10 @@ d122 之后的清理历史修复先运行 `CI=1 pnpm --config.verifyDepsBeforeRu
 随后增加流状态观察与真实自有 Node 进程 fixture，对应截图与流的 2 文件 9 项通过。它保持原错误对象、根进程 exit 与流结束的独立语义；测试收尾通过专属 release 文件释放后代，并等待自有命令与 stdio close，不回收其他任务资源。
 
 最终接入本地兼容性入口与 iOS workflow 的完整前置命令通过 16 文件 259 项。6 个截图、流观察与预算相关 TypeScript 文件通过严格类型检查（含 `exactOptionalPropertyTypes`）。归档组合测试的独立类型命令会牵引 112 项依赖诊断；用原始 d122 文件内容与当前内容分别创建相同 TypeScript program，诊断逐项相同，改动文件本身零诊断，因此不把该命令写成整体类型检查通过。
+
+启动宿主日志取证在 `a7dabe522` 加本轮未提交改动上，先以真实临时目录和原 `runIos` 入口运行新增首败回归；旧实现因缺少 `collection.json` 失败，修复后通过。随后在 macOS arm64、Node 24.18.0、pnpm 12.14.0、`CI=1`、`--update=none` 下执行 [Lynx iOS 原前置清单](../../../.github/workflows/lynx-native.yml)，32 文件、589 项全部通过；没有运行模拟器或完整本地验收。新增覆盖包括 POSIX/Windows/UNC 路径边界、来源绑定、文件与字节预算、目录/叶子链接和轮换、短读、部分失败继续导出、文件及目录读取/关闭双错、首错保真与成功后零日志读取。
+
+本轮 9 个新增或修改的 TypeScript 文件通过 ESLint；严格类型诊断（含 `exactOptionalPropertyTypes`）中，改动文件零诊断，125 项依赖诊断与替换回原 a7 模块内容的同配置比较完全一致，因此不声称整体类型检查通过。新 API 回归在旧模块内容下的 2 项诊断单独保留，没有计作依赖通过。规则与差异检查通过，不改变本文 `partial` 状态；实际宿主日志内容及更新后准确 head 的原生 CI 仍待验证。
 
 ## 适用边界
 
