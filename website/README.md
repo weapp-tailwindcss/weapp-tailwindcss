@@ -70,7 +70,7 @@ pnpm build
 - 在生产及预览 Worker 的 **Settings → Builds** 停用自动构建或断开 Git 构建连接，保留 Worker、域名及线上版本，避免恢复额度后重复部署。Actions 部署不需要 Cloudflare GitHub App。
 - Cloudflare 凭据仅传给上传步骤。缺少凭据、远端 main 无法读取或任何质量检查失败都会阻止上传。过期提交跳过部署；每个目标的固定并发组保证一次只有一个部署，且不会取消进行中的上传。两个工作流均复用上述全部质量门禁。
 
-上传步骤日志记录部署前的 Worker 版本和 Wrangler 返回的新版本。随后 `verify:deployment` 核对中英文页面、canonical、站点地图、机器可读内容、301/404，以及线上 CSS/社交图片与本次构建的 SHA-256。验证命令必须显式指定 `--target production` 或 `--target next`，以对应主域核对 canonical，防止混用构建。只有上传和验收都成功，才算部署完成。手动运行同样只能部署最新 `main`。
+上传步骤日志记录部署前的 Worker 版本和 Wrangler 返回的新版本。随后 `verify:deployment` 核对中英文页面、canonical、站点地图、机器可读内容、301/404，以及 `build/assets` 和各语言输出目录中全部 JS、CSS、字体、媒体等资源和社交图片与本次构建的 SHA-256。资源请求最多并发 8 个，失败后停止新请求并等待在途请求结束。验证命令必须显式指定 `--target production` 或 `--target next`，以对应主域核对 canonical，防止混用构建。只有上传和验收都成功，才算部署完成。手动运行同样只能部署最新 `main`。
 
 next 的双语页面、结构化数据和机器索引均使用 `https://next.tw.weapp.dev`。预览 HTML 带 `robots: noindex, nofollow`，`robots.txt` 禁止所有爬虫，静态响应带 `X-Robots-Tag: noindex, nofollow`，不生成双语 sitemap；统计入口只在正式主域构建和正式来源运行时启用。此索引策略不提供访问控制。
 

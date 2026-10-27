@@ -1,15 +1,9 @@
+import type { HashedDeploymentAsset } from './deployment-assets'
 import type { DeploymentVerificationOptions } from './deployment-verification-options'
-import { createHash } from 'node:crypto'
-import { readdir, readFile } from 'node:fs/promises'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { digest } from './deployment-assets'
 import { verifyIndexingHeaders, verifyIndexingHtml, verifyRobotsPolicy } from './deployment-indexing-policy'
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-
-function digest(content: Uint8Array) {
-  return createHash('sha256').update(content).digest('hex')
-}
+export { getExpectedHashedAssets } from './deployment-assets'
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -33,20 +27,6 @@ function createDeploymentRequest({ siteUrl, target }: DeploymentVerificationOpti
     }
     return response
   }
-}
-
-export async function getExpectedHashedAssets() {
-  const cssDirectory = path.join(projectRoot, 'build', 'assets', 'css')
-  const cssFiles = (await readdir(cssDirectory)).filter(filename => filename.endsWith('.css')).sort()
-  const paths = [
-    ...cssFiles.map(filename => `/assets/css/${filename}`),
-    '/img/social/weapp-tailwindcss-en.png',
-    '/img/social/weapp-tailwindcss-zh-cn.png',
-  ]
-  return Promise.all(paths.map(async (pathname) => {
-    const content = await readFile(path.join(projectRoot, 'build', pathname))
-    return { pathname, sha256: digest(content) }
-  }))
 }
 
 async function verifyHtmlMetadata(request: DeploymentRequest, canonicalOrigin: string, pathname: string, locale: 'en-US' | 'zh-CN', target: DeploymentVerificationOptions['target']) {
@@ -119,7 +99,40 @@ async function verifyMachineReadableAssets(request: DeploymentRequest, canonical
   }
 }
 
-export async function verifyDeploymentAssets(options: DeploymentVerificationOptions, assets: Awaited<ReturnType<typeof getExpectedHashedAssets>>, signal?: AbortSignal) {
+async function verifyHashedAssets(options: DeploymentVerificationOptions, assets: HashedDeploymentAsset[], signal?: AbortSignal) {
+  const controller = new AbortController()
+  const request = createDeploymentRequest(options, signal ? AbortSignal.any([signal, controller.signal]) : controller.signal)
+  let next = 0
+  let failed = false
+  let failure: unknown
+  const workers = Array.from({ length: Math.min(8, assets.length) }, async () => {
+    while (!failed && next < assets.length) {
+      const asset = assets[next++]
+      try {
+        const response = await request(asset.pathname, 200)
+        if (asset.pathname.startsWith('/assets/')) {
+          assert(response.headers.get('cache-control') === 'public, max-age=31536000, immutable', `${asset.pathname} immutable cache policy is missing or incorrect`)
+        }
+        const remoteSha256 = digest(new Uint8Array(await response.arrayBuffer()))
+        assert(remoteSha256 === asset.sha256, `${asset.pathname} does not match this build`)
+      }
+      catch (error) {
+        if (!failed) {
+          failed = true
+          failure = error
+          controller.abort(error)
+        }
+        throw error
+      }
+    }
+  })
+  await Promise.allSettled(workers)
+  if (failed) {
+    throw failure
+  }
+}
+
+export async function verifyDeploymentAssets(options: DeploymentVerificationOptions, assets: HashedDeploymentAsset[], signal?: AbortSignal) {
   const { canonicalOrigin, target } = options
   const request = createDeploymentRequest(options, signal)
   await verifyHtmlMetadata(request, canonicalOrigin, '/', 'en-US', target)
@@ -151,15 +164,6 @@ export async function verifyDeploymentAssets(options: DeploymentVerificationOpti
   await verifyMachineReadableAssets(request, canonicalOrigin)
 
   const homepage = await (await request('/', 200)).text()
-  for (const asset of assets) {
-    if (asset.pathname.startsWith('/assets/css/')) {
-      assert(homepage.includes(`href="${asset.pathname}"`), `homepage does not reference ${asset.pathname}`)
-    }
-    const response = await request(asset.pathname, 200)
-    if (asset.pathname.startsWith('/assets/')) {
-      assert(response.headers.get('cache-control') === 'public, max-age=31536000, immutable', `${asset.pathname} immutable cache policy is missing or incorrect`)
-    }
-    const remoteSha256 = digest(new Uint8Array(await response.arrayBuffer()))
-    assert(remoteSha256 === asset.sha256, `${asset.pathname} does not match this build`)
-  }
+  assert(assets.some(asset => asset.pathname.endsWith('.css') && homepage.includes(`href="${asset.pathname}"`)), 'homepage does not reference a stylesheet from this build')
+  await verifyHashedAssets(options, assets, signal)
 }

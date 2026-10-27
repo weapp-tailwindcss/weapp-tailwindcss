@@ -39,7 +39,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test deployment guards
-        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/docs-next-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/deployment-verification-options.test.ts scripts/deployment-indexing-policy.test.ts scripts/deployment-verification.test.ts scripts/metadata-environment.test.ts --update=none
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/docs-next-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/deployment-verification-options.test.ts scripts/deployment-indexing-policy.test.ts scripts/deployment-assets.test.ts scripts/deployment-verification.test.ts scripts/metadata-environment.test.ts --update=none
 
       - name: Check docs audience
         run: pnpm --filter @weapp-tailwindcss/website check:docs-audience
