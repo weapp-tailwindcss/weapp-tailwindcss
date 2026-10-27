@@ -13,6 +13,7 @@ export const repoCli = path.join(path.dirname(manifest), require(manifest).bin.r
 const hookManifest = require.resolve('lefthook/package.json')
 export const lefthookCli = path.join(path.dirname(hookManifest), require(hookManifest).bin.lefthook)
 export const hookConfig = fs.readFileSync(path.join(root, 'lefthook.yml'), 'utf8')
+export const messageFileEnv = 'WEAPP_TAILWINDCSS_COMMIT_MSG_FILE'
 
 export function write(cwd: string, file: string, content: string) {
   const target = path.join(cwd, file)
@@ -27,7 +28,7 @@ export function environment(cwd: string, source = process.env): NodeJS.ProcessEn
   for (const key of Object.keys(env).filter(key => key.toLowerCase() === 'path')) {
     delete env[key]
   }
-  for (const key of ['GIT_DIR', 'GIT_COMMON_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_CONFIG_COUNT']) {
+  for (const key of ['GIT_DIR', 'GIT_COMMON_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_CONFIG_COUNT', messageFileEnv]) {
     delete env[key]
   }
   return {
@@ -58,8 +59,8 @@ export function git(cwd: string, ...args: string[]) {
   return result.stdout.trim()
 }
 
-export function repository() {
-  const cwd = fs.realpathSync(fs.mkdtempSync(path.join(tmpdir(), 'weapp-hooks-')))
+export function repository(prefix = 'weapp-hooks-') {
+  const cwd = fs.realpathSync(fs.mkdtempSync(path.join(tmpdir(), prefix)))
   write(cwd, 'global.gitconfig', '')
   git(cwd, 'init', '--quiet', '--initial-branch=main')
   git(cwd, 'config', 'user.name', 'Hook Fixture')
@@ -91,9 +92,12 @@ export function commit(cwd: string, message = 'chore: verify hooks') {
   return run(cwd, 'git', ['commit', '--quiet', '-m', message])
 }
 
-export function hookRepository() {
-  const cwd = repository()
-  write(cwd, path.join('scripts', 'git-hooks', 'staged-eslint.mjs'), fs.readFileSync(path.join(root, 'scripts', 'git-hooks', 'staged-eslint.mjs'), 'utf8'))
+export function hookRepository(prefix?: string) {
+  const cwd = repository(prefix)
+  for (const file of ['staged-eslint.mjs', 'lefthookrc.sh', 'commit-msg.mjs']) {
+    const target = path.join('scripts', 'git-hooks', file)
+    write(cwd, target, fs.readFileSync(path.join(root, target), 'utf8'))
+  }
   write(cwd, 'eslint.config.js', `export default [{ files: ['**/*.{js,ts}'], rules: { quotes: ['error', 'single'], semi: ['error', 'never'], 'no-undef': 'error' } }]\n`)
   write(cwd, 'commitlint.config.ts', fs.readFileSync(path.join(root, 'commitlint.config.ts'), 'utf8'))
   git(cwd, 'add', '.')

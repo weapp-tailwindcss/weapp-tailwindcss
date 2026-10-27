@@ -1,5 +1,6 @@
 min_version: 2.2.2
 glob_matcher: doublestar
+rc: ./scripts/git-hooks/lefthookrc.sh
 
 pre-commit:
   piped: true
@@ -16,4 +17,4 @@ pre-commit:
 commit-msg:
   jobs:
     - name: commitlint
-      run: pnpm exec repo verify commit-msg "{1}"
+      run: pnpm exec node scripts/git-hooks/commit-msg.mjs

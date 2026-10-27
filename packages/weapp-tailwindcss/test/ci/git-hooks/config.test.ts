@@ -20,9 +20,22 @@ it('Lefthook 重新暂存范围与实际 ESLint 检查范围一致', () => {
   const config = YAML.parse(hookConfig)
   expect(config['pre-commit'].jobs[0]).toMatchObject({ glob: stagedGlob, exclude: stagedExcludes, stage_fixed: true })
   expect(selectStagedFiles([
-    'root.ts', "src/中文 component's.ts", 'src/line\nbreak.js', '-root.ts',
-    '.agents/ignored.ts', 'nested/.agents/ignored.ts', 'e2e/__snapshots__/ignored.ts', 'other.txt', '',
-  ].join('\0'))).toEqual(['root.ts', "src/中文 component's.ts", 'src/line\nbreak.js', '-root.ts'])
+    'root.ts',
+    'src/中文 component\'s.ts',
+    'src/line\nbreak.js',
+    '-root.ts',
+    '.agents/ignored.ts',
+    'nested/.agents/ignored.ts',
+    'e2e/__snapshots__/ignored.ts',
+    'other.txt',
+    '',
+  ].join('\0'))).toEqual(['root.ts', 'src/中文 component\'s.ts', 'src/line\nbreak.js', '-root.ts'])
+})
+
+it('提交消息通过官方 rc 保存原始参数，命令不插值消息文件名', () => {
+  const config = YAML.parse(hookConfig)
+  expect(config.rc).toBe('./scripts/git-hooks/lefthookrc.sh')
+  expect(config['commit-msg'].jobs[0].run).toBe('pnpm exec node scripts/git-hooks/commit-msg.mjs')
 })
 
 it('开发工具满足安装版本的 Node 和 peer 要求，最低公开运行时仍受支持', () => {

@@ -2,11 +2,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { afterEach, expect, it } from 'vitest'
-import { addFailure, commit, git, hookRepository, lefthookCli, run, write } from './fixture'
+import { addFailure, commit, environment, git, hookRepository, lefthookCli, messageFileEnv, run, write } from './fixture'
 
 const directories: string[] = []
-function repository() {
-  const cwd = hookRepository()
+function repository(prefix?: string) {
+  const cwd = hookRepository(prefix)
   directories.push(cwd)
   return cwd
 }
@@ -18,7 +18,7 @@ afterEach(() => {
 
 it('真实提交只修复暂存文件，文件名不经过 shell 插值', () => {
   const cwd = repository()
-  const files = ['root.ts', '-root.ts', "src/中文 component's.ts", 'src/$(echo injected).ts']
+  const files = ['root.ts', '-root.ts', 'src/中文 component\'s.ts', 'src/$(echo injected).ts']
   if (process.platform !== 'win32') {
     files.push('src/line\nbreak.ts', 'src/double"quote.ts')
   }
@@ -51,18 +51,18 @@ it.each([false, true])('部分暂存内容被修复，未暂存内容在后续�
   git(cwd, 'add', 'partial.ts')
   expect(commit(cwd).status).toBe(0)
   const head = git(cwd, 'rev-parse', 'HEAD')
-  const staged = before.replace("'original'", '"staged";')
+  const staged = before.replace('\'original\'', '"staged";')
   write(cwd, 'partial.ts', staged)
   git(cwd, 'add', 'partial.ts')
-  write(cwd, 'partial.ts', staged.replace("export const tail = 'original'", 'UNSTAGED_SENTINEL'))
+  write(cwd, 'partial.ts', staged.replace('export const tail = \'original\'', 'UNSTAGED_SENTINEL'))
   if (fail) {
     addFailure(cwd)
   }
   const result = commit(cwd)
   expect(result.status === 0, result.output).toBe(!fail)
-  const fixed = before.replace("'original'", "'staged'")
+  const fixed = before.replace('\'original\'', '\'staged\'')
   expect(git(cwd, 'show', `${fail ? '' : 'HEAD'}:partial.ts`)).toBe(fixed.trim())
-  expect(runFile(cwd, 'partial.ts')).toBe(fixed.replace("export const tail = 'original'", 'UNSTAGED_SENTINEL'))
+  expect(runFile(cwd, 'partial.ts')).toBe(fixed.replace('export const tail = \'original\'', 'UNSTAGED_SENTINEL'))
   expect(git(cwd, 'stash', 'list')).toBe('')
   if (fail) {
     expect(git(cwd, 'rev-parse', 'HEAD')).toBe(head)
@@ -108,11 +108,43 @@ it('处理重命名与删除，并通过真实 commitlint 拒绝无效提交消�
 })
 
 it('commit-msg 将包含空格、中文和单引号的消息文件路径传给 commitlint', () => {
-  const cwd = repository()
-  const file = path.join(cwd, "message 中文's.txt")
+  const cwd = repository('weapp-hooks 中文\'s-')
+  const file = path.join(cwd, 'message 中文\'s.txt')
   write(cwd, path.relative(cwd, file), 'chore: verify message path\n')
-  const result = run(cwd, process.execPath, [lefthookCli, 'run', 'commit-msg', file])
+  const result = run(cwd, 'git', ['hook', 'run', 'commit-msg', '--', file])
   expect(result.status, result.output).toBe(0)
   fs.writeFileSync(file, 'invalid message\n')
-  expect(run(cwd, process.execPath, [lefthookCli, 'run', 'commit-msg', file]).status).not.toBe(0)
+  expect(run(cwd, 'git', ['hook', 'run', 'commit-msg', '--', file]).status).not.toBe(0)
+})
+
+it('绕过官方 Git hook 的裸 Lefthook 调用缺少原始路径时失败关闭', () => {
+  const cwd = repository()
+  const file = path.join(cwd, 'message.txt')
+  fs.writeFileSync(file, 'chore: verify message path\n')
+  const result = run(cwd, process.execPath, [lefthookCli, 'run', 'commit-msg', file])
+  expect(result.status, result.output).not.toBe(0)
+  expect(result.output).toContain('缺少 Git 提交消息路径')
+})
+
+it('官方 Git hook 用本次原始路径覆盖陈旧环境变量', () => {
+  const cwd = repository()
+  const file = path.join(cwd, 'message 中文\'s.txt')
+  const stale = path.join(cwd, 'stale.txt')
+  const env = { ...environment(cwd), [messageFileEnv]: stale }
+  fs.writeFileSync(stale, 'invalid message\n')
+  fs.writeFileSync(file, 'chore: use original argument\n')
+  const result = run(cwd, 'git', ['hook', 'run', 'commit-msg', '--', file], env)
+  expect(result.status, result.output).toBe(0)
+  fs.writeFileSync(stale, 'chore: stale argument\n')
+  fs.writeFileSync(file, 'invalid message\n')
+  expect(run(cwd, 'git', ['hook', 'run', 'commit-msg', '--', file], env).status).not.toBe(0)
+})
+
+it('官方 Git hook 缺少本次路径时清空陈旧环境变量并拒绝检查', () => {
+  const cwd = repository()
+  const stale = path.join(cwd, 'stale.txt')
+  fs.writeFileSync(stale, 'chore: stale argument\n')
+  const result = run(cwd, 'git', ['hook', 'run', 'commit-msg'], { ...environment(cwd), [messageFileEnv]: stale })
+  expect(result.status, result.output).not.toBe(0)
+  expect(result.output).toContain('缺少 Git 提交消息路径')
 })
