@@ -403,7 +403,6 @@ packageExtensions:
       '@babel/core': ^7.26.10
 
 patchedDependencies:
-  '@icebreakers/monorepo@6.2.1': patches/@icebreakers__monorepo@6.2.1.patch
   '@lynx-js/tasm@0.0.49': patches/@lynx-js__tasm@0.0.49.patch
   '@mpxjs/vue-cli-plugin-mpx@2.2.30': patches/@mpxjs__vue-cli-plugin-mpx@2.2.30.patch
   '@tarojs/plugin-framework-react@4.2.1': patches/@tarojs__plugin-framework-react@4.2.1.patch

@@ -17,6 +17,8 @@ Release 工作流每天北京时间 04:00（UTC `0 20 * * *`）检查 main，支
 
 包装入口显式加载根 release 配置，保留质量与 verify 检查。正式发布继续使用原有版本 PR 审批、准确源码 SHA、OIDC/provenance 和六阶段 receipt，不与 nightly 共用稳定发布阶段。
 
+公开 API 来自正式 repoctl 6.3.0：[源码 PR #1121](https://github.com/icelib/repoctl/pull/1121)、[版本 PR #1122](https://github.com/icelib/repoctl/pull/1122)和[六阶段稳定发布](https://github.com/icelib/repoctl/actions/runs/40525064775/job/122262277058)均已完成，准确发布源码为 `7dc84a1a84b33026742db972e258577df0639607`。npm tarball、provenance、tag 和正式 GitHub Release 已逐项核对；本仓库消费 `^6.3.0`，已删除准确 tag 临时补丁。
+
 ## 原生产物的来源
 
 nightly 先运行现有八平台原生矩阵，在真实 ABI 检查完成后记录准确 commit、Git tree、工作流 run/attempt、二进制 metadata、sourceDigest 和许可证哈希。只有 nightly 显式启用此清单；恢复旧稳定提交不要求旧源码具备新脚本。
@@ -45,7 +47,7 @@ repoctl 隔离安装并改写 snapshot manifest 后，调用 `prepareSource`。�
 
 ## 本地验证
 
-2026-10-27 在 macOS / Node 24.22.1 / pnpm 12.14.0 执行发布、版本 PR、metadata、workspace、工作流和真实 Git hook 定向回归：30 个文件、554 项通过；新增 nightly 路由、输入完整性与消费回执测试包含在内。冻结安装、脚本 ESLint、`pnpm agents:check` 和 `git diff --check` 通过。
+2026-10-27 在 macOS / Node 24.22.1 / pnpm 12.14.0 / 正式 repoctl 6.3.0 下执行发布、版本 PR、metadata、workspace、工作流和真实 Git hook 定向回归：34 个文件、618 项通过；包含 nightly 路由、输入完整性、安装恢复与消费回执。22 项目依赖闭包构建、冻结安装、CI 跳过 hooks、定向 ESLint、`pnpm agents:check` 和 `git diff --check` 全部通过。官网部署回归另为 8 文件、62 项通过。
 
 额外使用上游构建后的公开 API 与仓库 `prepareNativeSource` 做外部 Git fixture 集成：真实归档、冻结安装、10 个公开包、2 个参考 gitlink，验证 install → prepareSource → build 顺序，生成 72 条唯一文件回执及 10 个 tarball，全部包检查通过。原 checkout 的文件 SHA-256、权限、HEAD、tree 与状态均未改变。宿主使用第三方真实 N-API 模块验证加载；其他平台为 fixture 字节，只证明 API、身份和打包管线，不证明本项目原生 ABI。
 
