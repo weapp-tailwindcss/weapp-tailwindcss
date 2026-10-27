@@ -47,6 +47,7 @@ export function createNativeCaptureBudget(registeredCases: number) {
       }
       captures++
       started = performance.now()
+      const deadline = started + NATIVE_CAPTURE_TIMEOUT
       const activeController = controller = new AbortController()
       inFlight = true
       completion = undefined
@@ -73,11 +74,19 @@ export function createNativeCaptureBudget(registeredCases: number) {
         const result = await Promise.race([
           owned,
           new Promise<never>((_resolve, reject) => {
-            timer = setTimeout(() => {
+            const expire = () => {
               const error = new Error(`Native semantic host capture exceeded ${NATIVE_CAPTURE_TIMEOUT}ms`)
               activeController.abort(error)
               reject(error)
-            }, NATIVE_CAPTURE_TIMEOUT)
+            }
+            // 同步启动与诊断前奏同样占用本次预算，不能从 operation 返回后重新计时。
+            const remaining = Math.max(0, deadline - performance.now())
+            if (remaining === 0) {
+              expire()
+            }
+            else {
+              timer = setTimeout(expire, Math.ceil(remaining))
+            }
           }),
         ])
         activeController.signal.throwIfAborted()

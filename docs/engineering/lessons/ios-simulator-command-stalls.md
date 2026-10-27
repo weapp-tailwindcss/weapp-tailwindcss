@@ -4,6 +4,7 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: 34894ffcd7e89d1b39fc593cfee8205da06d0102
 regressions:
   - e2e/react-native-ios-screenshot.test.ts
+  - e2e/react-native-ios-host-resources.test.ts
   - e2e/react-native-ios-screenshot-sample.test.ts
   - e2e/react-native-ios-screenshot-sample-lifecycle.test.ts
   - e2e/native-process-identity.test.ts
@@ -80,6 +81,14 @@ Lynx 首次 launch 的同 VM 快照显示 3 核、约 7.5GB 总内存、load ave
 
 两次同参运行均已失败，继续盲重跑不会补齐缺失的栈或安装阶段证据。此次保持双帧、像素、几何、control 和设备身份约束，不放宽预算、不加固定 sleep、重试或预热；先让下一次准确新 head 的运行留下可定位证据。诊断完善不等于底层超时已解决。
 
+### 后续命令的资源证据与绝对截止时间
+
+作者 head `617d75866834e6d6dfc98e98218fb293f4b3215f` 的 [Expo iOS 首次运行](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40375892413/job/121762746736) 在 baseline `layout-position/default` 第一帧耗尽原预算。唯一采样机会此前已在 `layout-aspect` 使用；该次身份查询见到 `bash` 而按原白名单拒绝。失败的 position 命令没有自己的资源样本，不能挪用前一条命令或本机 Xcode wrapper 解释其迟滞。
+
+每条截图命令现在分别记录启动、取消和 settled 时的同步主机数值，标明 `source: test-runner`，记录采集时刻与读取耗时。只读取现有 OS/Node API，不新增子进程、栈采样、重试或等待。取消快照的监听器在 execa 创建后登记，先把原取消送给自有命令，再读取资源；读取异常独立记录，不覆盖截图结果。这些数值属于宿主及父进程，不能冒充截图子进程的资源或内核执行映像。
+
+新增非零观察耗时回归还确认了独立的预算漏洞：`capture()` 在调用 `operation()` 后才安装完整 10000ms 计时器，使同步前奏不计入挂起路径的取消期限。旧实现对 100ms 与 10001ms 同步前奏的两项回归均失败。计时器现按本次原始 `started` 计算剩余预算，耗尽即取消；原 10000ms、真实操作锁、迟到错误及独立 5000ms drain 保持原语义。此回归证明截止时间记账缺陷，尚无证据证明它触发了上述 hosted 失败。
+
 ## 验证
 
 上述 `verification` 的定向命令已在诊断提交上执行，8 文件、69 项全部通过；本次仅新增文档，没有重复运行这组测试。回归覆盖快命令零采样、一轮最多一次、原截图子进程退出/取消/PID 变化后拒绝迟到身份、身份超时仍保留快照、成功截图不等待诊断、flush 排空及失败保留。安装回归调用真实 `runIos` 入口并模拟外部服务，验证指定设备、原 120 秒预算、独立诊断路径以及安装失败立即阻断后续阶段，不把模拟命令视为真实设备通过。
@@ -87,6 +96,10 @@ Lynx 首次 launch 的同 VM 快照显示 3 核、约 7.5GB 总内存、load ave
 持久回归路径在 frontmatter 中逐项登记；关键新增用例为 [采样所有权](../../../e2e/react-native-ios-screenshot-sample.test.ts)、[清理接线](../../../e2e/react-native-ios-screenshot-sample-lifecycle.test.ts)、[进程身份](../../../e2e/native-process-identity.test.ts) 和 [安装接线](../../../e2e/lynx-ios-install-diagnostics.test.ts)。诊断提交的定向 ESLint、严格 TypeScript（含 `exactOptionalPropertyTypes`）、`pnpm agents:check` 与差异检查均已通过。本文另执行规则与差异检查。
 
 失败原件可从上列四个 job 下载：Expo 关注 `ios-screenshots.json`、对应 `.capture.json`、`.pair.json`、`capture-cleanup.json`；Lynx 关注 `boot-command.json`、`launch-command.json`、sample 和 host 记录，第二轮安装仅有原异常而无独立诊断。新诊断的远端原件仍为 pending，不能将旧 head 的失败或单测通过改写为更新后 iOS 已通过。
+
+2026-10-27 的未提交修复在 macOS arm64、Node 24.18.0 下通过 4 文件 33 项定向回归，命令为 `CI=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts --update=none`。新增测试覆盖非零观察成本、取消转发顺序、资源读取失败后的原结果保真、后续命令独立资源以及同步前奏占用原截止时间；既有真实自有 Node 子进程取消和迟到错误回归也通过。新增资源回归接入本地兼容性入口及 iOS workflow；实际 iOS 结果仍待新 head 自然 CI，不重置历史复测额度。
+
+更新后的 iOS workflow 前置命令已在本机完整执行，14 文件 251 项通过（包含上述回归），没有执行 Expo 原生设备验收。改动的 5 个 TypeScript 文件通过 `strict`、`exactOptionalPropertyTypes` 定向检查及 ESLint；规则与差异检查通过。历史原件、未定位的模拟器迟滞和完整本地验收失败均保留。
 
 ## 适用边界
 

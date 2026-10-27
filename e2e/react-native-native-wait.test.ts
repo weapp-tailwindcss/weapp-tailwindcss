@@ -105,6 +105,34 @@ describe('React Native runtime wait state', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
+  it.each([100, NATIVE_CAPTURE_TIMEOUT + 1])('同步启动耗时 %dms 仍占用原绝对截止时间', async (prelude) => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(1)
+    let signal!: AbortSignal
+    let release!: () => void
+    const result = budget.capture((input) => {
+      signal = input
+      vi.advanceTimersByTime(prelude)
+      return new Promise<void>((resolve) => {
+        release = resolve
+      })
+    }).catch(error => error)
+    try {
+      await vi.advanceTimersByTimeAsync(Math.max(0, NATIVE_CAPTURE_TIMEOUT - prelude))
+      expect(signal.aborted).toBe(true)
+      expect(await result).toEqual(new Error('Native semantic host capture exceeded 10000ms'))
+      expect(budget.pending()).toBe(true)
+      expect(budget.elapsed()).toBe(NATIVE_CAPTURE_TIMEOUT)
+    }
+    finally {
+      release()
+      await result
+      await budget.drain()
+    }
+    expect(budget.pending()).toBe(false)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
   it('deadline 取消真实所属截图子进程，退出后不能再写入迟到产物', async () => {
     vi.useFakeTimers()
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-capture-cancel-'))

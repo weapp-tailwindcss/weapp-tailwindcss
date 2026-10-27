@@ -3,12 +3,20 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
+import { captureNativeHostResources } from '../native-command/host'
 import { createIosScreenshotSampleOwner } from './ios-screenshot-sample'
 
 interface ProcessEvent {
   atMs: number
   code: number | null
   signal: NodeJS.Signals | null
+}
+
+interface HostResourceSnapshot {
+  atMs: number
+  durationMs: number
+  resources?: ReturnType<typeof captureNativeHostResources>
+  error?: string
 }
 
 interface ScreenshotDiagnostic {
@@ -28,6 +36,12 @@ interface ScreenshotDiagnostic {
   stat?: { startedAtMs: number, settledAtMs?: number, size?: number, error?: string }
   settledAtMs?: number
   error?: string
+  hostResources: {
+    source: 'test-runner'
+    started: HostResourceSnapshot
+    cancelled?: HostResourceSnapshot
+    settled?: HostResourceSnapshot
+  }
   eventLoop: {
     intervalMs: number
     samples: number
@@ -36,6 +50,21 @@ interface ScreenshotDiagnostic {
     pendingDelayMs: number
     stopped: boolean
   }
+}
+
+/** 每条命令独立保留主机与父进程数值，不启动子进程，也不替代自有子进程采样。 */
+function captureHostResources(elapsed: () => number): HostResourceSnapshot {
+  const started = performance.now()
+  const snapshot: HostResourceSnapshot = { atMs: elapsed(), durationMs: 0 }
+  try {
+    snapshot.resources = captureNativeHostResources()
+  }
+  catch (error) {
+    // 只读诊断失败不能替换截图首错或取消原因。
+    snapshot.error = String(error)
+  }
+  snapshot.durationMs = Math.max(0, performance.now() - started)
+  return snapshot
 }
 
 /** 只观察截图期间的调度延迟；心跳不承担超时或成功判定，也不等待额外一轮采样。 */
@@ -87,6 +116,7 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         startedAt: new Date(performance.timeOrigin + started).toISOString(),
         status: 'pending',
         elapsedMs: 0,
+        hostResources: { source: 'test-runner', started: captureHostResources(elapsed) },
         eventLoop: { intervalMs: 100, samples: 0, maxDelayMs: 0, meanDelayMs: null, pendingDelayMs: 0, stopped: false },
       }
       const eventLoop = observeEventLoop(elapsed, record)
@@ -99,12 +129,20 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         stopSample?.()
         record.cancelled = { atMs: elapsed(), reason: String(cancelSignal?.reason) }
       }
+      const onAbortResources = () => {
+        record.hostResources.cancelled ??= captureHostResources(elapsed)
+      }
       cancelSignal?.addEventListener('abort', onAbort, { once: true })
       if (cancelSignal?.aborted) {
         onAbort()
       }
       try {
         const command = execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { ...(cancelSignal ? { cancelSignal } : {}), forceKillAfterDelay: 1_000 })
+        // 资源读取排在 execa 的取消监听之后，先将原取消传给自有命令。
+        cancelSignal?.addEventListener('abort', onAbortResources, { once: true })
+        if (cancelSignal?.aborted) {
+          onAbortResources()
+        }
         stopSample = samples.observe(command, record.index, elapsed, (sample) => {
           record.sample = sample
         })
@@ -163,6 +201,11 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         eventLoop.stop()
         stopSample?.()
         cancelSignal?.removeEventListener('abort', onAbort)
+        cancelSignal?.removeEventListener('abort', onAbortResources)
+        if (record.cancelled) {
+          onAbortResources()
+        }
+        record.hostResources.settled = captureHostResources(elapsed)
       }
     },
     async flush() {

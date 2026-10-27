@@ -76,6 +76,12 @@ it('原命令与一次 stat 保持不变；成功路径只记内存，最终排�
     settledAtMs: 150,
     eventLoop: { intervalMs: 100, samples: 1, maxDelayMs: 0, meanDelayMs: 0, pendingDelayMs: 0, stopped: true },
   })])
+  expect(saved.records[0].hostResources).toMatchObject({
+    source: 'test-runner',
+    started: { atMs: 0, durationMs: 0, resources: { freeMemory: expect.any(Number), parentCpu: { user: expect.any(Number) } } },
+    settled: { atMs: 150, durationMs: 0, resources: { parallelism: expect.any(Number), parentResources: { userCPUTime: expect.any(Number) } } },
+  })
+  expect(saved.records[0].hostResources.cancelled).toBeUndefined()
 })
 
 it('exit 与 stdio close 单独记录，退出不冒充命令 settle 或提前执行 stat', async () => {
@@ -92,6 +98,9 @@ it('exit 与 stdio close 单独记录，退出不冒充命令 settle 或提前�
   expect(pending).toMatchObject({ status: 'pending', elapsedMs: 250, exit: { atMs: 50, code: 0, signal: null } })
   expect(pending.stdioClosed).toBeUndefined()
   expect(pending.subprocessSettled).toBeUndefined()
+  expect(pending.hostResources).toMatchObject({ source: 'test-runner', started: { atMs: 0 } })
+  expect(pending.hostResources.cancelled).toBeUndefined()
+  expect(pending.hostResources.settled).toBeUndefined()
   expect(pending.stat).toBeUndefined()
   expect(stat).not.toHaveBeenCalled()
   context.events.emit('close', 0, null)
@@ -114,6 +123,8 @@ it('原 10 秒预算取消后仍保留在途状态，真实命令迟到失败后
   await context.diagnostics.flush()
   const pending = (await context.read()).records[0]
   expect(pending).toMatchObject({ status: 'pending', cancelled: { atMs: 10000, reason: 'Error: Native semantic host capture exceeded 10000ms' } })
+  expect(pending.hostResources).toMatchObject({ started: { atMs: 0 }, cancelled: { atMs: 10000, resources: { freeMemory: expect.any(Number) } } })
+  expect(pending.hostResources.settled).toBeUndefined()
   expect(pending.settledAtMs).toBeUndefined()
   expect(pending.subprocessSettled).toBeUndefined()
   const failure = new Error('owned screenshot was terminated')
@@ -134,6 +145,7 @@ it('原 10 秒预算取消后仍保留在途状态，真实命令迟到失败后
     subprocessSettled: { atMs: 10600, status: 'failed' },
     settledAtMs: 10600,
     error: String(failure),
+    hostResources: { settled: { atMs: 10600, resources: { parentCpu: { user: expect.any(Number) } } } },
   })
 })
 
