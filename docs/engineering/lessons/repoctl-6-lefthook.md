@@ -8,6 +8,7 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/git-hooks/config.test.ts
   - packages/weapp-tailwindcss/test/ci/repoctl-previous-release.test.ts
   - packages/weapp-tailwindcss/test/ci/workflows.test.ts
+  - benchmark/version-compare/test/dispatch-inputs.test.mjs
   - scripts/agents/eslint-scope.test.mjs
 ---
 
@@ -70,6 +71,8 @@ CI=1 LEFTHOOK=0 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindc
 - 修改的脚本、配置与工作流定向 ESLint 通过；`stylelint --print-config packages-runtime/ui/src/index.css` 通过；真实 `readSnapshot` 成功读取 32 个公开源码包及 pnpm 12 的双文档锁文件。
 - 锁文件语义检查确认 pnpm 工具链文档未变；初始迁移的非根 importer 基础版本变化来自 Vitest catalog。最终 6.3.0 更新的包记录仅替换 repoctl 和 monorepo，额外刷新 benchmark/app 的既有 Vue compiler peer 上下文，未提升其基础依赖版本。公开包 manifest 未修改。
 - `pnpm agents:check` 和 `git diff --check`：通过。
+
+首次本仓库 PR 的 [Synthetic Performance Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40529327825/job/122277840147)在 `d373bf6ae02fd9f509a908e4cccdcfd688b6bdef` 失败于诊断工作流测试：实际选择 22.23.4，测试仍期望 22.23.3，尚未进入性能采样。已同步精确版本断言和诊断说明；定向复现为 21 通过、1 失败，修复后 benchmark 工程回归 36 文件、279 项通过，未改性能预算。日志同时显示宽松的 `node-version: 22` 命中 hosted 缓存 22.23.3，低于新开发范围；后续 CI 验收需核对实际解析的 Node，不能只看 job 名称中的主版本。
 
 ## 适用边界
 
