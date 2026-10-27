@@ -21,7 +21,7 @@ const report = await (plan ? createNightlyPlan : releaseNightly)({
   referenceGitlinks: ['submodules/tailwindcss-v3', 'submodules/tailwindcss-v4'],
   ...(!plan && {
     publish: true,
-    prepareSource: context => prepareNativeSource(context, path.join(cwd, 'packages')),
+    prepareSource: async context => prepareNativeSource(context, path.join(cwd, 'packages')),
   }),
 })
 await writeFile(path.join(env.RUNNER_TEMP, 'nightly-report.json'), `${JSON.stringify(report, null, 2)}\n`)

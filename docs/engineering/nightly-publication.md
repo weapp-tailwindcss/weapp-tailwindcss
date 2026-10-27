@@ -44,4 +44,6 @@ repoctl 隔离安装并改写 snapshot manifest 后，调用 `prepareSource`。�
 
 额外使用上游构建后的公开 API 与仓库 `prepareNativeSource` 做外部 Git fixture 集成：真实归档、冻结安装、10 个公开包、2 个参考 gitlink，验证 install → prepareSource → build 顺序，生成 72 条唯一文件回执及 10 个 tarball，全部包检查通过。原 checkout 的文件 SHA-256、权限、HEAD、tree 与状态均未改变。宿主使用第三方真实 N-API 模块验证加载；其他平台为 fixture 字节，只证明 API、身份和打包管线，不证明本项目原生 ABI。
 
+[main 原发布工作流的 OIDC 审计](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40510156079)在准确源码 `60aca0b2377457a29ac7dc23309abb6690b25c6e` 上成功，40 个公开包的凭据交换均返回 201。此结果只证明当前交换权限；真实 nightly 上传、provenance 和发布后消费仍需首次完整运行确认。
+
 当前记录处于实施阶段，尚未将本地 fixture 或构建测试作为真实 npm 发布、八平台消费和线上部署的证据。最终版本、PR、源码 SHA 与首次真实运行结果在交付时补充。
