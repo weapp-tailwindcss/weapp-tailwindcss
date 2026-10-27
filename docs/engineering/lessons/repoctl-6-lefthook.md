@@ -88,6 +88,8 @@ CI=1 LEFTHOOK=0 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindc
 
 继续整合 Windows 原始参数桥接后，在提交 `b153b595d52ca5716b3502fcb2bd6fee7fe9aa02` 重新执行上述 37 文件，636 项全部通过；其中真实 Git hook 回归 19 项，包含部分暂存、失败恢复、冲突阻断、特殊绝对路径，以及缺参数拒绝和陈旧环境变量覆盖。新 helper、shell rc 与配置的定向 ESLint（显式 `--no-ignore`）、Node/shell 语法检查通过。六类合成 runner 的时钟 mock 同步修复后，8 文件、64 项通过，详见[时钟边界记录](ci-synthetic-artifact-clock.md)。上述本地结果来自 macOS，Windows 修复须以新提交的兼容矩阵确认。
 
+手动完整 CI 另捕获 Vite 4 HMR 用例超过 120 秒。诊断证明夹具的 runtime 扫描了整个工作树；补充显式源码根及跨夹具污染断言后，Node 22.23.4、24.22.1 的 Vite 4–8 共 10 项通过。整合后 Node 24 再验 5 项通过；原 120 秒门限、CSS 修改与 emitFile 两轮重放断言保留。完整根因、可失败的负例及边界见[HMR 夹具源码根记录](vite-hmr-fixture-source-root.md)。
+
 ## 适用边界
 
 本地仅执行定向验证，未运行本地全仓、多端或 Windows/Linux 原机验收；本仓库 PR CI、手动兼容矩阵和首次真实 nightly、官网 next 部署按准确提交分别记录。旧提交的远端成功不能证明后续修复已通过。上游源码、版本 PR 和稳定发布已真实执行，不能据此替代本仓库发布后消费者或线上验收。Windows、Linux/macOS 的工作流兼容作业已加入独立 hook 集成测试，执行位置在最低运行时切换之前。
