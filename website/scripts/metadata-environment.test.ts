@@ -17,11 +17,11 @@ it.each(['https://tw.weapp.dev', 'https://next.tw.weapp.dev'])('浏览器没有 
     mode: 'production',
     target: 'web',
     entry,
-    output: { path: directory, filename: 'bundle.cjs', library: { type: 'commonjs2' } },
+    output: { path: directory, filename: 'bundle.js' },
     plugins: metadataEnvironment({ siteConfig: { url: origin } } as LoadContext).configureWebpack({}, false, { currentBundler: { name: 'webpack', instance: webpack }, getStyleLoaders: () => [], getJSLoader: () => ({}) }).plugins,
   })
   try {
-    await writeFile(entry, 'module.exports = globalThis.process.env.SITE_URL')
+    await writeFile(entry, 'globalThis.metadataSiteUrl = globalThis.process.env.SITE_URL')
     await new Promise<void>((resolve, reject) => compiler.run((error, stats) => {
       if (error || stats?.hasErrors()) {
         reject(error ?? new Error(stats?.toString({ all: false, errors: true })))
@@ -30,9 +30,11 @@ it.each(['https://tw.weapp.dev', 'https://next.tw.weapp.dev'])('浏览器没有 
         resolve()
       }
     }))
-    const sandbox = { module: { exports: undefined } }
-    vm.runInNewContext(await readFile(path.join(directory, 'bundle.cjs'), 'utf8'), sandbox)
-    expect(sandbox.module.exports).toBe(origin)
+    const sandbox: { metadataSiteUrl?: string } = {}
+    expect(vm.runInNewContext('typeof globalThis.process', sandbox)).toBe('undefined')
+    vm.runInNewContext(await readFile(path.join(directory, 'bundle.js'), 'utf8'), sandbox)
+    expect(sandbox.metadataSiteUrl).toBe(origin)
+    expect(vm.runInNewContext('typeof globalThis.process', sandbox)).toBe('undefined')
   }
   finally {
     await new Promise<void>((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
