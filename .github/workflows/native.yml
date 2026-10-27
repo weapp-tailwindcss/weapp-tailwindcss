@@ -180,6 +180,7 @@ jobs:
         if: matrix.image != ''
         env:
           NATIVE_NODE_VERSION: v20.19.0
+          NATIVE_NIGHTLY_INPUTS: ${{ inputs.nightly-inputs && '1' || '0' }}
           NATIVE_TARGET: ${{ matrix.target }}
           NATIVE_ARCH: ${{ matrix.arch }}
           NATIVE_LIBC: ${{ matrix.libc }}
@@ -188,12 +189,12 @@ jobs:
           docker run --rm -v "$PWD:/work" -w /work
           -v "$RUNNER_TEMP/native-ci:/native-ci"
           -e NATIVE_PNPM_STORE=/native-ci/pnpm -e NATIVE_REUSE_DEPENDENCIES=1
-          -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
+          -e GITHUB_SHA -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB -e NATIVE_NIGHTLY_INPUTS
           -e CI=1 -e LEFTHOOK=0 -e NATIVE_CSS_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
       - name: Record verified native source identity
-        if: inputs.nightly-inputs == true
+        if: inputs.nightly-inputs == true && matrix.image == ''
         run: node scripts/release-nightly/native-input.mjs --target=${{ matrix.target }}
 
       - name: Upload verified native artifacts

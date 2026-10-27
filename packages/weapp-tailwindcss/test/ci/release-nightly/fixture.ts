@@ -64,7 +64,7 @@ export function fixture() {
       writeFileSync(path.join(native, 'bindings', bindingFileName(suffix, kernel)), `binary-${kernel}-${suffix}`)
       writeBindingMetadata(target, native, kernel)
     }
-    writeNativeInput(original, target, env)
+    writeNativeInput(original, target, { ...env, GITHUB_SHA: commit })
   }
   return { root, original, source, input: path.join(original, 'packages'), context: { directory: source, identity: { kind: 'nightly' as const, commit, buildId: '123-1' }, tree, packages, referenceGitlinks: [] } }
 }

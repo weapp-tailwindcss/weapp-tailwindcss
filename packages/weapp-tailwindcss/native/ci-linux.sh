@@ -44,3 +44,9 @@ else
   export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
   node packages/weapp-tailwindcss/native/ci.mjs "--target=$NATIVE_TARGET"
 fi
+
+if [ "${NATIVE_NIGHTLY_INPUTS:-0}" = 1 ]; then
+  # 在最后一次 ABI 验证的容器内写清单，保持原生产物目录的权限归属。
+  test "${NATIVE_CSS_ONLY:-0}" = 1
+  node scripts/release-nightly/native-input.mjs "--target=$NATIVE_TARGET"
+fi

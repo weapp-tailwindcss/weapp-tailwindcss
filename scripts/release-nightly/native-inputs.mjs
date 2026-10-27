@@ -39,10 +39,12 @@ function bindingInput(root, suffix, kernel, metadata = false) {
 /** 在已完成 ABI 验证的准确 checkout 中生成同轮产物清单。 */
 export function writeNativeInput(root, target, env = process.env) {
   assert.ok(nativeTargets[target], 'Native input requires a supported target')
-  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim()
+  // 容器与 checkout 的 uid 不同；只为当前命令信任调用者指定的源码目录。
+  const git = (...args) => execFileSync('git', ['-c', `safe.directory=${root}`, ...args], { cwd: root, encoding: 'utf8' }).trim()
   const commit = git('rev-parse', 'HEAD')
   const tree = git('rev-parse', 'HEAD^{tree}')
   assert.match(commit, /^[a-f0-9]{40}$/)
+  assert.equal(commit, env.GITHUB_SHA, 'Native input checkout differs from original workflow SHA')
   assert.match(tree, /^[a-f0-9]{40}$/)
   const { suffix } = nativeTargets[target]
   const roots = nativeRoots(root)
