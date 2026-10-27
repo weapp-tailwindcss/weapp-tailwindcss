@@ -9,6 +9,10 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/repoctl-previous-release.test.ts
   - packages/weapp-tailwindcss/test/ci/workflows.test.ts
   - benchmark/version-compare/test/dispatch-inputs.test.mjs
+  - e2e/node-toolchain-workflow-contract.test.ts
+  - packages/weapp-tailwindcss/test/ci/install-memory-workflow.test.ts
+  - website/scripts/content-metadata.test.ts
+  - website/scripts/metadata-environment.test.ts
   - scripts/agents/eslint-scope.test.mjs
 ---
 
@@ -25,7 +29,7 @@ regressions:
 - 最终升级到正式 repoctl 6.3.0，发布 API、六阶段命令及 `.changeset/ledger.yaml` 的 `{ dir, intents }` 格式保持兼容。稳定发布架构保留，新增 nightly 通过独立链路接入，详见 [Nightly 原生产物与发布身份](../nightly-publication.md)。
 - 开发工具链对齐新版 Node 要求，默认 Node 24.22.1；Vitest、UI、coverage 统一为 5.0.5，commitlint CLI 为 21.2.4。公开包的 Node 范围保持原样。兼容工作流先在受支持的开发 Node 安装、构建、验证 hooks，再切回 Node 22.18.0 执行原最低运行时用例；native 的旧 Node ABI 验证保持。
 - 官方 6.2.1 仍使用分页 Release 列表判断已知版本是否存在，迁移期间曾保留临时补丁。[上游源码 PR #1121](https://github.com/icelib/repoctl/pull/1121)以独立提交交付准确 tag 查询，并在 6.3.0 正式发布。只有明确 404 表示缺失；空体、数组、错 tag、权限异常、draft、prerelease、checkpoint 和 tag/gitHead 冲突继续阻断，旧注入客户端仍兼容。安装正式版并通过准确 tag 回归后，删除补丁文件、workspace 和 lock 登记。
-- repoctl 新增的制品检查静态依赖 `@arethetypeswrong/core`，该包的 development 出口指向未编译 TS。Vitest 5 默认向 worker 添加 development 条件。主包测试使用 Vite 后置 `configEnvironment`，在默认条件合并后替换 Node 环境的条件为 `node`，使测试按实际 Node CLI 加载发布入口。单独声明 `ssr.resolve.conditions` 仍会被默认数组追加，不能解决问题；无需改 NODE_ENV、内联依赖或 alias 第三方内部文件。
+- repoctl 新增的制品检查静态依赖 `@arethetypeswrong/core`，该包的 development 出口指向未编译 TS。Vitest 5 默认向 worker 添加 development 条件。共享插件 `scripts/testing/native-node-conditions.mjs` 使用 Vite 后置 `configEnvironment`，在默认条件合并后替换 Node SSR 与 Vitest 环境的条件为 `node`，使主包、test-helper 和网站这三个真实 CLI 消费方按实际 Node 加载发布入口。首轮完整 CI 暴露了原先仅覆盖主包的遗漏；插件不改变其他项目或浏览器环境。单独声明 `ssr.resolve.conditions` 仍会被默认数组追加，不能解决问题；无需改 NODE_ENV、内联依赖或 alias 第三方内部文件。
 - 使用精确版本 Lefthook 2.2.2，移除 Husky/lint-staged。原生 pre-commit 的 glob/exclude 与 [Node runner](../../../scripts/git-hooks/staged-eslint.mjs) 一致，保留既有 ESLint 范围。runner 从 Git NUL 输出取文件，以 Node 参数数组分批调用 ESLint，避免文件名 shell 插值及 Windows 参数长度限制。
 - Lefthook 负责隐藏、恢复部分暂存文件的未暂存修改及 `stage_fixed`。runner 不自行 stash 或重新暂存。真实 Git 回归覆盖成功修复、后续检查失败、恢复冲突、重命名、删除、特殊文件名和 commitlint 路径传递。
 - 根 prepare 使用 `repo tooling hooks install --json`，禁止 Lefthook 自身 postinstall。官方安装器保护自定义和继承的 hooksPath。它允许从 linked worktree 安装到共享 hooks，因此本轮真实工作树安装始终使用 `CI=1 LEFTHOOK=0`；启用安装只在隔离 Git fixture 验证。未更改用户 checkout 的 `.husky/_` 设置。
@@ -72,7 +76,13 @@ CI=1 LEFTHOOK=0 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindc
 - 锁文件语义检查确认 pnpm 工具链文档未变；初始迁移的非根 importer 基础版本变化来自 Vitest catalog。最终 6.3.0 更新的包记录仅替换 repoctl 和 monorepo，额外刷新 benchmark/app 的既有 Vue compiler peer 上下文，未提升其基础依赖版本。公开包 manifest 未修改。
 - `pnpm agents:check` 和 `git diff --check`：通过。
 
-首次本仓库 PR 的 [Synthetic Performance Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40529327825/job/122277840147)在 `d373bf6ae02fd9f509a908e4cccdcfd688b6bdef` 失败于诊断工作流测试：实际选择 22.23.4，测试仍期望 22.23.3，尚未进入性能采样。已同步精确版本断言和诊断说明；定向复现为 21 通过、1 失败，修复后 benchmark 工程回归 36 文件、279 项通过，未改性能预算。日志同时显示宽松的 `node-version: 22` 命中 hosted 缓存 22.23.3，低于新开发范围；后续 CI 验收需核对实际解析的 Node，不能只看 job 名称中的主版本。
+首次本仓库 PR 的 [Synthetic Performance Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40529327825/job/122277840147)在 `d373bf6ae02fd9f509a908e4cccdcfd688b6bdef` 失败于诊断工作流测试：实际选择 22.23.4，测试仍期望 22.23.3，尚未进入性能采样。已同步精确版本断言和诊断说明；定向复现为 21 通过、1 失败，修复后 benchmark 工程回归 36 文件、279 项通过，未改性能预算。日志同时显示宽松的 `node-version: 22` 命中 hosted 缓存 22.23.3，低于新开发范围。根据 [setup-node 的缓存协议](https://github.com/actions/setup-node/blob/v6/docs/advanced-usage.md#check-latest-version)，在 49 个开发安装入口增加 `check-latest: true`，先刷新宽松版本解析；准确的 22.18.0、20.19.0 运行时切换与已有固定 HBuilderX 版本保持。新增契约在修复前识别全部遗漏，修复后 4 项通过；它扫描实际受管 YAML，并独立校验最低 ABI 及先安装、后切换的顺序。后续 CI 仍需核对实际解析的 Node，不能只看 job 名称中的主版本。
+
+同一 head 的 Unit Tests 三个分片还发现三处测试边界问题：test-helper 与网站未使用真实 Node 解析条件；metadata 渲染测试缺少 Docusaurus context；浏览器 VM 回归依赖 CommonJS 导出形状，根聚合入口与独立网站入口表现不同。现已共享解析插件、补齐 production/next 的文档与博客渲染断言，并在没有 `process` 和 CommonJS `module` 的 VM 中执行真实 web bundle，通过 `globalThis` 观察来源注入。根聚合及独立网站入口分别 3 文件、29 项通过，test-helper 两文件、32 项通过。
+
+最低运行时契约原来错误地要求 Node 22.18.0 满足根开发工具的引擎范围。测试现分别核对工作流实际选择的安装 Node、公开包运行时及 pnpm 范围，并验证安装、构建、hooks、切换、公开包回归的顺序。修复前 1 项失败，修复后相关安装与 hooks 配置 4 文件、17 项通过；没有抬高公开包最低运行时。
+
+整合上述 CI 修复后，在原 34 文件命令中追加 `install-memory-workflow.test.ts`、`install-frozen-config.test.ts`、`install-workspace.test.ts`，共 37 文件、632 项通过；三个网站文件分别从根聚合与网站独立入口执行，各 29 项通过。test-helper 的两个真实 repoctl 消费回归 32 项、新 Node 工作流契约 4 项及 agents 检查通过。定向 ESLint 无错误，按仓库现有规则忽略两个测试配置路径；`git diff --check` 通过。
 
 ## 适用边界
 
