@@ -7,7 +7,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { verifyBinding } from '../../packages/weapp-tailwindcss/native/distribution.mjs'
 import { bindingFileName, hostNativeTarget, nativeTargets } from '../../packages/weapp-tailwindcss/native/targets.mjs'
-import { execaPnpm } from '../pnpm-exec.mjs'
+import { installPublishedNightly } from './installation/index.mjs'
 import { nativeRoots } from './native-inputs.mjs'
 
 const json = async file => JSON.parse(await readFile(file, 'utf8'))
@@ -102,7 +102,7 @@ async function main() {
     const { packageManager } = await json(path.join(source, 'package.json'))
     await writeFile(path.join(directory, 'package.json'), JSON.stringify({ private: true, type: 'module', packageManager, dependencies: Object.fromEntries([...expected].map(([name, pkg]) => [name, pkg.version])) }))
     await writeFile(path.join(directory, 'pnpm-workspace.yaml'), JSON.stringify({ packages: [], minimumReleaseAgeExclude: report.packages.map(pkg => `${pkg.name}@${pkg.version}`) }))
-    await execaPnpm(['install', '--ignore-scripts', '--registry=https://registry.npmjs.org/'], { cwd: directory, stdio: 'inherit' })
+    await installPublishedNightly(report, directory, path.join(process.env.RUNNER_TEMP, 'nightly-consumer-reports', `${suffix}-install.json`))
   }
   const snapshotMetadata = { ...report.snapshot.identity, identityKey: report.snapshot.identityKey, tag: report.snapshot.tag }
   const installed = new Map()
