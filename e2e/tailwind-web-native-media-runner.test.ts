@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { digest } from './tailwind-capabilities/identity'
 import { nativeMediaProbe } from './tailwind-capabilities/web-native-media/fixtures'
 import { runNativeMediaWeb } from './tailwind-capabilities/web-native-media/run'
@@ -16,7 +17,7 @@ vi.mock('./tailwind-capabilities/context', () => ({
   newReport: async (context: RunContext, target: string, _contracts: unknown, _fixture: unknown, environment: Record<string, string>) => {
     await mkdir(context.directory, { recursive: true })
     const hash = 'a'.repeat(64)
-    return { schemaVersion: 2, runId: context.runId, target, observedAt: new Date().toISOString(), identity: { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { unit: '1' } }, environment, results: [], artifacts: [] }
+    return { schemaVersion: 2, runId: context.runId, target, observedAt: context.artifactStartedAt ?? filesystemObservedAt(context.directory), identity: { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { unit: '1' } }, environment, results: [], artifacts: [] }
   },
   persistReport: mocks.persist,
 }))
