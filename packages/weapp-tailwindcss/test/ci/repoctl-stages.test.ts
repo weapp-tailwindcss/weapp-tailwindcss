@@ -82,7 +82,7 @@ afterEach(() => {
   }
 })
 
-describe('repoctl 5.10 真实阶段 API', () => {
+describe('repoctl 6.2 真实阶段 API', () => {
   it('手动预发布 auto 由官方计划选择 prerelease，prepare 在预发布线明确拒绝', async () => {
     const { options } = fixture(true)
     const prerelease = {

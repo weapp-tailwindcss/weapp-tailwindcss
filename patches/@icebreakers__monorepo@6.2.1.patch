@@ -1,8 +1,7 @@
-diff --git a/dist/commands-CB-HD_yZ.mjs b/dist/commands-CB-HD_yZ.mjs
-index 6d62dc6d108010f37008d65d57618b0b841ef6ca..92013ddb71c8b81d7d8f99cf9544d20012b36162 100644
---- a/dist/commands-CB-HD_yZ.mjs
-+++ b/dist/commands-CB-HD_yZ.mjs
-@@ -5308,6 +5308,19 @@ var GitHubClient = class {
+diff --git a/dist/commands-CWJn-_PI.mjs b/dist/commands-CWJn-_PI.mjs
+--- a/dist/commands-CWJn-_PI.mjs
++++ b/dist/commands-CWJn-_PI.mjs
+@@ -6984,6 +6984,19 @@
  			return recovered.data;
  		}
  	}
@@ -22,7 +21,7 @@ index 6d62dc6d108010f37008d65d57618b0b841ef6ca..92013ddb71c8b81d7d8f99cf9544d200
  	async listReleases() {
  		const releases = [];
  		for (let page = 1;; page++) {
-@@ -6567,7 +6580,7 @@ async function assertPreviousReleaseComplete(options, distTag = "latest") {
+@@ -8144,7 +8157,7 @@
  	}
  	if (!prepared.length) return;
  	const github = options.github;
@@ -31,7 +30,7 @@ index 6d62dc6d108010f37008d65d57618b0b841ef6ca..92013ddb71c8b81d7d8f99cf9544d200
  	const repository = getReleaseEnv(options)["GITHUB_REPOSITORY"];
  	const sources = /* @__PURE__ */ new Map();
  	const cohorts = /* @__PURE__ */ new Map();
-@@ -6586,9 +6599,9 @@ async function assertPreviousReleaseComplete(options, distTag = "latest") {
+@@ -8163,9 +8176,9 @@
  	const rule = options.config?.branches ? await resolveReleaseBranch(options) : void 0;
  	for (const pkg of prepared) {
  		const published = await inspectRegistry(pkg, options);
@@ -44,10 +43,9 @@ index 6d62dc6d108010f37008d65d57618b0b841ef6ca..92013ddb71c8b81d7d8f99cf9544d200
  			const recovery = rule?.kind === "maintenance" || distTag === "latest" ? `${rule ? `check out ${rule.branch} and run ` : ""}repo release ci --mode publish --source-sha ${source}` : `check out ${source} on ${rule?.branch ?? distTag} and run repo release ci`;
  			blocked.push(`${packageKey(pkg)} (source ${source}); recover with ${recovery}`);
 diff --git a/dist/index.d.mts b/dist/index.d.mts
-index 58ac78044b497d5edae8ed3a79ed407f156b4168..af7d0eb28cacec4253684204945386a18a08b07b 100644
 --- a/dist/index.d.mts
 +++ b/dist/index.d.mts
-@@ -824,6 +824,8 @@ interface GitHubOperations {
+@@ -871,6 +871,8 @@
    ensureTag?: (options: EnsureTagOptions) => Promise<void>;
    enrichReleaseNote?: (document: ReleaseNoteDocument) => Promise<ReleaseNoteDocument>;
    readReleasePullRequestContributors?: (target: string) => Promise<string[]>;
@@ -56,7 +54,7 @@ index 58ac78044b497d5edae8ed3a79ed407f156b4168..af7d0eb28cacec4253684204945386a1
    listReleases?: () => Promise<GitHubRelease[]>;
    updateRelease?: (options: UpdateReleaseOptions) => Promise<GitHubRelease>;
  }
-@@ -859,6 +861,7 @@ export declare class GitHubClient implements GitHubOperations {
+@@ -919,6 +921,7 @@
    ensurePullRequest(options: EnsurePullRequestOptions): Promise<GitHubPullRequest>;
    closeLegacyReleasePullRequests(options: CloseLegacyPullRequestsOptions): Promise<void>;
    ensureRelease(options: EnsureReleaseOptions): Promise<GitHubRelease>;

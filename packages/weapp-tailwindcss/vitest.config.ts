@@ -2,6 +2,20 @@ import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  plugins: [{
+    name: 'native-node-package-conditions',
+    enforce: 'post',
+    configEnvironment: {
+      order: 'post',
+      handler(name, config) {
+        // Vitest 5 会合并默认条件；合并后按实际 Node CLI 解析发布依赖，避免选中包内未编译的 TS。
+        if (name === 'ssr' || name === '__vitest__') {
+          config.resolve ??= {}
+          config.resolve.conditions = ['node']
+        }
+      },
+    },
+  }],
   test: {
     setupFiles: ['./test/setup/esbuild-cleanup.ts'],
     alias: [

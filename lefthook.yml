@@ -1,0 +1,19 @@
+min_version: 2.2.2
+glob_matcher: doublestar
+
+pre-commit:
+  piped: true
+  jobs:
+    - name: eslint
+      glob: '**/*.{js,jsx,mjs,ts,tsx,mts,vue,json,md,mdx,css,html,yml,yaml,scss}'
+      exclude:
+        - '.agents/**'
+        - '**/.agents/**'
+        - 'e2e/__snapshots__/**'
+      run: pnpm exec node scripts/git-hooks/staged-eslint.mjs
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec repo verify commit-msg "{1}"

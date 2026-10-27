@@ -16,6 +16,10 @@ export default defineMonorepoConfig({
       includePrivate: true,
     },
     release: {
+      nightly: {
+        provider: 'npm',
+        schedule: '0 20 * * *',
+      },
       hooks: {
         beforeVersion: ['native:artifacts:before-version'],
         verify: ['release:verify'],
@@ -44,7 +48,7 @@ export default defineMonorepoConfig({
         'AGENTS.md',
         'commitlint.config.ts',
         'eslint.config.mjs',
-        'lint-staged.config.ts',
+        'lefthook.yml',
         'pnpm-workspace.yaml',
         'prettier.config.mjs',
         'repoctl.config.ts',

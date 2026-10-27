@@ -54,7 +54,7 @@ jobs:
           cache: pnpm
       - name: Install only scope parser dependencies
         env:
-          HUSKY: '0'
+          LEFTHOOK: '0'
         run: pnpm --filter @weapp-tailwindcss/ci-scope install --prod --frozen-lockfile --ignore-scripts
       - name: Validate versions and classify the actual diff
         id: scope

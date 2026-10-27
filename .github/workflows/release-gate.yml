@@ -59,7 +59,7 @@ jobs:
     if: always() && !cancelled()
     timeout-minutes: 30
     env:
-      HUSKY: 0
+      LEFTHOOK: 0
     steps:
       - name: Require scope and enabled native checks
         env:

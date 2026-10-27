@@ -37,7 +37,7 @@ jobs:
           cache: pnpm
       - name: Install version metadata parsers
         env:
-          HUSKY: '0'
+          LEFTHOOK: '0'
         run: pnpm --filter @weapp-tailwindcss/ci-scope install --prod --frozen-lockfile --ignore-scripts
       - name: Validate current version PR and exact head
         id: target
@@ -67,7 +67,7 @@ jobs:
           cache: pnpm
       - name: Install version metadata parsers
         env:
-          HUSKY: '0'
+          LEFTHOOK: '0'
         run: pnpm --filter @weapp-tailwindcss/ci-scope install --prod --frozen-lockfile --ignore-scripts
       - name: Confirm the approved PR still belongs to this head
         env:

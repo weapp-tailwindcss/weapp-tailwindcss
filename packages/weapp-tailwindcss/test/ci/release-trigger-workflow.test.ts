@@ -13,7 +13,7 @@ describe('main 自动准备与合并发布的触发边界', () => {
     const release = workflow('release.yml')
     expect(release.on.push).toEqual({ branches: ['main'] })
     expect(release.on.workflow_dispatch.inputs.mode.default).toBe('prepare')
-    expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['auto', 'prepare', 'publish', 'publish-unpublished'])
+    expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['auto', 'prepare', 'publish', 'publish-unpublished', 'nightly'])
     expect(release.on.workflow_dispatch.inputs.mode.description).toContain('auto 仅用于预发布分支')
     expect(release.on.pull_request_target).toEqual({ types: ['closed'], branches: ['main'] })
     expect(release.jobs.dispatch.if).toContain('github.event.pull_request.merged == true')
