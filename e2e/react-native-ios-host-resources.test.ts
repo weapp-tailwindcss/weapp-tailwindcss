@@ -84,7 +84,7 @@ it('后续截图独立读取主机资源，不沿用前一条成功命令的现�
   }
 })
 
-it('非零资源读取耗时占用原预算，取消先转发到原命令再读取现场', async () => {
+it('非零资源读取耗时占用原预算，取消资源监听晚于命令监听登记', async () => {
   const context = await fixture()
   vi.useFakeTimers()
   const original = host.captureNativeHostResources
@@ -97,7 +97,7 @@ it('非零资源读取耗时占用原预算，取消先转发到原命令再读�
   vi.mocked(execa).mockImplementation((_file: string | URL, argsOrOptions?: readonly string[] | Options, options?: Options) => {
     const commandOptions = options ?? argsOrOptions as Options | undefined
     commandOptions?.cancelSignal?.addEventListener('abort', () => {
-      order.push('command-cancel')
+      order.push('command-listener')
     }, { once: true })
     return context.command
   })
@@ -105,7 +105,7 @@ it('非零资源读取耗时占用原预算，取消先转发到原命令再读�
   const result = budget.capture(signal => context.diagnostics.capture(context.output, 'bound-device', signal)).catch(error => error)
   await vi.advanceTimersByTimeAsync(NATIVE_CAPTURE_TIMEOUT - 100)
   expect(await result).toEqual(new Error('Native semantic host capture exceeded 10000ms'))
-  expect(order).toEqual(['resources', 'command-cancel', 'resources'])
+  expect(order).toEqual(['resources', 'command-listener', 'resources'])
   const primary = new Error('owned command canceled')
   context.reject(primary)
   await expect(budget.drain()).rejects.toBe(primary)

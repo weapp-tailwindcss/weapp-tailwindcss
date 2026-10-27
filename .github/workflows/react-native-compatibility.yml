@@ -165,7 +165,7 @@ jobs:
       - run: brew install cocoapods
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS launch reconciliation
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
       - name: Boot iOS simulator
         run: |

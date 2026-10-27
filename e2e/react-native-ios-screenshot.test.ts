@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { PassThrough } from 'node:stream'
 import { execa } from 'execa'
 import { afterEach, expect, it, vi } from 'vitest'
 import { runWithCleanup } from '../scripts/e2e-preflight/cleanup'
@@ -28,7 +29,8 @@ async function fixture() {
   await fs.writeFile(output, new Uint8Array(2048))
   const diagnostics = createIosScreenshotDiagnostics(directory, 'unit-run')
   const read = async () => JSON.parse(await fs.readFile(path.join(directory, 'ios-screenshots.json'), 'utf8'))
-  const events = Object.assign(new EventEmitter(), { pid: 42 })
+  const streams = { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough() }
+  const events = Object.assign(new EventEmitter(), { pid: 42, ...streams })
   let resolve!: () => void
   let reject!: (error: unknown) => void
   const completion = new Promise<void>((done, fail) => {
@@ -37,7 +39,7 @@ async function fixture() {
   })
   const command = Object.assign(events, { then: completion.then.bind(completion) }) as unknown as ResultPromise
   vi.mocked(execa).mockReset().mockReturnValue(command)
-  return { directory, output, diagnostics, read, events, resolve, reject }
+  return { directory, output, diagnostics, read, events, streams, resolve, reject }
 }
 
 it('原命令与一次 stat 保持不变；成功路径只记内存，最终排空时才写诊断', async () => {
@@ -102,12 +104,21 @@ it('exit 与 stdio close 单独记录，退出不冒充命令 settle 或提前�
   expect(pending.hostResources.cancelled).toBeUndefined()
   expect(pending.hostResources.settled).toBeUndefined()
   expect(pending.stat).toBeUndefined()
+  expect(pending.streams.stdout).toMatchObject({ direction: 'output', observed: true, events: {}, exited: { atMs: 50, ended: false, closed: false } })
+  expect(pending.streams.stderr).toMatchObject({ direction: 'output', observed: true, events: {}, exited: { atMs: 50, ended: false, closed: false } })
   expect(stat).not.toHaveBeenCalled()
   context.events.emit('close', 0, null)
   context.resolve()
   await captured
   await context.diagnostics.flush()
   expect((await context.read()).records[0]).toMatchObject({ status: 'succeeded', stdioClosed: { atMs: 250, code: 0, signal: null } })
+  expect((await context.read()).records[0].streams.stdout.settled).toMatchObject({ atMs: 250, ended: false, closed: false })
+  for (const stream of Object.values(context.streams)) {
+    expect(stream.listenerCount('close')).toBe(0)
+    expect(stream.listenerCount('end')).toBe(0)
+    expect(stream.listenerCount('finish')).toBe(0)
+    expect(stream.listenerCount('error')).toBe(0)
+  }
 })
 
 it('原 10 秒预算取消后仍保留在途状态，真实命令迟到失败后才标记 settled', async () => {

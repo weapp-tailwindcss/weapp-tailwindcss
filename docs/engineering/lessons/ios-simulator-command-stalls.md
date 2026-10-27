@@ -4,6 +4,7 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: 34894ffcd7e89d1b39fc593cfee8205da06d0102
 regressions:
   - e2e/react-native-ios-screenshot.test.ts
+  - e2e/react-native-ios-screenshot-streams.test.ts
   - e2e/react-native-ios-host-resources.test.ts
   - e2e/react-native-ios-screenshot-sample.test.ts
   - e2e/react-native-ios-screenshot-sample-lifecycle.test.ts
@@ -11,6 +12,7 @@ regressions:
   - e2e/lynx-command-host.test.ts
   - e2e/lynx-command-observer.test.ts
   - e2e/react-native-native-wait.test.ts
+  - e2e/react-native-runtime-artifacts.test.ts
   - e2e/lynx-ios-install-diagnostics.test.ts
 verification:
   - claim: Expo 首次运行在 TSX HMR 的 shadow 双帧采集耗尽原 10 秒总预算
@@ -85,21 +87,37 @@ Lynx 首次 launch 的同 VM 快照显示 3 核、约 7.5GB 总内存、load ave
 
 作者 head `617d75866834e6d6dfc98e98218fb293f4b3215f` 的 [Expo iOS 首次运行](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40375892413/job/121762746736) 在 baseline `layout-position/default` 第一帧耗尽原预算。唯一采样机会此前已在 `layout-aspect` 使用；该次身份查询见到 `bash` 而按原白名单拒绝。失败的 position 命令没有自己的资源样本，不能挪用前一条命令或本机 Xcode wrapper 解释其迟滞。
 
-每条截图命令现在分别记录启动、取消和 settled 时的同步主机数值，标明 `source: test-runner`，记录采集时刻与读取耗时。只读取现有 OS/Node API，不新增子进程、栈采样、重试或等待。取消快照的监听器在 execa 创建后登记，先把原取消送给自有命令，再读取资源；读取异常独立记录，不覆盖截图结果。这些数值属于宿主及父进程，不能冒充截图子进程的资源或内核执行映像。
+每条截图命令现在分别记录启动、取消和 settled 时的同步主机数值，标明 `source: test-runner`，记录采集时刻与读取耗时。只读取现有 OS/Node API，不新增子进程、栈采样、重试或等待。取消快照的监听器在 execa 创建后登记；这只保证监听登记顺序，Execa 的实际 kill 在异步恢复后执行，不能据同步 mock 断言信号先于资源读取。读取异常独立记录，不覆盖截图结果。这些数值属于宿主及父进程，不能冒充截图子进程的资源或内核执行映像。
 
 新增非零观察耗时回归还确认了独立的预算漏洞：`capture()` 在调用 `operation()` 后才安装完整 10000ms 计时器，使同步前奏不计入挂起路径的取消期限。旧实现对 100ms 与 10001ms 同步前奏的两项回归均失败。计时器现按本次原始 `started` 计算剩余预算，耗尽即取消；原 10000ms、真实操作锁、迟到错误及独立 5000ms drain 保持原语义。此回归证明截止时间记账缺陷，尚无证据证明它触发了上述 hosted 失败。
 
+### 首次清理超时与最终归档
+
+上述截止时间修复提交 `d12207253e2bcc53dcbe7a6eddc7b025e6b73bad` 的 [Expo iOS 首次运行](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40434227980/job/121959123056) 仍在 baseline `effect-shadow/default` 第二帧失败。第一帧的截图、解码、语义判断分别在 pair 的约 4450ms、6075ms、6974ms 完成，三项检查通过；第二帧约在 7126ms 开始，只剩约 2874ms。取消到 SIGTERM exit 约 68ms，exit 到 Execa settle 又约 9543ms，最终没有 ChildProcess close 或第二帧 PNG。日志同时保留独立的 `Native capture cleanup exceeded 5000ms`，不能由最终 `pending:false` 推断清理按时完成。
+
+Execa 9.6.1 在根进程退出后仍等待所拥有的 stdio 完成；`forceKillAfterDelay` 约束根 PID 的终止，不是整个 Promise 的结束期限。当前原件缺少各条流的结束事件、失败 PID 的后代及句柄归属，不能直接归因为继承 pipe。69 次新增资源读取合计约 11.14ms，失败命令的三次读取合计约 1ms；这些父进程与主机数据不能解释为截图子进程的 CPU 或 OS 根因。
+
+后续诊断仅订阅原 stdin 的 finish/close、stdout/stderr 的 end/close，分别保存命令开始、根进程 exit 和 Promise settle 时的流状态。观察器不读取、恢复、销毁或关闭流，不接管 error 事件，不增加子进程、采样、重试或等待；结束时移除本观察器的监听。独立 fixture 使用真实 Execa 与本任务 Node 父子进程，确认后代暂留输出 pipe 时，根进程退出并不等于 Execa 完成，释放自有 pipe 后才结束。它验证可能机制与观测点，不能证明上述 hosted 失败存在该后代。
+
+组合回归确认了独立的报告缺口：首次 `drain()` 超时没有保存到 owner，操作随后成功结束时，最终归档可以写成 `status:settled`；操作迟到失败时，最终归档只记录晚错误。整个作业原有错误聚合已经保留首次超时，没有误放行，但独立归档缺少该历史。负责预算的 owner 现在保留首次清理超时；最终归档仍等待真实结束，随后交付同一超时，若存在晚拒绝则同时保留两个原始错误。重复或并发 drain 不复制等价超时，不改变原 10000ms / 5000ms、取消、进程终止或在途锁的边界。
+
 ## 验证
 
-上述 `verification` 的定向命令已在诊断提交上执行，8 文件、69 项全部通过；本次仅新增文档，没有重复运行这组测试。回归覆盖快命令零采样、一轮最多一次、原截图子进程退出/取消/PID 变化后拒绝迟到身份、身份超时仍保留快照、成功截图不等待诊断、flush 排空及失败保留。安装回归调用真实 `runIos` 入口并模拟外部服务，验证指定设备、原 120 秒预算、独立诊断路径以及安装失败立即阻断后续阶段，不把模拟命令视为真实设备通过。
+上述 `verification` 的历史定向命令已在诊断提交 `63d113218ee093e29993551b36f06661bd060c17` 上执行，8 文件、69 项全部通过；该阶段随后仅新增文档，没有重复运行这组测试。回归覆盖快命令零采样、一轮最多一次、原截图子进程退出/取消/PID 变化后拒绝迟到身份、身份超时仍保留快照、成功截图不等待诊断、flush 排空及失败保留。安装回归调用真实 `runIos` 入口并模拟外部服务，验证指定设备、原 120 秒预算、独立诊断路径以及安装失败立即阻断后续阶段，不把模拟命令视为真实设备通过。
 
 持久回归路径在 frontmatter 中逐项登记；关键新增用例为 [采样所有权](../../../e2e/react-native-ios-screenshot-sample.test.ts)、[清理接线](../../../e2e/react-native-ios-screenshot-sample-lifecycle.test.ts)、[进程身份](../../../e2e/native-process-identity.test.ts) 和 [安装接线](../../../e2e/lynx-ios-install-diagnostics.test.ts)。诊断提交的定向 ESLint、严格 TypeScript（含 `exactOptionalPropertyTypes`）、`pnpm agents:check` 与差异检查均已通过。本文另执行规则与差异检查。
 
-失败原件可从上列四个 job 下载：Expo 关注 `ios-screenshots.json`、对应 `.capture.json`、`.pair.json`、`capture-cleanup.json`；Lynx 关注 `boot-command.json`、`launch-command.json`、sample 和 host 记录，第二轮安装仅有原异常而无独立诊断。新诊断的远端原件仍为 pending，不能将旧 head 的失败或单测通过改写为更新后 iOS 已通过。
+失败原件可从上列四个 job 下载：Expo 关注 `ios-screenshots.json`、对应 `.capture.json`、`.pair.json`、`capture-cleanup.json`；Lynx 关注 `boot-command.json`、`launch-command.json`、sample 和 host 记录，第二轮安装仅有原异常而无独立诊断。历史诊断提交的待验收记录不改写为成功；后续 d122 的官方原件已完整核验字节、SHA 与 ZIP CRC，实际 iOS 结果仍失败，不能用单测替代。
 
-2026-10-27 的未提交修复在 macOS arm64、Node 24.18.0 下通过 4 文件 33 项定向回归，命令为 `CI=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts --update=none`。新增测试覆盖非零观察成本、取消转发顺序、资源读取失败后的原结果保真、后续命令独立资源以及同步前奏占用原截止时间；既有真实自有 Node 子进程取消和迟到错误回归也通过。新增资源回归接入本地兼容性入口及 iOS workflow；实际 iOS 结果仍待新 head 自然 CI，不重置历史复测额度。
+2026-10-27 随后提交为 d122 的资源与截止时间修复在 macOS arm64、Node 24.18.0 下通过 4 文件 33 项定向回归，命令为 `CI=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts --update=none`。新增测试覆盖非零观察成本、取消监听登记顺序、资源读取失败后的原结果保真、后续命令独立资源以及同步前奏占用原截止时间；既有真实自有 Node 子进程取消和迟到错误回归也通过。新增资源回归接入本地兼容性入口及 iOS workflow；后续自然 CI 的真实失败见上节，不重置历史复测额度。
 
-更新后的 iOS workflow 前置命令已在本机完整执行，14 文件 251 项通过（包含上述回归），没有执行 Expo 原生设备验收。改动的 5 个 TypeScript 文件通过 `strict`、`exactOptionalPropertyTypes` 定向检查及 ESLint；规则与差异检查通过。历史原件、未定位的模拟器迟滞和完整本地验收失败均保留。
+d122 的 iOS workflow 前置命令在本机与实际 hosted runner 均通过 14 文件 251 项，原生设备验收仍失败。该提交改动的 5 个 TypeScript 文件通过 `strict`、`exactOptionalPropertyTypes` 定向检查及 ESLint；规则与差异检查通过。历史原件、未定位的模拟器迟滞和完整本地验收失败均保留。
+
+d122 之后的清理历史修复先运行 `CI=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-runtime-artifacts.test.ts --update=none -t 首次清理超时必须随最终归档保留`，旧实现的两项组合回归均失败。修复后截图、预算与归档的 3 文件 33 项通过；新增组合回归接入 iOS 前置命令，该完整命令在本机通过 15 文件 258 项。测试使用真实文件归档、固定计时器及受控 Promise，覆盖首次超时、重复与并发 drain、迟到成功/失败、最终恢复与归档，不启动设备或增加原生复测。
+
+随后增加流状态观察与真实自有 Node 进程 fixture，对应截图与流的 2 文件 9 项通过。它保持原错误对象、根进程 exit 与流结束的独立语义；测试收尾通过专属 release 文件释放后代，并等待自有命令与 stdio close，不回收其他任务资源。
+
+最终接入本地兼容性入口与 iOS workflow 的完整前置命令通过 16 文件 259 项。6 个截图、流观察与预算相关 TypeScript 文件通过严格类型检查（含 `exactOptionalPropertyTypes`）。归档组合测试的独立类型命令会牵引 112 项依赖诊断；用原始 d122 文件内容与当前内容分别创建相同 TypeScript program，诊断逐项相同，改动文件本身零诊断，因此不把该命令写成整体类型检查通过。
 
 ## 适用边界
 

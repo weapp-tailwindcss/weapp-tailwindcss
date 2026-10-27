@@ -5,6 +5,7 @@ import process from 'node:process'
 import { execa } from 'execa'
 import { captureNativeHostResources } from '../native-command/host'
 import { createIosScreenshotSampleOwner } from './ios-screenshot-sample'
+import { observeIosScreenshotStreams } from './ios-screenshot-streams'
 
 interface ProcessEvent {
   atMs: number
@@ -32,6 +33,7 @@ interface ScreenshotDiagnostic {
   exit?: ProcessEvent
   stdioClosed?: ProcessEvent
   subprocessSettled?: { atMs: number, status: 'succeeded' | 'failed' }
+  streams?: ReturnType<typeof observeIosScreenshotStreams>['records']
   cancelled?: { atMs: number, reason: string }
   stat?: { startedAtMs: number, settledAtMs?: number, size?: number, error?: string }
   settledAtMs?: number
@@ -125,6 +127,7 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         eventLoop.snapshot()
       } })
       let stopSample: (() => void) | undefined
+      let streams: ReturnType<typeof observeIosScreenshotStreams> | undefined
       const onAbort = () => {
         stopSample?.()
         record.cancelled = { atMs: elapsed(), reason: String(cancelSignal?.reason) }
@@ -138,11 +141,13 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
       }
       try {
         const command = execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { ...(cancelSignal ? { cancelSignal } : {}), forceKillAfterDelay: 1_000 })
-        // 资源读取排在 execa 的取消监听之后，先将原取消传给自有命令。
+        // 资源监听晚于 execa 登记；实际异步取消进度仍以 exit/close/settled 为准。
         cancelSignal?.addEventListener('abort', onAbortResources, { once: true })
         if (cancelSignal?.aborted) {
           onAbortResources()
         }
+        streams = observeIosScreenshotStreams(command, elapsed)
+        record.streams = streams.records
         stopSample = samples.observe(command, record.index, elapsed, (sample) => {
           record.sample = sample
         })
@@ -160,6 +165,7 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         })
         command.once('exit', (code, signal) => {
           record.exit = { atMs: elapsed(), code, signal }
+          streams?.snapshot('exited')
         })
         command.once('close', (code, signal) => {
           record.stdioClosed = { atMs: elapsed(), code, signal }
@@ -172,6 +178,7 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
           record.subprocessSettled = { atMs: elapsed(), status: 'failed' }
           throw error
         }
+        finally { streams.snapshot('settled') }
         cancelSignal?.throwIfAborted()
         const statRecord: NonNullable<ScreenshotDiagnostic['stat']> = record.stat = { startedAtMs: elapsed() }
         try {
@@ -200,6 +207,7 @@ export function createIosScreenshotDiagnostics(artifacts: string, runId: string,
         record.settledAtMs = record.elapsedMs = elapsed()
         eventLoop.stop()
         stopSample?.()
+        streams?.dispose()
         cancelSignal?.removeEventListener('abort', onAbort)
         cancelSignal?.removeEventListener('abort', onAbortResources)
         if (record.cancelled) {
