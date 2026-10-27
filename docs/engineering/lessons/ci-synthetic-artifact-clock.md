@@ -6,6 +6,12 @@ regressions:
   - e2e/tailwind-capabilities-coverage.test.ts
   - e2e/tailwind-weapp-replay.test.ts
   - e2e/tailwind-report-clock.test.ts
+  - e2e/tailwind-web-native-media-runner.test.ts
+  - e2e/tailwind-authoring-runner.test.ts
+  - e2e/tailwind-authoring-web-runner.test.ts
+  - e2e/tailwind-framework-source-runner.test.ts
+  - e2e/tailwind-static-conversion.test.ts
+  - e2e/tailwind-web-history-runner.test.ts
 verification:
   - claim: main 的两个合成夹具因混用系统时钟和文件系统时钟而失败
     kind: ci
@@ -19,6 +25,12 @@ verification:
     sha: 89f8e2599268fce388ea92f602745b8b13f47f10
     environment: macOS / Node 24.22.1 / pnpm 12.14.0
     command: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-capabilities-coverage.test.ts e2e/tailwind-weapp-replay.test.ts e2e/tailwind-report.test.ts e2e/tailwind-report-clock.test.ts e2e/tailwind-weapp-capture.test.ts --update=none --coverage.enabled=false
+  - claim: 六类 runner mock 对齐正式时钟模型后通过，时钟超前和旧产物拒绝回归保持
+    kind: integration
+    status: passed
+    sha: b153b595d52ca5716b3502fcb2bd6fee7fe9aa02
+    environment: macOS / Node 24.22.1 / pnpm 12.14.0
+    command: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-authoring-runner.test.ts e2e/tailwind-authoring-web-runner.test.ts e2e/tailwind-framework-source-runner.test.ts e2e/tailwind-static-conversion.test.ts e2e/tailwind-web-history-runner.test.ts e2e/tailwind-web-native-media-runner.test.ts e2e/tailwind-report-clock.test.ts e2e/tailwind-report.test.ts --update=none --coverage.enabled=false
 ---
 
 # 合成产物的时钟边界
@@ -33,9 +45,13 @@ main 的 E2E Static 第三分片将本轮生成的 `raw.css` 和 `generated.wxss
 
 夹具现在复用现有的同文件系统时钟。回归先将 Date 超前 60 秒复现旧行为，再确认本轮产物有效，并回拨 CSS 或截图时间验证旧证据继续被拒绝。生产报告验证器、哈希和重放协议保持原有要求。
 
+后续在本任务 head `ca5b99e669b1f50f7dbe53e6ee356ea94f1f0896` 手动执行[完整 CI](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40541520612/job/122322652762)，第一静态分片又捕获媒体 runner 的同类错误：`generated.css` 比报告起点早约 1.11ms。生产 `newReport` 已使用 `artifactStartedAt ?? filesystemObservedAt(context.directory)`，该测试却 mock 成 `new Date().toISOString()`。相邻六类 runner 的同类 mock 一并对齐正式时钟模型，避免只修首个失败文件；生产 1ms 新鲜度边界不放宽。
+
 ## 验证
 
 先构建 `weapp-tailwindcss` 的依赖闭包，再运行上述五个定向文件，47 项全部通过。初次复验因工作树没有构建 `weapp-tailwindcss/escape` 而在导入阶段失败，完成依赖构建后使用相同用例通过。
+
+六类 runner mock 修复整合后，连同报告与时钟反例共 8 文件、64 项通过；范围包括 Date 超前、回拨 CSS/截图时间以及哈希篡改拒绝。远端第一静态分片须在后续准确提交上重新验证。
 
 ## 适用边界
 

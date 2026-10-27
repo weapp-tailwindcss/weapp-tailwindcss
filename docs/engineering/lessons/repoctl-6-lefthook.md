@@ -33,6 +33,8 @@ regressions:
 - 使用精确版本 Lefthook 2.2.2，移除 Husky/lint-staged。原生 pre-commit 的 glob/exclude 与 [Node runner](../../../scripts/git-hooks/staged-eslint.mjs) 一致，保留既有 ESLint 范围。runner 从 Git NUL 输出取文件，以 Node 参数数组分批调用 ESLint，避免文件名 shell 插值及 Windows 参数长度限制。
 - Lefthook 负责隐藏、恢复部分暂存文件的未暂存修改及 `stage_fixed`。runner 不自行 stash 或重新暂存。真实 Git 回归覆盖成功修复、后续检查失败、恢复冲突、重命名、删除、特殊文件名和 commitlint 路径传递。
 - 根 prepare 使用 `repo tooling hooks install --json`，禁止 Lefthook 自身 postinstall。官方安装器保护自定义和继承的 hooksPath。它允许从 linked worktree 安装到共享 hooks，因此本轮真实工作树安装始终使用 `CI=1 LEFTHOOK=0`；启用安装只在隔离 Git fixture 验证。未更改用户 checkout 的 `.husky/_` 设置。
+- 手动补充的 [CI 兼容矩阵](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40541520612)在 Windows Node 22/24 各捕获一项失败：消息文件的绝对路径包含空格、中文与单引号，进入 repoctl 前已被截断。Lefthook 2.2.2 的 `{1}` 原样替换参数，Windows 执行器又手工拼接带双引号的 `CmdLine`；`scripts/runner` 同样拼接参数，迁移到 runner 不能修复原始信息丢失。官方待合并 [PR #1464](https://github.com/evilmartians/lefthook/pull/1464)和 [issue #1613](https://github.com/evilmartians/lefthook/issues/1613)记录了这些边界。
+- commit-msg 因此改为原始参数桥接：官方 hook 模板在启动 Lefthook 前 source 仓库 rc，保存 Git 的原始 `$1` 到专用环境变量；Node helper 只读该值，以参数数组启动 repoctl。原计划的 `"{1}"` 命令插值停止使用。Git 明确保证 pre-commit、commit-msg 在工作树根执行，因此 rc 使用固定相对路径，不拼接本机绝对路径。rc 每次覆盖旧值，缺少原始参数时失败；特殊路径回归通过 `git hook run commit-msg -- ABS_PATH` 验证官方安装的真实入口。Lefthook 版本、受控安装器、部分暂存与安装保护职责保持。
 
 补丁原移除条件现已满足：正式 npm 版本包含准确 tag 查询及等价拒绝门禁，本仓库前序发布回归通过。后续维护直接消费正式版本，不再维护此补丁。原问题证据见[此前发布完整性记录](main-ci-evidence-boundaries.md)。
 
@@ -84,9 +86,11 @@ CI=1 LEFTHOOK=0 pnpm --config.verifyDepsBeforeRun=false --filter weapp-tailwindc
 
 整合上述 CI 修复后，在原 34 文件命令中追加 `install-memory-workflow.test.ts`、`install-frozen-config.test.ts`、`install-workspace.test.ts`，共 37 文件、632 项通过；三个网站文件分别从根聚合与网站独立入口执行，各 29 项通过。test-helper 的两个真实 repoctl 消费回归 32 项、新 Node 工作流契约 4 项及 agents 检查通过。定向 ESLint 无错误，按仓库现有规则忽略两个测试配置路径；`git diff --check` 通过。
 
+继续整合 Windows 原始参数桥接后，在提交 `b153b595d52ca5716b3502fcb2bd6fee7fe9aa02` 重新执行上述 37 文件，636 项全部通过；其中真实 Git hook 回归 19 项，包含部分暂存、失败恢复、冲突阻断、特殊绝对路径，以及缺参数拒绝和陈旧环境变量覆盖。新 helper、shell rc 与配置的定向 ESLint（显式 `--no-ignore`）、Node/shell 语法检查通过。六类合成 runner 的时钟 mock 同步修复后，8 文件、64 项通过，详见[时钟边界记录](ci-synthetic-artifact-clock.md)。上述本地结果来自 macOS，Windows 修复须以新提交的兼容矩阵确认。
+
 ## 适用边界
 
-本仓库只做本地定向验证，未运行本地全仓、多端或 Windows/Linux 原机验收；本仓库 PR CI 和首次真实 nightly、官网 next 部署在交付时另行记录。上游源码、版本 PR 和稳定发布已真实执行，不能据此替代本仓库发布后消费者或线上验收。Windows、Linux/macOS 的工作流兼容作业已加入独立 hook 集成测试，执行位置在最低运行时切换之前。
+本地仅执行定向验证，未运行本地全仓、多端或 Windows/Linux 原机验收；本仓库 PR CI、手动兼容矩阵和首次真实 nightly、官网 next 部署按准确提交分别记录。旧提交的远端成功不能证明后续修复已通过。上游源码、版本 PR 和稳定发布已真实执行，不能据此替代本仓库发布后消费者或线上验收。Windows、Linux/macOS 的工作流兼容作业已加入独立 hook 集成测试，执行位置在最低运行时切换之前。
 
 本次只升级私有工程工具，没有公开包行为变化，不新增 change intent 或调整公开包版本。原 checkout 的 Tailwind 子模块外部变动保持原样。
 
