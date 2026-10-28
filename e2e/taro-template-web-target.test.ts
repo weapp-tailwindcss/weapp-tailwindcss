@@ -10,6 +10,7 @@ import { satisfies } from 'semver'
 import ts from 'typescript'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
+import { createWebpackHtmlScript } from './taro-template-web-target/html-script'
 
 const repoRoot = path.resolve(__dirname, '..')
 const require = createRequire(import.meta.url)
@@ -20,7 +21,7 @@ interface TemplateConfig {
   deviceRatio: Record<number, number>
   compiler: string | { vitePlugins: UserDefinedOptions[] }
   mini: { webpackChain?: (chain: unknown) => void }
-  h5: { postcss: { pxtransform: { config: { baseFontSize: number, minRootSize: number, maxRootSize: number } } }, webpackChain?: (chain: unknown) => void }
+  h5: { postcss: { pxtransform: { config: { baseFontSize: number, minRootSize: number, maxRootSize: number } } }, htmlPluginOption?: Record<string, unknown>, webpackChain?: (chain: unknown) => void }
   rn: Record<string, unknown>
 }
 
@@ -42,7 +43,7 @@ function cssRuntime(template: Template) {
     taroPxtransform: runnerRequire('postcss-pxtransform') as (options: Record<string, unknown>) => AcceptedPlugin,
     getHtmlScript: template === 'taro-vite-tailwindcss-v4'
       ? (runnerRequire('./dist/utils/html') as { getHtmlScript: (entry: string, options: unknown, platform: string) => string }).getHtmlScript
-      : undefined,
+      : createWebpackHtmlScript(templateRequire),
     base,
   }
 }
@@ -176,21 +177,29 @@ describe('独立 Taro 模板的输出目标边界', () => {
             miniValues.push(decl.value)
           })
           expect(miniValues).toEqual(['40rpx', '72rpx', '40rpx', '72rpx', '32rpx', '57.6rpx'])
-          if (runtime.getHtmlScript) {
-            const html = runtime.getHtmlScript('/src/app.ts', { config: {
-              ...config.h5.postcss.pxtransform.config,
-              designWidth: config.designWidth,
-              deviceRatio: config.deviceRatio,
-            } }, target)
-            const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1]
-            expect(script).toBeTruthy()
-            for (const [width, expectedRoot] of [[375, 16], [750, target === 'h5' ? 32 : 16], [1280, target === 'h5' ? 32 : 16]]) {
-              const element = { style: { fontSize: '' }, getBoundingClientRect: () => ({ width, height: 812 }) }
-              runInNewContext(script!, { window: { document: { documentElement: element }, addEventListener: () => {} }, setTimeout: () => {} })
-              expect(Number.parseFloat(element.style.fontSize)).toBe(expectedRoot)
-              if (width === 375) {
-                expect(Number.parseFloat(declarations.get('.p-\\[40rpx\\]|padding')!) * expectedRoot!).toBe(20)
-              }
+          expect(runtime.getHtmlScript).toBeTypeOf('function')
+          const html = runtime.getHtmlScript('/src/app.ts', { config: {
+            ...config.h5.postcss.pxtransform.config,
+            htmlPluginOption: config.h5.htmlPluginOption,
+            designWidth: config.designWidth,
+            deviceRatio: config.deviceRatio,
+          } }, target)
+          const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1]
+          expect(script).toBeTruthy()
+          const widthCases = [
+            [320, target === 'h5' ? 16 : 32 * 320 / 750],
+            [375, 16],
+            [599, 32 * 599 / 750],
+            [600, target === 'h5' ? 32 * 600 / 750 : 16],
+            [750, target === 'h5' ? 32 : 16],
+            [1280, target === 'h5' ? 32 : 16],
+          ] as const
+          for (const [width, expectedRoot] of widthCases) {
+            const element = { style: { fontSize: '' }, getBoundingClientRect: () => ({ width, height: 812 }) }
+            runInNewContext(script!, { window: { document: { documentElement: element }, addEventListener: () => {} }, setTimeout: () => {} })
+            expect(Number.parseFloat(element.style.fontSize)).toBeCloseTo(expectedRoot!, 10)
+            if (width === 375) {
+              expect(Number.parseFloat(declarations.get('.p-\\[40rpx\\]|padding')!) * expectedRoot!).toBe(20)
             }
           }
         }

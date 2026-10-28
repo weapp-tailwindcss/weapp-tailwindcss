@@ -165,6 +165,16 @@ jobs:
           pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1166-webpack-radius.test.ts e2e/issue-1194-css-calc.test.ts e2e/taro-template-web-target.test.ts --update=none &&
           pnpm e2e:web-css-preservation &&
           pnpm e2e:multiplatform-build
+      - name: Install published Taro Vite template dependencies
+        working-directory: templates/taro-vite-tailwindcss-v4
+        run: pnpm install --frozen-lockfile --config.update=false
+      - name: Install published Taro Webpack template dependencies
+        working-directory: templates/taro-webpack-tailwindcss-v4
+        run: pnpm install --frozen-lockfile --config.update=false
+      - name: Verify published Taro template CSS and HTML scripts
+        env:
+          E2E_TARO_TEMPLATE_PUBLISHED: '1'
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/taro-template-web-target.test.ts --update=none
 
   platform-watch:
     name: Platform watch smoke (${{ matrix.runner_label }}, ${{ matrix.case_name }})
