@@ -6,7 +6,7 @@ import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import sharp from 'sharp'
-import { readWebsiteTocMetadata } from '../../tests/helpers/full-page/toc/site-policy'
+import { readWebsiteTocMetadata } from '../../tests/helpers/full-page/toc/site-policy.mts'
 import { digest, filesDigest, regularBytes, treeFiles } from './files'
 
 export async function baselineContract(websiteRoot: string) {

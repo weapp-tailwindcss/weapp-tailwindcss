@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
-import { loadWebsiteTocPolicies, readWebsiteTocMetadata } from '../tests/helpers/full-page/toc/site-policy'
+import { loadWebsiteTocPolicies, readWebsiteTocMetadata } from '../tests/helpers/full-page/toc/site-policy.mts'
 import { captureBuildIdentity } from './visual-baselines/identity'
 
 const roots: string[] = []
