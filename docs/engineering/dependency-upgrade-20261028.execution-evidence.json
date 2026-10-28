@@ -1474,5 +1474,152 @@
       }
     },
     "finalNoUpdateVerification": "pending"
+  },
+  "websiteNoUpdateSecondAttempt": {
+    "head": "8ad08a899a7657ae388a9a4967bd5b08494c9668",
+    "preflightRun": "c0735a64-7de5-4a67-9c86-93088f70f0c1",
+    "plannedStages": 109,
+    "stage": 1,
+    "exitCode": 1,
+    "passed": 240,
+    "failed": 1,
+    "websiteNotRun": 2390,
+    "portableNotRun": 107,
+    "htmlVariantsNotRun": 8,
+    "failure": "Chromium desktop StyleInjectorOptions 页面 TOC Properties 高亮与已装基线不同；旧 inactive 基线形成原因尚未知。",
+    "pixelDifference": {
+      "playwright": 105,
+      "rawRgba": 320,
+      "boundingBox": [
+        1069,
+        101,
+        1129,
+        114
+      ]
+    },
+    "log": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/website-static-verify-8ad08a899.log",
+      "bytes": 200848,
+      "sha256": "4711abf696b5fb90df3fb36f491873594f715a9f84baa0f7c0e65e132df105a2"
+    },
+    "report": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/website-static-verify-1793218736596-12113/report.json",
+      "bytes": 205167,
+      "sha256": "c688ba40efa07066b852c460a78d0c3ed6a8dfd357d6ed770608e2c0f076c06e"
+    },
+    "firstFailureArtifact": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-first-failure-8ad08a899",
+    "diagnosis": "同一路由1280×720普通导航8轮均active；不能据未复现的held-font实验归因为字体。Playwright missing采集也等待稳定像素，不能声称只采一帧。",
+    "repair": "pending; read-only semantic TOC readiness contract under independent review; no product or screenshot threshold change"
+  },
+  "uniSyncNarrowTwoByTwo": {
+    "head": "8ad08a899a7657ae388a9a4967bd5b08494c9668",
+    "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "driverCommit": "b4fb2ca75b15f95a477c499a713dfdab8d8b3a47",
+    "preflightRun": "eed65fd2-3f29-4e0c-8690-6e5326a0f3ed",
+    "exitCode": 0,
+    "diagnosticOnly": true,
+    "budgetAcceptance": false,
+    "buildRunsPerCell": 3,
+    "hmrRunsPerCell": 3,
+    "hmrPluginMs": [
+      {
+        "version": "plain:base",
+        "samples": [
+          217,
+          88,
+          91
+        ]
+      },
+      {
+        "version": "probe:current",
+        "samples": [
+          228,
+          98,
+          94
+        ]
+      },
+      {
+        "version": "plain:current",
+        "samples": [
+          227,
+          88,
+          84
+        ]
+      },
+      {
+        "version": "probe:base",
+        "samples": [
+          227,
+          96,
+          93
+        ]
+      }
+    ],
+    "plainOriginalBudgetComparison": {
+      "passed": true,
+      "thresholds": {
+        "minimumMemoryRegressionMb": 64,
+        "minimumTailRegressionSamples": 2,
+        "minimumTimingRegressionMs": 10,
+        "maximumMedianRegressionPValue": 0.05,
+        "regressionPercent": 5
+      },
+      "violations": []
+    },
+    "sourceWritesEqual": true,
+    "changedComparableRecordCount": 406,
+    "changedComparableAggregateCount": 70,
+    "unknownAcrossWorkers": {
+      "base": 1091,
+      "current": 1091
+    },
+    "log": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899.log",
+      "bytes": 398641,
+      "sha256": "0c46db01f3beb4d7bf9b0333713762e5e39b0b6c7685ed4958d016c45b93c1d7"
+    },
+    "experiment": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/experiment.json",
+      "bytes": 7317,
+      "sha256": "920832c65f5cef614e509959a97bfd3cf7c8013efb83a0b588263a67de1994fa"
+    },
+    "matrix": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/matrix-raw.json",
+      "bytes": 745403,
+      "sha256": "93e01646a277426ee52368a0c5b3b4555ad24906b2f399f98dbb5984525b2b59"
+    },
+    "summary": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/summary.json",
+      "bytes": 307363,
+      "sha256": "e39ed51c25a016fc0b71fe9503ccd33cf7f099e4c88b034e347ad95642dde59c"
+    },
+    "scope": "macOS ARM64 production plain and narrow synchronous observer; does not clear Linux formal plugin p95 regression; driver remains independent from the dependency PR",
+    "formalPerformancePassed": false
+  },
+  "copiedTemplateFirstAttempt": {
+    "head": "8ad08a899a7657ae388a9a4967bd5b08494c9668",
+    "preflightRun": "b55b9e0d-c59c-4016-84b0-6eb20a5eac53",
+    "exitCode": 1,
+    "passedExecutableTargets": 1,
+    "failedProject": "taro-vite-tailwindcss-v4",
+    "failedTarget": "weapp",
+    "failure": "验收脚本把构建生成的 .swc/plugins 缓存判为模板源码改写；停止后续目标，不认定模板构建通过。",
+    "passedProject": "mpx-tailwindcss-v4",
+    "passedTarget": "wx",
+    "log": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-run-8ad08a899.log",
+      "bytes": 162,
+      "sha256": "c296067f1dbdd15b304890453dc981505b9cfdf4609d56bac59ed36d10208dc0"
+    },
+    "report": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-iizXAC/report.json",
+      "bytes": 71285,
+      "sha256": "890df27ff1a177346bc70da47864786e1b5e808142ebc9c87dcc9a257df71868"
+    },
+    "baselineGaps": [
+      "two Taro templates lack RN toolchain dependencies",
+      "Vue2 quickapp-native lacks release signing files"
+    ],
+    "repair": "pending strict generated-cache versus source identity boundary; original evidence preserved"
   }
 }

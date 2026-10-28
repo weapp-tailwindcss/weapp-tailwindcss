@@ -151,3 +151,11 @@ Uni 被动诊断唯一采样 `40737453562` 仍失败，不能作为正式性能�
 `9d8e7a9241935fff91464a7b22f4177c3b3bef31` 经新扩展预检 `f3eadeff-9831-45c9-9b25-e1dad955e3ab`、当前会话 computer use、verify 和单次领取后启动 109 阶段禁更验收。网站来源合同 1 项通过，三引擎浏览器阶段前 2 项通过后，旧 next 统计用例等待 `g/collect` 在 60 秒超时；1 项失败、2625 项未执行，后续 107 portable 与 8 HTML 变体未启动，服务正常收尾。首错日志与 trace 完整保留。
 
 该测试与产品隔离策略的冲突已在准确 main 基线 `e769e69b97c88b379a80d3cabca4fa20330b999a` 原依赖和未修改源码上复现。相关产品和测试到当前 head 无差异：只有正式主域允许加载统计，next 即使配置为 canonical 也须拒绝。修复仅将过时断言拆成正式 canonical 含路径的正向上报、next 配置在正式域和 next 域均不加载或上报；保留 SSR、业务脚本、SPA、安全 gtag 和空队列断言。三引擎 18 项定向通过，零重试，未改产品策略、超时、图片检查或视觉阈值；不能据此宣称完整网站禁更通过。根因及夹具边界见[统计来源复盘](lessons/website-runtime-analytics-origin.md)。
+
+## 网站目录状态、Uni 同步对照与模板外部消费首错
+
+准确 `8ad08a899a7657ae388a9a4967bd5b08494c9668` 经新扩展预检 `c0735a64-7de5-4a67-9c86-93088f70f0c1`、当前会话 computer use、verify 和单次领取启动禁更复验。网站来源合同通过，浏览器 240 项通过后，Chromium desktop 的 StyleInjectorOptions 页面目录 Properties 在基线为 inactive、实际为 active，Playwright 比较差异 105 像素；1 项失败、2390 项未执行，107 portable 与 8 HTML 变体未启动。完整首错截图、trace 和上下文已归档。1280×720 同路由普通导航 8 轮均为 active，符合实际标题几何；旧 inactive 基线的形成原因仍未知。字体延迟实验没有证实几何变化，且 Playwright missing 采集本身也等待连续稳定像素，不能据此推断根因。只读目录语义就绪合同正在独立评估，尚未安装新基线，也未调整产品或像素阈值。
+
+同一产品提交经新预检 `eed65fd2-3f29-4e0c-8690-6e5326a0f3ed` 完成生产 plain／同步 probe × 准确基线／当前的固定 2×2。独立工具提交 `b4fb2ca75b15f95a477c499a713dfdab8d8b3a47` 保留在诊断分支，不直接扩大依赖 PR。四组各 3 次冷构建、3 轮同 watch 修改与恢复全部完成，来源写入字节一致。生产组 HMR plugin 样本为基线 217/88/91ms、当前 227/88/84ms；原默认预算比较无违规，但仅为 macOS ARM64 诊断结果，不能清除 Linux 正式 p95 +13ms 失败。probe 样本为基线 227/96/93ms、当前 228/98/94ms；可序列化记录及聚合仍有差异、opaque 对象每侧 1091 项，继续核对实际 backend、cache、输入及同步调用，未以观察开销作生产归因。
+
+七模板仓库外复制消费首轮使用新预检 `b55b9e0d-c59c-4016-84b0-6eb20a5eac53`，真实界面证据、verify 与单次领取通过。Mpx 冻结安装及微信构建、产物合同通过；第二个 Taro Vite 模板的 weapp 构建后，验证脚本把新增 `.swc/plugins` 缓存当成源码改写而停止。首错、输入身份与实际产物保留，后续目标未启动；仅修复明确生成缓存与源码身份的边界，不放宽 manifest、workspace、锁或补丁保护。两 Taro 模板缺 RN 配套、Vue2 quickapp-native 缺 release 签名均在准确基线已有，单列待验证范围，不能将普通文件生成称为全部模板平台通过。
