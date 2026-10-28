@@ -22,6 +22,10 @@ async function fixture(page: Page) {
     </style><nav class="navbar">nav</nav><h2 class="anchor" id="first">first</h2>
     <ul class="table-of-contents"><li><a class="toc-highlight table-of-contents__link ${active}" href="#first">first</a></li></ul>
     <div id="bottom"></div>`)
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  })
 }
 
 function observation(): NativeCaptureEvidence {
@@ -32,14 +36,37 @@ async function ownedMonitors(page: Page) {
   return page.evaluate(() => Object.getOwnPropertySymbols(window).filter(symbol => symbol.description?.startsWith('weapp-full-page-monitor:')).length)
 }
 
-test('keeps native fullPage complete below the viewport and keeps fixed TOC geometry', async ({ page }) => {
+test('keeps native fullPage complete and accepts only captures with consistent TOC geometry', async ({ page }) => {
   await fixture(page)
   const before = await page.locator('.table-of-contents').boundingBox()
-  const image = PNG.sync.read(await captureStableNativeFullPage(page, createCaptureBudget(10_000), policy))
+  const screenshot = page.screenshot.bind(page)
+  const samples: { before: typeof before, after: typeof before }[] = []
+  page.screenshot = async (options) => {
+    const before = await page.locator('.table-of-contents').boundingBox()
+    const buffer = await screenshot(options)
+    samples.push({ before, after: await page.locator('.table-of-contents').boundingBox() })
+    return buffer
+  }
+  let image: PNG
+  try {
+    image = PNG.sync.read(await captureStableNativeFullPage(page, createCaptureBudget(10_000), policy))
+  }
+  finally {
+    page.screenshot = screenshot
+  }
+  // 原生 fullPage 可能触发布局扰动；污染样本必须拒绝，最后两个样本均须几何一致。
+  expect(samples.length).toBeGreaterThanOrEqual(2)
+  for (const sample of samples.slice(-2)) {
+    expect(sample.after).toEqual(sample.before)
+  }
+  expect(samples.at(-1)!.before).toEqual(samples.at(-2)!.before)
   expect([image.width, image.height]).toEqual([1280, 3000])
   const offset = (2990 * image.width + 30) * 4
   expect([...image.data.subarray(offset, offset + 4)]).toEqual([0, 255, 0, 255])
-  expect(await page.locator('.table-of-contents').boundingBox()).toEqual(before)
+  const after = await page.locator('.table-of-contents').boundingBox()
+  expect(after!.x + after!.width).toBe(before!.x + before!.width)
+  expect(after!.y).toBe(before!.y)
+  expect(page.viewportSize()).toEqual({ width: 1280, height: 720 })
   expect(await ownedMonitors(page)).toBe(0)
 })
 
@@ -50,6 +77,26 @@ test('same-size resize notifications alone keep a sample valid', async ({ page }
     await page.evaluate(() => window.dispatchEvent(new Event('resize')))
     await monitor.settle()
     expect(validCaptureWindow(await monitor.finish())).toBe(true)
+  }
+  finally {
+    await monitor.close()
+  }
+})
+
+test('rejects ancestor geometry that changes and returns before any native screenshot', async ({ page }) => {
+  await fixture(page)
+  const monitor = await startCaptureMonitor(page, createCaptureBudget(2000))
+  try {
+    await page.locator('.table-of-contents').evaluate(async (toc) => {
+      const element = toc as HTMLElement
+      element.style.transform = 'translateX(2px)'
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+      element.style.transform = ''
+    })
+    await monitor.settle()
+    const evidence = await monitor.finish()
+    expect(validCaptureWindow(evidence)).toBe(false)
+    expect(evidence.disturbances).toContain('捕获期间 TOC 节点、高亮、实际颜色或几何改变')
   }
   finally {
     await monitor.close()

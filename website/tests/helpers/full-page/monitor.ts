@@ -74,11 +74,12 @@ function installMonitor(key: string) {
     const nodes = [...document.querySelectorAll('.toc-highlight')].filter(visible)
     const links = nodes.map((node) => {
       const style = getComputedStyle(node)
+      const rect = node.getBoundingClientRect()
       const running = node.getAnimations().some(animation => animation.playState === 'running' || animation.pending)
       if (running) {
         mark('TOC 捕获期间存在未完成动画')
       }
-      return [identity(node), node.getAttribute('href'), node.classList.contains(activeClass), style.color, style.opacity]
+      return [identity(node), node.getAttribute('href'), node.classList.contains(activeClass), style.color, style.opacity, rect.x, rect.y, rect.width, rect.height]
     })
     const headings = nodes.length
       ? [...document.querySelectorAll('h1.anchor,h2.anchor,h3.anchor,h4.anchor,h5.anchor,h6.anchor')].map((node) => {
@@ -123,7 +124,7 @@ function installMonitor(key: string) {
         mark('捕获期间 document URL 改变')
       }
       if (JSON.stringify(current.links) !== JSON.stringify(initial.links)) {
-        mark('捕获期间 TOC 节点、高亮或实际颜色改变')
+        mark('捕获期间 TOC 节点、高亮、实际颜色或几何改变')
       }
       if (JSON.stringify(current.headings) !== JSON.stringify(initial.headings)) {
         mark('捕获期间标题身份或几何改变')
