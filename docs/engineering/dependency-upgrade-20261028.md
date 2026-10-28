@@ -163,3 +163,18 @@ Uni 被动诊断唯一采样 `40737453562` 仍失败，不能作为正式性能�
 TOC 只读就绪合同已整合为 `3d5c94912`，53 项定向单测、33 项 Chromium/Firefox/WebKit 真实 fixture 和 3 项既有整页截图 fixture 通过，零重试；实际生成 metadata 的 317 路由、双语覆盖及自定义 heading 范围均核对。旧黄金图先通过正式来源 verify，随后 1204 张原图及 provenance 原字节迁至本任务归档，旧登记原字节进入 `visual-baselines/history/dbc255b298ca2b39ae7f5ba1fe4d3568d6debe38/`，没有给新合同套用旧来源。新合同的采集、人工差异审查、安装与禁更仍待执行。
 
 模板验证脚本的生成缓存边界已在独立临时副本修复：只排除实际安装 SWC 对应 v7/runner0.104.8 的普通 hash 缓存叶子，未知隐藏输入继续核验，四层缓存链接均拒绝。22 项夹具在本轮 Node24.22.1 复验通过，原失败副本只读身份对照通过；尚未据此把 Taro 真实构建认定为通过，完整七模板需要新门禁重跑。
+
+## Uni 只读分析、准确 b5b 模板重跑与网站入口首错
+
+准确 `8ad08a899a7657ae388a9a4967bd5b08494c9668` 的 Uni 2×2 补齐只读分析，47 份原 JSON 的字节数及 SHA 再核对未变。macOS ARM64 / Node24.22.1 plain 稳态 plugin p95 为 91→88ms，probe 为 96→98ms；plain 原预算计算无违规，但诊断 `budgetAcceptance=false`。两侧 7 bundle、669 record、755 aggregate，调用计数一致；406 条可比较记录差异中，119 次 classNameSet 成员相同而迭代顺序不同，另建成员解释视图后仍保留每 bundle 两份 vendor 的真实 source/code 差异。70 条 aggregate 差异对应 35 对、252 次调用、280 个祖先相对路径槽，均可由原始 file/roots 完整重建。opaque 内部仍未知；共有 realpath 热点及本机同步耗时不能解释 Linux 正式 p95 +13ms（8.387%）。该阻塞保留，下一步必须冻结准确交付 head，在原 Ubuntu/Node22、准确 e769 基线与原预算下执行 Uni 唯一 case、build3/HMR3 和反向确认，三个诊断开关均为 false。
+
+分析文件位于 `e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/`，完整身份同步至[执行证据](dependency-upgrade-20261028.execution-evidence.json)：
+
+| 只读分析 | 字节数 | SHA-256 |
+| --- | --- | --- |
+| analysis-final.json | 133670 | `6437b7624dcf605622640d3cfa3c0460cf5583707c9f5e9d047955c15ca501fd` |
+| analysis-final.md | 12068 | `82d39ad5aed781dd3b0204d29178269418b3ee81617a262e6666b743fbaf6048` |
+
+七模板外部消费在准确 `b5b3709c5b9275a4908cf4e6fad60a862ae78c36`、新扩展预检 `35c9ef4a-f233-4aca-9608-8f4911dcf8cc` 的当前会话 computer use、verify 和单次领取后重跑，报告为 `copied-template-verification/run-AkzoMa/report.json`。前七个可执行目标通过：Mpx wx，以及 Taro Vite 的 weapp/swan/alipay/tt/qq/jd。第八个 Taro Vite Harmony Hybrid 的 `build:harmony-hybrid` 构建命令 exit0、进程清理通过，但 Web CSS 合同仍发现 `_b…_B` 编码 class，目标验收失败；六份原产物已按 manifest 的字节与 SHA 复核。后续八个可执行目标未运行，两份 Taro RN 与 Vue2 quickapp-native 的三个原有能力缺口仍 pending。不能仅删除 CSS 断言就宣称 Web 单位、主题作用域及 class/CSS 配套通过；原报告、产物和失败副本保留，七模板整体验收未完成。
+
+网站在同一准确 b5b、新扩展预检 `8c2f6cb6-e542-4f51-97e8-9e75c2aa26e4` 的当前会话 computer use、verify 和单次领取后采集，英文 `build` 与中文 `build/zh-cn` 真实生产构建均成功。随后 Playwright `--list` 加载真实 `index.spec.ts` 的 CommonJS 导入链时，TOC `site-policy.ts` 的 `import.meta` 报 `SyntaxError: Cannot use import.meta outside a module`，尚未启动截图测试，采集截图为 0。失败候选 `website-visual-candidate-1793221869708/` 原样保留，仅含 capture-started、capture-failed 与生成配置；未执行审查、安装或禁更。先前 33 项 TOC fixture 未覆盖这条真实导入链，不能用其通过替代本次入口失败；修复后仍须准确新 head 的新预检和完整采集、审查、安装、禁止更新复验。

@@ -1594,7 +1594,90 @@
       "sha256": "e39ed51c25a016fc0b71fe9503ccd33cf7f099e4c88b034e347ad95642dde59c"
     },
     "scope": "macOS ARM64 production plain and narrow synchronous observer; does not clear Linux formal plugin p95 regression; driver remains independent from the dependency PR",
-    "formalPerformancePassed": false
+    "formalPerformancePassed": false,
+    "finalReadOnlyAnalysis": {
+      "refs": {
+        "base": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+        "current": "8ad08a899a7657ae388a9a4967bd5b08494c9668",
+        "driver": "b4fb2ca75b15f95a477c499a713dfdab8d8b3a47"
+      },
+      "generatedAt": "2026-10-28T21:02:36.573Z",
+      "artifacts": [
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/analysis-final.json",
+          "bytes": 133670,
+          "sha256": "6437b7624dcf605622640d3cfa3c0460cf5583707c9f5e9d047955c15ca501fd"
+        },
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/uni-sync-2x2-8ad08a899/analysis-final.md",
+          "bytes": 12068,
+          "sha256": "82d39ad5aed781dd3b0204d29178269418b3ee81617a262e6666b743fbaf6048"
+        }
+      ],
+      "diagnosticOnly": true,
+      "budgetAcceptance": false,
+      "originalArtifacts": {
+        "count": 47,
+        "sha256AndBytesRechecked": true,
+        "unchanged": true
+      },
+      "steadyHmrPluginP95Ms": {
+        "plain": {
+          "base": 91,
+          "current": 88
+        },
+        "probe": {
+          "base": 96,
+          "current": 98
+        }
+      },
+      "plainOriginalBudgetPassed": true,
+      "plainOriginalBudgetViolations": [],
+      "watch": {
+        "bundlesPerSide": 7,
+        "recordsPerSide": [
+          669,
+          669
+        ],
+        "aggregatesPerSide": [
+          755,
+          755
+        ],
+        "recordsOutsideBundles": [
+          0,
+          0
+        ],
+        "changedComparableRecords": 406,
+        "changedClassNameSetCalls": 119,
+        "classNameSetExplanation": "119 次 classNameSet 成员相同、迭代顺序不同；保留原始顺序差异，仅在另建成员解释视图后，其余可序列化差异归于每个 bundle 两份真实 vendor source/code，共 14 次，不能称为相同输入。",
+        "matching": {
+          "changedSummaryRows": 70,
+          "changedPairs": 35,
+          "representedCalls": 252,
+          "changedRelativeSlots": 280,
+          "reconstructionFailures": [],
+          "explanation": "35 对对应 5 个 source × 7 bundle；280 个 Set 槽来自准备目录祖先的相对路径。按每条原始 file/roots、path.relative 与去扩展名完整重建，保留 Set 顺序，不全局抹除 base/current。"
+        },
+        "backendAndCache": "两侧真实调用计数一致；119 次 key 中 77 次为 undefined，42 个生成 key 互异，119 次 get 均未命中。Oxc/Babel 调用边界一致，native JS handler 实际调用为 0；加载身份不能证明后端 CPU 归属。"
+      },
+      "coldBuilds": {
+        "runsPerSide": 3,
+        "recordsPerSidePerRun": 138,
+        "sameNamedCallCountsEqual": true
+      },
+      "unknownAcrossWorkers": {
+        "base": 1091,
+        "current": 1091
+      },
+      "formalPerformance": {
+        "passed": false,
+        "linuxPluginP95DeltaMs": 13,
+        "linuxPluginP95RegressionPercent": 8.387,
+        "stillBlocked": true,
+        "conclusion": "macOS ARM64 / Node24.22.1 的同步差异不能解释或解除原 Ubuntu/Node22 正式 p95 +13ms（8.387%）阻塞；本分析不扩大为后续 head 的性能证明。",
+        "nextStep": "冻结准确交付 head，在原 ubuntu-latest/Node22、准确 e769 基线运行 Uni 唯一 case、build3/HMR3；gc/input/allocation 三诊断均 false，保留原预算和反向确认。不得据共同 realpath 热点盲加生产优化。"
+      }
+    }
   },
   "copiedTemplateFirstAttempt": {
     "head": "8ad08a899a7657ae388a9a4967bd5b08494c9668",
@@ -1685,5 +1768,324 @@
     },
     "newCaptureReviewInstallNoUpdate": "pending",
     "oldInactiveOrigin": "unknown"
+  },
+  "copiedTemplateSecondAttempt": {
+    "head": "b5b3709c5b9275a4908cf4e6fad60a862ae78c36",
+    "baselineRef": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "preflightRun": "35c9ef4a-f233-4aca-9608-8f4911dcf8cc",
+    "preflight": {
+      "head": "b5b3709c5b9275a4908cf4e6fad60a862ae78c36",
+      "extended": true,
+      "checksPassed": 10,
+      "computerUsePassed": true,
+      "verifiedAt": "2026-10-28T21:05:26.777Z",
+      "claimedOnce": true,
+      "finalStatus": "finished",
+      "report": {
+        "path": "e2e/.artifacts/preflight/35c9ef4a-f233-4aca-9608-8f4911dcf8cc/report.json",
+        "bytes": 24464,
+        "sha256": "8197f29c8868576cb2d626c63c12acceb259e48581c60ccf73deab4a9b1b74d3"
+      },
+      "computerUse": {
+        "path": "e2e/.artifacts/preflight/35c9ef4a-f233-4aca-9608-8f4911dcf8cc/computer-use.json",
+        "bytes": 1200,
+        "sha256": "e8aee6357b7ce2f67f0af2e04569fe5eacf42f6c1b6657894cd9052290a6c65e"
+      }
+    },
+    "driverInventorySha256": "ac35b77a1c69232ff7df1e10f7bcba36673c6198e3855ca6c2be61bb08cedd75",
+    "initialGitStatus": "",
+    "node": "v24.22.1",
+    "pnpm": "12.15.0",
+    "exitCode": 1,
+    "status": "failed",
+    "passedExecutableTargets": 7,
+    "passed": [
+      {
+        "project": "mpx-tailwindcss-v4",
+        "target": "wx",
+        "buildExitCode": 0,
+        "outputFiles": 16
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "weapp",
+        "buildExitCode": 0,
+        "outputFiles": 15
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "swan",
+        "buildExitCode": 0,
+        "outputFiles": 12
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "alipay",
+        "buildExitCode": 0,
+        "outputFiles": 12
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "tt",
+        "buildExitCode": 0,
+        "outputFiles": 11
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "qq",
+        "buildExitCode": 0,
+        "outputFiles": 14
+      },
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "jd",
+        "buildExitCode": 0,
+        "outputFiles": 14
+      }
+    ],
+    "failed": {
+      "ordinal": 8,
+      "project": "taro-vite-tailwindcss-v4",
+      "target": "harmony-hybrid",
+      "buildCommand": [
+        "pnpm",
+        "run",
+        "build:harmony-hybrid"
+      ],
+      "buildExitCode": 0,
+      "cleanupVerified": true,
+      "contractStatus": "failed",
+      "failure": "Harmony Hybrid 构建成功，但 Web CSS 合同发现仍有 _b…_B 编码 class，首错为 doesNotMatch /_b[\\w-]+_B/；不能仅删除该断言就认定 Web 单位、主题作用域及 class/CSS 配套通过。",
+      "outputFiles": 6,
+      "evidence": [
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-AkzoMa/taro-vite-tailwindcss-v4/harmony-hybrid/command.json",
+          "bytes": 412,
+          "sha256": "b4f16da786828b9b6aa300c7c7ae4a4b6735541d29b415273d39bca32862b02d"
+        },
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-AkzoMa/taro-vite-tailwindcss-v4/harmony-hybrid/stdout.log",
+          "bytes": 650,
+          "sha256": "dad0eb8633416d964ebaa217ab15d974909c59d7391029f79b303525ce6946eb"
+        },
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-AkzoMa/taro-vite-tailwindcss-v4/harmony-hybrid/stderr.log",
+          "bytes": 35,
+          "sha256": "f602117217d27f71d4b843751ea2d7193b939bca97ebdc103954fe0013efb14c"
+        },
+        {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-AkzoMa/taro-vite-tailwindcss-v4/harmony-hybrid/output-manifest.json",
+          "bytes": 901,
+          "sha256": "e51fa1fc3219d4ef4a7944bed9c4b5f0b2200a662303348575ed9a58dcb6d801"
+        }
+      ],
+      "outputManifestRechecked": {
+        "files": 6,
+        "sha256AndBytesMatch": true
+      }
+    },
+    "remainingExecutableTargets": [
+      {
+        "project": "taro-webpack-tailwindcss-v4",
+        "target": "weapp"
+      },
+      {
+        "project": "taro-webpack-tailwindcss-v4",
+        "target": "harmony-hybrid"
+      },
+      {
+        "project": "uni-app-tailwindcss-v4",
+        "target": "mp-weixin"
+      },
+      {
+        "project": "uni-app-tailwindcss-v4",
+        "target": "app"
+      },
+      {
+        "project": "uni-app-webpack-tailwindcss-v4",
+        "target": "mp-weixin"
+      },
+      {
+        "project": "uni-app-webpack-tailwindcss-v4",
+        "target": "app-plus"
+      },
+      {
+        "project": "weapp-vite-tailwindcss-v4",
+        "target": "weapp"
+      },
+      {
+        "project": "uni-app-hbuilderx-tailwindcss-v4",
+        "target": "mp-weixin"
+      }
+    ],
+    "remainingExecutableTargetsNotRun": 8,
+    "baselineCapabilityGaps": [
+      {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "rn",
+        "status": "pending",
+        "origin": "baseline-capability-gap",
+        "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+        "baselinePackageSha256": "4b6e17cd7b2843482ac9728ec53b8fe799b1f4375d13be1dd8177446c30be615",
+        "missing": [
+          "react-native",
+          "@tarojs/taro-rn",
+          "@tarojs/rn-runner"
+        ],
+        "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。"
+      },
+      {
+        "project": "taro-webpack-tailwindcss-v4",
+        "target": "rn",
+        "status": "pending",
+        "origin": "baseline-capability-gap",
+        "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+        "baselinePackageSha256": "01f32bd2361e0f7d07766cb24f278fcfcaa8cb3a4b4687e3b1e98ad346c88498",
+        "missing": [
+          "react-native",
+          "@tarojs/taro-rn",
+          "@tarojs/rn-runner"
+        ],
+        "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。"
+      },
+      {
+        "project": "uni-app-webpack-tailwindcss-v4",
+        "target": "quickapp-native",
+        "status": "pending",
+        "origin": "baseline-capability-gap",
+        "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+        "baselinePackageSha256": "0f1ebc76db8b04a2e80710438dbcde8e4a1b6cb73ad3b028863ea7380ca63560",
+        "missing": [
+          "src/sign/release/private.pem",
+          "src/sign/release/certificate.pem"
+        ],
+        "reason": "基线与当前均无release签名；上游缺证仍exit0，不生成密钥、不将普通编译文件当作签名rpk成功。"
+      }
+    ],
+    "temporaryRetainedForFailureReview": true,
+    "report": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-AkzoMa/report.json",
+      "bytes": 114000,
+      "sha256": "7afa69b8f2563e1853ab337b3837217cf54b1e02a3e88db9e51ccf3e0b2acbd3"
+    },
+    "logs": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-prepare-b5b3709c5.log",
+        "bytes": 4854,
+        "sha256": "2bb4c34f4bc26ec3ec8c1ddaaa29f78a272652007b975eb0d11fa83e0fdd4d95"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verify-b5b3709c5.log",
+        "bytes": 146,
+        "sha256": "957ce0fb0870f7f71b9c16ec334817826dc5ca9baf0acfdc96c009a1aa5b22f0"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-run-b5b3709c5.log",
+        "bytes": 162,
+        "sha256": "b891abc8e0c9ec90fe0bd910e264105a4d3e3ba4e89cf75866368d7fee316b15"
+      }
+    ],
+    "limitation": "只完成 Mpx wx 与 Taro Vite 六个小程序目标；后续八个可执行目标均未运行，三个原有能力缺口仍 pending，不代表七模板、HMR、设备或签名包验收通过。原失败报告、产物与临时副本保留。"
+  },
+  "websiteTocCaptureFirstAttempt": {
+    "head": "b5b3709c5b9275a4908cf4e6fad60a862ae78c36",
+    "preflightRun": "8c2f6cb6-e542-4f51-97e8-9e75c2aa26e4",
+    "preflight": {
+      "head": "b5b3709c5b9275a4908cf4e6fad60a862ae78c36",
+      "extended": true,
+      "checksPassed": 10,
+      "computerUsePassed": true,
+      "verifiedAt": "2026-10-28T21:10:09.080Z",
+      "claimedOnce": true,
+      "finalStatus": "finished",
+      "report": {
+        "path": "e2e/.artifacts/preflight/8c2f6cb6-e542-4f51-97e8-9e75c2aa26e4/report.json",
+        "bytes": 24464,
+        "sha256": "a2e987949e9d53a1636ec4bab6a0ae257b60234f8ba4c9a2c50214ef553c15d5"
+      },
+      "computerUse": {
+        "path": "e2e/.artifacts/preflight/8c2f6cb6-e542-4f51-97e8-9e75c2aa26e4/computer-use.json",
+        "bytes": 1200,
+        "sha256": "6c17c223b37d3fca6a3cb1c05aa457a4f84065a7f447790d260cfdd7f75c61d8"
+      }
+    },
+    "source": {
+      "head": "b5b3709c5b9275a4908cf4e6fad60a862ae78c36",
+      "lock": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",
+      "contract": "5ac0ebe722c398b08abe7fb50e60462f1c82a3105fd127d351831436bd4972da",
+      "node": "v24.22.1"
+    },
+    "environment": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "release": "27.0.0",
+      "playwright": "1.64.1",
+      "browsers": {
+        "chromium": "156.0.8078.4",
+        "firefox": "157.0",
+        "webkit": "27.2"
+      },
+      "imageDecoder": {
+        "sharp": "0.35.5",
+        "vips": "8.18.7"
+      }
+    },
+    "productionBuild": {
+      "exitCode": 0,
+      "locales": [
+        "en",
+        "zh-cn"
+      ],
+      "evidence": "原始日志分别记录 build 和 build/zh-cn 的 SUCCESS；未据此声明截图或全端通过。"
+    },
+    "exitCode": 1,
+    "failedPhase": "Playwright --list --reporter=json 用例发现，尚未启动截图测试",
+    "failure": "index.spec.ts 的 CommonJS 导入链加载 site-policy.ts 时执行 import.meta，报 SyntaxError: Cannot use import.meta outside a module；No tests found 只是入口加载失败的后续结果。",
+    "screenshotTestsStarted": false,
+    "screenshotsCaptured": 0,
+    "candidateDirectory": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793221869708",
+    "candidateRetained": true,
+    "candidateFiles": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793221869708/capture-started.json",
+        "bytes": 616,
+        "sha256": "6525889fae2325bfd8899ded7344fa4d5826234eec92574f839608f117e2851b"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793221869708/capture-failed.json",
+        "bytes": 1774,
+        "sha256": "cdbcb31697e84627266110bf5d8687c0f01e740d7372276f6c6e96c29829778d"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793221869708/playwright.config.mts",
+        "bytes": 1091,
+        "sha256": "b3422a01e43bad4a580fc502175c796322f7a9f3859b1d455d667f70d40c48f8"
+      }
+    ],
+    "noCaptureOutputs": [
+      "snapshots",
+      "results",
+      "manifest.json",
+      "report.json"
+    ],
+    "reviewInstallNoUpdate": "均未执行；修复模块边界后仍需准确新 head 的新预检、采集、人工审查、安装与禁止更新复验。",
+    "logs": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-prepare-b5b3709c5.log",
+        "bytes": 4110,
+        "sha256": "14d4d8990620d3f7da1b30298e4c5bc4f8d7ebfc4bff2e9ffc3c67e981cfe88f"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-verify-b5b3709c5.log",
+        "bytes": 146,
+        "sha256": "38d1b5a7a1ce1698c5bdd6b5f3405947d3d734db248a24cb7dbc276dc223365f"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-b5b3709c5.log",
+        "bytes": 236276,
+        "sha256": "72d391282ca1bbddf750ddd933df01248661c546bee7e8d5f80fb08201896959"
+      }
+    ],
+    "limitation": "本轮双语构建成功与先前 33 项 TOC fixture 不能替代真实 index 导入链成功；失败候选原样保留，不安装为黄金图。"
   }
 }
