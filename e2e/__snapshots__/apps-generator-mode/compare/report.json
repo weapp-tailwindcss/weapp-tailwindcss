@@ -363,7 +363,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 318765,
+      "bytes": 318789,
       "selectors": [
         ".-bg-conic-180",
         ".-bg-linear-65",
@@ -2630,7 +2630,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 429915,
+      "bytes": 430011,
       "selectors": [
         ".-translate-y-1",
         "._b--watch-hmr-offset_c000089px_B",
@@ -4926,7 +4926,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 241331,
+      "bytes": 241350,
       "selectors": [
         "._ebg-_bgray_B",
         ".after_c_econtent-_b_agood_work_e_a_B:after",
@@ -6688,7 +6688,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 339425,
+      "bytes": 339501,
       "selectors": [
         ".before_ccontent-_b_aindependent_subpackage_taro-vite-vue3-tailwindcss-v4_a_B:before",
         ".before_ccontent-_b_anormal_subpackage_taro-vite-vue3-tailwindcss-v4_a_B:before",
@@ -8836,7 +8836,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 451048,
+      "bytes": 452164,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -11156,7 +11156,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 442932,
+      "bytes": 443880,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -13477,7 +13477,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 460557,
+      "bytes": 461673,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -15816,7 +15816,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 458617,
+      "bytes": 459565,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -18153,7 +18153,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 639540,
+      "bytes": 640712,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -19971,7 +19971,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 636629,
+      "bytes": 637633,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -21789,7 +21789,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 336273,
+      "bytes": 337114,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -23583,7 +23583,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 333228,
+      "bytes": 333943,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -25386,7 +25386,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 87238,
+      "bytes": 89437,
       "selectors": [
         "#app",
         "*",
@@ -25600,12 +25600,7 @@
         ".uni-page-head__title .uni-loading",
         ".uni-page-head__title .uni-page-head__title_image",
         ".uni-placeholder-titlePenetrate",
-        ".uni-sample-toast",
-        ".uni-simple-toast__text",
-        ".uni-toast",
         ".uni-toast *",
-        ".uni-toast__content",
-        ".uni-toast__icon",
         ".w-12",
         ".w-20",
         ".w-32",
@@ -25707,6 +25702,13 @@
         "uni-textarea",
         "uni-toast",
         "uni-toast .uni-mask",
+        "uni-toast .uni-sample-toast",
+        "uni-toast .uni-sample-toast.uni-toast--bottom",
+        "uni-toast .uni-sample-toast.uni-toast--top",
+        "uni-toast .uni-simple-toast__text",
+        "uni-toast .uni-toast",
+        "uni-toast .uni-toast__content",
+        "uni-toast .uni-toast__icon",
         "uni-video",
         "uni-view",
         "uni-view[hidden]",
@@ -25757,7 +25759,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 83099,
+      "bytes": 85298,
       "selectors": [
         "#app",
         "*",
@@ -25971,12 +25973,7 @@
         ".uni-page-head__title .uni-loading",
         ".uni-page-head__title .uni-page-head__title_image",
         ".uni-placeholder-titlePenetrate",
-        ".uni-sample-toast",
-        ".uni-simple-toast__text",
-        ".uni-toast",
         ".uni-toast *",
-        ".uni-toast__content",
-        ".uni-toast__icon",
         ".w-12",
         ".w-20",
         ".w-32",
@@ -26078,6 +26075,13 @@
         "uni-textarea",
         "uni-toast",
         "uni-toast .uni-mask",
+        "uni-toast .uni-sample-toast",
+        "uni-toast .uni-sample-toast.uni-toast--bottom",
+        "uni-toast .uni-sample-toast.uni-toast--top",
+        "uni-toast .uni-simple-toast__text",
+        "uni-toast .uni-toast",
+        "uni-toast .uni-toast__content",
+        "uni-toast .uni-toast__icon",
         "uni-video",
         "uni-view",
         "uni-view[hidden]",

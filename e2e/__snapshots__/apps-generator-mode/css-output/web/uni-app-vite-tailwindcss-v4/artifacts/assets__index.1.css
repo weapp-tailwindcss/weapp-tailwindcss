@@ -1488,6 +1488,9 @@ abc {
   .page {
     --td-brand-color-1: #e4f9ec;
   }
+  body {
+    --td-brand-color-1: #e4f9ec;
+  }
 }
 @media (prefers-color-scheme: dark) {
   :root,
@@ -1495,11 +1498,54 @@ abc {
   .page {
     --td-brand-color-1: #002517;
   }
+  body {
+    --td-brand-color-1: #002517;
+  }
 }
 .reset-button {
   display: block;
 }
 uni-page-body {
+  --test-color: #006241;
+  --color-test: #006241;
+  --font-test: 'Issue 978', sans-serif;
+  --font-sans: 'inter', 'inter Fallback', system-ui;
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono: var(--font-plex-mono), monospace;
+  --color-red-500: #fb2c36;
+  --color-green-500: #00c758;
+  --color-emerald-500: #00bb7f;
+  --color-cyan-500: #00b7d7;
+  --color-blue-500: #3080ff;
+  --color-slate-900: #0f172b;
+  --color-fuchsia-500: #e12afb;
+  --color-rose-500: #ff2357;
+  --color-white: #fff;
+  --color-zinc-900: rgb(24, 24, 27);
+  --color-red-50: #fef2f2;
+  --color-red-950: #460809;
+  --color-orange-500: #fe6e00;
+  --color-amber-500: #f99c00;
+  --color-yellow-500: #edb200;
+  --color-lime-500: #80cd00;
+  --color-teal-500: #00baa7;
+  --color-sky-500: #00a5ef;
+  --color-indigo-500: #625fff;
+  --color-violet-500: #8d54ff;
+  --color-purple-500: #ac4bff;
+  --color-pink-500: #f6339a;
+  --color-gray-900: #101828;
+  --color-neutral-900: #171717;
+  --color-stone-900: #1c1917;
+  --color-black: #000;
+  --spacing: 0.25rem;
+  --text-base: 1rem;
+  --font-weight-bold: 700;
+  --radius-lg: 0.5rem;
+  --default-font-family: var(--font-inter), system-ui;
+  --default-mono-font-family: var(--font-plex-mono), monospace;
+}
+body {
   --test-color: #006241;
   --color-test: #006241;
   --font-test: 'Issue 978', sans-serif;

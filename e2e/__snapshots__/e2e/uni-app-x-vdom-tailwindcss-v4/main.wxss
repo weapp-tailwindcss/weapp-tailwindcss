@@ -719,6 +719,7 @@ page {
 
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 ad-draw,
@@ -737,6 +738,7 @@ checkbox,
 picker-view,
 radio,
 slider,
+video,
 cover-image,
 cover-view,
 custom-tab-bar,
@@ -760,7 +762,6 @@ open-data,
 page-meta,
 picker,
 radio-group,
-rich-text,
 scroll-view,
 sticky-header,
 sticky-section,
@@ -771,7 +772,6 @@ template,
 text,
 textarea,
 unicloud-db,
-video,
 view,
 web-view {
   position: relative;

@@ -501,10 +501,12 @@
   to {
     top: 0;
   }
-}
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-  ::-webkit-backdrop {
+  *,
+  ::-webkit-backdrop,
+  ::after,
+  ::before {
     --tw-rotate-x: initial;
     --tw-rotate-y: initial;
     --tw-rotate-z: initial;
@@ -522,7 +524,10 @@
     --tw-gradient-to-position: 100%;
     --tw-content: '';
   }
-  ::-ms-backdrop {
+  *,
+  ::-ms-backdrop,
+  ::after,
+  ::before {
     --tw-rotate-x: initial;
     --tw-rotate-y: initial;
     --tw-rotate-z: initial;
@@ -7474,19 +7479,23 @@ page {
   box-sizing: border-box;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input::-webkit-input-placeholder {
+.nut-input .nut-input-native .weui-input::-webkit-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input::-moz-placeholder {
+.nut-input .nut-input-native .weui-input::-moz-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input:-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input:-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input::-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input::-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
@@ -12296,20 +12305,29 @@ page {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
-::-webkit-backdrop {
+*,
+::-webkit-backdrop,
+::after,
+::before {
   border: 0 solid;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-::-ms-backdrop {
+*,
+::-ms-backdrop,
+::after,
+::before {
   border: 0 solid;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-::-webkit-file-upload-button {
+*,
+::-webkit-file-upload-button,
+::after,
+::before {
   border: 0 solid;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
@@ -12442,7 +12460,12 @@ taro-video-core {
   height: auto;
   max-width: 100%;
 }
-::-webkit-file-upload-button {
+::-webkit-file-upload-button,
+optgroup,
+select,
+taro-button-core,
+taro-input-core,
+taro-textarea-core {
   background-color: transparent;
   border-radius: 0;
   color: inherit;
@@ -12555,7 +12578,8 @@ taro-textarea-core {
 :-moz-ui-invalid {
   box-shadow: none;
 }
-::-webkit-file-upload-button {
+::-webkit-file-upload-button,
+taro-button-core {
   -webkit-appearance: button;
   appearance: button;
 }

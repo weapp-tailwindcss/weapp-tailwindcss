@@ -98,6 +98,22 @@
       "verifiedAt": "2026-10-28T05:44:46.445397+00:00",
       "failedFixture": "e2e/.artifacts/dependency-upgrade-20261028/webpack-first-timeout-fixture",
       "reason": "earlier 15-second timeout fixture belongs to this checkout by embedded emitter path and timestamp; archived before removing task temporary directory"
+    },
+    {
+      "entry": "IAB",
+      "browserId": "3",
+      "tabId": "3",
+      "createdByTask": true,
+      "status": "closed; listTabs confirmed tab3 absent after current CU success",
+      "preflight": "5fe2d41a-0596-4315-ad03-b03ad14b0037"
+    },
+    {
+      "entry": "IAB",
+      "browserId": "3",
+      "tabId": "2",
+      "createdByTask": true,
+      "status": "cleanup blocked by URL policy on data error page; native Codex app control denied by tool safety policy; not retained as deliverable",
+      "originalFailedTarget": "http://127.0.0.1:58794/challenge/12fb4a73-6360-4ab5-965e-eb4b1f90f9aa"
     }
   ],
   "subsequentFrozenInstalls": [
@@ -744,7 +760,7 @@
         "sha256": "6e2f95853797ce50dc1e0f85191c5f21789ae131d191c23cb1634784b003e1fc"
       }
     ],
-    "full107CaseGeneration": "not started; blocked by preflight config mismatch then WeChat protocol/service timeouts",
+    "full107CaseGeneration": "107case首次生成exit0；最终Vue3 icon-only方案9case重新生成exit0；禁止更新复验尚待执行。",
     "blockedPreflights": [
       {
         "runId": "7ebd1e3a-5282-4656-a995-574578f2a213",
@@ -759,5 +775,111 @@
         "reason": "auto request to current same-installation HTTP service timed out after30s; no tests started"
       }
     ]
+  },
+  "staticGenerationCompleted": {
+    "source": "head d3dc22646fe8ff2b39d9a144ffaec06756aa8be3 plus task icon-only change and generated snapshots",
+    "portable": {
+      "cases": 107,
+      "projects": 27,
+      "exitCode": 0,
+      "firstRunHead": "eb486aabb6655aa5377b61af1e4e19014bda2f6e",
+      "firstArchive": "e2e/.artifacts/dependency-upgrade-20261028/static-update-all",
+      "finalVue3ReplacementCases": 9,
+      "finalVue3Archive": "e2e/.artifacts/dependency-upgrade-20261028/static-update-vue3-icon-only",
+      "preflight": "9c7b2f1b-b710-4e6f-8753-4ab91185511b",
+      "finalVue3Preflight": "5fe2d41a-0596-4315-ad03-b03ad14b0037",
+      "verification": "pending; no-update verification remains required"
+    },
+    "traditional": {
+      "files": 16,
+      "testsPassed": 46,
+      "preflight": "c73127db-14f8-4e12-8bb8-a6b3690280e6",
+      "finalVue3TestsPassed": 6
+    },
+    "generator": {
+      "projects": 8,
+      "cases": 20,
+      "finalVue3CasesRegenerated": 3
+    },
+    "taroHtml": {
+      "projects": 4,
+      "variants": 8,
+      "exitCode": 0,
+      "finalVue3VariantsRegenerated": 2,
+      "standaloneDependencyFix": "d3dc22646fe8ff2b39d9a144ffaec06756aa8be3 adds root workspace PostCSS facade"
+    },
+    "canonicalTemplate": {
+      "project": "weapp-vite-tailwindcss-v4 weixin",
+      "testsPassed": 2,
+      "frozenInstallAndBuild": true,
+      "snapshotDiff": false
+    },
+    "logs": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-all-gated-eb486aabb.log",
+        "bytes": 2273981,
+        "sha256": "39ca5038cc146b3d3a160301bf9c431b67b53f0244c5ceb13bdc0ab9088a0f00"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-extra-gated-eb486aabb.log",
+        "bytes": 275394,
+        "sha256": "b0b9b38ad366742f7b3ded07bfb42ad4eb767d0c960c8b0d544cf0cc12752b7a"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-finish-gated-d3dc22646.log",
+        "bytes": 603443,
+        "sha256": "34dc78e06417174ff25fe024c95ab88855bf1ce72f2d6b79e0f0ec58b502870f"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-vue3-final-gated-d3dc22646.log",
+        "bytes": 516712,
+        "sha256": "0f3de734c63b244678c5ff21b53fda3430626a0871fb1d2a0e1d404cb91e8c07"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vue3-style-order-before.log",
+        "bytes": 2416,
+        "sha256": "c0d17ead2796acf4a8283389ded06fde89c8ca994d19a6b48be0481c7f466f97"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vue3-style-order-direct-icon-only.log",
+        "bytes": 885,
+        "sha256": "4c249323b1ba5c0212021ad8dfb0858335586c548fe4fbbf1301bf9fb5daaeef"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/lynx-native-baseline-update.log",
+        "bytes": 3285,
+        "sha256": "c53f8b2cdd9c844e997cbcaccad9765fdc4447da5df933a929865ad6186f4cfd"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/lynx-native-baseline-replay.log",
+        "bytes": 1784,
+        "sha256": "6b3b35210b01e01e4437990f9713013ae3556df0cbe06941ff71b0aef3e8f6fe"
+      }
+    ]
+  },
+  "lynxNativeBaselineRefresh": {
+    "ciRun": 40696344394,
+    "attempt": 1,
+    "head": "eb486aabb6655aa5377b61af1e4e19014bda2f6e",
+    "artifactIds": {
+      "ios": 12822592295,
+      "android": 12821372822
+    },
+    "nativeCasesPerPlatform": 118,
+    "rawArchiveDirectory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-lynx-ci-40696344394-T9hztp",
+    "nativeArchive": "e2e/.artifacts/lynx-baselines/baseline-jO65Qs",
+    "archiveReplayExitCode": 0,
+    "archiveFiles": 396,
+    "supportConclusions": "iOS53 supported/65 unsupported; Android54 supported/64 unsupported; unchanged from original; no not-tested",
+    "measurementDifferences": "iOS26checkpoints/24geometry, Android51checkpoints/24geometry; retain actual host measurements rather than copying baseline values",
+    "limitation": "CI原始双端证据重放用于刷新基线，不替代本地完整57阶段及双端运行。",
+    "targetedVerification": {
+      "command": "CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-reports.test.ts e2e/lynx-baseline-update.test.ts --update=none",
+      "exitCode": 0,
+      "testFiles": 2,
+      "testsPassed": 58,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-baseline-targeted-verify.log",
+      "logSha256": "47e87ea6bd69d933092fd5d69150cd6fdf9d29f6f30e11fec52e25bc9b326f11"
+    }
   }
 }

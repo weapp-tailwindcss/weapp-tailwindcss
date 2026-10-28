@@ -2,9 +2,9 @@
 
 本轮基于main e769e69b97c88b379a80d3cabca4fa20330b999a，覆盖根项目、全部workspace、demo（含Web、issue复现和style-injector）及七个独立模板，共105个manifest。评估和安装阶段已完成，static及完整多端验收仍在进行；本记录不宣称全面升级已验收完成。
 
-[逐依赖清单](dependency-upgrade-20261028.inventory.tsv)含1742条当前外部声明：原始1717条，新增25条配套，无移除；原评估为739项升级、828项已最新、150项保留，725项已有声明的锁版本发生变化。评估数不等于实际版本上升数，兼容回退与配套修正单独说明。[105项目状态](dependency-upgrade-20261028.projects.tsv)区分安装、构建和定向验证；97个根importer及七模板纳入冻结安装，assets/package.json无外部依赖且不在workspace，无需安装。
+[逐依赖清单](dependency-upgrade-20261028.inventory.tsv)含1743条当前外部声明：原始1717条，新增26条配套，无移除；原评估为739项升级、828项已最新、150项保留，725项已有声明的锁版本发生变化。评估数不等于实际版本上升数，兼容回退与配套修正单独说明。[105项目状态](dependency-upgrade-20261028.projects.tsv)区分安装、构建和定向验证；97个根importer及七模板纳入冻结安装，assets/package.json无外部依赖且不在workspace，无需安装。
 
-本次安装快照采于2026-10-28T05:41:55.435Z。根和七模板最新锁均已真实frozen安装通过，1742项直接声明的实际包名、版本均与锁一致，声明/物理身份问题0，采集中及完成后复核无变化。八份pnpm锁的升级前后身份、121个npm范围manifest/workspace/lock文件、24条补丁引用身份（含 PR 首轮新增的 Mpx 根与独立模板补丁），以及15项未引用catalog的逐项评估见[锁与补丁证据](dependency-upgrade-20261028.lock-evidence.json)。该结果只证明安装身份，不代表传递peer、漏洞或行为问题为0。根风险报告不覆盖独立模板，七模板的独立audit/peer基线对比另行附证，不能据根报告宣称模板风险为0。
+前次安装快照采于2026-10-28T05:41:55.435Z；2026-10-28T15:13:48.408Z再次核验当前105manifest、八锁及1743项外部声明，包名/版本身份问题0。根和七模板均已真实frozen安装通过，最新根锁在图标入口配套修改后重新冻结安装通过，1743项外部声明的实际包名、版本均与锁一致，声明/物理身份问题0，采集中及完成后复核无变化。八份pnpm锁的升级前后身份、121个npm范围manifest/workspace/lock文件、24条补丁引用身份（含 PR 首轮新增的 Mpx 根与独立模板补丁），以及15项未引用catalog的逐项评估见[锁与补丁证据](dependency-upgrade-20261028.lock-evidence.json)。该结果只证明安装身份，不代表传递peer、漏洞或行为问题为0。根风险报告不覆盖独立模板，七模板的独立audit/peer基线对比另行附证，不能据根报告宣称模板风险为0。
 
 ## 配套与保留
 
@@ -89,4 +89,18 @@ head `9d8636e3a14e6f89bbe71ba0b7d3c87fbe4d9918` 使用新预检 `be08895f-b917-4
 
 head `83ef312828a6dbee1aa464fe9238069fccf3155b` 后定向重生成 Mpx 五平台及 style-injector Mpx 共六份 portable 基线，语义 JSON 无变化；同六项禁止更新复验通过，完整生产产物按 case 归档。React Native static 重生成仅更新 Expo `54.0.37 → 54.0.38`、Node 环境及生成时间，编译结果和 catalog/fixture 身份不变；`react-native-compatibility.test.ts` 与 `react-native-static-entry-scope.test.ts` 共 18 项禁止更新复验通过，包含 Web/Android/iOS Metro 导出，不代表设备运行通过。
 
-后续 107-case 基线阶段尚未启动：预检 `7ebd1e3a-5282-4656-a995-574578f2a213` 的脚本探针、computer use、verify 通过，但领取入口从 pnpm 脚本改为 exec 启动后 PATH 身份不同，门禁拒绝启动测试。统一入口后，`c7f50472-02f3-4947-80a5-12b0d68cffd4` 在微信 App 域协议等待和收尾超时；按用户授权原生关闭已确认的任务探针、受控重启 IDE，登录态保留。新报告 `62a69293-08de-4b11-8cd9-c79d73c40200` 仍在 `auto` 请求 30 秒超时。原生界面与监听进程确认同一已登录安装，不能归因为 IDE 未开启；保留失败现场和本任务退出进程的旧锁归属，继续有界恢复，未放行全面测试。
+107-case 基线阶段开始前曾阻断：预检 `7ebd1e3a-5282-4656-a995-574578f2a213` 的脚本探针、computer use、verify 通过，但领取入口从 pnpm 脚本改为 exec 启动后 PATH 身份不同，门禁拒绝启动测试。统一入口后，`c7f50472-02f3-4947-80a5-12b0d68cffd4` 在微信 App 域协议等待和收尾超时；按用户授权原生关闭已确认的任务探针、受控重启 IDE，登录态保留。新报告 `62a69293-08de-4b11-8cd9-c79d73c40200` 仍在 `auto` 请求 30 秒超时。原生界面与监听进程确认同一已登录安装，不能归因为 IDE 未开启；保留失败现场和本任务退出进程的旧锁归属，继续有界恢复，未放行全面测试。
+
+## Static 生成、图标入口与 Lynx 基线补齐
+
+107 个 portable case（27 个可独立构建 demo）的生产构建和基线生成全部通过，原始产物保存于 `static-update-all/`。预检 `9c7b2f1b-b710-4e6f-8753-4ab91185511b` 的扩展探针、当前会话界面操作、verify 和单次领取全部通过。随后传统 16 文件/46 项通过，generator 的 8 项目/20 case 生成成功；四个 Taro 项目的 plugin-html 开/关共 8 变体，以及 weapp-vite canonical 模板的冻结安装、构建与 2 项验证均通过。HTML 单独入口首次缺少根 PostCSS facade 依赖，已在 d3dc22646 修复并冻结安装复验；失败日志保留。
+
+Taro Vue3 Webpack 小程序生产 CSS 回归发现 NutUI 图标默认值晚于 Tailwind 工具类，导致同节点 flex 与 100rpx 字号被覆盖。真实 module/CSS 图表明问题发生在 mini-css-extract 输入顺序，公共样式生成层没有重排。最终显式声明并在 app.css 前直接导入正式 `@nutui/icons-vue-taro@0.0.9` 图标入口，保留原 NutUI fullstyle 的 CSS import；不添加 important。小程序生产 CSS 声明顺序回归先红后绿。mini 与展平 layer 的 web-compact 保持后置 utilities 优先；普通 H5 的 utilities 仍在 @layer 中，无 layer 的图标普通声明按 CSS 原有规则优先，不能将 mini 的优先级结论推广到该模式。最终 icon-only 方案又完整重生成该项目的 9 个 portable 目标、传统 6 项、generator 3 case 和 HTML 2 变体，全部 exit0，替代中间方案产物；对应预检为 `5fe2d41a-0596-4315-ad03-b03ad14b0037`。
+
+本轮基线包含实际上游行为变化：Autoprefixer 占位符/reset 展开；DCloud vdom 的 page border-box 与 rich-text reset 边界；uni-app H5 Toast 尺寸、圆角、背景、字体及安全区定位；page 自定义变量向 body 的作用域扩展。不能统称格式变化。issue1160 的最终四边值相同，issue1164 mini 为 JSON 键顺序变化。最终基线仍需完成语义审查后的禁止更新复验，107 个 case 生成成功不代表 watch/HMR 或设备链路通过。
+
+Lynx 使用准确 head `eb486aabb6655aa5377b61af1e4e19014bda2f6e` 的 CI run 40696344394 attempt1 双端原始报告刷新基线。下载 ZIP 与 GitHub digest 一致，全 CRC、逐文件 SHA/大小、每端 144 张 PNG、181 条 evidence 及 118 个原生结论均严格重读校验；再通过仓库 updater 生成三个受跟踪文件并归档 396 个文件，独立 archive replay exit0；报告与 updater 的 2 文件/58 项禁止更新回归通过。iOS 53 supported/65 unsupported、Android 54/64，与历史结论一致，无 not-tested。保留 CI 宿主的真实几何/测量变化；iOS 实际 iPhone16Pro/iOS18.5，不能以页面旧静态文案当宿主身份。此 CI 证据不替代本地完整双端运行。
+
+macOS mp-weixin watch、单测三分片、Expo Web/Android/iOS 已通过；macOS H5 watch 已通过，旧收尾超时本轮未复现。性能门禁两项仍失败：Taro 构建峰值内存约 +5.55%/+72MB（跨轮可重现）和 uni-app Vite HMR p95 +15ms。继续按固定阈值诊断，未把重试或基线刷新当作性能修复。完整 57 阶段、107-case 禁更复验、全部适用 CI 仍待完成，因此 PR 保持草稿，尚未合并。
+
+HTML 专项差异另含新增主题变量，不能仅按注释/格式变化处理。准确 e769 的传统 issue998 基线已含相同 cyan/blue 默认值，而该提交的 HTML 专项基线缺少部分变量，显示专项基线可能滞后；是否为升级引入仍需准确基线实际构建产物对照。当前不据此声称无视觉影响，也不直接改写生成内核。

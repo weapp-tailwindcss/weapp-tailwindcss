@@ -29,6 +29,9 @@
   }
 }
 @layer base {
+  *,
+  ::after,
+  ::before,
   ::-webkit-backdrop {
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
@@ -36,12 +39,18 @@
     padding: 0;
     border: 0 solid;
   }
+  *,
+  ::after,
+  ::before,
   ::-ms-backdrop {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     border: 0 solid;
   }
+  *,
+  ::after,
+  ::before,
   ::-webkit-file-upload-button {
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
@@ -175,6 +184,11 @@
     max-width: 100%;
     height: auto;
   }
+  taro-button-core,
+  taro-input-core,
+  select,
+  optgroup,
+  taro-textarea-core,
   ::-webkit-file-upload-button {
     font: inherit;
     -webkit-font-feature-settings: inherit;
@@ -298,6 +312,7 @@
   :-moz-ui-invalid {
     box-shadow: none;
   }
+  taro-button-core,
   ::-webkit-file-upload-button {
     -webkit-appearance: button;
     appearance: button;
@@ -7917,19 +7932,23 @@ page {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
-.nut-input .nut-input-native .weui-input::-webkit-input-placeholder {
+.nut-input .nut-input-native .weui-input::-webkit-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input::-moz-placeholder {
+.nut-input .nut-input-native .weui-input::-moz-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input:-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input:-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
-.nut-input .nut-input-native .weui-input::-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input::-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 0.35rem));
 }
@@ -13104,6 +13123,9 @@ page {
 }
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+    *,
+    ::before,
+    ::after,
     ::-webkit-backdrop {
       --tw-space-y-reverse: 0;
       --tw-border-style: solid;
@@ -13133,6 +13155,9 @@ page {
       --tw-content: '';
       --tw-font-weight: initial;
     }
+    *,
+    ::before,
+    ::after,
     ::-ms-backdrop {
       --tw-space-y-reverse: 0;
       --tw-border-style: solid;
