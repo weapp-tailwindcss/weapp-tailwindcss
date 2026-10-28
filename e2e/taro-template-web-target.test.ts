@@ -21,13 +21,21 @@ interface TemplateConfig {
   deviceRatio: Record<number, number>
   compiler: string | { vitePlugins: UserDefinedOptions[] }
   mini: { webpackChain?: (chain: unknown) => void }
-  h5: { postcss: { pxtransform: { config: { baseFontSize: number, minRootSize: number, maxRootSize: number } } }, htmlPluginOption?: Record<string, unknown>, webpackChain?: (chain: unknown) => void }
+  h5: {
+    postcss: {
+      'pxtransform': { config: { baseFontSize: number, minRootSize: number, maxRootSize: number } }
+      'postcss-rule-unit-converter'?: { enable: boolean, config: { rules: Array<{ from: string, to: string, factor: number }> } }
+    }
+    htmlPluginOption?: Record<string, unknown>
+    webpackChain?: (chain: unknown) => void
+  }
   rn: Record<string, unknown>
 }
 
 function cssRuntime(template: Template) {
   if (process.env.E2E_TARO_TEMPLATE_PUBLISHED !== '1') {
-    return { createWeappTailwindcssGenerator, resolveTailwindV4Source, applyConfiguredCssUnits, postcss, transformWebCssCompat, base: repoRoot }
+    const postcssRequire = createRequire(path.join(repoRoot, 'packages', 'postcss', 'package.json'))
+    return { createWeappTailwindcssGenerator, resolveTailwindV4Source, applyConfiguredCssUnits, postcss, transformWebCssCompat, unitConverter: postcssRequire('postcss-rule-unit-converter'), base: repoRoot }
   }
   const base = path.join(repoRoot, 'templates', template)
   const templateRequire = createRequire(path.join(base, 'package.json'))
@@ -40,6 +48,7 @@ function cssRuntime(template: Template) {
   return {
     ...templateRequire('weapp-tailwindcss/generator') as { createWeappTailwindcssGenerator: typeof createWeappTailwindcssGenerator, resolveTailwindV4Source: typeof resolveTailwindV4Source },
     ...packageRequire('@weapp-tailwindcss/postcss/transform') as { applyConfiguredCssUnits: typeof applyConfiguredCssUnits, postcss: typeof postcss, transformWebCssCompat: typeof transformWebCssCompat },
+    unitConverter: template === 'taro-webpack-tailwindcss-v4' ? templateRequire('postcss-rule-unit-converter') : undefined,
     taroPxtransform: runnerRequire('postcss-pxtransform') as (options: Record<string, unknown>) => AcceptedPlugin,
     getHtmlScript: template === 'taro-vite-tailwindcss-v4'
       ? (runnerRequire('./dist/utils/html') as { getHtmlScript: (entry: string, options: unknown, platform: string) => string }).getHtmlScript
@@ -103,6 +112,17 @@ async function loadTemplate(template: Template, target: string) {
   return { config, options }
 }
 
+async function transformTemplateWebUnits(runtime: ReturnType<typeof cssRuntime>, template: Template, config: TemplateConfig, option: UserDefinedOptions, css: string) {
+  if (template === 'taro-vite-tailwindcss-v4') {
+    return runtime.applyConfiguredCssUnits(css, option)
+  }
+  const plugin = config.h5.postcss['postcss-rule-unit-converter']
+  expect(plugin?.enable).toBe(true)
+  expect(option.cssOptions?.unitConversion).toBeUndefined()
+  // 使用模板实际声明的框架插件，不在测试中补跑主包内部转换器。
+  return (await runtime.postcss([runtime.unitConverter(plugin!.config)]).process(css, { from: undefined })).css
+}
+
 describe('独立 Taro 模板的输出目标边界', () => {
   afterEach(() => vi.unstubAllEnvs())
 
@@ -125,7 +145,7 @@ describe('独立 Taro 模板的输出目标边界', () => {
         expect(generator.target).toBe('web')
         expect(generator.webCompat).toBe(true)
         const generated = await engine.generate({ target: generator.target, styleOptions: generator.styleOptions })
-        const css = await runtime.applyConfiguredCssUnits(runtime.transformWebCssCompat(generated.css, generator.webCompat), option)
+        const css = await transformTemplateWebUnits(runtime, template, config, option, runtime.transformWebCssCompat(generated.css, generator.webCompat))
         const root = runtime.postcss.parse(css)
         const declarations = new Map<string, string>()
         const themeScopes: string[] = []
@@ -161,8 +181,8 @@ describe('独立 Taro 模板的输出目标边界', () => {
             deviceRatio: config.deviceRatio,
             platform,
           })]).process(cssText, { from: undefined })).css
-          const sourceAfterTaro = await runtime.applyConfiguredCssUnits(await transform(input, 'h5'), option)
-          const sourceBeforeTaro = await transform(await runtime.applyConfiguredCssUnits(input, option), 'h5')
+          const sourceAfterTaro = await transformTemplateWebUnits(runtime, template, config, option, await transform(input, 'h5'))
+          const sourceBeforeTaro = await transform(await transformTemplateWebUnits(runtime, template, config, option, input), 'h5')
           for (const result of [sourceAfterTaro, sourceBeforeTaro]) {
             const values: string[] = []
             runtime.postcss.parse(result).walkDecls((decl) => {

@@ -87,6 +87,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "4.6.2",
     "postcss": "^8.5.32",
+    "postcss-rule-unit-converter": "0.2.6",
     "react-refresh": "^0.18.0",
     "stylelint": "^17.16.0",
     "tailwindcss": "^4.3.3",

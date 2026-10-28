@@ -19,8 +19,6 @@ const tailwindcssOptions: UserDefinedOptions = {
     rem2rpx: false,
     px2rpx: false,
     cssSelectorReplacement: { root: false, universal: false },
-    // 对齐生成器的 32rpx=1rem，并让 Taro 750 设计宽下的 40px/40rpx 均为 1.25rem。
-    unitConversion: { rules: [{ from: 'rpx', to: 'rem', factor: 1 / (webBaseFontSize * 2) }] },
   } : undefined,
 }
 
@@ -100,6 +98,12 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
         chunkFilename: 'css/[name].[chunkhash].css'
       },
       postcss: {
+        // 发布版 5.6.3 的 Web 生成器尚未执行单位选项，由真实框架管线重放此纯转换插件。
+        // 升级到包含 Web 生成单位修复的版本并复验后，可移回 cssOptions.unitConversion。
+        'postcss-rule-unit-converter': {
+          enable: true,
+          config: { rules: [{ from: 'rpx', to: 'rem', factor: 1 / (webBaseFontSize * 2) }] },
+        },
         pxtransform: {
           config: { baseFontSize: webBaseFontSize, minRootSize: webBaseFontSize, maxRootSize: webBaseFontSize * 2 },
         },
