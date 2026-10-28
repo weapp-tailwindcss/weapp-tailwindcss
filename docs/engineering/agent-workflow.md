@@ -16,6 +16,41 @@
 
 HMR 在同一服务进程连续修改，覆盖新增、替换、删除和最终浏览器刷新。保存标识与被测属性尽量在一次写入提交；等待本轮 DOM、CSS 和计算样式一致，不用旧 marker 或固定等待证明成功。保留服务端错误、请求失败、页面日志和失败截图。
 
+## 全面依赖升级
+
+用户要求“全面升级”或“升级全部依赖”时，按以下流程执行。通用更新入口的成功只证明该入口处理过的范围，不能作为全仓完成凭据。
+
+### 清单与版本通道
+
+1. 按 `pnpm-workspace.yaml` 与 `templates.jsonc` 盘点根项目、全部 workspace 项目、全部 demo（含 Web、issue 复现与 style-injector）及独立模板，排除 `node_modules`、构建输出与其他生成产物。通过依赖声明和实际构建配置识别框架，不依赖目录名称；逐项记录项目、依赖、当前声明与实际解析版本、目标版本、升级方式和结果。
+2. 默认选择上游正式版，以官方发布通道判定，不仅凭版本字符串中的连字符判断是否为预发布；核对 Node/pnpm engines、peer 与框架配套约束。只有必要能力尚无正式版时才保留 alpha，并记录官方依据、完整工具链版本和退出例外条件。uni-app-x 不自动成为 alpha 例外。专门覆盖旧版本兼容性的样例保留测试目的，逐项说明保留版本及复查条件，不静默抹去回归场景。
+3. 普通依赖沿用 `pnpm up:pkg`、`pnpm up:pkg:latest` 等现有入口；这些命令及 `update.ignoreDeps` 排除的框架依赖进入专项升级清单，不能视为已处理。uni-app 项目中的组件库、图标、Sass 等非编译器依赖也须检查。独立模板按[模板依赖升级流程](template-dependency-upgrade.md)处理，并纳入总清单。
+
+### uni-app 与 HBuilderX 工具链
+
+uni-app CLI 编译器使用官方 `@dcloudio/uvm` 获取配套版本。每轮先查询并固定当轮工具版本，核对其参数与行为；2026-10-28 核实的版本为 `0.3.1`。在每个目标项目目录运行以下正式版预览命令，不在仓库根目录代替各项目执行：
+
+```sh
+pnpm dlx @dcloudio/uvm@0.3.1 latest --manager manual
+```
+
+`latest`、`alpha` 与指定编译器版本均为位置参数；`0.3.1` 不支持 `--latest`、`--alpha` 或 `--dry-run`，也不能用 `--version` 查询工具版本，因为它可能按默认目标开始升级。`manual` 只输出配套清单，不安装或改写目标项目依赖，其输出不视为稳定 JSON 接口；`pnpm dlx` 自身仍会获取工具及其依赖。
+
+审查 UVM 清单与实际编译器约束后，同步各项目 manifest 及已有 catalog，保留 `workspace:`/`catalog:` 关系，在仓库根目录统一执行 `pnpm install`；独立模板维护各自锁文件。UVM 的 pnpm 安装模式必须显式选择 `--manager pnpm`，但本仓库默认采用上述 manual 流程，避免直接安装改写 catalog 引用。不能把所有 `@dcloudio/*` 机械设置为相同版本或 npm `latest`。
+
+UVM 只增加或更新编译器主要配套依赖，可能新增平台包并调整 Vue/Vite 等依赖，不保证覆盖全部 DCloud 包，也不会补齐构建 scripts。逐项核对新增平台包、未覆盖的 DCloud 包、Vue/Vite 配套与目标平台构建脚本；版本模板回退不能代替实际编译器约束验证。UVM `0.3.1` 未将安装子进程的非零退出码作为失败传播，不能仅凭 UVM 退出成功判定升级完成。
+
+HBuilderX 与 uni-app-x 按实际构建入口分别登记项目 npm 编译器、IDE、内置编译器和运行基座版本，按对应正式工具链整体对齐。UVM 不升级 HBuilderX 内置编译器、原生 SDK 或运行基座；项目 npm 依赖已更新不代表 IDE 链路已更新，也不能混用 IDE 与 npm 编译器作为验证兜底。
+
+官方依据：[DCloud 编译器版本管理](https://uniapp.dcloud.net.cn/quickstart-cli.html#cliversion)、[UVM 参数入口](https://unpkg.com/@dcloudio/uvm@0.3.1/bin/index.js)、[UVM 安装实现](https://unpkg.com/@dcloudio/uvm@0.3.1/lib/project.js)、[uni-app-x 工具链兼容说明](https://doc.dcloud.net.cn/uni-app-x/tutorial/compatibility.html)。上游工具或框架支持变化时重新核实这些约束，不沿用旧版本结论。
+
+### 验证与交付
+
+- 核对 manifests、共享 catalog、根与独立模板锁文件、overrides、精确版本补丁及实际安装版本；共享配置变化须追踪到全部受影响项目，不能因项目未被通用命令选中而跳过。Node/pnpm 声明与项目工具链也纳入兼容性核对；不手工改写生成的锁文件。
+- 安装更新后完成 `pnpm install --frozen-lockfile`、受影响构建与对应回归，独立模板在各自目录验证。demo 工具链或依赖变化后，定向重新生成 static 基线、审查语义差异，再以禁止更新模式复验；产物无差异也记录项目、命令与结果。涉及 HMR、IDE、原生基座时验证对应真实链路；本地全面验收仍须先通过下述全端预检，不得以单次构建替代。
+- 逐项交付“已升级、已是最新、保留、阻塞”清单，保留项说明兼容性或复现场景依据及复查条件；另列验证的通过、失败、跳过和阻塞范围。存在未处理项目或未完成验收时明确报告剩余范围，不能以通用入口、UVM 退出码或历史报告宣称全面完成。
+- 规范自身的文档变更运行 `pnpm agents:check` 和 `git diff --check`，核对链接与命令，不因此执行实际依赖升级或全端测试。
+
 ## 全面测试环境门禁
 
 用户要求全面、本地全端或全仓验收时，先执行环境预检，再启动任何全面测试的构建、单测或 E2E 阶段。手动拆分命令同样受此约束，不得通过改为单端或 smoke 名义绕过用户要求的全面验收。

@@ -8,7 +8,7 @@ import { validateVerification } from './verification.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const read = file => readFileSync(file, 'utf8')
-const nativeCommands = new Set(['install', 'exec', 'pack', 'publish', 'change'])
+const nativeCommands = new Set(['install', 'exec', 'dlx', 'pack', 'publish', 'change'])
 
 export function localLinks(markdown) {
   // 规则文档约定使用行内 Markdown 链接；代码块中的示例不是引用。

@@ -13,6 +13,12 @@
 - 涉及小程序样式输出、热更新或构建器适配问题时，demo/e2e 回归不能只覆盖微信小程序；Taro 与 uni-app 至少要包含一个非微信小程序目标，验证 `.acss`、`.ttss`、`.qss`、`.jxss` 或框架产出的 `.css` 等真实产物后缀。
 - demo 不应通过 `app.wxss`、`main.wxss`、`app-origin.wxss` 这类固定文件名来证明通用行为；回归断言应面向框架真实输出文件集合和平台产物目录。
 
+## 依赖升级
+
+- 全面升级必须逐项检查全部 demo（含 Web、issue 复现与 style-injector）；通过依赖声明与构建配置识别 uni-app/DCloud 工具链，不能只按目录名筛选。通用命令排除的 uni-app 项目仍须专项处理，项目中的组件库、图标、Sass 等非编译器依赖也必须纳入检查。
+- uni-app CLI 使用官方 UVM 配套清单，保留 workspace/catalog 管理；HBuilderX、uni-app-x 核对实际使用的 IDE、内置编译器和运行基座。正式版策略、命令与完成条件统一遵循[全面依赖升级](../docs/engineering/agent-workflow.md#全面依赖升级)。
+- demo 工具链或依赖变化后，必须重新生成对应项目的 e2e static 快照/产物基线，审查差异，再以禁止更新模式复验；无产物差异也要记录项目、命令与结果，不制造快照改动。涉及 HMR、IDE 或原生基座时补对应真实链路验收。
+
 ## 构建与调试
 - 按 demo 自身脚本执行（例如 `taro build --type weapp`、`uni -p mp-weixin`、`weapp-vite build`、`gulp`）。
 - 对小程序 demo，涉及 `open`/上传脚本时注意路径与工具版本差异，不强制在 CI 场景执行。

@@ -8,6 +8,8 @@
 
 ## 全局硬规则
 - 统一使用 `pnpm`，禁止切换 npm/yarn；Node 与 pnpm 版本以根 `package.json` 的 `engines` / `packageManager` 为准。
+- 用户要求“全面升级”或“升级全部依赖”时，必须覆盖根项目、全部 workspace 项目、demo（含 Web、issue 复现与 style-injector）及独立模板；通用命令排除或冻结的项目与依赖仍须专项评估，逐项交付升级、已是最新、保留或阻塞结论，不得仅运行通用入口后宣称完成。统一流程见[全面依赖升级](docs/engineering/agent-workflow.md#全面依赖升级)。
+- 依赖升级默认采用上游正式版；只有必要能力尚无正式版时才保留 alpha，记录依据、完整版本与退出条件。专门覆盖旧版本兼容性的样例保留其测试目的并说明版本保留原因；uni-app 编译器配套依赖以官方 UVM 为依据，HBuilderX 内置工具链单独核对。
 - 代码默认 TypeScript + ESM，缩进 2 空格。
 - 文件超过约 300 行优先按目录拆分（如 `feature/a.ts`），避免 `feature.a.ts`。
 - 测试默认 Vitest；修复缺陷或改行为必须补回归测试。

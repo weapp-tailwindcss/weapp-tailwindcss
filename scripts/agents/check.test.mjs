@@ -32,6 +32,16 @@ it('接受 pnpm 内置 change，但 run 仍须对应真实脚本', () => {
   assert.deepEqual(validateCommand('pnpm run change status', dir, [manifest]), [])
 })
 
+it('接受 pnpm dlx 预览命令，仍检查显式 run 脚本和包范围', () => {
+  const dir = path.resolve('fixture')
+  const manifests = [{ dir, name: 'demo', scripts: {} }]
+  const args = '@dcloudio/uvm@0.3.1 latest --manager manual'
+  assert.deepEqual(validateCommand(`pnpm dlx ${args}`, dir, manifests), [])
+  assert.deepEqual(validateCommand(`pnpm --filter demo dlx ${args}`, dir, manifests), [])
+  assert.equal(validateCommand(`pnpm run dlx ${args}`, dir, manifests).length, 1)
+  assert.equal(validateCommand(`pnpm --filter missing dlx ${args}`, dir, manifests).length, 1)
+})
+
 it.each([path.posix.resolve('/repo'), path.win32.resolve('C:\\repo')])('显式包命令不依赖宿主路径分隔符：%s', (dir) => {
   const manifests = [{ dir, name: 'demo', scripts: { test: 'vitest run' } }]
   assert.deepEqual(validateCommand('pnpm --filter demo test', dir, manifests), [])
