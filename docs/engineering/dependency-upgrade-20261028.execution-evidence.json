@@ -1044,7 +1044,23 @@
       "decision": "不安装第一次candidate；在文档修正后的稳定提交重新正式采集并审查。"
     },
     "installed": false,
-    "noUpdateVerification": "pending"
+    "noUpdateVerification": "pending",
+    "subsequentCaptureAttempts": [
+      {
+        "head": "d43786bef",
+        "preflightRun": "e4e9bd0b-fd27-4511-b395-011f0fb75ce3",
+        "preflightStatus": "extended probes, current-session computer use, verify and claim passed",
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-d43786bef.log",
+          "sha256": "5de4275206a361e60ca59eb2bbf994e8509a0f0a308e3de6dc38f0f9bae38636",
+          "bytes": 228063
+        },
+        "exitCode": 1,
+        "screenshotsStarted": false,
+        "reason": "实际双语生产构建成功后发现模板文档引起两份受跟踪llms-index-full.json同步更新；captureSource拒绝绑定未提交源码。",
+        "resolution": "审查生成差异仅中英模板summary及生成时间，提交配套搜索索引，保持身份门槛不变，再fresh预检重采。"
+      }
+    ]
   },
   "finalLockRiskRefresh": {
     "rootLockSha256": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",

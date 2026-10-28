@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-10-20T01:32:36.788Z",
+  "generatedAt": "2026-10-28T17:36:25.959Z",
   "locale": "en-US",
   "contentTier": "full",
   "siteUrl": "https://tw.weapp.dev",
@@ -3162,7 +3162,7 @@
       "productArea": "community",
       "title": "🔥Templates for each framework",
       "description": "Runnable Tailwind CSS 4 templates using the latest weapp-tailwindcss integration for uni-app, Taro, Mpx, and native mini programs.",
-      "summary": "These templates use the Tailwind CSS 4 CSS-first entry and delegate CSS generation to weapp-tailwindcss@5.5.4. Templates marked with 🔥 also run through the repository's canonical build gate. See the support matrix for…",
+      "summary": "These templates use the Tailwind CSS 4 CSS-first entry and delegate CSS generation to weapp-tailwindcss. Versions are recorded in each template's package.json and lockfile. Templates marked with 🔥 also run through the…",
       "url": "/docs/community/templates",
       "canonical": "https://tw.weapp.dev/docs/community/templates",
       "alternates": {

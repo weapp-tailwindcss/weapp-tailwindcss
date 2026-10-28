@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-10-20T01:32:36.788Z",
+  "generatedAt": "2026-10-28T17:36:25.959Z",
   "locale": "zh-CN",
   "contentTier": "full",
   "siteUrl": "https://tw.weapp.dev/zh-cn",
@@ -3327,7 +3327,7 @@
       "productArea": "community",
       "title": "🔥各个框架的模板",
       "description": "Tailwind CSS 4 与最新版 weapp-tailwindcss 的可运行模板，覆盖 uni-app、Taro、Mpx 和原生小程序。",
-      "summary": "以下模板统一使用 Tailwind CSS 4 CSS-first 入口，并由 weapp-tailwindcss@5.5.4 接管样式生成。带有 🔥 标志的模板同时纳入仓库 canonical 构建门禁；完整验证范围见支持矩阵。",
+      "summary": "以下模板统一使用 Tailwind CSS 4 CSS-first 入口，并由 weapp-tailwindcss 接管样式生成。具体版本以各模板的 package.json 和锁文件为准。带有 🔥 标志的模板同时纳入仓库 canonical 构建门禁；完整验证范围见支持矩阵。",
       "url": "/zh-cn/docs/community/templates",
       "canonical": "https://tw.weapp.dev/zh-cn/docs/community/templates",
       "alternates": {
