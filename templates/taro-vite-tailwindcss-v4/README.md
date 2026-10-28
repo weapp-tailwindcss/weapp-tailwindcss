@@ -35,6 +35,7 @@ pnpm dev:weapp
 pnpm dev:weapp
 pnpm build:weapp
 pnpm build:h5
+pnpm build:harmony-hybrid
 pnpm open
 ```
 
@@ -43,6 +44,9 @@ pnpm open
 - 生成模式不需要配置 `postinstall: "weapp-tw patch"`
 - `package.json` 中保留了其他平台的构建脚本，可按需启用
 - 如果你需要 webpack 方案，请使用 `taro-webpack-tailwindcss-v4`
+- H5 与 `harmony-hybrid` 显式使用 Web 生成目标、浏览器主题根和兼容降级；RN/`jdrn` 禁用小程序样式插件，其他小程序目标保留原有单位转换。
+- Web 单位与 Taro 的 `designWidth: 750`、`deviceRatio[750]: 1`、`baseFontSize: 16` 配套，`32rpx` 转为 `1rem`，与小程序原有的 rem 基准一致。H5 根字号范围为 16–32px；Hybrid 保留 Taro 的分段缩放。375px 视口下，`40px`/`40rpx` 均对应 `1.25rem`/20px，Tailwind 的 `1rem` 对应 16px。调整设计宽或比例时，须同步修改 `config/index.ts` 的单位换算规则与 H5 `pxtransform` 配置。
+- Hybrid 的浏览器样式验证覆盖 Web 资源；鸿蒙宿主 API 和原生 bridge 仍需在真实容器验收。
 
 ## 相关文档
 

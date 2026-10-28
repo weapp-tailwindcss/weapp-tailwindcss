@@ -1,13 +1,27 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
+import { WeappTailwindcss, type UserDefinedOptions } from 'weapp-tailwindcss/vite'
+import path from 'node:path'
 import devConfig from './dev'
 import prodConfig from './prod'
-import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
-import path from 'path'
 
-const generator = {
-  styleOptions: {
-    px2rpx: true,
+const isWebTarget = process.env.TARO_ENV === 'h5' || process.env.TARO_ENV === 'harmony-hybrid'
+const isNativeTarget = process.env.TARO_ENV === 'rn' || process.env.TARO_ENV === 'jdrn'
+const webBaseFontSize = 16
+const tailwindcssOptions: UserDefinedOptions = {
+  disabled: isNativeTarget,
+  rem2rpx: !isWebTarget,
+  generator: {
+    target: isWebTarget ? 'web' : 'weapp',
+    webCompat: isWebTarget ? true : undefined,
+    styleOptions: isWebTarget ? undefined : { px2rpx: true },
   },
+  cssOptions: isWebTarget ? {
+    rem2rpx: false,
+    px2rpx: false,
+    cssSelectorReplacement: { root: false, universal: false },
+    // 对齐生成器的 32rpx=1rem，并让 Taro 750 设计宽下的 40px/40rpx 均为 1.25rem。
+    unitConversion: { rules: [{ from: 'rpx', to: 'rem', factor: 1 / (webBaseFontSize * 2) }] },
+  } : undefined,
 }
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
@@ -38,9 +52,8 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       type: 'vite',
       vitePlugins: [
         WeappTailwindcss({
+          ...tailwindcssOptions,
           tailwindcssBasedir: process.cwd(),
-          rem2rpx: true,
-          generator,
           cssEntries: [
             path.resolve(__dirname, '../src/app.css')
           ]
@@ -74,6 +87,9 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
         chunkFilename: 'css/[name].[chunkhash].css'
       },
       postcss: {
+        pxtransform: {
+          config: { baseFontSize: webBaseFontSize, minRootSize: webBaseFontSize, maxRootSize: webBaseFontSize * 2 },
+        },
         autoprefixer: {
           enable: true,
           config: {}
