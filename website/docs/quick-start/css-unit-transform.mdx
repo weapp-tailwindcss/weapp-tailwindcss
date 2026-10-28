@@ -105,6 +105,8 @@ WeappTailwindcss({
 })
 ```
 
+`transformVarFallbacks` 由 `postcss-pxtrans@1.1.0` 及之后版本提供，本仓库直接使用正式依赖，无需额外补丁。
+
 `transformVarFallbacks` 在 `weapp-tailwindcss` 的 `px2rpx` 中默认开启；直接使用 `postcss-pxtrans` 时默认关闭。该设置仅控制 `px2rpx`，`rem2rpx` 仍遵循各自配置。
 
 更多参数看 [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans)。不要为了单位转换再把 Tailwind CSS 官方 PostCSS 插件注册进来，小程序样式生成仍然由 `weapp-tailwindcss` 接管。

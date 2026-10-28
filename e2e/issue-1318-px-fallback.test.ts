@@ -62,7 +62,7 @@ describe('Issue 1318：VPT 配置的发布产物', () => {
   })
 })
 
-it('发布类型支持未打补丁的上游依赖', () => {
+it('发布类型包含正式依赖的 fallback 配置', () => {
   const filename = path.resolve(__dirname, '../packages/postcss/dist/issue-1318-consumer.ts')
   const source = `
 import type { Px2rpxOptions, UserDefinedPostcssOptions } from './types.js';
@@ -85,24 +85,15 @@ const invalid: Px2rpxOptions = { transformVarFallbacks: 'false' };
   const host = ts.createCompilerHost(options)
   const readFile = host.readFile.bind(host)
   const fileExists = host.fileExists.bind(host)
-  let legacyDeclarations = 0
   host.fileExists = file => file === filename || fileExists(file)
   host.readFile = (file) => {
     if (file === filename) {
       return source
     }
-    const content = readFile(file)
-    // 模拟 npm 消费者解析到未打补丁的 postcss-pxtrans@1.0.7 声明。
-    if (content && path.basename(path.dirname(path.dirname(file))) === 'postcss-pxtrans') {
-      return content.replace(/^\s*transformVarFallbacks\?: boolean;?\r?\n/gm, () => {
-        legacyDeclarations++
-        return ''
-      })
-    }
-    return content
+    return readFile(file)
   }
+
   const program = ts.createProgram([filename], options, host)
   const diagnostics = ts.getPreEmitDiagnostics(program)
-  expect(legacyDeclarations).toBeGreaterThan(0)
   expect(diagnostics.map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'))).toEqual([])
 })

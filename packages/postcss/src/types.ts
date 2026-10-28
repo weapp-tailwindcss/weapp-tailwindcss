@@ -19,10 +19,7 @@ export interface IPropValue {
   value: string
 }
 
-export type Px2rpxOptions = NonNullable<Parameters<typeof pxtrans>[0]> & {
-  /** 转换 var() fallback 中的 px；本包默认开启，false 保留旧行为。 */
-  transformVarFallbacks?: boolean
-}
+export type Px2rpxOptions = NonNullable<Parameters<typeof pxtrans>[0]>
 
 export type UniAppXCssTarget = 'uvue'
 

@@ -108,6 +108,8 @@ WeappTailwindcss({
 })
 ```
 
+`transformVarFallbacks` is available in `postcss-pxtrans@1.1.0` and later. This repository consumes the official dependency without an extra patch.
+
 `transformVarFallbacks` defaults to `true` in `weapp-tailwindcss`'s `px2rpx` configuration, and to `false` when using `postcss-pxtrans` directly. This setting only controls `px2rpx`; `rem2rpx` follows its own configuration.
 
 See [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans) for more parameters. Do not register the Tailwind CSS official PostCSS plug-in for unit conversion. The mini program style generation is still taken over by `weapp-tailwindcss`.

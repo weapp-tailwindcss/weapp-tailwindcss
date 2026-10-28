@@ -24,15 +24,11 @@ regressions:
 `postcss-pxtrans` 复用该入口，并保留大小写退出、平台倍率、过滤和回调契约；阈值使用绝对值，转换保留正负号。
 本仓库只在 `px2rpx` 默认启用该选项，允许显式关闭。普通与延迟管线使用同一入口，避免重复换算；rem 行为保持既有契约。
 
-临时承接为 pnpm 精确版本补丁：
+初始方案通过 pnpm 精确版本补丁承接 converter@0.2.6 与 pxtrans@1.0.7 的 ESM/CJS、共享 chunk 和声明。上游 PR 已合并（`5b6aba49d778dd101715cb1705903f24c604c71e`），随后正式发布 `postcss-rule-unit-converter@0.3.0` 与 `postcss-pxtrans@1.1.0`。本 PR 已切换到这两个正式版，移除两份临时补丁及 workspace/锁文件登记；pxtrans 的直接依赖也准确解析到 converter@0.3.0。
 
-- `patches/postcss-rule-unit-converter@0.2.6.patch`：完整 ESM/CJS、共享 chunk 与声明。
-- `patches/postcss-pxtrans@1.0.7.patch`：完整 ESM/CJS 与声明。
+运行时修复由 PostCSS 包的 ESM/CJS 构建打包，消费者不需要安装额外补丁。公开 `Px2rpxOptions` 直接消费正式版声明，发布类型由包外消费者编译回归验证，不再额外复制上游选项定义。
 
-补丁通过 pnpm 的 `patch` / `patch-commit` 内置命令 生成。pnpm 12 可能生成它自身无法应用的 rename metadata；本轮以 `diff.renames=false` 重新生成删除/新增格式，未手改锁文件。
-两包的版本及导出路径保持 npm 原版契约。正式版本发布后，必须核对包含上述提交的等价修复，升级两个包，删除补丁与 workspace 登记，由 pnpm 重建锁文件并复验下述入口；不得只删除补丁。
-
-运行时修复由 PostCSS 包的 ESM/CJS 构建打包，消费者不需要再安装本仓库补丁。公开 `Px2rpxOptions` 显式扩展新选项，避免发布声明仍引用旧上游类型导致退出配置无法通过编译。
+本轮正式版升级重新执行冻结安装、PostCSS 包回归、构建、发布产物与公开类型检查，并重新生成和复验对应 static 基线；不沿用旧补丁产物作为正式版证据。
 
 ## 验证
 
@@ -40,7 +36,7 @@ regressions:
 
 - `CI=1 pnpm --filter @weapp-tailwindcss/postcss test --update=none --coverage.enabled=false`：161 个文件通过，1889 项通过、3 项原有跳过。覆盖 375/750、嵌套、符号、科学计数、保护区域、显式关闭、阈值、过滤、回调、mediaQuery、replace:false、插件复用及配置缓存。
 - `pnpm --filter weapp-tailwindcss... run build`：受影响依赖链与主包构建通过；`pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false` 通过。
-- `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1318-px-fallback.test.ts -u --coverage.enabled=false`：先校验精确结果，再生成 `e2e/__snapshots__/issue-1318/vpt.css`；随后以 `--update=none` 复验 3 项通过。使用当前 VPT 的实际 `createStyleHandler` 策略，分别加载真实 ESM/CJS，并拒绝外部解析单位实现包；另模拟 npm 未打补丁的上游声明验证公开类型。
+- `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1318-px-fallback.test.ts -u --coverage.enabled=false`：先校验精确结果，再生成 `e2e/__snapshots__/issue-1318/vpt.css`；随后以 `--update=none` 复验 3 项通过。使用当前 VPT 的实际 `createStyleHandler` 策略，分别加载真实 ESM/CJS，并拒绝外部解析单位实现包；另使用正式依赖的声明验证公开类型。
 - `pnpm --filter @weapp-tailwindcss/postcss pack --pack-destination <本轮 artifacts>`：tarball 内 300 份 dist 文件逐字节匹配已验证产物，包含新公开类型。
 - `CI=1 pnpm e2e:demo:matrix taro-vite-react-tailwindcss-v4:weapp taro-vite-react-tailwindcss-v4:alipay --update --build-only`：重新生成两项目 static 基线，无差异；去掉 `--update` 后复验通过。范围为生产构建和产物，不含 watch、IDE 或设备。
 - 变更文件 ESLint、工作流契约、架构检查、`pnpm agents:check`、change intent 检查与 `git diff --check` 通过。
@@ -55,4 +51,4 @@ PR Gate 的 core smoke 已纳入发布产物回归。两个 PR 需按各自最�
 
 ## 规则评估
 
-不新增 AGENTS 规则。已有第三方补丁、包边界、失败回归、产物基线和 CI 最新 head 规则足够；通过持久测试保护运行时打包、公开类型和 CI 入口。
+不新增 AGENTS 规则。已有第三方补丁、包边界、失败回归、产物基线和 CI 最新 head 规则足够；通过持久测试保护运行时打包、公开类型和 CI 入口；正式版可用后及时移除临时补丁。

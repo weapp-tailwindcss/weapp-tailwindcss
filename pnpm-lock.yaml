@@ -384,11 +384,11 @@ catalogs:
       version: 8.5.30
   postcssCompat:
     postcss-pxtrans:
-      specifier: ^1.0.7
-      version: 1.0.7
+      specifier: ^1.1.0
+      version: 1.1.0
     postcss-rule-unit-converter:
-      specifier: ^0.2.6
-      version: 0.2.6
+      specifier: ^0.3.0
+      version: 0.3.0
     postcss-scss:
       specifier: ^4.0.9
       version: 4.0.9
@@ -798,8 +798,6 @@ patchedDependencies:
   '@tarojs/plugin-platform-harmony-hybrid@4.2.1': 71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7
   '@tarojs/vite-runner@4.2.1': c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c
   nitropack@2.13.4: d0cbcb54a52558c28137353e5237e87891cab448f0ef1a833a8e76210a582ded
-  postcss-pxtrans@1.0.7: 5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303
-  postcss-rule-unit-converter@0.2.6: 4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee
   rollup@3.30.0: 415cda1e6f88df0d9857e1ed62e30f7322003971cb1c9689fffbb79a26e28a3f
   rollup@4.63.0: 96f66c21f382a81d068f61fb336d55f796bc913d03596c5c33be490439c8d298
   rollup@4.63.1: 763e8845b95a472328a0e03129d40aec1dd2a69146d2a0065a28b7ac410d524a
@@ -5085,13 +5083,13 @@ importers:
         version: 11.6.1(postcss@8.5.30)
       postcss-pxtrans:
         specifier: catalog:postcssCompat
-        version: 1.0.7(patch_hash=5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303)(postcss@8.5.30)
+        version: 1.1.0(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
         version: 7.0.8(postcss@8.5.30)
       postcss-rule-unit-converter:
         specifier: catalog:postcssCompat
-        version: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
+        version: 0.3.0(postcss@8.5.30)
       postcss-scss:
         specifier: catalog:postcssCompat
         version: 4.0.9(postcss@8.5.30)
@@ -29629,8 +29627,8 @@ packages:
     peerDependencies:
       postcss: ^8
 
-  postcss-pxtrans@1.0.7:
-    resolution: {integrity: sha512-7koV30MTIwdtsEqeQzHAjEEw1cXH+v2xOvuSBxDTuEyz7kvoFF0tsQ+fcMATELtsBLLhmO+EUo+AzwLtjO4WFQ==}
+  postcss-pxtrans@1.1.0:
+    resolution: {integrity: sha512-cADH7nP97Hh+EIkDjDA8suSY5l0vDR5fLwX7y+xtwTNiPY7FHjJtMR81PJuC1yC6B6wmJjcP3u+C4lKU76xQDg==}
     peerDependencies:
       postcss: ^8
 
@@ -29736,6 +29734,12 @@ packages:
 
   postcss-rule-unit-converter@0.2.6:
     resolution: {integrity: sha512-aw51LFWQKnyzebc4SymzGRRImx/kUiMbwYqotCf/ZwVM64zPcYxEfe4LiKYT0pgiLW7Gh1LYykYw1ecBRGsk3g==}
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      postcss: ^8
+
+  postcss-rule-unit-converter@0.3.0:
+    resolution: {integrity: sha512-ssgcaJ2d2Foc53lHJC1M6N0LLSLv+T52LVkCJfYajgygGLPm6I3snLYpJgL1cAF+jSB4fM+GihNL8vMle6wN9w==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss: ^8
@@ -70011,11 +70015,11 @@ snapshots:
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
       postcss-rule-unit-converter: 0.2.5(postcss@8.5.30)
 
-  postcss-pxtrans@1.0.7(patch_hash=5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303)(postcss@8.5.30):
+  postcss-pxtrans@1.1.0(postcss@8.5.30):
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.3.0(postcss@8.5.30)
 
   postcss-pxtransform@4.2.1(postcss@8.5.30):
     dependencies:
@@ -70110,7 +70114,7 @@ snapshots:
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
 
   postcss-replace-overflow-wrap@4.0.0(postcss@8.5.30):
     dependencies:
@@ -70131,7 +70135,13 @@ snapshots:
       postcss: 8.5.30
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
 
-  postcss-rule-unit-converter@0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30):
+  postcss-rule-unit-converter@0.2.6(postcss@8.5.30):
+    dependencies:
+      '@csstools/css-tokenizer': 4.0.2
+      postcss: 8.5.30
+      postcss-plugin-shared: 1.2.0(postcss@8.5.30)
+
+  postcss-rule-unit-converter@0.3.0(postcss@8.5.30):
     dependencies:
       '@csstools/css-tokenizer': 4.0.2
       postcss: 8.5.30
