@@ -9,6 +9,7 @@ import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { createServiceFixture, createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
 import { viteOperationFixture } from './helpers/vite-operations.mjs'
+import { uniWorkerFixture } from './helpers/uni-worker.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -55,7 +56,8 @@ const candidates = () => new Set(read().includes('twbenchdiagnosticround') ? ['f
 const store = { snapshot: () => ({ candidatesById: [[key, [...candidates()]]], sourceById: [[key, read()]], inlineIncludedCandidates: [], inlineExcludedCandidates: [] }), values: candidates, getRevision: () => revision };
 observer.registerStore(store);
 ${viteOperationFixture()}
-async function compile() { revision++; await diagnosticGenerate(); await observer.compilation({ sourceCandidates: store.values(), runtime: store.values(), transformRuntime: store.values(), generatorRuntime: store.values() }); }
+${uniWorkerFixture()}
+async function compile() { revision++; await diagnosticBundle(read(), async () => { await diagnosticGenerate(); await diagnosticCompilation({ sourceCandidates: store.values(), runtime: store.values(), transformRuntime: store.values(), generatorRuntime: store.values() }); }); }
 process.on('message', async (message) => {
   if (message === 'exit') { process.disconnect(); return; }
   await compile(); if (message === 'mutation-3') { await compile(); await compile(); } process.send(message);

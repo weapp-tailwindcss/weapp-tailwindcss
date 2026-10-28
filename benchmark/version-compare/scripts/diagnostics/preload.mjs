@@ -8,6 +8,7 @@ import { diagnosticSymbol, limits, mpxProject } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
 import { createOperationRecorder } from './operations.mjs'
 import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
+import { createUniInputObserver, uniInputProject } from './uni-observer.mjs'
 
 async function start() {
   const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
@@ -45,6 +46,7 @@ async function start() {
   const frameReceipts = []
   const startedAt = performance.now()
   const operations = createOperationRecorder({ writer, root: identity.root, phase: stage })
+  const uniInput = identity.project === uniInputProject && identity.mode === 'inputs' ? createUniInputObserver({ operations, root: identity.root, phase: stage }) : undefined
   const viteTail = identity.project === viteTailProject && identity.kind === 'build' ? createViteTailObserver({ operations }) : undefined
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
@@ -76,6 +78,7 @@ async function start() {
       snapshotCount: compilationId,
       ...(identity.project === mpxProject ? { webpackCreatedCount, webpackCompletedCount } : { viteCompletedCount }),
       operations: operations.summary(),
+      ...(uniInput ? { uniInput: uniInput.summary() } : {}),
       storeCount: storeId,
       frameReceipts,
       ...(viteTail ? { viteTail: viteTail.summary() } : {}),
@@ -124,6 +127,7 @@ async function start() {
 
   globalThis[Symbol.for(diagnosticSymbol)] = {
     operations,
+    ...(uniInput ? { uniInput } : {}),
     viteTail,
     webpackCreated(compilation) {
       if (!operations || webpackPhases.has(compilation)) {
@@ -162,10 +166,11 @@ async function start() {
       stores.set(storeId, new WeakRef(store))
     },
     compilation(collections) {
-      const current = stage()
+      const current = uniInput?.phase() ?? stage()
       const phase = { ...current, type: current.type === 'watch-ready' ? 'watch-start' : current.type.replace(/-observed$/, '-write') }
       const key = `${phase.type}:${phase.round ?? ''}`
       const id = ++viteCompletedCount
+      uniInput?.finalization(id)
       const selectedForSnapshot = phase.type !== 'watch-stop' && !capturedPhases.has(key)
       viteTail?.point('main-finalizer')
       operations.emit('vite.completed', { finalizationId: id, selectedForSnapshot, collections }, undefined, undefined, phase)
