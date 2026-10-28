@@ -5,6 +5,7 @@ import type { TocOptions } from './toc/observe'
 import { expect, test } from '@playwright/test'
 import { createCaptureBudget, readDocumentGeometry } from './capture'
 import { prepareFullPageImages } from './images'
+import { captureStableNativeFullPage, NativeCaptureError } from './native'
 import { captureStableFullPage } from './stable'
 import { evaluateTocReadiness } from './toc/model'
 import { observeToc } from './toc/observe'
@@ -20,7 +21,7 @@ export async function prepareFullPageToc(page: Page, budget: CaptureBudget, opti
     if (typeof options === 'function') {
       preliminary = await budget.run(() => observeToc(page, null))
       if (evaluateTocReadiness(preliminary).ready) {
-        return
+        return null
       }
       policy = await budget.run(() => options())
     }
@@ -28,6 +29,7 @@ export async function prepareFullPageToc(page: Page, budget: CaptureBudget, opti
       policy = options
     }
     await waitForTocReadiness(page, budget, policy)
+    return policy
   }
   catch (cause) {
     const error = cause instanceof TocReadinessError ? cause : new TocReadinessError(cause, { observation: preliminary, readiness: preliminary ? evaluateTocReadiness(preliminary) : null })
@@ -36,25 +38,30 @@ export async function prepareFullPageToc(page: Page, budget: CaptureBudget, opti
   }
 }
 
-/** 仅 Firefox 的协议尺寸超限使用分片，其余整页截图保留原生断言。 */
+/** 仅 Firefox 的协议尺寸超限使用分片，其余使用带捕获期观测的原生 fullPage。 */
 export async function expectFullPageScreenshot(page: Page, tocOptions: TocPolicy = null) {
   const budget = createCaptureBudget(test.info().timeout || 60_000)
   await prepareFullPageImages(page, budget)
-  await prepareFullPageToc(page, budget, tocOptions)
-  if (page.context().browser()?.browserType().name() !== 'firefox') {
-    await expect(page).toHaveScreenshot({ fullPage: true, timeout: budget.remaining() })
-    return
-  }
+  const policy = await prepareFullPageToc(page, budget, tocOptions)
   const geometry = await budget.run(() => readDocumentGeometry(page))
-  if (geometry.width <= 32_767 && geometry.height <= 32_767) {
-    await expect(page).toHaveScreenshot({ fullPage: true, timeout: budget.remaining() })
-    return
-  }
+  const tiled = page.context().browser()?.browserType().name() === 'firefox'
+    && (geometry.width > 32_767 || geometry.height > 32_767)
   const name = '__full-page-template-check__.png'
   if (test.info().snapshotPath(name, { kind: 'screenshot' }) !== test.info().snapshotPath(name, { kind: 'snapshot' })) {
     throw new Error('整页截图与 PNG 快照模板必须一致，禁止改变既有快照路径')
   }
-  const buffer = await captureStableFullPage(page, { budget })
+  let buffer
+  try {
+    buffer = tiled ? await captureStableFullPage(page, { budget }) : await captureStableNativeFullPage(page, budget, policy)
+  }
+  catch (error) {
+    if (error instanceof NativeCaptureError) {
+      await test.info().attach('full-page-capture-observation', {
+        body: JSON.stringify({ totalSamples: error.attempts, lastSamples: error.evidence, failure: String(error.cause) }, null, 2), contentType: 'application/json',
+      })
+    }
+    throw error
+  }
   // 只比较整张图一次，全部分片合计最多 5 像素；匿名名称沿用原生截图计数。
   expect(buffer).toMatchSnapshot({ maxDiffPixels: 5 })
   budget.remaining()

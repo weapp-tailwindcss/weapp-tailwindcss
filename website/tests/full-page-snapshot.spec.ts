@@ -59,8 +59,14 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
             await expect(page).toHaveScreenshot({ fullPage: true })
           return
         }
-        if (browserName !== 'firefox')
-          page.screenshot = async () => { throw new Error('普通浏览器不得分片') }
+        if (browserName !== 'firefox') {
+          const screenshot = page.screenshot.bind(page)
+          page.screenshot = options => {
+            expect(options?.fullPage).toBe(true)
+            expect(options?.clip).toBeUndefined()
+            return screenshot(options)
+          }
+        }
         await expectFullPageScreenshot(page)
         await page.evaluate(() => {
           for (const y of [20, 16020, 16030, 32020, 32030]) {
@@ -89,7 +95,12 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
         expect(tiled).toMatchSnapshot('gradient.png', { maxDiffPixels:5 })
         const screenshotBaseline = info.snapshotPath('native-branches-and-gradient-rasterization-1.png', { kind:'screenshot' })
         await writeFile(screenshotBaseline, native)
-        page.screenshot = async () => { throw new Error('尺寸未超限不得分片') }
+        const screenshot = page.screenshot.bind(page)
+        page.screenshot = options => {
+          expect(options?.fullPage).toBe(true)
+          expect(options?.clip).toBeUndefined()
+          return screenshot(options)
+        }
         await expectFullPageScreenshot(page)
       })
       test('native lazy images reject missing baselines without writing them', async ({ page }) => {
