@@ -70,7 +70,7 @@ describe('Web 真实构建的 calc 与显式单位转换', () => {
       expect(css.match(/\.p-\\\[2rem\\\]\s*\{[^}]*\}/)?.[0]).toContain(`padding: ${expected}`)
       if (cssCalc) {
         const width = Number.parseFloat(expected) * 2
-        expect(css.match(/\.units-target\s*\{[^}]*\}/)?.[0]).toContain(`width: ${width}rem`)
+        expect(css.match(/\.units-target\s*\{[^}]*\}/)?.[0]).toMatch(new RegExp(`width:\\s*${width}rem\\s*[;}]`))
       }
     }
   })

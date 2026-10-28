@@ -1,5 +1,5 @@
 import type { UserDefinedOptions } from '@/types'
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -42,7 +42,7 @@ describe('Webpack 真实 Web 生成的单位规则', () => {
           }),
         ],
       })
-      const stats = await new Promise<webpack.Stats>((resolve, reject) => compiler!.run((error, result) => {
+      await new Promise<webpack.Stats>((resolve, reject) => compiler!.run((error, result) => {
         if (error || !result || result.hasErrors()) {
           reject(error ?? new Error(result?.toString({ all: false, errors: true }) ?? '缺少 Webpack 结果'))
         }
@@ -50,7 +50,7 @@ describe('Webpack 真实 Web 生成的单位规则', () => {
           resolve(result)
         }
       }))
-      const css = stats.compilation.getAsset('theme.css')!.source.source().toString()
+      const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
       expect(css).toContain(`padding: ${expected}`)
       expect(css).not.toContain('weapp-tailwindcss webpack-generated-css')
       expect(css).not.toMatch(/padding:\s*[\d.]+rpx\b/)
