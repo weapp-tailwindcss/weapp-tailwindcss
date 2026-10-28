@@ -33,6 +33,7 @@
 
 ## 多 Codex / 多代理协作
 - 同一个物理 checkout 只允许一个 Codex/代理执行写入型任务；多个 Codex 并发处理不同任务时，必须先为每个任务创建独立 `git worktree`。
+- 各 worktree 的 `node_modules`、`.bin`、虚拟 store 和 workspace 包级依赖目录必须独立安装，禁止通过软链或目录借用共享可写依赖；pnpm 的内容寻址 store 可由正常安装机制复用。`pnpm exec` / `run` 可能触发依赖校验和隐式安装，不能视为只读命令；执行前确认依赖目录与生成的命令入口均归属本 worktree。缺少依赖时在自有 worktree 完成 frozen install，不把关闭自动校验当作共享依赖的隔离保证。根因与恢复见[依赖目录隔离复盘](docs/engineering/lessons/worktree-node-modules-isolation.md)。
 - 推荐目录形态：在仓库同级目录创建工作树，例如 `../weapp-tailwindcss-codex/<task-slug>`；不要把并发工作树放进当前仓库目录内部。
 - 每个并发任务使用独立分支名，例如 `codex/<task-slug>`；开始前先执行 `git status --short --branch`，确认当前工作树没有其他代理遗留改动。
 - 在任何编辑、格式化、测试自动修复、`git add`、`git commit`、`git rebase` 或 `git push` 前，都要重新检查 `git status --short`；如果出现自己没有产生的改动，必须停止并说明冲突来源，不得覆盖、删除或顺手纳入提交。
