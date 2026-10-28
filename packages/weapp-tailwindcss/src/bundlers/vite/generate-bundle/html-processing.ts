@@ -1,4 +1,5 @@
 import type { OutputAsset } from 'rollup'
+import type { ViteFrameworkTemplateAssetTransform } from '../shared/framework-asset-strategy'
 import type { createEmptyMetrics } from './metrics'
 import { logger } from '@weapp-tailwindcss/logger'
 import { processCachedTask } from '@/bundlers/shared/cache'
@@ -23,6 +24,7 @@ export interface ProcessHtmlBundleEntryOptions {
   resolveCurrentSourceCandidateSource: (file: string) => string | undefined
   tasks: Promise<void>[]
   templateHandler: (source: string, options: { runtimeSet: Set<string> }) => string | Promise<string>
+  templateTransform?: ViteFrameworkTemplateAssetTransform | undefined
   timeTask: (name: string, task: () => Promise<void>) => Promise<void>
   transformRuntime: Set<string>
   transformRuntimeSignature: string
@@ -43,6 +45,7 @@ export function processHtmlBundleEntry(options: ProcessHtmlBundleEntryOptions) {
     resolveCurrentSourceCandidateSource,
     tasks,
     templateHandler,
+    templateTransform,
     timeTask,
     transformRuntime,
     transformRuntimeSignature,
@@ -62,7 +65,7 @@ export function processHtmlBundleEntry(options: ProcessHtmlBundleEntryOptions) {
   const templateRuntimeSignature = templateRuntime === transformRuntime
     ? transformRuntimeSignature
     : createCandidateSignature(templateRuntime)
-  const htmlProcessHash = `${cache.computeHash(currentBundleSource)}:${cache.computeHash(createRuntimeAffectingSourceSignature(currentBundleSource, 'html'))}:${templateRuntimeSignature}`
+  const htmlProcessHash = `${cache.computeHash(currentBundleSource)}:${cache.computeHash(createRuntimeAffectingSourceSignature(currentBundleSource, 'html'))}:${templateRuntimeSignature}${templateTransform ? `:${templateTransform.cacheKey}` : ''}`
   const cacheKey = `${file}:html:${htmlProcessHash}`
   const hashKey = cacheKey
   rememberProcessCacheKey(cacheKey, hashKey)
@@ -117,6 +120,7 @@ export function processHtmlBundleEntry(options: ProcessHtmlBundleEntryOptions) {
             )
           }
         }
+        transformed = templateTransform?.transform(transformed) ?? transformed
         metrics.html.elapsed += measureElapsed(start)
         metrics.html.transformed++
         onUpdate(file, currentBundleSource, transformed)

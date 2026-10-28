@@ -59,7 +59,7 @@ jobs:
       - run: pnpm --filter @weapp-tailwindcss/hbuilderx-runner test --update=none
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/browser-navigation.test.mjs --update=none
-      - run: pnpm --filter weapp-tailwindcss... run build
+      - run: pnpm --filter weapp-tailwindcss... --filter @weapp-tailwindcss/debug-uni-app-x... run build
       - run: pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x --update=none
       - run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1144-runner.test.ts e2e/hbuilderx-project-alias.test.ts e2e/hbuilderx-attach.test.ts e2e/issue-1319-static.test.ts --update=none
 
