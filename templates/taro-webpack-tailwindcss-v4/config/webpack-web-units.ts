@@ -55,11 +55,12 @@ export class WebRpxToRemPlugin {
           if (!converted || result.css === css) {
             continue
           }
-          if (!previousMap && annotation) {
+          if (annotation && !inlineMap && !relatedMap) {
             throw new Error(`Cannot transform ${asset.name}: its source map is unavailable in the compilation assets`)
           }
-          // PostCSS 已将单位变化映射与原映射合成，不能直接把原 map 挂到新 CSS。
-          const nextSource = result.map
+          // 已导出的映射继续交付为 map 资产/内联注释，避免下一轮 DEV_TOOLING 再次导出。
+          // 只有尚未导出的内部映射才留在 SourceMapSource，且必须使用 PostCSS 合成后的 map。
+          const nextSource = result.map && !relatedMap && !inlineMap
             ? new sources.SourceMapSource(result.css, asset.name, result.map.toJSON())
             : new sources.RawSource(result.css)
           compilation.updateAsset(asset.name, nextSource)
