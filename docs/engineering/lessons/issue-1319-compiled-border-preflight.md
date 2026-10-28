@@ -27,7 +27,7 @@ verification:
     status: pending
     sha: 56aee0671509d20b034891ad96f241d499bc824e
     environment: macOS，用户已开启的微信 IDE；通过受保护 Launcher 连接
-    reason: IDE 服务被另一任务的服务租约锁占用，保护器拒绝并发打开项目；未删除其他任务的锁，未启动或重启 IDE，未改变登录态
+    reason: 服务租约释放后重试，登录及连接成功，但 App.captureScreenshot 就绪探针超时；随后全面预检被另一活动会话的工具锁阻断，停止后续原生验收，未改变登录态
 ---
 
 # Issue 1319：编译后宿主与边框重置的归属
@@ -52,7 +52,7 @@ H5 的首次偏离发生在 bundle CSS 任务：缓存源码的 Tailwind root im
 - H5 的 #1319 与 #1160 static 使用 `--update=none` 通过。新增检查从真实 render 调用读取宿主标签，并验证零宽基础选择器真正匹配 `div`；作者 class 规则和条件规则不能充数。
 - H5 使用确认根目录身份的本轮生产输出。Chromium 390×844 实测原片段 `[top,right,bottom,left]=[1,0,0,0]`，颜色为 `rgb(226,232,240)`；九个探针通过，无页面异常。截图与计算样式位于忽略目录 `e2e/.artifacts/issue-1319/`，浏览器、临时 HTTP 服务均已关闭。
 - 微信静态验收使用 HBuilderX 正式版 5.33.2026102401 编译，确认 `div -> view`，基础类与零宽声明先于 utility，#1160 及 #1319 mini-static 均通过。
-- 微信运行验收在打开项目之前被另一任务的租约锁阻断，不能将编译成功当成微信截图或原生验收通过。未执行本地全面验收或 App/Vapor 设备验收，未使用旧预检报告放行。
+- 微信运行验收先被另一任务租约阻断。该租约释放后，已有 IDE 的登录及自动化连接成功，但 30 秒总预算内 App 域尚未就绪，`App.captureScreenshot` 返回 `DEVTOOLS_PROTOCOL_TIMEOUT`；保护器关闭本次项目并保留登录态。随后执行 `pnpm e2e:preflight prepare`，又被另一活动预检的本机工具锁阻断，本轮报告为 `e2e/.artifacts/preflight/8db59c1f-7f79-4bfb-b539-68b431ffd353/report.json`。停止后续原生验收，不能将编译成功当成微信截图通过。未执行本地全面验收或 App/Vapor 设备验收，未使用旧报告放行。
 
 限定 VDOM 项目生成了 #1319 H5/微信、通用 static 基线。新增组件改变候选排列，使 #1160 mini 基线中方向宽度、style、color 的顺序变化；逐项核对值未变，零宽仍在最前，显式顶部覆盖仍在全边框之后。基线单独更新后以禁止更新模式复验，没有通过排序隐藏级联差异。
 
