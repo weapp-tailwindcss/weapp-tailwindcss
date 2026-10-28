@@ -1620,6 +1620,70 @@
       "two Taro templates lack RN toolchain dependencies",
       "Vue2 quickapp-native lacks release signing files"
     ],
-    "repair": "pending strict generated-cache versus source identity boundary; original evidence preserved"
+    "repair": "pending strict generated-cache versus source identity boundary; original evidence preserved",
+    "repairCandidate": {
+      "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-swc-driver-fspf71as",
+      "driverInventorySha256": "ac35b77a1c69232ff7df1e10f7bcba36673c6198e3855ca6c2be61bb08cedd75",
+      "scope": "Only known SWC1.3.96/runner0.104.8 v7 regular hash cache leaves; sources and symlinks remain protected.",
+      "rootNodeFixture": {
+        "passed": 22,
+        "exitCode": 0,
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/template-swc-fixture-root-node.log",
+          "bytes": 2445,
+          "sha256": "500aebfe5d8b353e3fd84ad09dd9bfee2e30eec9395ad59383e5273825d51dd4"
+        }
+      },
+      "realRerun": "pending"
+    }
+  },
+  "websiteTocReadiness": {
+    "integratedCommit": "3d5c94912",
+    "sourceCandidate": "35ebd715d0b583c8a5a5f9e8f05b66fe10b93971",
+    "includesUncommittedFixtureTimingAdjustment": true,
+    "scope": "Read-only TOC semantics and actual generated metadata identity; product, DOM classes, scroll/resize, viewport, pixels and production deadlines unchanged.",
+    "unit": {
+      "passed": 53,
+      "exitCode": 0,
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/toc-integrated-3d5c94912.log",
+        "bytes": 249,
+        "sha256": "7a746355f0f15cb4cbb0c0dafd800ae97cdc17165348dbabaffc5848652d3a87"
+      }
+    },
+    "browsers": {
+      "passed": 33,
+      "retried": 0,
+      "exitCode": 0,
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/toc-fixture-3d5c94912.log",
+        "bytes": 4719,
+        "sha256": "fefa242536ce3df874eb886dab50214928e312a6e0b9e373d4aaa3ef8e0fdf75"
+      }
+    },
+    "existingFullPageBrowsers": {
+      "passed": 3,
+      "retried": 0,
+      "exitCode": 0,
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/full-page-fixture-3d5c94912.log",
+        "bytes": 946,
+        "sha256": "3a3f46773171c2f4aab650b03056ee439303d8741ee53a411edbe20fc1b5f0fe"
+      }
+    },
+    "metadata": {
+      "routes": 317,
+      "zhCn": 160,
+      "default": 157,
+      "maxHeading4": 10,
+      "duplicates": 0
+    },
+    "oldGoldenArchive": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/website-golden-before-toc-receipt.json",
+      "bytes": 1108,
+      "sha256": "e1da060aaae4b8eb547c8a72ebb6ae4a5512ee6d1010e1d585e3e98ede436099"
+    },
+    "newCaptureReviewInstallNoUpdate": "pending",
+    "oldInactiveOrigin": "unknown"
   }
 }

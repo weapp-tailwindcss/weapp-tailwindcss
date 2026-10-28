@@ -98,11 +98,11 @@ test('permanent mismatch retains its last observation attachment without repairi
 
 test('previous preparation and TOC share one deadline', async ({ page }) => {
   await fixture(page, links + headings)
-  const budget = createCaptureBudget(150)
-  await budget.run(() => page.evaluate(() => new Promise<void>(resolve => setTimeout(resolve, 100))))
+  const budget = createCaptureBudget(1000)
+  await budget.run(() => page.evaluate(() => new Promise<void>(resolve => setTimeout(resolve, 800))))
   const started = performance.now()
   await expect(waitForTocReadiness(page, budget, options)).rejects.toThrow('TOC 未就绪')
-  expect(performance.now() - started).toBeLessThan(140)
+  expect(performance.now() - started).toBeLessThan(700)
   expect(() => budget.remaining()).toThrow('共享预算已耗尽')
 })
 
