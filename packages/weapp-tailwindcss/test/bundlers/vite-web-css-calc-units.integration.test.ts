@@ -12,9 +12,9 @@ async function buildCss(cssOptions: UserDefinedOptions['cssOptions'], spacing: s
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weapp-vite-web-calc-units-')))
   try {
     await symlink(path.resolve('node_modules'), path.join(root, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
-    await writeFile(path.join(root, 'index.html'), '<script type="module" src="./main.ts"></script><div class="w-2"></div>')
+    await writeFile(path.join(root, 'index.html'), '<script type="module" src="./main.ts"></script><div class="w-2 p-[2rem]"></div>')
     await writeFile(path.join(root, 'main.ts'), 'import "./theme.css";import "./author.css";')
-    await writeFile(path.join(root, 'theme.css'), `@import "tailwindcss" source(none);@source inline("w-2");@theme{--spacing:${spacing}}`)
+    await writeFile(path.join(root, 'theme.css'), `@import "tailwindcss" source(none);@source inline("w-2 p-[2rem]");@theme{--spacing:${spacing}}`)
     await writeFile(path.join(root, 'author.css'), '.units-target{width:calc(var(--spacing)*2)}')
     const result = await build({
       root,
@@ -27,8 +27,10 @@ async function buildCss(cssOptions: UserDefinedOptions['cssOptions'], spacing: s
       }),
       build: { write: false, cssMinify: false },
     }) as RollupOutput
-    return result.output.filter(output => output.type === 'asset' && output.fileName.endsWith('.css'))
-      .map(output => String(output.source)).join('\n')
+    return result.output
+      .filter(output => output.type === 'asset' && output.fileName.endsWith('.css'))
+      .map(output => String(output.source))
+      .join('\n')
   }
   finally {
     await rm(root, { recursive: true, force: true })
@@ -56,5 +58,20 @@ describe('Web 真实构建的 calc 与显式单位转换', () => {
     expect(css.match(/\.units-target\s*\{[^}]*\}/)?.[0]).toContain('0.75rem')
     expect(css).toContain(':root')
     expect(css).not.toContain('rpx')
+  })
+
+  it.each([{ cssCalc: false }, { cssCalc: ['--spacing'] }] as const)('cssCalc=$cssCalc 时非幂等单位规则只执行一次', async ({ cssCalc }) => {
+    for (const options of [
+      { unitConversion: { rules: [{ from: 'rem', to: 'rem', factor: 2 }] }, expected: '4rem' },
+      { unitsToPx: { unitMap: { rem: 10 } }, unitConversion: { rules: [{ from: 'px', to: 'rem', factor: 0.5 }] }, expected: '10rem' },
+    ]) {
+      const { expected, ...units } = options
+      const css = await buildCss({ ...units, cssCalc } as UserDefinedOptions['cssOptions'], '2rem')
+      expect(css.match(/\.p-\\\[2rem\\\]\s*\{[^}]*\}/)?.[0]).toContain(`padding: ${expected}`)
+      if (cssCalc) {
+        const width = Number.parseFloat(expected) * 2
+        expect(css.match(/\.units-target\s*\{[^}]*\}/)?.[0]).toContain(`width: ${width}rem`)
+      }
+    }
   })
 })
