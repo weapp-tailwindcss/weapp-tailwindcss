@@ -2087,5 +2087,66 @@
       }
     ],
     "limitation": "本轮双语构建成功与先前 33 项 TOC fixture 不能替代真实 index 导入链成功；失败候选原样保留，不安装为黄金图。"
+  },
+  "webUnitsAndScreenshotFollowup": {
+    "head": "76649b1897f359e9b37df6cb0bb400ceb5ea4877",
+    "targeted": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/integration-web-units-76649b189.json",
+      "bytes": 3173,
+      "sha256": "80ef1c86c219000616bf371b27f39fba0c6e2e04735ca11cc82b73bd228614a1"
+    },
+    "productFix": "5a5609ced",
+    "templateAttempt": "3fd6603bc",
+    "testHarnessCorrection": "ae6aff2fe",
+    "passed": {
+      "packageBuilds": 2,
+      "generatorAndRealBundlerTests": 16,
+      "templateSourceTests": 4,
+      "templatePublishedTests": 4
+    },
+    "copiedTemplates": {
+      "preflightRun": "ae9b61ff-72b5-4255-bd83-fae019d0840e",
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-XCuQyV/report.json",
+        "bytes": 130017,
+        "sha256": "bbe0dba33277bb899d5094b6fef8c6d8270c92461e51bd7485415cffb682df77"
+      },
+      "status": "failed",
+      "passed": 9,
+      "failed": [
+        [
+          "taro-webpack-tailwindcss-v4",
+          "harmony-hybrid"
+        ]
+      ],
+      "notRun": 6,
+      "existingCapabilityGaps": 3,
+      "failure": "Webpack Hybrid exit0 but generated CSS still contains margin-top:8rpx; framework PostCSS conversion does not cover later generated additions",
+      "temporaryRetained": true
+    },
+    "websiteDiagnostic": {
+      "head": "5e577ccaf672eec04271c5b097d714036ad82ef1",
+      "preflightRun": "eee9adb6-c883-47f1-b033-aa69430e7741",
+      "report": {
+        "path": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-toc-engine-ab9-fix-iv2a24hg/run-8qEI9z/run-completed.json",
+        "bytes": 73912,
+        "sha256": "f8d030c54eef13751efd72e80f8c701e2be8a8ebd1977adb47bdbcfceac877a9"
+      },
+      "nativeCasesCompleted": 8,
+      "candidate9": "failed: full clip dimensions correct but offscreen bands/bottom markers white",
+      "acceptance": false,
+      "sourceEvidence": "captureBeyondViewport:true may transiently set viewport1x1; same-round shell llms records remount and new transition inside request",
+      "proposedFix": "observe entire capture and require two complete undisturbed identical RGBA samples; implementation under review"
+    },
+    "pngComparator": {
+      "directory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/website-png-comparator-vz5Kvx",
+      "playwright": "1.64.1",
+      "maxDiffPixels": 5,
+      "threshold": "unchanged default 0.2",
+      "006": "passed against original PNG",
+      "001": "rejected, 82 comparator pixels exceeds5",
+      "browserLaunched": false
+    },
+    "remaining": "Website frozen acceptance, template final pipeline, portable/HTML frozen checks, final extended quality/multi-platform, applicable exact-head CI and formal Uni performance; PR1320 is not ready to merge."
   }
 }

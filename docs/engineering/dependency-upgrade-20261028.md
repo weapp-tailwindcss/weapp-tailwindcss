@@ -178,3 +178,16 @@ TOC 只读就绪合同已整合为 `3d5c94912`，53 项定向单测、33 项 Chr
 七模板外部消费在准确 `b5b3709c5b9275a4908cf4e6fad60a862ae78c36`、新扩展预检 `35c9ef4a-f233-4aca-9608-8f4911dcf8cc` 的当前会话 computer use、verify 和单次领取后重跑，报告为 `copied-template-verification/run-AkzoMa/report.json`。前七个可执行目标通过：Mpx wx，以及 Taro Vite 的 weapp/swan/alipay/tt/qq/jd。第八个 Taro Vite Harmony Hybrid 的 `build:harmony-hybrid` 构建命令 exit0、进程清理通过，但 Web CSS 合同仍发现 `_b…_B` 编码 class，目标验收失败；六份原产物已按 manifest 的字节与 SHA 复核。后续八个可执行目标未运行，两份 Taro RN 与 Vue2 quickapp-native 的三个原有能力缺口仍 pending。不能仅删除 CSS 断言就宣称 Web 单位、主题作用域及 class/CSS 配套通过；原报告、产物和失败副本保留，七模板整体验收未完成。
 
 网站在同一准确 b5b、新扩展预检 `8c2f6cb6-e542-4f51-97e8-9e75c2aa26e4` 的当前会话 computer use、verify 和单次领取后采集，英文 `build` 与中文 `build/zh-cn` 真实生产构建均成功。随后 Playwright `--list` 加载真实 `index.spec.ts` 的 CommonJS 导入链时，TOC `site-policy.ts` 的 `import.meta` 报 `SyntaxError: Cannot use import.meta outside a module`，尚未启动截图测试，采集截图为 0。失败候选 `website-visual-candidate-1793221869708/` 原样保留，仅含 capture-started、capture-failed 与生成配置；未执行审查、安装或禁更。先前 33 项 TOC fixture 未覆盖这条真实导入链，不能用其通过替代本次入口失败；修复后仍须准确新 head 的新预检和完整采集、审查、安装、禁止更新复验。
+
+
+## Web 单位生成修复与截图过程取证
+
+共享 Web 生成流程漏掉显式单位转换，已在负责 CSS 转换的 PostCSS 层修复（`5a5609ced`）。两个包真实构建通过；生成器、增量/缓存、Vite 阶段及真实 Vite/Webpack 构建共 16 项通过，覆盖同单位缩放和回到原单位的非幂等管线，未在消费者手动补转换。真实回归首次发现测试读取 Webpack emit 后的 SizeOnlySource 和固定 CSS 空白两项夹具问题，`ae6aff2fe` 改为读取真实产物并断言语义，首错保留。
+
+模板源码及 npm 发布版模式各 4 项通过，但不等于框架最终产物通过。准确 `76649b1897f359e9b37df6cb0bb400ceb5ea4877` 经新扩展预检 `ae9b61ff-72b5-4255-bd83-fae019d0840e`、本会话真实交互、verify 与单次领取重跑复制模板矩阵，前九目标通过，第十个 Webpack Harmony Hybrid 构建 exit0 后仍残留 `margin-top: 8rpx`，后六目标未执行。模板 h5.postcss 的转换没有覆盖发布版后续生成的样式，正在按真实 Webpack 资产生命周期修复，不能用上述纯组合测试代替最终构建。原三个 RN/签名能力缺口仍单列 pending。报告、原产物及失败副本保留于 `copied-template-verification/run-XCuQyV/`。
+
+网站截图的八项引擎对照使用独立新预检 `eee9adb6-c883-47f1-b033-aa69430e7741`，原 fixture、原生 fullPage、原 60 秒预算及零重试全部保留。shell llms 的真实协议请求期间记录到 1×1 视口、TOC 移除/重建及新 transition；前后 ready 无法排除该过程。官方 Chromium 同轮未记录此重建，但共享源码仍有该临时尺寸逻辑，不能推导切换引擎已经解决。第九项独立 CDP false/fullclip 候选虽有正确 PNG 尺寸及相同顶部 720 像素，离屏色带和底部标记却全白，明确拒绝采用；整轮是诊断失败，不是视觉禁更通过。下一修复观察完整捕获期，并要求两张连续、完整、未受扰动的 RGBA 相等，仍须真实 fixture、完整候选和禁更验证。
+
+展示页 006 的轻微变化已用已安装 Playwright 1.64.1 的真实 PNG 比较器、原 maxDiffPixels=5 与未覆盖的默认 threshold=0.2 验证通过；001 目录颜色控制实际被拒绝（82 比较器像素），没有放宽门槛或修改原 PNG。新基线仍未安装。
+
+本地代理借用可写依赖目录另造成 62 个命令 shim 指向临时 worktree；主任务以固定锁文件、离线 force install 重新生成，62/62 恢复，随后两个包构建与上述回归通过。源码提交未损坏，隔离边界和恢复证据见[worktree 依赖目录复盘](lessons/worktree-node-modules-isolation.md)。完整多端、107 portable/8 HTML 禁更、全部模板及准确最终 head 的适用 CI（含 Uni 正式性能）仍未完成，PR #1320 继续保持未合并。
