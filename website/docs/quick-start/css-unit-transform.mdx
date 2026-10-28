@@ -39,7 +39,7 @@ WeappTailwindcss({
 
 ## px 转 rpx
 
-从 `weapp-tailwindcss@4.3.0` 开始，插件内置了 [`postcss-pxtransform`](https://www.npmjs.com/package/postcss-pxtransform)。需要 `px` 转 `rpx` 时，在 `cssOptions` 中开启 `px2rpx`：
+`px2rpx` 由内置的 [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans) 提供。需要 `px` 转 `rpx` 时，在 `cssOptions` 中开启 `px2rpx`：
 
 ```js
 // vite
@@ -80,7 +80,34 @@ WeappTailwindcss({
 })
 ```
 
-更多参数看 [`postcss-pxtransform`](https://www.npmjs.com/package/postcss-pxtransform)。不要为了单位转换再把 Tailwind CSS 官方 PostCSS 插件注册进来，小程序样式生成仍然由 `weapp-tailwindcss` 接管。
+开启 `px2rpx` 后，`var()` fallback 中的 `px` 也会按相同倍率转换，同时保留变量名、变量引用关系、字符串和 URL。例如，使用上面的 375 设计稿配置时：
+
+```css
+.nut { height: var(--nutui-48px, 48px); }
+```
+
+输出为：
+
+```css
+.nut { height: var(--nutui-48px, 96rpx); }
+```
+
+嵌套的 `var()` 和 `calc()` fallback 同样参与转换。需要沿用整段跳过 `var()` 的旧行为时，显式设置 `transformVarFallbacks: false`：
+
+```js
+WeappTailwindcss({
+  cssOptions: {
+    px2rpx: {
+      designWidth: 375,
+      transformVarFallbacks: false,
+    },
+  },
+})
+```
+
+`transformVarFallbacks` 在 `weapp-tailwindcss` 的 `px2rpx` 中默认开启；直接使用 `postcss-pxtrans` 时默认关闭。该设置仅控制 `px2rpx`，`rem2rpx` 仍遵循各自配置。
+
+更多参数看 [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans)。不要为了单位转换再把 Tailwind CSS 官方 PostCSS 插件注册进来，小程序样式生成仍然由 `weapp-tailwindcss` 接管。
 
 ## 多单位转 px
 

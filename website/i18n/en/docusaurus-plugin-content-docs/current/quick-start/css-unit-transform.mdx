@@ -42,7 +42,7 @@ Successful unit conversion does not guarantee correct sizing for `calc(var(--spa
 
 ## px to rpx
 
-Starting with `weapp-tailwindcss@4.3.0`, the plugin has [`postcss-pxtransform`](https://www.npmjs.com/package/postcss-pxtransform) built-in. When you need to convert `px` to `rpx`, open `cssOptions` in `px2rpx`:
+`px2rpx` uses the built-in [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans) plugin. To convert `px` to `rpx`, enable `px2rpx` in `cssOptions`:
 
 ```js
 // vite
@@ -83,7 +83,34 @@ WeappTailwindcss({
 })
 ```
 
-See [`postcss-pxtransform`](https://www.npmjs.com/package/postcss-pxtransform) for more parameters. Do not register the Tailwind CSS official PostCSS plug-in for unit conversion. The mini program style generation is still taken over by `weapp-tailwindcss`.
+With `px2rpx` enabled, `px` values in `var()` fallbacks use the same conversion ratio. Variable names, variable references, strings, and URLs are preserved. For example, with the 375-wide design configuration above:
+
+```css
+.nut { height: var(--nutui-48px, 48px); }
+```
+
+The output is:
+
+```css
+.nut { height: var(--nutui-48px, 96rpx); }
+```
+
+Nested `var()` and `calc()` fallbacks are converted too. Set `transformVarFallbacks: false` to retain the previous behavior of skipping complete `var()` functions:
+
+```js
+WeappTailwindcss({
+  cssOptions: {
+    px2rpx: {
+      designWidth: 375,
+      transformVarFallbacks: false,
+    },
+  },
+})
+```
+
+`transformVarFallbacks` defaults to `true` in `weapp-tailwindcss`'s `px2rpx` configuration, and to `false` when using `postcss-pxtrans` directly. This setting only controls `px2rpx`; `rem2rpx` follows its own configuration.
+
+See [`postcss-pxtrans`](https://www.npmjs.com/package/postcss-pxtrans) for more parameters. Do not register the Tailwind CSS official PostCSS plug-in for unit conversion. The mini program style generation is still taken over by `weapp-tailwindcss`.
 
 ## Convert multiple units to px
 
