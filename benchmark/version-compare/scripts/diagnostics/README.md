@@ -106,3 +106,20 @@ Taro 的 input / allocation 两种显式模式同时启用尾部数值观测，�
 资产只统计全资产与脚本的数量和 UTF-8 字节，不复制 CSS、JS、AST 或 sourcemap 全文，不读取用户 opts 或额外调用 cssMatcher。无法从已知元数据确定的 CSS 数量和字节、sourcemap 序列化大小及未观测到的 styleHandler 调用次数保持 `unknown`；不能用文件名启发式分类。候选、sourceId、生成次数及请求 CSS 全文复用同序列的 `source.snapshot` 和已有生成操作，不重复扫描或额外调用 handler。reporter 是否可能压缩或序列化 map，应读取本次 resolved `logLevel/reportCompressedSize/ssr/sourcemap`，不能从框架名猜测。
 
 每进程最多 64 个尾部事件、每次最多 4096 个资产；仍共用原操作事件数与文件/会话字节预算。没有强制 GC、额外构建、采样间隔或正式阈值变更。阶段结束与实际 RSS 峰的时序需要在同次诊断中对照；诊断 fixture 成功不表示 Taro 性能回归已修复。
+
+
+## Uni HMR 的 bundle 输入补证
+
+只有 Uni 微信目标的 `input_diagnostics=true` 注册本节观察器，普通 PR、自然 GC 和 allocation 模式不插入这层观察。沿用已有完整 Git 基线、单项目和固定 3 build / 同 watcher 3 次修改回滚；Node 固定 22.23.4，不启用 inspector。准备只写无 Git 的副本，并在写任何文件前验证全部实际 AST 锚点。入口示例（`PR_BRANCH` 须绑定本次待诊断准确提交，基线示例为本轮首败的实际 base）：
+
+```sh
+gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=e769e69b97c88b379a80d3cabca4fa20330b999a -f only=demo-uni-app-vite-tailwindcss-v4__mp-weixin -f build_runs=3 -f hmr_runs=3 -f input_diagnostics=true
+```
+
+新增事件继续写入控制器拥有的 `operation-N.json` 和 `text-<sha256>.json`，不是 bundler 输出；不写入、扫描或读回 `dist` 来还原源码。`uni.bundle.input` 在原 shouldProcessBundle 早退之后、实际处理的 generateBundle hook 入口归档 asset/chunk 的原始字符串或二进制字节；二进制按规范 base64 保存，并独立核原字节 SHA。`uni.snapshot` 在既有 snapshot 建立后、任何 entry 任务启动前保存处理器真正消费的 `entry.source` 字符串、SHA、UTF-8/UTF-16 长度，以及 processFiles、changedByType、runtimeAffectingChangedByType、linkedImpactsByEntry、removedFiles、omitted-known-files 和增量模式。两层输入不可互相替代。
+
+`uni.plan`、`uni.selection` 与 `uni.cache` 记录既有计划结果、实际早退分支和 callback；不再次查询 cache 或调用用户 matcher。local hit、last-result hit、clean JS direct replay、processed reuse、shared attempt、shared result、transform entered 和 cancelled 保持各自语义；发现 shared task 不能代表最终复用成功，共享任务撤销后的真实重算仍留存。CSS 归一化、root/source/composition/decision/cache plan、JS plan/precheck/handler 等原调用使用成对 phase 事件。既有 `entries.plan`、`tasks` 与 metrics 原样附在 `uni.plan.complete`。它们是重叠的墙钟片段，不能相加作 CPU 开销。每个实际处理的 hook 使用独立 AsyncLocalStorage 身份并固定开始阶段，所有异步 factory 继承所属 bundle，并与实际 Vite finalization 一一绑定；timing 输出后控制器切换 rollback 不会重新归属该 bundle。正常 skip prehook 不虚构编译。
+
+`uni.dependencies` 被动检查同一 worker 已完成的 CJS Module 缓存，记录实际 physical 文件、包身份、package SHA 和观测时文件 SHA；只将这些项标为 `loaded-cjs-cache`。按 importer 解析的 CLI、Vite 内部 Rollup/PostCSS 和主包依赖另列为 `resolved-only`，不会为了补证执行依赖。ESM 注册表、被 bundle 内联的模块、尚未使用的入口没有公开只读枚举依据时，逐项写入 `missingEvidence`；不能从 resolve 或锁文件推出 loaded，也不能从加载推出调用或 CPU 归属。文件 SHA 是观测时磁盘字节，不证明加载时字节；登记的 wrapper 身份也不证明 Rollup/Oxc 等原生后端已被覆盖，未登记的 backend 保持缺证。读取及原有事件/归档预算超限即失败，不截断放行。
+
+控制器复核原始字节与处理器文本、每份输入/规划/完成唯一性、bundle 生命周期和实际 finalization 关系；缺失或未知结构阻断。原有 3 build 各一份、watch 8 份与双侧 11 个阶段对照继续执行。还须人工核对 run head、`versions.json`/controller 的准确 sourceCommit、worker Node/entry/preload SHA、清洁工作树和实际 mutation/rollback SHA。同步归档、哈希、Promise 包装及上下文传播都有观察成本；没有 observer 时不求值诊断详情、不增加 await。诊断保持 `diagnosticOnly=true`、`budgetAcceptance=false`，不能替代未插桩的正式性能门禁，不能据一次 profile 直接认定某个依赖为根因。

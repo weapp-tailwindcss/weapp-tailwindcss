@@ -8,6 +8,8 @@ import { guardDiagnosticObserver } from './observer-guard.mjs'
 import { generationTargets, instrumentOperationSource } from './operation-instrumentation.mjs'
 import { instrumentViteTailSource } from './vite-tail-instrumentation.mjs'
 import { viteTailProject } from './vite-tail-observer.mjs'
+import { instrumentUniInputSource, uniInputTargets } from './uni-instrumentation.mjs'
+import { uniInputProject } from './uni-observer.mjs'
 
 const targets = [
   { relative: 'packages/weapp-tailwindcss/src/project-sources/candidates/store.ts', kind: 'store', name: 'createSourceCandidateStore' },
@@ -70,13 +72,13 @@ export function instrumentDiagnosticSource(source, target) {
       throw new Error('Vite 完成边界缺失实际候选集合')
     }
     start = end = endings[0].getStart(ast)
-    replacement = `await ${observer}.compilation({ ${names.join(', ')} })\n  `
+    replacement = `${target.uniInputs ? `if (${observer}?.uniInput !== undefined) ${observer}.uniInput.completed({ metrics, timingDetails });\n  ` : ''}await ${observer}.compilation({ ${names.join(', ')} })\n  `
   }
   const instrumented = source.slice(0, start) + replacement + source.slice(end)
   return { source: target.kind === 'compilation' ? guardDiagnosticObserver(instrumented, target.relative) : instrumented, anchor: { function: target.name, kind: target.kind, offset: start } }
 }
 
-export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory, project) {
+export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory, project, mode) {
   const realRoot = await fs.realpath(root)
   if (realRoot === await fs.realpath(sourceRoot)) {
     throw new Error('拒绝向源码工作树注入诊断')
@@ -93,9 +95,14 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
   const prepared = []
   const selected = project === mpxProject
     ? [targets[0], ...mpxTargets.map(([kind, relative]) => ({ kind, relative }))]
-    : [...targets, ...generationTargets.map(([kind, relative]) => ({ kind, relative }))]
+    : [...targets.map(target => ({ ...target })), ...generationTargets.map(([kind, relative]) => ({ kind, relative }))]
   if (project === viteTailProject) {
     selected.push({ kind: 'vite-tail-css', relative: 'packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/plugin.ts' })
+  }
+  const uniInputs = project === uniInputProject && mode === 'inputs'
+  if (uniInputs) {
+    selected.find(target => target.kind === 'compilation').uniInputs = true
+    selected.push(...uniInputTargets.map(([kind, relative]) => ({ kind: `uni-${kind}`, relative })))
   }
   const absentCapabilities = []
   for (const target of selected) {
@@ -111,7 +118,9 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
       }
       throw error
     }
-    const transformed = target.kind === 'vite-tail-css'
+    const transformed = target.kind.startsWith('uni-')
+      ? instrumentUniInputSource(source, target.kind.slice(4), target.relative)
+      : target.kind === 'vite-tail-css'
       ? instrumentViteTailSource(source, 'css', target.relative)
       : target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
     prepared.push({ target, file, original: source, ...transformed })
