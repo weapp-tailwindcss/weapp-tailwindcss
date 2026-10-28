@@ -658,5 +658,50 @@
       "diff": "toolchain versions/catalog identity updated; flex-shorthand-shrink encoded flex-basis changes 0 to 0%; native layout/pixel verification remains pending"
     },
     "remaining": "Full local workflow and applicable current-head CI/CD remain pending; process observer and watcher cleanup failures are being diagnosed."
-  }
+  },
+  "prFollowupRounds": [
+    {
+      "head": "9d8636e3a14e6f89bbe71ba0b7d3c87fbe4d9918",
+      "preflightRun": "be08895f-b917-4c75-a173-b414473b98a4",
+      "preflightStatus": "extended probes, current-session computer use and verify passed; workflow claimed once",
+      "workflow": {
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/full-workflow-pr-9d8636e3a.log",
+        "logSha256": "3492b60f836540f8333b7332b95e488d418f6fa90cde3ba3735df6e3657e3b5e",
+        "exitCode": 1,
+        "rootBuild": {
+          "status": "passed",
+          "tasks": 71,
+          "includesCacheReplays": true
+        },
+        "firstFailedStage": "quality all unit tests",
+        "testFiles": {
+          "passed": 1129,
+          "failed": 2,
+          "skipped": 5
+        },
+        "tests": {
+          "passed": 11897,
+          "failed": 3,
+          "expectedFail": 1,
+          "skipped": 44
+        },
+        "remainingStagesNotExecuted": 55
+      },
+      "targetedFixVerification": {
+        "source": "head plus subsequent task changes; not a full workflow pass",
+        "checks": [
+          {
+            "command": "CI=1 pnpm exec vitest run --project @weapp-tailwindcss/test-helper packages/test-helper/test/update-packages/runner.test.ts packages/test-helper/test/update-packages/snapshot.test.ts --update=none",
+            "exitCode": 0,
+            "testsPassed": 32
+          },
+          {
+            "command": "CI=1 pnpm exec vitest run --project @weapp-tailwindcss/minify-preserve packages/minify-preserve/test/bundler-config.test.ts --update=none",
+            "exitCode": 0,
+            "testsPassed": 4
+          }
+        ]
+      }
+    }
+  ]
 }

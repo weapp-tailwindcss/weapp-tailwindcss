@@ -77,3 +77,12 @@ Expo 58、Vue Router 5、Pinia 4、Execa/Chokidar/jsdom/pako 新主版本，以�
 - Vue 2 模板新增 360 必需构建 case，保持 Vue 3 矩阵独立。`CI=1 E2E_TEMPLATE_CASE='uni-app-webpack-tailwindcss-v4 mp-360$' pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/templates-build-smoke.test.ts --update=none` 的 2 项通过，确认 H5 派生的 app.js/app.json/app.css、360 页面清单及源码 class/CSS 颜色；不声称 360 宿主运行时通过。首次测试对独立 CSS 文件的路径预期不准确，已依据实际 bundle 修正为合并后的 app.css，原失败日志保留。
 
 远端 Windows 身份采集首请求和 macOS watch 收尾超时仍在诊断，不能放宽门槛或把清理未知状态视作成功。完整本地流程、其余 static 定向更新/禁更复验、适用 CI/CD 和全部真实平台验收尚未完成，暂不合并。
+
+## PR 后续本地验收
+
+head `9d8636e3a14e6f89bbe71ba0b7d3c87fbe4d9918` 使用新预检 `be08895f-b917-4c75-a173-b414473b98a4`，扩展脚本探针、当前会话 computer use 和 verify 全部通过。完整入口第一阶段根构建通过（71 个任务，含缓存重放）；第二阶段全仓单测为 1129 文件通过、2 文件失败、5 文件跳过，11897 项通过、3 项失败、1 项预期失败、44 项跳过。失败后停止，后续 55 阶段未执行。
+
+- test-helper 的合成 fixture 仅写 pnpm importer，没有真实工具包元数据，仍遗留旧工具版本。新版 pnpm 重新解析工具依赖时，请求被假 registry 错误回答成 `@fixture/a`。仅改版本仍不足以修复：最终从根真实锁复制完整工具文档并对齐 `packageManager`，保留测试显式覆盖版本的能力；registry 只响应已提供的包，未知请求返回 404。真实 `pnpm change status` 和依赖快照共 32 项通过。
+- Webpack 5.112.2 不再输出未使用的 export runtime，默认压缩函数名随之变化。先增加实际执行断言，确认普通压缩返回改写后的函数名、`keep_fnames` 返回 `weappTwIgnore`，再仅更新对应快照。四种压缩配置的 4 项测试在禁止更新模式通过，公开实现未改变。
+
+定向命令为 `CI=1 pnpm exec vitest run --project @weapp-tailwindcss/test-helper packages/test-helper/test/update-packages/runner.test.ts packages/test-helper/test/update-packages/snapshot.test.ts --update=none` 和 `CI=1 pnpm exec vitest run --project @weapp-tailwindcss/minify-preserve packages/minify-preserve/test/bundler-config.test.ts --update=none`。上述结果包含 head 后的本轮未提交修复；完整验收仍须在提交与 static 更新后重新预检。
