@@ -24,129 +24,132 @@
           "lockSha256": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
           "originalPackageManager": "pnpm@12.14.0",
           "temporaryAuditPackageManager": "pnpm@12.15.0",
-          "temporaryModification": "仅临时 manifest 的 packageManager 设为 12.15.0；未安装。工具可能迁移锁 doc0，业务 doc1 逐字节保持原始锁。",
+          "temporaryModification": "只修改临时 manifest 的 packageManager；工具 doc0 迁移，业务 doc1 字节相同；无安装。",
           "commands": {
             "audit": {
               "command": [
-                "pnpm-native@12.15.0",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
                 "audit",
                 "--json"
               ],
+              "semanticCommand": [
+                "pnpm",
+                "audit",
+                "--json"
+              ],
+              "startedAt": "2026-10-28T16:31:42.772218+00:00",
+              "finishedAt": "2026-10-28T16:32:01.615634+00:00",
+              "elapsedSeconds": 18.843,
               "exitCode": 1,
               "timedOut": false,
-              "elapsedSeconds": 16.141,
-              "stdout": {
-                "file": "evidence/baseline/mpx-tailwindcss-v4/audit.json",
-                "bytes": 482211,
-                "sha256": "80d31b3226661169c5feb5c5f4047bf02e637e15bc327e577a0432f61f3b63ac"
-              },
-              "stderr": {
-                "file": "evidence/baseline/mpx-tailwindcss-v4/audit.stderr.log",
-                "bytes": 0,
-                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-              },
               "lockSha256Before": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
               "lockSha256After": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
               "lockUnchanged": false,
-              "valid": true,
+              "businessDocumentSha256Before": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
+              "businessDocumentSha256After": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
               "parseError": null,
-              "summary": {
-                "metadata": {
-                  "vulnerabilities": {
-                    "info": 0,
-                    "low": 8,
-                    "moderate": 59,
-                    "high": 61,
-                    "critical": 3
-                  },
-                  "dependencies": 70,
-                  "devDependencies": 1314,
-                  "optionalDependencies": 111,
-                  "totalDependencies": 1399
+              "stdout": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-mpx/audit.json",
+                "bytes": 488419,
+                "sha256": "e29dc279f43cab2cb15a01506d8087cab0d94982aa6756fa0f494984cd7c800e"
+              },
+              "stderr": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-mpx/audit.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "metadata": {
+                "vulnerabilities": {
+                  "info": 0,
+                  "low": 8,
+                  "moderate": 59,
+                  "high": 61,
+                  "critical": 3
                 },
-                "advisoryRecords": 131
+                "dependencies": 70,
+                "devDependencies": 1314,
+                "optionalDependencies": 111,
+                "totalDependencies": 1399
               },
-              "businessLockUnchanged": true,
-              "documentProof": {
-                "documents": 2,
-                "originalSha256": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
-                "afterSha256": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
-                "toolingDocumentOriginalSha256": "664931dd8e8442f88ed32d130880c73ede04c8ba79e6b99a893e7a10db107f59",
-                "toolingDocumentAfterSha256": "a23011e6373e436d886269b0d72aa29287d5f4245f4dc162d55930f1d47fc149",
-                "businessDocumentOriginalSha256": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
-                "businessDocumentAfterSha256": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
-                "businessDocumentByteIdentical": true,
-                "changedDocumentScope": "doc0 只有 packageManagerDependencies、pnpm 与 @pnpm/exe 平台工具包；业务 doc1 字节完全相同。"
-              },
-              "auditedLock": "evidence/baseline/mpx-tailwindcss-v4/audit.audited-lock.yaml"
+              "advisoryRecords": 131,
+              "error": null
             },
             "peers": {
               "command": [
-                "pnpm-native@12.15.0",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
                 "peers",
                 "check",
                 "--lockfile-only",
                 "--json"
               ],
+              "semanticCommand": [
+                "pnpm",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "startedAt": "2026-10-28T16:32:01.616441+00:00",
+              "finishedAt": "2026-10-28T16:32:01.646395+00:00",
+              "elapsedSeconds": 0.03,
               "exitCode": 1,
               "timedOut": false,
-              "elapsedSeconds": 0.075,
+              "lockSha256Before": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
+              "lockSha256After": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
+              "lockUnchanged": true,
+              "businessDocumentSha256Before": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
+              "businessDocumentSha256After": "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
+              "parseError": null,
               "stdout": {
-                "file": "evidence/baseline/mpx-tailwindcss-v4/peers.json",
-                "bytes": 1882,
-                "sha256": "e082af82161f39f03d39a45d8d412c8508eb19ff42c553253fc7ce2cb8b6c269"
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-mpx/peers.json",
+                "bytes": 1664,
+                "sha256": "7d520c98d2f2bccae14c1951708af3e9ecfb6f3d50167b66d1870fe431c69fb3"
               },
               "stderr": {
-                "file": "evidence/baseline/mpx-tailwindcss-v4/peers.stderr.log",
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-mpx/peers.stderr.log",
                 "bytes": 0,
                 "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
               },
-              "lockSha256Before": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
-              "lockSha256After": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
-              "lockUnchanged": false,
-              "valid": true,
-              "parseError": null,
-              "businessLockUnchanged": true,
-              "documentProof": {
-                "documentsBefore": 2,
-                "documentsAfter": 2,
-                "originalSha256": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
-                "afterSha256": "f18f2813980a7e30e896916e3e9bed708afba60f3d79029d134e8aad8d669277",
-                "documentSha256Before": [
-                  "664931dd8e8442f88ed32d130880c73ede04c8ba79e6b99a893e7a10db107f59",
-                  "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158"
-                ],
-                "documentSha256After": [
-                  "a23011e6373e436d886269b0d72aa29287d5f4245f4dc162d55930f1d47fc149",
-                  "0933bd74ab88b9a621ae8390e0709ea4fbac223802b8e84fcbf6ddc3eec3a158"
-                ],
-                "businessDocumentByteIdentical": true,
-                "changedDocumentScope": "仅 doc0 pnpm 工具元数据；业务 doc1 逐字节相同。"
-              },
-              "auditedLock": "evidence/baseline/mpx-tailwindcss-v4/peers.audited-lock.yaml",
-              "summary": {
-                "projects": 1,
-                "bad": 3,
-                "missing": 0,
-                "optional": 0
-              }
+              "projects": 1
             }
           }
         },
         "current": {
           "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
-          "lockSha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+          "lockSha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
           "lockUnchanged": true,
           "packageManager": "pnpm@12.15.0",
           "commands": {
             "audit": {
-              "command": "pnpm audit --json",
+              "command": [
+                "pnpm",
+                "audit",
+                "--json"
+              ],
+              "startedAt": "2026-10-28T16:24:18.718818+00:00",
+              "finishedAt": "2026-10-28T16:26:56.461708+00:00",
+              "elapsedSeconds": 157.742,
               "exitCode": 1,
+              "timedOut": false,
+              "lockSha256Before": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+              "lockSha256After": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+              "lockUnchanged": true,
               "validJson": true,
-              "validReport": true,
-              "stderrBytes": 0,
-              "bytes": 465285,
-              "sha256": "f238818a7fce588fa11648a9bc8b35ff180e9dd01304c64de36b435d0b6502e7",
+              "parseError": null,
+              "stdout": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/mpx/audit.json",
+                "bytes": 469712,
+                "sha256": "b03417ba0dcf2de32a4f2ca39f7a5d922f04b2f1b5087c02f99809f1bb6fd4b0"
+              },
+              "stderr": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/mpx/audit.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
               "metadata": {
                 "vulnerabilities": {
                   "info": 0,
@@ -160,21 +163,40 @@
                 "optionalDependencies": 111,
                 "totalDependencies": 1388
               },
-              "advisories": 119,
-              "file": "evidence/current/mpx-tailwindcss-v4/audit.json"
+              "advisoryRecords": 119,
+              "error": null
             },
             "peers": {
-              "command": "pnpm peers check --lockfile-only --json",
+              "command": [
+                "pnpm",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "startedAt": "2026-10-28T16:26:56.462480+00:00",
+              "finishedAt": "2026-10-28T16:26:56.543063+00:00",
+              "elapsedSeconds": 0.081,
               "exitCode": 0,
+              "timedOut": false,
+              "lockSha256Before": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+              "lockSha256After": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+              "lockUnchanged": true,
               "validJson": true,
-              "validReport": true,
-              "stderrBytes": 0,
-              "bytes": 96,
-              "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7",
-              "projects": 1,
-              "bad": 0,
-              "missing": 0,
-              "file": "evidence/current/mpx-tailwindcss-v4/peers.json"
+              "parseError": null,
+              "stdout": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/mpx/peers.json",
+                "bytes": 96,
+                "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7"
+              },
+              "stderr": {
+                "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/mpx/peers.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "keys": [
+                "."
+              ]
             }
           }
         }
@@ -400,10 +422,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-22jm-h49p-29qw"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -426,10 +444,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-23c5-xmqv-rm74"
-            ],
-            "logicalPathCount": 5,
-            "affectedVersions": [
-              "9.0.5"
             ]
           },
           {
@@ -452,10 +466,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-25h7-pfq9-p65f"
-            ],
-            "logicalPathCount": 42,
-            "affectedVersions": [
-              "3.3.3"
             ]
           },
           {
@@ -481,11 +491,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-27r3-jxmh-p828"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "1.20.5",
-              "2.3.0"
             ]
           },
           {
@@ -508,10 +513,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-2p49-hgcm-8545"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "2.8.2"
             ]
           },
           {
@@ -534,10 +535,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-2wm5-q62r-hmrv"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "2.9.3"
             ]
           },
           {
@@ -560,10 +557,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-333x-w4r6-6crp"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -586,11 +579,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-395f-4hp3-45gv"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "1.8.3",
-              "1.8.4"
             ]
           },
           {
@@ -616,12 +604,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -644,10 +626,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-3ppc-4f35-3m26"
-            ],
-            "logicalPathCount": 5,
-            "affectedVersions": [
-              "9.0.5"
             ]
           },
           {
@@ -670,10 +648,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-3pq3-5fj3-cg6v"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -696,10 +670,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-42h9-826w-cgv3"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -722,10 +692,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-44g4-m2mj-wpvx"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -748,10 +714,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-46jr-4wx8-v453"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -774,10 +736,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-4c8g-83qw-93j6"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -800,10 +758,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-4hqw-qxg8-jxx2"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -826,10 +780,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "6.15.2"
             ]
           },
           {
@@ -852,10 +802,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-4v9v-hfq4-rm2v"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -878,10 +824,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-4vpr-x523-8j87"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "2.8.2"
             ]
           },
           {
@@ -904,10 +846,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-542g-h47m-68v8"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -930,10 +868,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-566m-qj78-rww5"
-            ],
-            "logicalPathCount": 4,
-            "affectedVersions": [
-              "6.0.23"
             ]
           },
           {
@@ -956,11 +890,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-587h-7wmj-h5pm"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "2.12.0",
-              "2.14.1"
             ]
           },
           {
@@ -983,10 +912,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-5c6j-r48x-rmvq"
-            ],
-            "logicalPathCount": 7,
-            "affectedVersions": [
-              "6.0.2"
             ]
           },
           {
@@ -1009,10 +934,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-5j4c-8p2g-v4jx"
-            ],
-            "logicalPathCount": 69,
-            "affectedVersions": [
-              "2.7.16"
             ]
           },
           {
@@ -1035,10 +956,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-5r4p-p66f-jhc7"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "4.13.5"
             ]
           },
           {
@@ -1061,10 +978,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-64mm-vxmg-q3vj"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "2.0.9"
             ]
           },
           {
@@ -1087,11 +1000,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-698v-4r3x-3vcv"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "2.12.0",
-              "2.14.1"
             ]
           },
           {
@@ -1114,11 +1022,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6g55-p6wh-862q"
-            ],
-            "logicalPathCount": 9,
-            "affectedVersions": [
-              "6.0.23",
-              "7.0.39"
             ]
           },
           {
@@ -1141,10 +1044,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6h2x-m376-mqjq"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "17.13.4"
             ]
           },
           {
@@ -1170,12 +1069,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -1198,10 +1091,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "6.15.2"
             ]
           },
           {
@@ -1224,10 +1113,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6prh-2h8m-c8cw"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -1250,10 +1135,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6qxp-vccf-f47h"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -1276,10 +1157,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-6w3j-5fw6-r9vr"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "17.13.4"
             ]
           },
           {
@@ -1302,11 +1179,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-73wf-gq98-2v4g"
-            ],
-            "logicalPathCount": 106,
-            "affectedVersions": [
-              "4.28.1",
-              "4.28.2"
             ]
           },
           {
@@ -1329,10 +1201,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-79cf-xcqc-c78w"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -1355,11 +1223,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-7fh5-64p2-3v2j"
-            ],
-            "logicalPathCount": 9,
-            "affectedVersions": [
-              "6.0.23",
-              "7.0.39"
             ]
           },
           {
@@ -1382,10 +1245,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-7p8r-x3mc-p8w7"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -1408,10 +1267,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-7q8q-rj6j-mhjq"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1434,10 +1289,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-7r86-cg39-jmmj"
-            ],
-            "logicalPathCount": 5,
-            "affectedVersions": [
-              "9.0.5"
             ]
           },
           {
@@ -1460,10 +1311,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "1.4.0"
             ]
           },
           {
@@ -1486,10 +1333,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-8r9p-f939-6h3c"
-            ],
-            "logicalPathCount": 16,
-            "affectedVersions": [
-              "1.16.0"
             ]
           },
           {
@@ -1512,10 +1355,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-9fr6-4gfg-395g"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1538,10 +1377,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-9jgg-88mc-972h"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -1564,10 +1399,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-c29m-xwm3-cm6r"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1590,11 +1421,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-c83g-rgw3-j3cx"
-            ],
-            "logicalPathCount": 106,
-            "affectedVersions": [
-              "4.28.1",
-              "4.28.2"
             ]
           },
           {
@@ -1617,10 +1443,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f23m-r3pf-42rh"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "4.17.21"
             ]
           },
           {
@@ -1643,10 +1465,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f4gw-2p7v-4548"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1669,10 +1487,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f5vj-f2hx-8m93"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -1695,10 +1509,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f65p-4m7j-42xc"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -1721,10 +1531,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f886-m6hf-6m8v"
-            ],
-            "logicalPathCount": 5,
-            "affectedVersions": [
-              "2.0.2"
             ]
           },
           {
@@ -1747,10 +1553,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-f897-62hf-6gxq"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -1773,10 +1575,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-fph4-wmhf-6fwf"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -1799,11 +1597,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp"
-            ],
-            "logicalPathCount": 9,
-            "affectedVersions": [
-              "6.0.23",
-              "7.0.39"
             ]
           },
           {
@@ -1826,10 +1619,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-g84c-rxfj-3j2c"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "5.3.4"
             ]
           },
           {
@@ -1852,10 +1641,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-gcfj-64vw-6mp9"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1878,10 +1663,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-gg4h-3hg2-grpc"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "17.13.4"
             ]
           },
           {
@@ -1904,10 +1685,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-h3mg-xc3c-68pw"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "10.7.0"
             ]
           },
           {
@@ -1930,10 +1707,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-hcpx-6fm6-wx23"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -1956,10 +1729,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -1982,10 +1751,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-hxh3-vqpv-xpqv"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "4.13.5"
             ]
           },
           {
@@ -2008,10 +1773,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-j6r3-76f7-8jcv"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "10.7.0"
             ]
           },
           {
@@ -2034,10 +1795,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-j8rh-479h-cp32"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2060,10 +1817,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-jqcg-44mw-7w3h"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "2.0.7"
             ]
           },
           {
@@ -2086,10 +1839,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-jqff-g426-hqxp"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -2112,10 +1861,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-jqh4-m9w3-8hp9"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2138,10 +1883,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-m28w-2pqf-7qgj"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -2164,10 +1905,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-m5mm-p8h7-m29v"
-            ],
-            "logicalPathCount": 7,
-            "affectedVersions": [
-              "6.0.2"
             ]
           },
           {
@@ -2190,10 +1927,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-m8m8-qj5v-23w3"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2216,10 +1949,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mghh-pgcx-3jjj"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2245,12 +1974,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mh99-v99m-4gvg"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -2273,10 +1996,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mmx7-hfxf-jppx"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2299,10 +2018,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.5.4"
             ]
           },
           {
@@ -2325,10 +2040,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mwf2-3pr3-8698"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2351,10 +2062,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-mx8g-39q3-5c79"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "4.15.2"
             ]
           },
           {
@@ -2375,10 +2082,6 @@
             "patchedRanges": [],
             "urls": [
               "https://github.com/advisories/GHSA-pfq8-rq6v-vf5m"
-            ],
-            "logicalPathCount": 4,
-            "affectedVersions": [
-              "3.5.21"
             ]
           },
           {
@@ -2401,10 +2104,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-pmv8-rq9r-6j72"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2427,10 +2126,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-pqg4-j6r4-53mv"
-            ],
-            "logicalPathCount": 10,
-            "affectedVersions": [
-              "1.8.4"
             ]
           },
           {
@@ -2456,12 +2151,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -2484,10 +2173,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-q3jh-wrc6-jgq8"
-            ],
-            "logicalPathCount": 16,
-            "affectedVersions": [
-              "1.16.0"
             ]
           },
           {
@@ -2513,12 +2198,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -2541,10 +2220,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-qj8w-gfj5-8c6v"
-            ],
-            "logicalPathCount": 7,
-            "affectedVersions": [
-              "6.0.2"
             ]
           },
           {
@@ -2567,10 +2242,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-qw65-cvwx-89v3"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -2593,11 +2264,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-qx2v-qp2m-jg93"
-            ],
-            "logicalPathCount": 9,
-            "affectedVersions": [
-              "6.0.23",
-              "7.0.39"
             ]
           },
           {
@@ -2620,11 +2286,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-r28c-9q8g-f849"
-            ],
-            "logicalPathCount": 9,
-            "affectedVersions": [
-              "6.0.23",
-              "7.0.39"
             ]
           },
           {
@@ -2647,10 +2308,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-r4gj-5m52-g5wh"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -2673,10 +2330,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-r5fr-rjxr-66jc"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "4.17.21"
             ]
           },
           {
@@ -2699,11 +2352,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-r825-w8mm-5pxw"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "2.12.0",
-              "2.14.1"
             ]
           },
           {
@@ -2726,10 +2374,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-rf6f-7fwh-wjgh"
-            ],
-            "logicalPathCount": 42,
-            "affectedVersions": [
-              "3.3.3"
             ]
           },
           {
@@ -2755,12 +2399,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-rgw5-rvv9-x895"
-            ],
-            "logicalPathCount": 111,
-            "affectedVersions": [
-              "1.1.15",
-              "2.0.2",
-              "2.1.1"
             ]
           },
           {
@@ -2783,11 +2421,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-rj75-hqrm-r3gf"
-            ],
-            "logicalPathCount": 105,
-            "affectedVersions": [
-              "6.1.2",
-              "6.1.4"
             ]
           },
           {
@@ -2810,10 +2443,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-rvq5-wwqv-78pq"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "1.30.0"
             ]
           },
           {
@@ -2836,10 +2465,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-rxp7-6hxx-x8q5"
-            ],
-            "logicalPathCount": 1,
-            "affectedVersions": [
-              "10.7.0"
             ]
           },
           {
@@ -2862,10 +2487,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-v2hh-gcrm-f6hx"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -2888,10 +2509,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-v422-hmwv-36x6"
-            ],
-            "logicalPathCount": 4,
-            "affectedVersions": [
-              "1.20.5"
             ]
           },
           {
@@ -2914,10 +2531,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-v6wh-96g9-6wx3"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "2.12.0"
             ]
           },
           {
@@ -2940,10 +2553,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-vc2v-76pw-4v95"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "1.8.1"
             ]
           },
           {
@@ -2966,10 +2575,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
-            ],
-            "logicalPathCount": 4,
-            "affectedVersions": [
-              "0.2.2"
             ]
           },
           {
@@ -2992,10 +2597,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-vh66-26gq-q6x8"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -3018,10 +2619,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w27v-7q3p-w38r"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "2.8.2"
             ]
           },
           {
@@ -3044,10 +2641,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
-            ],
-            "logicalPathCount": 3,
-            "affectedVersions": [
-              "8.3.2"
             ]
           },
           {
@@ -3070,11 +2663,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w5vr-8v7q-w6rv"
-            ],
-            "logicalPathCount": 106,
-            "affectedVersions": [
-              "2.10.37",
-              "2.9.0"
             ]
           },
           {
@@ -3097,10 +2685,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w74x-v6f9-j3xg"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -3123,10 +2707,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w7jw-789q-3m8p"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "1.8.3"
             ]
           },
           {
@@ -3149,10 +2729,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-w9m9-85wc-3x92"
-            ],
-            "logicalPathCount": 5,
-            "affectedVersions": [
-              "6.1.2"
             ]
           },
           {
@@ -3175,10 +2751,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-wq5f-xc86-pv6w"
-            ],
-            "logicalPathCount": 52,
-            "affectedVersions": [
-              "0.35.4"
             ]
           },
           {
@@ -3201,10 +2773,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-wr44-6hxh-3jwq"
-            ],
-            "logicalPathCount": 6,
-            "affectedVersions": [
-              "17.13.4"
             ]
           },
           {
@@ -3227,10 +2795,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx"
-            ],
-            "logicalPathCount": 12,
-            "affectedVersions": [
-              "6.15.2"
             ]
           },
           {
@@ -3253,10 +2817,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-x97p-jq2g-jp4f"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -3279,10 +2839,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-xhq7-xmqj-769h"
-            ],
-            "logicalPathCount": 100,
-            "affectedVersions": [
-              "3.1.2"
             ]
           },
           {
@@ -3305,10 +2861,6 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-xj6q-8x83-jv6g"
-            ],
-            "logicalPathCount": 13,
-            "affectedVersions": [
-              "1.17.0"
             ]
           },
           {
@@ -3331,17 +2883,13 @@
             ],
             "urls": [
               "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg"
-            ],
-            "logicalPathCount": 2,
-            "affectedVersions": [
-              "4.17.21"
             ]
           }
         ],
         "pathDelta": {
-          "added": 1772,
-          "resolved": 1925,
-          "retained": 1636
+          "added": 1760,
+          "resolved": 1913,
+          "retained": 1648
         }
       },
       "peers": {
@@ -3377,46 +2925,6 @@
           },
           "added": [],
           "resolved": [
-            {
-              "project": ".",
-              "kind": "bad",
-              "dependency": "eslint",
-              "wantedRange": "^6.0.0 || ^7.0.0 || ^8.0.0",
-              "optional": false,
-              "parentNames": [
-                "@mpxjs/eslint-config-ts",
-                "@mpxjs/eslint-config",
-                "eslint-plugin-import",
-                "@typescript-eslint/parser"
-              ],
-              "foundVersions": [
-                "9.39.5"
-              ],
-              "parentVersionChains": [
-                [
-                  {
-                    "name": "@mpxjs/eslint-config-ts",
-                    "version": "1.0.10"
-                  },
-                  {
-                    "name": "@mpxjs/eslint-config",
-                    "version": "1.0.10"
-                  },
-                  {
-                    "name": "eslint-plugin-import",
-                    "version": "2.32.0"
-                  },
-                  {
-                    "name": "@typescript-eslint/parser",
-                    "version": "5.62.0"
-                  }
-                ]
-              ],
-              "resolvedFrom": [
-                []
-              ],
-              "rawOccurrences": 1
-            },
             {
               "project": ".",
               "kind": "bad",
@@ -3486,6 +2994,36 @@
                 []
               ],
               "rawOccurrences": 1
+            },
+            {
+              "project": ".",
+              "kind": "bad",
+              "dependency": "eslint",
+              "wantedRange": "^6.0.0 || ^7.0.0 || ^8.0.0",
+              "optional": false,
+              "parentNames": [
+                "@mpxjs/eslint-config-ts",
+                "@typescript-eslint/parser"
+              ],
+              "foundVersions": [
+                "9.39.5"
+              ],
+              "parentVersionChains": [
+                [
+                  {
+                    "name": "@mpxjs/eslint-config-ts",
+                    "version": "1.0.10"
+                  },
+                  {
+                    "name": "@typescript-eslint/parser",
+                    "version": "5.62.0"
+                  }
+                ]
+              ],
+              "resolvedFrom": [
+                []
+              ],
+              "rawOccurrences": 1
             }
           ],
           "retainedCount": 0,
@@ -3495,8 +3033,22 @@
             "baseline": {},
             "current": {}
           },
-          "algorithm": "主键含项目、bad/missing、依赖、wantedRange、optional与不带版本的父链；父包版本和foundVersion变化只记详情变化。相同父链的范围/optional变化单列requirementChanges，不机械计为新增/消失。conflicts/intersections原样保留，不静默丢弃。"
+          "algorithm": "以 project/kind/dependency/wantedRange/optional/父链包名分组，保留版本父链与 foundVersion；pnpm 的代表父链可能在等价图的重复采集中变化，added/resolved 不自动解释为实际依赖图新增/消失。"
         }
+      },
+      "refresh": {
+        "capturedAt": "2026-10-28T16:34:35.680054+00:00",
+        "previousLockSha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+        "sourceTemplateReport": {
+          "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/previous-tracked/dependency-upgrade-20261028.template-risks.json",
+          "bytes": 630139,
+          "sha256": "cc36ca92c7f66328549ce866bdde6caca736bc1dbb588052b8bca98c74b7208a"
+        },
+        "limitations": [
+          "pnpm 输出的父链是代表路径；路径 added/resolved 不自动等于真实依赖图新增/移除。",
+          "本轮 Mpx 当前锁与准确 e769 基线使用同一 pnpm 12.15.0，只读采集 audit 与 peers，未执行安装或构建。",
+          "当前 Mpx 锁完整 SHA 前后不变；准确基线仅在临时副本迁移工具 doc0，业务 doc1 逐字节相同。"
+        ]
       }
     },
     {
@@ -21330,6 +20882,24 @@
           "algorithm": "主键含项目、bad/missing、依赖、wantedRange、optional与不带版本的父链；父包版本和foundVersion变化只记详情变化。相同父链的范围/optional变化单列requirementChanges，不机械计为新增/消失。conflicts/intersections原样保留，不静默丢弃。"
         }
       }
+    }
+  ],
+  "refreshRounds": [
+    {
+      "capturedAt": "2026-10-28T16:34:35.680054+00:00",
+      "scope": [
+        "templates/mpx-tailwindcss-v4"
+      ],
+      "commandsCompleted": 4,
+      "originalReport": {
+        "file": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/previous-tracked/dependency-upgrade-20261028.template-risks.json",
+        "bytes": 630139,
+        "sha256": "cc36ca92c7f66328549ce866bdde6caca736bc1dbb588052b8bca98c74b7208a"
+      },
+      "rawEvidenceRoot": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks",
+      "artifactIndex": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/artifact-index.json",
+      "baselineDocumentProof": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-document-proof.json",
+      "note": "保留原七模板28条命令历史；本轮仅刷新Mpx最终锁，其他六模板输入锁未变化。"
     }
   ]
 }

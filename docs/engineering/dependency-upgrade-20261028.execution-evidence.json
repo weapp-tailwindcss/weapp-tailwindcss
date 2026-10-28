@@ -765,6 +765,39 @@
           }
         ]
       }
+    },
+    {
+      "head": "71a8b3c0720f3c7d16a824a947970cd404ca89b5",
+      "preflightRun": "1e6f819b-51ff-464d-9caf-1f11f85cff74",
+      "preflightStatus": "extended probes, current-session computer use, verify and single claim passed",
+      "workflow": {
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/full-workflow-pr-71a8b3c07.log",
+          "bytes": 458059,
+          "sha256": "cdc7775d324064288b566c427acb78a2c550069d1bfe4676b0afd1e8b86e1f46"
+        },
+        "exitCode": 1,
+        "passedStages": 23,
+        "totalStages": 57,
+        "firstFailedStage": "24 extended website browser runtime: missing installed visual baseline provenance/manifest.json",
+        "testFiles": {
+          "passed": 1131,
+          "skipped": 5
+        },
+        "tests": {
+          "passed": 11900,
+          "expectedFail": 1,
+          "skipped": 44
+        },
+        "rustTests": [
+          44,
+          17
+        ],
+        "realAbiCases": 14096,
+        "abiLifecycleAndFallbackCases": 7,
+        "remainingStagesNotExecuted": 33
+      },
+      "remaining": "网站基线需重采、人工审查和安装后禁止更新复验；107 portable、8 HTML变体、七模板复制消费及完整多端流程仍待完成。"
     }
   ],
   "staticFollowup": {
@@ -938,5 +971,170 @@
     "appDifference": "1835 rules unchanged; one equivalent placeholder branch adds .nut-input-placeholder, +22bytes; authored cyan/blue values and order unchanged",
     "conclusion": "Old special HTML baseline lagged in this verified case; page override boundary already existed. Not a rebuilt Vite or base without-mode conclusion.",
     "rawEvidence": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-taro-html-audit-dpuqUU/exact-base-theme-comparison.json"
+  },
+  "websiteVisualBaselineRecovery": {
+    "head": "71a8b3c0720f3c7d16a824a947970cd404ca89b5",
+    "preflightRun": "f580bcac-b14e-4a48-9c6e-2a2d217e9d08",
+    "capture": {
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-71a8b3c07.log",
+        "bytes": 7963102,
+        "sha256": "c54a713ce437cc9cddf3d89d04d2d895138c0c21de620e684cbb53d480f42440"
+      },
+      "exitCode": 0,
+      "passed": 1204,
+      "existingConditionalSkipped": 602,
+      "failed": 0,
+      "retried": 0,
+      "candidate": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793204171721",
+      "manifest": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793204171721/manifest.json",
+        "bytes": 602813,
+        "sha256": "56743b264e0bd2451f260980cb616b53ba2edd7335f515bbd2438eb9b285ef00"
+      }
+    },
+    "comparison": {
+      "artifact": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-review-71a8b3c07/comparison.json",
+        "bytes": 53301,
+        "sha256": "7c4785552876800a2f3708d556ae187dbd01247e704c8e291246b4801f606e5c"
+      },
+      "sameSha": 1174,
+      "changed": 30,
+      "added": 0,
+      "removed": 0,
+      "contractUnchanged": true,
+      "environmentUnchanged": true,
+      "skipSetUnchanged": true
+    },
+    "historicalPngRecovery": "283个worktree限定搜索无历史图；primary checkout的192张旧图逐项SHA与历史manifest比对，0匹配，无法进行变化项历史像素比较。",
+    "review": {
+      "observations": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-review-71a8b3c07/observations.json",
+        "bytes": 4214,
+        "sha256": "1a384a9903c00a27a14e7c7b86823dcc6f71407d1c2b4d0af4853f6eade8f2fa"
+      },
+      "rootFiguresActuallyViewed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "finding": "两份模板文档硬编码5.5.4而七模板实际声明^5.6.3；已改为以各模板package.json和锁文件为准，避免重复版本漂移。",
+      "decision": "不安装第一次candidate；在文档修正后的稳定提交重新正式采集并审查。"
+    },
+    "installed": false,
+    "noUpdateVerification": "pending"
+  },
+  "finalLockRiskRefresh": {
+    "rootLockSha256": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",
+    "mpxTemplateLockSha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+    "archiveReceipt": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/archive-receipt.json",
+      "bytes": 33552,
+      "sha256": "d8a4a23c0064ced53408a4e71404ed297423314dbfdb4d7c48725c9b7bbdcae5"
+    },
+    "baselineDocumentProof": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-document-proof.json",
+      "bytes": 1708,
+      "sha256": "a170f96ace8a2188f11ce7f11341c773f4aa3ad4627b51d79f5bb7f607500ad7"
+    },
+    "referenceCheck": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/candidate-reference-check.json",
+      "bytes": 3161,
+      "sha256": "46b7543891acafb28bf694fd3068306c017fe83e332b1308c2fef606a970915a"
+    },
+    "root": {
+      "auditRaw": [
+        404,
+        362
+      ],
+      "advisoryPackageGroups": [
+        346,
+        329
+      ],
+      "added": 3,
+      "removed": 20,
+      "retained": 326,
+      "peers": [
+        176,
+        40
+      ]
+    },
+    "mpxTemplate": {
+      "auditRaw": [
+        131,
+        119
+      ],
+      "addedGroups": 0,
+      "removedGroups": 7,
+      "peers": [
+        3,
+        0
+      ]
+    },
+    "limitations": "audit/peers只读采集，不替代安装、构建、回归；保留根首次180秒超时；父链代表路径变化不等同实际图变化。"
+  },
+  "ci71Followup": {
+    "head": "71a8b3c0720f3c7d16a824a947970cd404ca89b5",
+    "mergeCommit": "d2f1a99b6e35185da2ff21ae9f4b7be430afb7c0",
+    "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "windowsBoundedRerun": {
+      "run": 40719596104,
+      "attempt": 2,
+      "originalFailedJob": 122926804216,
+      "rerunJob": 122941731675,
+      "status": "success",
+      "reason": "turbo-network测试30007ms超时；watch未启动。同head其他runner309–489ms通过；仅一次受控重验476ms通过，首失败保留，未确认代码根因。"
+    },
+    "taroWebpackPerformance": {
+      "run": 40719596033,
+      "job": 122932912083,
+      "artifact": 12832347157,
+      "status": "success with observations",
+      "buildRssMedianMb": [
+        1300.3515625,
+        1367.75
+      ],
+      "growthPercent": 5.18309,
+      "growthMb": 67.3984375,
+      "mannWhitneyP": 0.35,
+      "blockingPThreshold": 0.05,
+      "limitation": "原门槛未改；统计条件不满足blocking，仍保留实际内存增长及HMR首次增长/反序确认结果，不继续刷性能。"
+    },
+    "uniVitePerformance": {
+      "run": 40719596033,
+      "job": 122932911986,
+      "artifact": 12831199256,
+      "status": "failure; root cause pending",
+      "pluginSteadyP95Ms": [
+        155,
+        168
+      ],
+      "growthPercent": 8.387,
+      "mainStage": "generateBundle 152/154→166/166ms",
+      "limitation": "缺真实bundler输入全文对照；独立分支仅开发被动诊断，不改正式门槛/缓存/工作量。"
+    },
+    "overall": "尚有运行与排队检查；不将旧head、事件skip或性能汇总派生失败算作最终完整通过。"
   }
 }
