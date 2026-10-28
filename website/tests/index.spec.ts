@@ -3,6 +3,7 @@ import { URL } from 'node:url'
 import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
 import { expectFullPageScreenshot } from './helpers/full-page/screenshot'
+import { websiteTocPolicy } from './helpers/full-page/toc/site-policy'
 import { navigateWebsite, reloadWebsite } from './helpers/navigation'
 import { followWebsiteLink } from './helpers/navigation-link'
 import { visualTest } from './helpers/visual-test'
@@ -1088,7 +1089,7 @@ for (const viewport of viewports) {
         const url = new URL(route, baseURL)
         await navigateWebsite(page, url.toString())
 
-        await expectFullPageScreenshot(page)
+        await expectFullPageScreenshot(page, () => websiteTocPolicy(new URL(page.url()).pathname))
       })
     }
   })

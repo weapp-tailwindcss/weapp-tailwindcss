@@ -45,6 +45,10 @@ pnpm --filter @weapp-tailwindcss/website e2e:local
 
 黄金图记录历史源码和构建，不要求未来 HEAD 相同；未来代码仍须比较像素。操作系统、架构、系统版本、Playwright/浏览器、图片解码器版本或截图合同变化会阻断，不能静默沿用其他环境的旧图。完整本地验收仍须先完成仓库本轮扩展预检、当前会话 computer use 与 verify，此处单独采集网站候选不能替代该门禁。
 
+整页截图在图片准备并恢复原滚动位置后，还会只读核对可见动态 TOC 的高亮语义。navbar 策略和有效 heading 范围来自本次 `.docusaurus` 生成配置及 docs/blog/pages 路由 metadata 的 frontmatter；全部范围内标题按 DOM 顺序参与上游算法，当前标题没有 TOC 链接时允许无高亮。隐藏的移动端 TOC 不参与检查；可见 TOC 的目标缺失、结构未知或路由 metadata 缺失不能放行。检查与图片及截图共用原有截止时间，不触发 scroll/resize、不改 class；失败保留 `full-page-toc-observation` 附件。实际读取的 TOC metadata 摘要纳入采集前后的构建身份，临时生成文件不纳入。
+
+TOC 前置条件属于截图合同变更，不能沿用旧合同身份登记新图。原 inactive 截图的形成原因尚未确定；不能据此声称是字体缺陷，也不能只因新状态重复出现就接受。先检查受影响路由的新候选及语义差异，再按上面的采集、审查、安装流程重建来源，最后用 `--update-snapshots=none` 复验。证据与边界见 [TOC 截图就绪复盘](../docs/engineering/lessons/website-toc-readiness.md)。
+
 ## 报错解决
 
 Module not found: Error: Can't resolve '@weapp-tailwindcss/merge' in '/Users/zzy/Projects/weapp-tailwindcss/website/src/theme/ReactLiveScope'
