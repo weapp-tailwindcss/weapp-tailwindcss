@@ -69,6 +69,7 @@
 	<view class="content">
 		<navigator url="/pages/issue-1164/index"><text>Issue 1164 SCSS comments</text></navigator>
 		<navigator url="/pages/issue-1160/index"><text>Issue 1160 border</text></navigator>
+		<navigator url="/pages/issue-1319/index"><text>Issue 1319 HTML border</text></navigator>
 		<WeappTailwindcss />
 		<BindClass />
 		<Issue1019Button>issue 1019 scoped button</Issue1019Button>
