@@ -2067,17 +2067,17 @@
     "catalogHash": "e02267ce217c78899898b6cefd7c46e962b99b442a5052fddcd74cc7500ed3e0",
     "fixtureHash": "a4c36edbacc694de8299813c52499cd09b56c58fde96ce0feffb91a4ea34aaf3",
     "runId": "static-generation",
-    "verifiedAt": "2026-10-22T03:06:34.084Z",
+    "verifiedAt": "2026-10-28T12:56:21.020Z",
     "versions": {
       "tailwindcss": "4.3.3",
-      "expo": "54.0.37",
+      "expo": "54.0.38",
       "reactNative": "0.81.5",
       "compiler": "0.3.4"
     },
     "environment": {
       "deviceName": "static-export",
       "osName": "Node",
-      "osVersion": "v24.18.0",
+      "osVersion": "v24.22.1",
       "runtimeIdentifier": "metro-static",
       "abi": "arm64",
       "viewport": {

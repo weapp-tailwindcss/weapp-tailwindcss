@@ -703,5 +703,61 @@
         ]
       }
     }
-  ]
+  ],
+  "staticFollowup": {
+    "head": "83ef312828a6dbee1aa464fe9238069fccf3155b",
+    "mpx": {
+      "cases": [
+        "mpx-tailwindcss-v4:wx",
+        "mpx-tailwindcss-v4:ali",
+        "mpx-tailwindcss-v4:swan",
+        "mpx-tailwindcss-v4:tt",
+        "mpx-tailwindcss-v4:dd",
+        "style-injector-mpx:wx"
+      ],
+      "updateExitCode": 0,
+      "verifyExitCode": 0,
+      "semanticBaselineDiff": false,
+      "productionArchive": "e2e/.artifacts/dependency-upgrade-20261028/static-update/mpx"
+    },
+    "reactNative": {
+      "command": "CI=1 pnpm e2e:react-native:static:update",
+      "exitCode": 0,
+      "diff": "Expo54.0.37 to54.0.38, Node and generation time only; no compile result/catalog/fixture difference",
+      "verificationCommand": "CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-compatibility.test.ts e2e/react-native-static-entry-scope.test.ts --update=none",
+      "verificationExitCode": 0,
+      "testFiles": 2,
+      "testsPassed": 18,
+      "includes": "Web/Android/iOS Metro exports, not native runtime"
+    },
+    "logs": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-mpx-update.log",
+        "sha256": "8b9ebee3ca6e79320b14d962140c227312d9e1c282f6a12ab8848725d8687755"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-mpx-verify.log",
+        "sha256": "b5696b765d1e575deba878bf33dd697dccf85ce1a07c0ccb9e89ac19f2a4df4a"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/rn-static-update.log",
+        "sha256": "6e2f95853797ce50dc1e0f85191c5f21789ae131d191c23cb1634784b003e1fc"
+      }
+    ],
+    "full107CaseGeneration": "not started; blocked by preflight config mismatch then WeChat protocol/service timeouts",
+    "blockedPreflights": [
+      {
+        "runId": "7ebd1e3a-5282-4656-a995-574578f2a213",
+        "reason": "pnpm run/exec PATH config identity mismatch at claim after probes/CU/verify passed; no test started"
+      },
+      {
+        "runId": "c7f50472-02f3-4947-80a5-12b0d68cffd4",
+        "reason": "App.getCurrentPage readiness and cleanup timed out; task scene saved, task window closed natively, controlled IDE restart with login preserved"
+      },
+      {
+        "runId": "62a69293-08de-4b11-8cd9-c79d73c40200",
+        "reason": "auto request to current same-installation HTTP service timed out after30s; no tests started"
+      }
+    ]
+  }
 }

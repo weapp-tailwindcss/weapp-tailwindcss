@@ -86,3 +86,7 @@ head `9d8636e3a14e6f89bbe71ba0b7d3c87fbe4d9918` 使用新预检 `be08895f-b917-4
 - Webpack 5.112.2 不再输出未使用的 export runtime，默认压缩函数名随之变化。先增加实际执行断言，确认普通压缩返回改写后的函数名、`keep_fnames` 返回 `weappTwIgnore`，再仅更新对应快照。四种压缩配置的 4 项测试在禁止更新模式通过，公开实现未改变。
 
 定向命令为 `CI=1 pnpm exec vitest run --project @weapp-tailwindcss/test-helper packages/test-helper/test/update-packages/runner.test.ts packages/test-helper/test/update-packages/snapshot.test.ts --update=none` 和 `CI=1 pnpm exec vitest run --project @weapp-tailwindcss/minify-preserve packages/minify-preserve/test/bundler-config.test.ts --update=none`。上述结果包含 head 后的本轮未提交修复；完整验收仍须在提交与 static 更新后重新预检。
+
+head `83ef312828a6dbee1aa464fe9238069fccf3155b` 后定向重生成 Mpx 五平台及 style-injector Mpx 共六份 portable 基线，语义 JSON 无变化；同六项禁止更新复验通过，完整生产产物按 case 归档。React Native static 重生成仅更新 Expo `54.0.37 → 54.0.38`、Node 环境及生成时间，编译结果和 catalog/fixture 身份不变；`react-native-compatibility.test.ts` 与 `react-native-static-entry-scope.test.ts` 共 18 项禁止更新复验通过，包含 Web/Android/iOS Metro 导出，不代表设备运行通过。
+
+后续 107-case 基线阶段尚未启动：预检 `7ebd1e3a-5282-4656-a995-574578f2a213` 的脚本探针、computer use、verify 通过，但领取入口从 pnpm 脚本改为 exec 启动后 PATH 身份不同，门禁拒绝启动测试。统一入口后，`c7f50472-02f3-4947-80a5-12b0d68cffd4` 在微信 App 域协议等待和收尾超时；按用户授权原生关闭已确认的任务探针、受控重启 IDE，登录态保留。新报告 `62a69293-08de-4b11-8cd9-c79d73c40200` 仍在 `auto` 请求 30 秒超时。原生界面与监听进程确认同一已登录安装，不能归因为 IDE 未开启；保留失败现场和本任务退出进程的旧锁归属，继续有界恢复，未放行全面测试。
