@@ -85,14 +85,22 @@ export function collectIssue1319MatchingWebResets(root: Root, probe: Issue1319We
     element.className = [...probe.classes].join(' ')
     document.querySelector('uni-app')!.appendChild(element)
     const selectors: string[] = []
+    const widthStyle = document.createElement('div').style
     root.walkRules((rule) => {
       if (!isUnconditionalRule(rule)) {
         return
       }
       const widthDeclarations = rule.nodes.filter(node => node.type === 'decl')
         .filter(declaration => /^(?:border|border-width|border-(?:top|right|bottom|left)(?:-width)?)$/.test(declaration.prop))
-      if (widthDeclarations.length !== 1 || widthDeclarations[0]?.prop !== 'border-width'
-        || !/^0(?:px)?$/.test(widthDeclarations[0].value) || widthDeclarations[0].important) {
+      const widthDeclaration = widthDeclarations[0]
+      if (widthDeclarations.length !== 1 || !widthDeclaration
+        || !['border', 'border-width'].includes(widthDeclaration.prop) || widthDeclaration.important) {
+        return
+      }
+      // 通过 CSS 声明解析器展开 shorthand，拒绝缺省 medium、无效或非零宽度。
+      widthStyle.cssText = ''
+      widthStyle.setProperty(widthDeclaration.prop, widthDeclaration.value)
+      if (['top', 'right', 'bottom', 'left'].some(side => !/^0(?:px)?$/.test(widthStyle.getPropertyValue(`border-${side}-width`)))) {
         return
       }
       selectorParser((selectorRoot) => {

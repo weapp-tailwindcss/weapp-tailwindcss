@@ -37,7 +37,7 @@ it.skipIf(Boolean(filter && !new RegExp(filter).test(project)))('issue #1319 pre
     expect(probe.tag).toBe('div')
     expect(probe.classes).not.toContain('weapp-tw-border')
     if (id !== 'issue-1319-native') {
-      expect(collectIssue1319MatchingWebResets(root, probe), `${id} must match an unconditional border-width:0 base rule`).not.toHaveLength(0)
+      expect(collectIssue1319MatchingWebResets(root, probe), `${id} must match an unconditional zero-width border base rule`).not.toHaveLength(0)
     }
     evidence[id] = collectIssue1319BorderDeclarations(root, probe.classes)
   }
