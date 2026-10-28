@@ -1424,5 +1424,55 @@
       "Candidate sets match but original iteration order differs; opaque object identity unknown.",
       "No threshold/workload reduction, forced GC or dependency rollback."
     ]
+  },
+  "websiteNoUpdateFirstAttempt": {
+    "head": "9d8e7a9241935fff91464a7b22f4177c3b3bef31",
+    "preflightRun": "f3eadeff-9831-45c9-9b25-e1dad955e3ab",
+    "stage": 1,
+    "plannedStages": 109,
+    "exitCode": 1,
+    "passed": 2,
+    "failed": 1,
+    "websiteNotRun": 2625,
+    "portableNotRun": 107,
+    "htmlVariantsNotRun": 8,
+    "failure": "旧next统计用例期待上报，与正式主域隔离策略冲突；60秒超时。",
+    "log": {
+      "path": "e2e/.artifacts/dependency-upgrade-20261028/website-static-verify-9d8e7a924.log",
+      "bytes": 197779,
+      "sha256": "f06b2f938a9c11c5d66af32f9f60261ccca4aa809a6bfe3c8d6e63cbf98db0e9"
+    },
+    "firstFailureArtifact": "e2e/.artifacts/dependency-upgrade-20261028/website-analytics-first-failure-9d8e7a924",
+    "exactBaseline": {
+      "head": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+      "sourceUnmodified": true,
+      "exitCode": 1,
+      "sameFailure": true,
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/analytics-baseline-e769.log",
+        "bytes": 2629,
+        "sha256": "9a3def5e7af77251c3b669bbdc10e27729218ecd577bf1f8f7df5b897f75e72d"
+      }
+    },
+    "repair": {
+      "scope": "仅纠正过时测试；保留产品正式主域隔离、超时与阈值。",
+      "sourceHead": "9d8e7a9241935fff91464a7b22f4177c3b3bef31",
+      "includesUncommittedTestRepair": true,
+      "passed": 18,
+      "failed": 0,
+      "retried": 0,
+      "browsers": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/analytics-fixed-final-9d8e7a924.log",
+        "bytes": 3092,
+        "sha256": "1fcb576d235b205887c0173fa4130962442d384cdbf94b558a9adaad05641cc2"
+      }
+    },
+    "finalNoUpdateVerification": "pending"
   }
 }
