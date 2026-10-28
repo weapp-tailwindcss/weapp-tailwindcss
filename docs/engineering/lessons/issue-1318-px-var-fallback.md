@@ -24,7 +24,7 @@ regressions:
 `postcss-pxtrans` 复用该入口，并保留大小写退出、平台倍率、过滤和回调契约；阈值使用绝对值，转换保留正负号。
 本仓库只在 `px2rpx` 默认启用该选项，允许显式关闭。普通与延迟管线使用同一入口，避免重复换算；rem 行为保持既有契约。
 
-初始方案通过 pnpm 精确版本补丁承接 converter@0.2.6 与 pxtrans@1.0.7 的 ESM/CJS、共享 chunk 和声明。上游 PR 已合并（`5b6aba49d778dd101715cb1705903f24c604c71e`），随后正式发布 `postcss-rule-unit-converter@0.3.0` 与 `postcss-pxtrans@1.1.0`。本 PR 已切换到这两个正式版，移除两份临时补丁及 workspace/锁文件登记；pxtrans 的直接依赖也准确解析到 converter@0.3.0。
+初始方案通过 pnpm 精确版本补丁承接 converter@0.2.6 与 pxtrans@1.0.7 的 ESM/CJS、共享 chunk 和声明。上游 PR 已合并（`5b6aba49d778dd101715cb1705903f24c604c71e`），随后正式发布 `postcss-rule-unit-converter@0.3.0`、`postcss-pxtrans@1.1.0` 与 `postcss-rem-to-responsive-pixel@7.0.9`。本 PR 已切换到这三个正式版，移除两份临时补丁及 workspace/锁文件登记；pxtrans 与 rem 包统一依赖 converter@0.3.0，避免同时打包旧版 converter。rem 包运行时代码与 7.0.8 的差异仅为构建注释，声明无变化；本轮不为 rem 开启新选项。
 
 运行时修复由 PostCSS 包的 ESM/CJS 构建打包，消费者不需要安装额外补丁。公开 `Px2rpxOptions` 直接消费正式版声明，发布类型由包外消费者编译回归验证，不再额外复制上游选项定义。
 

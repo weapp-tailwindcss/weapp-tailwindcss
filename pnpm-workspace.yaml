@@ -226,7 +226,7 @@ catalogs:
   postcssComment2:
     postcss-comment: ^2.0.0
   postcssRem:
-    postcss-rem-to-responsive-pixel: ^7.0.8
+    postcss-rem-to-responsive-pixel: ^7.0.9
   postcssRpx:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:

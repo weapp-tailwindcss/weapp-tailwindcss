@@ -397,8 +397,8 @@ catalogs:
       version: 4.2.0
   postcssRem:
     postcss-rem-to-responsive-pixel:
-      specifier: ^7.0.8
-      version: 7.0.8
+      specifier: ^7.0.9
+      version: 7.0.9
   postcssRpx:
     postcss-rpx-transform:
       specifier: ^1.0.1
@@ -1700,7 +1700,7 @@ importers:
         version: 4.3.0(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
-        version: 7.0.8(postcss@8.5.30)
+        version: 7.0.9(postcss@8.5.30)
       postcss-rpx-transform:
         specifier: catalog:postcssRpx
         version: 1.0.1
@@ -5086,7 +5086,7 @@ importers:
         version: 1.1.0(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
-        version: 7.0.8(postcss@8.5.30)
+        version: 7.0.9(postcss@8.5.30)
       postcss-rule-unit-converter:
         specifier: catalog:postcssCompat
         version: 0.3.0(postcss@8.5.30)
@@ -29704,8 +29704,8 @@ packages:
     peerDependencies:
       postcss: ^8
 
-  postcss-rem-to-responsive-pixel@7.0.8:
-    resolution: {integrity: sha512-ktsWJMZ00GxZkcs5g67OhnxEJK8L+UQ/JVp6qPXXPvSBBCABk68IJLD0bJpfb6M/RamJG6+3da8smEiEnhpaYA==}
+  postcss-rem-to-responsive-pixel@7.0.9:
+    resolution: {integrity: sha512-eGfXUsp9Nv3EK9jyHStoKjaRgwJmOgtVz+j8YGxxqwCw1RiBJzLpCvHddn/ARBLlDLrP7UA+ldyPmV/txUN0og==}
     engines: {node: '>=16.6.0'}
     peerDependencies:
       postcss: ^8
@@ -29729,12 +29729,6 @@ packages:
 
   postcss-rule-unit-converter@0.2.5:
     resolution: {integrity: sha512-0Qb/DuGbhk+gifkNqDxzGfkdGugIgiqR4opLjzWx68qLi8XAVi64SxtHbUhlN6lNtYnrXlArVqEcEEdRnXbQJA==}
-    peerDependencies:
-      postcss: ^8
-
-  postcss-rule-unit-converter@0.2.6:
-    resolution: {integrity: sha512-aw51LFWQKnyzebc4SymzGRRImx/kUiMbwYqotCf/ZwVM64zPcYxEfe4LiKYT0pgiLW7Gh1LYykYw1ecBRGsk3g==}
-    engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss: ^8
 
@@ -70110,11 +70104,11 @@ snapshots:
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
       postcss-rule-unit-converter: 0.2.5(postcss@8.5.30)
 
-  postcss-rem-to-responsive-pixel@7.0.8(postcss@8.5.30):
+  postcss-rem-to-responsive-pixel@7.0.9(postcss@8.5.30):
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.3.0(postcss@8.5.30)
 
   postcss-replace-overflow-wrap@4.0.0(postcss@8.5.30):
     dependencies:
@@ -70134,12 +70128,6 @@ snapshots:
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
-
-  postcss-rule-unit-converter@0.2.6(postcss@8.5.30):
-    dependencies:
-      '@csstools/css-tokenizer': 4.0.2
-      postcss: 8.5.30
-      postcss-plugin-shared: 1.2.0(postcss@8.5.30)
 
   postcss-rule-unit-converter@0.3.0(postcss@8.5.30):
     dependencies:
