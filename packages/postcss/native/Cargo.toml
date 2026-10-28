@@ -12,8 +12,8 @@ crate-type = [
 ]
 
 [dependencies]
-napi = { version = "=3.14.0", default-features = false, features = [ "napi4" ] }
-napi-derive = "=3.6.10"
+napi = { version = "=3.15.0", default-features = false, features = [ "napi4" ] }
+napi-derive = "=3.6.13"
 
 [build-dependencies]
 napi-build = "=2.6.0"

@@ -4,6 +4,33 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { lynxDecoderIdentity } from './decoder'
 
+interface InstalledPackageManifest {
+  name?: string
+  version?: string
+}
+
+function readPackageManifest(directory: string): InstalledPackageManifest | undefined {
+  try {
+    return JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf8')) as InstalledPackageManifest
+  }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error
+    }
+    return undefined
+  }
+}
+
+function readManifestVersion(manifest: InstalledPackageManifest, packageName: string) {
+  if (manifest.name !== packageName) {
+    throw new Error(`${packageName} 的实际包身份不一致`)
+  }
+  if (!manifest.version || !/^\d+\.\d+\.\d+(?:[-+].+)?$/.test(manifest.version)) {
+    throw new Error(`${packageName} 的实际版本无效`)
+  }
+  return manifest.version
+}
+
 /** 读取解析到的真实包，不以 package.json 中的范围或历史报告冒充已安装版本。 */
 export function readInstalledVersion(fromManifest: string, packageName: string) {
   const require = createRequire(fromManifest)
@@ -12,22 +39,24 @@ export function readInstalledVersion(fromManifest: string, packageName: string) 
     directory = path.dirname(require.resolve(`${packageName}/package.json`))
   }
   catch {
-    directory = path.dirname(require.resolve(packageName))
-  }
-  for (;;) {
     try {
-      const manifest = JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf8')) as { name?: string, version?: string }
-      if (manifest.name === packageName) {
-        if (!manifest.version || !/^\d+\.\d+\.\d+(?:[-+].+)?$/.test(manifest.version)) {
-          throw new Error(`${packageName} 的实际版本无效`)
-        }
-        return manifest.version
-      }
+      directory = path.dirname(require.resolve(packageName))
     }
     catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw error
+      // 仅 types 条件导出的包没有运行时入口；仍按当前调用者的 Node 查找顺序核对实际 manifest。
+      for (const lookup of require.resolve.paths(packageName) ?? []) {
+        const manifest = readPackageManifest(path.join(lookup, packageName))
+        if (manifest) {
+          return readManifestVersion(manifest, packageName)
+        }
       }
+      throw error
+    }
+  }
+  for (;;) {
+    const manifest = readPackageManifest(directory)
+    if (manifest?.name === packageName) {
+      return readManifestVersion(manifest, packageName)
     }
     const parent = path.dirname(directory)
     if (parent === directory) {
@@ -52,11 +81,17 @@ export function readCompatibilityVersions(repoRoot: string) {
   const host = path.join(repoRoot, 'e2e', 'fixtures', 'lynx-native')
   const exampleManifest = path.join(repoRoot, 'examples', 'react-lynx', 'package.json')
   const exampleRequire = createRequire(exampleManifest)
-  const reactRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
+  const reactManifest = exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json')
+  const reactRequire = createRequire(reactManifest)
   const templateManifest = reactRequire.resolve('@lynx-js/template-webpack-plugin/package.json')
   const bundleConfig = readFileSync(path.join(repoRoot, 'examples', 'react-lynx', 'lynx.config.ts'), 'utf8')
   return {
     tailwindcss: readInstalledVersion(exampleManifest, 'tailwindcss'),
+    reactLynx: readInstalledVersion(exampleManifest, '@lynx-js/react'),
+    reactRsbuildPlugin: readInstalledVersion(exampleManifest, '@lynx-js/react-rsbuild-plugin'),
+    rspeedy: readInstalledVersion(exampleManifest, '@lynx-js/rspeedy'),
+    lynxTypes: readInstalledVersion(exampleManifest, '@lynx-js/types'),
+    templateWebpackPlugin: readInstalledVersion(reactManifest, '@lynx-js/template-webpack-plugin'),
     ...readHostVersions(
       readFileSync(path.join(host, 'ios', 'Podfile'), 'utf8'),
       readFileSync(path.join(host, 'android', 'app', 'build.gradle.kts'), 'utf8'),

@@ -39,7 +39,7 @@
     "tailwindcss": "catalog:tailwindcss4",
     "typescript": "catalog:typescript59",
     "weapp-tailwindcss": "workspace:*",
-    "webpack": "5.105.4",
+    "webpack": "5.112.2",
     "webpack-cli": "catalog:webpackTools",
     "webpack-dev-server": "catalog:webpackTools"
   },

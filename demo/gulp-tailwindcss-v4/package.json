@@ -86,7 +86,7 @@
     "gulp-util": "^3.0.8",
     "miniprogram-api-typings": "catalog:miniApiTypings",
     "postcss": "catalog:postcss85",
-    "postcss-pxtransform": "^4.3.0",
+    "postcss-pxtransform": "^4.3.1",
     "postcss-rem-to-responsive-pixel": "catalog:postcssRem",
     "postcss-rpx-transform": "catalog:postcssRpx",
     "prettier": "catalog:prettier371",

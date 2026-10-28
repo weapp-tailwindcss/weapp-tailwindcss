@@ -2,7 +2,7 @@ diff --git a/dist/h5/config.js b/dist/h5/config.js
 index ad700e12493f6a3af576d5f8936fdb5ad8716652..493f78bb5d4d5fbe9a11be1f4c2e63cc12c609f8 100644
 --- a/dist/h5/config.js
 +++ b/dist/h5/config.js
-@@ -246,7 +246,7 @@ function default_1(viteCompilerContext) {
+@@ -246,7 +246,7 @@
                      return html;
                  const { configPath } = app;
                  const scriptSource = configPath.replace(sourceDir, '');
@@ -15,7 +15,7 @@ diff --git a/dist/h5/mpa.js b/dist/h5/mpa.js
 index 819265b62fcfb424de870a3249107471e030a113..86de02a85a70fb1873016b834d592cce89f8a661 100644
 --- a/dist/h5/mpa.js
 +++ b/dist/h5/mpa.js
-@@ -156,7 +156,7 @@ function default_1(viteCompilerContext) {
+@@ -156,7 +156,7 @@
                      const queryString = (0, utils_1.generateQueryString)(params);
                      srciptSource = page.configPath.replace(sourceDir, '') + `?${queryString}`;
                  }
@@ -28,7 +28,7 @@ diff --git a/dist/index.h5.js b/dist/index.h5.js
 index 32eabe74231c5248e6e66e03e5ceb20b56ac13f4..8452a5edfb5fe6a82e7825c44cdda10ee30f2151 100644
 --- a/dist/index.h5.js
 +++ b/dist/index.h5.js
-@@ -49,7 +49,7 @@ function default_1(appPath, rawTaroConfig) {
+@@ -49,7 +49,7 @@
              configFile: false,
              plugins
          };
@@ -41,7 +41,7 @@ diff --git a/dist/index.harmony.js b/dist/index.harmony.js
 index 1221b1345031bf9288f58ef2eb0287ca966219a0..f50e3fcbf5b6f5d983851a488157e91fcc79a8e9 100644
 --- a/dist/index.harmony.js
 +++ b/dist/index.harmony.js
-@@ -39,7 +39,7 @@ function default_1(appPath, rawTaroConfig) {
+@@ -39,7 +39,7 @@
          const commonConfig = {
              plugins,
          };
@@ -54,7 +54,7 @@ diff --git a/dist/index.mini.js b/dist/index.mini.js
 index f6117d213c5987f8292905bf3984cb465b9170cd..d1eb69880e3864da704d30e0ae6bba7f86c6df74 100644
 --- a/dist/index.mini.js
 +++ b/dist/index.mini.js
-@@ -43,7 +43,7 @@ function default_1(appPath, rawTaroConfig) {
+@@ -43,7 +43,7 @@
          if ((0, shared_1.isFunction)(modifyComponentConfig)) {
              modifyComponentConfig(component_1.componentConfig, taroConfig);
          }

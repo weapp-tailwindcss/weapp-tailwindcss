@@ -28,22 +28,22 @@
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "5.3.0",
-    "@fontsource-variable/noto-sans-sc": "5.3.0",
-    "@remotion/media": "4.0.524",
+    "@fontsource-variable/noto-sans-sc": "5.3.1",
+    "@remotion/media": "4.0.539",
     "qrcode": "1.5.4",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "remotion": "4.0.524"
+    "remotion": "4.0.539"
   },
   "devDependencies": {
-    "@remotion/cli": "4.0.524",
+    "@remotion/cli": "4.0.539",
     "@types/node": "catalog:typesNode2410",
     "@types/qrcode": "^1.5.6",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "execa": "^9.6.1",
     "tsx": "catalog:tsx",
-    "typescript": "^5.9.0",
+    "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }
 }

@@ -9,19 +9,19 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@lynx-js/react": "0.126.1",
-    "@lynx-js/react-rsbuild-plugin": "0.20.2",
-    "@lynx-js/types": "4.2.1",
+    "@lynx-js/react": "0.129.0",
+    "@lynx-js/react-rsbuild-plugin": "0.22.0",
+    "@lynx-js/types": "4.3.0",
     "@weapp-tailwindcss/lynx": "workspace:*",
     "@weapp-tailwindcss/test-catalog": "workspace:*",
     "react": "catalog:react19"
   },
   "devDependencies": {
     "@lynx-js/config-rsbuild-plugin": "0.2.5",
-    "@lynx-js/rspeedy": "0.17.2",
+    "@lynx-js/rspeedy": "0.18.3",
     "@types/react": "catalog:react19",
     "tailwindcss": "4.3.3",
-    "typescript": "^5.9.0",
+    "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }
 }

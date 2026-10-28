@@ -1,0 +1,570 @@
+{
+  "scope": "installation and targeted regression stage; full acceptance pending",
+  "baselineRef": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+  "frozenInstalls": [
+    {
+      "finishedAt": "2026-10-28T03:31:26.440Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/uni-app-hbuilderx-tailwindcss-v4",
+      "exitCode": 0,
+      "log": null
+    },
+    {
+      "finishedAt": "2026-10-28T03:56:16.282Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/weapp-vite-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-final-4.log",
+      "logSha256": "e1ffb351f4adfb55f19e35f1deb066290037e8e3a28def8a1680e4eb8eb4a99e"
+    },
+    {
+      "finishedAt": "2026-10-28T03:56:16.272Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/mpx-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-final-3.log",
+      "logSha256": "a4cf7e0010e92149d46c6fd4c39acef7d4d87fd631685d83ed83dca4ae3e1eae"
+    },
+    {
+      "finishedAt": "2026-10-28T03:56:18.972Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": ".",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-final-0.log",
+      "logSha256": "fad628c337ea48eb97eb8c7fe62190d16ee9557b484b04acefc04b6843449de8"
+    },
+    {
+      "finishedAt": "2026-10-28T03:33:47.875Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/uni-app-tailwindcss-v4",
+      "exitCode": 0,
+      "log": null
+    },
+    {
+      "finishedAt": "2026-10-28T03:56:16.288Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/taro-vite-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-final-1.log",
+      "logSha256": "46e6f42dec3f97e746b7196be5e89e685235aa6a0b42996c4c923a52fb7ce072"
+    },
+    {
+      "finishedAt": "2026-10-28T03:56:16.285Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/taro-webpack-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-final-2.log",
+      "logSha256": "8eab5d954bcc1a967b10197e9ff1f744b95620fcfca5e9362cf2a93c37fe4505"
+    },
+    {
+      "finishedAt": "2026-10-28T03:35:58.589Z",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/uni-app-webpack-tailwindcss-v4",
+      "exitCode": 0,
+      "log": null
+    }
+  ],
+  "cargoLockGeneration": [
+    {
+      "finishedAt": "2026-10-28T02:39:41.915Z",
+      "command": "cargo update --manifest-path packages/weapp-tailwindcss/native/Cargo.toml -p napi --precise 3.15.0",
+      "exitCode": 0,
+      "output": "    Updating crates.io index\n    Updating napi v3.14.0 -> v3.15.0\n    Updating napi-derive v3.6.10 -> v3.6.13\n    Updating napi-derive-backend v6.1.4 -> v6.1.6\n    Updating napi-sys v3.4.0 -> v3.4.1\nnote: pass `--verbose` to see 23 unchanged dependencies behind latest\n"
+    },
+    {
+      "finishedAt": "2026-10-28T02:40:48.290Z",
+      "command": "cargo update --manifest-path packages/postcss/native/Cargo.toml -p napi --precise 3.15.0",
+      "exitCode": 0,
+      "output": "    Updating crates.io index\n    Updating napi v3.14.0 -> v3.15.0\n    Updating napi-derive v3.6.10 -> v3.6.13\n    Updating napi-derive-backend v6.1.4 -> v6.1.6\n    Updating napi-sys v3.4.0 -> v3.4.1\n    Removing syn v2.0.119\nnote: pass `--verbose` to see 3 unchanged dependencies behind latest\n"
+    }
+  ],
+  "browserResources": [
+    {
+      "entry": "IAB",
+      "browserId": "3",
+      "tabId": "1",
+      "createdByTask": true,
+      "status": "closed and empty tab list verified",
+      "evidence": "当前会话 cua listTabs(browser=3) 在关闭 tab 1 后返回空数组；以原始工具调用记录的时间为准。"
+    },
+    {
+      "entry": "WeChat IDE",
+      "window": "preflight-e7152606-0936-48ee-8a82-66f17291f60a",
+      "status": "failure scene retained; no project requests after timeout"
+    },
+    {
+      "entry": "Playwright headless Chromium",
+      "status": "latest two runtime tests completed finally cleanup; executable process scan empty",
+      "verifiedAt": "2026-10-28T05:44:46.445397+00:00",
+      "failedFixture": "e2e/.artifacts/dependency-upgrade-20261028/webpack-first-timeout-fixture",
+      "reason": "earlier 15-second timeout fixture belongs to this checkout by embedded emitter path and timestamp; archived before removing task temporary directory"
+    }
+  ],
+  "subsequentFrozenInstalls": [
+    {
+      "observedCompletedAt": "2026-10-28T05:44:46.445397+00:00",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": ".",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-rn-provider-webpack591.log",
+      "logSha256": "bbfd7a99ada2a0bec4db2495b3c6f336e7fde1dc3bbb17392bcc1c630e870425",
+      "lockSha256": "a589e4561dc44ec27162b72b595a17039a6b778990f326fdc6389ddf5da1949e"
+    },
+    {
+      "observedCompletedAt": "2026-10-28T05:44:46.445397+00:00",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/taro-webpack-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/install-taro-webpack591.log",
+      "logSha256": "58079c3c30565912ac06ba9b6ea526cd18497fabb62194a7a9b10d3c9224ba80",
+      "lockSha256": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620"
+    },
+    {
+      "observedCompletedAt": "2026-10-28T05:49:51.328494+00:00",
+      "command": "pnpm install --frozen-lockfile",
+      "cwd": "templates/taro-vite-tailwindcss-v4",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/template-install-rollup-container.log",
+      "logSha256": "01603087dcaa212182aeefddeb16a1ff840131dff8067ed894704435cb11251a",
+      "lockSha256": "c2acf1e6e5a0feb699ff01c28237b0c58002da85db36eabd702be7d9a6a1a7b5",
+      "note": "原始命令已确认exit0；此处补录未再变化的最终锁身份，不将当前观察时间当作原命令完成时间。"
+    }
+  ],
+  "lockedCargoChecks": [
+    {
+      "command": "cargo check --locked --manifest-path packages/weapp-tailwindcss/native/Cargo.toml",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/rust-core-locked-check.log",
+      "logSha256": "ca16002aea1f1fd561a8c6786970c73e276554075642564aafa6d87ce91dfe04"
+    },
+    {
+      "command": "cargo check --locked --manifest-path packages/postcss/native/Cargo.toml",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/rust-postcss-locked-check.log",
+      "logSha256": "626deb834c9975765a50a1923d9850d652693c7246a63df20ce9cd7b09515594"
+    }
+  ],
+  "latestConsumerRegression": {
+    "command": "CI=1 node node_modules/vitest/vitest.mjs run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/taro-rn-stylelint.test.mjs scripts/ci/demo-matrix/webpack-hmr.test.mjs --update=none",
+    "exitCode": 0,
+    "testFiles": 2,
+    "testsPassed": 56,
+    "log": "e2e/.artifacts/dependency-upgrade-20261028/rn-webpack-consumers-fixed.log"
+  },
+  "cargoLocks": [
+    {
+      "directory": "packages/weapp-tailwindcss/native",
+      "filesSha256": {
+        "Cargo.toml": "436ace9cf89e02c6f9ff28263d34b1e0a32784cf02ba4e2688f79abfcea41a61",
+        "Cargo.lock": "47635c5978b865bada12570cd41a120090519d152ea67580ce35307a5b941c4f"
+      },
+      "napi": "3.15.0",
+      "napiDerive": "3.6.13",
+      "napiBuild": "2.6.0",
+      "lockedCheckExitCode": 0
+    },
+    {
+      "directory": "packages/postcss/native",
+      "filesSha256": {
+        "Cargo.toml": "dbe9a252e6121ac32ab338cde0dc9f15d39e0a0957d64e604dc94e40902494a3",
+        "Cargo.lock": "ac0c241398684edaf87320232f938ee4f28b9d20187788b530a3516e39c94d92"
+      },
+      "napi": "3.15.0",
+      "napiDerive": "3.6.13",
+      "napiBuild": "2.6.0",
+      "lockedCheckExitCode": 0
+    }
+  ],
+  "lynxTargetedChecks": [
+    {
+      "command": "pnpm --filter @weapp-tailwindcss/lynx build",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-package-prerequisite-build.log",
+      "logSha256": "bfc0d16885e0b6b4d97d3e57c650d0e0d3522b92e073ccee95d4a3d21c99f088"
+    },
+    {
+      "command": "node examples/react-lynx/node_modules/typescript/bin/tsc --project examples/react-lynx/tsconfig.json --noEmit",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-example-types-ready.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prerequisiteFailure": "首次同一类型检查缺少workspace集成包构建产物而exit2；补齐前置构建后同一命令exit0，原日志lynx-example-types-install-stage.log保留。"
+    }
+  ],
+  "repositoryChecks": [
+    {
+      "command": "pnpm agents:check",
+      "startedAt": "2026-10-28T06:23:38.999825+00:00",
+      "finishedAt": "2026-10-28T06:23:39.824384+00:00",
+      "exitCode": 0,
+      "rules": 71,
+      "documents": 413,
+      "commandEntries": 1139,
+      "errors": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/agents-install-stage-final.log",
+      "logSha256": "8dfe0d47dbfccfd574b6e54ee0529f5b01e6fcb1161ef0ece76213917850ad30"
+    },
+    {
+      "command": "git diff --check",
+      "startedAt": "2026-10-28T06:23:38.999985+00:00",
+      "finishedAt": "2026-10-28T06:23:40.295498+00:00",
+      "exitCode": 0,
+      "additionalUntrackedFilesChecked": 37,
+      "additionalUntrackedFailures": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/whitespace-install-stage-final.json",
+      "logSha256": "7c6081e822b74277b62eeb22350fcface888cffd82a2ac76b1c9f1b443cd3b81",
+      "note": "另以git diff --no-index --check核对每个未跟踪文件；模板补丁沿用根补丁的合法diff上下文空白属性，不改写补丁内容。"
+    }
+  ],
+  "mpxDemoLintBaseline": {
+    "status": "准确工具闭包与基线源码的定向lint对照完成；两侧均失败",
+    "capturedAt": "2026-10-28T06:45:42.771176+00:00",
+    "baselineRef": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "baselineLockSha256": "3f297e3afc20ea1928351bede0a75984181e528bd7de0f0f99f115e9c7fcb93c",
+    "statement": "准确基线 e769e69 与当前版本的同一 Mpx demo lint 脚本均因根 flat config 忽略 demo/src 而 exit 2；这是已复现的原有失败，不是本轮升级新增失败，也不是 lint 通过。未执行本地注释掉的 @mpxjs meta config 规则，7条相关peer仍按未启用配置依赖的元数据风险记录。",
+    "node": "v24.18.0",
+    "baselinePnpm": "12.14.0",
+    "currentPnpm": "12.15.0",
+    "baselineTools": {
+      "eslint": "10.12.0(jiti@2.7.0)(supports-color@10.2.2)",
+      "repoctl": "6.3.0(7a86c02bb9d3d883ee4bb615d7adecf8)",
+      "monorepo": "6.3.0(8dc8e93483a88bd224c9dacf3eca0b12)",
+      "eslintConfig": "8.0.12；旧8.0.9属于其他链，不能用作repoctl基线要求"
+    },
+    "toolGraph": {
+      "nodesChecked": 876,
+      "edgesChecked": 1886,
+      "issueCount": 0,
+      "absentOptionalCount": 106,
+      "restore": "OS temp复制82个必要节点，重建558条依赖链接；其余精确节点只读复用已有cache；无全仓安装。",
+      "contentIntegrityLimit": "核对名称、版本、peer闭包及物理解析路径；未重新校验npm tarball完整性。"
+    },
+    "source": {
+      "baselineFiles": 40,
+      "allBaselineFilesUnchangedByRuns": true,
+      "behaviorFilesEqualToCurrent": 15,
+      "allBehaviorFilesEqualToCurrent": true,
+      "behaviorInputHashes": [
+        {
+          "path": "eslint.config.js",
+          "baselineSha256": "67ace15a20e51b339a7d9e42673ec7e0ea6c6443e2dbf4c8e34d06d8b6d54c1c",
+          "currentSha256": "67ace15a20e51b339a7d9e42673ec7e0ea6c6443e2dbf4c8e34d06d8b6d54c1c",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/.eslintrc.js",
+          "baselineSha256": "1a0b65a14621223a7884257937b9cd85c05491583bc7e075e9b596edfcb93b2a",
+          "currentSha256": "1a0b65a14621223a7884257937b9cd85c05491583bc7e075e9b596edfcb93b2a",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/app.css",
+          "baselineSha256": "39c44adefc8cc8371308c528a825859663b9e39d8f4fe6c5712d49dee1d21996",
+          "currentSha256": "39c44adefc8cc8371308c528a825859663b9e39d8f4fe6c5712d49dee1d21996",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/app.mpx",
+          "baselineSha256": "5801c4d2414d21cdf618c47b51666ff4d888bb691d8ff0fd1b2b44a5b233dec4",
+          "currentSha256": "5801c4d2414d21cdf618c47b51666ff4d888bb691d8ff0fd1b2b44a5b233dec4",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/components/list.mpx",
+          "baselineSha256": "cbc7555c3d492f7e92674ad6dd70e633ecae0b5e6ff22152667324bf42e4396a",
+          "currentSha256": "cbc7555c3d492f7e92674ad6dd70e633ecae0b5e6ff22152667324bf42e4396a",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/custom-tab-bar/index.mpx",
+          "baselineSha256": "8fb65911bd4226672dfc99089b332c4beb5c8eb04a49fef4c08a5fad347f4800",
+          "currentSha256": "8fb65911bd4226672dfc99089b332c4beb5c8eb04a49fef4c08a5fad347f4800",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/global.d.ts",
+          "baselineSha256": "93f5307772114d9e38b2d9ff57505b9dc0aec4a96cb925593ee2763433c494fc",
+          "currentSha256": "93f5307772114d9e38b2d9ff57505b9dc0aec4a96cb925593ee2763433c494fc",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/pages/component/index.mpx",
+          "baselineSha256": "97436944483bc1e5b814bed52686a78454ff74244f86d34347cf20ecf7cac5ff",
+          "currentSha256": "97436944483bc1e5b814bed52686a78454ff74244f86d34347cf20ecf7cac5ff",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/pages/index.mpx",
+          "baselineSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+          "currentSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/sub-independent/index.css",
+          "baselineSha256": "bbc04b3c1e202de643c8469b9d26286b5366decdc954315cf5a5649f7e77e34e",
+          "currentSha256": "bbc04b3c1e202de643c8469b9d26286b5366decdc954315cf5a5649f7e77e34e",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/sub-independent/pages/index.mpx",
+          "baselineSha256": "4e30db99323c1718d013d30a72c598453011a19ae5017eea2f8c5038b954926d",
+          "currentSha256": "4e30db99323c1718d013d30a72c598453011a19ae5017eea2f8c5038b954926d",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/sub-normal/index.css",
+          "baselineSha256": "3825e20e705ef57d1b58e7f4d22bdf42e052549a9e285302332d4077af73ab68",
+          "currentSha256": "3825e20e705ef57d1b58e7f4d22bdf42e052549a9e285302332d4077af73ab68",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/sub-normal/pages/index.mpx",
+          "baselineSha256": "500950346185aba958677248a4005e96c5ec99fb84cb690efdd52f413388a696",
+          "currentSha256": "500950346185aba958677248a4005e96c5ec99fb84cb690efdd52f413388a696",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/tailwind-intellisense.css",
+          "baselineSha256": "994e0c54acd8e179c81599dd5c9d87ee9e7c0dce631d685460dec7eec3aff8c4",
+          "currentSha256": "994e0c54acd8e179c81599dd5c9d87ee9e7c0dce631d685460dec7eec3aff8c4",
+          "equal": true
+        },
+        {
+          "path": "demo/mpx-tailwindcss-v4/src/third-party-ui.css",
+          "baselineSha256": "8a2ccbe8f8b4399039cd206d1b3459014bbe53ccf7727dc6d1eb64237a9546ab",
+          "currentSha256": "8a2ccbe8f8b4399039cd206d1b3459014bbe53ccf7727dc6d1eb64237a9546ab",
+          "equal": true
+        }
+      ],
+      "sourceManifestSha256": "29081c54d4ff51f97a2d6fb5facbc0d5156f6155b66ba837e49305bb485a9877"
+    },
+    "runs": [
+      {
+        "label": "baseline",
+        "command": "rtk proxy pnpm --config.verifyDepsBeforeRun=false --dir demo/mpx-tailwindcss-v4 lint",
+        "cwd": "OS temporary copy of baseline e769e69",
+        "exitCode": 2,
+        "sourceFilesChecked": 40,
+        "sourceFilesUnchanged": true,
+        "managerOverride": "仅命令行显式关闭verifyDepsBeforeRun，避免隔离源码副本尝试安装；未改任何基线源码、manifest或manager元数据。",
+        "logs": {
+          "stdout": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/baseline-lint.stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/baseline-lint.stderr.log",
+            "bytes": 1032,
+            "sha256": "3c09b7e6e5b5a5fe7bef34018522b90ee65ac126d287848f3e2c749bff7c282c"
+          }
+        }
+      },
+      {
+        "label": "current",
+        "command": "rtk proxy pnpm --config.verifyDepsBeforeRun=false --dir demo/mpx-tailwindcss-v4 lint",
+        "cwd": ".",
+        "exitCode": 2,
+        "sourceFilesChecked": 40,
+        "sourceFilesUnchanged": true,
+        "managerOverride": "仅命令行显式关闭verifyDepsBeforeRun，避免隔离源码副本尝试安装；未改任何基线源码、manifest或manager元数据。",
+        "logs": {
+          "stdout": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/current-lint.stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/current-lint.stderr.log",
+            "bytes": 1032,
+            "sha256": "ee136fc68b241c57cc09f68ad7f0c9821f7dcb3206d35dd27e96ca9759ae77ea"
+          }
+        }
+      }
+    ],
+    "managerHarness": {
+      "override": "--config.verifyDepsBeforeRun=false",
+      "reason": "隔离副本只还原lint所需源码和工具闭包，显式阻止pnpm在run之前自动安装整个根清单。",
+      "baselineManifestAndManagerMetadataModified": false,
+      "typescriptRootProvider": "node_modules/.pnpm/typescript@6.0.3/node_modules/typescript",
+      "firstAttempt": "首次原命令因缺少隔离副本安装验证脚本而出现preinstall MODULE_NOT_FOUND，随后lint也出现all files ignored；不把该首轮作为最终对照，完整日志与元数据保留。最终两侧同用上述CLI覆盖，不再触发安装检查。"
+    },
+    "artifacts": [
+      {
+        "name": "lint-runs.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/lint-runs.json",
+        "bytes": 2392,
+        "sha256": "75c978cbeba678bf425230af7def1363081d1d7e286763abfa919d6233dadf2d"
+      },
+      {
+        "name": "preparation.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/preparation.json",
+        "bytes": 7757,
+        "sha256": "51c7ffae35ca4714cca76ea29ea199f496774fefee518eb46a4ccab3ec686618"
+      },
+      {
+        "name": "source-comparison.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/source-comparison.json",
+        "bytes": 4002,
+        "sha256": "fa316e134f58548ebf18ca7fbb7bddf9d25d98348dc7ee1c66a5142ad4a07504"
+      },
+      {
+        "name": "tool-restore.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/tool-restore.json",
+        "bytes": 51960,
+        "sha256": "5366c5e920372867246e19044f21ca66e15695748b40efbf96edf9ebd3142889"
+      },
+      {
+        "name": "restored-tool-identity.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/restored-tool-identity.json",
+        "bytes": 436,
+        "sha256": "c901b5438bc363a137b0be9981d3fd805825bffb8af55eefd28aa687e1f6d718"
+      },
+      {
+        "name": "baseline-lint.stdout.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/baseline-lint.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "baseline-lint.stderr.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/baseline-lint.stderr.log",
+        "bytes": 1032,
+        "sha256": "3c09b7e6e5b5a5fe7bef34018522b90ee65ac126d287848f3e2c749bff7c282c"
+      },
+      {
+        "name": "current-lint.stdout.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/current-lint.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "current-lint.stderr.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/current-lint.stderr.log",
+        "bytes": 1032,
+        "sha256": "ee136fc68b241c57cc09f68ad7f0c9821f7dcb3206d35dd27e96ca9759ae77ea"
+      },
+      {
+        "name": "first-lint-runs.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/first-lint-runs.json",
+        "bytes": 2025,
+        "sha256": "bb9e764da9f1bfc21e160212f2555dda5c6ce85fd32b2dd653501b6bb9d07106"
+      },
+      {
+        "name": "first-baseline-lint.stdout.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/first-baseline-lint.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "first-baseline-lint.stderr.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/first-baseline-lint.stderr.log",
+        "bytes": 2888,
+        "sha256": "c13f1d426f1e3201cc127e3417269af6367d917f1481ffc06feb469ba8d24ce5"
+      },
+      {
+        "name": "first-current-lint.stdout.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/first-current-lint.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "first-current-lint.stderr.log",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/first-current-lint.stderr.log",
+        "bytes": 1032,
+        "sha256": "ee136fc68b241c57cc09f68ad7f0c9821f7dcb3206d35dd27e96ca9759ae77ea"
+      },
+      {
+        "name": "tool-audit-identity.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/tool-audit-identity.json",
+        "bytes": 286036,
+        "sha256": "c16f2aa2a973dff9eb7d35edd69a074e00af5ee219d76101b57057fb1ffa2e45"
+      },
+      {
+        "name": "tool-audit-candidates.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/tool-audit-candidates.json",
+        "bytes": 1403100,
+        "sha256": "2e8939bc5b1998a9cbe363eb69a3b1075c0f00a68a9df3c2c0a10fb578769060"
+      },
+      {
+        "name": "tool-audit-minimal-clone-plan.json",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/tool-audit-minimal-clone-plan.json",
+        "bytes": 10714,
+        "sha256": "0019963c69484e00c93434c81e80e6d2fbc99fbe0b4d7751e3a705058b5e16ac"
+      },
+      {
+        "name": "tool-audit-candidates.mjs",
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mpx-lint-baseline/tool-audit-candidates.mjs",
+        "bytes": 5648,
+        "sha256": "d99637b22b0c2681ffa05fd882f26ad4c3fd222a3d2ea08c14687d2cfe723e5c"
+      }
+    ]
+  },
+  "subsequentRepositoryChecks": [
+    {
+      "command": "pnpm agents:check",
+      "startedAt": "2026-10-28T06:48:52.984440+00:00",
+      "finishedAt": "2026-10-28T06:48:53.491630+00:00",
+      "exitCode": 1,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/agents-install-stage-complete.log",
+      "logSha256": "8bcc763ba09f64cddc04036cbe04bd98909ef77111197372f40368a6f98effc5",
+      "resolution": "文档命令校验器将动态pnpm配置选项误判为脚本名；报告改为说明选项用途，完整真实执行命令保留在mpxDemoLintBaseline中，随后同一规范检查通过。"
+    },
+    {
+      "command": "pnpm agents:check",
+      "startedAt": "2026-10-28T06:49:35.131202+00:00",
+      "finishedAt": "2026-10-28T06:49:35.494119+00:00",
+      "exitCode": 0,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/agents-install-stage-complete-recheck.log",
+      "logSha256": "8dfe0d47dbfccfd574b6e54ee0529f5b01e6fcb1161ef0ece76213917850ad30"
+    },
+    {
+      "command": "git diff --check and untracked-file whitespace checks; JSON/TSV and recorded fingerprints",
+      "startedAt": "2026-10-28T06:48:52.985813+00:00",
+      "finishedAt": "2026-10-28T06:48:54.166748+00:00",
+      "exitCode": 0,
+      "trackedStdout": "",
+      "trackedStderr": "",
+      "untrackedFileCount": 37,
+      "untrackedFailures": [],
+      "verifiedManifestWorkspaceLockFiles": 121,
+      "verifiedPatchReferences": 22,
+      "verifiedCurrentAndBaselineLocks": 16,
+      "unusedCatalogAssessments": 15,
+      "jsonPortable": true,
+      "inventoryRows": 1742,
+      "projectRows": 105,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/whitespace-install-stage-complete.json",
+      "logSha256": "9af3e34d793233e27c5dec25a75dd4f888a165aca29e9c6797cd552bdd0ee5e6"
+    }
+  ],
+  "evidenceCorrections": [
+    {
+      "observedAt": "2026-10-28T11:36:36.626736+00:00",
+      "scope": "补丁组全过声明更正",
+      "actual": "36文件通过、1失败；920项通过、1项Webpack HMR超时",
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/patch-regressions-reviewed.log",
+      "logSha256": "7505e713fc7c437d5d540c30de4c4a0c0bc1187dd6863e79b9022e927071453e",
+      "followup": "后续2文件56项通过仅覆盖对应consumer；原组需以当前候选复验。"
+    }
+  ],
+  "prDeliveryTargetedChecks": [
+    {
+      "command": "CI=1 node node_modules/vitest/vitest.mjs run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup- scripts/ci/demo-matrix/taro-harmony- scripts/ci/demo-matrix/weapp-vite- scripts/ci/demo-matrix/taro-vite-async.test.mjs scripts/ci/demo-matrix/webpack-hmr.test.mjs scripts/ci/demo-matrix/mpx-fatal-watch.test.mjs scripts/ci/demo-matrix/nitro-externals.test.mjs scripts/ci/demo-matrix/framework-eslint.test.mjs scripts/ci/demo-matrix/taro-rn-stylelint.test.mjs --update=none",
+      "exitCode": 0,
+      "testFiles": 40,
+      "testsPassed": 1019,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/patch-regressions-pr-current.log",
+      "logSha256": "b5259a4ed4485b95f18e13dd2f12755c00acac144c49654872fca28fe442070f",
+      "recordedAt": "2026-10-28T11:57:48.084541+00:00"
+    },
+    {
+      "command": "CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/wechat-service.test.ts e2e/wechat-service-close.test.ts e2e/wechat-session-boundary.test.ts --update=none",
+      "exitCode": 0,
+      "testFiles": 3,
+      "testsPassed": 44,
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/wechat-diagnostics-20261028.log",
+      "logSha256": "c70481cf30dadb74bea13e0a7e2c3a3486b6dd4081225dfff8d79a7e81b81b3e",
+      "recordedAt": "2026-10-28T11:57:48.084900+00:00"
+    }
+  ]
+}

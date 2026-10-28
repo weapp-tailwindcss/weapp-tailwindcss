@@ -106,8 +106,8 @@
     "@tarojs/taro": "catalog:taro4",
     "@tarojs/taro-rn": "catalog:taro4rn",
     "expo": "catalog:expo50",
-    "react": "catalog:react18",
-    "react-dom": "catalog:react18",
+    "react": "catalog:taroRnReact18",
+    "react-dom": "catalog:taroRnReact18",
     "react-native": "catalog:reactNative073",
     "react-native-device-info": "catalog:reactNativeDeviceInfo14",
     "react-native-gesture-handler": "catalog:reactNativeGestureHandler214",
@@ -135,13 +135,16 @@
     "@types/node": "catalog:typesNode2410",
     "@types/react": "catalog:react18",
     "@types/webpack-env": "catalog:webpackTools",
+    "@typescript-eslint/eslint-plugin": "catalog:taroLint",
+    "@typescript-eslint/parser": "catalog:taroLint",
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/variants": "workspace:*",
     "babel-preset-taro": "catalog:taro4",
-    "eslint": "catalog:eslint10",
+    "eslint": "catalog:taroLint",
     "eslint-config-taro": "catalog:taro4",
+    "eslint-plugin-import": "catalog:taroLint",
     "eslint-plugin-react": "catalog:eslintPluginReact",
-    "eslint-plugin-react-hooks": "catalog:eslintPluginReactHooks",
+    "eslint-plugin-react-hooks": "catalog:taroLint",
     "metro-react-native-babel-preset": "catalog:metroReactNativeBabelPreset077",
     "postcss": "catalog:postcss85",
     "react-refresh": "catalog:reactRefresh018",
@@ -152,6 +155,6 @@
     "typescript": "catalog:typescript59",
     "weapp-ide-cli": "catalog:weappIdeCli",
     "weapp-tailwindcss": "workspace:*",
-    "webpack": "5.105.4"
+    "webpack": "5.91.0"
   }
 }

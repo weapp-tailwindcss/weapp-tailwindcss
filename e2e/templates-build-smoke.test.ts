@@ -4,6 +4,7 @@ import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
 import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
@@ -526,10 +527,14 @@ describe('templates build smoke', () => {
   })
 
   it.each(templateCases.filter(item => shouldRunCase(item.name)))('$name installs with its own frozen lockfile', async (item) => {
-    if (process.env['E2E_TEMPLATE_SKIP_INSTALL'] === '1') {
-      return
+    const root = getTemplateRoot(item.name)
+    if (process.env['E2E_TEMPLATE_SKIP_INSTALL'] !== '1') {
+      await runPnpm(['install', '--frozen-lockfile'], root)
     }
-    await runPnpm(['install', '--frozen-lockfile'], getTemplateRoot(item.name))
+    const family = templateLintFamilies.get(item.name)
+    if (family) {
+      await verifyFrameworkEslint(root, family)
+    }
   }, 1_200_000)
 
   it.each(templateBuildCases.filter(item => shouldRunCase(item.name)))('$name build output', async (item) => {

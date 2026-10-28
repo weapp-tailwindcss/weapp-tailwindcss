@@ -32,7 +32,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:tailwindcss4",
     "@tailwindcss/vite": "catalog:tailwindcss4",
-    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitejs/plugin-vue": "^6.0.10",
     "echarts": "^6.1.0",
     "postcss": "catalog:postcss85",
     "tailwindcss": "catalog:tailwindcss4",

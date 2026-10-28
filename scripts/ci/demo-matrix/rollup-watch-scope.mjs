@@ -29,7 +29,7 @@ export function watchRunScope(watcher) {
   return () => closing ??= (async () => {
     // watch() 异步初始化完成前 close 仍可能为空实现；首个 START 才证明真实句柄已接管。
     await started.promise
-    // 4.63.5 关闭后不再发送 END，必须先排空自然构建，再同步关闭真实句柄。
+    // Rollup 关闭后不再发送 END，必须先排空自然构建，再同步关闭真实句柄。
     for (let current = active; current; current = active) {
       await current.promise
     }

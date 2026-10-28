@@ -3,6 +3,7 @@ import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfigs } from './template-ide/config'
 import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
@@ -100,6 +101,10 @@ describe('canonical template build smoke', () => {
 
     if (process.env['E2E_CANONICAL_TEMPLATE_SKIP_INSTALL'] !== '1') {
       await runPnpm(root, ['install', '--frozen-lockfile'])
+    }
+    const family = templateLintFamilies.get(item.template)
+    if (family) {
+      await verifyFrameworkEslint(root, family)
     }
     if (process.env['E2E_CANONICAL_TEMPLATE_USE_LOCAL'] === '1' && item.kind === 'web') {
       await runPnpm(root, ['link', path.resolve(repoRoot, 'packages/weapp-tailwindcss')])

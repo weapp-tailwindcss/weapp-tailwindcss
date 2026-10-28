@@ -23,7 +23,7 @@ PR #1275 的 [PR Gate run 37725638756](https://github.com/weapp-tailwindcss/weap
 
 Webpack 5.105.4 的 [only-dev-server 实现](https://github.com/webpack/webpack/blob/v5.105.4/hot/only-dev-server.js) 先 `hot.check()`，再在 Promise 回调中 `hot.apply(options)`。进入 ready 后若有新的异步 chunk 加载，runtime 会回到 prepare，外部 apply 调用因此拒绝。真实 Webpack watch 编译与 headless 浏览器回归在 ready 回调中加载 chunk，补丁前稳定复现相同错误、旧值和 ready 状态。
 
-[补丁](../../../patches/webpack@5.105.4.patch) 把原有 apply 选项交给 `hot.check(options)`，让 runtime 等待 blocking promises 后内部应用，保留 ignore 选项、错误回调和继续检查更新的逻辑。没有放宽 idle gate、超时或引入页面刷新兜底。锁文件只新增此版本的 patch 身份，保留原来的依赖版本与 peer 图。
+[补丁（现已迁移至 5.112.2）](../../../patches/webpack@5.112.2.patch) 把原有 apply 选项交给 `hot.check(options)`，让 runtime 等待 blocking promises 后内部应用，保留 ignore 选项、错误回调和继续检查更新的逻辑。没有放宽 idle gate、超时或引入页面刷新兜底。原修复的锁文件只新增当时版本的 patch 身份，保留原来的依赖版本与 peer 图。
 
 macOS 向仅剩僵尸成员的进程组发送信号会返回 EPERM。真实回归使父进程暂时不能 reap 子进程，验证 Z 状态和该错误。收尾仍只操作已捕获的本任务进程组；EPERM 后检查 PGID/状态，仅组已空或全是僵尸时允许完成。有活成员、状态不明或 ps 失败时继续失败，不能一概吞掉权限错误。ESRCH 和 Windows 的 taskkill 路径保持原有行为。
 

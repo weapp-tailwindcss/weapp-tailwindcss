@@ -46,6 +46,6 @@
     "tsconfig-paths-webpack-plugin": "catalog:webpackTools",
     "typescript": "catalog:typescript59",
     "weapp-style-injector": "workspace:*",
-    "webpack": "5.105.4"
+    "webpack": "5.91.0"
   }
 }

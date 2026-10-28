@@ -20,3 +20,15 @@ minimumReleaseAgeExclude:
   - repoctl
   - '@weapp-tailwindcss/postcss@3.3.3'
   - weapp-tailwindcss@5.5.5
+patchedDependencies:
+  "@tarojs/plugin-framework-react@4.3.1": patches/@tarojs__plugin-framework-react@4.3.1.patch
+  "@tarojs/plugin-platform-harmony-hybrid@4.3.1": patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch
+  "@tarojs/vite-runner@4.3.1": patches/@tarojs__vite-runner@4.3.1.patch
+  rollup@3.30.0: patches/rollup@3.30.0.patch
+overrides:
+  eslint-config-taro@4.3.1>@typescript-eslint/parser: 8.72.1
+  eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin: 8.72.1
+packageExtensions:
+  "@tarojs/plugin-platform-harmony-hybrid@4.3.1":
+    dependencies:
+      "@babel/core": ^7.26.10

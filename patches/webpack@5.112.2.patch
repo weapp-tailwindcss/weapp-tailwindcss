@@ -2,7 +2,7 @@ diff --git a/hot/only-dev-server.js b/hot/only-dev-server.js
 index 785dd33d46154a82e06a915787ea1f303c2b699e..819af7e7bf92aba0e004a891805878c84d622aa2 100644
 --- a/hot/only-dev-server.js
 +++ b/hot/only-dev-server.js
-@@ -12,7 +12,36 @@ if (module.hot) {
+@@ -12,7 +12,36 @@
  	var log = require("./log");
  	var check = function check() {
  		module.hot
@@ -40,7 +40,7 @@ index 785dd33d46154a82e06a915787ea1f303c2b699e..819af7e7bf92aba0e004a891805878c8
  			.then(function (updatedModules) {
  				if (!updatedModules) {
  					log("warning", "[HMR] Cannot find update. Need to do a full reload!");
-@@ -23,48 +52,15 @@ if (module.hot) {
+@@ -23,48 +52,15 @@
  					return;
  				}
  

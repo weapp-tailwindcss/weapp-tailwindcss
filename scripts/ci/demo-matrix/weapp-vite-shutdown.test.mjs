@@ -1,53 +1,24 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { EventEmitter } from 'node:events'
-import { readdirSync, readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import path from 'node:path'
-import { runInNewContext } from 'node:vm'
-import { parseSync, traverse } from '@babel/core'
 import { expect, it, vi } from 'vitest'
 import { repo } from './catalog.mjs'
+import { evaluatePublishedDefinitions, publishedClassMethods, publishedExport } from './weapp-vite-package.fixture.mjs'
 
-const demoRequire = createRequire(path.join(repo, 'demo/weapp-vite-tailwindcss-v4/package.json'))
-const dist = path.join(path.dirname(demoRequire.resolve('weapp-vite/package.json')), 'dist')
-const contextSource = readFileSync(path.join(dist, readdirSync(dist).find(name => /^createContext-.*\.mjs$/.test(name))), 'utf8')
-const cliSource = readFileSync(path.join(dist, 'cli.mjs'), 'utf8')
+const bindHostLifecycle = await publishedExport('bindHostLifecycle')
+const takeHostLifecycle = await publishedExport('takeHostLifecycle')
 
-// 执行发行包里的真实私有实现，避免导入 CLI 触发其命令入口。
-function fragment(source, predicate) {
-  const ast = parseSync(source, { babelrc: false, configFile: false, sourceType: 'module' })
-  const matches = []
-  traverse(ast, {
-    enter({ node }) {
-      if (predicate(node)) {
-        matches.push(node)
-      }
-    },
+function createScope(signals) {
+  signals.stdin ??= new EventEmitter()
+  const { createDevShutdownScope } = evaluatePublishedDefinitions(['DevShutdownScope', 'createDevShutdownScope'], {
+    process: signals,
+    operations: new AsyncLocalStorage(),
   })
-  expect(matches).toHaveLength(1)
-  return source.slice(matches[0].start, matches[0].end)
-}
-
-function deferred() {
-  return Promise.withResolvers()
-}
-
-const scopeSource = fragment(cliSource, node => node.type === 'FunctionDeclaration' && /^(?:waitForServeShutdownSignal|createServeShutdownSignalScope)$/.test(node.id.name))
-const serveSource = fragment(cliSource, node => node.type === 'FunctionDeclaration' && node.id.name === 'registerServeCommand')
-const ownershipSource = fragment(contextSource, node => node.type === 'ObjectExpression' && node.properties.some(property => property.key?.name === 'name' && property.value?.value === 'weapp-vite:ide-asset-watch-ownership'))
-const installSource = fragment(contextSource, node => node.type === 'IfStatement' && node.test.type === 'Identifier' && node.test.name === 'privateConfigPath')
-const leaseSource = contextSource.slice(contextSource.indexOf('\tlet restoreAssetWatch;'), contextSource.indexOf('\tasync function trackStatefulRestart('))
-
-function lease(install) {
-  return runInNewContext(`${leaseSource}\n({ release: releaseAssetWatch, install: async () => { ${installSource} } })`, {
-    configService: { outDir: 'fixture', projectConfig: {} },
-    privateConfigPath: 'fixture',
-    initialSnapshot: [],
-    installIdeAssetWatch: install,
-  })
+  return createDevShutdownScope()
 }
 
 function serve(signals, driver) {
   const backend = { descriptor: { id: 'miniprogram' }, driver }
+  const targets = { select: () => [backend], has: () => true }
   let action
   const cli = {
     command: () => cli,
@@ -55,40 +26,74 @@ function serve(signals, driver) {
     option: () => cli,
     action: (callback) => { action = callback },
   }
-  runInNewContext(`${scopeSource}\n${serveSource}\nregisterServeCommand(cli)`, {
-    cli,
+  const { registerServeCommand } = evaluatePublishedDefinitions(['startServeCommand', 'registerServeCommand'], {
+    createDevShutdownScope: () => createScope(signals),
     process: signals,
     filterDuplicateOptions() {},
+    parseDashboardUiHost() {},
     setCommandNodeEnv() {},
     resolveConfigFile() {},
-    resolveRuntimeTargets: () => ({ select: () => [backend], has: () => true }),
+    resolveRuntimeTargets: () => targets,
+    resolveConfiguredRuntimeTargets: value => value,
+    resolveWebHost() {},
     getBackendForCapability: (_, id) => id === 'miniprogram' ? backend : undefined,
     createInlineConfig() {},
-    createCompilerContext: async () => ({ configService: { multiPlatform: {}, weappViteConfig: {} } }),
+    createCompilerContext: async () => ({ configService: { weappViteConfig: {} } }),
+    getHmrRuntimeSession: () => ({ classicIdeConfig: { close: async () => {} } }),
     detectAiDevelopmentEnvironment: async () => ({}),
     applyMcpCliOptions() {},
     logRuntimeTarget() {},
     isUiEnabled: () => false,
-    createServeMiniProgramDevActions: () => ({}),
-    resolveIdeProjectRoot() {},
+    createServeDevelopmentActions: () => ({}),
     startDevHotkeys: () => ({ restore() {}, close() {} }),
     createAnalyzeController: () => ({}),
-    logger_default: { success() {} },
+    logger_default: { success() {}, error() {} },
     formatDuration: String,
     logBuildAppFinish() {},
     closeActiveForwardConsole: async () => {},
   })
+  registerServeCommand(cli)
   return () => action(repo, {})
+}
+
+/** 资源替身只提供外部关闭动作，租约获取、排空和幂等关闭执行真实发布方法。 */
+function session(install) {
+  const methods = publishedClassMethods('StatefulHmrSession', ['prepareIdeAssetWatch', 'prepareClassicHandoff', 'close', 'closeResources'], {
+    resolveIdePrivateConfigPath: () => 'fixture',
+    installIdeAssetWatch: install,
+    getHmrRuntimeSession: () => ({ classicIdeConfig: {} }),
+    getCompilerHmrHost: () => ({}),
+    clearTimeout,
+  })
+  return {
+    ...methods,
+    ctx: { configService: { outDir: 'fixture', projectConfig: {} } },
+    snapshots: { initial: { output: [] } },
+    delivery: { close: vi.fn(async () => {}) },
+    snapshotScheduler: { close: vi.fn(async () => {}) },
+    interruptSettlement: vi.fn(async () => {}),
+    transport: { close: vi.fn(async () => {}) },
+    adapter: { close: vi.fn(async () => {}) },
+    sourceDirtyReasons: new Map(),
+    unpersistedNativeScripts: new Map(),
+    nativeScriptInputs: { clear: vi.fn() },
+    retiringOutputFailures: new Set(),
+    outputChain: Promise.resolve(),
+  }
+}
+
+function host(close = vi.fn(async () => {}), restart = vi.fn(async () => {}), inlineConfig = {}) {
+  return { close, restart, config: { inlineConfig }, watcher: { close: vi.fn(async () => {}) } }
 }
 
 it.each(['success', 'startup-error', 'cleanup-error'])('真实 serve action 保持整个启动和关闭作用域：%s', async (mode) => {
   const signals = new EventEmitter()
   const external = vi.fn()
   signals.on('SIGTERM', external)
-  const started = deferred()
-  const startup = deferred()
-  const closing = deferred()
-  const cleanup = deferred()
+  const started = Promise.withResolvers()
+  const startup = Promise.withResolvers()
+  const closing = Promise.withResolvers()
+  const cleanup = Promise.withResolvers()
   const driver = {
     dev: vi.fn(() => {
       started.resolve()
@@ -99,9 +104,8 @@ it.each(['success', 'startup-error', 'cleanup-error'])('真实 serve action 保�
       return cleanup.promise
     }),
   }
-  const action = serve(signals, driver)
   let finished = false
-  const result = action().then(() => undefined, error => error).finally(() => {
+  const result = serve(signals, driver)().then(() => undefined, error => error).finally(() => {
     finished = true
   })
   try {
@@ -120,7 +124,9 @@ it.each(['success', 'startup-error', 'cleanup-error'])('真实 serve action 保�
     if (mode === 'cleanup-error') {
       cleanup.reject(new Error(mode))
     }
-    else { cleanup.resolve() }
+    else {
+      cleanup.resolve()
+    }
     expect((await result)?.message).toBe(mode === 'success' ? undefined : mode)
     expect(driver.close).toHaveBeenCalledTimes(1)
     expect(signals.listenerCount('SIGINT')).toBe(0)
@@ -138,66 +144,100 @@ it('启动前监听退出信号，重复信号不能提前移除清理期间的�
   const signals = new EventEmitter()
   const external = vi.fn()
   signals.on('SIGTERM', external)
-  const factoryName = scopeSource.match(/function (\w+)/)[1]
-  const scope = runInNewContext(`${scopeSource}\n${factoryName}()`, { process: signals })
+  const scope = createScope(signals)
+  const started = Promise.withResolvers()
+  const cleanup = Promise.withResolvers()
+  scope.own(() => {
+    started.resolve()
+    return cleanup.promise
+  })
   try {
     expect(signals.listenerCount('SIGINT')).toBe(1)
     signals.emit('SIGTERM')
-    await (scope.signal ?? scope)
+    await scope.signal
+    await started.promise
     signals.emit('SIGINT')
     signals.emit('SIGTERM')
     expect(signals.listenerCount('SIGINT')).toBe(1)
     expect(signals.listenerCount('SIGTERM')).toBe(2)
   }
-  finally { scope.dispose?.() }
+  finally {
+    cleanup.resolve()
+    await scope.close()
+  }
   expect(signals.listenerCount('SIGINT')).toBe(0)
   expect(signals.listeners('SIGTERM')).toEqual([external])
 })
 
 it.each(['resolve', 'reject'])('并发释放共享完成边界，下一轮安装等待旧租约 %s', async (result) => {
-  const cleanup = deferred()
-  const restore = vi.fn(() => cleanup.promise)
+  const cleanup = Promise.withResolvers()
+  const restoring = Promise.withResolvers()
+  const failure = new Error('restore failed')
+  const restore = vi.fn(() => {
+    restoring.resolve()
+    return cleanup.promise
+  })
   const nextRestore = vi.fn()
   const install = vi.fn().mockResolvedValueOnce(restore).mockResolvedValueOnce(nextRestore)
-  const resource = lease(install)
-  await resource.install()
-  const first = resource.release()
-  const second = resource.release()
-  const next = resource.install()
-  const settled = Promise.allSettled([first, second, next])
-  await Promise.resolve()
-  expect(restore).toHaveBeenCalledTimes(1)
-  expect(install).toHaveBeenCalledTimes(1)
-  if (result === 'reject') {
-    cleanup.reject(new Error('restore failed'))
+  const first = session(install)
+  const next = session(install)
+  await first.prepareIdeAssetWatch()
+  let server
+  const nativeRestart = vi.fn(async () => {
+    await next.prepareIdeAssetWatch()
+    const replacement = host(undefined, undefined, server.config.inlineConfig)
+    bindHostLifecycle(replacement, () => next.close(), takeHostLifecycle(replacement.config.inlineConfig))
+    Object.assign(server, replacement)
+  })
+  server = host(undefined, nativeRestart)
+  bindHostLifecycle(server, () => first.close())
+  const restarting = server.restart()
+  const observed = restarting.then(() => undefined, error => error)
+  try {
+    await restoring.promise
+    expect(install).toHaveBeenCalledTimes(1)
+    expect(nativeRestart).not.toHaveBeenCalled()
+    expect(first.close()).toBe(first.close())
+    if (result === 'reject') {
+      cleanup.reject(failure)
+    }
+    else { cleanup.resolve() }
+    expect(await observed).toBe(result === 'reject' ? failure : undefined)
+    expect(install).toHaveBeenCalledTimes(result === 'reject' ? 1 : 2)
+    expect(restore).toHaveBeenCalledTimes(1)
   }
-  else { cleanup.resolve() }
-  const results = await settled
-  expect(results.map(item => item.status)).toEqual(Array.from({ length: 3 }).fill(result === 'reject' ? 'rejected' : 'fulfilled'))
-  expect(install).toHaveBeenCalledTimes(result === 'reject' ? 1 : 2)
+  finally {
+    cleanup.resolve()
+    await observed
+    if (result === 'reject') {
+      await expect(server.close()).rejects.toBe(failure)
+    }
+    else {
+      await server.close()
+    }
+  }
   if (result === 'resolve') {
-    await resource.release()
     expect(nextRestore).toHaveBeenCalledTimes(1)
   }
 })
 
-it.each(['close', 'restart', 'error'])('Vite 已开始 %s 时，public close 仍须等待租约恢复', async (reason) => {
-  const cleanup = deferred()
-  const releasing = deferred()
-  const released = vi.fn(() => {
-    releasing.resolve()
+it.each(['success', 'native-error', 'lease-error'])('public close 等待真实会话租约恢复并传播错误：%s', async (mode) => {
+  const cleanup = Promise.withResolvers()
+  const restoring = Promise.withResolvers()
+  const failure = new Error(mode)
+  const restore = vi.fn(() => {
+    restoring.resolve()
     return cleanup.promise
   })
-  const plugin = runInNewContext(`(${ownershipSource})`, { releaseAssetWatch: released })
-  const failure = new Error('server close failed')
-  const originalClose = vi.fn(async () => {
-    if (reason === 'error') {
+  const resource = session(vi.fn().mockResolvedValue(restore))
+  await resource.prepareIdeAssetWatch()
+  const nativeClose = vi.fn(async () => {
+    if (mode === 'native-error') {
       throw failure
     }
-    await plugin.closeServer?.({ reason })
   })
-  const server = { close: originalClose }
-  plugin.configureServer?.(server)
+  const server = host(nativeClose)
+  bindHostLifecycle(server, () => resource.close())
   let settled = false
   const first = server.close()
   const second = server.close()
@@ -205,31 +245,41 @@ it.each(['close', 'restart', 'error'])('Vite 已开始 %s 时，public close 仍
     settled = true
     return results
   })
-  await Promise.race([releasing.promise, finished])
-  expect(released).toHaveBeenCalled()
-  expect(settled).toBe(false)
-  cleanup.resolve()
-  const results = await finished
-  expect(results.map(result => result.status)).toEqual(Array.from({ length: 2 }).fill(reason === 'error' ? 'rejected' : 'fulfilled'))
-  if (reason === 'error') {
-    expect(results.map(result => result.reason)).toEqual([failure, failure])
+  try {
+    expect(first).toBe(second)
+    await restoring.promise
+    expect(settled).toBe(false)
+    expect(nativeClose).not.toHaveBeenCalled()
+    if (mode === 'lease-error') {
+      cleanup.reject(failure)
+    }
+    else {
+      cleanup.resolve()
+    }
+    const results = await finished
+    expect(results.map(item => item.status)).toEqual(Array.from({ length: 2 }).fill(mode === 'success' ? 'fulfilled' : 'rejected'))
+    if (mode !== 'success') {
+      expect(results.map(item => item.reason)).toEqual([failure, failure])
+    }
+    expect(nativeClose).toHaveBeenCalledTimes(1)
+    expect(restore).toHaveBeenCalledTimes(1)
   }
-  expect(originalClose).toHaveBeenCalledTimes(1)
+  finally {
+    cleanup.resolve()
+    await finished
+  }
 })
 
-it('内部重启保留租约，启动期关闭 hook 等待释放', async () => {
-  const cleanup = deferred()
-  const released = vi.fn(() => cleanup.promise)
-  const plugin = runInNewContext(`(${ownershipSource})`, { releaseAssetWatch: released })
-  await plugin.closeServer?.({ reason: 'restart' })
-  expect(released).not.toHaveBeenCalled()
-  let settled = false
-  const closing = Promise.resolve(plugin.closeServer?.({ reason: 'close' })).then(() => {
-    settled = true
-  })
-  await Promise.resolve()
-  expect(released).toHaveBeenCalledTimes(1)
-  expect(settled).toBe(false)
-  cleanup.resolve()
-  await closing
+it('会话资源关闭失败时，仍恢复租约并保留失败', async () => {
+  const failure = new Error('delivery close failed')
+  const restore = vi.fn()
+  const resource = session(vi.fn().mockResolvedValue(restore))
+  await resource.prepareIdeAssetWatch()
+  resource.delivery.close.mockRejectedValue(failure)
+  const first = resource.close()
+  expect(first).toBe(resource.close())
+  await expect(first).rejects.toBe(failure)
+  expect(resource.snapshotScheduler.close).toHaveBeenCalledTimes(1)
+  expect(resource.adapter.close).toHaveBeenCalledTimes(1)
+  expect(restore).toHaveBeenCalledExactlyOnceWith(undefined)
 })

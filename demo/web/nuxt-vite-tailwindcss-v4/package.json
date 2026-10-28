@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
     "dev": "nuxt dev",
@@ -13,7 +13,7 @@
     "prebuild": "node ../../../scripts/ensure-weapp-tailwindcss-built.mjs"
   },
   "dependencies": {
-    "nuxt": "4.6.0",
+    "nuxt": "4.6.3",
     "vue": "catalog:vue3"
   },
   "devDependencies": {
@@ -22,7 +22,8 @@
     "@iconify/tailwind4": "^1.2.3",
     "tailwindcss": "catalog:tailwindcss4",
     "typescript": "catalog:typescript59",
-    "weapp-tailwindcss": "workspace:*"
+    "weapp-tailwindcss": "workspace:*",
+    "vite": "catalog:vite8"
   },
   "repository": {
     "type": "git",

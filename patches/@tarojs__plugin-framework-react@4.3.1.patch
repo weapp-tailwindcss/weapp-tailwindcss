@@ -1,20 +1,20 @@
 diff --git a/dist/index.js b/dist/index.js
-index d6d43958b056629cfd22ebea14dad178685fbe91..e4711d708a7446fd1283b3796a914300b56fd4b3 100644
+index 2e1635591119d661c55c28aded1cb091bc903551..02a79b9ae2c81f58c5d66c18d08f2b0053822717 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -317,6 +317,9 @@ function injectLoaderMeta$2(ctx) {
+@@ -262,6 +262,9 @@
      };
  }
  function setTaroApi() {
 +    const hybridApi = /[\\/]@tarojs[\\/]plugin-platform-harmony-hybrid[\\/]dist[\\/]runtime[\\/]apis[\\/]index\.js$/;
 +    const apiPattern = new RegExp(helper.REG_TARO_H5_RUNTIME_API.source + '|' + hybridApi.source);
 +    const inject = (input, id) => apiLoader(input + (hybridApi.test(id) ? '' : '\nconst taro = Taro__default\n'));
-     // dev 环境通过 esbuild 来做； pro 环境通过 rollup load 钩子来做；因为生产环境不会走 optimizeDeps
+     // dev 环境通过 esbuild 来做； pro 环境通过 rollup load 钩子来做；因为生产环境不会走 esbuild
      return {
-         name: 'taro-vue3:process-import-taro',
-@@ -328,10 +331,10 @@ function setTaroApi() {
+         name: 'taro-react:process-import-taro',
+@@ -273,10 +276,10 @@
                          {
-                             name: 'taro:vue3-api',
+                             name: 'taro:react-api',
                              setup(build) {
 -                                build.onLoad({ filter: helper.REG_TARO_H5_RUNTIME_API }, (args) => tslib.__awaiter(this, void 0, void 0, function* () {
 +                                build.onLoad({ filter: apiPattern }, (args) => tslib.__awaiter(this, void 0, void 0, function* () {
@@ -25,7 +25,7 @@ index d6d43958b056629cfd22ebea14dad178685fbe91..e4711d708a7446fd1283b3796a914300
                                      };
                                  }));
                              },
-@@ -342,10 +345,10 @@ function setTaroApi() {
+@@ -287,10 +290,10 @@
          }),
          load(id) {
              return tslib.__awaiter(this, void 0, void 0, function* () {

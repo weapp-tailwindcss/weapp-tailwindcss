@@ -13,17 +13,18 @@
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "@weapp-tailwindcss/react-native": "workspace:*",
-    "expo": "~54.0.37",
+    "expo": "~54.0.38",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-web": "~0.21.0"
+    "react-native-web": "~0.21.4"
   },
   "devDependencies": {
+    "@babel/core": "catalog:babelCore7285",
     "@types/node": "catalog:typesNode2410",
     "@types/react": "~19.1.10",
     "tailwindcss": "catalog:tailwindcss4",
-    "typescript": "^5.9.0",
+    "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }
 }

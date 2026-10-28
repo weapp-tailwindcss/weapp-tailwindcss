@@ -1,8 +1,8 @@
 diff --git a/dist/index.js b/dist/index.js
-index a6e970413bef6f03e73f57b6eb301a4467cad598..810304dbc45d2a869d06c7d43f266780ae4923c7 100644
+index 941ed5309a3bd4fefb52a321677b9c2468b743dd..63afc07f9e21cf3679c2172e5ccf2f7e3662a22e 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -445,7 +445,7 @@ class H5 extends service.TaroPlatformWeb {
+@@ -445,7 +445,7 @@
          this.runtimePath = `${PACKAGE_NAME}/dist/runtime`;
          this.setupTransaction.addWrapper({
              close() {
@@ -11,7 +11,7 @@ index a6e970413bef6f03e73f57b6eb301a4467cad598..810304dbc45d2a869d06c7d43f266780
              },
          });
      }
-@@ -489,6 +489,9 @@ class H5 extends service.TaroPlatformWeb {
+@@ -489,6 +489,9 @@
      /**
       * 修改 Webpack 配置
       */

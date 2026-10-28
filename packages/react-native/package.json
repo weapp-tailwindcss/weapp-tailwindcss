@@ -105,9 +105,10 @@
     "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {
-    "@babel/core": "catalog:babel8",
+    "@babel/core": "catalog:babelCore7285",
     "@types/react": "catalog:react19",
     "react": "catalog:react19",
+    "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }
 }

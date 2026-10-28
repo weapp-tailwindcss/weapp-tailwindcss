@@ -1,0 +1,1549 @@
+{
+  "schemaVersion": 1,
+  "phase": "安装阶段最终身份；static与完整多端验收未完成",
+  "capturedAt": "2026-10-28T05:41:55.435Z",
+  "baselineRef": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+  "sourceInventorySha256": "3b2794b8fadfa4307177e6713a1ab6ecae7c9590b2013893c486ed778f3cf2ad",
+  "inventorySummary": {
+    "manifests": 105,
+    "originalRecords": 1717,
+    "originalPackages": 444,
+    "currentExternalDeclarations": 1742,
+    "added": 25,
+    "removed": 0,
+    "currentLocks": 8,
+    "baselineLocks": 8,
+    "declarationResults": {
+      "符合目标": 1650,
+      "批准专项目标": 34,
+      "批准新增声明": 25,
+      "目标版本已固定": 14,
+      "peer范围保持": 19
+    },
+    "resolutionResults": {
+      "锁解析符合声明及目标": 1723,
+      "锁定提供者满足peer契约": 19
+    },
+    "issues": 0,
+    "physicalResults": {
+      "inspected": 1742,
+      "matchesLock": 1742,
+      "matchesRegistryName": 1742,
+      "missingDirectLink": 0
+    },
+    "physicalIssues": 0,
+    "unusedCatalogs": 15,
+    "changedDuringCapture": []
+  },
+  "locks": [
+    {
+      "file": "pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "3f297e3afc20ea1928351bede0a75984181e528bd7de0f0f99f115e9c7fcb93c",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 97,
+          "packages": 6102
+        }
+      ]
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "a589e4561dc44ec27162b72b595a17039a6b778990f326fdc6389ddf5da1949e",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 97,
+          "packages": 5765
+        }
+      ]
+    },
+    {
+      "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "813c498042e32bfa91694bc17b2be50c607f0ddec315507185194f278a81f59f",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1384
+        }
+      ]
+    },
+    {
+      "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1373
+        }
+      ]
+    },
+    {
+      "file": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "bcfc0c292e0143fa4a534db917ba100248701357cea78273848dab01d4050610",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1408
+        }
+      ]
+    },
+    {
+      "file": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "c2acf1e6e5a0feb699ff01c28237b0c58002da85db36eabd702be7d9a6a1a7b5",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1394
+        }
+      ]
+    },
+    {
+      "file": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "7ae5e58ed01a6c41e4965da59f58acfef2659e4df41b9510dd48df8a1145984a",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1752
+        }
+      ]
+    },
+    {
+      "file": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1720
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "177e9206d5490e0b5cd664e412b36f9b52c0d64a51b9895810d89c039db7e06d",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 296
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "d2614c7e04b0168b378de6e474b7a2e8b2f6b32d0aa892a76dd7ed41ed0761cb",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 284
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "17c6221431de393b41943da66d9e6d86f8ce32b3b95dc12a5c7f4bf024d5ebb4",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1185
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "60c0e81b7d918647e4045bba83895a535ac43de84d0afe0ed141e1d110d9d24c",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1161
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "ec1afc43dd5cbbbec699cfc592cf0c14d049006cdc6e27072a26e7384430f97a",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1922
+        }
+      ]
+    },
+    {
+      "file": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "5141e12753b0d28b5c166cdbe9e91fa63ff2394300df4ac56752834e3ec50135",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 1916
+        }
+      ]
+    },
+    {
+      "file": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": true,
+      "sha256": "6d5350f9961913afb6e06c0a8fbcfad888411016c5eaa78b36dd662726469f7e",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 678
+        }
+      ]
+    },
+    {
+      "file": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "baseline": false,
+      "sha256": "9d1bfae52955ed2cb01df892147096efdb8ee8d6bb6ebb42d4ded3a4e56759e0",
+      "documents": [
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 15
+        },
+        {
+          "lockfileVersion": "9.0",
+          "importers": 1,
+          "packages": 763
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "file": "apps/lynx-promo-video/package.json",
+      "bytes": 2349,
+      "sha256": "6a8c8de981c9200ababf64fe67a384565768dbedfe4d440409c85f286a53137e",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "bytes": 12190,
+      "sha256": "6d109074c90921f2569c665d8aa330e4f0b46d82ebde07605c6a8b6c5267ae23",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "apps/weapp-tailwindcss-promo-video/package.json",
+      "bytes": 1511,
+      "sha256": "370621d6c613733f67823444cbbe1f6fd249acc0b0ca257972d65929eb2a6aa3",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "assets/package.json",
+      "bytes": 304,
+      "sha256": "369dd8e056458fe5014b1b3e6f0130fd113cfff82317dd8a2468c882178d41c4",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "benchmark/app/package.json",
+      "bytes": 1404,
+      "sha256": "8075d010c098f5d8aa72e10fddc202678f2d7c345cd3e2d410f20f8f327d1aaf",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "benchmark/performance/package.json",
+      "bytes": 1127,
+      "sha256": "f9e7b56c66560ce14fd1d22b430c8d92e7316d88d611984af35e11e1cbb0303c",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "benchmark/runtime-cn-vs-merge/package.json",
+      "bytes": 1337,
+      "sha256": "6103703013e2ef2916322209f6121806a82f7de66b31524cef054eef0fb1d47a",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "benchmark/tailwindcss-plugin-compare/package.json",
+      "bytes": 1129,
+      "sha256": "391d8d29b4ea7c5bf608f6e1ea10bf55a8077bbbfaf94b51af53e58f26cfd282",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "benchmark/tailwindcss4/package.json",
+      "bytes": 721,
+      "sha256": "92027e032a1621fe7cb79cf142cb6dc6f26d8a6cb5c837ce1cc3e99aa266a0ce",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/gulp-tailwindcss-v4/package.json",
+      "bytes": 4221,
+      "sha256": "09c19869dbb9b300cc45eaf623899a83f8f6e3793df1bf2a28b64b27684b45b2",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/issue-1144-uni-app-x-web/package.json",
+      "bytes": 986,
+      "sha256": "b822a39017d95599549d9c0c4408718bda4772afd9ff2ec70b7ca85d86273685",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/issue-951-taro-vite-react-tailwindcss-v4/package.json",
+      "bytes": 8447,
+      "sha256": "3d98ac1a4082067a2ad88eb0323690683ca528857efcc9ab710224a66ccf0fea",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/issue-uview-plus-cssentries/package.json",
+      "bytes": 2067,
+      "sha256": "7a6d9e7f7cf572126c322cbca560e1792b70739e2cada151fc7012b67427f6f1",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/mpx-tailwindcss-v4/package.json",
+      "bytes": 2607,
+      "sha256": "fb20a61fe6dc55a5f10837a6d9fed79f16a90f140eb8d603863bdaaf51854f68",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/style-injector-mpx/package.json",
+      "bytes": 1620,
+      "sha256": "daf68effec18e9dde87948d3fcb0113ca0fbff7bafb6dfece25694b61a0aabaf",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/style-injector-taro-vite-react/package.json",
+      "bytes": 1971,
+      "sha256": "45f6999c48fe732a7d940e5a3a9d6f1d327cd58f5078e8b393af779c5dc01175",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/style-injector-taro-webpack-react/package.json",
+      "bytes": 2139,
+      "sha256": "a15e4e77c3f6e8e552a84a3936369eae1bb619d4d11795f39a7d0de959f3784a",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/style-injector-uni-app/package.json",
+      "bytes": 1453,
+      "sha256": "83f9ff453c363b71f7295072b9ff43a504136347c5434f7e67d433fb8b8351a3",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/subpackage-taro-webpack-react-tailwindcss-v4/package.json",
+      "bytes": 5416,
+      "sha256": "13908286f8669bef5fd18531ff4a0002ef8dc5c47e932153acc133bda09dbfc4",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/subpackage-uni-app-vite-tailwindcss-v4/package.json",
+      "bytes": 3335,
+      "sha256": "f837086a5a30826d648371f26d476e154b851fe11814d9b3bdea4f4c8fb3754f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/taro-vite-react-tailwindcss-v4/package.json",
+      "bytes": 8374,
+      "sha256": "cac10a5a7f756c085c7164fb89e9d954068b7dfd615c21509a21f746b7d8bb5f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/taro-vite-vue3-tailwindcss-v4/package.json",
+      "bytes": 8172,
+      "sha256": "0003b1478b7aa957420584670968ddc9bea4f7f690c7589b162ca2c5bbca7f1b",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/taro-webpack-react-tailwindcss-v4/package.json",
+      "bytes": 8102,
+      "sha256": "02365ccf2dfbc6b743cca132b730cc991df9dee41558769b9359d48f993f103e",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/taro-webpack-vue3-tailwindcss-v4/package.json",
+      "bytes": 7946,
+      "sha256": "9330c60358bac5d13a27b93717bfba37c4474fa428500daa8f168408ab9b043b",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/uni-app-vite-tailwindcss-v4/package.json",
+      "bytes": 7523,
+      "sha256": "859aec84c13c855634ece51d2031cc268a9739e8fb390f973884fc04c3d4d959",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/uni-app-vite-vue3-hbuilderx-tailwindcss-v4/package.json",
+      "bytes": 2989,
+      "sha256": "d562afaf5e201a5afef131a5a8ef06a7f76ad5355229f2a49d5522f91f798bef",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/uni-app-x-vapor-tailwindcss-v4/package.json",
+      "bytes": 1390,
+      "sha256": "72edefa3f70478655519bc1d0479f8880b1bcdd62377bf1a151dff5fc4893e23",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/uni-app-x-vdom-tailwindcss-v4/package.json",
+      "bytes": 2091,
+      "sha256": "2a82ed8e38f21b623cd4046ad00751b2795ae3a7f1788b1d34a30df7a9377ca5",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/weapp-vite-tailwindcss-v4/package.json",
+      "bytes": 2092,
+      "sha256": "f2cf94f2d6dcba68849e5b741606b4a565415268c67b6e441d462f159de5ae15",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/nuxt-vite-tailwindcss-v4/package.json",
+      "bytes": 975,
+      "sha256": "0162d398e8085c95f0ee5fae852249d91db5b1cfcb18b3acd2812dac94143cac",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/react-rsbuild-tailwindcss-v4/package.json",
+      "bytes": 1643,
+      "sha256": "a57ca5e59f61121c86e627d5d4e96deea6c5535a284b07dee6e01ccf347b90e0",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/react-vite-tailwindcss-v4/package.json",
+      "bytes": 1611,
+      "sha256": "55e28578e7c56fb5c95d2c86cf0be43a4644287f428f4941cfdf27d8a80dc52f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/react-webpack-tailwindcss-v4/package.json",
+      "bytes": 2008,
+      "sha256": "51588f698393455ae0078338de4c1a6dacbc20051d1f4ade058cec2785b9389f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/vue-rsbuild-tailwindcss-v4/package.json",
+      "bytes": 1591,
+      "sha256": "51e0d95c84cb7b7e0d7eb042c45d4cf0fb7981fd28bf701dffeb89a7210b8907",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/vue-vite-tailwindcss-v4/package.json",
+      "bytes": 1557,
+      "sha256": "08b09bfc1bb9225b721de130d6b25335239e4093d27c7075450f09f6e1ef09e0",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/vue-vite7-tailwindcss-v4/package.json",
+      "bytes": 1034,
+      "sha256": "1f139b470c20f684531299a82af4e2032650a25bdf73be33f52ed591065e574f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "demo/web/vue-webpack-tailwindcss-v4/package.json",
+      "bytes": 1928,
+      "sha256": "011afdfe1e6201c478a36dd520eac8f033541004fc0fa517381cbf4f0502e16c",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "e2e/package.json",
+      "bytes": 402,
+      "sha256": "176224c912a8d7ad4f19410e2a217ff8abcd51a8438a514c63ddf6e35f7bc4d7",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "examples/node-api-core/package.json",
+      "bytes": 641,
+      "sha256": "88d5d3a23512508be175c0f6711e3e83aaf538f18b4bebc4e2d57435fb3365f8",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "examples/react-lynx-promo/package.json",
+      "bytes": 643,
+      "sha256": "6bcf0b21c203501e56bbefd0cbe4693b08652fff554b393944f979f9517f6de4",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "examples/react-lynx/package.json",
+      "bytes": 718,
+      "sha256": "1c7c4cd6ee583645696e909babcd745bffda3583535823030d08a93aa12c5473",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "examples/react-native-expo/package.json",
+      "bytes": 850,
+      "sha256": "cf13ad1697d6072a29aee56b93d31a309f69589c94bc66ca79518e0fb77abbe7",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "examples/tailwindcss-patch-token-style/package.json",
+      "bytes": 481,
+      "sha256": "1ec252bdc2022e90ea477105fd0dba4bef8ae1c9f7a4eb1a865a7bfe00c1102e",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "package.json",
+      "bytes": 43684,
+      "sha256": "d02f60210a9357e4d36c05dcd10eef5af68f9248ffc6be48c87b901ffc150eff",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/darwin-arm64/package.json",
+      "bytes": 963,
+      "sha256": "3063189820d53356a95acd9ac3612a01e7d49c2122dc4086bc7bd24b171ba4a2",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/darwin-x64/package.json",
+      "bytes": 949,
+      "sha256": "564aac6579bd966f7d47107a07ce34bb08cd8d0aa6e493712e53a9eb40136d90",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/linux-arm64-gnu/package.json",
+      "bytes": 1009,
+      "sha256": "4606d8a188c6a4fce2344c42c8b560b726344fa647f97cfa8e3b808850a8224c",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/linux-arm64-musl/package.json",
+      "bytes": 1014,
+      "sha256": "4609bd64dcb8bbf436fb4b14e010d530445e9f9ecb168212a30f16ceb74f6f51",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/linux-x64-gnu/package.json",
+      "bytes": 995,
+      "sha256": "f320c5dd1b8a7b5c737bc80528cbf0e33cc5d8f11eca774e14f7f92064539ec7",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/linux-x64-musl/package.json",
+      "bytes": 1000,
+      "sha256": "c0b54e79060a469961b3c9b362e8e6b45de762e038a12a22b86a5ae864a5752a",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/win32-arm64-msvc/package.json",
+      "bytes": 986,
+      "sha256": "6dd5aa5037baa38b4a5b943be611311e137766b27b41390c6b3c8cb10f0902f0",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-native/win32-x64-msvc/package.json",
+      "bytes": 972,
+      "sha256": "5bb269a3051cfe55f4b472ce8167fe1266a7ef92c3191f61cf0683c2eba20165",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/cn/package.json",
+      "bytes": 1568,
+      "sha256": "49616901ad2a97ef350bcc9373d3bd6869d883343140bfea0641816b0c0aa8c6",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/cva/package.json",
+      "bytes": 1584,
+      "sha256": "1450cbaada2ff4a03d9c8f68daefa9a963dd6611216729bc74676096b2d7b2a5",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/merge/package.json",
+      "bytes": 3116,
+      "sha256": "0fc8c2b3a5923d72eccd372a8c473873f590e29ec2b9b2cf1ed556c2e88825fd",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/runtime/package.json",
+      "bytes": 1546,
+      "sha256": "76e4f2650be087400d238036490b7ad297f43f94f0e43df0f8d41f3200ca4572",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/theme-transition/package.json",
+      "bytes": 2496,
+      "sha256": "020bdfe2e6e3c062548a1b18cd568ff6743ad3f24e06014d98c295bc1d71ba9b",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/typography/package.json",
+      "bytes": 2186,
+      "sha256": "4f7bbb019776086eec5deded03bd2b62237bfd778b908b75c32ee51ee17cf097",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/ui/package.json",
+      "bytes": 4804,
+      "sha256": "fa65c32b7f765dcafa68f38b134e23e6f8cb20ebe695fd38f0fb6a14e3326e65",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages-runtime/variants/package.json",
+      "bytes": 1654,
+      "sha256": "ad9f111460d9665c311e5f43ab8656dc1ae3950543452d6d73a2db7b6a34e4f1",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/babel/package.json",
+      "bytes": 1373,
+      "sha256": "b8c25ad662743c1737699a3c17cb8b48b247d3aa2fdba9f751a45b7742c932dd",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/build-all/package.json",
+      "bytes": 1234,
+      "sha256": "e65c69b7caa1d9ed5cb9f5cda889a270b27f89d03f4ee7e0b4a8d407627ee929",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/cli/package.json",
+      "bytes": 1723,
+      "sha256": "6f39cc9a3ed2f31dc4053fc6a6b5698e1610212c8f4a68a975f504fc2f504378",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/css-compat/package.json",
+      "bytes": 2720,
+      "sha256": "f5163919e494626dfb157786b6a699357e682e40973ae82111e4403f5f2d3b59",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/debug-uni-app-x/package.json",
+      "bytes": 1821,
+      "sha256": "1a99f56efd93c7d981ccdbcce0f12167109ca35a018980a7999ae699341fe44d",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/engine/package.json",
+      "bytes": 2050,
+      "sha256": "22da9edb1bddef9b668ecf3759ef6f193472b3aeb78a62fd2715ef5a05ee651b",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/env/package.json",
+      "bytes": 1396,
+      "sha256": "40b3611284062ef0a7df3146affb8a0910b8d3c7895834b5f8d0469117506591",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/escape/package.json",
+      "bytes": 1507,
+      "sha256": "3cba1a436d4066298ed6900faef5a66717915c0ab1781ac57baaca92e2c48446",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/experimental/package.json",
+      "bytes": 1564,
+      "sha256": "ca4330e98cefdc3a7781905d54813600c1d75d9e796b79cbe806649eee8a7c88",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/hbuilderx-runner/package.json",
+      "bytes": 1564,
+      "sha256": "a1a86d51fcf2556ac78213b9c0404d96d9688fd6f3e86d4a7050eac4add887b0",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/init/package.json",
+      "bytes": 1517,
+      "sha256": "d7d0101ad63fb5b11369b12df68572acc397db447d19a8932bf04ffff9ebb38c",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/logger/package.json",
+      "bytes": 1294,
+      "sha256": "3d81d6089be560bcf85d4981623d549ea49604f92120f481c078c758187b8cbe",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/lynx/package.json",
+      "bytes": 1920,
+      "sha256": "eb836a9beae66e0fab1d0103117175cd3dd28aef8fc37ffa744287f012c834fd",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/minify-preserve/package.json",
+      "bytes": 745,
+      "sha256": "52813606de39c4ceca656510c05bd695f933be23d616c62a28f5404c6b77fc72",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/postcss-calc/package.json",
+      "bytes": 2325,
+      "sha256": "a4763e94ced0c3e1b11354f164541f1d272bc21ffebba7735a8596d91de4e964",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/postcss/package.json",
+      "bytes": 5510,
+      "sha256": "467da1d94428a9ff21996b7771cda18cda7da1c6e3e3a8fe0dc1b5f131c453b4",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/react-native/package.json",
+      "bytes": 2986,
+      "sha256": "b36e3d22903ba33d348a2f017cf7ad4d08a16bf1a22c1fe98e7eda4157959530",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/reset/package.json",
+      "bytes": 1493,
+      "sha256": "ef1fcfdf3504379a6508c435dba45eeaf83a8afbe1eff80db8a632246309f4f3",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/shared/package.json",
+      "bytes": 1620,
+      "sha256": "b5d4fc5d2b46271b39a438ba231695bbf8c8f93a552a0778010b676505df62fd",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/source-scan/package.json",
+      "bytes": 1393,
+      "sha256": "01b5b0a5e817c92c89b12e0557173df13f1fc6a2de918e669e94f0671a539119",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/tailwindcss-config/package.json",
+      "bytes": 1764,
+      "sha256": "b531353d3694870fd6f2926a1e3ecd8c9135561bc64322fa6a17491d97550727",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/tailwindcss-core-plugins-extractor/package.json",
+      "bytes": 1132,
+      "sha256": "9bcda7e45c433976451209166238df368510def38cc2d794837d1e04cb19ee00",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/tailwindcss-injector/package.json",
+      "bytes": 1910,
+      "sha256": "717c3154d039ecdfb693792eb1fe41d8d4dee205c75b1922b59abc17fb3641e0",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/test-helper/package.json",
+      "bytes": 1366,
+      "sha256": "f53480e126256de658353cda4b4bae6ac20f3851a1291ccea298b13425fcbb36",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/weapp-style-injector/package.json",
+      "bytes": 2828,
+      "sha256": "24719bf2273a89e11359783bf1c9562873081b898ee034f088f17f4208b4e628",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/weapp-tailwindcss/package.json",
+      "bytes": 9478,
+      "sha256": "c0466f906df067ee21f6a80bf39fe6e1af705b9c381a6716c39e9b755ed6f597",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/weapp-tw/package.json",
+      "bytes": 1285,
+      "sha256": "a07c764cff3b74ee47097bc583b1a82a5aaa66bd3ac140e71e29c6a3d75a6e04",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/weapptw/package.json",
+      "bytes": 1308,
+      "sha256": "d8663b8f5eb6df190800071207566a8208e3cdfdaf1477f406f853c6417cbf6d",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "packages/wetw/package.json",
+      "bytes": 1491,
+      "sha256": "d8ab91bf9223a6b268e9fed6a22ceccb9fa4df117051c8121b06de3b4fa7bb84",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/gulp/package.json",
+      "bytes": 1097,
+      "sha256": "318bb4667c2ef431f5ed7c0080d25a5cf1a55da0f1c071121ce09dacaadad45f",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/mpx/package.json",
+      "bytes": 1259,
+      "sha256": "b390a63ed6ecb1446b656b781f1d43a77e7a9d90bed700ba940fdf2c26ca02b9",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/taro-vite-react/package.json",
+      "bytes": 1869,
+      "sha256": "e09601f6bf393df31c2c95e8a82e57b2e36b0d742b94127153b6bf29263c4d01",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/taro-webpack-react/package.json",
+      "bytes": 1958,
+      "sha256": "51447d6e46f5fdb9526c712dc9b1ed9ea89a405229ca0a1f2a51d5769a57f923",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/uni-app-vite/package.json",
+      "bytes": 1324,
+      "sha256": "f0cb727282aa5f5f8f176fc0ebb46dc534582f6ff4965e6d456c1f19995f7b29",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "starter/weapp-vite/package.json",
+      "bytes": 599,
+      "sha256": "b7d1ae0301f3aa79718fdea436a332bf88923c1a4a6b38583e5f0882ea81d63b",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/mpx-tailwindcss-v4/package.json",
+      "bytes": 2039,
+      "sha256": "a90acecd2c06e19073b5c1bd7e6af7833f004b21607b61ac86669688e9a000bd",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 633,
+      "sha256": "3307b7a887316df3f7636a0cf01effe51ed6ad37c008901ce3761555d170d2c7",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-vite-tailwindcss-v4/package.json",
+      "bytes": 3089,
+      "sha256": "261f7d39313c78aa4890abde2e0e12bc42f90e77c88c86884f0156b3ce0b8b71",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 1026,
+      "sha256": "37aed1c73d60fede1de1ed5cfc21958fe7eae1ab28ae956c25534df700342b46",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-webpack-tailwindcss-v4/package.json",
+      "bytes": 3242,
+      "sha256": "0c22fd5131d73a557e9a2dfd6a5aff668768daab917e1ec7ce5d8c78afc523da",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 956,
+      "sha256": "c8915776006ef994790df9b25da53ba4c8872ea1f7b7a6f04012c7e1f298690a",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-hbuilderx-tailwindcss-v4/package.json",
+      "bytes": 560,
+      "sha256": "d316ed549d69c307cfe71a819eade65f2694732b2ddeb302095963db55c86aec",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 247,
+      "sha256": "b8ab1326cced7ca608cda7afd0a7afc0c7178379d8b58a82f6dd8c3249604833",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-tailwindcss-v4/package.json",
+      "bytes": 3389,
+      "sha256": "e2b91457eb52a0d06d00bafb6a7a4c9e358c97f7788d4bdab71a2a35c02070d1",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 329,
+      "sha256": "75172782fbc4c21d10cf888a7472b281c6c3bb13c4fa0c23da8260156deeb875",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-webpack-tailwindcss-v4/package.json",
+      "bytes": 9036,
+      "sha256": "3f41925540f90e14bec08e3a4f1fb443bbc0b6ce679c9f59dc37c761a98cda43",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 393,
+      "sha256": "f3e6127a33ec7d36f4d809364a29985c6714fa4c45d86d95ee8368decb442397",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/weapp-vite-tailwindcss-v4/package.json",
+      "bytes": 599,
+      "sha256": "d4d3bf85cbbb6eb5b0484d4546c935a0f230c9b69a8bc24db1ce86a9b3fbb56d",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/weapp-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "bytes": 442,
+      "sha256": "2d2afd9b3c3805e2f89de005f7b3ccbefef33ba93944d00d6c2379984f60df1d",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "tools/ci-scope/package.json",
+      "bytes": 173,
+      "sha256": "7ef55dd9f8ee8480c972779b2e03dbbc346339f781a2d49ca7ae9c7c157384bc",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "tools/tailwindcss-test-catalog/package.json",
+      "bytes": 304,
+      "sha256": "11e3e4f71eded12fa687c1ed3fe703b09d0e9cf7bac37968b8acee644901f3d4",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "tools/weapp-tailwindcss-scripts/package.json",
+      "bytes": 1914,
+      "sha256": "8295a224d9f6f7deb991732bc9457ef5853d0852ca2b500e337281c643a198a7",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "website/package.json",
+      "bytes": 6323,
+      "sha256": "be6934597f406533fbb9efefa4e83fbe76153f392621bd84cdc100babfc61874",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "bytes": 3034170,
+      "sha256": "a589e4561dc44ec27162b72b595a17039a6b778990f326fdc6389ddf5da1949e",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 519248,
+      "sha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 506742,
+      "sha256": "c2acf1e6e5a0feb699ff01c28237b0c58002da85db36eabd702be7d9a6a1a7b5",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 611567,
+      "sha256": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 114516,
+      "sha256": "d2614c7e04b0168b378de6e474b7a2e8b2f6b32d0aa892a76dd7ed41ed0761cb",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 445525,
+      "sha256": "60c0e81b7d918647e4045bba83895a535ac43de84d0afe0ed141e1d110d9d24c",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 646586,
+      "sha256": "5141e12753b0d28b5c166cdbe9e91fa63ff2394300df4ac56752834e3ec50135",
+      "changedDuringCapture": false
+    },
+    {
+      "file": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "bytes": 287958,
+      "sha256": "9d1bfae52955ed2cb01df892147096efdb8ee8d6bb6ebb42d4ded3a4e56759e0",
+      "changedDuringCapture": false
+    }
+  ],
+  "patches": [
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "weapp-vite@7.6.0",
+      "file": "patches/weapp-vite@7.6.0.patch",
+      "bytes": 1658,
+      "sha256": "3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@lynx-js/tasm@0.0.49",
+      "file": "patches/@lynx-js__tasm@0.0.49.patch",
+      "bytes": 486,
+      "sha256": "e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "rollup@3.30.0",
+      "file": "patches/rollup@3.30.0.patch",
+      "bytes": 81741,
+      "sha256": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@mpxjs/vue-cli-plugin-mpx@2.2.32",
+      "file": "patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch",
+      "bytes": 2694,
+      "sha256": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-framework-react@4.3.1",
+      "file": "patches/@tarojs__plugin-framework-react@4.3.1.patch",
+      "bytes": 2281,
+      "sha256": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-framework-vue3@4.3.1",
+      "file": "patches/@tarojs__plugin-framework-vue3@4.3.1.patch",
+      "bytes": 2284,
+      "sha256": "f4ed61230de76c998792d052310fea250ac4d22673681ae83aa87a362d4b5e96",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "f4ed61230de76c998792d052310fea250ac4d22673681ae83aa87a362d4b5e96"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-platform-harmony-hybrid@4.3.1",
+      "file": "patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch",
+      "bytes": 5508,
+      "sha256": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@tarojs/vite-runner@4.3.1",
+      "file": "patches/@tarojs__vite-runner@4.3.1.patch",
+      "bytes": 6572,
+      "sha256": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "nitropack@2.13.5",
+      "file": "patches/nitropack@2.13.5.patch",
+      "bytes": 583,
+      "sha256": "8c9b17900b85d8273758251dff670c1a9094879e7702cd42419e1ac1494a4dcf",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "8c9b17900b85d8273758251dff670c1a9094879e7702cd42419e1ac1494a4dcf"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "webpack@5.91.0",
+      "file": "patches/webpack@5.91.0.patch",
+      "bytes": 2443,
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "webpack@5.112.2",
+      "file": "patches/webpack@5.112.2.patch",
+      "bytes": 2443,
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "rollup@4.65.1",
+      "file": "patches/rollup@4.65.1.patch",
+      "bytes": 84535,
+      "sha256": "3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf"
+    },
+    {
+      "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@mpxjs/vue-cli-plugin-mpx@2.2.32",
+      "file": "templates/mpx-tailwindcss-v4/patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch",
+      "bytes": 2694,
+      "sha256": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+      "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8"
+    },
+    {
+      "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "webpack@5.112.2",
+      "file": "templates/mpx-tailwindcss-v4/patches/webpack@5.112.2.patch",
+      "bytes": 2443,
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-framework-react@4.3.1",
+      "file": "templates/taro-vite-tailwindcss-v4/patches/@tarojs__plugin-framework-react@4.3.1.patch",
+      "bytes": 2281,
+      "sha256": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+      "lockFile": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a"
+    },
+    {
+      "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-platform-harmony-hybrid@4.3.1",
+      "file": "templates/taro-vite-tailwindcss-v4/patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch",
+      "bytes": 5508,
+      "sha256": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+      "lockFile": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b"
+    },
+    {
+      "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@tarojs/vite-runner@4.3.1",
+      "file": "templates/taro-vite-tailwindcss-v4/patches/@tarojs__vite-runner@4.3.1.patch",
+      "bytes": 6572,
+      "sha256": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+      "lockFile": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2"
+    },
+    {
+      "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "rollup@3.30.0",
+      "file": "templates/taro-vite-tailwindcss-v4/patches/rollup@3.30.0.patch",
+      "bytes": 81741,
+      "sha256": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9",
+      "lockFile": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9"
+    },
+    {
+      "workspace": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "webpack@5.91.0",
+      "file": "templates/taro-webpack-tailwindcss-v4/patches/webpack@5.91.0.patch",
+      "bytes": 2443,
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "lockFile": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-framework-react@4.3.1",
+      "file": "templates/taro-webpack-tailwindcss-v4/patches/@tarojs__plugin-framework-react@4.3.1.patch",
+      "bytes": 2281,
+      "sha256": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+      "lockFile": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a"
+    },
+    {
+      "workspace": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@tarojs/plugin-platform-harmony-hybrid@4.3.1",
+      "file": "templates/taro-webpack-tailwindcss-v4/patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch",
+      "bytes": 5508,
+      "sha256": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+      "lockFile": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b"
+    },
+    {
+      "workspace": "templates/weapp-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "weapp-vite@7.6.0",
+      "file": "templates/weapp-vite-tailwindcss-v4/patches/weapp-vite@7.6.0.patch",
+      "bytes": 1658,
+      "sha256": "3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1",
+      "lockFile": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1"
+    }
+  ],
+  "installationEvidence": "根及七模板均已真实冻结安装通过；根与独立Taro Webpack模板在最终RN runner Stylelint16.10.0/plugin4.3.1配套及Webpack5.91精确补丁登记后重新解锁和冻结安装exit0；RN54与双Webpack runtime2共56真实consumer回归通过；本次只读核对安装身份，完整构建/static/设备验收仍未完成",
+  "patchHashesCapturedAt": "2026-10-28T05:42:50.505Z",
+  "independentTemplateRnRunner": [
+    {
+      "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/uni-app-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/uni-app-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    },
+    {
+      "workspace": "templates/weapp-vite-tailwindcss-v4/pnpm-workspace.yaml",
+      "lockFile": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "rnRunnerEntries": [],
+      "addsStylelintProvider": false
+    }
+  ],
+  "stylelintPairing": {
+    "issue951Manifest": "demo/issue-951-taro-vite-react-tailwindcss-v4/package.json",
+    "directDevStylelint": "16.10.0",
+    "scopedOverride": {
+      "selector": "@tarojs/rn-style-transformer@4.3.1>stylelint",
+      "version": "16.10.0"
+    },
+    "runnerProvider": {
+      "selector": "@tarojs/rn-runner@4.3.1",
+      "dependencies": {
+        "stylelint": "16.10.0",
+        "stylelint-taro-rn": "4.3.1"
+      }
+    },
+    "rootCatalogStylelint": "^17.16.0",
+    "pluginOwnerExtensionPresent": false,
+    "pluginScopedOverrides": []
+  },
+  "webpackHmrPairing": [
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "webpack@5.91.0",
+      "file": "patches/webpack@5.91.0.patch",
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "webpack@5.112.2",
+      "file": "patches/webpack@5.112.2.patch",
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "webpack@5.112.2",
+      "file": "templates/mpx-tailwindcss-v4/patches/webpack@5.112.2.patch",
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "webpack@5.91.0",
+      "file": "templates/taro-webpack-tailwindcss-v4/patches/webpack@5.91.0.patch",
+      "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+      "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    }
+  ],
+  "unusedCatalogs": [
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "buildUtilities",
+      "name": "vite-plugin-dts",
+      "spec": "^4.5.4",
+      "targetSpec": "^4.5.4",
+      "targetVersion": "4.5.4",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/vite-plugin-dts/4.5.4",
+      "assessmentReason": "补查同代发布包；保留现有主版本与前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "babelRuntime7284tilde",
+      "name": "@babel/runtime",
+      "spec": "^7.29.10",
+      "targetSpec": "^7.29.10",
+      "targetVersion": "7.29.10",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/@babel%2Fruntime/7.29.10",
+      "assessmentReason": "按未用catalog当前主版本选择正式最新版，保留原^/~前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "eslintPluginReactHooks",
+      "name": "eslint-plugin-react-hooks",
+      "spec": "^7.1.1",
+      "targetSpec": "^7.1.1",
+      "targetVersion": "7.1.1",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/eslint-plugin-react-hooks/7.1.1",
+      "assessmentReason": "按未用catalog当前主版本选择正式最新版，保留原^/~前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "lucideReact0555",
+      "name": "lucide-react",
+      "spec": "^1.62.0",
+      "targetSpec": "^1.62.0",
+      "targetVersion": "1.62.0",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/lucide-react/1.62.0",
+      "assessmentReason": "cache-busted npm dist-tags/full packument均确认正式latest1.62.0；next为1.3.0。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "lucideVueNext0555",
+      "name": "lucide-vue-next",
+      "spec": "^1.0.0",
+      "targetSpec": "^1.0.0",
+      "targetVersion": "1.0.0",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/lucide-vue-next/1.0.0",
+      "assessmentReason": "补查同代发布包；保留现有主版本与前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "postcssComment2",
+      "name": "postcss-comment",
+      "spec": "^2.0.0",
+      "targetSpec": "^2.0.0",
+      "targetVersion": "2.0.0",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/postcss-comment/2.0.0",
+      "assessmentReason": "按未用catalog当前主版本选择正式最新版，保留原^/~前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "react18",
+      "name": "@types/react-dom",
+      "spec": "^18.3.7",
+      "targetSpec": "^18.3.7",
+      "targetVersion": "18.3.7",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/@types%2Freact-dom/18.3.7",
+      "assessmentReason": "保留React18类型兼容组。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "tailwindMerge2",
+      "name": "tailwind-merge",
+      "spec": "^2.6.1",
+      "targetSpec": "^2.6.1",
+      "targetVersion": "2.6.1",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/tailwind-merge/2.6.1",
+      "assessmentReason": "补查同代发布包；保留现有主版本与前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "tailwindcssRem",
+      "name": "tailwindcss-rem2px-preset",
+      "spec": "^1.0.3",
+      "targetSpec": "^1.0.3",
+      "targetVersion": "1.0.3",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/tailwindcss-rem2px-preset/1.0.3",
+      "assessmentReason": "补查同代发布包；保留现有主版本与前缀。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "typescript59tilde",
+      "name": "typescript",
+      "spec": "^6.0.3",
+      "targetSpec": "^6.0.3",
+      "targetVersion": "6.0.3",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/typescript/6.0.3",
+      "assessmentReason": "保留TS6.0.3/TS5.9.3兼容代际。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "typescriptEslint",
+      "name": "@typescript-eslint/eslint-plugin",
+      "spec": "^8.72.1",
+      "targetSpec": "^8.72.1",
+      "targetVersion": "8.72.1",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/@typescript-eslint%2Feslint-plugin/8.72.1",
+      "assessmentReason": "TS-eslint8三个未用catalog条目保持配套8.72.1。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "typescriptEslint",
+      "name": "@typescript-eslint/parser",
+      "spec": "^8.72.1",
+      "targetSpec": "^8.72.1",
+      "targetVersion": "8.72.1",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/@typescript-eslint%2Fparser/8.72.1",
+      "assessmentReason": "TS-eslint8三个未用catalog条目保持配套8.72.1。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "typescriptEslint",
+      "name": "typescript-eslint",
+      "spec": "^8.72.1",
+      "targetSpec": "^8.72.1",
+      "targetVersion": "8.72.1",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/typescript-eslint/8.72.1",
+      "assessmentReason": "TS-eslint8三个未用catalog条目保持配套8.72.1。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "vite52",
+      "name": "vite",
+      "spec": "^5.4.21",
+      "targetSpec": "^5.4.21",
+      "targetVersion": "5.4.21",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/vite/5.4.21",
+      "assessmentReason": "未用Vite5目录仍保留Vite5兼容矩阵。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "catalog": "vueRuntimeCore",
+      "name": "@vue/runtime-core",
+      "spec": "^3.5.44",
+      "targetSpec": "^3.5.44",
+      "targetVersion": "3.5.44",
+      "result": "符合已评估目标",
+      "evidence": "https://registry.npmjs.org/@vue%2Fruntime-core/3.5.44",
+      "assessmentReason": "Vue3运行时catalog统一已评估3.5.44，未引用条目也同步。",
+      "evidenceReview": "沿用本轮已保存评估及发布包身份；未重新查询版本或安装。evidence为对应完整版本的npm官方入口。"
+    }
+  ],
+  "nuxtEngineCorrection": {
+    "recordedAt": "2026-10-28T11:57:48.085857+00:00",
+    "originalFileRecord": {
+      "file": "demo/web/nuxt-vite-tailwindcss-v4/package.json",
+      "bytes": 976,
+      "sha256": "45f00d8a29bd2a4f8dd2a669485235e57a3640ede238059334802bcfab9ed67f",
+      "changedDuringCapture": false
+    },
+    "currentFileRecord": {
+      "file": "demo/web/nuxt-vite-tailwindcss-v4/package.json",
+      "bytes": 975,
+      "sha256": "0162d398e8085c95f0ee5fae852249d91db5b1cfcb18b3acd2812dac94143cac",
+      "changedDuringCapture": false
+    },
+    "reason": "按Nuxt4.6.0至4.6.3相同的官方实际Node支持修正demo声明，未修改依赖和锁文件。"
+  },
+  "stagedLintFileUpdates": [
+    {
+      "previous": {
+        "file": "pnpm-workspace.yaml",
+        "bytes": 12194,
+        "sha256": "01fe2d50bda2acf3605892f8f495a67c9f5b79e4c2bca2b3c581d7279a12f29c",
+        "changedDuringCapture": false
+      },
+      "reason": "原生Lefthook暂存ESLint仅规范YAML引号，配套关系不变",
+      "current": {
+        "file": "pnpm-workspace.yaml",
+        "bytes": 12190,
+        "sha256": "6d109074c90921f2569c665d8aa330e4f0b46d82ebde07605c6a8b6c5267ae23",
+        "changedDuringCapture": false
+      }
+    }
+  ]
+}

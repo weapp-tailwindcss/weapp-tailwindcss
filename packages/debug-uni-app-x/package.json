@@ -48,7 +48,7 @@
     "pathe": "catalog:buildUtilities"
   },
   "devDependencies": {
-    "vite": "7.2.7"
+    "vite": "7.3.7"
   },
   "publishConfig": {
     "exports": {

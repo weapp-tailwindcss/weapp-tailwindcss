@@ -1,8 +1,123 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71e26bf766 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
-@@ -7679,6 +7679,8 @@ function requireNodefsHandler () {
+@@ -7597,8 +7597,11 @@
+ 	 * @param {Object} handlers container for event listener functions
+ 	 */
+ 	const setFsWatchListener = (path, fullPath, options, handlers) => {
+-	  const {listener, errHandler, rawEmitter} = handlers;
++	  const {listener, errHandler, rawEmitter, fileIdentity} = handlers;
+ 	  let cont = FsWatchInstances.get(fullPath);
++	  // 零 inode 无法证明文件换代，不能据此反复重建共享句柄。
++	  const identity = fileIdentity && fileIdentity.ino > 0
++	    ? {dev: fileIdentity.dev, ino: fileIdentity.ino} : undefined;
+ 
+ 	  /** @type {fs.FSWatcher=} */
+ 	  let watcher;
+@@ -7606,56 +7609,70 @@
+ 	    watcher = createFsWatchInstance(
+ 	      path, options, listener, errHandler, rawEmitter
+ 	    );
+-	    return watcher.close.bind(watcher);
+-	  }
++	    return watcher && watcher.close.bind(watcher);
++	  }
++	  const bindWatcher = () => {
++	    let next;
++	    const current = () => next && cont.watcher === next;
++	    next = createFsWatchInstance(
++	      path,
++	      options,
++	      (...args) => { if (current()) fsWatchBroadcast(fullPath, KEY_LISTENERS, ...args); },
++	      errHandler,
++	      (...args) => { if (current()) fsWatchBroadcast(fullPath, KEY_RAW, ...args); }
++	    );
++	    if (!next) return false;
++	    next.on(EV_ERROR, async (error) => {
++	      if (!current()) return;
++	      const broadcastErr = () => {
++	        // Windows 的异步 EPERM 探测返回后也必须仍属于当前代。
++	        if (current()) fsWatchBroadcast(fullPath, KEY_ERR, error);
++	      };
++	      cont.watcherUnusable = true;
++	      if (isWindows && error.code === 'EPERM') {
++	        try {
++	          const fd = await open(path, 'r');
++	          await close(fd);
++	          broadcastErr();
++	        } catch (err) {}
++	      } else {
++	        broadcastErr();
++	      }
++	    });
++	    // 所有逻辑 owner 与 closer 保留同一个容器，只替换成功创建的原生代。
++	    const previous = cont.watcher;
++	    cont.watcher = next;
++	    cont.fileIdentity = identity;
++	    cont.watcherUnusable = false;
++	    if (previous) previous.close();
++	    return true;
++	  };
+ 	  if (cont) {
++	    if (identity && (!cont.fileIdentity || identity.dev !== cont.fileIdentity.dev || identity.ino !== cont.fileIdentity.ino)) {
++	      if (!bindWatcher()) return;
++	    }
+ 	    addAndConvert(cont, KEY_LISTENERS, listener);
+ 	    addAndConvert(cont, KEY_ERR, errHandler);
+ 	    addAndConvert(cont, KEY_RAW, rawEmitter);
+ 	  } else {
+-	    watcher = createFsWatchInstance(
+-	      path,
+-	      options,
+-	      fsWatchBroadcast.bind(null, fullPath, KEY_LISTENERS),
+-	      errHandler, // no need to use broadcast here
+-	      fsWatchBroadcast.bind(null, fullPath, KEY_RAW)
+-	    );
+-	    if (!watcher) return;
+-	    watcher.on(EV_ERROR, async (error) => {
+-	      const broadcastErr = fsWatchBroadcast.bind(null, fullPath, KEY_ERR);
+-	      cont.watcherUnusable = true; // documented since Node 10.4.1
+-	      // Workaround for https://github.com/joyent/node/issues/4337
+-	      if (isWindows && error.code === 'EPERM') {
+-	        try {
+-	          const fd = await open(path, 'r');
+-	          await close(fd);
+-	          broadcastErr(error);
+-	        } catch (err) {}
+-	      } else {
+-	        broadcastErr(error);
+-	      }
+-	    });
+ 	    cont = {
+ 	      listeners: listener,
+ 	      errHandlers: errHandler,
+ 	      rawEmitters: rawEmitter,
+-	      watcher
++	      watcher: undefined
+ 	    };
++	    if (!bindWatcher()) return;
+ 	    FsWatchInstances.set(fullPath, cont);
+ 	  }
+-	  // const index = cont.listeners.indexOf(listener);
+-
+-	  // removes this instance's listeners and closes the underlying fs_watch
+-	  // instance if there are no more listeners left
++	  let disposed = false;
+ 	  return () => {
++	    if (disposed) return;
++	    disposed = true;
+ 	    delFromSet(cont, KEY_LISTENERS, listener);
+ 	    delFromSet(cont, KEY_ERR, errHandler);
+ 	    delFromSet(cont, KEY_RAW, rawEmitter);
+ 	    if (isEmptySet(cont.listeners)) {
+-	      // Check to protect against issue gh-730.
+-	      // if (cont.watcherUnusable) {
+ 	      cont.watcher.close();
+-	      // }
+ 	      FsWatchInstances.delete(fullPath);
+ 	      HANDLER_KEYS.forEach(clearItem(cont));
+ 	      cont.watcher = undefined;
+@@ -7679,6 +7696,8 @@
  	 * @param {Object} handlers container for event listener functions
  	 * @returns {Function} closer
  	 */
@@ -11,7 +126,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	const setFsWatchFileListener = (path, fullPath, options, handlers) => {
  	  const {listener, rawEmitter} = handlers;
  	  let cont = FsWatchFileInstances.get(fullPath);
-@@ -7706,8 +7708,7 @@ function requireNodefsHandler () {
+@@ -7706,8 +7725,7 @@
  	        foreach(cont.rawEmitters, (rawEmitter) => {
  	          rawEmitter(EV_CHANGE, fullPath, {curr, prev});
  	        });
@@ -21,12 +136,12 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	          foreach(cont.listeners, (listener) => listener(path, curr));
  	        }
  	      })
-@@ -7749,12 +7750,11 @@ function requireNodefsHandler () {
+@@ -7749,12 +7767,11 @@
  	 * @param {Function} listener on fs change
  	 * @returns {Function} closer for the watcher instance
  	 */
 -	_watchWithNodeFs(path, listener) {
-+	_watchWithNodeFs(path, listener, onBindingError) {
++	_watchWithNodeFs(path, listener, onBindingError, fileIdentity) {
  	  const opts = this.fsw.options;
  	  const directory = sysPath.dirname(path);
  	  const basename = sysPath.basename(path);
@@ -35,23 +150,25 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  const absolutePath = sysPath.resolve(path);
  	  const options = {persistent: opts.persistent};
  	  if (!listener) listener = EMPTY_FN;
-@@ -7770,10 +7770,14 @@ function requireNodefsHandler () {
+@@ -7770,10 +7787,15 @@
  	  } else {
  	    closer = setFsWatchListener(path, absolutePath, options, {
  	      listener,
 -	      errHandler: this._boundHandleError,
+-	      rawEmitter: this.fsw._emitRaw
 +	      errHandler: onBindingError ? error => {
 +	        onBindingError(error);
 +	        this._boundHandleError(error);
 +	      } : this._boundHandleError,
- 	      rawEmitter: this.fsw._emitRaw
++	      rawEmitter: this.fsw._emitRaw,
++	      fileIdentity
  	    });
  	  }
 +	  if (closer) parent.add(basename);
  	  return closer;
  	}
  
-@@ -7797,26 +7801,80 @@ function requireNodefsHandler () {
+@@ -7797,26 +7819,80 @@
  	  // if the file is already being watched, do nothing
  	  if (parent.has(basename)) return;
  
@@ -62,7 +179,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +	    missingBinding = false;
 +	    const closer = this._watchWithNodeFs(file, listener, error => {
 +	      missingBinding = error.code === 'ENOENT' || error.code === 'ENOTDIR';
-+	    });
++	    }, prevStats);
 +	    if (!closer) return;
 +	    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
 +	    this.fsw._throttled.get('remove')?.get(sysPath.join(dirname, basename))?.clear();
@@ -140,7 +257,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	        // Fix issues where mtime is null but file is still present
  	        this.fsw._remove(dirname, basename);
  	      }
-@@ -7825,14 +7883,27 @@ function requireNodefsHandler () {
+@@ -7825,14 +7901,27 @@
  	      // Check that change event was not fired because of changed only accessTime.
  	      const at = newStats.atimeMs;
  	      const mt = newStats.mtimeMs;
@@ -170,7 +287,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  
  	  // emit an add event if we're supposed to
  	  if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -7840,7 +7911,7 @@ function requireNodefsHandler () {
+@@ -7840,7 +7929,7 @@
  	    this.fsw._emit(EV_ADD, file, stats);
  	  }
  
@@ -179,7 +296,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	}
  
  	/**
-@@ -7894,6 +7965,7 @@ function requireNodefsHandler () {
+@@ -7894,6 +7983,7 @@
  	}
  
  	_handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
@@ -187,7 +304,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  // Normalize the directory name on Windows
  	  directory = sysPath.join(directory, EMPTY_STR);
  
-@@ -7910,7 +7982,7 @@ function requireNodefsHandler () {
+@@ -7910,7 +8000,7 @@
  	    directoryFilter: entry => wh.filterDir(entry),
  	    depth: 0
  	  }).on(STR_DATA, async (entry) => {
@@ -196,7 +313,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	      stream = undefined;
  	      return;
  	    }
-@@ -7922,7 +7994,7 @@ function requireNodefsHandler () {
+@@ -7922,7 +8012,7 @@
  	      return;
  	    }
  
@@ -205,7 +322,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	      stream = undefined;
  	      return;
  	    }
-@@ -7939,38 +8011,27 @@ function requireNodefsHandler () {
+@@ -7939,38 +8029,27 @@
  	    }
  	  }).on(EV_ERROR, this._boundHandleError);
  
@@ -260,7 +377,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	}
  
  	/**
-@@ -7985,6 +8046,8 @@ function requireNodefsHandler () {
+@@ -7985,6 +8064,8 @@
  	 * @returns {Promise<Function>} closer for the watcher instance.
  	 */
  	async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
@@ -269,13 +386,14 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  const parentDir = this.fsw._getWatchedDir(sysPath.dirname(dir));
  	  const tracked = parentDir.has(sysPath.basename(dir));
  	  if (!(initialAdd && this.fsw.options.ignoreInitial) && !target && !tracked) {
-@@ -7999,10 +8062,60 @@ function requireNodefsHandler () {
+@@ -7999,10 +8080,60 @@
  
  	  const oDepth = this.fsw.options.depth;
  	  if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
 -	    if (!target) {
 -	      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 -	      if (this.fsw.closed) return;
+-	    }
 +	    if (target) {
 +	      const file = sysPath.join(dir, target);
 +	      const key = sysPath.resolve(file);
@@ -327,13 +445,13 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +	        throw error;
 +	      }
 +	      return;
- 	    }
++	    }
 +	    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 +	    if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
  
  	    closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
  	      // if current directory is removed, do nothing
-@@ -8024,9 +8137,9 @@ function requireNodefsHandler () {
+@@ -8024,9 +8155,9 @@
  	 * @param {String=} target Child path actually targeted for watch
  	 * @returns {Promise}
  	 */
@@ -345,7 +463,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	    ready();
  	    return false;
  	  }
-@@ -8040,9 +8153,10 @@ function requireNodefsHandler () {
+@@ -8040,9 +8171,10 @@
  	  }
  
  	  // evaluate what is at the path we're being asked to watch
@@ -357,7 +475,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	    if (this.fsw._isIgnored(wh.watchPath, stats)) {
  	      ready();
  	      return false;
-@@ -8053,28 +8167,38 @@ function requireNodefsHandler () {
+@@ -8053,28 +8185,38 @@
  	    if (stats.isDirectory()) {
  	      const absPath = sysPath.resolve(path);
  	      const targetPath = follow ? await fsrealpath(path) : path;
@@ -400,7 +518,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	    }
  	    ready();
  
-@@ -8082,8 +8206,11 @@ function requireNodefsHandler () {
+@@ -8082,8 +8224,11 @@
  	    return false;
  
  	  } catch (error) {
@@ -412,7 +530,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	      return path;
  	    }
  	  }
-@@ -8935,6 +9062,10 @@ function requireChokidar () {
+@@ -8935,6 +9080,10 @@
  	  this._watched = new Map();
  	  /** @type {Map<String, Array>} */
  	  this._closers = new Map();
@@ -423,7 +541,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  /** @type {Set<String>} */
  	  this._ignoredPaths = new Set();
  
-@@ -9110,26 +9241,19 @@ function requireChokidar () {
+@@ -9110,26 +9259,19 @@
  	  if (this.closed) return this;
  	  const paths = unifyPaths(paths_);
  	  const {cwd} = this.options;
@@ -458,7 +576,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  return this;
  	}
  
-@@ -9140,26 +9264,64 @@ function requireChokidar () {
+@@ -9140,25 +9282,63 @@
  	close() {
  	  if (this.closed) return this._closePromise;
  	  this.closed = true;
@@ -502,7 +620,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +	  };
 +	  settle().then(complete, fail);
  	  return this._closePromise;
- 	}
++	}
 +	
 +	_collectClose(operations) {
 +	  const errors = [];
@@ -531,11 +649,10 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +	    failure.errorCount = count;
 +	    throw failure;
 +	  }
-+	}
+ 	}
  
  	/**
- 	 * Expose list of watched paths
-@@ -9251,8 +9413,15 @@ function requireChokidar () {
+@@ -9251,8 +9431,15 @@
  	  }
  
  	  if (event === EV_CHANGE) {
@@ -553,7 +670,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9490,11 +9659,6 @@ function requireChokidar () {
+@@ -9490,11 +9677,6 @@
  	  // via multiple paths (such as _handleFile and _handleDir)
  	  if (!this._throttle('remove', path, 100)) return;
  
@@ -565,7 +682,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  // This will create a new entry in the watched object in either case
  	  // so we got to do the directory check beforehand
  	  const wp = this._getWatchedDir(path);
-@@ -9530,12 +9694,23 @@ function requireChokidar () {
+@@ -9530,12 +9712,23 @@
  	  this._watched.delete(path);
  	  this._watched.delete(fullPath);
  	  const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -575,12 +692,13 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +	  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
  	  if (!this.options.useFsEvents) {
  	    this._closePath(path);
+-	  }
 +	    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
 +	      this._closeRecreation(path);
 +	      this._pendingRecreations.set(fullPath, {});
 +	      this.add(directory, item, true);
 +	    }
- 	  }
++	  }
 +	  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
 +	}
 +
@@ -592,7 +710,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	}
  
  	/**
-@@ -9543,9 +9718,10 @@ function requireChokidar () {
+@@ -9543,9 +9736,10 @@
  	 * @param {Path} path
  	 */
  	_closePath(path) {
@@ -606,7 +724,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	}
  
  	/**
-@@ -9553,10 +9729,10 @@ function requireChokidar () {
+@@ -9553,10 +9747,10 @@
  	 * @param {Path} path
  	 */
  	_closeFile(path) {
@@ -619,7 +737,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	}
  
  	/**
-@@ -9566,6 +9742,12 @@ function requireChokidar () {
+@@ -9566,6 +9760,12 @@
  	 */
  	_addPathCloser(path, closer) {
  	  if (!closer) return;
@@ -632,7 +750,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  let list = this._closers.get(path);
  	  if (!list) {
  	    list = [];
-@@ -9577,17 +9759,11 @@ function requireChokidar () {
+@@ -9577,17 +9777,11 @@
  	_readdirp(root, opts) {
  	  if (this.closed) return;
  	  const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
@@ -654,7 +772,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
  	  return stream;
  	}
  
-@@ -9615,59 +9791,166 @@ function requireChokidar () {
+@@ -9615,59 +9809,166 @@
  var chokidarExports = /*@__PURE__*/ requireChokidar();
  const chokidar = /*@__PURE__*/getDefaultExportFromCjs(chokidarExports);
  
@@ -742,13 +860,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +            const remaining = group.descendants.get(ancestor) - 1;
 +            if (remaining) group.descendants.set(ancestor, remaining);
 +            else group.descendants.delete(ancestor);
-         }
--    }
--    watch(id, isTransformDependency) {
--        if (isTransformDependency) {
--            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
--            watcher.add(id);
--            this.transformWatchers.set(id, watcher);
++        }
 +        // Chokidar 保留撤销路径的 ignore；旧组不再接纳新根，防止历史祖先污染。
 +        group.sealed = true;
 +        if (group.roots.size === 0) {
@@ -766,9 +878,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +        // 组内根互不包含；每项释放独立执行，失败不会留下其余退役资源。
 +        for (const watchedPath of watcher._closers.keys()) {
 +            if (isWatchPathWithin(key, path.resolve(watchedPath))) operations.push(() => watcher._closeFile(watchedPath));
-         }
--        else {
--            this.watcher.add(id);
++        }
 +        for (const watchedPath of watcher._pendingRecreations.keys()) {
 +            if (isWatchPathWithin(key, path.resolve(watchedPath))) operations.push(() => watcher._closeRecreation(watchedPath));
 +        }
@@ -785,12 +895,15 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +            throw error;
          }
      }
--    createWatcher(transformWatcherId) {
--        const task = this.task;
--        const isLinux = platform() === 'linux';
--        const isFreeBSD = platform() === 'freebsd';
--        const isTransformDependency = transformWatcherId !== null;
-+    watch(id, isTransformDependency) {
+     watch(id, isTransformDependency) {
+-        if (isTransformDependency) {
+-            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
+-            watcher.add(id);
+-            this.transformWatchers.set(id, watcher);
+-        }
+-        else {
+-            this.watcher.add(id);
+-        }
 +        if (this.closed) return;
 +        const key = path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
@@ -809,7 +922,12 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
 +        for (const ancestor of ancestors) group.descendants.set(ancestor, (group.descendants.get(ancestor) || 0) + 1);
 +        this.fileGroups.set(key, group);
 +        group.watcher.add(key);
-+    }
+     }
+-    createWatcher(transformWatcherId) {
+-        const task = this.task;
+-        const isLinux = platform() === 'linux';
+-        const isFreeBSD = platform() === 'freebsd';
+-        const isTransformDependency = transformWatcherId !== null;
 +    createWatcherGroup() {
 +        const group = { roots: new Set(), descendants: new Map(), sealed: false, watcher: null };
          const handleChange = (id, event) => {
@@ -855,7 +973,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
      }
  }
  
-@@ -9707,21 +9990,16 @@ class Watcher {
+@@ -9707,21 +10008,16 @@
          }
          process$1.nextTick(() => this.runExclusively(() => this.run()));
      }
@@ -886,7 +1004,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
      }
      invalidate(file) {
          if (this.closed)
-@@ -9832,6 +10110,7 @@ class Task {
+@@ -9832,6 +10128,7 @@
          this.cache = { modules: [] };
          this.watchFiles = [];
          this.invalidated = true;
@@ -894,7 +1012,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
          this.watched = new Set();
          this.watchHooks = null;
          this.watcher = watcher;
-@@ -9854,15 +10133,21 @@ class Task {
+@@ -9854,15 +10151,21 @@
      async announceChange(id, event) {
          await this.watchHooks?.watchChange(id, { event });
      }
@@ -919,7 +1037,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -9880,6 +10165,8 @@ class Task {
+@@ -9880,6 +10183,8 @@
          if (!this.invalidated || this.watcher.closed)
              return;
          this.invalidated = false;
@@ -928,7 +1046,7 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
          const options = {
              ...this.options,
              cache: this.cache
-@@ -9941,6 +10228,12 @@ class Task {
+@@ -9941,6 +10246,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -942,10 +1060,125 @@ index 9b62423879ca599d9c3c0d969da2f75b7d0d4360..909396fccf4977aac4d8340ca2b69d71
              this.watchFile(id);
          }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
-index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c5bc10bad 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
-@@ -7675,6 +7675,8 @@ function requireNodefsHandler () {
+@@ -7593,8 +7593,11 @@
+ 	 * @param {Object} handlers container for event listener functions
+ 	 */
+ 	const setFsWatchListener = (path, fullPath, options, handlers) => {
+-	  const {listener, errHandler, rawEmitter} = handlers;
++	  const {listener, errHandler, rawEmitter, fileIdentity} = handlers;
+ 	  let cont = FsWatchInstances.get(fullPath);
++	  // 零 inode 无法证明文件换代，不能据此反复重建共享句柄。
++	  const identity = fileIdentity && fileIdentity.ino > 0
++	    ? {dev: fileIdentity.dev, ino: fileIdentity.ino} : undefined;
+ 
+ 	  /** @type {fs.FSWatcher=} */
+ 	  let watcher;
+@@ -7602,56 +7605,70 @@
+ 	    watcher = createFsWatchInstance(
+ 	      path, options, listener, errHandler, rawEmitter
+ 	    );
+-	    return watcher.close.bind(watcher);
+-	  }
++	    return watcher && watcher.close.bind(watcher);
++	  }
++	  const bindWatcher = () => {
++	    let next;
++	    const current = () => next && cont.watcher === next;
++	    next = createFsWatchInstance(
++	      path,
++	      options,
++	      (...args) => { if (current()) fsWatchBroadcast(fullPath, KEY_LISTENERS, ...args); },
++	      errHandler,
++	      (...args) => { if (current()) fsWatchBroadcast(fullPath, KEY_RAW, ...args); }
++	    );
++	    if (!next) return false;
++	    next.on(EV_ERROR, async (error) => {
++	      if (!current()) return;
++	      const broadcastErr = () => {
++	        // Windows 的异步 EPERM 探测返回后也必须仍属于当前代。
++	        if (current()) fsWatchBroadcast(fullPath, KEY_ERR, error);
++	      };
++	      cont.watcherUnusable = true;
++	      if (isWindows && error.code === 'EPERM') {
++	        try {
++	          const fd = await open(path, 'r');
++	          await close(fd);
++	          broadcastErr();
++	        } catch (err) {}
++	      } else {
++	        broadcastErr();
++	      }
++	    });
++	    // 所有逻辑 owner 与 closer 保留同一个容器，只替换成功创建的原生代。
++	    const previous = cont.watcher;
++	    cont.watcher = next;
++	    cont.fileIdentity = identity;
++	    cont.watcherUnusable = false;
++	    if (previous) previous.close();
++	    return true;
++	  };
+ 	  if (cont) {
++	    if (identity && (!cont.fileIdentity || identity.dev !== cont.fileIdentity.dev || identity.ino !== cont.fileIdentity.ino)) {
++	      if (!bindWatcher()) return;
++	    }
+ 	    addAndConvert(cont, KEY_LISTENERS, listener);
+ 	    addAndConvert(cont, KEY_ERR, errHandler);
+ 	    addAndConvert(cont, KEY_RAW, rawEmitter);
+ 	  } else {
+-	    watcher = createFsWatchInstance(
+-	      path,
+-	      options,
+-	      fsWatchBroadcast.bind(null, fullPath, KEY_LISTENERS),
+-	      errHandler, // no need to use broadcast here
+-	      fsWatchBroadcast.bind(null, fullPath, KEY_RAW)
+-	    );
+-	    if (!watcher) return;
+-	    watcher.on(EV_ERROR, async (error) => {
+-	      const broadcastErr = fsWatchBroadcast.bind(null, fullPath, KEY_ERR);
+-	      cont.watcherUnusable = true; // documented since Node 10.4.1
+-	      // Workaround for https://github.com/joyent/node/issues/4337
+-	      if (isWindows && error.code === 'EPERM') {
+-	        try {
+-	          const fd = await open(path, 'r');
+-	          await close(fd);
+-	          broadcastErr(error);
+-	        } catch (err) {}
+-	      } else {
+-	        broadcastErr(error);
+-	      }
+-	    });
+ 	    cont = {
+ 	      listeners: listener,
+ 	      errHandlers: errHandler,
+ 	      rawEmitters: rawEmitter,
+-	      watcher
++	      watcher: undefined
+ 	    };
++	    if (!bindWatcher()) return;
+ 	    FsWatchInstances.set(fullPath, cont);
+ 	  }
+-	  // const index = cont.listeners.indexOf(listener);
+-
+-	  // removes this instance's listeners and closes the underlying fs_watch
+-	  // instance if there are no more listeners left
++	  let disposed = false;
+ 	  return () => {
++	    if (disposed) return;
++	    disposed = true;
+ 	    delFromSet(cont, KEY_LISTENERS, listener);
+ 	    delFromSet(cont, KEY_ERR, errHandler);
+ 	    delFromSet(cont, KEY_RAW, rawEmitter);
+ 	    if (isEmptySet(cont.listeners)) {
+-	      // Check to protect against issue gh-730.
+-	      // if (cont.watcherUnusable) {
+ 	      cont.watcher.close();
+-	      // }
+ 	      FsWatchInstances.delete(fullPath);
+ 	      HANDLER_KEYS.forEach(clearItem(cont));
+ 	      cont.watcher = undefined;
+@@ -7675,6 +7692,8 @@
  	 * @param {Object} handlers container for event listener functions
  	 * @returns {Function} closer
  	 */
@@ -954,7 +1187,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	const setFsWatchFileListener = (path, fullPath, options, handlers) => {
  	  const {listener, rawEmitter} = handlers;
  	  let cont = FsWatchFileInstances.get(fullPath);
-@@ -7702,8 +7704,7 @@ function requireNodefsHandler () {
+@@ -7702,8 +7721,7 @@
  	        foreach(cont.rawEmitters, (rawEmitter) => {
  	          rawEmitter(EV_CHANGE, fullPath, {curr, prev});
  	        });
@@ -964,12 +1197,12 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	          foreach(cont.listeners, (listener) => listener(path, curr));
  	        }
  	      })
-@@ -7745,12 +7746,11 @@ function requireNodefsHandler () {
+@@ -7745,12 +7763,11 @@
  	 * @param {Function} listener on fs change
  	 * @returns {Function} closer for the watcher instance
  	 */
 -	_watchWithNodeFs(path, listener) {
-+	_watchWithNodeFs(path, listener, onBindingError) {
++	_watchWithNodeFs(path, listener, onBindingError, fileIdentity) {
  	  const opts = this.fsw.options;
  	  const directory = sysPath.dirname(path);
  	  const basename = sysPath.basename(path);
@@ -978,23 +1211,25 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  const absolutePath = sysPath.resolve(path);
  	  const options = {persistent: opts.persistent};
  	  if (!listener) listener = EMPTY_FN;
-@@ -7766,10 +7766,14 @@ function requireNodefsHandler () {
+@@ -7766,10 +7783,15 @@
  	  } else {
  	    closer = setFsWatchListener(path, absolutePath, options, {
  	      listener,
 -	      errHandler: this._boundHandleError,
+-	      rawEmitter: this.fsw._emitRaw
 +	      errHandler: onBindingError ? error => {
 +	        onBindingError(error);
 +	        this._boundHandleError(error);
 +	      } : this._boundHandleError,
- 	      rawEmitter: this.fsw._emitRaw
++	      rawEmitter: this.fsw._emitRaw,
++	      fileIdentity
  	    });
  	  }
 +	  if (closer) parent.add(basename);
  	  return closer;
  	}
  
-@@ -7793,26 +7797,80 @@ function requireNodefsHandler () {
+@@ -7793,26 +7815,80 @@
  	  // if the file is already being watched, do nothing
  	  if (parent.has(basename)) return;
  
@@ -1005,7 +1240,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 +	    missingBinding = false;
 +	    const closer = this._watchWithNodeFs(file, listener, error => {
 +	      missingBinding = error.code === 'ENOENT' || error.code === 'ENOTDIR';
-+	    });
++	    }, prevStats);
 +	    if (!closer) return;
 +	    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
 +	    this.fsw._throttled.get('remove')?.get(sysPath.join(dirname, basename))?.clear();
@@ -1083,7 +1318,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	        // Fix issues where mtime is null but file is still present
  	        this.fsw._remove(dirname, basename);
  	      }
-@@ -7821,14 +7879,27 @@ function requireNodefsHandler () {
+@@ -7821,14 +7897,27 @@
  	      // Check that change event was not fired because of changed only accessTime.
  	      const at = newStats.atimeMs;
  	      const mt = newStats.mtimeMs;
@@ -1113,7 +1348,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  
  	  // emit an add event if we're supposed to
  	  if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -7836,7 +7907,7 @@ function requireNodefsHandler () {
+@@ -7836,7 +7925,7 @@
  	    this.fsw._emit(EV_ADD, file, stats);
  	  }
  
@@ -1122,7 +1357,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
  	/**
-@@ -7890,6 +7961,7 @@ function requireNodefsHandler () {
+@@ -7890,6 +7979,7 @@
  	}
  
  	_handleRead(directory, initialAdd, wh, target, dir, depth, throttler) {
@@ -1130,7 +1365,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  // Normalize the directory name on Windows
  	  directory = sysPath.join(directory, EMPTY_STR);
  
-@@ -7906,7 +7978,7 @@ function requireNodefsHandler () {
+@@ -7906,7 +7996,7 @@
  	    directoryFilter: entry => wh.filterDir(entry),
  	    depth: 0
  	  }).on(STR_DATA, async (entry) => {
@@ -1139,7 +1374,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	      stream = undefined;
  	      return;
  	    }
-@@ -7918,7 +7990,7 @@ function requireNodefsHandler () {
+@@ -7918,7 +8008,7 @@
  	      return;
  	    }
  
@@ -1148,7 +1383,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	      stream = undefined;
  	      return;
  	    }
-@@ -7935,38 +8007,27 @@ function requireNodefsHandler () {
+@@ -7935,38 +8025,27 @@
  	    }
  	  }).on(EV_ERROR, this._boundHandleError);
  
@@ -1203,7 +1438,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
  	/**
-@@ -7981,6 +8042,8 @@ function requireNodefsHandler () {
+@@ -7981,6 +8060,8 @@
  	 * @returns {Promise<Function>} closer for the watcher instance.
  	 */
  	async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
@@ -1212,13 +1447,14 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  const parentDir = this.fsw._getWatchedDir(sysPath.dirname(dir));
  	  const tracked = parentDir.has(sysPath.basename(dir));
  	  if (!(initialAdd && this.fsw.options.ignoreInitial) && !target && !tracked) {
-@@ -7995,10 +8058,60 @@ function requireNodefsHandler () {
+@@ -7995,10 +8076,60 @@
  
  	  const oDepth = this.fsw.options.depth;
  	  if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
 -	    if (!target) {
 -	      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 -	      if (this.fsw.closed) return;
+-	    }
 +	    if (target) {
 +	      const file = sysPath.join(dir, target);
 +	      const key = sysPath.resolve(file);
@@ -1270,13 +1506,13 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 +	        throw error;
 +	      }
 +	      return;
- 	    }
++	    }
 +	    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
 +	    if (this.fsw.closed || this.fsw._isIgnored(dir)) return;
  
  	    closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
  	      // if current directory is removed, do nothing
-@@ -8020,9 +8133,9 @@ function requireNodefsHandler () {
+@@ -8020,9 +8151,9 @@
  	 * @param {String=} target Child path actually targeted for watch
  	 * @returns {Promise}
  	 */
@@ -1288,7 +1524,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	    ready();
  	    return false;
  	  }
-@@ -8036,9 +8149,10 @@ function requireNodefsHandler () {
+@@ -8036,9 +8167,10 @@
  	  }
  
  	  // evaluate what is at the path we're being asked to watch
@@ -1300,7 +1536,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	    if (this.fsw._isIgnored(wh.watchPath, stats)) {
  	      ready();
  	      return false;
-@@ -8049,28 +8163,38 @@ function requireNodefsHandler () {
+@@ -8049,28 +8181,38 @@
  	    if (stats.isDirectory()) {
  	      const absPath = sysPath.resolve(path);
  	      const targetPath = follow ? await fsrealpath(path) : path;
@@ -1343,7 +1579,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	    }
  	    ready();
  
-@@ -8078,8 +8202,11 @@ function requireNodefsHandler () {
+@@ -8078,8 +8220,11 @@
  	    return false;
  
  	  } catch (error) {
@@ -1355,7 +1591,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	      return path;
  	    }
  	  }
-@@ -8931,6 +9058,10 @@ function requireChokidar () {
+@@ -8931,6 +9076,10 @@
  	  this._watched = new Map();
  	  /** @type {Map<String, Array>} */
  	  this._closers = new Map();
@@ -1366,7 +1602,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  /** @type {Set<String>} */
  	  this._ignoredPaths = new Set();
  
-@@ -9106,26 +9237,19 @@ function requireChokidar () {
+@@ -9106,26 +9255,19 @@
  	  if (this.closed) return this;
  	  const paths = unifyPaths(paths_);
  	  const {cwd} = this.options;
@@ -1401,7 +1637,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  return this;
  	}
  
-@@ -9136,26 +9260,64 @@ function requireChokidar () {
+@@ -9136,25 +9278,63 @@
  	close() {
  	  if (this.closed) return this._closePromise;
  	  this.closed = true;
@@ -1445,7 +1681,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 +	  };
 +	  settle().then(complete, fail);
  	  return this._closePromise;
- 	}
++	}
 +	
 +	_collectClose(operations) {
 +	  const errors = [];
@@ -1474,11 +1710,10 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 +	    failure.errorCount = count;
 +	    throw failure;
 +	  }
-+	}
+ 	}
  
  	/**
- 	 * Expose list of watched paths
-@@ -9247,8 +9409,15 @@ function requireChokidar () {
+@@ -9247,8 +9427,15 @@
  	  }
  
  	  if (event === EV_CHANGE) {
@@ -1496,7 +1731,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  }
  
  	  if (opts.alwaysStat && val1 === undefined &&
-@@ -9486,11 +9655,6 @@ function requireChokidar () {
+@@ -9486,11 +9673,6 @@
  	  // via multiple paths (such as _handleFile and _handleDir)
  	  if (!this._throttle('remove', path, 100)) return;
  
@@ -1508,7 +1743,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  // This will create a new entry in the watched object in either case
  	  // so we got to do the directory check beforehand
  	  const wp = this._getWatchedDir(path);
-@@ -9526,12 +9690,23 @@ function requireChokidar () {
+@@ -9526,12 +9708,23 @@
  	  this._watched.delete(path);
  	  this._watched.delete(fullPath);
  	  const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -1518,12 +1753,13 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
 +	  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
  	  if (!this.options.useFsEvents) {
  	    this._closePath(path);
+-	  }
 +	    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
 +	      this._closeRecreation(path);
 +	      this._pendingRecreations.set(fullPath, {});
 +	      this.add(directory, item, true);
 +	    }
- 	  }
++	  }
 +	  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
 +	}
 +
@@ -1535,7 +1771,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
  	/**
-@@ -9539,9 +9714,10 @@ function requireChokidar () {
+@@ -9539,9 +9732,10 @@
  	 * @param {Path} path
  	 */
  	_closePath(path) {
@@ -1549,7 +1785,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
  	/**
-@@ -9549,10 +9725,10 @@ function requireChokidar () {
+@@ -9549,10 +9743,10 @@
  	 * @param {Path} path
  	 */
  	_closeFile(path) {
@@ -1562,7 +1798,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
  	/**
-@@ -9562,6 +9738,12 @@ function requireChokidar () {
+@@ -9562,6 +9756,12 @@
  	 */
  	_addPathCloser(path, closer) {
  	  if (!closer) return;
@@ -1575,7 +1811,7 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	  let list = this._closers.get(path);
  	  if (!list) {
  	    list = [];
-@@ -9573,17 +9755,11 @@ function requireChokidar () {
+@@ -9573,17 +9773,11 @@
  	_readdirp(root, opts) {
  	  if (this.closed) return;
  	  const options = {type: EV_ALL, alwaysStat: true, lstat: true, ...opts};
@@ -1598,10 +1834,9 @@ index ce06b96b168676e12b540a38558651993bcaf43a..f8d4a47f24b58392b91fb5005304a87c
  	}
  
 diff --git a/dist/shared/watch.js b/dist/shared/watch.js
-index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777f58577c3 100644
 --- a/dist/shared/watch.js
 +++ b/dist/shared/watch.js
-@@ -29,59 +29,166 @@ require('os');
+@@ -29,59 +29,166 @@
  require('./fsevents-importer.js');
  require('events');
  
@@ -1689,13 +1924,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
 +            const remaining = group.descendants.get(ancestor) - 1;
 +            if (remaining) group.descendants.set(ancestor, remaining);
 +            else group.descendants.delete(ancestor);
-         }
--    }
--    watch(id, isTransformDependency) {
--        if (isTransformDependency) {
--            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
--            watcher.add(id);
--            this.transformWatchers.set(id, watcher);
++        }
 +        // Chokidar 保留撤销路径的 ignore；旧组不再接纳新根，防止历史祖先污染。
 +        group.sealed = true;
 +        if (group.roots.size === 0) {
@@ -1722,9 +1951,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
 +                try { return directory.dispose(); }
 +                finally { watcher._watched.delete(watchedPath); }
 +            });
-         }
--        else {
--            this.watcher.add(id);
++        }
 +        const errors = watcher._collectClose(operations);
 +        try { watcher._throwCloseErrors(errors); }
 +        catch (error) {
@@ -1732,12 +1959,21 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
 +            throw error;
          }
      }
+     watch(id, isTransformDependency) {
+-        if (isTransformDependency) {
+-            const watcher = this.transformWatchers.get(id) ?? this.createWatcher(id);
+-            watcher.add(id);
+-            this.transformWatchers.set(id, watcher);
+-        }
+-        else {
+-            this.watcher.add(id);
+-        }
+-    }
 -    createWatcher(transformWatcherId) {
 -        const task = this.task;
 -        const isLinux = node_os.platform() === 'linux';
 -        const isFreeBSD = node_os.platform() === 'freebsd';
 -        const isTransformDependency = transformWatcherId !== null;
-+    watch(id, isTransformDependency) {
 +        if (this.closed) return;
 +        const key = path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
@@ -1767,6 +2003,8 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
 -                // but then no longer any further events
 -                watcher.unwatch(changedId);
 -                watcher.add(changedId);
+-            }
+-            task.invalidate(changedId, { event, isTransformDependency });
 +            if (this.closed) return;
 +            const key = path.resolve(id);
 +            // 每个物理组只通知自身仍活跃的逻辑依赖，跨组父子事件不重复派发。
@@ -1786,8 +2024,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
 +                    if (owner === root) this.task.invalidate(id, { event, isTransformDependency: false });
 +                    emittedSource = true;
 +                }
-             }
--            task.invalidate(changedId, { event, isTransformDependency });
++            }
          };
 -        const watcher = index.chokidar
 +        group.watcher = index.chokidar
@@ -1802,7 +2039,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
      }
  }
  
-@@ -121,21 +228,16 @@ class Watcher {
+@@ -121,21 +228,16 @@
          }
          process.nextTick(() => this.runExclusively(() => this.run()));
      }
@@ -1833,7 +2070,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
      }
      invalidate(file) {
          if (this.closed)
-@@ -246,6 +348,7 @@ class Task {
+@@ -246,6 +348,7 @@
          this.cache = { modules: [] };
          this.watchFiles = [];
          this.invalidated = true;
@@ -1841,7 +2078,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
          this.watched = new Set();
          this.watchHooks = null;
          this.watcher = watcher;
-@@ -268,15 +371,21 @@ class Task {
+@@ -268,15 +371,21 @@
      async announceChange(id, event) {
          await this.watchHooks?.watchChange(id, { event });
      }
@@ -1866,7 +2103,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -294,6 +403,8 @@ class Task {
+@@ -294,6 +403,8 @@
          if (!this.invalidated || this.watcher.closed)
              return;
          this.invalidated = false;
@@ -1875,7 +2112,7 @@ index 828de74ab3aad9f9992c264df6bf7a484b31f16d..97b923bd3be5330601b8dacc83b06777
          const options = {
              ...this.options,
              cache: this.cache
-@@ -355,6 +466,12 @@ class Task {
+@@ -355,6 +466,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
