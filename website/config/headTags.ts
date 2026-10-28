@@ -4,6 +4,7 @@ import { navbarUiControls, navbarUiStorageKey } from '../src/features/ui-managem
 import { defaultSiteLocale, localePreferenceStorageKey } from '../src/i18n/locale'
 import { getSiteConfigCopy } from '../src/i18n/siteConfig'
 import { getBuildLocale } from './buildLocale'
+import { isProductionSite } from './deploymentTarget'
 import { organizationJsonLd, siteLanguage, siteName, siteUrl, softwareJsonLd, websiteJsonLd } from './siteMetadata'
 
 const copy = getSiteConfigCopy(getBuildLocale())
@@ -238,4 +239,4 @@ const headTags: NonNullable<Config['headTags']> = [
   },
 ]
 
-export default headTags
+export default isProductionSite(siteUrl) ? headTags : headTags.filter(tag => tag.attributes?.rel !== 'sitemap')

@@ -1,12 +1,14 @@
 import type { ThemeConfig } from '@docusaurus/preset-classic'
 import { getSiteConfigCopy } from '../src/i18n/siteConfig'
 import { getBuildLocale } from './buildLocale'
+import { isProductionSite } from './deploymentTarget'
 import { defaultMetaDescription, defaultMetaTitle, siteName, siteUrl, socialImageUrl } from './siteMetadata'
 
 const currentLocale = getBuildLocale()
 const copy = getSiteConfigCopy(currentLocale)
 
 const themeMetadata: NonNullable<ThemeConfig['metadata']> = [
+  ...(!isProductionSite(siteUrl) ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
   {
     name: 'keywords',
     content: copy.metadata.themeKeywords.join(','),

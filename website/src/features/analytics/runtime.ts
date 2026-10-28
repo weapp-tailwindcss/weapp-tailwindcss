@@ -1,3 +1,5 @@
+import { deploymentOrigins } from '../../../config/deploymentTarget'
+
 interface AnalyticsGtag {
   (command: 'js', date: Date): void
   (command: 'config', trackingId: string, config: Record<string, unknown>): void
@@ -19,14 +21,14 @@ interface RouteLocation {
 const googleTrackingId = 'G-S81Q4GRTPM'
 const baiduTrackingId = '61f3de7065e36044e6d5f201632bc368'
 
-export function isCanonicalOrigin(origin: string, siteUrl: string): boolean {
+export function isProductionAnalyticsOrigin(origin: string, siteUrl: string): boolean {
   const canonical = new URL(siteUrl)
-  return (canonical.protocol === 'https:' || canonical.protocol === 'http:') && origin === canonical.origin
+  return canonical.origin === deploymentOrigins.production && origin === canonical.origin
 }
 
 /** 统计资源和事件共用部署来源边界，生产产物可安全复用于预览及本地验证。 */
 export function initializeAnalytics(browser: AnalyticsWindow, siteUrl: string) {
-  if (!isCanonicalOrigin(browser.location.origin, siteUrl)) {
+  if (!isProductionAnalyticsOrigin(browser.location.origin, siteUrl)) {
     return undefined
   }
 

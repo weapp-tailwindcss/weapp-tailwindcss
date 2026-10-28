@@ -2,6 +2,8 @@
 name: Release
 
 on:
+  schedule:
+    - cron: '0 20 * * *'
   push:
     branches: [main]
   pull_request_target:
@@ -19,6 +21,7 @@ on:
           - prepare
           - publish
           - publish-unpublished
+          - nightly
       package:
         description: Package used for unpublished-version recovery
         required: false
@@ -38,7 +41,7 @@ on:
         type: boolean
 
 env:
-  HUSKY: 0
+  LEFTHOOK: 0
   NPM_CONFIG_PROVENANCE: true
   npm_config_registry: https://registry.npmjs.org
 
@@ -78,7 +81,7 @@ jobs:
     name: Route release work
     if: >-
       ${{ !inputs.oidc_audit && ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      github.event_name == 'workflow_dispatch') }}
+      (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -118,6 +121,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # 此处只消费路由结果；正式 job 在自身 checkout 重新规划和验证。
@@ -185,6 +189,7 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
 
       - name: Install Dependencies
@@ -314,7 +319,118 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Audit npm OIDC
         run: pnpm exec repo release ci --mode oidc-audit
+
+  nightly-plan:
+    name: Plan nightly publication
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 20 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      REPOCTL_NIGHTLY_PROVIDER: npm
+      REPOCTL_NIGHTLY_SCHEDULE: '0 20 * * *'
+    outputs:
+      run: ${{ steps.plan.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          check-latest: true
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: plan
+        run: node scripts/release-nightly/index.mjs --plan
+      - name: Retain nightly plan
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nightly-report.json
+          if-no-files-found: error
+          retention-days: 7
+
+  nightly-native-artifacts:
+    needs: nightly-plan
+    if: needs.nightly-plan.outputs.run == 'true'
+    uses: ./.github/workflows/native.yml
+    with:
+      ref: ${{ github.sha }}
+      nightly-inputs: true
+
+  nightly:
+    name: Publish nightly
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 20 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly') }}
+    needs: [nightly-plan, nightly-native-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CI: 'true'
+      REPOCTL_NIGHTLY_PROVIDER: npm
+      REPOCTL_NIGHTLY_SCHEDULE: '0 20 * * *'
+      REPOCTL_SNAPSHOT_PUBLISH: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          check-latest: true
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Download native artifacts from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: packages
+      - name: Stage and verify all native platform packages
+        run: pnpm native:artifacts:stage
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium chromium-headless-shell
+      - name: Prepare, publish and verify nightly
+        run: node scripts/release-nightly/index.mjs
+      - name: Retain nightly publication identity
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nightly-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain nightly receipts and tarballs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/repoctl-nightly/**/*.json
+            ${{ runner.temp }}/repoctl-nightly/**/*.tgz
+            !${{ runner.temp }}/repoctl-nightly/**/source/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  nightly-consumers:
+    needs: nightly
+    uses: ./.github/workflows/nightly-consumers.yml
+    with:
+      ref: ${{ github.sha }}

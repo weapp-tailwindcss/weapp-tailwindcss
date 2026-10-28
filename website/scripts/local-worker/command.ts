@@ -1,4 +1,5 @@
 import type { HBuilderXCommandOptions } from '../../../packages/hbuilderx-runner/src/types'
+import type { DeploymentTarget } from '../../config/deploymentTarget'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
@@ -7,7 +8,7 @@ import { pathToFileURL } from 'node:url'
 import { withLocalCommand } from './lifecycle'
 
 /** 从包声明解析 CLI，避免依赖 pnpm 的安装目录结构或未导出的子路径。 */
-export async function resolveWranglerCommand(websiteRoot: string, port: number): Promise<HBuilderXCommandOptions> {
+export async function resolveWranglerCommand(websiteRoot: string, port: number, target: DeploymentTarget = 'production'): Promise<HBuilderXCommandOptions> {
   const require = createRequire(pathToFileURL(path.join(websiteRoot, 'package.json')))
   const manifestFile = require.resolve('wrangler/package.json')
   const manifest = JSON.parse(await readFile(manifestFile, 'utf8')) as { bin?: Record<string, string> }
@@ -17,7 +18,7 @@ export async function resolveWranglerCommand(websiteRoot: string, port: number):
   }
   return {
     command: process.execPath,
-    args: [path.resolve(path.dirname(manifestFile), bin), 'dev', '--config', path.join(websiteRoot, 'wrangler.jsonc'), '--env', '', '--local', '--ip', '127.0.0.1', '--port', String(port), '--inspector-port', '0'],
+    args: [path.resolve(path.dirname(manifestFile), bin), 'dev', '--config', path.join(websiteRoot, 'wrangler.jsonc'), '--env', target === 'next' ? 'next' : '', '--local', '--ip', '127.0.0.1', '--port', String(port), '--inspector-port', '0'],
     cwd: websiteRoot,
     env: { CI: '1', WRANGLER_SEND_METRICS: 'false' },
   }

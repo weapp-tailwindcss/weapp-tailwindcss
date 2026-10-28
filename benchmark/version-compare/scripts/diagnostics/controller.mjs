@@ -13,7 +13,7 @@ import { verifyViteTailEvidence } from './vite-tail-evidence.mjs'
 import { viteTailProject } from './vite-tail-observer.mjs'
 
 const modules = ['constants.mjs', 'profile-codec.mjs', 'profile-compression.mjs', 'profile-json.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs', 'vite-tail-observer.mjs']
-const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$)/
+const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$|LEFTHOOK$)/
 
 export async function createCaseDiagnostics(options) {
   if (!options.allocation) {

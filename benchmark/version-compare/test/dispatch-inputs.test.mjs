@@ -122,11 +122,11 @@ describe('Benchmark 工作流诊断装配', () => {
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', inputs, taro)).toBe('1')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: false }, taro)).toBe('0')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', inputs, uni)).toBe(inputs.baseline_ref)
-    expect(evaluate(node, 'workflow_dispatch', inputs, uni)).toBe('22.23.3')
+    expect(evaluate(node, 'workflow_dispatch', inputs, uni)).toBe('22.23.4')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', { baseline_ref: '' }, uni)).toBe('')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: false }, uni)).toBe('0')
     for (const flag of ['input_diagnostics', 'allocation_diagnostics']) {
-      expect(evaluate(node, 'workflow_dispatch', { [flag]: true }, uni)).toBe('22.23.3')
+      expect(evaluate(node, 'workflow_dispatch', { [flag]: true }, uni)).toBe('22.23.4')
       expect(evaluate(node, 'pull_request', { [flag]: true }, uni)).toBe('22')
     }
     expect(evaluate(shard.env.BENCH_ALLOCATION_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: true }, uni)).toBe('false')

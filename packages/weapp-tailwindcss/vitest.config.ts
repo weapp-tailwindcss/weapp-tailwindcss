@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { createNativeNodeConditionsPlugin } from '../../scripts/testing/native-node-conditions.mjs'
 
 export default defineConfig({
+  plugins: [createNativeNodeConditionsPlugin()],
   test: {
     setupFiles: ['./test/setup/esbuild-cleanup.ts'],
     alias: [

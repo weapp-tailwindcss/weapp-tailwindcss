@@ -2,8 +2,8 @@ import type { SiteLocale } from '../src/i18n/locale'
 import { getSiteConfigCopy } from '../src/i18n/siteConfig'
 import { getBuildLocale } from './buildLocale'
 
-// eslint-disable-next-line node/prefer-global/process -- 此模块也会进入浏览器 bundle，需安全访问可选的 Node 全局
-const envSiteUrl = globalThis.process?.env.SITE_URL
+// eslint-disable-next-line node/prefer-global/process -- 浏览器产物由 metadataEnvironment 插件注入同一构建来源，避免 hydration 回退到生产域名。
+const envSiteUrl = globalThis.process.env.SITE_URL
 
 export const siteUrl = (envSiteUrl || 'https://tw.weapp.dev').replace(/\/$/, '')
 export const siteName = 'weapp-tailwindcss'

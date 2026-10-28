@@ -42,6 +42,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
       - name: 安装测量工具，消费项目另行隔离安装
         run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
@@ -78,6 +79,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
       - name: 验证当前系统的短进程 RSS 与超时清理
@@ -115,6 +117,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          check-latest: true
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
       - uses: actions/download-artifact@v4
         continue-on-error: true

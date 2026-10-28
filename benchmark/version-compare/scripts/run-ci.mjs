@@ -70,6 +70,7 @@ async function run(cwd, command, args, options = {}) {
       ...process.env,
       CI: '1',
       HUSKY: '0',
+      LEFTHOOK: '0',
       ...options.env,
     },
   })
@@ -92,6 +93,7 @@ async function runCapture(cwd, command, args, options = {}) {
       ...process.env,
       CI: '1',
       HUSKY: '0',
+      LEFTHOOK: '0',
       ...options.env,
     },
   })

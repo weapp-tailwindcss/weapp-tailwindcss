@@ -58,9 +58,9 @@ pnpm build
 
 <https://tw.weapp.dev/>
 
-## GitHub Actions 生产部署
+## GitHub Actions 文档部署
 
-网站构建和上传由 `.github/workflows/docs.yml`（Deploy Docs Worker）执行。`main` 每次推送自动运行，也可在 Actions 页面从 `main` 手动重部署。生产 Worker 仍为 `weapp-tailwindcss`，主域名仍为 `https://tw.weapp.dev`；预览 Worker 本次不自动部署。
+网站构建和上传由 `.github/workflows/docs.yml`（Deploy Docs Worker）执行。`main` 每次推送自动运行，也可在 Actions 页面从 `main` 手动重部署。生产 Worker 为 `weapp-tailwindcss`，主域名为 `https://tw.weapp.dev`。`.github/workflows/docs-next.yml`（Deploy Next Docs Worker）在相同触发条件下构建固定预览站，使用现有 `wrangler.jsonc` 的 `env.next`、Worker `weapp-tailwindcss-next` 和 `https://next.tw.weapp.dev`。两个目标分别串行部署，均只允许最新 `main`。
 
 工作流使用 Node 24、根目录声明的 pnpm 和锁定版本的 Wrangler，在 GitHub runner 中完成受众检查、关键词检查、中英文构建、SEO 严格检查、本地 Worker 路由测试及 dry-run，再直接上传产物。该过程不使用 Cloudflare Builds 构建额度。
 
@@ -68,17 +68,19 @@ pnpm build
 
 - 组织级 `CLOUDFLARE_ACCOUNT_ID` 和 `CLOUDFLARE_API_TOKEN` 对本仓库开放，并移除仓库中这两项同名旧 Secret，避免仓库值覆盖组织值。Token 需要目标账户的 Worker 上传及现有 Custom Domain 管理权限；仅有 Builds 权限不足以部署。
 - 在生产及预览 Worker 的 **Settings → Builds** 停用自动构建或断开 Git 构建连接，保留 Worker、域名及线上版本，避免恢复额度后重复部署。Actions 部署不需要 Cloudflare GitHub App。
-- Cloudflare 凭据仅传给上传步骤。缺少凭据、远端 main 无法读取或任何质量检查失败都会阻止上传。过期提交跳过部署；固定并发组保证一次只有一个生产部署，且不会取消进行中的上传。
+- Cloudflare 凭据仅传给上传步骤。缺少凭据、远端 main 无法读取或任何质量检查失败都会阻止上传。过期提交跳过部署；每个目标的固定并发组保证一次只有一个部署，且不会取消进行中的上传。两个工作流均复用上述全部质量门禁。
 
-上传步骤日志记录部署前的 Worker 版本和 Wrangler 返回的新版本。随后 `verify:deployment` 核对中英文页面、canonical、站点地图、机器可读内容、301/404，以及线上 CSS/社交图片与本次构建的 SHA-256。只有上传和验收都成功，才算部署完成。手动运行同样只能部署最新 `main`。
+上传步骤日志记录部署前的 Worker 版本和 Wrangler 返回的新版本。随后 `verify:deployment` 核对中英文页面、canonical、站点地图、机器可读内容、301/404，以及 `build/assets` 和各语言输出目录中全部 JS、CSS、字体、媒体等资源和社交图片与本次构建的 SHA-256。资源请求最多并发 8 个，失败后停止新请求并等待在途请求结束。验证命令必须显式指定 `--target production` 或 `--target next`，以对应主域核对 canonical，防止混用构建。只有上传和验收都成功，才算部署完成。手动运行同样只能部署最新 `main`。
 
-若上传后验收失败，先停用 Deploy Docs Worker 工作流阻止后续上传，再根据日志定位问题；必要时使用 Wrangler 将生产 Worker 回退到上传前版本，修复并验证后再启用 Actions，不恢复 Connected Builds。
+next 的双语页面、结构化数据和机器索引均使用 `https://next.tw.weapp.dev`。预览 HTML 带 `robots: noindex, nofollow`，`robots.txt` 禁止所有爬虫，静态响应带 `X-Robots-Tag: noindex, nofollow`，不生成双语 sitemap；统计入口只在正式主域构建和正式来源运行时启用。此索引策略不提供访问控制。
 
-本地构建及部署命令保持可用：先执行 `pnpm build:docs:cloudflare` 完成生产构建与检查，再执行 `pnpm deploy:docs:cloudflare` 上传并验收。`pnpm deploy:docs:cloudflare:next` 为独立的手动预览入口，使用前需单独确认预览域名和权限。
+若上传后验收失败，先停用对应 Deploy Docs Worker 或 Deploy Next Docs Worker 工作流阻止后续上传，再根据日志定位问题；必要时使用 Wrangler 将对应 Worker 回退到上传前版本（next 加 `--env next`），修复并验证后再启用 Actions，不恢复 Connected Builds。
+
+本地构建及部署命令保持可用：先执行 `pnpm build:docs:cloudflare` 完成生产构建与检查，再执行 `pnpm deploy:docs:cloudflare` 上传并验收。`pnpm deploy:docs:cloudflare:next` 为本地手动预览入口。仅构建和验收 next 而不上传时，执行 `pnpm --filter @weapp-tailwindcss/website build:next`、`pnpm --filter @weapp-tailwindcss/website test:worker -- --target next` 和 `pnpm --filter @weapp-tailwindcss/website deploy:worker:next:dry-run`。生产构建继续使用原默认命令。
 
 ## Cloudflare 域名迁移
 
-生产 Worker 通过 `wrangler.jsonc` 的 Custom Domain 使用 `tw.weapp.dev`。配置中的预览域名为 `next.tw.weapp.dev`，本次不接通预览部署。旧 hostname 保持 Cloudflare 代理和证书，在 Cloudflare **Rules → Redirect Rules** 中配置以下永久重定向，并开启保留 query string：
+生产 Worker 通过 `wrangler.jsonc` 的 Custom Domain 使用 `tw.weapp.dev`。固定预览 Worker 通过 `env.next` 的 Custom Domain 使用 `next.tw.weapp.dev`。首次上线需在 Cloudflare 确认两个目标的域名绑定及证书均生效。旧 hostname 保持 Cloudflare 代理和证书，在 Cloudflare **Rules → Redirect Rules** 中配置以下永久重定向，并开启保留 query string：
 
 ```text
 http*://tw.icebreaker.top/*     -> https://tw.weapp.dev/${2}       (301)

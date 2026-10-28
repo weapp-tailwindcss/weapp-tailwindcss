@@ -10,7 +10,7 @@
 pnpm bench:ci -- --input-diagnostics --baseline-ref fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417 --only demo-uni-app-vite-tailwindcss-v4__mp-weixin --build-runs 3 --hmr-runs 3 --result-dir .tmp/benchmark-input-diagnostic
 ```
 
-分配模式使用同一参数，将 `--input-diagnostics` 换成 `--allocation-diagnostics`，并使用独立结果目录。工作流为这两个模式固定 Node 22.23.3；本地应核对实际 worker 的 `process-start.json`，不能以父 shell 的版本代替。该版本 V8 inspector 支持 `includeObjectsCollectedByMajorGC` 和 `includeObjectsCollectedByMinorGC`。实现不发送 GC 或 heap snapshot 请求；协议失败则停止诊断。
+分配模式使用同一参数，将 `--input-diagnostics` 换成 `--allocation-diagnostics`，并使用独立结果目录。工作流为这两个模式固定 Node 22.23.4；本地应核对实际 worker 的 `process-start.json`，不能以父 shell 的版本代替。该版本 V8 inspector 支持 `includeObjectsCollectedByMajorGC` 和 `includeObjectsCollectedByMinorGC`。实现不发送 GC 或 heap snapshot 请求；协议失败则停止诊断。
 
 Taro Vite React 使用 `--only demo-taro-vite-react-tailwindcss-v4__mp-weixin`，其余限制相同。Taro 的仓库 runner 在加载 CLI 前改写 `process.argv`，preload 因此绑定准备副本中的 `scripts/taro-build-runner.mjs`，同时核对实际解析的 `@tarojs/cli` 包身份和 bin 声明。不能绑定未直接执行的 CLI bin，也不能把缺少对应进程证据解释为没有 GC 或分配。GC 模式仅在显式选择 Taro 的诊断 dispatch 开启；普通 PR 的 Taro 采样与门禁保持原行为。
 

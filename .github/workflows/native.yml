@@ -7,6 +7,10 @@ on:
         description: 已校验的构建提交
         type: string
         required: false
+      nightly-inputs:
+        description: 为 nightly 记录同轮原生产物身份
+        type: boolean
+        default: false
   workflow_dispatch:
 
 permissions:
@@ -59,7 +63,7 @@ jobs:
             arch: arm64
             libc: musl
     env:
-      HUSKY: 0
+      LEFTHOOK: 0
       CI: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -73,6 +77,7 @@ jobs:
         id: node
         with:
           node-version: 24
+          check-latest: true
           cache: ${{ matrix.image == '' && 'pnpm' || '' }}
 
       - name: Cache host Cargo downloads
@@ -135,7 +140,7 @@ jobs:
           -v "$RUNNER_TEMP/native-ci:/native-ci"
           -e NATIVE_PNPM_STORE=/native-ci/pnpm -e CARGO_HOME=/native-ci/cargo
           -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
-          -e CI=1 -e HUSKY=0 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          -e CI=1 -e LEFTHOOK=0 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -160,7 +165,7 @@ jobs:
           -v "$RUNNER_TEMP/native-ci:/native-ci"
           -e NATIVE_PNPM_STORE=/native-ci/pnpm -e NATIVE_REUSE_DEPENDENCIES=1
           -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
-          -e CI=1 -e HUSKY=0 -e NATIVE_VERIFY_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          -e CI=1 -e LEFTHOOK=0 -e NATIVE_VERIFY_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -176,6 +181,7 @@ jobs:
         if: matrix.image != ''
         env:
           NATIVE_NODE_VERSION: v20.19.0
+          NATIVE_NIGHTLY_INPUTS: ${{ inputs.nightly-inputs && '1' || '0' }}
           NATIVE_TARGET: ${{ matrix.target }}
           NATIVE_ARCH: ${{ matrix.arch }}
           NATIVE_LIBC: ${{ matrix.libc }}
@@ -184,9 +190,13 @@ jobs:
           docker run --rm -v "$PWD:/work" -w /work
           -v "$RUNNER_TEMP/native-ci:/native-ci"
           -e NATIVE_PNPM_STORE=/native-ci/pnpm -e NATIVE_REUSE_DEPENDENCIES=1
-          -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
-          -e CI=1 -e HUSKY=0 -e NATIVE_CSS_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          -e GITHUB_SHA -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB -e NATIVE_NIGHTLY_INPUTS
+          -e CI=1 -e LEFTHOOK=0 -e NATIVE_CSS_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
+
+      - name: Record verified native source identity
+        if: inputs.nightly-inputs == true && matrix.image == ''
+        run: node scripts/release-nightly/native-input.mjs --target=${{ matrix.target }}
 
       - name: Upload verified native artifacts
         uses: actions/upload-artifact@v7

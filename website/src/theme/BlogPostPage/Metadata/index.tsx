@@ -1,5 +1,6 @@
 import Head from '@docusaurus/Head'
 import { useBlogPost } from '@docusaurus/plugin-content-blog/client'
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import {
   getSiteLanguage,
   getSocialImageAlt,
@@ -17,6 +18,7 @@ import React from 'react'
 type BlogPostPageMetadataProps = React.ComponentProps<typeof OriginalMetadata>
 
 export default function BlogPostPageMetadata(props: BlogPostPageMetadataProps) {
+  const { siteConfig: { noIndex } } = useDocusaurusContext()
   const locale = useCurrentSiteLocale()
   const { metadata, frontMatter, assets } = useBlogPost()
   const copy = getSiteConfigCopy(locale)
@@ -53,7 +55,7 @@ export default function BlogPostPageMetadata(props: BlogPostPageMetadataProps) {
         <link rel="canonical" href={canonicalUrl} />
         <meta name="description" content={description} />
         <meta name="keywords" content={keywords.join(', ')} />
-        <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+        <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'} />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={metadata.title} />
         <meta property="og:description" content={description} />

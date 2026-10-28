@@ -41,7 +41,7 @@
     "gulp-plugin"
   ],
   "engines": {
-    "node": "^22.18.0 || >=24.11.0"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "scripts": {
     "preinstall": "node scripts/verify-template-pnpm.mjs",
@@ -269,7 +269,7 @@
     "format": "prettier --check \"src/**/*.{ts,js}\" -w",
     "format:test": "prettier --check \"test/**/*.test.{ts,js}\" -w",
     "ls:pack": "npm pack --dry-run",
-    "prepare": "husky",
+    "prepare": "repo tooling hooks install --json",
     "css-build": "css2plugin build css-plugin.css css-plugin-scss.scss --cwd test/fixtures/css",
     "css-build-out": "css2plugin build css-plugin.css css-plugin-scss.scss --cwd test/fixtures/css --out tw-plugins",
     "-------": "-----------",
@@ -327,7 +327,7 @@
     "@ampproject/remapping": "^2.3.0",
     "@babel/core": "catalog:babel8",
     "@babel/generator": "catalog:babel8",
-    "@commitlint/cli": "^21.2.3",
+    "@commitlint/cli": "^21.2.4",
     "@csstools/css-color-parser": "catalog:csstools",
     "@csstools/css-parser-algorithms": "catalog:csstools",
     "@csstools/css-tokenizer": "catalog:csstools",
@@ -417,12 +417,11 @@
     "gulp": "catalog:gulp5",
     "gulp-postcss": "catalog:gulp5",
     "html-loader": "^5.1.0",
-    "husky": "^9.1.7",
     "js-beautify": "^2.0.3",
     "jsdom": "^29.1.1",
     "klaw": "^4.1.0",
+    "lefthook": "2.2.2",
     "lightningcss": "^1.33.0",
-    "lint-staged": "^17.5.1",
     "local-pkg": "catalog:buildUtilities",
     "lodash": "^4.18.1",
     "lodash-es": "^4.18.1",
@@ -448,7 +447,7 @@
     "pptxgenjs": "^4.0.1",
     "prettier": "catalog:prettier371",
     "promisify-loader-runner": "^1.0.1",
-    "repoctl": "^5.10.3",
+    "repoctl": "^6.3.0",
     "rimraf": "^6.1.3",
     "rollup": "^4.63.5",
     "sass": "catalog:sass195",

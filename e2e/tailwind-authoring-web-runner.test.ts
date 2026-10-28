@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { runAuthoringWeb } from './tailwind-capabilities/authoring-web'
 
 const mocks = vi.hoisted(() => ({ launch: vi.fn(), persist: vi.fn() }))
@@ -16,7 +17,7 @@ vi.mock('./tailwind-capabilities/context', () => ({
     }
     await mkdir(context.directory, { recursive: true })
     const hash = 'a'.repeat(64)
-    return { schemaVersion: 2, runId: context.runId, target, observedAt: new Date().toISOString(), identity: { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { tailwindcss: '4.3.3' } }, environment, results: [], artifacts: [] }
+    return { schemaVersion: 2, runId: context.runId, target, observedAt: context.artifactStartedAt ?? filesystemObservedAt(context.directory), identity: { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { tailwindcss: '4.3.3' } }, environment, results: [], artifacts: [] }
   },
   persistReport: mocks.persist,
 }))

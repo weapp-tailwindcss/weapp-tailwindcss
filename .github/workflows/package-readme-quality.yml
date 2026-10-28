@@ -53,6 +53,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          check-latest: true
 
       - name: Validate bilingual package READMEs
         run: node scripts/check-package-readmes.mjs

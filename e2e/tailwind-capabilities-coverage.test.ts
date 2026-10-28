@@ -2,13 +2,15 @@ import type { CapabilityIdentity, CapabilityReport, CaseContract } from './tailw
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { validateCoverageRegistry } from './coverageRegistry'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { capabilityCoverageEvidence, createTailwindCoverageCells } from './tailwind-capabilities/coverage'
 import { receipt } from './tailwind-capabilities/report'
 
 const directories: string[] = []
 afterEach(async () => {
+  vi.useRealTimers()
   await Promise.all(directories.splice(0).map(directory => fs.rm(directory, { recursive: true, force: true })))
 })
 const identity: CapabilityIdentity = {
@@ -24,7 +26,7 @@ const contract: CaseContract = { id: 'display-flex', features: ['display'], cand
 async function fixture(contracts = [contract]) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'capability coverage '))
   directories.push(root)
-  const observedAt = new Date().toISOString()
+  const observedAt = filesystemObservedAt(root)
   const file = path.join(root, 'raw.css')
   await fs.writeFile(file, '.flex { display: flex }')
   const artifact = await receipt(file, root, 'run-one', contracts.map(item => item.id), 'css')
@@ -48,6 +50,16 @@ it('只有 generation 的案例只填充 static，并保持独立案例和浏览
   expect(registry[0]).toMatchObject({ caseId: 'display-flex', capabilityIds: ['display'], browserEngine: 'chromium' })
   expect(registry[0]!.layers.runtime.status).toBe('not-applicable')
   expect(await capabilityCoverageEvidence(report, [contract], options)).toMatchObject([{ layer: 'static', status: 'passed' }])
+})
+
+it('Date 超前时本轮合成产物仍有效，旧产物继续拒绝', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(Date.now() + 60_000)
+  const { root, report, options } = await fixture()
+  expect(await capabilityCoverageEvidence(report, [contract], options)).toMatchObject([{ layer: 'static', status: 'passed' }])
+  const old = new Date(Date.parse(report.observedAt) - 60_000)
+  await fs.utimes(path.join(root, 'raw.css'), old, old)
+  await expect(capabilityCoverageEvidence(report, [contract], options)).rejects.toThrow('早于本轮')
 })
 
 it('runtime 失败保留失败，不用先前生成成功补齐运行时覆盖', async () => {

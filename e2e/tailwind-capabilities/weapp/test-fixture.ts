@@ -4,6 +4,7 @@ import type { WeappObservation, WeappProbe, WeappSidecar } from './types'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { PNG } from 'pngjs'
+import { filesystemObservedAt } from '../artifact-clock'
 import { digest } from '../identity'
 import { receipt } from '../report'
 import { weappFixtureCss } from './alpha-fixtures'
@@ -22,7 +23,7 @@ export async function weappReplayFixture(root: string, probe: WeappProbe) {
   const runId = 'synthetic-weapp-protocol'
   const fixture = { probes: [probe], css: weappFixtureCss, render: weappRenderContract }
   const identity = { sourceHash: digest('synthetic-source'), lockfileHash: digest('synthetic-lock'), catalogHash: digest([contract.id]), fixtureHash: digest({ target: 'weapp', fixture }), expectationsHash: digest(contract), versions: { synthetic: 'protocol-only' } }
-  const report: CapabilityReport = { schemaVersion: 2, target: 'weapp', runId, observedAt: new Date().toISOString(), identity, environment: { provider: 'synthetic-protocol-only', appid: 'wx-test' }, results: [], artifacts: [] }
+  const report: CapabilityReport = { schemaVersion: 2, target: 'weapp', runId, observedAt: filesystemObservedAt(root), identity, environment: { provider: 'synthetic-protocol-only', appid: 'wx-test' }, results: [], artifacts: [] }
   const sources = weappProjectFiles(css, runId, 'wx-test')
   const artifacts: string[] = []
   async function save(name: string, bytes: string | Buffer, kind: 'css' | 'bundle' | 'measurements' | 'screenshot') {

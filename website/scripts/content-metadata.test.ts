@@ -4,21 +4,26 @@ import type { DocMetadata } from '@docusaurus/plugin-content-docs'
 import type { ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import BlogPostMetadata from '../src/theme/BlogPostPage/Metadata'
 import BlogPostStructuredData from '../src/theme/BlogPostPage/StructuredData'
 import DocItemMetadata from '../src/theme/DocItem/Metadata'
 
-const hooks = vi.hoisted(() => ({ useDoc: vi.fn(), useBlogPost: vi.fn(), useBlogPostStructuredData: vi.fn() }))
+const hooks = vi.hoisted(() => ({ useDoc: vi.fn(), useBlogPost: vi.fn(), useBlogPostStructuredData: vi.fn(), useDocusaurusContext: vi.fn() }))
 vi.mock('@docusaurus/plugin-content-docs/client', () => ({ useDoc: hooks.useDoc }))
 vi.mock('@docusaurus/plugin-content-blog/client', () => ({ useBlogPost: hooks.useBlogPost, useBlogPostStructuredData: hooks.useBlogPostStructuredData }))
 vi.mock('@docusaurus/Head', () => ({ default: ({ children }: { children: ReactNode }) => children }))
+vi.mock('@docusaurus/useDocusaurusContext', () => ({ default: hooks.useDocusaurusContext }))
 vi.mock('@theme-original/DocItem/Metadata', () => ({ default: () => null }))
 vi.mock('@theme-original/BlogPostPage/Metadata', () => ({ default: () => null }))
 vi.mock('@site/src/i18n/runtime', () => ({ useCurrentSiteLocale: () => 'en' }))
 
 const modifiedTime = '2026-10-03T00:00:00.000Z'
 const publishedTime = '2026-10-02T00:00:00.000Z'
+const deploymentProfiles = [
+  { name: 'production', origin: 'https://tw.weapp.dev', noIndex: false, robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' },
+  { name: 'next', origin: 'https://next.tw.weapp.dev', noIndex: true, robots: 'noindex, nofollow' },
+]
 
 function docMetadata(overrides: Partial<DocMetadata> = {}): DocMetadata {
   return {
@@ -55,9 +60,26 @@ beforeEach(() => {
   hooks.useDoc.mockReset()
   hooks.useBlogPost.mockReset()
   hooks.useBlogPostStructuredData.mockReset()
+  hooks.useDocusaurusContext.mockReset()
+  hooks.useDocusaurusContext.mockReturnValue({ siteConfig: { noIndex: false } })
 })
 
+afterEach(() => vi.unstubAllEnvs())
+
 describe('文档日期的真实 metadata 与 JSON-LD', () => {
+  it.each(deploymentProfiles)('$name 文档沿用构建来源与索引策略', async ({ origin, noIndex, robots }) => {
+    vi.stubEnv('SITE_URL', origin)
+    vi.resetModules()
+    hooks.useDocusaurusContext.mockReturnValue({ siteConfig: { url: origin, noIndex } })
+    hooks.useDoc.mockReturnValue({ metadata: docMetadata() })
+    const { default: Metadata } = await import('../src/theme/DocItem/Metadata')
+    const html = renderToStaticMarkup(createElement(Metadata))
+
+    expect(html).toContain(`<link rel="canonical" href="${origin}/docs/intro"`)
+    expect(html).toContain(`<meta name="robots" content="${robots}"`)
+    expect(readDocJsonLd(html)).toMatchObject({ url: `${origin}/docs/intro`, publisher: { '@id': `${origin}/#organization` } })
+  })
+
   it('文档图片同样使用已解析的资源路径', () => {
     hooks.useDoc.mockReturnValue({ metadata: docMetadata({ frontMatter: { image: './cover.png' } }), assets: { image: '/assets/doc-cover.hash.png' } })
     const html = renderToStaticMarkup(createElement(DocItemMetadata))
@@ -102,7 +124,7 @@ describe('文档日期的真实 metadata 与 JSON-LD', () => {
 })
 
 describe('博客 metadata 的官方字段', () => {
-  function renderBlog(frontMatter: PropBlogPostContent['metadata']['frontMatter'] = {}) {
+  function renderBlog(frontMatter: PropBlogPostContent['metadata']['frontMatter'] = {}, Metadata = BlogPostMetadata, origin = 'https://tw.weapp.dev') {
     const metadata: PropBlogPostContent['metadata'] = {
       source: '@site/blog/post.md',
       title: 'Release notes',
@@ -121,20 +143,37 @@ describe('博客 metadata 的官方字段', () => {
     const structuredData = {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
-      'url': 'https://tw.weapp.dev/blog/release',
+      'url': `${origin}/blog/release`,
       'datePublished': publishedTime,
       'dateModified': modifiedTime,
       'image': {
         '@type': 'ImageObject',
-        '@id': 'https://tw.weapp.dev/assets/cover.hash.png',
-        'url': 'https://tw.weapp.dev/assets/cover.hash.png',
-        'contentUrl': 'https://tw.weapp.dev/assets/cover.hash.png',
+        '@id': `${origin}/assets/cover.hash.png`,
+        'url': `${origin}/assets/cover.hash.png`,
+        'contentUrl': `${origin}/assets/cover.hash.png`,
         'caption': 'title image for the blog post: Release notes',
       },
     } satisfies ReturnType<typeof useBlogPostStructuredData>
     hooks.useBlogPostStructuredData.mockReturnValue(structuredData)
-    return renderToStaticMarkup(createElement(BlogPostMetadata))
+    return renderToStaticMarkup(createElement(Metadata))
   }
+
+  it.each(deploymentProfiles)('$name 博客沿用构建来源与索引策略', async ({ origin, noIndex, robots }) => {
+    vi.stubEnv('SITE_URL', origin)
+    vi.resetModules()
+    hooks.useDocusaurusContext.mockReturnValue({ siteConfig: { url: origin, noIndex } })
+    const { default: Metadata } = await import('../src/theme/BlogPostPage/Metadata')
+    const { default: StructuredData } = await import('../src/theme/BlogPostPage/StructuredData')
+    const html = renderBlog({}, Metadata, origin)
+
+    expect(html).toContain(`<link rel="canonical" href="${origin}/blog/release"`)
+    expect(html).toContain(`<meta name="robots" content="${robots}"`)
+    expect(html).toContain(`property="og:image" content="${origin}/assets/cover.hash.png"`)
+    expect(readJsonLd(renderToStaticMarkup(createElement(StructuredData)), 'blog-post-jsonld')).toMatchObject({
+      '@id': `${origin}/blog/release#article`,
+      'publisher': { '@id': `${origin}/#organization` },
+    })
+  })
 
   it('使用已解析的图片资源和官方更新时间', () => {
     const html = renderBlog({ image: './cover.png', category: 'Changelog', lang: 'zh-CN' })

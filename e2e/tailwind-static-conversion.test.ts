@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { conversionTargets } from './tailwind-capabilities/conversion-audit'
 import { assertCapabilitySuccess } from './tailwind-capabilities/report'
 import { runStatic } from './tailwind-capabilities/static'
@@ -27,7 +28,7 @@ vi.mock('./tailwind-capabilities/context', () => ({
   newReport: async (context: RunContext, target: string, _contracts: CaseContract[], _fixture: unknown, environment: Record<string, string | number | boolean>) => {
     const hash = 'a'.repeat(64)
     const identity: CapabilityIdentity = { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { tailwindcss: '4.3.3' } }
-    return { schemaVersion: 2, runId: context.runId, target, observedAt: new Date().toISOString(), identity, environment, results: [], artifacts: [] }
+    return { schemaVersion: 2, runId: context.runId, target, observedAt: context.artifactStartedAt ?? filesystemObservedAt(context.directory), identity, environment, results: [], artifacts: [] }
   },
   persistReport: mocks.persist,
 }))

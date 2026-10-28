@@ -16,9 +16,11 @@ on:
       - packages/env/**
       - pnpm-workspace.yaml
       - .github/workflows/native.yml
+      - .github/workflows/nightly-consumers.yml
       - .github/workflows/release.yml
       - scripts/verify-packed-packages.mjs
       - scripts/release-certificate.ts
+      - scripts/release-nightly/**
       - .github/workflows/release-gate.yml
       - .github/workflows/ci-scope.yml
       - scripts/ci/**
@@ -59,7 +61,7 @@ jobs:
     if: always() && !cancelled()
     timeout-minutes: 30
     env:
-      HUSKY: 0
+      LEFTHOOK: 0
     steps:
       - name: Require scope and enabled native checks
         env:
@@ -86,6 +88,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 

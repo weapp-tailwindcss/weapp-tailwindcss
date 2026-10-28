@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { runInNewContext } from 'node:vm'
 import semver from 'semver'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
@@ -35,23 +36,32 @@ describe('CI 安装资源策略', () => {
     expect(regression).toContain('test/ci/install-workspace.test.ts')
   })
 
-  it('兼容矩阵的准确 Node 基线同时满足仓库与 pnpm 11 引擎范围', () => {
+  it('安装 Node 满足开发引擎，切换后的运行时满足公开包与 pnpm 11 范围', () => {
     const rootManifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
-    const matrices = workflow.jobs.compatibility.strategy.matrix.include.match(/\[\{.*?\}\]/g)
+    const publicManifest = JSON.parse(readFileSync(path.join(root, 'packages', 'weapp-tailwindcss', 'package.json'), 'utf8'))
+    const job = workflow.jobs.compatibility
+    const setup = job.steps.find((step: any) => step.uses?.startsWith('actions/setup-node@'))
+    const selection = setup.with['node-version']
+    const matrices = job.strategy.matrix.include.match(/\[\{.*?\}\]/g)
     expect(matrices).toHaveLength(2)
     for (const matrix of matrices) {
       for (const entry of JSON.parse(matrix)) {
-        const node = String(entry['node-version'])
-        if (node.includes('.')) {
-          expect(semver.satisfies(node, rootManifest.engines.node), entry.scenario).toBe(true)
-          expect(semver.satisfies(node, '>=22.13.0'), entry.scenario).toBe(true)
-        }
-        else {
-          // setup-node 的 major selector 解析该主版本最新版本，不表示 x.0.0。
-          expect(semver.intersects(node, rootManifest.engines.node), entry.scenario).toBe(true)
-          expect(semver.intersects(node, '>=22.13.0'), entry.scenario).toBe(true)
+        // 仅求值仓库中的选择表达式；矩阵数据作为变量传入，适配 GitHub 带连字符的属性名。
+        const development = String(runInNewContext(`(${selection.slice(3, -2).replaceAll('matrix.node-version', 'matrix["node-version"]')})`, { matrix: entry }, { timeout: 100 }))
+        const runtime = String(entry['node-version'])
+        for (const [node, engine] of [[development, rootManifest.engines.node], [development, '>=22.13.0'], [runtime, publicManifest.engines.node], [runtime, '>=22.13.0']]) {
+          // major selector 刷新到该主版本最新版本，不表示 x.0.0；准确版本按实际 semver 核验。
+          expect(semver.valid(node) ? semver.satisfies(node, engine) : semver.intersects(node, engine), entry.scenario).toBe(true)
         }
       }
     }
+  })
+
+  it('先安装构建并验证 hooks，再切换最低运行时执行公开包回归', () => {
+    const steps = workflow.jobs.compatibility.steps
+    const names = ['Setup Node.js environment', 'Install dependencies', 'Build core package dependency closure', 'Verify Git hooks on this platform', 'Switch to the minimum supported runtime', 'Verify core escape on this platform', 'Run core compatibility regression tests']
+    const indices = names.map(name => steps.findIndex((step: any) => step.name === name))
+    expect(indices.every(index => index >= 0)).toBe(true)
+    expect([...indices].sort((left, right) => left - right)).toEqual(indices)
   })
 })

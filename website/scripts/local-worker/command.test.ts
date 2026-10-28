@@ -42,6 +42,12 @@ it('从导出的包 manifest 解析 Wrangler bin，并固定本地地址与默�
   expect(command.args).not.toContain('--remote')
 })
 
+it('next 验证显式选择独立 Wrangler 环境', async () => {
+  const command = await resolveWranglerCommand(websiteRoot, 45678, 'next')
+  expect(command.args.slice(command.args.indexOf('--env'), command.args.indexOf('--env') + 2)).toEqual(['--env', 'next'])
+  expect(command.args).toContain('--local')
+})
+
 it('三浏览器只访问本轮 URL，显式后台运行且禁止更新基线', () => {
   vi.stubEnv('PLAYWRIGHT_BASE_URL', 'https://unrelated.example/')
   vi.stubEnv('PLAYWRIGHT_CHROMIUM_CHANNEL', 'chrome')

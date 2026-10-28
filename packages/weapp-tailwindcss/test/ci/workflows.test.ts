@@ -547,6 +547,20 @@ describe('ci workflows', () => {
       'windows-latest:22:windows-node22-core',
     ])
 
+    const steps = workflow.jobs.compatibility.steps
+    const installNode = steps.find(step => step.name === 'Setup Node.js environment')
+    const runtimeNode = steps.find(step => step.name === 'Switch to the minimum supported runtime')
+    expect(installNode.with['node-version']).toBe("${{ matrix.scenario == 'node22-min-core' && '22.23.4' || matrix.node-version }}")
+    expect(runtimeNode).toMatchObject({
+      if: "matrix.scenario == 'node22-min-core'",
+      with: { 'node-version': '${{ matrix.node-version }}' },
+    })
+    expect(steps.indexOf(runtimeNode)).toBeGreaterThan(steps.findIndex(step => step.run === 'pnpm build:ci'))
+    expect(steps.indexOf(runtimeNode)).toBeLessThan(steps.findIndex(step => step.name === 'Verify core escape on this platform'))
+    const hooks = steps.find(step => step.name === 'Verify Git hooks on this platform')
+    expect(hooks.run).toContain('vitest run test/ci/git-hooks --update=none')
+    expect(steps.indexOf(hooks)).toBeLessThan(steps.indexOf(runtimeNode))
+
     const compatibilityRuns = stepRuns(workflow, 'compatibility').join('\n')
     expect(compatibilityRuns).toContain('pnpm build:ci')
     expect(compatibilityRuns).toContain('test/bundlers/vite-plugin.uni-app-x.unit.test.ts')
@@ -869,6 +883,7 @@ describe('ci workflows', () => {
       'prepare',
       'publish',
       'publish-unpublished',
+      'nightly',
     ])
     expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toBe('${{ needs.plan.outputs.mode }}')
     expect(workflow.jobs.release.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')

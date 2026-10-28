@@ -10,9 +10,11 @@ import { fileURLToPath } from 'node:url'
 import createBlogOptions from './config/blog'
 import { getBuildLocale } from './config/buildLocale'
 import { preserveWebsiteCssConditionalOrder } from './config/cssMinimizer'
+import { isProductionSite } from './config/deploymentTarget'
 import { footer, footerCustomFields } from './config/footer'
 import headTags from './config/headTags'
 import { getDocsDirectory } from './config/localizedContent'
+import metadataEnvironment from './config/metadataEnvironment'
 import navbar from './config/navbar'
 import { siteUrl } from './config/siteMetadata'
 import themeMetadata from './config/themeMetadata'
@@ -27,6 +29,8 @@ const workspacePackagePnpmStorePattern = /[\\/]packages(?:-runtime)?[\\/][^\\/]+
 const buildLocale = getBuildLocale()
 const isEnglishBuild = buildLocale === 'en'
 const siteCopy = getSiteConfigCopy(buildLocale)
+const llmCanonicalSource = isEnglishBuild ? `Canonical documentation: ${siteUrl}` : `规范文档来源：${siteUrl}`
+const deploymentStaticDirectory = isProductionSite(siteUrl) ? 'static-production' : 'static-next'
 
 const config: Config = {
   title: 'weapp-tailwindcss',
@@ -35,8 +39,9 @@ const config: Config = {
 
   // Set the production url of your site here
   url: siteUrl,
+  noIndex: !isProductionSite(siteUrl),
   baseUrl: '/',
-  staticDirectories: isEnglishBuild ? ['static', 'static/en'] : ['static'],
+  staticDirectories: isEnglishBuild ? ['static', 'static/en', deploymentStaticDirectory] : ['static', deploymentStaticDirectory],
   trailingSlash: false,
   onBrokenLinks: 'throw',
 
@@ -60,8 +65,8 @@ const config: Config = {
     },
   },
   headTags,
-  // 生产构建仍在浏览器运行时核对 canonical origin，避免预览部署加载线上统计。
-  clientModules: isProd ? ['./src/features/analytics/client.ts'] : [],
+  // 构建与浏览器运行时均限制到正式主域，next 构建不包含统计入口。
+  clientModules: isProd && isProductionSite(siteUrl) ? ['./src/features/analytics/client.ts'] : [],
   customFields: {
     footer: footerCustomFields,
   },
@@ -109,6 +114,7 @@ const config: Config = {
     ],
   ],
   plugins: [
+    metadataEnvironment,
     [
       'docusaurus-plugin-llms',
       {
@@ -136,24 +142,33 @@ const config: Config = {
         ],
         includeUnmatchedLast: true,
         rootContent: isEnglishBuild
-          ? `LLM navigation notes:
+          ? `${llmCanonicalSource}
+
+LLM navigation notes:
 - The English bundle mirrors the complete Chinese documentation tree, including guides, API references, troubleshooting, migrations, and AI workflows.
 - Use /llms-index.json for the product-focused GEO index and /llms-index-full.json for the complete corpus.
 - MDX imports and duplicate headings are removed for easier model parsing, while key title/description frontmatter is preserved.`
-          : `LLM 导航说明：
+          : `${llmCanonicalSource}
+
+LLM 导航说明：
 - 顺序为「入门 → 配置 → API → 迁移/问题 → AI 工作流」，覆盖 webpack/vite/gulp 与各类小程序框架。
 - 产品问题优先读取 /llms-index.json，需要博客、AI 基础和历史内容时读取 /llms-index-full.json。
 - 已剔除 MDX import 与重复标题，便于模型解析；附带保留的标题/描述 frontmatter。`,
         fullRootContent: isEnglishBuild
-          ? `Full doc bundle for offline or single-file loading:
+          ? `${llmCanonicalSource}
+
+Full doc bundle for offline or single-file loading:
 - quick-start/* covers setup flows and framework examples, options/* and api/* provide configuration and API details, and ai/* contains prompts and workflows.
 - Content is ordered for onboarding, with key frontmatter preserved for summarization and indexing.`
-          : `完整文档合辑，适合离线或单文件加载：
+          : `${llmCanonicalSource}
+
+完整文档合辑，适合离线或单文件加载：
 - quick-start/* 给出接入步骤与常见框架示例，options/*、api* 提供配置与 API 细节，ai/* 收录提示词与工作流。
 - 内容按上手优先排序，并保留关键 frontmatter 供模型摘要与索引。`,
         customLLMFiles: [
           {
             filename: 'llms-quickstart.txt',
+            rootContent: llmCanonicalSource,
             includePatterns: isEnglishBuild
               ? ['intro.md', 'quick-start/**', 'tailwindcss/v4-reference.md', 'community/templates.md', 'tools/**', 'ai/**']
               : [
@@ -172,6 +187,7 @@ const config: Config = {
           },
           {
             filename: 'llms-api.txt',
+            rootContent: llmCanonicalSource,
             includePatterns: [
               isEnglishBuild ? 'config/**' : 'docs/config/**',
               isEnglishBuild ? 'options/**' : 'docs/options/**',

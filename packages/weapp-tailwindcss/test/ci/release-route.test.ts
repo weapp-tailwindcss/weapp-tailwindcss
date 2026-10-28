@@ -154,7 +154,7 @@ describe('Release 事件路由', () => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName })).toEqual(skipped)
   })
 
-  it.each(['oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
+  it.each(['nightly', 'oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, mode })).toEqual(skipped)
   })
 

@@ -1,0 +1,110 @@
+name: Published Nightly Consumers
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Nightly 的准确源码提交
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  consumer:
+    name: Nightly consumer (${{ matrix.suffix }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - runner: macos-latest
+            suffix: darwin-arm64
+          - runner: macos-15-intel
+            suffix: darwin-x64
+          - runner: windows-latest
+            suffix: win32-x64-msvc
+          - runner: windows-11-arm
+            suffix: win32-arm64-msvc
+          - runner: ubuntu-latest
+            suffix: linux-x64-gnu
+          - runner: ubuntu-24.04-arm
+            suffix: linux-arm64-gnu
+          - runner: ubuntu-latest
+            suffix: linux-x64-musl
+            image: node:24.22.1-alpine
+          - runner: ubuntu-24.04-arm
+            suffix: linux-arm64-musl
+            image: node:24.22.1-alpine
+    env:
+      CI: 'true'
+      LEFTHOOK: 0
+      NIGHTLY_EXPECTED_SUFFIX: ${{ matrix.suffix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nightly-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nightly-publication
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        if: matrix.image == ''
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.image == ''
+        with:
+          node-version: 24
+          check-latest: true
+          cache: pnpm
+      - name: Install and verify published native packages
+        if: matrix.image == ''
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/release-nightly/consumer.mjs --install
+      - name: Install and verify published musl packages
+        if: matrix.image != ''
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP:/evidence" -e RUNNER_TEMP=/evidence
+          -e GITHUB_SHA -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e NIGHTLY_EXPECTED_SUFFIX -e CI=true -e LEFTHOOK=0
+          "${{ matrix.image }}" sh scripts/release-nightly/consumer-linux.sh install
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.image == ''
+        with:
+          node-version: 22.18.0
+      - name: Verify published Node 22.18 ABI
+        if: matrix.image == ''
+        run: node scripts/release-nightly/consumer.mjs
+      - name: Verify published musl Node 22.18 ABI
+        if: matrix.image != ''
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP:/evidence" -e RUNNER_TEMP=/evidence
+          -e GITHUB_SHA -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e NIGHTLY_EXPECTED_SUFFIX -e CI=true -e LEFTHOOK=0
+          node:22.18.0-alpine node scripts/release-nightly/consumer.mjs
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.image == ''
+        with:
+          node-version: 20.19.0
+      - name: Verify independent published PostCSS Node 20.19 ABI
+        if: matrix.image == ''
+        run: node scripts/release-nightly/consumer.mjs --css-only
+      - name: Verify independent published musl PostCSS Node 20.19 ABI
+        if: matrix.image != ''
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP:/evidence" -e RUNNER_TEMP=/evidence
+          -e GITHUB_SHA -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e NIGHTLY_EXPECTED_SUFFIX -e CI=true -e LEFTHOOK=0
+          node:20.19.0-alpine node scripts/release-nightly/consumer.mjs --css-only
+      - name: Retain platform consumer evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-consumer-${{ matrix.suffix }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nightly-consumer-reports/*.json
+          if-no-files-found: warn
+          retention-days: 7

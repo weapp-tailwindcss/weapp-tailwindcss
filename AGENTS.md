@@ -100,5 +100,5 @@
 - `提交前检查`
 
 ## 补充
-- 首次克隆后执行 `pnpm prepare` 初始化 Husky。
+- 首次克隆后执行 `pnpm prepare` 初始化 Lefthook。
 - 文档站发布前需配置 `website/.env.local` 并执行 `pnpm build:docs`。

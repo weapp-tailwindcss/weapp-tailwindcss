@@ -33,6 +33,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+          check-latest: true
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm architecture:check
