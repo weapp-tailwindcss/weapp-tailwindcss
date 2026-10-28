@@ -4,6 +4,7 @@ import {WeappTailwindcss,type UserDefinedOptions} from 'weapp-tailwindcss/webpac
 import path from 'node:path'
 import devConfig from './dev'
 import prodConfig from './prod'
+import { WebRpxToRemPlugin } from './webpack-web-units'
 
 const isWebTarget = process.env.TARO_ENV === 'h5' || process.env.TARO_ENV === 'harmony-hybrid'
 const isNativeTarget = process.env.TARO_ENV === 'rn' || process.env.TARO_ENV === 'jdrn'
@@ -98,12 +99,6 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
         chunkFilename: 'css/[name].[chunkhash].css'
       },
       postcss: {
-        // 发布版 5.6.3 的 Web 生成器尚未执行单位选项，由真实框架管线重放此纯转换插件。
-        // 升级到包含 Web 生成单位修复的版本并复验后，可移回 cssOptions.unitConversion。
-        'postcss-rule-unit-converter': {
-          enable: true,
-          config: { rules: [{ from: 'rpx', to: 'rem', factor: 1 / (webBaseFontSize * 2) }] },
-        },
         pxtransform: {
           config: { baseFontSize: webBaseFontSize, minRootSize: webBaseFontSize, maxRootSize: webBaseFontSize * 2 },
         },
@@ -129,6 +124,9 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
             ]
           } satisfies UserDefinedOptions
         ])
+        if (isWebTarget) {
+          chain.plugin('web-rpx-to-rem').use(WebRpxToRemPlugin, [webBaseFontSize])
+        }
       }
     },
     rn: {
