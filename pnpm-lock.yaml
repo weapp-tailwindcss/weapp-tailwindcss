@@ -1007,6 +1007,9 @@ importers:
       '@vue/compiler-sfc':
         specifier: catalog:vue3
         version: 3.5.44
+      '@weapp-tailwindcss/postcss':
+        specifier: workspace:*
+        version: link:packages/postcss
       '@weapp-tailwindcss/shared':
         specifier: workspace:*
         version: link:packages/shared

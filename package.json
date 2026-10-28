@@ -381,6 +381,7 @@
     "@vitest/ui": "catalog:vitest",
     "@vue/compiler-dom": "catalog:vue3",
     "@vue/compiler-sfc": "catalog:vue3",
+    "@weapp-tailwindcss/postcss": "workspace:*",
     "@weapp-tailwindcss/shared": "workspace:*",
     "@weapp-tailwindcss/test-catalog": "workspace:*",
     "@weapp-tailwindcss/test-helper": "workspace:*",
