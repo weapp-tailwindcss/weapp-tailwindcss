@@ -7,6 +7,14 @@ import { sha256 } from './evidence.mjs'
 export async function verifyUniInputEvidence(directory, summary, events) {
   if (!summary || summary.recordingError || !Array.isArray(summary.bundles) || !summary.bundles.length) throw new Error('Uni 输入诊断状态缺失或失败')
   const records = events.filter(event => event.name.startsWith('uni.'))
+  const spans = records.filter(event => event.name.startsWith('uni.phase.') && event.name.endsWith('.span'))
+  if (!summary.spans || summary.spans.pending?.length !== 0 || summary.spans.started !== spans.length || summary.spans.completed !== spans.length) throw new Error('Uni span 缺少终结或数量不匹配')
+  const spanIds = new Set()
+  for (const event of spans) {
+    const { spanId, startedAtMonotonicMs: start, endedAtMonotonicMs: end, outcome } = event.details
+    if (!Number.isSafeInteger(spanId) || spanId < 1 || spanId > summary.spans.started || spanIds.has(spanId) || !Number.isFinite(start) || !Number.isFinite(end) || end < start || !Number.isFinite(event.durationMs) || Math.abs(event.durationMs - (end - start)) > 1e-9 || outcome !== 'success') throw new Error('Uni span 身份、时间区间或实际结果损坏')
+    spanIds.add(spanId)
+  }
   const ids = new Set(summary.bundles.map(item => item.id))
   if (ids.size !== summary.bundles.length || records.some(event => !ids.has(event.details?.bundleId))) throw new Error('Uni bundle 身份重复或事件归属未知')
   const texts = new Map()
@@ -41,6 +49,7 @@ export async function verifyUniInputEvidence(directory, summary, events) {
     const begin = exactly('bundle.start')
     const end = exactly('bundle.success')
     if (own.some(event => event.sequence < begin.sequence || event.sequence > end.sequence)) throw new Error('Uni 事件越过所属 bundle 的实际生命周期')
+    if (own.some(event => event.name.endsWith('.span') && (event.details.startedAtMonotonicMs < begin.atMonotonicMs || event.details.endedAtMonotonicMs > end.atMonotonicMs))) throw new Error('Uni span 时间越过所属 bundle 的实际生命周期')
     if (!bundle.raw || !bundle.snapshot || !bundle.completed || !Number.isSafeInteger(bundle.finalizationId) || bundle.finalizationId !== completion.details.finalizationId || finalizations.has(bundle.finalizationId)) throw new Error('Uni finalization 绑定不完整或重复')
     finalizations.add(bundle.finalizationId)
     const vite = events.filter(event => event.name === 'vite.completed' && event.details.finalizationId === bundle.finalizationId)
@@ -64,10 +73,10 @@ export async function verifyUniInputEvidence(directory, summary, events) {
       if (!Number.isFinite(plan.details.timingDetails?.[name]) || plan.details.timingDetails[name] < 0) throw new Error(`Uni 缺少原阶段成本：${name}`)
     }
     const layers = own.filter(event => event.name === 'uni.layer')
-    const called = (name, file) => own.some(event => event.name === `uni.phase.${name}.start` && event.details.file === file)
+    const called = (name, file) => own.some(event => event.name === `uni.phase.${name}.span` && event.details.file === file)
     const hasLayer = (layer, file) => layers.some(event => event.details.layer === layer && event.details.file === file)
     for (const [call, layer] of [['runtime.processViteCssBundleEntry', 'css-plan'], ['runtime.processJsBundleEntry', 'js'], ['runtime.processHtmlBundleEntry', 'html'], ['css-plan.processViteCssEntryTransform', 'css-decision'], ['css-decision.scheduleViteCssTransform', 'css-schedule'], ['js.createFrameworkJsAssetContext', 'js-asset']]) {
-      for (const event of own.filter(item => item.name === `uni.phase.${call}.start`)) {
+      for (const event of own.filter(item => item.name === `uni.phase.${call}.span`)) {
         if (!hasLayer(layer, event.details.file)) throw new Error(`Uni 实际进入的处理层缺证：${layer}/${event.details.file}`)
       }
     }
@@ -85,7 +94,7 @@ export async function verifyUniInputEvidence(directory, summary, events) {
   }
   for (const event of records) {
     if (event.name === 'uni.cache') cacheStates.set(event.details.state, (cacheStates.get(event.details.state) ?? 0) + 1)
-    if (event.name.startsWith('uni.phase.') && event.name.endsWith('.success')) phaseCosts.push({ name: event.name, bundleId: event.details.bundleId, durationMs: event.durationMs, operationId: event.details.operationId })
+    if (event.name.startsWith('uni.phase.') && event.name.endsWith('.span')) phaseCosts.push({ name: event.name, bundleId: event.details.bundleId, durationMs: event.durationMs, spanId: event.details.spanId, startedAtMonotonicMs: event.details.startedAtMonotonicMs, endedAtMonotonicMs: event.details.endedAtMonotonicMs })
   }
   return { bundles: summary.bundles.length, finalizations: [...finalizations], cacheStates: Object.fromEntries(cacheStates), phaseCosts, missingEvidence: records.filter(event => event.name === 'uni.dependencies').flatMap(event => event.details.missingEvidence.map(item => ({ bundleId: event.details.bundleId, ...item }))), interpretation: 'raw bundle 在本 hook 入口归档；snapshot 是处理器实际消费的字符串。阶段是墙钟且允许并发重叠；不把 process/shared/last-result/processed-reuse 合并为同一种命中。' }
 }

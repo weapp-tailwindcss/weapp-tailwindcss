@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { limits, mpxProject } from './constants.mjs'
-import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { isOperationEvidenceFilename, rootRelativeKey, sha256 } from './evidence.mjs'
 import { verifyViteCompletions, verifyWebpackCompletions } from './operation-completions.mjs'
 import { verifyServiceEvidence } from './service-evidence.mjs'
 import { verifyUniInputEvidence } from './uni-evidence.mjs'
@@ -12,7 +12,8 @@ const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGen
 
 /** 控制器逐份复核全文引用；不以缺失或截断记录证明没有操作。 */
 export async function verifyOperationEvidence(directory, status, identity = {}) {
-  const files = (await fs.readdir(directory)).filter(name => /^(?:process-start|inputs-\d+|allocation-(?:frames-)?\d+|operation-\d+|text-[a-f\d]{64})\.json$/.test(name))
+  const files = (await fs.readdir(directory)).filter(isOperationEvidenceFilename)
+  if (files.includes('operation-terminal.json')) throw new Error('操作录制存在首败回执，证据未完成')
   let bytes = 0
   for (const file of files) {
     const size = (await fs.stat(path.join(directory, file))).size

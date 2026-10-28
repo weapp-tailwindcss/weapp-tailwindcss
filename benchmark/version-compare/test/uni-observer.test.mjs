@@ -103,8 +103,10 @@ it('缺失 begin/end、选择理由、阶段成本或 finalization 均阻断', a
   await expect(verifyUniInputEvidence(f.directory, f.observer.summary(), broken)).rejects.toThrow('选择证据')
   const missingLayer = structuredClone(events)
   const begin = missingLayer.find(event => event.name === 'uni.snapshot')
-  missingLayer.push({ sequence: begin.sequence + 0.5, name: 'uni.phase.runtime.processViteCssBundleEntry.start', phase: begin.phase, details: { bundleId: 1, file: 'a.wxss' } })
-  await expect(verifyUniInputEvidence(f.directory, f.observer.summary(), missingLayer)).rejects.toThrow('处理层缺证')
+  missingLayer.push({ sequence: begin.sequence + 0.5, name: 'uni.phase.runtime.processViteCssBundleEntry.span', phase: begin.phase, durationMs: 0, details: { bundleId: 1, file: 'a.wxss', spanId: 1, startedAtMonotonicMs: begin.atMonotonicMs, endedAtMonotonicMs: begin.atMonotonicMs, outcome: 'success' } })
+  const missingSummary = structuredClone(f.observer.summary())
+  missingSummary.spans.started = missingSummary.spans.completed = 1
+  await expect(verifyUniInputEvidence(f.directory, missingSummary, missingLayer)).rejects.toThrow('处理层缺证')
   delete events.find(event => event.name === 'uni.plan.complete').details.timingDetails.tasks
   await expect(verifyUniInputEvidence(f.directory, f.observer.summary(), events)).rejects.toThrow('阶段成本')
 })

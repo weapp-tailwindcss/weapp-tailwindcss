@@ -4,14 +4,17 @@ import { performance } from 'node:perf_hooks'
 import { limits } from './constants.mjs'
 import { createUniDependencyObserver } from './uni-dependencies.mjs'
 import { sha256 } from './evidence.mjs'
+import { createUniSpanRecorder } from './uni-spans.mjs'
+import { runWithCleanup } from './failures.mjs'
 
 export const uniInputProject = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
 
 /** 只在 Uni inputs worker 注册；归档目录属于控制器，不是 bundler 输出。 */
-export function createUniInputObserver({ operations, root, phase = () => ({ type: 'unknown' }), dependencies = createUniDependencyObserver({ root }) }) {
+export function createUniInputObserver({ operations, root, phase = () => ({ type: 'unknown' }), dependencies = createUniDependencyObserver({ root }), onBundleSettled }) {
   const storage = new AsyncLocalStorage()
   const bundles = []
   let recordingError
+  const spans = createUniSpanRecorder({ emit, current, failed(message) { recordingError = message } })
   function current() {
     const context = storage.getStore()
     if (!context) throw new Error('Uni 观察事件缺少所属 bundle 上下文')
@@ -28,6 +31,7 @@ export function createUniInputObserver({ operations, root, phase = () => ({ type
     }
   }
   function measured(name, details, run, asynchronous, preservePromise = false) {
+    if (name.startsWith('phase.')) return spans.measure(name, details, run, asynchronous, preservePromise)
     const operationId = emit(`${name}.start`, details)
     const started = performance.now()
     function finish(result) {
@@ -72,10 +76,10 @@ export function createUniInputObserver({ operations, root, phase = () => ({ type
       const fixedPhase = { ...started, type: started.type === 'watch-ready' ? 'watch-start' : started.type.replace(/-observed$/, '-write') }
       const context = { id: bundles.length + 1, phase: fixedPhase, raw: false, snapshot: false, completed: false, closed: false }
       bundles.push(context)
-      return storage.run(context, () => measured('bundle', {}, async () => {
+      return storage.run(context, () => runWithCleanup(() => measured('bundle', {}, async () => {
         try { return await run() }
         finally { context.closed = true }
-      }, true))
+      }, true), [() => onBundleSettled?.()]))
     },
     phase() { return { ...current().phase } },
     rawBundle(bundle) {
@@ -122,7 +126,7 @@ export function createUniInputObserver({ operations, root, phase = () => ({ type
       emit('finalization', { finalizationId })
     },
     summary() {
-      return { bundles: bundles.map(item => ({ ...item })), recordingError, interpretation: '只用于输入诊断；同步归档、SHA、AsyncLocalStorage 和 Promise 计时包装均有观测开销。阶段为重叠墙钟，不能相加当 CPU 成本。' }
+      return { bundles: bundles.map(item => ({ ...item })), spans: spans.summary(), recordingError, interpretation: '只用于输入诊断；同步归档、SHA、AsyncLocalStorage 和 Promise 计时包装均有观测开销。阶段为重叠墙钟，不能相加当 CPU 成本。' }
     },
   }
 }

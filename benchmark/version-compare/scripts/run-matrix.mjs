@@ -6,6 +6,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { validateAllocationRequest } from './diagnostics/constants.mjs'
 import { createCaseDiagnostics } from './diagnostics/controller.mjs'
+import { runWithCleanup } from './diagnostics/failures.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
 import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
@@ -276,7 +277,7 @@ async function fetchProbeText(url) {
 
 function stopChild(child) {
   return new Promise((resolve) => {
-    if (child.exitCode != null) {
+    if (child.exitCode != null || child.signalCode != null) {
       resolve()
       return
     }
@@ -337,7 +338,7 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
     ...buildEnv,
     ...diagnostics?.env,
   }, 'pipe')
-  diagnostics?.spawned(child.pid)
+  diagnostics?.spawned(child.pid, child)
   const memorySampler = createProcessMemorySampler(child.pid)
   let logs = ''
   child.stdout.on('data', (chunk) => {
@@ -349,7 +350,7 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
 
   let code
   let memory
-  try {
+  await runWithCleanup(async () => {
     code = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         try {
@@ -364,16 +365,16 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
         reject(new Error(`build timeout ${timeoutMs}ms`))
       }, timeoutMs)
 
-      child.once('error', reject)
+      child.once('error', (error) => { clearTimeout(timer); reject(error) })
       child.once('close', (exitCode) => {
         clearTimeout(timer)
         resolve(exitCode ?? 1)
       })
     })
-  }
-  finally {
-    memory = memorySampler.stop()
-  }
+  }, [
+    () => { memory = memorySampler.stop() },
+    () => code === undefined ? stopChild(child) : undefined,
+  ])
 
   if (code !== 0) {
     throw new Error(`build failed code=${code}\n${logs.slice(-4000)}`)
@@ -450,14 +451,14 @@ async function runHmrRounds({
     ...devEnv,
     ...diagnostics?.env,
   }, 'pipe')
-  diagnostics?.spawned(child.pid)
+  diagnostics?.spawned(child.pid, child)
   const memorySampler = createProcessMemorySampler(child.pid)
   const logBuffer = createWatchLogBuffer()
   const logs = logBuffer.lines
   child.stdout.on('data', logBuffer.collect)
   child.stderr.on('data', logBuffer.collect)
 
-  try {
+  return runWithCleanup(async () => {
     const ready = await waitFor(async () => {
       if (child.exitCode != null) {
         throw new Error(`dev exited early code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
@@ -551,21 +552,16 @@ async function runHmrRounds({
       samples: times,
       memory: memorySampler.stop(),
     }
-  }
-  finally {
-    memorySampler.stop()
-    try {
-      await stopChild(child)
-    }
-    finally {
+  }, [
+    () => memorySampler.stop(),
+    () => stopChild(child),
+    async () => {
       if (sourceDirty) {
         await fs.writeFile(sourcePath, original, 'utf8')
-        if (diagnostics?.source) {
-          await diagnostics.source('failure-restored', sourcePath, original)
-        }
+        if (diagnostics?.source) await diagnostics.source('failure-restored', sourcePath, original)
       }
-    }
-  }
+    },
+  ])
 }
 
 async function runDevServerHmrRounds({
@@ -707,13 +703,10 @@ export async function runCase(versionMeta, projectMeta, options) {
   else {
     for (let i = 0; i < options.buildRuns; i += 1) {
       const diagnostics = await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'build', run: i + 1, env: projectMeta.buildEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
-      let sample
-      try {
-        sample = await runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv, diagnostics)
-      }
-      finally {
-        await diagnostics?.finish()
-      }
+      const sample = await runWithCleanup(
+        () => runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv, diagnostics),
+        [outcome => diagnostics?.finish(outcome)],
+      )
       buildMemorySamples.push({ run: i + 1, ...sample })
       buildMs.push(sample.durationMs)
       if (typeof sample.pluginProcessMs === 'number') {
@@ -755,9 +748,8 @@ export async function runCase(versionMeta, projectMeta, options) {
     }
     else {
       const diagnostics = await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
-      let result
-      try {
-        result = await runHmrRounds({
+      const result = await runWithCleanup(
+        () => runHmrRounds({
           cwd,
           sourceFile: projectMeta.sourceFile,
           outputTemplate: projectMeta.outputTemplate,
@@ -770,11 +762,9 @@ export async function runCase(versionMeta, projectMeta, options) {
           timeoutMs: options.timeoutMs,
           pollIntervalMs: options.pollIntervalMs,
           diagnostics,
-        })
-      }
-      finally {
-        await diagnostics?.finish()
-      }
+        }),
+        [outcome => diagnostics?.finish(outcome)],
+      )
       hmrMemory = result.memory
       hmrMs.push(...result.samples.map(sample => sample.durationMs))
       hmrPluginMs.push(...result.samples.flatMap(sample => typeof sample.pluginProcessMs === 'number' ? [sample.pluginProcessMs] : []))
