@@ -1041,7 +1041,28 @@
         24
       ],
       "finding": "两份模板文档硬编码5.5.4而七模板实际声明^5.6.3；已改为以各模板package.json和锁文件为准，避免重复版本漂移。",
-      "decision": "不安装第一次candidate；在文档修正后的稳定提交重新正式采集并审查。"
+      "decision": "不安装第一次candidate；在文档修正后的稳定提交重新正式采集并审查。",
+      "independentReview": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-review-71a8b3c07/independent-review-025-038.json",
+        "bytes": 4017,
+        "sha256": "01ed8be4bd28853de903f24617b18a7fd272df912fb8b940b90acc220b84aa02"
+      },
+      "independentFiguresActuallyViewed": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38
+      ]
     },
     "installed": false,
     "noUpdateVerification": "pending",
@@ -1059,8 +1080,60 @@
         "screenshotsStarted": false,
         "reason": "实际双语生产构建成功后发现模板文档引起两份受跟踪llms-index-full.json同步更新；captureSource拒绝绑定未提交源码。",
         "resolution": "审查生成差异仅中英模板summary及生成时间，提交配套搜索索引，保持身份门槛不变，再fresh预检重采。"
+      },
+      {
+        "head": "c91e9eb2fd1d8ddf06840e4f531f474b0870e4ad",
+        "preflightRun": "11850bdb-4a71-498b-840d-f0c5b252c0af",
+        "preflightStatus": "extended probes, current-session computer use, verify and single claim passed",
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-c91e9eb2f.log",
+          "bytes": 777573,
+          "sha256": "a7bffdd6e0d1a78f9f35d3b14ce3b275ce6233b9f7d198679d5f6461325df068"
+        },
+        "candidate": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793209503167",
+        "exitCode": 1,
+        "passed": 754,
+        "failed": 1,
+        "notExecuted": 1051,
+        "firstFailed": "Firefox /zh-cn/blog/2025/9/v4.3-release",
+        "error": "page.evaluate: 整页截图图片加载失败：https://github.com/sonofmagic.png",
+        "installed": false,
+        "resolution": "保留图片真实加载与解码断言；将官方作者头像原字节收录为同源静态资源，补真实Docusaurus baseUrl合同及解码回归，再fresh预检重采。"
       }
-    ]
+    ],
+    "authorAssetRepair": {
+      "asset": {
+        "path": "website/static/img/authors/sonofmagic.jpg",
+        "bytes": 14467,
+        "sha256": "1d11a485bee8c8ac06fbfa3060656b9c6b35438813a5a6493b6e17c0a39810af"
+      },
+      "source": "https://github.com/sonofmagic.png",
+      "officialRedirect": "https://avatars.githubusercontent.com/u/15621541?v=4",
+      "officialUser": "https://github.com/sonofmagic",
+      "githubUserId": 15621541,
+      "downloadedAt": "2026-10-28T18:17:03Z",
+      "contentType": "image/jpeg",
+      "dimensions": [
+        460,
+        460
+      ],
+      "etag": "abaf5b1e30de46aa686d600c6583affbde1d8c13a8897edef76db34f45167697",
+      "originalResponseHeaders": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/author-avatar-response.headers",
+        "bytes": 5127,
+        "sha256": "30a3e5575181e55f106b5d3f204aa526cc21ad45429ec95b31be5358a01bca23"
+      },
+      "policy": "下载原字节未转码；两份真实authors.yml使用/img/authors/sonofmagic.jpg，由Docusaurus按baseUrl/locale转换；保留作者姓名、个人链接与社交配置。",
+      "targetedChecks": [
+        {
+          "command": "pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/blog-author-assets.test.ts scripts/docs-deployment.test.ts --update=none",
+          "exitCode": 0,
+          "testFiles": 2,
+          "testsPassed": 20
+        }
+      ],
+      "productionValidation": "pending fresh actual bilingual build, three-engine capture and no-update verification"
+    }
   },
   "finalLockRiskRefresh": {
     "rootLockSha256": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",
@@ -1152,5 +1225,53 @@
       "limitation": "缺真实bundler输入全文对照；独立分支仅开发被动诊断，不改正式门槛/缓存/工作量。"
     },
     "overall": "尚有运行与排队检查；不将旧head、事件skip或性能汇总派生失败算作最终完整通过。"
+  },
+  "taroHtmlArtifactFollowup": {
+    "sourceCommit": "15e059f42f09fadb09373a8dee4ba28518ab481b",
+    "integratedCommit": "4e2313eeb",
+    "environment": "WEAPP_TW_TARO_PLUGIN_HTML_ARTIFACT_DIR",
+    "scope": "每project/mode归档真实dist、完整合并stdout/stderr、命令、环境、exit/signal与报告；在下一个mode清理前保留原产物。",
+    "comparison": "保留原staging与逐字Buffer.equals；归档不参与判等，清理成功后才标passed，保留运行/清理/归档错误。",
+    "targetedChecks": [
+      {
+        "command": "pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/taro-plugin-html-artifacts.test.ts e2e/demo-workflow-extended.test.ts --update=none",
+        "exitCode": 0,
+        "testFiles": 2,
+        "testsPassed": 35
+      },
+      {
+        "command": "pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/taro-plugin-html-report.test.ts --update=none",
+        "exitCode": 0,
+        "testFiles": 1,
+        "testsPassed": 4
+      }
+    ],
+    "realEightVariantVerification": "pending fresh preflight; task-owned non-symlink output directory only"
+  },
+  "uniInputDiagnosticsFollowup": {
+    "branch": "codex/uni-hmr-input-diagnostics",
+    "head": "9530a978c1d791ef2cb89d0e312bb644f53ea217",
+    "run": 40737453562,
+    "job": 122991387148,
+    "artifact": 12838811746,
+    "artifactBytes": 11721801,
+    "artifactSha256": "f658165b7b6b1779880c2e27d9910be7dda23e4fc87b3d6c644d30faec4d3eba",
+    "artifactFiles": 15026,
+    "archiveDirectory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/dependency-upgrade-9530-diag-audit-zki0xafs",
+    "diagnosticOnly": true,
+    "status": "failure; not a formal performance pass",
+    "buildSessionsComplete": 6,
+    "hmrCompletedBundlesPerSide": 5,
+    "actualOperationFilesPerHmr": 4096,
+    "lastActualOperation": "uni.phase.css-decision.createScopedGeneratorCandidateSignature.start; mutation-write round3/bundle6; pages-order/pages/home/home.wxss",
+    "statusBoundary": "status3659/bundle5是早期capture快照；preload先writeStatus再runtime wrapper finally/uni.bundle.success，不能将其当作最终事件数。",
+    "failureBoundary": "run-matrix finally中diagnostics.finish覆盖原HMR首错，artifact未保留独立worker stdout/stderr，不能恢复真实首错文本或伪造closed。",
+    "rawReview": "已复算raw/snapshot SHA；两vendor含真实代码变化，WXML有生成ID变化；7CSS在只规范准确根路径后全文相同。bundle2–5文件顺序、四组候选逐字符串集合、缓存/处理分支和可序列化plan字段一致；opaque对象身份未知。",
+    "loadedPostcss": [
+      "8.5.30",
+      "8.5.32"
+    ],
+    "limitation": "只有bundle4一条稳态诊断完整；观察开销和异步重叠使本轮不能重算p95或归因正式+13ms。",
+    "repair": "独立worktree修复首次失败receipt、bundle关闭后的真实status、首错与清理错cause聚合及有界worker日志；固定4096/16MiB/64MiB预算，去掉重复观测并补37初始+22增量资产的完整3修改3回滚回归。review前不重复调度。"
   }
 }

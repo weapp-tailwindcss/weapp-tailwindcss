@@ -125,3 +125,12 @@ HTML 专项差异另含新增主题变量，不能仅按注释/格式变化处�
 CI 的准确 PR merge commit 为 `d2f1a99b6e35185da2ff21ae9f4b7be430afb7c0`。Windows 前置 turbo-network 测试首次 30 秒超时，watch 尚未启动；同 head 其他 runner 多次 309–489ms 通过，仅一次受控重验后原 case 476ms、后续 watch 通过，保留首失败且未确认代码根因。Taro Webpack 性能 job 已通过原统计合同，但 build RSS 中位 1300.35→1367.75MB（+5.183%/+67.40MB），精确 p=.35 未满足 p≤.05 的阻断条件，不能写成没有增长；HMR 首次增长与反序确认亦保留观察。Uni Vite plugin 稳态 p95 仍为 155→168ms（+8.387%），generateBundle 增量跨轮重现；真实输入全文对照尚缺，继续在独立分支补被动诊断，不降低性能门槛。其余适用 CI、107 portable/8 HTML 变体禁更复验、七模板仓库外复制消费和完整多端链路仍待完成，暂不合并。
 
 修正文档后的 `d43786bef` 重采使用新预检 `e4e9bd0b-fd27-4511-b395-011f0fb75ce3`，扩展探针、当前会话 computer use、verify 和领取通过。双语生产构建成功并同步更新两份受跟踪 `llms-index-full.json` 的模板摘要及生成时间；截图采集前的源码身份检查因这些未提交产物拒绝启动。该轮未产生截图，通过审查生成差异并补齐提交后重新预检，不绕过干净源码检查。
+
+
+## 网站外部头像与诊断记录边界
+
+修正文档后的 `c91e9eb2f` 经新预检 `11850bdb-4a71-498b-840d-f0c5b252c0af` 正式采集，754 项通过后，Firefox 的 `/zh-cn/blog/2025/9/v4.3-release` 因 `https://github.com/sonofmagic.png` 加载失败停止；1 项失败、1051 项未执行。失败候选不安装，不降低真实图片加载/解码断言。已将 GitHub 官方用户 ID 15621541 的头像原字节存入同源静态目录；原始响应为 JPEG、460×460、14467 字节，SHA256 `1d11a485bee8c8ac06fbfa3060656b9c6b35438813a5a6493b6e17c0a39810af`。两份作者配置使用站点相对 URL，由真实 Docusaurus 处理根路径、locale 与子路径部署；新增静态文件完整解码和四种 baseUrl 合同，网站定向 2 文件/20 项通过。实际双语生产构建、重采和禁更验收仍待执行。独立代理已实际查看旧候选 025–038 的全部 14 张裁剪图，补充记录另存，原 observations 字节与 SHA 保持不变；仍不能代替变化项历史像素比较。
+
+Taro HTML 归档提交已整合为 `4e2313eeb`：每个 project/mode 在后续删除 dist 前保存真实原产物、完整合并日志、命令与退出状态；不改原 staging 和逐字 Buffer 判等，清理/归档失败保留原错误。定向 artifacts/workflow 2 文件/35 项及 report 1 文件/4 项通过，真实 8 变体禁更复验仍待新门禁。
+
+Uni 被动诊断唯一采样 `40737453562` 仍失败，不能作为正式性能通过。完整 artifact 的上传 SHA、下载 SHA 与全成员 CRC 已核对：6 个 build session 完整；两侧 HMR 实际各写满 4096 个事件，第 6 bundle 在第三轮 mutation 的 CSS decision start 截断。旧 status 是 capture 期间的早期快照，finally 中的 finish 又遮蔽原 HMR 首错；不伪造 bundle 闭合，不提高 4096/16MiB/64MiB 预算，不减少真实工作量。独立分支正在修复记录协议和错误保留，并补真实资产规模预算回归，审查前不重复调度。两侧输入集合、处理分支及可序列化 plan 一致，CSS 仅有准确根路径差异，但 vendor 有真实变化；插件实际加载 PostCSS 8.5.30→8.5.32。现有诊断含观察开销且缺第三轮，不足以解释正式 p95 +13ms；该性能阻塞保留。

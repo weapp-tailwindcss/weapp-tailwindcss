@@ -119,6 +119,10 @@ jobs:
         if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs --update=none
 
+      - name: Verify blog author assets
+        if: needs.detect-website-changes.outputs.website == 'true'
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/blog-author-assets.test.ts --update=none
+
       - name: few_keywords Gate (website)
         if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website seo:few-keywords
