@@ -2148,5 +2148,89 @@
       "browserLaunched": false
     },
     "remaining": "Website frozen acceptance, template final pipeline, portable/HTML frozen checks, final extended quality/multi-platform, applicable exact-head CI and formal Uni performance; PR1320 is not ready to merge."
+  },
+  "captureMonitorAndWebpackAssetFollowup": {
+    "head": "cdf138589977369cad509f5f10a57cd658b5f487",
+    "webpackAssetCommits": [
+      "b1938f35c",
+      "20ef4e202"
+    ],
+    "webpackRegression": {
+      "source": {
+        "passed": 17,
+        "webpack": "5.112.2",
+        "session": 65708
+      },
+      "published": {
+        "passed": 17,
+        "webpack": "5.91.0",
+        "session": 17207
+      },
+      "firstAttempt": {
+        "passed": 12,
+        "failed": 2,
+        "session": 61052,
+        "preserved": true
+      }
+    },
+    "monitorCommits": [
+      "b440d5eab",
+      "895936873",
+      "cdf138589"
+    ],
+    "pureRegression": {
+      "passed": 48
+    },
+    "realFixtures": {
+      "preflightRun": "32470ffc-12b4-44be-bd2d-ce2098813f32",
+      "passed": 72,
+      "failed": 0,
+      "retry": 0,
+      "update": "none",
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793231046765/result.json",
+        "bytes": 162274,
+        "sha256": "4a4bddb8b401e8735d32d724d2d8cc70742d3d634a2d55d8585fdb71cf33d9a9"
+      },
+      "playwright": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793231046765/playwright-report.json",
+        "bytes": 95908,
+        "sha256": "97662c46ab9bd2a99550b48e637196708411f7125c5c45c71de09aa832ea9c6e"
+      }
+    },
+    "preservedFirstFailure": {
+      "preflightRun": "fe821a97-4102-45a4-886c-de89a3a70c24",
+      "failed": 1,
+      "notRun": 68,
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793230429205/result.json",
+        "bytes": 15917,
+        "sha256": "4f73c1ee7f9d7a2a11d56e3e6e10e43de19c8bdf916719a305b541a85294d8be"
+      }
+    },
+    "nativeLayoutDiagnostics": [
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793230429205/native-geometry-direct-full-page.json",
+        "bytes": 1840,
+        "sha256": "c643d54722b1f34b25062a149a8a934aad49c6faf38ff95d6f9db260b63755e9"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793230429205/native-geometry-direct-full-page-trace.zip",
+        "bytes": 42418,
+        "sha256": "35545ab66ac6914eef2ea6ae6f8044545ca9d53020ae3cd2d497210231347726"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793230429205/native-geometry-monospace.json",
+        "bytes": 1856,
+        "sha256": "4bed8d53de727103e8e4928627fc7ef72a0735865e20808ea76d9588cc25d05b"
+      },
+      {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-monitor-fixtures-1793230429205/native-geometry-monospace-trace.zip",
+        "bytes": 42933,
+        "sha256": "8921ad98db772336675e82f53e21599386e41c58b07f1cd6fc5d526a239cec18"
+      }
+    ],
+    "scope": "fixtures only; production website and copied-template acceptance remain pending; formal Uni performance still blocked",
+    "thresholdsChanged": false
   }
 }
