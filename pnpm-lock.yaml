@@ -798,6 +798,8 @@ patchedDependencies:
   '@tarojs/plugin-platform-harmony-hybrid@4.2.1': 71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7
   '@tarojs/vite-runner@4.2.1': c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c
   nitropack@2.13.4: d0cbcb54a52558c28137353e5237e87891cab448f0ef1a833a8e76210a582ded
+  postcss-pxtrans@1.0.7: 5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303
+  postcss-rule-unit-converter@0.2.6: 4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee
   rollup@3.30.0: 415cda1e6f88df0d9857e1ed62e30f7322003971cb1c9689fffbb79a26e28a3f
   rollup@4.63.0: 96f66c21f382a81d068f61fb336d55f796bc913d03596c5c33be490439c8d298
   rollup@4.63.1: 763e8845b95a472328a0e03129d40aec1dd2a69146d2a0065a28b7ac410d524a
@@ -5083,13 +5085,13 @@ importers:
         version: 11.6.1(postcss@8.5.30)
       postcss-pxtrans:
         specifier: catalog:postcssCompat
-        version: 1.0.7(postcss@8.5.30)
+        version: 1.0.7(patch_hash=5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303)(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
         version: 7.0.8(postcss@8.5.30)
       postcss-rule-unit-converter:
         specifier: catalog:postcssCompat
-        version: 0.2.6(postcss@8.5.30)
+        version: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
       postcss-scss:
         specifier: catalog:postcssCompat
         version: 4.0.9(postcss@8.5.30)
@@ -70009,11 +70011,11 @@ snapshots:
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
       postcss-rule-unit-converter: 0.2.5(postcss@8.5.30)
 
-  postcss-pxtrans@1.0.7(postcss@8.5.30):
+  postcss-pxtrans@1.0.7(patch_hash=5efe947cd553dab999b2fef9812d8a4ded21130e260f918ca768d84e19692303)(postcss@8.5.30):
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
 
   postcss-pxtransform@4.2.1(postcss@8.5.30):
     dependencies:
@@ -70108,7 +70110,7 @@ snapshots:
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30)
 
   postcss-replace-overflow-wrap@4.0.0(postcss@8.5.30):
     dependencies:
@@ -70129,7 +70131,7 @@ snapshots:
       postcss: 8.5.30
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
 
-  postcss-rule-unit-converter@0.2.6(postcss@8.5.30):
+  postcss-rule-unit-converter@0.2.6(patch_hash=4c616bc5e6cca201eb0a8b106117943fc8bbe77a40aa870188a0c1568b6a79ee)(postcss@8.5.30):
     dependencies:
       '@csstools/css-tokenizer': 4.0.2
       postcss: 8.5.30
@@ -74205,24 +74207,6 @@ snapshots:
       postcss: 8.5.30
       uglify-js: 3.19.3
 
-  terser-webpack-plugin@5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.51.2
-      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
-    optionalDependencies:
-      '@swc/core': 1.16.18(@swc/helpers@0.5.23)
-      clean-css: 5.3.3
-      cssnano: 9.3.2(postcss@8.5.30)
-      csso: 5.0.5
-      esbuild: 0.28.1
-      html-minifier-terser: 7.2.0
-      lightningcss: 1.33.0
-      postcss: 8.5.30
-      uglify-js: 3.19.3
-
   terser-webpack-plugin@5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -77361,49 +77345,6 @@ snapshots:
       webpack-sources: 3.5.1
     optionalDependencies:
       webpack-cli: 7.2.3(js-yaml@5.4.3)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@4.15.2)(webpack@5.105.4)
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
-
-  webpack@5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.18.0
-      acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.29.3
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.26.0
-      es-module-lexer: 2.3.2
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.2
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4)
-      watchpack: 2.5.2
-      webpack-sources: 3.5.1
-    optionalDependencies:
-      webpack-cli: 7.2.3(js-yaml@5.4.3)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.105.4)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@swc/core'

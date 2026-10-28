@@ -162,7 +162,7 @@ jobs:
       - name: Run core smoke suite
         run: >
           pnpm e2e:generator-parity &&
-          pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1166-webpack-radius.test.ts e2e/issue-1194-css-calc.test.ts --update=none &&
+          pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1166-webpack-radius.test.ts e2e/issue-1194-css-calc.test.ts e2e/issue-1318-px-fallback.test.ts --update=none &&
           pnpm e2e:web-css-preservation &&
           pnpm e2e:multiplatform-build
 

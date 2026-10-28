@@ -8,6 +8,7 @@ import postcssPxtrans from 'postcss-pxtrans'
 const defaultPxTransformOptions: PxTransformOptions = {
   platform: 'weapp',
   targetUnit: 'rpx',
+  transformVarFallbacks: true,
   unitPrecision: 5,
   propList: ['*'],
   selectorBlackList: [],

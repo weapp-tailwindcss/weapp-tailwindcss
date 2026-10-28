@@ -410,6 +410,8 @@ patchedDependencies:
   '@tarojs/plugin-platform-harmony-hybrid@4.2.1': patches/@tarojs__plugin-platform-harmony-hybrid@4.2.1.patch
   '@tarojs/vite-runner@4.2.1': patches/@tarojs__vite-runner@4.2.1.patch
   nitropack@2.13.4: patches/nitropack@2.13.4.patch
+  postcss-pxtrans@1.0.7: patches/postcss-pxtrans@1.0.7.patch
+  postcss-rule-unit-converter@0.2.6: patches/postcss-rule-unit-converter@0.2.6.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
   rollup@4.63.0: patches/rollup@4.63.0.patch
   rollup@4.63.1: patches/rollup@4.63.1.patch

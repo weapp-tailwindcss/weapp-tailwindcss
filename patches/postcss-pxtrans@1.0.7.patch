@@ -1,0 +1,146 @@
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index ef450b3a923e3f8a5e87511924cc3497e5e776fb..25d561dfb0b3594d644ea24744de573c952599f1 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -66,6 +66,8 @@ export interface PxTransformDeviceRatio {
+  * }
+  */
+ export interface PxTransformOptions {
++  /** 转换 var() fallback 内的完整长度 token；默认 false，保留既有正则行为。 */
++  transformVarFallbacks?: boolean;
+   /**
+    * Target platform.
+    *
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 18bb213ed8ec3508ab225d13946e728553ac6700..e253bb0523f340a30c19922f1c769d3e8a7cef96 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -128,7 +128,8 @@ const defaults = {
+ 	propList: ["*"],
+ 	replace: true,
+ 	mediaQuery: false,
+-	minPixelValue: 0
++	minPixelValue: 0,
++	transformVarFallbacks: false
+ };
+ const DEFAULT_WEAPP_OPTIONS = {
+ 	platform: "weapp",
+@@ -325,6 +326,7 @@ function plugin(userOptions = {}) {
+ 	const preserveUnit = unConvertTargetUnit ?? targetUnit;
+ 	const unitPrecision = opts.unitPrecision ?? defaults.unitPrecision;
+ 	const minPixelValue = opts.minPixelValue ?? defaults.minPixelValue;
++	const transformVarFallbacks = opts.transformVarFallbacks ?? defaults.transformVarFallbacks;
+ 	const isBlacklisted = hasSelectorBlackList ? createSelectorBlacklistMatcher(opts.selectorBlackList, { cache: true }) : void 0;
+ 	const wrappedPlugin = unitConverter({
+ 		exclude: [],
+@@ -336,6 +338,7 @@ function plugin(userOptions = {}) {
+ 		rules: [{
+ 			from: (unit) => unit === "px" || unit === "rpx",
+ 			transform(value, context) {
++				if (transformVarFallbacks && !transUnits.includes(context.rawUnit)) return;
+ 				if (context.prop && !satisfyPropList(context.prop)) return;
+ 				if (context.rule && (isBlacklisted === null || isBlacklisted === void 0 ? void 0 : isBlacklisted(context.rule))) {
+ 					if (!isHarmony) return;
+@@ -348,22 +351,25 @@ function plugin(userOptions = {}) {
+ 					value,
+ 					unit: preserveUnit
+ 				};
+-				if (!onePxTransform && value === 1) return isHarmony ? {
++				if (!onePxTransform && Math.abs(value) === 1) return isHarmony ? {
+ 					value,
+ 					unit: preserveUnit
+ 				} : void 0;
+-				if (value < minPixelValue) return isHarmony ? {
++				if (Math.abs(value) < minPixelValue) return isHarmony ? {
+ 					value,
+ 					unit: preserveUnit
+ 				} : void 0;
++				const match = transformVarFallbacks ? context.match.replace(/^[+-]/, "") : context.match;
++				const rawValue = transformVarFallbacks ? context.rawValue.replace(/^[+-]/, "") : context.rawValue;
+ 				return {
+-					value: value / getRootValue(context.input)(context.input, context.match, context.rawValue),
++					value: value / getRootValue(context.input)(context.input, match, rawValue),
+ 					unit: targetUnit
+ 				};
+ 			}
+ 		}],
+ 		unitPrecision,
+-		unitRegex: pxRegex(transUnits)
++		transformVarFallbacks,
++		unitRegex: transformVarFallbacks ? void 0 : pxRegex(transUnits)
+ 	});
+ 	return {
+ 		postcssPlugin,
+diff --git a/dist/index.require.cjs b/dist/index.require.cjs
+index b0da47c996e887bb78af209a3caa80108652fdcb..f6ed77cb88d7296e81d6d8e3df07ba2c329a49de 100644
+--- a/dist/index.require.cjs
++++ b/dist/index.require.cjs
+@@ -351,6 +351,7 @@ function plugin(userOptions = {}) {
+ 	const preserveUnit = unConvertTargetUnit ?? targetUnit;
+ 	const unitPrecision = opts.unitPrecision ?? defaults.unitPrecision;
+ 	const minPixelValue = opts.minPixelValue ?? defaults.minPixelValue;
++	const transformVarFallbacks = opts.transformVarFallbacks ?? defaults.transformVarFallbacks;
+ 	const isBlacklisted = hasSelectorBlackList ? (0, postcss_plugin_shared.createSelectorBlacklistMatcher)(opts.selectorBlackList, { cache: true }) : void 0;
+ 	const wrappedPlugin = (0, postcss_rule_unit_converter.default)({
+ 		exclude: [],
+@@ -362,6 +363,7 @@ function plugin(userOptions = {}) {
+ 		rules: [{
+ 			from: (unit) => unit === "px" || unit === "rpx",
+ 			transform(value, context) {
++				if (transformVarFallbacks && !transUnits.includes(context.rawUnit)) return;
+ 				if (context.prop && !satisfyPropList(context.prop)) return;
+ 				if (context.rule && (isBlacklisted === null || isBlacklisted === void 0 ? void 0 : isBlacklisted(context.rule))) {
+ 					if (!isHarmony) return;
+@@ -374,22 +376,25 @@ function plugin(userOptions = {}) {
+ 					value,
+ 					unit: preserveUnit
+ 				};
+-				if (!onePxTransform && value === 1) return isHarmony ? {
++				if (!onePxTransform && Math.abs(value) === 1) return isHarmony ? {
+ 					value,
+ 					unit: preserveUnit
+ 				} : void 0;
+-				if (value < minPixelValue) return isHarmony ? {
++				if (Math.abs(value) < minPixelValue) return isHarmony ? {
+ 					value,
+ 					unit: preserveUnit
+ 				} : void 0;
++				const match = transformVarFallbacks ? context.match.replace(/^[+-]/, "") : context.match;
++				const rawValue = transformVarFallbacks ? context.rawValue.replace(/^[+-]/, "") : context.rawValue;
+ 				return {
+-					value: value / getRootValue(context.input)(context.input, context.match, context.rawValue),
++					value: value / getRootValue(context.input)(context.input, match, rawValue),
+ 					unit: targetUnit
+ 				};
+ 			}
+ 		}],
+ 		unitPrecision,
+-		unitRegex: pxRegex(transUnits)
++		transformVarFallbacks,
++		unitRegex: transformVarFallbacks ? void 0 : pxRegex(transUnits)
+ 	});
+ 	return {
+ 		postcssPlugin,
+@@ -428,7 +433,8 @@ const pxTransformModule = (__esmMin((() => {
+ 		propList: ["*"],
+ 		replace: true,
+ 		mediaQuery: false,
+-		minPixelValue: 0
++		minPixelValue: 0,
++		transformVarFallbacks: false
+ 	};
+ 	DEFAULT_WEAPP_OPTIONS = {
+ 		platform: "weapp",
+diff --git a/dist/index.require.d.cts b/dist/index.require.d.cts
+index d7e04c69714887ea1dad94e19871cc72b2f9095e..610047cf4e2aedefac25466e700d293a7791c8b1 100644
+--- a/dist/index.require.d.cts
++++ b/dist/index.require.d.cts
+@@ -66,6 +66,8 @@ interface PxTransformDeviceRatio {
+  * }
+  */
+ interface PxTransformOptions {
++  /** 转换 var() fallback 内的完整长度 token；默认 false，保留既有正则行为。 */
++  transformVarFallbacks?: boolean;
+   /**
+    * Target platform.
+    *
