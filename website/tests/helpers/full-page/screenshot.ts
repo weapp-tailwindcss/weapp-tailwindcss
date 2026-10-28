@@ -57,7 +57,8 @@ export async function expectFullPageScreenshot(page: Page, tocOptions: TocPolicy
   catch (error) {
     if (error instanceof NativeCaptureError) {
       await test.info().attach('full-page-capture-observation', {
-        body: JSON.stringify({ totalSamples: error.attempts, lastSamples: error.evidence, failure: String(error.cause) }, null, 2), contentType: 'application/json',
+        body: JSON.stringify({ totalSamples: error.attempts, lastSamples: error.evidence, failure: String(error.cause) }, null, 2),
+        contentType: 'application/json',
       })
     }
     throw error

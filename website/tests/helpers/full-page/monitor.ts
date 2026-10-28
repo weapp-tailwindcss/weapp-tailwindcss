@@ -41,8 +41,14 @@ function installMonitor(key: string) {
   const listeners = new AbortController()
   const disturbances = new Set<string>()
   const evidence: CaptureWindow = {
-    initialized: false, completed: false, frames: 0, events: 0, overflow: false,
-    disturbances: [], geometry: { width: 0, height: 0 }, fingerprint: '',
+    initialized: false,
+    completed: false,
+    frames: 0,
+    events: 0,
+    overflow: false,
+    disturbances: [],
+    geometry: { width: 0, height: 0 },
+    fingerprint: '',
   }
   const mark = (reason: string) => {
     if (++evidence.events > 200) {
@@ -74,15 +80,17 @@ function installMonitor(key: string) {
       }
       return [identity(node), node.getAttribute('href'), node.classList.contains(activeClass), style.color, style.opacity]
     })
-    const headings = nodes.length ? [...document.querySelectorAll('h1.anchor,h2.anchor,h3.anchor,h4.anchor,h5.anchor,h6.anchor')].map((node) => {
-      let element = node
-      let rect = element.getBoundingClientRect()
-      while (rect.top === rect.bottom && element.parentElement) {
-        element = element.parentElement
-        rect = element.getBoundingClientRect()
-      }
-      return [identity(node), node.id, rect.top, rect.bottom]
-    }) : []
+    const headings = nodes.length
+      ? [...document.querySelectorAll('h1.anchor,h2.anchor,h3.anchor,h4.anchor,h5.anchor,h6.anchor')].map((node) => {
+          let element = node
+          let rect = element.getBoundingClientRect()
+          while (rect.top === rect.bottom && element.parentElement) {
+            element = element.parentElement
+            rect = element.getBoundingClientRect()
+          }
+          return [identity(node), node.id, rect.top, rect.bottom]
+        })
+      : []
     const navbar = nodes.length ? document.querySelector<HTMLElement>('.navbar') : null
     return {
       viewport: [innerWidth, innerHeight, devicePixelRatio, scrollX, scrollY],
@@ -91,7 +99,9 @@ function installMonitor(key: string) {
         height: Math.max(body.scrollHeight, html.scrollHeight, body.offsetHeight, html.offsetHeight, body.clientHeight, html.clientHeight),
       },
       url: location.href,
-      links, headings, navbar: navbar ? [identity(navbar), navbar.clientHeight] : null,
+      links,
+      headings,
+      navbar: navbar ? [identity(navbar), navbar.clientHeight] : null,
     }
   }
   const initial = read()

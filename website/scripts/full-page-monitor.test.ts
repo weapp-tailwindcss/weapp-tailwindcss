@@ -9,8 +9,15 @@ import { validNativeSample } from '../tests/helpers/full-page/native'
 
 function window(overrides: Partial<CaptureWindow> = {}): CaptureWindow {
   return {
-    initialized: true, completed: true, frames: 2, events: 0, overflow: false,
-    disturbances: [], geometry: { width: 1280, height: 3000 }, fingerprint: 'same-document-geometry', ...overrides,
+    initialized: true,
+    completed: true,
+    frames: 2,
+    events: 0,
+    overflow: false,
+    disturbances: [],
+    geometry: { width: 1280, height: 3000 },
+    fingerprint: 'same-document-geometry',
+    ...overrides,
   }
 }
 
@@ -35,7 +42,8 @@ it.each([
 })
 
 it.each([
-  null, undefined,
+  null,
+  undefined,
   window({ initialized: false }),
   window({ completed: false }),
   window({ frames: 1 }),

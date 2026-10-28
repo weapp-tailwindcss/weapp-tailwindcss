@@ -173,7 +173,9 @@ test('screenshot failures retain the original error and clean up the owned monit
   await fixture(page)
   const screenshot = page.screenshot.bind(page)
   const error = new Error('native screenshot original marker')
-  page.screenshot = async () => { throw error }
+  page.screenshot = async () => {
+    throw error
+  }
   try {
     await expect(captureNativeSample(page, createCaptureBudget(2000), policy, observation())).rejects.toBe(error)
     expect(await ownedMonitors(page)).toBe(0)
