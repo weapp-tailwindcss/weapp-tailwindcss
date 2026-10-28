@@ -56,7 +56,7 @@
     {
       "file": "pnpm-lock.yaml",
       "baseline": false,
-      "sha256": "a589e4561dc44ec27162b72b595a17039a6b778990f326fdc6389ddf5da1949e",
+      "sha256": "91afa9b2b91b057c9911b0c6b520b209d58e7a8edcb947d63322b9ff2b58b28e",
       "documents": [
         {
           "lockfileVersion": "9.0",
@@ -90,7 +90,7 @@
     {
       "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
       "baseline": false,
-      "sha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+      "sha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
       "documents": [
         {
           "lockfileVersion": "9.0",
@@ -318,8 +318,8 @@
     },
     {
       "file": "pnpm-workspace.yaml",
-      "bytes": 12190,
-      "sha256": "6d109074c90921f2569c665d8aa330e4f0b46d82ebde07605c6a8b6c5267ae23",
+      "bytes": 12268,
+      "sha256": "61507d81f2a3eef1170299ec832b3112436f66015284e4753ca53c8bac78e86c",
       "changedDuringCapture": false
     },
     {
@@ -888,8 +888,8 @@
     },
     {
       "file": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
-      "bytes": 633,
-      "sha256": "3307b7a887316df3f7636a0cf01effe51ed6ad37c008901ce3761555d170d2c7",
+      "bytes": 711,
+      "sha256": "7396c058bb7d00c61abc8341ae1308c3e229e96355ac6a4db04d4ea9029364b2",
       "changedDuringCapture": false
     },
     {
@@ -990,14 +990,14 @@
     },
     {
       "file": "pnpm-lock.yaml",
-      "bytes": 3034170,
-      "sha256": "a589e4561dc44ec27162b72b595a17039a6b778990f326fdc6389ddf5da1949e",
+      "bytes": 3036117,
+      "sha256": "91afa9b2b91b057c9911b0c6b520b209d58e7a8edcb947d63322b9ff2b58b28e",
       "changedDuringCapture": false
     },
     {
       "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
-      "bytes": 519248,
-      "sha256": "a6cab26dcd26f5d15334f27f2c0612ba0c8bb72e50c51e5cd0994a9059127239",
+      "bytes": 520117,
+      "sha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
       "changedDuringCapture": false
     },
     {
@@ -1147,6 +1147,15 @@
       "locked": "3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf"
     },
     {
+      "workspace": "pnpm-workspace.yaml",
+      "identity": "@mpxjs/webpack-plugin@2.11.1",
+      "file": "patches/@mpxjs__webpack-plugin@2.11.1.patch",
+      "bytes": 8522,
+      "sha256": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+      "lockFile": "pnpm-lock.yaml",
+      "locked": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4"
+    },
+    {
       "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
       "identity": "@mpxjs/vue-cli-plugin-mpx@2.2.32",
       "file": "templates/mpx-tailwindcss-v4/patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch",
@@ -1163,6 +1172,15 @@
       "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
       "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
       "locked": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+    },
+    {
+      "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "identity": "@mpxjs/webpack-plugin@2.11.1",
+      "file": "templates/mpx-tailwindcss-v4/patches/@mpxjs__webpack-plugin@2.11.1.patch",
+      "bytes": 8522,
+      "sha256": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+      "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "locked": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4"
     },
     {
       "workspace": "templates/taro-vite-tailwindcss-v4/pnpm-workspace.yaml",
@@ -1238,7 +1256,7 @@
     }
   ],
   "installationEvidence": "根及七模板均已真实冻结安装通过；根与独立Taro Webpack模板在最终RN runner Stylelint16.10.0/plugin4.3.1配套及Webpack5.91精确补丁登记后重新解锁和冻结安装exit0；RN54与双Webpack runtime2共56真实consumer回归通过；本次只读核对安装身份，完整构建/static/设备验收仍未完成",
-  "patchHashesCapturedAt": "2026-10-28T05:42:50.505Z",
+  "patchHashesCapturedAt": "2026-10-28T12:34:37.796Z",
   "independentTemplateRnRunner": [
     {
       "workspace": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
@@ -1545,5 +1563,49 @@
         "changedDuringCapture": false
       }
     }
-  ]
+  ],
+  "postInstallPatchReview": {
+    "capturedAt": "2026-10-28T12:34:37.796Z",
+    "reason": "PR1320首轮真实Mpx构建发现Webpack内部路径变动；新增同一Mpx精确兼容补丁，两个锁由pnpm生成并重新冻结安装。",
+    "previousFileIdentities": [
+      {
+        "file": "pnpm-workspace.yaml",
+        "bytes": 12268,
+        "sha256": "61507d81f2a3eef1170299ec832b3112436f66015284e4753ca53c8bac78e86c",
+        "changedDuringCapture": false
+      },
+      {
+        "file": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+        "bytes": 711,
+        "sha256": "7396c058bb7d00c61abc8341ae1308c3e229e96355ac6a4db04d4ea9029364b2",
+        "changedDuringCapture": false
+      },
+      {
+        "file": "pnpm-lock.yaml",
+        "bytes": 3036117,
+        "sha256": "91afa9b2b91b057c9911b0c6b520b209d58e7a8edcb947d63322b9ff2b58b28e",
+        "changedDuringCapture": false
+      },
+      {
+        "file": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+        "bytes": 520117,
+        "sha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273",
+        "changedDuringCapture": false
+      }
+    ],
+    "graphs": [
+      {
+        "lockFile": "pnpm-lock.yaml",
+        "added": [],
+        "removed": [],
+        "currentSha256": "91afa9b2b91b057c9911b0c6b520b209d58e7a8edcb947d63322b9ff2b58b28e"
+      },
+      {
+        "lockFile": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+        "added": [],
+        "removed": [],
+        "currentSha256": "3ebbbc17a259492763dbcfae8ff028fb4efeddca74d0f079dd36faa2ce14d273"
+      }
+    ]
+  }
 }

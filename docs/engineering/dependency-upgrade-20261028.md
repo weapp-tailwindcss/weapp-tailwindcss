@@ -1,10 +1,10 @@
 # 2026-10-28 全面依赖升级：安装阶段
 
-本轮基于main e769e69b97c88b379a80d3cabca4fa20330b999a，覆盖根项目、全部workspace、demo（含Web、issue复现和style-injector）及七个独立模板，共105个manifest。评估和安装阶段已完成，static及完整多端验收仍受微信预检阻塞；本记录不宣称全面升级已验收完成。
+本轮基于main e769e69b97c88b379a80d3cabca4fa20330b999a，覆盖根项目、全部workspace、demo（含Web、issue复现和style-injector）及七个独立模板，共105个manifest。评估和安装阶段已完成，static及完整多端验收仍在进行；本记录不宣称全面升级已验收完成。
 
 [逐依赖清单](dependency-upgrade-20261028.inventory.tsv)含1742条当前外部声明：原始1717条，新增25条配套，无移除；原评估为739项升级、828项已最新、150项保留，725项已有声明的锁版本发生变化。评估数不等于实际版本上升数，兼容回退与配套修正单独说明。[105项目状态](dependency-upgrade-20261028.projects.tsv)区分安装、构建和定向验证；97个根importer及七模板纳入冻结安装，assets/package.json无外部依赖且不在workspace，无需安装。
 
-本次安装快照采于2026-10-28T05:41:55.435Z。根和七模板最新锁均已真实frozen安装通过，1742项直接声明的实际包名、版本均与锁一致，声明/物理身份问题0，采集中及完成后复核无变化。八份pnpm锁的升级前后身份、121个npm范围manifest/workspace/lock文件、22条补丁引用身份，以及15项未引用catalog的逐项评估见[锁与补丁证据](dependency-upgrade-20261028.lock-evidence.json)。该结果只证明安装身份，不代表传递peer、漏洞或行为问题为0。根风险报告不覆盖独立模板，七模板的独立audit/peer基线对比另行附证，不能据根报告宣称模板风险为0。
+本次安装快照采于2026-10-28T05:41:55.435Z。根和七模板最新锁均已真实frozen安装通过，1742项直接声明的实际包名、版本均与锁一致，声明/物理身份问题0，采集中及完成后复核无变化。八份pnpm锁的升级前后身份、121个npm范围manifest/workspace/lock文件、24条补丁引用身份（含 PR 首轮新增的 Mpx 根与独立模板补丁），以及15项未引用catalog的逐项评估见[锁与补丁证据](dependency-upgrade-20261028.lock-evidence.json)。该结果只证明安装身份，不代表传递peer、漏洞或行为问题为0。根风险报告不覆盖独立模板，七模板的独立audit/peer基线对比另行附证，不能据根报告宣称模板风险为0。
 
 ## 配套与保留
 
@@ -56,7 +56,7 @@ Mpx lint对照在两侧显式传入`--config.verifyDepsBeforeRun=false`，只关
 
 模板没有新增GHSA/包公告组合，但仍有8条peer提示。新增两项分别为Taro可选Less4与现有Less3，以及DCloud内部renderer3.4.21与应用Vue3.5.44；保留对应代际与官方内部配套，实际构建仍待验收。Taro模板当前只有CSS入口；uni-app Webpack既有两条Webpack4 peer提示与实际compiler需区分：uni-build和Vue CLI实际解析同一Webpack5.106.2，env未将其alias到4，插件和loader使用实际compiler/loader context。上述源码核验不能替代真实构建或HMR。
 
-static更新、差异审查和禁止更新复验、全部demo/starter/template构建，以及微信/HBuilderX/iOS/Android/Harmony/Web、HMR和基座验收尚未完成。微信/v2/auto预检超时仍阻断完整验收；依用户安排先完成依赖修复，再恢复环境。不得拆分全面验收命令绕过预检，恢复后须取得新一轮完整预检凭据。Rust单测、真实Node-API差分、八平台binding/tarball/摘要及许可检查仍待完成。
+static更新、差异审查和禁止更新复验、全部demo/starter/template构建，以及微信/HBuilderX/iOS/Android/Harmony/Web、HMR和基座验收尚未完成。历史微信预检超时已保留；本轮 6ddc97c0-1145-4977-8094-6be02c8cac89 的扩展探针、当前会话 computer use 和 verify 已全部通过，完整流程在根构建阶段发现 Mpx/Webpack 兼容失败并停止，后续阶段未执行。不得拆分全面验收命令绕过预检，恢复后须取得新一轮完整预检凭据。Rust单测、真实Node-API差分、八平台binding/tarball/摘要及许可检查仍待完成。
 
 ## 清单边界与后续迁移
 
@@ -65,3 +65,15 @@ static更新、差异审查和禁止更新复验、全部demo/starter/template�
 Expo 58、Vue Router 5、Pinia 4、Execa/Chokidar/jsdom/pako 新主版本，以及 Rust Oxc 提高工具链下限的迁移单独评估，不混入本轮兼容升级。jison-gho 0.6.1-216 是官方发布的完整版本身份；只有当前 grammar/parser 的消费回归及兼容矩阵通过正式替代实现后才替换，不能按版本后缀机械判为 alpha。
 
 本轮重新预检首次在 isLogin 连接阶段失败，报告为 `190092cc-d9cc-4b15-be20-c406ab922cc9`；其余脚本探针通过，computer use 与全面测试未执行。随后同一安装的已有服务登录确认通过，原错误未记录连接原因，不能推断 IDE 未打开。依用户最新要求允许受控自动启动/重启，优先复用现有实例；新增标准连接错误诊断保留目标端口，仍保护登录态。失败报告不复用，恢复后重新预检。
+
+## PR #1320 首轮验收与修复
+
+[PR #1320](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1320) 初始 head 为 7f8df54041940450426208fc9e57a91f2b55e3db。完整本地入口使用固定起始基线及本轮扩展预检，根构建首次失败后停止；预检通过不等于后续 57 阶段通过。
+
+- Webpack 5.112.2 移动内部目录，Mpx 2.11.1 的 9 类请求失效。根和独立模板新增同一精确补丁：8 类改用 Webpack 公开导出，唯一未公开的入口导出保护插件集中兼容新旧路径，加载阶段错误原样传播。6 项持久回归、style-injector/Mpx 主 demo 与独立模板生产构建通过；根与 Mpx 模板再次 frozen install 通过，两个锁的 package 版本集合未改变。上游 Mpx 正式版修复并通过相同生产/HMR/WXS 及模板回归后删除补丁。
+- 六份 Lynx 中英文文档同步 Rspeedy 0.18.3、React 插件 0.22.0 和 runtime 0.129.0，网站配置文档合同通过。
+- Expo HTTP 观察回归的 CLI 期望同步至实际 54.0.28，12 项测试通过；没有调整归档校验规则。
+- 执行 `pnpm e2e:lynx:static:update` 更新该项目静态证据，再以 `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-static-evidence.test.ts e2e/lynx-encoder-values.test.ts --update=none` 复验，3 文件/83 项通过。差异为工具链版本、catalog 身份，以及 flex shorthand 的编码 `flex-basis: 0` 变为 `0%`；两者不作通用等价承诺，原生布局与像素验收仍待完成。
+- Vue 2 模板新增 360 必需构建 case，保持 Vue 3 矩阵独立。`CI=1 E2E_TEMPLATE_CASE='uni-app-webpack-tailwindcss-v4 mp-360$' pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/templates-build-smoke.test.ts --update=none` 的 2 项通过，确认 H5 派生的 app.js/app.json/app.css、360 页面清单及源码 class/CSS 颜色；不声称 360 宿主运行时通过。首次测试对独立 CSS 文件的路径预期不准确，已依据实际 bundle 修正为合并后的 app.css，原失败日志保留。
+
+远端 Windows 身份采集首请求和 macOS watch 收尾超时仍在诊断，不能放宽门槛或把清理未知状态视作成功。完整本地流程、其余 static 定向更新/禁更复验、适用 CI/CD 和全部真实平台验收尚未完成，暂不合并。

@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 当前适配器版本为 `0.4.4`，适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`。适配器依赖的 `weapp-tailwindcss` 当前为 `5.6.3`，其依赖链要求 Node.js `^22.18.0 || >=24.11.0`。
 
-仓库示例固定 `@lynx-js/rspeedy` `0.17.2`、`@lynx-js/react-rsbuild-plugin` `0.20.2`、`@lynx-js/react` `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
+仓库示例固定 `@lynx-js/rspeedy` `0.18.3`、`@lynx-js/react-rsbuild-plugin` `0.22.0`、`@lynx-js/react` `0.129.0`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
 
 ## 配置
 

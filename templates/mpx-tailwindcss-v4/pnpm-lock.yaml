@@ -168,6 +168,7 @@ overrides:
 
 patchedDependencies:
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': 1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8
+  '@mpxjs/webpack-plugin@2.11.1': dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4
   webpack@5.112.2: d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b
 
 importers:
@@ -249,16 +250,16 @@ importers:
         version: 2.2.32(@vue/compiler-sfc@3.5.35)(clean-css@5.3.3)(csso@4.2.0)(ejs@3.1.10)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(lodash@4.18.1)(prettier@2.8.8)(sharp@0.35.4(@types/node@25.9.3))(stylus-loader@8.1.3(stylus@0.64.0(supports-color@8.1.1))(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(supports-color@8.1.1)(svgo@2.8.2)(uglify-js@3.4.10)(vue@2.7.16)(webpack-sources@3.6.0)
       '@mpxjs/size-report':
         specifier: ^2.11.0
-        version: 2.11.0(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(supports-color@8.1.1)
+        version: 2.11.0(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(supports-color@8.1.1)
       '@mpxjs/vue-cli-plugin-mpx':
         specifier: ^2.2.32
-        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(324a96b708a96db02b22db3a0aa7c002)
+        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(8e2a524a9a7bfa33a2dbc9375062624c)
       '@mpxjs/vue-cli-plugin-mpx-typescript':
         specifier: ^2.2.32
         version: 2.2.32(loader-utils@2.0.4)(typescript@6.0.3)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       '@mpxjs/webpack-plugin':
         specifier: ^2.11.1
-        version: 2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
+        version: 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       '@stylistic/eslint-plugin-ts':
         specifier: 3.1.0
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -309,7 +310,7 @@ importers:
         version: 5.4.12(@types/node@25.9.3)(supports-color@8.1.1)
       weapp-tailwindcss:
         specifier: ^5.6.3
-        version: 5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@8.1.1)(tailwindcss@4.3.3)
+        version: 5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@8.1.1)(tailwindcss@4.3.3)
       webpack:
         specifier: ^5.112.2
         version: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)
@@ -8412,9 +8413,9 @@ snapshots:
       vue: 2.7.16
       vue-demi: 0.14.10(vue@2.7.16)
 
-  '@mpxjs/size-report@2.11.0(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(supports-color@8.1.1)':
+  '@mpxjs/size-report@2.11.0(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(supports-color@8.1.1)':
     dependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       acorn: 8.17.0
       acorn-walk: 7.2.0
       ejs: 3.1.10
@@ -8434,7 +8435,7 @@ snapshots:
 
   '@mpxjs/template-engine@2.8.7(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))':
     dependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
     transitivePeerDependencies:
       - '@mpxjs/core'
       - supports-color
@@ -8454,10 +8455,10 @@ snapshots:
       - typescript
       - webpack
 
-  '@mpxjs/vue-cli-plugin-mpx@2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(324a96b708a96db02b22db3a0aa7c002)':
+  '@mpxjs/vue-cli-plugin-mpx@2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(8e2a524a9a7bfa33a2dbc9375062624c)':
     dependencies:
       '@mpxjs/cli-shared-utils': 2.2.32
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       '@soda/friendly-errors-webpack-plugin': 1.8.1(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       '@vue/cli-shared-utils': 5.0.9
       '@vue/vue-loader-v15': vue-loader@15.11.1(@vue/compiler-sfc@3.5.35)(css-loader@6.11.0(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(ejs@3.1.10)(lodash@4.18.1)(prettier@2.8.8)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
@@ -8560,7 +8561,7 @@ snapshots:
       - webpack-cli
       - whiskers
 
-  '@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))':
+  '@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@babel/generator': 7.29.7
@@ -13865,7 +13866,7 @@ snapshots:
       '@weapp-tailwindcss/shared': 2.0.4
       micromatch: 4.0.8
 
-  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@8.1.1)(tailwindcss@4.3.3):
+  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@8.1.1)(tailwindcss@4.3.3):
     dependencies:
       '@babel/parser': 8.0.7
       '@babel/traverse': 8.0.7
@@ -13894,7 +13895,7 @@ snapshots:
       weapp-style-injector: 1.0.7
       yaml: 2.9.1
     optionalDependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@8.1.1)(vue@2.7.16)(webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10))
       '@weapp-tailwindcss/native-darwin-arm64': 5.6.3
       '@weapp-tailwindcss/native-darwin-x64': 5.6.3
       '@weapp-tailwindcss/native-linux-arm64-gnu': 5.6.3

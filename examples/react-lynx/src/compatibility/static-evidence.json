@@ -1,9 +1,14 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941",
-  "generatedAt": "2026-10-21T18:29:42.477Z",
+  "catalogHash": "0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff",
+  "generatedAt": "2026-10-28T12:27:58.096Z",
   "versions": {
     "tailwindcss": "4.3.3",
+    "reactLynx": "0.129.0",
+    "reactRsbuildPlugin": "0.22.0",
+    "rspeedy": "0.18.3",
+    "lynxTypes": "4.3.0",
+    "templateWebpackPlugin": "0.16.5",
     "lynxEngine": "4.0.1",
     "engineVersion": "3.9",
     "cssDefines": "0.0.18",
@@ -2739,7 +2744,7 @@
         },
         {
           "property": "flex-basis",
-          "value": "0"
+          "value": "0%"
         },
         {
           "property": "flex-shrink",

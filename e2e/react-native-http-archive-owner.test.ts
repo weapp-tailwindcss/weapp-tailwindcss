@@ -100,7 +100,7 @@ it('元数据从Expo实际依赖链解析Metro，不取仓库其他版本', asyn
   const observation = await prepareMetroHttpObservation(path.resolve(import.meta.dirname, '..'), test.root, { compiler: 'test' })
   const options = JSON.parse(observation.environment.RN_METRO_HTTP_ARCHIVE)
   expect(options.identity.tools.metro.version).toBe('0.83.3')
-  expect(options.identity.tools['@expo/cli'].version).toBe('54.0.27')
+  expect(options.identity.tools['@expo/cli'].version).toBe('54.0.28')
   expect(options.identity.metroConfigSha256).toMatch(/^[a-f0-9]{64}$/)
   expect(options.identity.observer).toHaveLength(2)
   expect(options.identity.invocationId).toBe(identity.invocationId)

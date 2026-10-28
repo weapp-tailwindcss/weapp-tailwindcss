@@ -31,6 +31,7 @@ interface TemplateBuildCase {
   styleFiles?: string[]
   textFiles?: string[]
   expectTransformedClassMarkers?: boolean
+  verifyOutput?: (root: string, styles: string, texts: string) => Promise<void>
 }
 
 interface OutputShape {
@@ -186,6 +187,28 @@ function createUniH5BuildCase(template: string, script = 'build:h5', outputDir =
   }
 }
 
+function createUni360BuildCase(): TemplateBuildCase {
+  // 360 继承 H5 编译器，并在平台目录内追加 dist；不使用小程序模板协议。
+  const outputDir = 'dist/build/mp-360/dist'
+  return {
+    name: 'uni-app-webpack-tailwindcss-v4 mp-360',
+    template: 'uni-app-webpack-tailwindcss-v4',
+    command: ['pnpm', 'run', 'build:mp-360'],
+    outputDir,
+    requiredFiles: ['app.js', 'app.json', 'app.css'].map(file => `${outputDir}/${file}`),
+    styleFiles: [`${outputDir}/app.css`],
+    textFiles: [`${outputDir}/app.js`, `${outputDir}/static/js`],
+    expectTransformedClassMarkers: false,
+    async verifyOutput(root, styles, texts) {
+      const manifest = await readJson<{ sdkversion: string, pages: Array<{ route: string }> }>(path.resolve(root, outputDir, 'app.json'))
+      expect(manifest.sdkversion).toBe('1.0.0')
+      expect(manifest.pages).toContainEqual(expect.objectContaining({ route: 'pages/index/index' }))
+      expect(texts).toContain('bg-[#877878]')
+      expect(styles).toContain('#877878')
+    },
+  }
+}
+
 function createUniH5SsrBuildCase(template: string): TemplateBuildCase {
   return {
     name: `${template} h5:ssr`,
@@ -261,6 +284,7 @@ const templateBuildCases: TemplateBuildCase[] = [
       'quickapp-webview-union',
     ].map(platform => createUniQuickappWebviewBuildCase(template, platform)),
   ]),
+  createUni360BuildCase(),
   ...[
     'uni-app-webpack-tailwindcss-v4',
   ].flatMap<TemplateBuildCase>(template => [
@@ -312,7 +336,6 @@ const localOnlyBuildTargets: LocalOnlyBuildTarget[] = [
     { template, script: 'build:app-plus', reason: 'app-plus 端需要原生 App 构建环境，本轮只记录为本地环境验证项。' },
     { template, script: 'build:custom', reason: 'custom 构建脚本需要额外平台参数，本轮只记录为本地环境验证项。' },
     { template, script: 'build:quickapp-native', reason: 'quickapp-native 需要快应用 native 工具链，本轮只记录为本地环境验证项。' },
-    { template, script: 'build:mp-360', reason: 'mp-360 端依赖较旧平台工具链，本轮只记录为本地环境验证项。' },
   ]),
   { template: 'uni-app-hbuilderx-tailwindcss-v4', script: 'HBuilderX run', reason: '该模板未提交 CLI build 脚本，需要在 HBuilderX 中导入后运行。' },
 ]
@@ -563,6 +586,7 @@ describe('templates build smoke', () => {
     expect(styles, `${item.name} styles should not contain raw Tailwind directives`).not.toMatch(rawTailwindDirectiveRE)
 
     const texts = await readTextTargets(root, item.textFiles ?? [], textFileRE)
+    await item.verifyOutput?.(root, styles, texts)
     const combined = `${styles}\n${texts}`
     const transformedClassMarkerRE = /_b[\w-]+_B/
     if (item.expectTransformedClassMarkers === false) {

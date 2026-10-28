@@ -820,6 +820,7 @@ pnpmfileChecksum: sha256-VIhHxkE3DlYGW4jpmh5YBZoirXpyRMuq7rJOkofCfW8=
 patchedDependencies:
   '@lynx-js/tasm@0.0.49': e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': 1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8
+  '@mpxjs/webpack-plugin@2.11.1': dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4
   '@tarojs/plugin-framework-react@4.3.1': fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a
   '@tarojs/plugin-framework-vue3@4.3.1': f4ed61230de76c998792d052310fea250ac4d22673681ae83aa87a362d4b5e96
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1': ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b
@@ -2183,16 +2184,16 @@ importers:
         version: 2.2.32(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.20(@swc/helpers@0.5.23))(@vue/compiler-sfc@3.5.44)(clean-css@5.3.3)(csso@5.0.5)(ejs@3.1.10)(encoding@0.1.13)(esbuild@0.28.2)(handlebars@4.7.9)(html-minifier-terser@7.2.0)(less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.9.1(supports-color@10.2.2))(webpack@5.112.2))(lightningcss@1.33.0)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(sass-loader@17.1.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.106.1)(sass@1.106.1)(webpack@5.112.2))(sharp@0.35.5(@types/node@26.6.5))(stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.112.2))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(vue-template-compiler@2.7.16)(vue@2.7.16)(webpack-cli@7.2.3)(webpack-sources@3.5.1)
       '@mpxjs/size-report':
         specifier: ^2.11.0
-        version: 2.11.0(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(supports-color@10.2.2)
+        version: 2.11.0(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(supports-color@10.2.2)
       '@mpxjs/vue-cli-plugin-mpx':
         specifier: ^2.2.32
-        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c4244984afdc9760200a174cb046a42e)
+        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c3027297a65d1fef6f8c415601372913)
       '@mpxjs/vue-cli-plugin-mpx-typescript':
         specifier: ^2.2.32
         version: 2.2.32(typescript@6.0.3)(webpack@5.112.2)
       '@mpxjs/webpack-plugin':
         specifier: ^2.11.1
-        version: 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+        version: 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@tailwindcss/postcss':
         specifier: catalog:tailwindcss4
         version: 4.3.3
@@ -2310,13 +2311,13 @@ importers:
         version: 2.2.32(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.20(@swc/helpers@0.5.23))(@vue/compiler-sfc@3.5.44)(clean-css@5.3.3)(csso@5.0.5)(ejs@3.1.10)(encoding@0.1.13)(esbuild@0.28.2)(handlebars@4.7.9)(html-minifier-terser@7.2.0)(less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.9.1(supports-color@10.2.2))(webpack@5.112.2))(lightningcss@1.33.0)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(sass-loader@17.1.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.106.1)(sass@1.106.1)(webpack@5.112.2))(sharp@0.35.5(@types/node@26.6.5))(stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.112.2))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(vue-template-compiler@2.7.16)(vue@2.7.16)(webpack-cli@7.2.3)(webpack-sources@3.5.1)
       '@mpxjs/vue-cli-plugin-mpx':
         specifier: ^2.2.32
-        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c4244984afdc9760200a174cb046a42e)
+        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c3027297a65d1fef6f8c415601372913)
       '@mpxjs/vue-cli-plugin-mpx-typescript':
         specifier: ^2.2.32
         version: 2.2.32(typescript@6.0.3)(webpack@5.112.2)
       '@mpxjs/webpack-plugin':
         specifier: ^2.11.1
-        version: 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+        version: 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@vue/cli-service':
         specifier: ~5.0.9
         version: 5.0.9(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.20(@swc/helpers@0.5.23))(@vue/compiler-sfc@3.5.44)(clean-css@5.3.3)(csso@5.0.5)(ejs@3.1.10)(encoding@0.1.13)(esbuild@0.28.2)(handlebars@4.7.9)(html-minifier-terser@7.2.0)(less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.9.1(supports-color@10.2.2))(webpack@5.112.2))(lightningcss@1.33.0)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(sass-loader@17.1.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.106.1)(sass@1.106.1)(webpack@5.112.2))(sharp@0.35.5(@types/node@26.6.5))(stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.112.2))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(vue-template-compiler@2.7.16)(vue@2.7.16)(webpack-cli@7.2.3)(webpack-sources@3.5.1)
@@ -4154,7 +4155,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       weapp-vite:
         specifier: catalog:weappVite
-        version: 7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1)
+        version: 7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1)
 
   demo/web/nuxt-vite-tailwindcss-v4:
     dependencies:
@@ -5457,7 +5458,7 @@ importers:
         version: 0.3.31
       '@mpxjs/webpack-plugin':
         specifier: ^2.11.1
-        version: 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+        version: 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       tsx:
         specifier: catalog:tsx
         version: 4.23.15
@@ -5595,13 +5596,13 @@ importers:
         version: 2.2.32(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.20(@swc/helpers@0.5.23))(@vue/compiler-sfc@3.5.44)(clean-css@5.3.3)(csso@5.0.5)(ejs@3.1.10)(encoding@0.1.13)(esbuild@0.28.2)(handlebars@4.7.9)(html-minifier-terser@7.2.0)(less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.9.1(supports-color@10.2.2))(webpack@5.112.2))(lightningcss@1.33.0)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(sass-loader@17.1.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.106.1)(sass@1.106.1)(webpack@5.112.2))(sharp@0.35.5(@types/node@26.6.5))(stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.112.2))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(vue-template-compiler@2.7.16)(vue@2.7.16)(webpack-cli@7.2.3)(webpack-sources@3.5.1)
       '@mpxjs/vue-cli-plugin-mpx':
         specifier: ^2.2.32
-        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c4244984afdc9760200a174cb046a42e)
+        version: 2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c3027297a65d1fef6f8c415601372913)
       '@mpxjs/vue-cli-plugin-mpx-typescript':
         specifier: ^2.2.32
         version: 2.2.32(typescript@6.0.3)(webpack@5.112.2)
       '@mpxjs/webpack-plugin':
         specifier: ^2.11.1
-        version: 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+        version: 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@vue/cli-service':
         specifier: ~5.0.9
         version: 5.0.9(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.20(@swc/helpers@0.5.23))(@vue/compiler-sfc@3.5.44)(clean-css@5.3.3)(csso@5.0.5)(ejs@3.1.10)(encoding@0.1.13)(esbuild@0.28.2)(handlebars@4.7.9)(html-minifier-terser@7.2.0)(less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.9.1(supports-color@10.2.2))(webpack@5.112.2))(lightningcss@1.33.0)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(sass-loader@17.1.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.106.1)(sass@1.106.1)(webpack@5.112.2))(sharp@0.35.5(@types/node@26.6.5))(stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.112.2))(supports-color@10.2.2)(svgo@4.1.0)(uglify-js@3.19.3)(vue-template-compiler@2.7.16)(vue@2.7.16)(webpack-cli@7.2.3)(webpack-sources@3.5.1)
@@ -5859,7 +5860,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       weapp-vite:
         specifier: catalog:weappVite
-        version: 7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1)
+        version: 7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1)
 
   tools/ci-scope:
     dependencies:
@@ -42083,9 +42084,9 @@ snapshots:
       vue: 2.7.16
       vue-demi: 0.14.10(vue@2.7.16)
 
-  '@mpxjs/size-report@2.11.0(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(supports-color@10.2.2)':
+  '@mpxjs/size-report@2.11.0(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(supports-color@10.2.2)':
     dependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       acorn: 8.16.0
       acorn-walk: 7.2.0
       ejs: 3.1.10
@@ -42105,7 +42106,7 @@ snapshots:
 
   '@mpxjs/template-engine@2.8.7(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)':
     dependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
     transitivePeerDependencies:
       - '@mpxjs/core'
       - supports-color
@@ -42124,10 +42125,10 @@ snapshots:
       - typescript
       - webpack
 
-  '@mpxjs/vue-cli-plugin-mpx@2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c4244984afdc9760200a174cb046a42e)':
+  '@mpxjs/vue-cli-plugin-mpx@2.2.32(patch_hash=1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8)(c3027297a65d1fef6f8c415601372913)':
     dependencies:
       '@mpxjs/cli-shared-utils': 2.2.32
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@soda/friendly-errors-webpack-plugin': 1.8.1(webpack@5.112.2)
       '@vue/cli-shared-utils': 5.0.9(encoding@0.1.13)
       '@vue/vue-loader-v15': vue-loader@15.11.1(@vue/compiler-sfc@3.5.44)(css-loader@7.1.5(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.112.2))(ejs@3.1.10)(handlebars@4.7.9)(lodash@4.18.1)(prettier@3.9.10)(react@19.3.1)(vue-template-compiler@2.7.16)(webpack@5.112.2)
@@ -42232,7 +42233,7 @@ snapshots:
       - webpack-cli
       - whiskers
 
-  '@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)':
+  '@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@babel/generator': 7.29.8
@@ -49896,14 +49897,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@weapp-vite/tailwindcss@1.0.1(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@weapp-vite/tailwindcss@1.0.1(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@weapp-tailwindcss/engine': 0.1.6(tailwindcss@4.3.3)
       '@weapp-tailwindcss/source-scan': 0.1.2
       '@weapp-vite/hmr': 0.2.2
       micromatch: 4.0.8
       pathe: 2.0.3
-      weapp-tailwindcss: 5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      weapp-tailwindcss: 5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
     transitivePeerDependencies:
       - '@mpxjs/webpack-plugin'
       - '@oxc-project/types'
@@ -49915,14 +49916,14 @@ snapshots:
       - tsx
       - vite
 
-  '@weapp-vite/tailwindcss@1.0.1(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@weapp-vite/tailwindcss@1.0.1(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@weapp-tailwindcss/engine': 0.1.6(tailwindcss@4.3.3)
       '@weapp-tailwindcss/source-scan': 0.1.2
       '@weapp-vite/hmr': 0.2.2
       micromatch: 4.0.8
       pathe: 2.0.3
-      weapp-tailwindcss: 5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      weapp-tailwindcss: 5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
     transitivePeerDependencies:
       - '@mpxjs/webpack-plugin'
       - '@oxc-project/types'
@@ -69947,7 +69948,7 @@ snapshots:
     dependencies:
       tailwindcss: 4.3.3
 
-  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
+  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@babel/parser': 8.0.8
       '@babel/traverse': 8.0.7
@@ -69976,7 +69977,7 @@ snapshots:
       weapp-style-injector: 1.0.7
       yaml: 2.9.1
     optionalDependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@weapp-tailwindcss/native-darwin-arm64': 5.6.3
       '@weapp-tailwindcss/native-darwin-x64': 5.6.3
       '@weapp-tailwindcss/native-linux-arm64-gnu': 5.6.3
@@ -69995,7 +69996,7 @@ snapshots:
       - supports-color
       - tsx
 
-  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
+  weapp-tailwindcss@5.6.3(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@babel/parser': 8.0.8
       '@babel/traverse': 8.0.7
@@ -70024,7 +70025,7 @@ snapshots:
       weapp-style-injector: 1.0.7
       yaml: 2.9.1
     optionalDependencies:
-      '@mpxjs/webpack-plugin': 2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
+      '@mpxjs/webpack-plugin': 2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2)
       '@weapp-tailwindcss/native-darwin-arm64': 5.6.3
       '@weapp-tailwindcss/native-darwin-x64': 5.6.3
       '@weapp-tailwindcss/native-linux-arm64-gnu': 5.6.3
@@ -70043,7 +70044,7 @@ snapshots:
       - supports-color
       - tsx
 
-  weapp-vite@7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1):
+  weapp-vite@7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1):
     dependencies:
       '@babel/core': 8.0.9
       '@babel/plugin-transform-dynamic-import': 8.0.1(@babel/core@8.0.9)
@@ -70074,7 +70075,7 @@ snapshots:
       '@weapp-vite/i18n': 0.2.10(miniprogram-api-typings@5.2.3)
       '@weapp-vite/mcp': 2.1.0(@types/node@26.6.5)
       '@weapp-vite/miniprogram-automator': 1.4.0(@types/node@26.6.5)
-      '@weapp-vite/tailwindcss': 1.0.1(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      '@weapp-vite/tailwindcss': 1.0.1(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.154.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       '@weapp-vite/volar': 2.1.14
       '@weapp-vite/web': 2.0.1(@types/node@26.6.5)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vitest@5.0.5)(yaml@2.9.1)
       '@wevu/api': 0.3.9(vitest@5.0.5)
@@ -70149,7 +70150,7 @@ snapshots:
       - vitest
       - yaml
 
-  weapp-vite@7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1):
+  weapp-vite@7.6.0(patch_hash=3744e0eec76138333d8640a7968acd666162a728d81dea170806f71151e850b1)(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(@swc/helpers@0.5.23)(@types/node@26.6.5)(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(miniprogram-api-typings@5.2.3)(oxc-resolver@11.21.2)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(srvx@1.0.5)(stylus@0.63.0(supports-color@10.2.2))(supports-color@10.2.2)(tailwindcss@4.3.3)(terser@5.51.2)(tsx@4.23.15)(vitest@5.0.5)(yaml@2.9.1):
     dependencies:
       '@babel/core': 8.0.9
       '@babel/plugin-transform-dynamic-import': 8.0.1(@babel/core@8.0.9)
@@ -70180,7 +70181,7 @@ snapshots:
       '@weapp-vite/i18n': 0.2.10(miniprogram-api-typings@5.2.3)
       '@weapp-vite/mcp': 2.1.0(@types/node@26.6.5)
       '@weapp-vite/miniprogram-automator': 1.4.0(@types/node@26.6.5)
-      '@weapp-vite/tailwindcss': 1.0.1(@mpxjs/webpack-plugin@2.11.1(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      '@weapp-vite/tailwindcss': 1.0.1(@mpxjs/webpack-plugin@2.11.1(patch_hash=dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4)(@mpxjs/core@2.11.1)(supports-color@10.2.2)(vue@2.7.16)(webpack@5.112.2))(@oxc-project/types@0.156.0)(jiti@2.7.0)(lightningcss@1.33.0)(rolldown@1.2.14)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       '@weapp-vite/volar': 2.1.14
       '@weapp-vite/web': 2.0.1(@types/node@26.6.5)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(sass-embedded@1.106.1)(sass@1.106.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vitest@5.0.5)(yaml@2.9.1)
       '@wevu/api': 0.3.9(vitest@5.0.5)

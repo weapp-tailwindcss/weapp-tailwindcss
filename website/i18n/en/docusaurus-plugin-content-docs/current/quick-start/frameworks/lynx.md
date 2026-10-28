@@ -38,7 +38,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 The current `@weapp-tailwindcss/lynx` adapter is `0.4.4` and requires Node.js `^22.18.0 || >=24.11.0`. Its `weapp-tailwindcss` core dependency is `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
 
-The repository fixture and regression matrix pin Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
+The repository fixture and regression matrix pin Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
 
 ## Register the Rspeedy plugin
 

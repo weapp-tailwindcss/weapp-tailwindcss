@@ -566,5 +566,97 @@
       "logSha256": "c70481cf30dadb74bea13e0a7e2c3a3486b6dd4081225dfff8d79a7e81b81b3e",
       "recordedAt": "2026-10-28T11:57:48.084900+00:00"
     }
-  ]
+  ],
+  "prFirstRound": {
+    "head": "7f8df54041940450426208fc9e57a91f2b55e3db",
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1320",
+    "preflightRun": "6ddc97c0-1145-4977-8094-6be02c8cac89",
+    "preflightStatus": "extended probes, current-session computer use and verify passed; workflow claimed once",
+    "workflow": {
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/full-workflow-pr-7f8df540.log",
+      "exitCode": 1,
+      "firstFailedStage": "quality root build",
+      "reason": "Mpx webpack-plugin2.11.1引用Webpack5.112.2已移动的私有模块；后续阶段未执行"
+    },
+    "targetedChecks": [
+      {
+        "command": "CI=1 pnpm --filter @weapp-tailwindcss-demo/style-injector-mpx build",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-public-api-build.log",
+        "exitCode": 0,
+        "logSha256": "963fef66ebcf5a6e3467b3b330565fba3de397ba8179154378e92beaef3657c4"
+      },
+      {
+        "command": "CI=1 pnpm --filter @weapp-tailwindcss-demo/mpx-tailwindcss-v4 build",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-main-public-api-build.log",
+        "exitCode": 0,
+        "logSha256": "15c40fa86139999e65d8c0e9cfd9c4dce45d7da2e6c92d76ff825b6844aeba8b"
+      },
+      {
+        "command": "CI=1 pnpm --dir templates/mpx-tailwindcss-v4 run build",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-template-public-api-build.log",
+        "exitCode": 0,
+        "logSha256": "90947b5eb3be624973f675e4388cc258b390dbde9857a6a60ec8f02932086027"
+      },
+      {
+        "command": "pnpm install --frozen-lockfile",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-public-api-root-frozen.log",
+        "exitCode": 0,
+        "logSha256": "3cbd5afee8b59627045074729e37aedb5ae74e716d9824665104fd59bc8be342"
+      },
+      {
+        "command": "pnpm --dir templates/mpx-tailwindcss-v4 install --frozen-lockfile",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-template-public-api-frozen.log",
+        "exitCode": 0,
+        "logSha256": "9109b01777f8bd60a8e1704efe66558554225d52c920e8e47d8e42aac157f91a"
+      },
+      {
+        "command": "pnpm --filter @weapp-tailwindcss/website check:config-docs",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/website-contracts-current.log",
+        "exitCode": 0,
+        "logSha256": "3e7e27f57229036640a09884727e669f0e9849a2836efe5be9b296fd43932574"
+      },
+      {
+        "command": "CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-http-archive-owner.test.ts --update=none",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/expo-http-owner-cli54.log",
+        "testsPassed": 12,
+        "exitCode": 0,
+        "logSha256": "cc4510a528a51625553a8299776ee297808ef35a81205f31da23c404def34c07"
+      },
+      {
+        "command": "CI=1 E2E_TEMPLATE_CASE='uni-app-webpack-tailwindcss-v4 mp-360$' pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/templates-build-smoke.test.ts --update=none",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/vue2-360-targeted-build-verified.log",
+        "testsPassed": 2,
+        "exitCode": 0,
+        "logSha256": "f0077d23232abe7c40e1d202905526453e7d5c5778c8f7326e6dc661f76ab17d"
+      },
+      {
+        "command": "CI=1 pnpm e2e:lynx:static:update",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-static-upgrade-update.log",
+        "exitCode": 0,
+        "logSha256": "629edbf9940e3d28c3a213e968b4a89c92ab780363e4d0a126037a9e48447374"
+      },
+      {
+        "command": "CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-static-evidence.test.ts e2e/lynx-encoder-values.test.ts --update=none",
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-static-upgrade-verify.log",
+        "testFiles": 3,
+        "testsPassed": 83,
+        "exitCode": 0,
+        "logSha256": "2bd8e3f8770b5aef5c4ab45ae328a68c502906493c19c8201e740b436f5188d5"
+      },
+      {
+        "command": "CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/mpx-webpack-compat.test.mjs --update=none",
+        "exitCode": 0,
+        "testFiles": 1,
+        "testsPassed": 6,
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/mpx-public-api-regressions.log",
+        "logSha256": "3314d132e23aacdb5db6e031099499a6d5be5b53c26ac90053bb44b7925599a8"
+      }
+    ],
+    "lynxStaticReview": {
+      "file": "examples/react-lynx/src/compatibility/static-evidence.json",
+      "sha256": "f2b6c170fea8f3a844bf92357890905161eb51463e19b48b0f97ec9b24b88f92",
+      "diff": "toolchain versions/catalog identity updated; flex-shorthand-shrink encoded flex-basis changes 0 to 0%; native layout/pixel verification remains pending"
+    },
+    "remaining": "Full local workflow and applicable current-head CI/CD remain pending; process observer and watcher cleanup failures are being diagnosed."
+  }
 }
