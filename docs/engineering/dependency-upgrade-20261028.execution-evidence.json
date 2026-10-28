@@ -1132,7 +1132,16 @@
           "testsPassed": 20
         }
       ],
-      "productionValidation": "pending fresh actual bilingual build, three-engine capture and no-update verification"
+      "productionValidation": {
+        "head": "dbc255b298ca2b39ae7f5ba1fe4d3568d6debe38",
+        "bilingualBuild": "passed",
+        "actualHtmlAndBytes": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/blog-author-production-html-dbc255b29.json",
+          "bytes": 603,
+          "sha256": "583f18ccd75d595d1105ea9e91c87b43ee22a2946e1c00c179da7d7321c3600d"
+        },
+        "noUpdate": "pending"
+      }
     }
   },
   "finalLockRiskRefresh": {
@@ -1273,5 +1282,147 @@
     ],
     "limitation": "只有bundle4一条稳态诊断完整；观察开销和异步重叠使本轮不能重算p95或归因正式+13ms。",
     "repair": "独立worktree修复首次失败receipt、bundle关闭后的真实status、首错与清理错cause聚合及有界worker日志；固定4096/16MiB/64MiB预算，去掉重复观测并补37初始+22增量资产的完整3修改3回滚回归。review前不重复调度。"
+  },
+  "websiteVisualBaselineInstalled": {
+    "head": "dbc255b298ca2b39ae7f5ba1fe4d3568d6debe38",
+    "preflightRun": "f8f73752-71da-42a9-90a1-1ba16637802d",
+    "capture": {
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-capture-dbc255b29.log",
+        "bytes": 7618195,
+        "sha256": "867ce0142fe23d443ab52576612df48e41f66035d83117f818b63f5af2749838"
+      },
+      "candidate": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793212841915",
+      "manifest": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793212841915/manifest.json",
+        "bytes": 602813,
+        "sha256": "21950c9d143c95b6466fd8f50cd2e15735f82f1df4da6717f4172bd40d5a1c5c"
+      },
+      "passed": 1204,
+      "existingConditionalSkipped": 602,
+      "failed": 0,
+      "retried": 0,
+      "exitCode": 0
+    },
+    "review": {
+      "root": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-review-dbc255b29/root-review-001-024.json",
+        "bytes": 34779,
+        "sha256": "2c9b4d1f9736b1b42a34d6d3e4071ed041f87817e56ecd9a98e19ca02fb9d461"
+      },
+      "independent": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-review-dbc255b29/independent-review-025-048.json",
+        "bytes": 53365,
+        "sha256": "b16e0f35307939e78afd849ca69edf550966f3c9c0627fedffea6c03acd5cf0a"
+      },
+      "registered": {
+        "path": "website/tests/visual-baselines/darwin.review.json",
+        "bytes": 10308,
+        "sha256": "17ded90de329df22bf1b7f67c86c528ec0980d03c6d2fb117ffa229582276278"
+      },
+      "figures": 48,
+      "historicalSameSha": 1163,
+      "historicalChanged": 41,
+      "available71PixelChanges": 37,
+      "historicalPngUnavailable": true,
+      "fullPixelManualReview": false,
+      "tocDifferenceCause": "unknown; original maxDiffPixels=5 retained"
+    },
+    "installation": {
+      "installed": true,
+      "verifyCommand": "pnpm --filter @weapp-tailwindcss/website e2e:visual verify",
+      "verifyLog": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-baseline-verify-dbc255b29.log",
+        "bytes": 41,
+        "sha256": "88641c2dc1a3154bb60e558888571b5d01e8f1c7c155a7f1e57fb1e33031d765"
+      },
+      "exitCode": 0,
+      "noUpdateVerification": "pending"
+    },
+    "archives": [
+      {
+        "receipt": {
+          "path": "/Users/icebreaker/.codex/artifacts/dependency-upgrade-20261028/website-capture-71a8b3c07/archive-receipt.json",
+          "bytes": 858930,
+          "sha256": "143cb3f0a469a8a76712a3bd7343cc324c9ded3b5e45602bdebcc3a648c4ea95"
+        },
+        "archive": {
+          "file": "website-candidate.tar.gz",
+          "bytes": 2083238283,
+          "sha256": "9083846c83910228f688ffe183031ab6d869f01cb570b335fb49fb5d02037862",
+          "membersVerified": 2454
+        },
+        "verified": true
+      },
+      {
+        "receipt": {
+          "path": "/Users/icebreaker/.codex/artifacts/dependency-upgrade-20261028/website-capture-dbc255b29/archive-receipt.json",
+          "bytes": 873418,
+          "sha256": "e807933d0fd7f3ecc5df0c4c33a93e8b7b2ff56ba2af33fee5b61e2d3a06ea34"
+        },
+        "archive": {
+          "file": "website-candidate.tar.gz",
+          "bytes": 2123052876,
+          "sha256": "f5e7d222bd6c6098b4ff6195e4be779d4630b34bc105ef4e36e445a06d6d69cd",
+          "membersVerified": 2514
+        },
+        "verified": true
+      }
+    ]
+  },
+  "uniInputDiagnosticsCompleted": {
+    "head": "7a4a1c4a434e4a18c61f47a31c955296e717593c",
+    "integratedCommits": [
+      "c7e5131a8",
+      "30b892020"
+    ],
+    "baselineRef": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "run": 40751122919,
+    "runConclusion": "success",
+    "artifact": 12843747610,
+    "artifactBytes": 11581636,
+    "artifactSha256": "1415977c45b5bfdcf3284179ed88b51c0ee31f90f6e1cffe2ec76b8768c34da2",
+    "integrity": {
+      "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/dependency-upgrade-7a4a-diag-audit-h2giu1ly/integrity-receipt.json",
+      "bytes": 968,
+      "sha256": "14cc30009e13257cd3d3c4cb0f9e04cf583d70b18bbdf4869bcd046c001a3c84"
+    },
+    "protocol": {
+      "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/dependency-upgrade-7a4a-diag-audit-h2giu1ly/protocol-completeness-summary.json",
+      "bytes": 6075,
+      "sha256": "83f351671a9b632b5459cf35764519a3a7e47ea04e5e0bfde227afb8acdf4e98"
+    },
+    "perSide": {
+      "buildSamples": 3,
+      "hmrSamples": 3,
+      "bundles": 7,
+      "snapshots": 8,
+      "completedSpans": 1347,
+      "pendingSpans": 0,
+      "actualOperations": 3650,
+      "operationLimit": 4096
+    },
+    "integratedTargeted": {
+      "command": "CI=1 pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none --maxWorkers=1",
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/benchmark-integrated-30b892020.log",
+        "bytes": 6246,
+        "sha256": "eacd199354be5a624fcf3ea0072350a5e20ad911b47cc393c8c3cd361e705475"
+      },
+      "testFiles": 47,
+      "passed": 340,
+      "exitCode": 0
+    },
+    "formalPerformancePassed": false,
+    "formalPluginP95Ms": {
+      "base": 155,
+      "current": 168
+    },
+    "limitations": [
+      "Instrumented async spans include waiting and observation overhead.",
+      "Some synchronous CSS-path outliers overlap minor GC.",
+      "Candidate sets match but original iteration order differs; opaque object identity unknown.",
+      "No threshold/workload reduction, forced GC or dependency rollback."
+    ]
   }
 }

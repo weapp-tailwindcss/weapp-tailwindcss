@@ -134,3 +134,13 @@ CI 的准确 PR merge commit 为 `d2f1a99b6e35185da2ff21ae9f4b7be430afb7c0`。Wi
 Taro HTML 归档提交已整合为 `4e2313eeb`：每个 project/mode 在后续删除 dist 前保存真实原产物、完整合并日志、命令与退出状态；不改原 staging 和逐字 Buffer 判等，清理/归档失败保留原错误。定向 artifacts/workflow 2 文件/35 项及 report 1 文件/4 项通过，真实 8 变体禁更复验仍待新门禁。
 
 Uni 被动诊断唯一采样 `40737453562` 仍失败，不能作为正式性能通过。完整 artifact 的上传 SHA、下载 SHA 与全成员 CRC 已核对：6 个 build session 完整；两侧 HMR 实际各写满 4096 个事件，第 6 bundle 在第三轮 mutation 的 CSS decision start 截断。旧 status 是 capture 期间的早期快照，finally 中的 finish 又遮蔽原 HMR 首错；不伪造 bundle 闭合，不提高 4096/16MiB/64MiB 预算，不减少真实工作量。独立分支正在修复记录协议和错误保留，并补真实资产规模预算回归，审查前不重复调度。两侧输入集合、处理分支及可序列化 plan 一致，CSS 仅有准确根路径差异，但 vendor 有真实变化；插件实际加载 PostCSS 8.5.30→8.5.32。现有诊断含观察开销且缺第三轮，不足以解释正式 p95 +13ms；该性能阻塞保留。
+
+## 网站基线安装与完整诊断补证
+
+`dbc255b298ca2b39ae7f5ba1fe4d3568d6debe38` 使用新预检 `f8f73752-71da-42a9-90a1-1ba16637802d` 完成扩展探针、当前会话 computer use、verify 和单次领取；双语真实构建及三引擎采集成功，1204 项通过、602 项既有条件跳过，零失败或重试。原 Firefox 博客图片失败路径已通过。生产 HTML 核对英文 `/img/authors/sonofmagic.jpg` 与中文 `/zh-cn/img/authors/sonofmagic.jpg`，输出头像保持原字节 SHA。
+
+相对历史登记，1163 张 SHA 相同、41 张变化，无新增或移除，合同、环境与跳过集合相同。root 实际查看 001–024，独立代理查看 025–048 的顶/中/底裁剪，未见新内容缺失或重叠；这不是长页全像素人工审查。相对可用的 71 候选，37 张均有真实像素或尺寸差：8 张模板文字高度变化、12 张 WebKit 头像、14 张 Chromium 目录首项高亮状态，以及 WebKit 长页/首页和移动案例图的小色差。目录状态及小色差成因仍未知，未将其统称预期语义变化；微信码未解码 payload。历史 399 原 PNG 仍缺失，不能宣称历史逐像素比较通过。两份旧登记原字节移至 `website/tests/visual-baselines/history/399d635bb559cfd6a0d01369727740e1ffc7f822/`，新候选经正式 review/install/verify 安装，全部 48 张实际审查图绑定审查记录；真正禁止更新的浏览器复验尚待执行，原像素和加载门槛保持不变。两轮成功候选及审查证据分别归档在 worktree 外，按全部成员长度和 SHA 校验，恢复须保留原始来源路径身份。
+
+独立诊断修复 `7a4a1c4a434e4a18c61f47a31c955296e717593c` 的唯一新运行 [40751122919](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40751122919) 整体成功：两侧各 3 次冷构建、3 轮修改/回滚、7 个 bundle、8 份快照、1347 个完整 span，pending 为空，实际各 3650/4096 个事件；最终 status、操作、模块哈希、16 份 worker 原字节日志及源码恢复记录一致。归档 ZIP 与 GitHub digest 相同且全部 CRC 通过。修复保留固定预算与完整工作量，终结 span 不再重复写起止事件，首错与清理错分别保留；已整合为 `c7e5131a8`、`30b892020`，集成后 47 文件/340 项回归、agents 与 diff 检查通过。
+
+完整诊断仅证明证据协议成功。稳态可序列化输入、分支与处理次数一致，但候选集合的原始迭代顺序不同，opaque 对象身份仍未知；两份 vendor 与 WXML 生成 ID 有真实变化。同步 CSS 路径叶子的部分峰值与 minor GC 重叠，异步外层 span 包含等待与观察开销，因此不能直接归因为 PostCSS、JS 后端或同步算法回归。正式 plugin p95 +13ms 门禁仍未通过，继续做保持完整负载的生产/窄同步观测对照；没有降低阈值、主动 GC 或盲目回退依赖。完整 57 阶段、107 portable/8 HTML 禁更复验、七模板外部消费及准确最终 head 的适用 CI 仍待完成，PR 仍不合并。
