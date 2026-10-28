@@ -114,6 +114,14 @@
       "createdByTask": true,
       "status": "cleanup blocked by URL policy on data error page; native Codex app control denied by tool safety policy; not retained as deliverable",
       "originalFailedTarget": "http://127.0.0.1:58794/challenge/12fb4a73-6360-4ab5-965e-eb4b1f90f9aa"
+    },
+    {
+      "entry": "IAB",
+      "browserId": "3",
+      "tabId": "4",
+      "createdByTask": true,
+      "status": "closed; listTabs confirmed tab4 absent",
+      "preflight": "15389ca6-3596-41cd-be68-5a9ed7cc8d50"
     }
   ],
   "subsequentFrozenInstalls": [
@@ -718,6 +726,45 @@
           }
         ]
       }
+    },
+    {
+      "head": "3b02978a436c0ec2309f3d96b0e0c92e9601665b",
+      "preflightRun": "15389ca6-3596-41cd-be68-5a9ed7cc8d50",
+      "preflightStatus": "extended probes, current-session computer use, verify and claim passed",
+      "workflow": {
+        "log": "e2e/.artifacts/dependency-upgrade-20261028/full-workflow-pr-3b02978a4.log",
+        "logSha256": "be5b599ffdafced35c22fbe87db1c201fb29a24a9851cd19fc3196810984003e",
+        "exitCode": 1,
+        "firstFailedStage": "quality root build: six Lynx documentation sources used previous native baseline facts",
+        "rootBuild": {
+          "tasksTotal": 71,
+          "tasksSuccessful": 64,
+          "cached": 0,
+          "status": "failed; downstream cancelled or stopped"
+        },
+        "remainingStagesNotExecuted": 56
+      },
+      "targetedFixVerification": {
+        "changes": "Synchronized six docs with real archived baseline time/catalog/device/ABI and CI provenance; validation rules unchanged",
+        "checks": [
+          {
+            "command": "pnpm --filter @weapp-tailwindcss/website check:lynx-contract",
+            "exitCode": 0
+          },
+          {
+            "command": "CI=1 pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/check-lynx-contract.test.mjs --update=none",
+            "exitCode": 0,
+            "testsPassed": 16
+          },
+          {
+            "command": "pnpm --filter @weapp-tailwindcss/website build",
+            "exitCode": 0,
+            "log": "e2e/.artifacts/dependency-upgrade-20261028/website-build-lynx-baseline-fix.log",
+            "logSha256": "8dfdba8ba82e2366a6f16138efc2ef5be7b93568033a2cffd67d277555947dcd",
+            "scope": "Actual Docusaurus English and Simplified Chinese production build"
+          }
+        ]
+      }
     }
   ],
   "staticFollowup": {
@@ -881,5 +928,15 @@
       "log": "e2e/.artifacts/dependency-upgrade-20261028/lynx-baseline-targeted-verify.log",
       "logSha256": "47e87ea6bd69d933092fd5d69150cd6fdf9d29f6f30e11fec52e25bc9b326f11"
     }
+  },
+  "exactBaselineThemeReview": {
+    "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+    "head": "3b02978a436c0ec2309f3d96b0e0c92e9601665b",
+    "scope": "WebpackReact default plugin-html mode, same Node22.23.4 and strict production build, each3runs",
+    "pageCssBytesEqual": true,
+    "issue998Sha256": "2dc30810546a8cceeb11618a1fdd90155a7a05cc7a91219964defdaba9c60141",
+    "appDifference": "1835 rules unchanged; one equivalent placeholder branch adds .nut-input-placeholder, +22bytes; authored cyan/blue values and order unchanged",
+    "conclusion": "Old special HTML baseline lagged in this verified case; page override boundary already existed. Not a rebuilt Vite or base without-mode conclusion.",
+    "rawEvidence": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-taro-html-audit-dpuqUU/exact-base-theme-comparison.json"
   }
 }

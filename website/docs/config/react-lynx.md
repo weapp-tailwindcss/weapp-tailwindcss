@@ -213,7 +213,7 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 
 ## 设备与验证证据
 
-CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a）和 `iPhone 17 Pro iOS 26.5`（iPhone 17 Pro，iOS 26.5，arm64），基线 `verifiedAt` 为 `2026-10-21T18:49:50.413Z`，`catalogHash` 为 `ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`。当前基线来自源码 `8db895c54373e20737dcc8254861f73872579aa1` 的本地双端 run `8c29cdaa-b86c-4fc1-a7e8-28b254463458`，经过本轮完整环境预检和原始附件重放；后续 CI 的不同设备配置仍需独立运行证据。
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-10-28T14:07:32.687Z`，`catalogHash` 为 `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`。当前基线来自源码 `eb486aabb6655aa5377b61af1e4e19014bda2f6e` 的 CI run `40696344394` attempt 1：iOS run `5b228ab0-969a-469e-9537-805701a8f22d`、Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
 
 `--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 
