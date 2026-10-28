@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url'
 import { limits } from './constants.mjs'
 
 export const sha256 = value => createHash('sha256').update(value).digest('hex')
+export const terminalReceiptBytes = 4096
+export const isOperationEvidenceFilename = name => /^(?:process-start|inputs-\d+|allocation-(?:frames-)?\d+|operation-(?:\d+|terminal)|text-[a-f\d]{64})\.json$/.test(name)
 
 export function rootRelativeKey(value, root, platform = process.platform) {
   if (typeof value !== 'string') {
@@ -75,25 +77,26 @@ export function compilationCandidates(collections) {
   return Object.fromEntries(Object.entries(collections).map(([name, values]) => [name, sortedCandidates(values)]))
 }
 
-export function evidenceLimitError({ filename, bytes, maximum, bytesWritten, scope = 'encoded-file', statistics }) {
-  return new Error(`诊断输出超过固定上限；本份证据未写入，不做静默截断：${JSON.stringify({ filename, bytes, maximum, bytesWritten, totalMaximum: limits.maxTotalBytes, fileMaximum: limits.maxProfileBytes, scope, statistics })}`)
+export function evidenceLimitError({ filename, bytes, maximum, bytesWritten, scope = 'encoded-file', statistics, reservedTerminalBytes = 0 }) {
+  return new Error(`诊断输出超过固定上限；本份证据未写入，不做静默截断：${JSON.stringify({ filename, bytes, maximum, bytesWritten, totalMaximum: limits.maxTotalBytes, reservedTerminalBytes, fileMaximum: limits.maxProfileBytes, scope, statistics })}`)
 }
 
 export function createEvidenceWriter(directory) {
   let bytesWritten = 0
   let filesWritten = 0
-  function write(name, value, maximum = limits.maxProfileBytes, statistics) {
+  function write(name, value, maximum = limits.maxProfileBytes, statistics, terminal = false) {
     if (path.basename(name) !== name) {
       throw new Error('诊断文件名不能越过会话目录')
     }
     const payload = Buffer.from(`${JSON.stringify(value)}\n`)
-    if (payload.length > maximum || bytesWritten + payload.length > limits.maxTotalBytes) {
-      throw evidenceLimitError({ filename: name, bytes: payload.length, maximum, bytesWritten, scope: payload.length > maximum ? 'encoded-file' : 'session-total', statistics })
+    const totalMaximum = limits.maxTotalBytes - (terminal ? 0 : terminalReceiptBytes)
+    if (payload.length > maximum || bytesWritten + payload.length > totalMaximum) {
+      throw evidenceLimitError({ filename: name, bytes: payload.length, maximum, bytesWritten, scope: payload.length > maximum ? 'encoded-file' : 'session-total', statistics, reservedTerminalBytes: terminal ? 0 : terminalReceiptBytes })
     }
     fs.writeFileSync(path.join(directory, name), payload, { flag: 'wx' })
     bytesWritten += payload.length
     filesWritten++
     return { sha256: sha256(payload), bytes: payload.length }
   }
-  return { write, accounting: () => ({ bytesWritten, filesWritten }) }
+  return { write, terminal: value => write('operation-terminal.json', value, terminalReceiptBytes, undefined, true), accounting: () => ({ bytesWritten, filesWritten }) }
 }

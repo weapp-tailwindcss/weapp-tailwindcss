@@ -87,7 +87,7 @@ it('真实 JS asset 上首次 miss、重复 hit、改源 miss 与未插桩调用
   expect(observed).toEqual(plain)
   expect(observed).toEqual({ calls: { handler: 2, matcher: 1, updates: 2 }, cache: { lookups: 3, transforms: 2, hits: 1 }, output: 'two!' })
   expect(events.filter(event => event.name === 'uni.cache').map(event => event.details.state)).toEqual(['transform-entered', 'local-hit', 'transform-entered'])
-  expect(events.filter(event => event.name === 'uni.phase.js-asset.options.jsHandler.success')).toHaveLength(2)
+  expect(events.filter(event => event.name === 'uni.phase.js-asset.options.jsHandler.span')).toHaveLength(2)
 })
 
 it('无观察器时真实 asset context 不读诊断 file getter，也不额外等待', async () => {

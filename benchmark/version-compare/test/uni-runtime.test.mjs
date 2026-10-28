@@ -45,7 +45,7 @@ it('真实 Node 语义 fixture 保留 this、同步起始顺序和原 await，ra
   expect(order).toEqual(['html', 'css', 'js', 'replay'])
   const input = events.findIndex(event => event.name === 'uni.bundle.input')
   const snap = events.findIndex(event => event.name === 'uni.snapshot')
-  const task = events.findIndex(event => event.name === 'uni.phase.runtime.processHtmlBundleEntry.start')
+  const task = events.findIndex(event => event.name === 'uni.phase.runtime.processHtmlBundleEntry.span')
   expect(input).toBeLessThan(snap)
   expect(snap).toBeLessThan(task)
   expect(observer.summary().bundles[0]).toMatchObject({ raw: true, snapshot: true, closed: true })

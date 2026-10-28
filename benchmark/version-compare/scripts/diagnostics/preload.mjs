@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { persistCompilationEvidence } from './capture.mjs'
 import { diagnosticSymbol, limits, mpxProject } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
+import { runWithCleanup } from './failures.mjs'
 import { createOperationRecorder } from './operations.mjs'
 import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
 import { createUniInputObserver, uniInputProject } from './uni-observer.mjs'
@@ -45,8 +46,8 @@ async function start() {
   let lastCommand = 0
   const frameReceipts = []
   const startedAt = performance.now()
-  const operations = createOperationRecorder({ writer, root: identity.root, phase: stage })
-  const uniInput = identity.project === uniInputProject && identity.mode === 'inputs' ? createUniInputObserver({ operations, root: identity.root, phase: stage }) : undefined
+  const operations = createOperationRecorder({ writer, root: identity.root, phase: stage, onFailure: writeStatus })
+  const uniInput = identity.project === uniInputProject && identity.mode === 'inputs' ? createUniInputObserver({ operations, root: identity.root, phase: stage, onBundleSettled: writeStatus }) : undefined
   const viteTail = identity.project === viteTailProject && identity.kind === 'build' ? createViteTailObserver({ operations }) : undefined
   const sampler = identity.mode === 'allocation' ? await (await import('./sampling.mjs')).createAllocationSampler() : undefined
   writer.write('process-start.json', {
@@ -89,13 +90,7 @@ async function start() {
 
   async function fail(error) {
     recordingError = error instanceof Error ? error.message : String(error)
-    try {
-      await sampler?.close()
-    }
-    finally {
-      writeStatus()
-    }
-    throw error
+    return runWithCleanup(async () => { throw error }, [() => sampler?.close(), writeStatus])
   }
 
   async function capture(collections, stop = false, completedPhase, rootCompilationId, finalizationId) {
