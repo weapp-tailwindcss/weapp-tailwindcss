@@ -31,11 +31,40 @@ async function main() {
   compiler.hooks.beforeCompile.tapPromise('BuildDuration', () => delay(100))
   const invalidations = []
   const dependencyGraphs = []
+  const events = []
+  const startedAt = Date.now()
+  const observedWatchers = new WeakSet()
+  const record = entry => events.push({ at: Date.now() - startedAt, ...entry })
+  const watchFileSystem = compiler.watchFileSystem
+  const originalWatch = watchFileSystem.watch
+  watchFileSystem.watch = function (...args) {
+    record({ event: 'watch', startTime: args[3] })
+    const result = originalWatch.apply(this, args)
+    let owner = this
+    while (owner.wfs) owner = owner.wfs
+    if (!observedWatchers.has(owner.watcher)) {
+      observedWatchers.add(owner.watcher)
+      for (const method of ['_onChange', '_onRemove']) {
+        const original = owner.watcher[method]
+        owner.watcher[method] = function (...eventArgs) {
+          const item = eventArgs[0]
+          const directoryWatcher = this.fileWatchers.get(item)?.watcher.directoryWatcher
+          const directoryTime = directoryWatcher?.directorySafeTimes.get(item)
+          // 固定事件当时的精度数据，避免后续重挂载修改同一个对象而覆盖证据。
+          record({ event: method, args: eventArgs, directoryTime: directoryTime && typeof directoryTime === 'object' ? { ...directoryTime } : directoryTime })
+          return original.apply(this, eventArgs)
+        }
+      }
+    }
+    return result
+  }
+  compiler.hooks.watchRun.tap('WatchEvidence', () => record({ event: 'watchRun', modified: [...(compiler.modifiedFiles ?? [])], removed: [...(compiler.removedFiles ?? [])] }))
   compiler.hooks.invalid.tap('WatchEvidence', file => invalidations.push(file))
   let builds = 0
   let buildError
   const watcher = compiler.watch({ aggregateTimeout: 100 }, (error, stats) => {
     builds++
+    record({ event: 'callback', build: builds })
     const missing = [...(stats?.compilation.missingDependencies ?? [])]
     dependencyGraphs.push({
       files: [...(stats?.compilation.fileDependencies ?? [])],
@@ -87,7 +116,7 @@ async function main() {
     process.stdout.write(`${JSON.stringify({ initialBuilds, updatedBuilds, value: readValue(), webpack: webpackRequire('webpack/package.json').version, watchpack: createRequire(webpackRequire.resolve('webpack/package.json'))('watchpack/package.json').version, projectRoot: temporaryRoot, dependencyGraphs })}\n`)
   }
   catch (error) {
-    process.stderr.write(`Virtual watcher evidence: ${JSON.stringify({ invalidations, dependencyGraphs })}\n`)
+    process.stderr.write(`Virtual watcher evidence: ${JSON.stringify({ invalidations, dependencyGraphs, events })}\n`)
     throw error
   }
   finally {
