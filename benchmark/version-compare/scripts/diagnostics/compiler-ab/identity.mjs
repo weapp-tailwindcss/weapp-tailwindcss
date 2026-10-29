@@ -64,8 +64,24 @@ export function compilerIdentity(root, role, expectedCompanions) {
   assert.deepEqual(Object.fromEntries(Object.entries(minimizers).map(([name, value]) => [name, value.version])), {
     terserPlugin: '5.6.1', terser: '5.51.2', cssPlugin: '6.0.0', cssnano: '6.1.2', postcss: '8.5.32',
   }, '两侧必须保持当前 Taro 的真实压缩配套')
+  const taro = readPackage(project, '@tarojs/taro')
+  const optionalWebpack = readPackage(taro.directory, 'webpack')
+  assert.equal(optionalWebpack.version, compilerVersions[role], '可选编译器必须实际解析本侧 Webpack')
+  if (role === 'previous') assert.equal(optionalWebpack.directory, webpack.directory, '旧编译器的可选上下文必须合入目标直接编译器')
+  const optionalTerser = readPackage(optionalWebpack.directory, 'terser-webpack-plugin')
+  assert.equal(optionalTerser.version, '5.6.1')
+  const mainEsbuild = readPackage(terserPlugin.directory, 'esbuild')
+  const optionalEsbuild = readPackage(optionalTerser.directory, 'esbuild')
+  assert.equal(mainEsbuild.version, '0.28.2', '目标直接 Terser 的实际 esbuild 身份必须保持')
+  assert.equal(optionalEsbuild.version, role === 'current' ? '0.21.5' : '0.28.2', '可选 Terser 必须实际解析合同中的 esbuild')
+  const implementation = dependency => Object.fromEntries(['dist/index.js', 'dist/utils.js'].map(file => [file, sha256(fs.readFileSync(path.join(dependency.directory, file)))]))
+  const terserImplementation = implementation(terserPlugin)
+  assert.deepEqual(implementation(optionalTerser), terserImplementation, '可选编译器的 Terser 实现必须完全相同')
+  const esbuildCalls = fs.readFileSync(path.join(terserPlugin.directory, 'dist/utils.js'), 'utf8').match(/\brequire\(["']esbuild["']\)/g)
+  assert.equal(esbuildCalls?.length, 2, '固定 Terser 的实际 esbuild 调用锚点必须复查')
   return {
-    runner, webpack, direct, minimizers, compilerConsumers,
+    runner, webpack, direct, minimizers, compilerConsumers, terserImplementation, mainEsbuild,
+    optionalCompilerContext: { taro, webpack: optionalWebpack, terser: optionalTerser, esbuild: optionalEsbuild },
     compilerFiles: Object.fromEntries(['lib/Compiler.js', 'lib/Compilation.js', 'hot/only-dev-server.js'].map(file => [file, sha256(fs.readFileSync(path.resolve(webpack.directory, file)))])),
     configSha256: sha256(fs.readFileSync(path.join(project, 'config/index.ts'))),
   }

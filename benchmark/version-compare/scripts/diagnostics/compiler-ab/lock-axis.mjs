@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { isDeepStrictEqual } from 'node:util'
 import { auditNonAxisGraph } from './lock-graph.mjs'
+import { auditOptionalEsbuildMerge } from './optional-esbuild.mjs'
 
 export const baselineRef = '0e9ceb82321d49d145bf63c4adf84c7a8639e0e9'
 export const projectRelative = 'demo/taro-webpack-react-tailwindcss-v4'
@@ -118,11 +119,12 @@ export function auditLockAxis(current, previous, accurateBaseline) {
     assert.ok(allowed.has(withoutPeers(id)), `非编译器依赖发生漂移：${id}`)
     packageChanges.push({ id, current: a ?? null, previous: b ?? null })
   }
-  auditNonAxisGraph(current, previous, allowed, { projectRelative, versions: compilerVersions })
+  const optionalEsbuildMerge = auditOptionalEsbuildMerge(current, previous, projectRelative, compilerVersions)
+  const graph = auditNonAxisGraph(current, previous, allowed, { projectRelative, versions: compilerVersions, parents: compilerParents, optionalEsbuildMerge })
   assert.deepEqual(current.catalogs, previous.catalogs, 'catalog 不允许变化')
   const peerKeyChanges = {
     removed: Object.keys(current.snapshots).filter(key => !previous.snapshots[key]),
     added: Object.keys(previous.snapshots).filter(key => !current.snapshots[key]),
   }
-  return { companionChanges, allowedPackageIdentities: [...allowed].sort(), packageChanges, compilerPeerChanges, peerKeyChanges }
+  return { optionalEsbuildMerge, graph, companionChanges, allowedPackageIdentities: [...allowed].sort(), packageChanges, compilerPeerChanges, peerKeyChanges }
 }

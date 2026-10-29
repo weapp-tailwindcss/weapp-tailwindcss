@@ -15,10 +15,12 @@ export const runOrder = [
 
 export function markdownReport(preparation, runs) {
   const lines = [
-    '# Taro Webpack 编译器 A/B 诊断', '',
-    '仅用于解释编译器版本链；不产生正式性能验收结论，不修改预算、正式依赖目标或真实编译工作量。', '',
+    `# ${preparation.label}`, '',
+    '本轮比较 Webpack 编译器及明确记录的可选 esbuild peer 上下文，保持正式预算、依赖目标与完整编译工作量。结果仅作为诊断证据。', '',
     `源码：\`${preparation.sourceRef}\`；旧编译器配套来源：\`${preparation.baselineRef}\`。`,
     '两侧均为 Taro 4.3.1、当前源码、相同生产压缩配置；每侧三次新进程完整冷构建。',
+    '两侧均使用派生锁，原正式锁及其 SHA 单独归档。明确的附加轴为可选编译器的 Terser 5.6.1/esbuild 0.21.5 上下文合入 esbuild 0.28.2；Terser 其余实现与绑定保持。',
+    '每个 main/child/worker 必须有加载守卫证据；实际加载 webpack-cli 或从 Terser 实现消费 esbuild、以及守卫缺证均使该轮测量无效。',
     '自然 GC 只记录运行时事件；没有主动 GC。worker_threads 的 RSS 属于主 Node，另记录线程创建数及峰值。',
     '逐资产完整 SHA256 来自 source.source()；phase 内存在求值/哈希前记录，哈希耗时及之后内存另存。此操作可能物化缓存源码，因此仅用于对称诊断。',
     'map 数量仅指实际 .map 资产与 related.sourceMap 元数据；不调用 source.map() 物化内部映射。', '',
@@ -53,10 +55,10 @@ export async function main() {
   const runs = []
   try {
     preparation = await prepare(outDir)
-    await fs.writeFile(path.join(outDir, 'plan.json'), `${JSON.stringify({ diagnosticOnly: true, node: process.version, platform: process.platform, runOrder }, null, 2)}\n`)
+    await fs.writeFile(path.join(outDir, 'plan.json'), `${JSON.stringify({ diagnosticOnly: true, label: preparation.label, node: process.version, platform: process.platform, runOrder, optionalEsbuildMerge: preparation.axis.optionalEsbuildMerge }, null, 2)}\n`)
     for (const [role, run] of runOrder) {
       process.stdout.write(`[compiler-ab] ${role} ${run}/3：完整冷构建\n`)
-      runs.push(await measure(preparation.roots[role], role, run, outDir))
+      runs.push(await measure(preparation.roots[role], role, run, outDir, { nativeHelpers: preparation.nativeHelpers[role].helpers }))
     }
     const report = { diagnosticOnly: true, preparation, runOrder, runs }
     const markdown = markdownReport(preparation, runs)

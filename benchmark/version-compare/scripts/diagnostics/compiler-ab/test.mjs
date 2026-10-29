@@ -12,9 +12,14 @@ import { sha256 } from './identity.mjs'
 import { outputManifest, sampleRss, validatePhases } from './measure.mjs'
 import { assertTemporaryRoot, previousProjectManifest, previousWorkspace } from './prepare.mjs'
 import { runOrder } from './run.mjs'
+import { createRuntimeGuardSession, readRuntimeGuardEvidence } from './runtime-guard.mjs'
 import { assertProcessesStopped, groupStatus, pollGroup, processOwnership, runOwned, stopGroup } from './owned-process.mjs'
 import './lock-axis.test.mjs'
 import './gc-evidence.test.mjs'
+import './optional-cli.test.mjs'
+import './lock-roots.test.mjs'
+import './optional-esbuild.test.mjs'
+import './runtime-guard.test.mjs'
 
 const execute = promisify(execFile)
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -79,7 +84,7 @@ test('逐资产完整 hash 不调用 source.map，输出 manifest 保留带空�
   finally { await fs.rm(temporary, { recursive: true, force: true }) }
 })
 
-test('真实 Node preload 观测压缩阶段与 worker，保留原生命周期及 options', async () => {
+test('真实 Node 加载守卫与 preload 观测兼容，ESM Worker 的空环境/execArgv 仍保留证据', async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'compiler-ab-node-'))
   try {
     const library = path.join(temporary, 'node_modules', 'webpack', 'lib')
@@ -110,14 +115,18 @@ test('真实 Node preload 观测压缩阶段与 worker，保留原生命周期�
       assert.equal(compilation.original, true);
       compilation.hooks.processAssets.call();
       compilation.hooks.afterProcessAssets.call();
-      const { Worker } = require('node:worker_threads');
-      const worker = new Worker('require("node:worker_threads").parentPort.postMessage("ok")', { eval: true });
-      worker.once('message', message => assert.equal(message, 'ok'));
+      process.stdout.write(JSON.stringify({ pid: process.pid }));
+      import('node:worker_threads').then(({ Worker }) => {
+        const worker = new Worker('require("node:worker_threads").parentPort.postMessage("ok")', { eval: true, execArgv: [], env: {} });
+        worker.once('message', message => assert.equal(message, 'ok'));
+      }).catch(error => { console.error(error); process.exitCode = 1 });
     `)
     const file = path.join(temporary, 'compiler.ndjson')
-    await execute(process.execPath, ['--require', path.join(here, 'preload.cjs'), entry], {
-      env: { ...process.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file }) }, timeout: 10000,
+    const guard = createRuntimeGuardSession(path.join(temporary, 'guard'))
+    const { stdout } = await execute(process.execPath, [...guard.execArgv, '--require', path.join(here, 'preload.cjs'), entry], {
+      env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file }) }, timeout: 10000,
     })
+    readRuntimeGuardEvidence(guard.session, { rootPid: JSON.parse(stdout).pid })
     const records = (await fs.readFile(file, 'utf8')).trim().split('\n').map(JSON.parse)
     validatePhases(records)
     const phases = records.filter(item => item.type === 'phase')
@@ -139,7 +148,7 @@ test('诊断固定每侧三次完整冷构建，workflow 与正式 check 隔离'
   assert.match(workflow, /workflow_dispatch:/)
   assert.doesNotMatch(workflow, /pull_request:|push:|workflow_call:/)
   assert.match(workflow, /node-version: 22\.23\.4/)
-  assert.match(workflow, /name: Diagnostic \/ Taro Webpack compiler chain/)
+  assert.match(workflow, /name: Diagnostic \/ Taro compiler and optional esbuild peer/)
 })
 
 test('有界 runner 在超时后终止本轮父子进程，确认 close/reap 并保留首错', async () => {

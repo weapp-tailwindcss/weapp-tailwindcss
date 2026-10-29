@@ -9,7 +9,8 @@ import { parsePosixProcessRows, selectProcessTreeRows } from '../../process-memo
 import { sha256 } from './identity.mjs'
 import { readGcEvidence } from './gc-evidence.mjs'
 import { projectRelative } from './lock-axis.mjs'
-import { failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
+import { createRuntimeGuardSession, readRuntimeGuardEvidence } from './runtime-guard.mjs'
+import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const gcPreload = path.join(here, 'gc-preload.mjs')
@@ -83,10 +84,12 @@ function readRecords(file) {
   return content.trimEnd().split('\n').map(line => JSON.parse(line))
 }
 
-export async function measure(root, role, run, outDir) {
+export async function measure(root, role, run, outDir, options = {}) {
   const project = path.join(root, projectRelative)
   const directory = path.join(outDir, role, `run-${run}`)
   await fsp.mkdir(directory)
+  const guard = createRuntimeGuardSession(path.join(directory, 'runtime-guard'), { nativeHelpers: options.nativeHelpers ?? [] })
+  await fsp.writeFile(path.join(directory, 'runtime-guard-session.json'), `${JSON.stringify(guard.session, null, 2)}\n`)
   // 每轮都使用新进程；持久化缓存与 prebundle 在原 demo 配置中已经关闭。
   for (const name of ['dist', '.taro', '.swc', path.join('node_modules', '.cache')]) {
     await fsp.rm(path.join(project, name), { recursive: true, force: true })
@@ -123,12 +126,13 @@ export async function measure(root, role, run, outDir) {
   let sampler
   let outcome
   let primary
+  let runtimeGuard
   const cleanupErrors = []
   try {
-    outcome = await runOwned(process.execPath, ['--require', path.join(here, 'preload.cjs'), '--import', gcPreload, entry, 'build', '--type', 'weapp'], {
+    outcome = await runOwned(process.execPath, [...guard.execArgv, '--require', path.join(here, 'preload.cjs'), '--import', gcPreload, entry, 'build', '--type', 'weapp'], {
       cwd: project, stdio: ['ignore', 'pipe', 'pipe'], timeoutMs: 300000,
       env: {
-        ...process.env, CI: '1', NODE_ENV: 'production', BROWSERSLIST_ENV: 'production',
+        ...process.env, ...guard.env, CI: '1', NODE_ENV: 'production', BROWSERSLIST_ENV: 'production',
         TARO_BUILD_STRICT: '1', LEFTHOOK: '0', HUSKY: '0',
         WEAPP_TW_HMR_TIMING: '1', WEAPP_TW_HMR_TIMING_LOG: '0',
         WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify(session),
@@ -160,6 +164,17 @@ export async function measure(root, role, run, outDir) {
     }
     catch (error) { cleanupErrors.push(error) }
   }
+  try {
+    assertProcessesStopped()
+    runtimeGuard = readRuntimeGuardEvidence(guard.session, { rootPid: child?.pid })
+    await fsp.writeFile(path.join(directory, 'runtime-guard-evidence.json'), `${JSON.stringify({ available: true, ...runtimeGuard }, null, 2)}\n`)
+  }
+  catch (error) {
+    try { await fsp.writeFile(path.join(directory, 'runtime-guard-evidence.json'), `${JSON.stringify({ available: false, error: failureEvidence(error), evidence: error.evidence, receiptDirectory: guard.session.directory }, null, 2)}\n`) }
+    catch (caught) { cleanupErrors.push(caught) }
+    if (primary) cleanupErrors.push(error)
+    else primary = error
+  }
   if (primary || cleanupErrors.length) throw new AggregateError([...(primary ? [primary] : []), ...cleanupErrors], `冷构建失败：${role}/${run}`, { cause: primary })
   assert.equal(probeFailures.length, 0, '存活进程的 RSS 采样失败')
   assert.ok(samples.length > 0 && samples.some(item => item.processes.some(row => row.pid === child.pid)), '缺少主 Node 的 RSS 证据')
@@ -180,7 +195,7 @@ export async function measure(root, role, run, outDir) {
   assert.ok(output.some(file => file.name === 'app.js') && output.some(file => file.name === 'app.json'), '没有完整微信构建产物')
   await fsp.writeFile(path.join(directory, 'output.json'), `${JSON.stringify(output, null, 2)}\n`)
   const result = {
-    role, run, pid: child.pid, durationMs: Date.now() - started,
+    role, run, pid: child.pid, runtimeGuard, durationMs: Date.now() - started,
     mainNodePeakRssMb: Math.max(...samples.flatMap(item => item.processes.filter(row => row.pid === child.pid).map(row => row.rssMb))),
     treePeakRssMb: Math.max(...samples.map(item => item.rssMb)),
     observerPeakRssMb: Math.max(...phases.filter(item => item.memory).map(item => item.memory.rss / 1024 / 1024)),

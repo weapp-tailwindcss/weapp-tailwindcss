@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url'
 import { compilerIdentity, fileSha256, sha256 } from './identity.mjs'
 import { auditLockAxis, baselineRef, compilerOverrides, compilerSnapshot, compilerVersions, previousCompanions, projectRelative } from './lock-axis.mjs'
 import { auditLockDocuments, parseLockDocuments } from './lock-documents.mjs'
+import { auditOptionalCliIsolation, isolateOptionalCliWorkspace } from './optional-cli.mjs'
+import { nativeEsbuildHelpers } from './native-helpers.mjs'
 import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..')
@@ -72,42 +74,64 @@ export async function prepare(outDir) {
     }
     const originalLock = await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))
     const originalLockSha256 = sha256(originalLock)
+    await fs.writeFile(path.join(outDir, 'original-pnpm-lock.yaml'), originalLock)
+    const currentWorkspaceFile = path.join(roots.current, 'pnpm-workspace.yaml')
+    await fs.writeFile(path.join(outDir, 'original-pnpm-workspace.yaml'), await fs.readFile(currentWorkspaceFile))
+    const currentWorkspace = String(isolateOptionalCliWorkspace(parseDocument(await fs.readFile(currentWorkspaceFile, 'utf8'))))
+    await fs.writeFile(currentWorkspaceFile, currentWorkspace)
+    await command(roots.current, 'pnpm', ['install', '--no-frozen-lockfile'])
+    const currentLock = await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))
+    const currentLockSha256 = sha256(currentLock)
+    const originalDocuments = parseLockDocuments(originalLock.toString())
+    const currentDocuments = parseLockDocuments(currentLock.toString())
+    auditLockDocuments(originalDocuments, currentDocuments)
+    const isolation = auditOptionalCliIsolation(originalDocuments.lock, currentDocuments.lock)
+    await command(roots.current, 'pnpm', ['install', '--frozen-lockfile'])
+    assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), currentLockSha256, '当前派生锁 frozen install 不得变化')
+    assert.equal(await fs.readFile(currentWorkspaceFile, 'utf8'), currentWorkspace, '安装不得改写当前隔离配置')
+    await fs.writeFile(path.join(roots.previous, 'pnpm-lock.yaml'), currentLock)
+    await fs.copyFile(currentWorkspaceFile, path.join(roots.previous, 'pnpm-workspace.yaml'))
     const manifestFile = path.join(roots.previous, projectRelative, 'package.json')
     const originalManifest = await fs.readFile(manifestFile)
     const previousManifest = `${JSON.stringify(previousProjectManifest(JSON.parse(originalManifest)), null, 2)}\n`
     await fs.writeFile(manifestFile, previousManifest)
     const workspaceFile = path.join(roots.previous, 'pnpm-workspace.yaml')
     const document = previousWorkspace(parseDocument(await fs.readFile(workspaceFile, 'utf8')), expected, patchFile)
-    await fs.writeFile(workspaceFile, String(document))
+    const previousWorkspaceSource = String(document)
+    await fs.writeFile(workspaceFile, previousWorkspaceSource)
     const patchPath = path.resolve(roots.previous, patchFile)
     assert.ok(path.relative(roots.previous, patchPath) && !path.relative(roots.previous, patchPath).startsWith('..'), '补丁必须位于副本内')
     await fs.writeFile(patchPath, patch)
-    await command(roots.current, 'pnpm', ['install', '--frozen-lockfile'])
     await command(roots.previous, 'pnpm', ['install', '--no-frozen-lockfile'])
+    const previousLockSha256 = sha256(await fs.readFile(path.join(roots.previous, 'pnpm-lock.yaml')))
     await command(roots.previous, 'pnpm', ['install', '--frozen-lockfile'])
+    assert.equal(sha256(await fs.readFile(path.join(roots.previous, 'pnpm-lock.yaml'))), previousLockSha256, '旧编译器派生锁 frozen install 不得变化')
+    assert.equal(await fs.readFile(workspaceFile, 'utf8'), previousWorkspaceSource, '安装不得改写旧编译器配套配置')
     for (const [role, root] of Object.entries(roots)) {
       const evidenceDir = path.join(outDir, role)
       await fs.mkdir(evidenceDir)
       for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
       await fs.copyFile(path.join(root, projectRelative, 'package.json'), path.join(evidenceDir, 'target-package.json'))
     }
-    assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), originalLockSha256, '当前原锁不允许变化')
+    assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), currentLockSha256, '当前派生锁不允许变化')
     const documents = Object.fromEntries(await Promise.all(Object.entries(roots).map(async ([role, root]) => [role, parseLockDocuments(await fs.readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))])))
     const locks = auditLockDocuments(documents.current, documents.previous)
     const axis = auditLockAxis(locks.current, locks.previous, accurateBaseline)
-    const identities = {}
+    const identities = {}, nativeHelpers = {}
     for (const [role, root] of Object.entries(roots)) {
       const companions = Object.fromEntries(Object.entries(compilerSnapshot(locks[role], compilerVersions[role]).snapshot.dependencies).map(([name, ref]) => [name, ref.split('(')[0]]))
       identities[role] = compilerIdentity(root, role, companions)
+      nativeHelpers[role] = nativeEsbuildHelpers(root, identities[role])
     }
     assert.equal(identities.current.configSha256, identities.previous.configSha256)
+    assert.deepEqual(identities.current.terserImplementation, identities.previous.terserImplementation, '两侧 Terser 实现必须相同')
     const preparation = {
-      schemaVersion: 1, diagnosticOnly: true, sourceRef, baselineRef, originalLockSha256,
+      schemaVersion: 2, diagnosticOnly: true, sourceRef, baselineRef, originalLockSha256, currentLockSha256, previousLockSha256, isolation,
+      label: 'Webpack 编译器及其可选 esbuild peer 上下文 A/B',
       sourceArchiveSha256: await fileSha256(archiveFile),
-      previousLockSha256: sha256(await fs.readFile(path.join(roots.previous, 'pnpm-lock.yaml'))),
       patch: { file: patchFile, sha256: sha256(patch), baselineRef },
       manifestAxis: { file: path.join(projectRelative, 'package.json'), currentSha256: sha256(originalManifest), previousSha256: sha256(previousManifest), current: compilerVersions.current, previous: compilerVersions.previous },
-      axis, identities, roots, temporary,
+      axis, identities, nativeHelpers, roots, temporary,
     }
     await fs.writeFile(path.join(outDir, 'preparation.json'), `${JSON.stringify(preparation, null, 2)}\n`)
     await fs.writeFile(path.join(outDir, 'previous-webpack.patch'), patch)

@@ -1,13 +1,9 @@
 import assert from 'node:assert/strict'
+import { assign, compilerIds, edgeSignature, normalizeSnapshots, packageName, patchHash, peerContext, stable, target, withoutPeers } from './lock-graph-core.mjs'
+import { auditImporterGraphs } from './lock-roots.mjs'
+export { optionalCliContextKey } from './lock-graph-core.mjs'
 
-const withoutPeers = value => value.split('(')[0]
-const packageName = id => id.slice(0, id.lastIndexOf('@'))
-const patchHash = value => value.match(/^[^(]+\(patch_hash=([^()]+)\)/)?.[1]
-const ordered = value => Array.isArray(value) ? value.map(ordered) : value && typeof value === 'object'
-  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])])) : value
-const stable = value => JSON.stringify(ordered(value))
 const fields = ['dependencies', 'optionalDependencies']
-const compilerIds = allowed => new Set([...allowed].filter(id => packageName(id) === 'webpack'))
 
 function externalAxisReference(child, allowed) {
   if (packageName(child.id) === 'webpack') return { axis: 'webpack' }
@@ -15,34 +11,7 @@ function externalAxisReference(child, allowed) {
   return { fixedAxis: { id: child.id, patchHash: patchHash(child.key), peers: peerContext(child.key, compilerIds(allowed), false) } }
 }
 
-function target(lock, name, reference) {
-  if (/^(?:link:|file:|workspace:)/.test(reference)) return { local: reference }
-  const key = Object.hasOwn(lock.snapshots, reference) ? reference : `${name}@${reference}`
-  assert.ok(Object.hasOwn(lock.snapshots, key), `非编译器引用缺少准确 snapshot：${name} -> ${reference}`)
-  return { key, id: withoutPeers(key) }
-}
-
-function peerContext(key, allowed, ignoreOpaque) {
-  let offset = key.indexOf('(')
-  if (offset < 0) return ''
-  function group() {
-    assert.equal(key[offset++], '(')
-    const start = offset
-    while (offset < key.length && !['(', ')'].includes(key[offset])) offset += 1
-    const identity = key.slice(start, offset)
-    let children = ''
-    while (key[offset] === '(') children += group()
-    assert.equal(key[offset++], ')', `peer context 无效：${key}`)
-    if (allowed.has(identity)) return `(<compiler-axis:${packageName(identity)}>)`
-    if (ignoreOpaque && /^[a-f\d]{32,64}$/i.test(identity)) return '(<opaque-peer-context>)'
-    return `(${identity}${children})`
-  }
-  let result = ''
-  while (offset < key.length) result += group()
-  return result
-}
-
-function graph(lock, allowed, side) {
+function graph(lock, allowed, side, optionalCliConsumers) {
   const nodes = []
   const byKey = new Map()
   for (const [key, value] of Object.entries(lock.snapshots)) {
@@ -56,6 +25,7 @@ function graph(lock, allowed, side) {
   for (const node of nodes) {
     for (const field of fields) {
       for (const [name, reference] of Object.entries(node.value[field] ?? {})) {
+        if (optionalCliConsumers?.has(node.id) && field === 'optionalDependencies' && name === 'webpack-cli') continue
         const child = target(lock, name, reference)
         const edge = { name: `${field}:${name}` }
         if (child.local) edge.local = child.local
@@ -67,6 +37,7 @@ function graph(lock, allowed, side) {
           edge.node = byKey.get(child.key)
           assert.ok(edge.node)
           parents.get(edge.node).push(node)
+          if (optionalCliConsumers?.has(child.id) && !node.reachesAxis) { node.reachesAxis = true; pending.push(node) }
         }
         node.edges.push(edge)
       }
@@ -80,37 +51,14 @@ function graph(lock, allowed, side) {
   }
   for (const node of nodes) {
     const metadata = Object.fromEntries(Object.entries(node.value).filter(([field]) => !fields.includes(field)))
-    node.label = stable({ id: node.id, patchHash: patchHash(node.key), metadata, peers: peerContext(node.key, compilerIds(allowed), node.reachesAxis) })
+    const transitiveCli = Boolean(optionalCliConsumers && node.reachesAxis && node.value.transitivePeerDependencies?.includes('webpack-cli') && !Object.hasOwn(lock.packages[node.id].peerDependencies ?? {}, 'webpack-cli'))
+    if (transitiveCli && metadata.transitivePeerDependencies) {
+      metadata.transitivePeerDependencies = metadata.transitivePeerDependencies.filter(name => name !== 'webpack-cli')
+      if (!metadata.transitivePeerDependencies.length) delete metadata.transitivePeerDependencies
+    }
+    node.label = stable({ id: node.id, patchHash: patchHash(node.key), metadata, peers: peerContext(node.key, compilerIds(allowed), node.reachesAxis, optionalCliConsumers, transitiveCli) })
   }
   return { lock, nodes, byKey, side }
-}
-
-function assign(nodes, signatures) {
-  const identifiers = new Map([...new Set(signatures)].sort().map((signature, index) => [signature, index]))
-  nodes.forEach((node, index) => { node.color = identifiers.get(signatures[index]) })
-  return identifiers.size
-}
-
-function edgeSignature(edge) {
-  return edge.node ? { name: edge.name, node: edge.node.color } : { name: edge.name, local: edge.local, axis: edge.axis, fixedAxis: edge.fixedAxis }
-}
-
-function normalizeSnapshots({ nodes }) {
-  const result = new Map()
-  const opaque = new Map()
-  for (const node of nodes) {
-    const colors = result.get(node.id) ?? new Set()
-    colors.add(node.color)
-    result.set(node.id, colors)
-    if (node.label.includes('<opaque-peer-context>')) {
-      const keys = opaque.get(node.color) ?? new Set()
-      keys.add(node.key)
-      opaque.set(node.color, keys)
-    }
-  }
-  // 多个不透明上下文若无法从依赖图区分，不能推断它们可以互换。
-  for (const keys of opaque.values()) assert.equal(keys.size, 1, `不透明 peer context 存在歧义：${[...keys].join(', ')}`)
-  return Object.fromEntries([...result].sort().map(([id, colors]) => [id, [...colors].sort((a, b) => a - b)]))
 }
 
 function normalizeImporters({ lock, byKey, side }, allowed, compilerAxis) {
@@ -135,8 +83,9 @@ function normalizeImporters({ lock, byKey, side }, allowed, compilerAxis) {
 
 /** 联合细分两侧 snapshot 图；仅编译器轴可变，保留边名、其余 peer 绑定和完整 metadata。 */
 export function auditNonAxisGraph(current, previous, allowed, compilerAxis) {
-  const left = graph(current, allowed, 'current')
-  const right = graph(previous, allowed, 'previous')
+  if (compilerAxis.projectRelative && compilerAxis.parents) return auditImporterGraphs(current, previous, allowed, compilerAxis)
+  const left = graph(current, allowed, 'current', compilerAxis.optionalCliConsumers)
+  const right = graph(previous, allowed, 'previous', compilerAxis.optionalCliConsumers)
   const nodes = [...left.nodes, ...right.nodes]
   let count = assign(nodes, nodes.map(node => node.label))
   let stablePartition = nodes.length === 0

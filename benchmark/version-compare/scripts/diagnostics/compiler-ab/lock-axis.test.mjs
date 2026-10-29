@@ -5,34 +5,7 @@ import { stringify } from 'yaml'
 import { auditLockAxis, compilerOverrides, compilerParents, projectRelative } from './lock-axis.mjs'
 import { auditLockDocuments, parseLockDocuments } from './lock-documents.mjs'
 
-function lock(version, sourceVersion) {
-  const reference = `${version}(patch_hash=fixture-${version})(peer@1.0.0)`
-  return {
-    lockfileVersion: '9.0',
-    settings: { autoInstallPeers: true },
-    catalogs: { tools: { example: { specifier: '^1.0.0', version: '1.0.0' } } },
-    overrides: { existing: '1.0.0' },
-    patchedDependencies: { [`webpack@${version}`]: { hash: `fixture-${version}`, path: `patches/webpack@${version}.patch` } },
-    importers: { [projectRelative]: { devDependencies: { webpack: { specifier: version, version: reference }, example: { specifier: '^1.0.0', version: '1.0.0' } } } },
-    packages: Object.fromEntries([`webpack@${version}`, `webpack-sources@${sourceVersion}`, 'example@1.0.0', '@tarojs/webpack5-runner@4.3.1', 'terser-webpack-plugin@5.6.1'].map(key => [key, { resolution: { integrity: key } }])),
-    snapshots: {
-      [`webpack@${reference}`]: { dependencies: { 'webpack-sources': sourceVersion, 'terser-webpack-plugin': '5.6.1' } },
-      [`webpack-sources@${sourceVersion}`]: {},
-      'example@1.0.0': {},
-      'terser-webpack-plugin@5.6.1': {},
-      [`@tarojs/webpack5-runner@4.3.1(webpack@${version})`]: { dependencies: { webpack: reference, example: '1.0.0' } },
-    },
-  }
-}
-
-function pair() {
-  const current = lock('5.91.0', '3.6.0')
-  const baseline = lock('5.105.4', '3.5.1')
-  const previous = structuredClone(baseline)
-  previous.overrides = { existing: '1.0.0', ...compilerOverrides({ 'webpack-sources': '3.5.1', 'terser-webpack-plugin': '5.6.1' }) }
-  previous.patchedDependencies = { ...current.patchedDependencies, ...previous.patchedDependencies }
-  return { current, previous, baseline }
-}
+import { pair } from './fixtures/lock-pair.mjs'
 
 test('锁轴允许准确编译器配套和可读、压缩 peer key 传播', () => {
   const { current, previous, baseline } = pair()
@@ -42,6 +15,7 @@ test('锁轴允许准确编译器配套和可读、压缩 peer key 传播', () =
   for (const [index, item] of [current, previous].entries()) {
     const key = Object.keys(item.snapshots).find(key => key.startsWith('@tarojs/webpack5-runner@'))
     const compressed = `@tarojs/webpack5-runner@4.3.1(${'a'.repeat(31)}${index})`
+    item.importers[projectRelative].devDependencies.runner.version = compressed
     item.snapshots[compressed] = item.snapshots[key]
     delete item.snapshots[key]
     item.snapshots['example@1.0.0'].dependencies = { runner: compressed }
@@ -109,6 +83,7 @@ test('锁轴拒绝无关 peer 的嵌套改名和不透明上下文的歧义', ()
   const { current, previous, baseline } = pair()
   const rename = (item, suffix) => {
     const key = Object.keys(item.snapshots).find(key => key.startsWith('@tarojs/webpack5-runner@'))
+    item.importers[projectRelative].devDependencies.runner.version = `${key}(unrelated@${suffix})`
     item.snapshots[`${key}(unrelated@${suffix})`] = item.snapshots[key]
     delete item.snapshots[key]
   }
@@ -118,7 +93,12 @@ test('锁轴拒绝无关 peer 的嵌套改名和不透明上下文的歧义', ()
   const value = pair()
   for (const item of [value.current, value.previous]) {
     const key = Object.keys(item.snapshots).find(key => key.startsWith('@tarojs/webpack5-runner@'))
-    for (const char of ['a', 'b']) item.snapshots[`@tarojs/webpack5-runner@4.3.1(${char.repeat(32)})`] = structuredClone(item.snapshots[key])
+    for (const char of ['a', 'b']) {
+      const clone = `@tarojs/webpack5-runner@4.3.1(${char.repeat(32)})`
+      item.snapshots[clone] = structuredClone(item.snapshots[key])
+      item.importers[projectRelative].devDependencies[`runner-${char}`] = { specifier: '4.3.1', version: clone }
+    }
+    delete item.importers[projectRelative].devDependencies.runner
     delete item.snapshots[key]
   }
   assert.throws(() => auditLockAxis(value.current, value.previous, value.baseline), /不透明 peer context 存在歧义/)
@@ -127,7 +107,7 @@ test('锁轴拒绝无关 peer 的嵌套改名和不透明上下文的歧义', ()
 test('锁图保留已存在 opaque peer context 的真实绑定，不因编译器可达而混同', () => {
   const { current, previous, baseline } = pair()
   for (const item of [current, previous]) {
-    item.packages['foo@1.0.0'] = {}
+    item.packages['foo@1.0.0'] = { peerDependencies: { webpack: '^5' } }
     const webpack = item.importers[projectRelative].devDependencies.webpack.version
     for (const [index, char] of ['a', 'b'].entries()) {
       const peer = `${index + 1}.0.0`
@@ -135,7 +115,7 @@ test('锁图保留已存在 opaque peer context 的真实绑定，不因编译�
       item.snapshots[`peer@${peer}`] = {}
       item.snapshots[`foo@1.0.0(${char.repeat(32)})`] = { dependencies: { webpack, peer } }
     }
-    item.snapshots['example@1.0.0'].dependencies = { foo: `1.0.0(${'a'.repeat(32)})` }
+    item.snapshots['example@1.0.0'].dependencies = { foo: `1.0.0(${'a'.repeat(32)})`, second: `foo@1.0.0(${'b'.repeat(32)})` }
   }
   auditLockAxis(current, previous, baseline)
   previous.snapshots['example@1.0.0'].dependencies.foo = `1.0.0(${'b'.repeat(32)})`

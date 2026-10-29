@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const { Buffer } = require('node:buffer')
 const { createHash } = require('node:crypto')
 const fs = require('node:fs')
-const { createRequire } = require('node:module')
+const { createRequire, syncBuiltinESMExports } = require('node:module')
 const path = require('node:path')
 const { performance } = require('node:perf_hooks')
 const process = require('node:process')
@@ -100,6 +100,8 @@ function start() {
       })
     }
   }
+
+  syncBuiltinESMExports()
 
   let compilationNumber = 0
   const original = Compiler.prototype.newCompilation
