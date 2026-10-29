@@ -1,4 +1,6 @@
 import type { Buffer } from 'node:buffer'
+import type { createMemorySampler } from './memory/sampler'
+import type { createWatchProcessController } from './process-controller'
 import type { CliOptions, HmrMemoryDebugSample, MemoryUsageSample, PluginProcessSample, WatchSession } from './types'
 import { spawn, spawnSync } from 'node:child_process'
 import path from 'node:path'
@@ -7,9 +9,8 @@ import { createPnpmCommand } from '../../../../scripts/pnpm-command.mjs'
 import { assertWatchCommandActive } from './cancellation'
 import { createLogLineBuffer, createPollingCompileTracker } from './compile-state'
 import { createSpawnEnv, createWatchProcessEnv } from './environment'
-import { createMemorySampler } from './memory/sampler'
-import { spawnWithWatchMemorySource } from './memory/source'
-import { createWatchProcessController } from './process-controller'
+import { spawnWithWatchResources } from './process-resources'
+import { initializeWatchRuntime } from './process-runtime'
 import { createWatchResourceStop } from './process-stop'
 
 export { createSpawnEnv } from './environment'
@@ -417,17 +418,13 @@ export async function createWatchCommandSession(
   const memorySamples: MemoryUsageSample[] = []
   let lastCompileSuccessAt = 0
   let compileFatalError: string | undefined
-  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(cwd, () => spawnPnpm(args, {
+  const { child, memorySource, identitySource, startedAt } = await spawnWithWatchResources(cwd, () => spawnPnpm(args, {
     cwd,
     env: createWatchSpawnEnv(env),
     detached: process.platform !== 'win32',
     stdio: 'pipe',
   }))
-  const controller = (dependencies.controller ?? createWatchProcessController)(child)
-  const initialOwnership = controller.capture()
-  const memorySampler = (dependencies.sampler ?? createMemorySampler)({
-    probe: signal => memorySource.sample(child.pid, signal),
-    close: () => memorySource.close(),
+  const { controller, memorySampler } = await initializeWatchRuntime({ child, memorySource, identitySource }, {
     onSample(sample) {
       memorySamples.push(sample)
       if (memorySamples.length > 1000) {
@@ -435,7 +432,8 @@ export async function createWatchCommandSession(
       }
     },
     onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
-  })
+  }, dependencies)
+  const initialOwnership = controller.capture()
   let exitSignal: NodeJS.Signals | null = null
   child.once('close', (_code, signal) => {
     exitSignal = signal

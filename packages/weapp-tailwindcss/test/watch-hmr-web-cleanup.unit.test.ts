@@ -20,6 +20,7 @@ vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/sessi
   ...await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session')>(),
   spawnPnpm: (...args: unknown[]) => mocks.spawn(...args),
 }))
+vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-identity', () => ({ prepareWatchIdentitySource: async () => undefined }))
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source')>()
   return { ...actual, spawnWithWatchMemorySource: (cwd: string, spawnChild: () => unknown) => actual.spawnWithWatchMemorySource(cwd, spawnChild, () => mocks.source()) }

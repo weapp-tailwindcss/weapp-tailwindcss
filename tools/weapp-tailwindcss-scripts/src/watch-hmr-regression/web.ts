@@ -6,9 +6,9 @@ import { existsSync } from 'node:fs'
 import process from 'node:process'
 import { chromium } from 'playwright'
 import { createWatchCaseCleanup } from './cleanup'
-import { createMemorySampler } from './memory/sampler'
-import { spawnWithWatchMemorySource } from './memory/source'
-import { createWatchProcessController, WEB_STOP_PHASES } from './process-controller'
+import { WEB_STOP_PHASES } from './process-controller'
+import { spawnWithWatchResources } from './process-resources'
+import { initializeWatchRuntime } from './process-runtime'
 import { createWatchResourceStop } from './process-stop'
 import {
   createLineCollector,
@@ -664,7 +664,7 @@ export async function runWebHmr(
   const pluginProcessSamples: PluginProcessSample[] = []
   const memoryDebugSamples: HmrMemoryDebugSample[] = []
   const memorySamples: MemoryUsageSample[] = []
-  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(watchCase.cwd, () => spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
+  const { child, memorySource, identitySource, startedAt } = await spawnWithWatchResources(watchCase.cwd, () => spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
     cwd: watchCase.cwd,
     env: createSpawnEnv(process.env, {
       BROWSER: 'none',
@@ -687,11 +687,7 @@ export async function runWebHmr(
     stdio: 'pipe',
   }))
 
-  const controller = createWatchProcessController(child, { phases: WEB_STOP_PHASES })
-  const initialOwnership = controller.capture()
-  const memorySampler = createMemorySampler({
-    probe: signal => memorySource.sample(child.pid, signal),
-    close: () => memorySource.close(),
+  const { controller, memorySampler } = await initializeWatchRuntime({ child, memorySource, identitySource }, {
     onSample(sample) {
       memorySamples.push(sample)
       if (memorySamples.length > 1000) {
@@ -699,7 +695,8 @@ export async function runWebHmr(
       }
     },
     onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
-  })
+  }, { phases: WEB_STOP_PHASES })
+  const initialOwnership = controller.capture()
 
   let capturedInitialCompile = false
   const collectLine = createLineCollector('web-watch', lines, 240, {
