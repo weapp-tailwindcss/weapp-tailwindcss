@@ -77,10 +77,16 @@ describe('Vite style source identities', () => {
     fs.writeFileSync(sourceFile, '.theme {}')
 
     expect(scoreMatchingStyleFileBase(
-      path.join('feature', 'theme.wxss'), `${sourceFile}?vue&type=style`, outputRoot, sourceRoot,
+      path.join('feature', 'theme.wxss'),
+      `${sourceFile}?vue&type=style`,
+      outputRoot,
+      sourceRoot,
     )).toBe(100000 + 'feature/theme'.length)
     expect(scoreMatchingStyleFileBase(
-      path.join('other', 'theme.wxss'), sourceFile, outputRoot, sourceRoot,
+      path.join('other', 'theme.wxss'),
+      sourceFile,
+      outputRoot,
+      sourceRoot,
     )).toBe(0)
   })
 
