@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { summarize } from './stats.mjs'
 import { closeWatchResources, createWatchControl, runWatchOperation } from './watch-lifecycle/control.mjs'
@@ -17,7 +18,8 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
   const control = createWatchControl(kind, signal, root)
   const write = (file, content) => {
     control.assertActive()
-    return fs.writeFile(path.join(root, file), content)
+    control.record('write-start', { file })
+    return fs.writeFile(path.join(root, file), content).then(() => control.record('write-complete', { file }))
   }
   return runWatchOperation(control, async () => {
     await fs.symlink(path.join(sourceRoot, 'node_modules'), path.join(root, 'node_modules'), 'junction')
@@ -26,9 +28,12 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
     const template = Array.from({ length: size }, (_, index) => `<div class="bg-accent w-[${index + 1}px]"></div>`).join('\n')
     const config = color => `module.exports = {theme: {extend: {colors: {accent: "${color}"}}}}`
     await Promise.all([
-      write('main.js', 'import "./main.css"'), write('secondary.js', 'import "./secondary.css"'),
-      write('main.css', mainCss), write('secondary.css', `${baseCss}\n.author-secondary{height:19px}`),
-      write('view.html', template), write('theme.cjs', config('#123456')),
+      write('main.js', 'import "./main.css"'),
+      write('secondary.js', 'import "./secondary.css"'),
+      write('main.css', mainCss),
+      write('secondary.css', `${baseCss}\n.author-secondary{height:19px}`),
+      write('view.html', template),
+      write('theme.cjs', config('#123456')),
     ])
     control.assertActive()
     const options = { tailwindcssBasedir: root, cssEntries: [path.join(root, 'main.css'), path.join(root, 'secondary.css')], generator: { target: 'web', hmr: { preserveDeletedCss: false } } }
@@ -38,28 +43,45 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       const { WeappTailwindcss } = require('weapp-tailwindcss/vite')
       control.assertActive()
       const watcher = await build({
-        configFile: false, root, logLevel: 'silent', plugins: [WeappTailwindcss(options), {
+        configFile: false,
+        root,
+        logLevel: 'silent',
+        plugins: [WeappTailwindcss(options), {
           name: 'benchmark-current-css-assets',
+          watchChange(file, change) { control.record('watch-change', { file, change: change.event }) },
+          buildStart() { control.record('build-start') },
           writeBundle: { order: 'post', handler(_options, bundle) {
             control.css = Object.values(bundle).filter(asset => asset.type === 'asset' && asset.fileName.endsWith('.css')).sort((a, b) => a.fileName.localeCompare(b.fileName)).map(asset => String(asset.source)).join('\n')
           } },
         }],
         build: {
-          outDir: output, emptyOutDir: false, watch: {}, minify: false, cssMinify: false,
+          outDir: output,
+          emptyOutDir: false,
+          watch: {},
+          minify: false,
+          cssMinify: false,
           rollupOptions: { input: { main: path.join(root, 'main.js'), secondary: path.join(root, 'secondary.js') }, output: { assetFileNames: '[name][extname]' } },
         },
       })
       close = () => watcher.close()
       watcher.on('event', (event) => {
-        if (event.code === 'END') { control.notify() }
-        if (event.code === 'ERROR') { control.notify(event.error) }
+        control.record('rollup-event', { code: event.code, error: event.error?.message })
+        if (event.code === 'END') {
+          control.notify()
+        }
+        if (event.code === 'ERROR') {
+          control.notify(event.error)
+        }
       })
     }
     else {
-      const webpack = require('webpack')
       const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
+      const webpack = require('webpack')
       const compiler = webpack({
-        mode: 'development', context: root, devtool: false, cache: false,
+        mode: 'development',
+        context: root,
+        devtool: false,
+        cache: false,
         entry: { main: './main.js', secondary: './secondary.js' },
         output: { path: output, filename: '[name].js' },
         module: { rules: [{ test: /\.css$/, type: 'asset/resource', generator: { filename: '[name][ext]' } }] },
@@ -75,12 +97,25 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       })
       const closeCompiler = () => new Promise((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
       close = closeCompiler
+      compiler.hooks.invalid.tap('BenchmarkWatchEvidence', (file, time) => control.record('invalid', { file, time }))
+      compiler.hooks.watchRun.tap('BenchmarkWatchEvidence', () => {
+        control.record('watch-run', { modified: [...compiler.modifiedFiles ?? []], removed: [...compiler.removedFiles ?? []] })
+      })
+      const watchFileSystem = compiler.watchFileSystem
+      const originalWatch = watchFileSystem.watch
+      watchFileSystem.watch = function (...args) {
+        const result = originalWatch.apply(this, args)
+        control.record('watch-attached', { startTime: args[3] })
+        return result
+      }
       // watch 回调早于下一轮监听注册；afterDone 后让 nextTick 完成，才能写下一份输入。
       compiler.hooks.afterDone.tap('BenchmarkWatchReady', (stats) => {
         setImmediate(() => control.notify(stats.hasErrors() ? new Error(stats.toString({ all: false, errors: true })) : undefined))
       })
       const watcher = compiler.watch({ aggregateTimeout: 5 }, (error) => {
-        if (error) { control.notify(error) }
+        if (error) {
+          control.notify(error)
+        }
       })
       close = () => closeWatchResources([
         () => new Promise((resolve, reject) => watcher.close(error => error ? reject(error) : resolve())),
@@ -102,8 +137,9 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
         await control.nextBuild(observed)
         observed = control.completed
         const css = control.css
-        if (predicate(css)) { return css }
-
+        if (predicate(css)) {
+          return css
+        }
       }
     }
     for (let index = 0; index < warmups + runs; index++) {

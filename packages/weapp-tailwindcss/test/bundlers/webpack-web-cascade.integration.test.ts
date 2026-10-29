@@ -8,6 +8,7 @@ import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 import webpack from 'webpack'
 import { preserveWebsiteCssConditionalOrder } from '../../../../website/config/cssMinimizer'
+import { createWebpackWatchTrace } from '../helpers/webpack-watch-trace'
 
 const require = createRequire(import.meta.url)
 const websiteRequire = createRequire(fileURLToPath(new URL('../../../../website/package.json', import.meta.url)))
@@ -247,12 +248,18 @@ it('真实 Web watch 在来源新增、替换、删除和主题变值后保留�
   let build = 0
   const events: unknown[] = []
   const startedAt = Date.now()
-  const record = (event: string, detail: object = {}) => events.push({ at: Date.now() - startedAt, event, phase, build, ...detail })
+  const record = (event: string, detail: object = {}) => {
+    events.push({ at: Date.now() - startedAt, event, phase, build, ...detail })
+    if (events.length > 256) {
+      events.shift()
+    }
+  }
   const watchFileSystem = compiler.watchFileSystem!
+  const watchSnapshot = createWebpackWatchTrace(watchFileSystem, root, record)
   const originalWatch = watchFileSystem.watch
   watchFileSystem.watch = function (...args) {
     const result = originalWatch.apply(this, args)
-    record('attached', { startTime: args[3] })
+    record('attached', { startTime: args[3], watch: watchSnapshot() })
     return result
   }
   compiler.hooks.watchRun.tap('cascade-watch-evidence', () => {
@@ -293,7 +300,7 @@ it('真实 Web watch 在来源新增、替换、删除和主题变值后保留�
     const result = pending.promise
     const timeout = setTimeout(() => pending.reject(new Error(`Web watch 没有响应本轮来源变化：${change?.file ?? '初次构建'}`)), 20_000)
     try {
-      record('edit-start', { file: change?.file })
+      record('edit-start', { file: change?.file, watch: watchSnapshot() })
       await change?.edit()
       record('edit-complete', { file: change?.file })
       await result

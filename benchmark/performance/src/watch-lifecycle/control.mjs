@@ -5,10 +5,19 @@ export function createWatchControl(kind, signal, directory) {
   let css = ''
   let failure
   let waiting
+  const started = performance.now()
+  const events = []
+  const record = (event, detail = {}) => {
+    events.push({ at: performance.now() - started, event, phase, completed, ...detail })
+    if (events.length > 128) {
+      events.shift()
+    }
+  }
   const snapshot = () => ({ kind, phase, completed, colors: [...new Set(css.match(/#[0-9a-f]{6}/gi) ?? [])], ...(directory ? { directory } : {}) })
   const contextualize = (message, cause) => {
     const state = snapshot()
-    return Object.assign(new Error(`${kind} watch ${message} at ${phase} after build ${completed}; colors=${state.colors.join(',')}${directory ? `; workspace=${directory}` : ''}`, { cause }), { watchState: state })
+    const watchEvents = [...events]
+    return Object.assign(new Error(`${kind} watch ${message} at ${phase} after build ${completed}; colors=${state.colors.join(',')}${directory ? `; workspace=${directory}` : ''}; events=${JSON.stringify(watchEvents)}`, { cause }), { watchState: state, watchEvents })
   }
   const assertActive = () => {
     if (signal?.aborted) {
@@ -20,16 +29,19 @@ export function createWatchControl(kind, signal, directory) {
     snapshot,
     contextualize,
     assertActive,
+    record,
     get css() { return css },
     set css(value) { css = value },
     get completed() { return completed },
     setPhase(value) {
       assertActive()
       phase = value
+      record('phase')
     },
     notify(error) {
       completed++
       failure ??= error
+      record('build-completed', { error: error?.message })
       waiting?.()
     },
     nextBuild(previous) {
