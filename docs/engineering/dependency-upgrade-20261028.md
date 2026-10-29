@@ -251,3 +251,9 @@ HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tai
 Webpack 用例补充每轮输入编辑、invalid、watchRun、构建回调及实际监听重挂事件，并保留生成/优化阶段已捕获的 CSS、错误和路径过滤结果；不改监听行为或原超时。诊断首轮在完成回调读取 `SizeOnlySource` 抛错，已改为消费原有阶段缓存，完整文件 5 项通过。下一轮失败可区分未产生回调、构建未完成和回调被过滤，不先认定为文件事件丢失。
 
 准确该 head 的 Benchmark [40860278161](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40860278161) 也失败：实际 PR 合并树 `f8b911ad9fd2b780dfd1a44859e4f99272b88f96` 对比 main `0e9ceb82321d49d145bf63c4adf84c7a8639e0e9`，Taro Webpack React v4 构建峰值 RSS 中位 1316.0195→1397.6836 MiB，增加 81.6641 MiB（6.2054%），满足原 5%、64 MiB、双尾及精确 p≤0.05 的阻断条件。增量集中在主 Node 进程的编译中后段；尚无证据将其定为泄漏或归因于特定依赖。汇总 job 仅传播该首因，其余四个 demo 性能分片和 Synthetic gate 成功。保留首败，不提高预算，也不把诊断或其他 head 成功当作本轮通过。
+
+## 3fd8 补充静态与复制模板复验
+
+准确 `3fd8e5f30f606c6459d5e20037edd0eba44b67c8` 经新扩展预检 `c517324d-876d-45ca-8146-345c8c98226c`、当前会话 computer use、verify 和单次领取，在禁止更新模式完成 107 个 portable 目标、四个 Taro 项目的八个 plugin-html 变体，以及七个独立模板复制消费的 16 个可执行静态目标。全部构建及产物合同通过，源码与八份 pnpm 锁保持干净；独立副本已删除，原日志、产物与逐文件身份保存在 `e2e/.artifacts/dependency-upgrade-20261028/supplemental-3fd8/run-YkVFv9/`。其 `report.json` 的 SHA256 为 `a0b3a30a634c3e07100df6fe8d5233ea11c19f252fb0ee898bb0c7571e9a7960`。
+
+该报告总体保留 `partial`：Taro 两模板缺少 RN 配套、Vue2 quickapp-native 缺少 release 签名，共三项准确 e769 基线已有的能力缺口仍为 pending。HBuilderX 目标只证明正式 IDE 内置编译器的微信静态编译与产物合同，不代表 IDE 页面、cascade 或设备运行通过。此轮结果不替代完整 57 阶段、HMR、设备验收或准确最终 head 的 CI，Taro 内存性能阻塞仍未解决，PR #1320 保持未合并。用户已授权与「修复 issue #1278」任务协调微信 IDE 串行验收；补充静态结束后已通知释放本轮窗口。
