@@ -1,0 +1,78 @@
+name: Watch memory probe diagnostic
+
+on:
+  push:
+    branches: [codex/watch-memory-probe-lifecycle]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watch-memory-probe-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  platform-watch-diagnostic:
+    if: github.ref == 'refs/heads/codex/watch-memory-probe-lifecycle'
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: '22.23.4'
+      - name: Record exact checkout and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp/watch-memory-probe-diagnostic
+          probe_checkout_sha="$(git rev-parse HEAD)"
+          test "$probe_checkout_sha" = "$GITHUB_SHA"
+          test "$(node --version)" = v22.23.4
+          {
+            printf 'checkout=%s\nworkflow=%s\nrun=%s\nattempt=%s\n' "$probe_checkout_sha" '${{ github.workflow_sha }}' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            printf 'source_commit=%s\n' '2ee5791c2e0e2ea71e38301f238f58634d8d99b1'
+            printf 'runner_os=%s\nrunner_arch=%s\n' "$RUNNER_OS" "$RUNNER_ARCH"
+            printf 'image_os=%s\nimage_version=%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+            node --version
+            pnpm --version
+            git status --short
+            shasum -a 256 tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/probe.ts tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/probe-diagnostics.ts tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/posix.ts .github/workflows/pr-gate.yml pnpm-lock.yaml
+          } > .tmp/watch-memory-probe-diagnostic/identity.txt
+      - name: Build watch dependencies for this OS
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm build:ci 2>&1 | tee .tmp/watch-memory-probe-diagnostic/build.log
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell 2>&1 | tee .tmp/watch-memory-probe-diagnostic/playwright-install.log
+      - name: Run platform watch smoke
+        env:
+          E2E_WATCH_CASE: uni-app-vite-tailwindcss-v4
+          E2E_WATCH_WEB_ONLY: '1'
+          E2E_WATCH_MAX_ATTEMPTS: '1'
+          E2E_WATCH_ROUND_PROFILE: default
+          E2E_WATCH_TIMEOUT_MS: '420000'
+          E2E_WATCH_COMMAND_TIMEOUT_MS: '1200000'
+          E2E_WATCH_SAVE_SNAPSHOTS: '1'
+          NODE_OPTIONS: --max-old-space-size=6144
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm e2e:watch 2>&1 | tee .tmp/watch-memory-probe-diagnostic/watch.log
+      - name: Upload platform watch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: watch-memory-probe-diagnostic-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            e2e/benchmark/e2e-watch-hmr/**
+            .tmp/watch-memory-probe-diagnostic/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
