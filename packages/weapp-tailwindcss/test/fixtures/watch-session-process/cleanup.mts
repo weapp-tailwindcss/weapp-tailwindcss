@@ -1,8 +1,9 @@
+import type { ProcessCommandOwner } from '../../../../../scripts/demo-e2e-workflow/process-command'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { readProcessSubset } from '../../../../../scripts/demo-e2e-workflow/process-table'
 /** fixture 只用本轮 UUID 文件请求自行退出；查询失败或元数据缺失都不能算空集。 */
-export async function cleanupFixture(directory: string, token: string, requestCleanup: boolean, rootClosed?: () => boolean) {
+export async function cleanupFixture(directory: string, token: string, requestCleanup: boolean, rootClosed: (() => boolean) | undefined, owner: ProcessCommandOwner) {
   const errors: string[] = []
   const result = { verified: false, errors, pids: [] as number[], live: [] as number[] }
   if (requestCleanup) {
@@ -50,7 +51,7 @@ export async function cleanupFixture(directory: string, token: string, requestCl
     result.pids = pids
     if (complete) {
       try {
-        result.live = (await readProcessSubset(undefined, pids, 1000)).filter(row => !row.zombie).map(row => row.pid)
+        result.live = (await readProcessSubset(undefined, pids, 1000, undefined, undefined, owner)).filter(row => !row.zombie).map(row => row.pid)
       }
       catch (error) {
         errors.push(String(error))

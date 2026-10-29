@@ -5,7 +5,8 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { readProcessSubset } from '../../../../../scripts/demo-e2e-workflow/process-table'
+import { createProcessCommandOwner } from '../../../../../scripts/demo-e2e-workflow/process-command'
+import { readProcessSubset, readProcessTable } from '../../../../../scripts/demo-e2e-workflow/process-table'
 import { MemoryProbeCleanupError } from '../../../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/probe'
 import { createMemorySampler } from '../../../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/sampler'
 import { createWatchProcessController } from '../../../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-controller'
@@ -19,6 +20,7 @@ async function main() {
     string,
   ]
   const receipt: Record<string, unknown> = { mode, directory, token, fallbackUsed: false }
+  const probeOwner = createProcessCommandOwner()
   let controller: ReturnType<typeof createWatchProcessController> | undefined
   let session: Awaited<ReturnType<typeof createWatchCommandSession>> | undefined
   let registered: ProcessIdentity[] = []
@@ -42,7 +44,7 @@ async function main() {
     return value.pid as number
   }
   async function remaining() {
-    const current = await readProcessSubset(undefined, registered.map(row => row.pid), 1000)
+    const current = await readProcessSubset(undefined, registered.map(row => row.pid), 1000, undefined, undefined, probeOwner)
     return current.filter(row => registered.some(previous => previous.pid === row.pid && previous.started === row.started) && !row.zombie)
   }
   try {
@@ -62,7 +64,12 @@ async function main() {
         child.once('close', () => {
           didClose = true
         })
-        controller = createWatchProcessController(child)
+        controller = createWatchProcessController(child, {
+          observer: {
+            table: (timeoutMs, signal) => readProcessTable(timeoutMs, signal, undefined, probeOwner),
+            subset: (group, pids, timeoutMs, signal) => readProcessSubset(group, pids, timeoutMs, signal, undefined, probeOwner),
+          },
+        })
         return controller
       },
     })
@@ -137,13 +144,13 @@ async function main() {
     try {
       const needsFallback = receipt.passed !== true
       receipt.fallbackUsed = needsFallback
-      const cleanup = await cleanupFixture(directory, token, needsFallback, () => didClose)
+      const cleanup = await cleanupFixture(directory, token, needsFallback, () => didClose, probeOwner)
       receipt.fixtureCleanup = cleanup
-      receipt.cleanupVerified = cleanup.verified
+      receipt.businessCleanupVerified = cleanup.verified
     }
     catch (error) {
       cleanupErrors.push(String(error))
-      receipt.cleanupVerified = false
+      receipt.businessCleanupVerified = false
     }
     try {
       if (session) {
@@ -158,8 +165,18 @@ async function main() {
     }
     catch (error) {
       cleanupErrors.push(String(error))
-      receipt.cleanupVerified = false
+      receipt.businessCleanupVerified = false
     }
+    try {
+      await probeOwner.close()
+    }
+    catch (error) {
+      cleanupErrors.push(String(error))
+      process.exitCode = 1
+    }
+    receipt.probeCleanup = probeOwner.diagnostics()
+    receipt.probeCleanupVerified = probeOwner.diagnostics().cleanupVerified
+    receipt.cleanupVerified = receipt.businessCleanupVerified === true && receipt.probeCleanupVerified === true
     receipt.cleanupErrors = cleanupErrors
     if (receipt.cleanupVerified !== true) {
       process.exitCode = 1

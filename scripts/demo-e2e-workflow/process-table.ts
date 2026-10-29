@@ -1,3 +1,4 @@
+import type { ProcessCommandOwner } from './process-command'
 import type { WorkflowProcessObserver } from './process-observer'
 import process from 'node:process'
 import { runProcessCommand } from './process-command'
@@ -34,7 +35,7 @@ export function parseWindowsProcesses(output: string): ProcessIdentity[] {
   return rows
 }
 
-export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal, observer?: WorkflowProcessObserver): Promise<ProcessIdentity[]> {
+export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal, observer?: WorkflowProcessObserver, owner?: ProcessCommandOwner): Promise<ProcessIdentity[]> {
   if (observer) {
     return await observer.table(timeoutMs, signal)
   }
@@ -43,7 +44,7 @@ export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal, o
   try {
     output = await runProcessCommand(windows ? 'powershell' : 'ps', windows
       ? ['-NoProfile', '-Command', '$rows = @(Get-CimInstance -Query "SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process" | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject $rows -Compress']
-      : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal)
+      : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, { owner })
   }
   catch (error) {
     throw new Error(`无法确认本轮子进程归属：${error instanceof Error ? error.message : String(error)}`, { cause: error })
@@ -58,7 +59,7 @@ export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal, o
  * 子进程已经退出后只读取本轮已确认的进程组和身份锚，避免高负载下再次扫描整张系统进程表。
  * 独立进程组中的已登记后代通过 pids 保留身份校验；未登记的独立后代仍不在清理范围内。
  */
-export async function readProcessSubset(group: number | undefined, pids: readonly number[], timeoutMs = 5000, signal?: AbortSignal, observer?: WorkflowProcessObserver): Promise<ProcessIdentity[]> {
+export async function readProcessSubset(group: number | undefined, pids: readonly number[], timeoutMs = 5000, signal?: AbortSignal, observer?: WorkflowProcessObserver, owner?: ProcessCommandOwner): Promise<ProcessIdentity[]> {
   if (observer) {
     return await observer.subset(pids, timeoutMs, signal)
   }
@@ -73,7 +74,7 @@ export async function readProcessSubset(group: number | undefined, pids: readonl
         '-NoProfile',
         '-Command',
         `$ids = @(${values.join(',')}); $filter = [string]::Join(' OR ', ($ids | ForEach-Object { "ProcessId = $_" })); $query = 'SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process WHERE ' + $filter; $rows = @(Get-CimInstance -Query $query | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject @($rows) -Compress`,
-      ], timeoutMs, signal)
+      ], timeoutMs, signal, { owner })
     }
     catch (error) {
       throw new Error(`无法确认本轮子进程身份：${error instanceof Error ? error.message : String(error)}`, { cause: error })
@@ -99,6 +100,7 @@ export async function readProcessSubset(group: number | undefined, pids: readonl
   let output: string
   try {
     output = await runProcessCommand('ps', [...filters, '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, {
+      owner,
       acceptFailure: (error, stdout, stderr) => {
         const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
         return code === 1 && stdout.length === 0 && stderr.length === 0
