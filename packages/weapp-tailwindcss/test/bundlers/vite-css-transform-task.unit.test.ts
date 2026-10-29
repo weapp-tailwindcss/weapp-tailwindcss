@@ -125,6 +125,32 @@ describe('vite css transform task', () => {
   })
 
   it.each([
+    '@media source(none){/*! weapp-tailwindcss generator-placeholder */}@config "./tailwind.config.js";@source "./components";',
+    '@reference "./entry.css";@source inline("border-t-[1px]");',
+  ])('preserves compiled Web preflight when remembered source only contains generation context: %s', async (generatorRawSource) => {
+    const generateCss = vi.fn(async () => ({
+      css: '.author{color:blue}',
+      classSet: new Set<string>(),
+      dependencies: [],
+      metadata: { file: '/project/styles/entry.css' },
+      source: 'generator' as const,
+      target: 'web',
+    }))
+    const rawSource = '/*! weapp-tailwindcss vite-generated-css:entry.css */*{border:0 solid}.border-t{border-top-width:1px}.author{color:blue}'
+    const result = await executeViteCssTransformTask(createOptions({
+      annotateCss: css => css,
+      generateCss,
+      generatorRawSource,
+      isWebGeneratorTarget: true,
+      rawSource,
+      transformWebTargetCss: css => css,
+    }))
+    expect(generateCss).not.toHaveBeenCalled()
+    expect(result.css).toBe(rawSource)
+    expect(result.kind).toBe('web')
+  })
+
+  it.each([
     '/project/styles/entry.css',
     'C:\\project\\styles\\entry.css',
     'styles/entry.css',

@@ -1,0 +1,77 @@
+{
+  "issue-1319-original": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-native": [
+    "border-width:0",
+    "border-width:0",
+    "border-top-width:1px",
+    "border-top-style:solid",
+    "border-top-color:#e2e8f0"
+  ],
+  "issue-1319-top": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-right": [
+    "border-width:0",
+    "border-right-style:var(--tw-border-style)",
+    "border-right-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-bottom": [
+    "border-width:0",
+    "border-bottom-style:var(--tw-border-style)",
+    "border-bottom-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-left": [
+    "border-width:0",
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-pair": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:2px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-all": [
+    "border-width:0",
+    "border-style:var(--tw-border-style)",
+    "border-width:2px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ],
+  "issue-1319-override": [
+    "border-width:0",
+    "border-style:var(--tw-border-style)",
+    "border-width:2px",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:0px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:#e2e8f0"
+  ]
+}

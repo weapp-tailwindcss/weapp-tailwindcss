@@ -19,6 +19,10 @@
 			}
 		},
 		{
+			"path": "pages/issue-1319/index",
+			"style": { "navigationBarTitleText": "Issue 1319" }
+		},
+		{
 			"path": "pages/issue-1160/index",
 			"style": {
 				"navigationBarTitleText": "Issue 1160"
