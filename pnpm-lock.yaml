@@ -384,11 +384,11 @@ catalogs:
       version: 8.5.30
   postcssCompat:
     postcss-pxtrans:
-      specifier: ^1.0.7
-      version: 1.0.7
+      specifier: ^1.1.0
+      version: 1.1.0
     postcss-rule-unit-converter:
-      specifier: ^0.2.6
-      version: 0.2.6
+      specifier: ^0.3.0
+      version: 0.3.0
     postcss-scss:
       specifier: ^4.0.9
       version: 4.0.9
@@ -397,8 +397,8 @@ catalogs:
       version: 4.2.0
   postcssRem:
     postcss-rem-to-responsive-pixel:
-      specifier: ^7.0.8
-      version: 7.0.8
+      specifier: ^7.0.9
+      version: 7.0.9
   postcssRpx:
     postcss-rpx-transform:
       specifier: ^1.0.1
@@ -1700,7 +1700,7 @@ importers:
         version: 4.3.0(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
-        version: 7.0.8(postcss@8.5.30)
+        version: 7.0.9(postcss@8.5.30)
       postcss-rpx-transform:
         specifier: catalog:postcssRpx
         version: 1.0.1
@@ -5083,13 +5083,13 @@ importers:
         version: 11.6.1(postcss@8.5.30)
       postcss-pxtrans:
         specifier: catalog:postcssCompat
-        version: 1.0.7(postcss@8.5.30)
+        version: 1.1.0(postcss@8.5.30)
       postcss-rem-to-responsive-pixel:
         specifier: catalog:postcssRem
-        version: 7.0.8(postcss@8.5.30)
+        version: 7.0.9(postcss@8.5.30)
       postcss-rule-unit-converter:
         specifier: catalog:postcssCompat
-        version: 0.2.6(postcss@8.5.30)
+        version: 0.3.0(postcss@8.5.30)
       postcss-scss:
         specifier: catalog:postcssCompat
         version: 4.0.9(postcss@8.5.30)
@@ -29627,8 +29627,8 @@ packages:
     peerDependencies:
       postcss: ^8
 
-  postcss-pxtrans@1.0.7:
-    resolution: {integrity: sha512-7koV30MTIwdtsEqeQzHAjEEw1cXH+v2xOvuSBxDTuEyz7kvoFF0tsQ+fcMATELtsBLLhmO+EUo+AzwLtjO4WFQ==}
+  postcss-pxtrans@1.1.0:
+    resolution: {integrity: sha512-cADH7nP97Hh+EIkDjDA8suSY5l0vDR5fLwX7y+xtwTNiPY7FHjJtMR81PJuC1yC6B6wmJjcP3u+C4lKU76xQDg==}
     peerDependencies:
       postcss: ^8
 
@@ -29704,8 +29704,8 @@ packages:
     peerDependencies:
       postcss: ^8
 
-  postcss-rem-to-responsive-pixel@7.0.8:
-    resolution: {integrity: sha512-ktsWJMZ00GxZkcs5g67OhnxEJK8L+UQ/JVp6qPXXPvSBBCABk68IJLD0bJpfb6M/RamJG6+3da8smEiEnhpaYA==}
+  postcss-rem-to-responsive-pixel@7.0.9:
+    resolution: {integrity: sha512-eGfXUsp9Nv3EK9jyHStoKjaRgwJmOgtVz+j8YGxxqwCw1RiBJzLpCvHddn/ARBLlDLrP7UA+ldyPmV/txUN0og==}
     engines: {node: '>=16.6.0'}
     peerDependencies:
       postcss: ^8
@@ -29732,8 +29732,8 @@ packages:
     peerDependencies:
       postcss: ^8
 
-  postcss-rule-unit-converter@0.2.6:
-    resolution: {integrity: sha512-aw51LFWQKnyzebc4SymzGRRImx/kUiMbwYqotCf/ZwVM64zPcYxEfe4LiKYT0pgiLW7Gh1LYykYw1ecBRGsk3g==}
+  postcss-rule-unit-converter@0.3.0:
+    resolution: {integrity: sha512-ssgcaJ2d2Foc53lHJC1M6N0LLSLv+T52LVkCJfYajgygGLPm6I3snLYpJgL1cAF+jSB4fM+GihNL8vMle6wN9w==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss: ^8
@@ -70009,11 +70009,11 @@ snapshots:
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
       postcss-rule-unit-converter: 0.2.5(postcss@8.5.30)
 
-  postcss-pxtrans@1.0.7(postcss@8.5.30):
+  postcss-pxtrans@1.1.0(postcss@8.5.30):
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.3.0(postcss@8.5.30)
 
   postcss-pxtransform@4.2.1(postcss@8.5.30):
     dependencies:
@@ -70104,11 +70104,11 @@ snapshots:
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
       postcss-rule-unit-converter: 0.2.5(postcss@8.5.30)
 
-  postcss-rem-to-responsive-pixel@7.0.8(postcss@8.5.30):
+  postcss-rem-to-responsive-pixel@7.0.9(postcss@8.5.30):
     dependencies:
       postcss: 8.5.30
       postcss-plugin-shared: 1.2.0(postcss@8.5.30)
-      postcss-rule-unit-converter: 0.2.6(postcss@8.5.30)
+      postcss-rule-unit-converter: 0.3.0(postcss@8.5.30)
 
   postcss-replace-overflow-wrap@4.0.0(postcss@8.5.30):
     dependencies:
@@ -70129,7 +70129,7 @@ snapshots:
       postcss: 8.5.30
       postcss-plugin-shared: 1.1.7(postcss@8.5.30)
 
-  postcss-rule-unit-converter@0.2.6(postcss@8.5.30):
+  postcss-rule-unit-converter@0.3.0(postcss@8.5.30):
     dependencies:
       '@csstools/css-tokenizer': 4.0.2
       postcss: 8.5.30
@@ -74205,24 +74205,6 @@ snapshots:
       postcss: 8.5.30
       uglify-js: 3.19.3
 
-  terser-webpack-plugin@5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.51.2
-      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
-    optionalDependencies:
-      '@swc/core': 1.16.18(@swc/helpers@0.5.23)
-      clean-css: 5.3.3
-      cssnano: 9.3.2(postcss@8.5.30)
-      csso: 5.0.5
-      esbuild: 0.28.1
-      html-minifier-terser: 7.2.0
-      lightningcss: 1.33.0
-      postcss: 8.5.30
-      uglify-js: 3.19.3
-
   terser-webpack-plugin@5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -77361,49 +77343,6 @@ snapshots:
       webpack-sources: 3.5.1
     optionalDependencies:
       webpack-cli: 7.2.3(js-yaml@5.4.3)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@4.15.2)(webpack@5.105.4)
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
-
-  webpack@5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.18.0
-      acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.29.3
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.26.0
-      es-module-lexer: 2.3.2
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.2
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack@5.105.4)
-      watchpack: 2.5.2
-      webpack-sources: 3.5.1
-    optionalDependencies:
-      webpack-cli: 7.2.3(js-yaml@5.4.3)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.105.4)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@swc/core'

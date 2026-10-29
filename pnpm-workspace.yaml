@@ -142,8 +142,8 @@ catalogs:
     oxc-walker: ^1.1.1
     semver: ~7.8.5
   postcssCompat:
-    postcss-pxtrans: ^1.0.7
-    postcss-rule-unit-converter: ^0.2.6
+    postcss-pxtrans: ^1.1.0
+    postcss-rule-unit-converter: ^0.3.0
     postcss-scss: ^4.0.9
     postcss-value-parser: ^4.2.0
   runtimeVariants:
@@ -226,7 +226,7 @@ catalogs:
   postcssComment2:
     postcss-comment: ^2.0.0
   postcssRem:
-    postcss-rem-to-responsive-pixel: ^7.0.8
+    postcss-rem-to-responsive-pixel: ^7.0.9
   postcssRpx:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:

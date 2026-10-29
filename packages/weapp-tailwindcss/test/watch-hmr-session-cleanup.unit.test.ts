@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { createWatchCommandSession } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 
 const mocks = vi.hoisted(() => ({ source: vi.fn(), sampler: vi.fn(), controller: vi.fn() }))
-vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source', () => ({ spawnWithWatchMemorySource: () => mocks.source() }))
+vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-resources', () => ({ spawnWithWatchResources: () => mocks.source() }))
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/sampler', () => ({ createMemorySampler: () => mocks.sampler() }))
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/process-controller', () => ({ createWatchProcessController: () => mocks.controller() }))
 beforeEach(() => vi.resetAllMocks())
@@ -70,7 +70,7 @@ it('queues a fresh ownership checkpoint when compile success arrives during the 
   mocks.sampler.mockReturnValue({ stop: vi.fn(async () => {}) })
   mocks.source.mockResolvedValue({ child, memorySource: {}, startedAt: Date.now() })
   const creating = createWatchCommandSession('unused', [], { quietSass: true })
-  await Promise.resolve()
+  await vi.waitFor(() => expect(controller.capture).toHaveBeenCalledOnce())
   child.stdout.emit('data', 'compiled successfully\n')
   expect(controller.capture).toHaveBeenCalledOnce()
   resolve()

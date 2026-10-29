@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { createObserverDiagnostics } from './diagnostics'
 import { observerInputRequest } from './input'
 import { resolveObserverLaunchEnvironment } from './launch-environment'
+import { createObserverReapWindow } from './reap-window'
 
 export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
 
@@ -30,6 +31,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
   const child = createChild(command, args, { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: launch.env })
   const diagnostics = createObserverDiagnostics(child.pid, launch.diagnostic)
   const pending = new Map<number, PendingRequest>()
+  const reapWindow = createObserverReapWindow()
   const startupWaits = new Set<PendingOperation>()
   let hostReadyAt: number | undefined
   let sequence = 0
@@ -38,10 +40,11 @@ export function createProcessObserverTransport(command: string, args: string[], 
   let fatal: unknown
   let closing: Promise<void> | undefined
   let didClose = false
+  let closedAt: number | undefined
   let terminationAttempted = false
   let hostStopped = false
-  let resolveClosed!: () => void
-  const closed = new Promise<void>((resolve) => {
+  let resolveClosed!: (at: number) => void
+  const closed = new Promise<number>((resolve) => {
     resolveClosed = resolve
   })
   const dispose = (request: PendingOperation) => {
@@ -50,22 +53,16 @@ export function createProcessObserverTransport(command: string, args: string[], 
       request.signal?.removeEventListener('abort', request.abort)
     }
   }
+  const reapError = () => new Error(`身份采集器退出未确认：${command} pid=${child.pid}；禁止继续调度；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`, { cause: fatal })
   const reap = async () => {
     if (didClose) {
+      reapWindow.assertClosed(closedAt, reapError)
       return
     }
-    let timer: ReturnType<typeof setTimeout> | undefined
-    try {
-      await Promise.race([closed, new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error(`身份采集器退出未确认：${command} pid=${child.pid}；禁止继续调度；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`, { cause: fatal })), 1000)
-      })])
-    }
-    finally {
-      clearTimeout(timer)
-    }
+    await reapWindow.wait(closed, reapError)
   }
   const terminate = () => {
-    if (didClose || terminationAttempted) {
+    if (didClose || terminationAttempted || !Number.isInteger(child.pid) || child.pid! <= 0) {
       return
     }
     terminationAttempted = true
@@ -115,7 +112,8 @@ export function createProcessObserverTransport(command: string, args: string[], 
   child.once('close', (code, signal) => {
     diagnostics.shutdown('close', { code, signal })
     didClose = true
-    resolveClosed()
+    closedAt = Date.now()
+    resolveClosed(closedAt)
     const expectedForcedClose = closing !== undefined && hostStopped && terminationAttempted && code === null && signal === 'SIGKILL'
     if (pending.size || (!expectedForcedClose && (code !== 0 || signal !== null)) || (!closing && fatal === undefined)) {
       fail(new Error(`身份采集器意外退出：${command} pid=${child.pid} code=${code} signal=${signal} stderr=${stderr}`))
@@ -208,6 +206,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
     pid: child.pid,
     diagnostics: diagnostics.snapshot,
     invalidate: fail,
+    constrainShutdown: reapWindow.constrain,
     assertHealthy() {
       if (fatal !== undefined || closing) {
         throw fatal ?? new Error('身份采集器已关闭，禁止继续调度。')
@@ -271,7 +270,10 @@ export function createProcessObserverTransport(command: string, args: string[], 
         })
       })
     },
-    async close() {
+    async close(options: { deadline?: number } = {}) {
+      if (options.deadline !== undefined) {
+        reapWindow.constrain(options.deadline)
+      }
       if (!closing) {
         if (pending.size || startupWaits.size) {
           fail(new Error('身份采集器关闭时仍有未落定请求。'))
@@ -305,6 +307,12 @@ export function createProcessObserverTransport(command: string, args: string[], 
         }
       }
       await closing
+      try {
+        reapWindow.assertClosed(closedAt, reapError)
+      }
+      catch (error) {
+        fatal ??= error
+      }
       if (fatal !== undefined) {
         throw fatal
       }

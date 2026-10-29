@@ -1,0 +1,8 @@
+.nut-fallback {
+  height: var(--nutui-48px, 48rpx);
+  width: var(--width, calc(24rpx + var(--other, 12rpx)));
+  margin: var(--margin, -2rpx);
+  padding: 32rpx;
+  content: "48px";
+  background: var(--image, url("48px.png"));
+}
