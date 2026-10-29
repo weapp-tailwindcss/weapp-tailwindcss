@@ -167,7 +167,8 @@ async function runObservedStep(step: WorkflowStep, index: number, total: number,
     failure ??= error
   })
   const reason = signal.aborted ? signal.reason : undefined
-  const errors = [...new Set([failure ?? reason, reason, failure, spawnError, cleanupResult.error].filter(error => error !== undefined))]
+  // 内部 fatal 同样先进入取消状态；迟到采样错误只能补充诊断，不能覆盖首因。
+  const errors = [...new Set([reason, failure, spawnError, cleanupResult.error].filter(error => error !== undefined))]
   const cancelledError = reason instanceof WorkflowCancellationError ? reason : undefined
   if (cancelledError) {
     exitCode = cancelledError.exitCode
