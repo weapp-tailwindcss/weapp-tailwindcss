@@ -41,7 +41,9 @@ async function main() {
     record({ event: 'watch', startTime: args[3] })
     const result = originalWatch.apply(this, args)
     let owner = this
-    while (owner.wfs) owner = owner.wfs
+    while (owner.wfs) {
+      owner = owner.wfs
+    }
     if (!observedWatchers.has(owner.watcher)) {
       observedWatchers.add(owner.watcher)
       for (const method of ['_onChange', '_onRemove']) {

@@ -19,8 +19,12 @@ function createClock(platform) {
   const sandbox = {
     module: { exports: {} },
     require(id) {
-      if (id === 'path') return paths
-      if (id === 'os') return { platform: () => platform }
+      if (id === 'path') {
+        return paths
+      }
+      if (id === 'os') {
+        return { platform: () => platform }
+      }
       if (id === 'graceful-fs') {
         return {
           lstat(_file, callback) {
@@ -47,7 +51,9 @@ function createClock(platform) {
   owner.initialScanFinished = now
   const watchers = []
   function flush() {
-    while (pending.length) pending.shift()()
+    while (pending.length) {
+      pending.shift()()
+    }
   }
   function watch(file, startTime) {
     const events = []
