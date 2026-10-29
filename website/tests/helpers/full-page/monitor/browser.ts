@@ -76,8 +76,7 @@ export function installMonitor(key: string) {
       if (running(node)) {
         mark('TOC 祖先捕获期间存在未完成动画')
       }
-      return [identity(node), owner ? identity(owner) : null, properties, rect.x, rect.y, rect.width, rect.height,
-        node.clientWidth, node.clientHeight, node.scrollWidth, node.scrollHeight, node.scrollLeft, node.scrollTop]
+      return [identity(node), owner ? identity(owner) : null, properties, rect.x, rect.y, rect.width, rect.height, node.clientWidth, node.clientHeight, node.scrollWidth, node.scrollHeight, node.scrollLeft, node.scrollTop]
     })
     const headings = nodes.length
       ? [...document.querySelectorAll('h1.anchor,h2.anchor,h3.anchor,h4.anchor,h5.anchor,h6.anchor')].map((node) => {

@@ -8,7 +8,6 @@ export function compositionFixture(linkCount = 1, propertyCount = 4) {
   const frames = new Map<number, () => void>()
   const records: MutationRecord[] = []
   let frame = 0
-  let callback: (records: MutationRecord[]) => void
   class ElementFixture {
     parentElement: ElementFixture | null = null
     assignedSlot = null
@@ -28,26 +27,34 @@ export function compositionFixture(linkCount = 1, propertyCount = 4) {
     rect = { x: 1000, y: 200, width: 80, height: 20, top: 200, bottom: 220 }
     constructor(readonly kind: string) {}
     getRootNode() {
+      // eslint-disable-next-line ts/no-use-before-define -- 文档在构造后、执行监测前完成初始化。
       return document
     }
+
     getClientRects() {
       return [this.getBoundingClientRect()]
     }
+
     getBoundingClientRect() {
       return this.rect
     }
+
     getAnimations() {
       return this.animations
     }
+
     getAttribute(name: string) {
       return this.attributes.get(name) ?? null
     }
+
     matches(selector: string) {
       return this.kind === 'link' && selector === '.toc-highlight'
     }
+
     querySelector() {
       return null
     }
+
     contains() {
       return false
     }
@@ -78,9 +85,8 @@ export function compositionFixture(linkCount = 1, propertyCount = 4) {
     addEventListener() {},
   }
   class Observer {
-    constructor(value: typeof callback) {
-      callback = value
-    }
+    constructor(_value: (records: MutationRecord[]) => void) {}
+
     observe() {}
     disconnect() {}
     takeRecords() {

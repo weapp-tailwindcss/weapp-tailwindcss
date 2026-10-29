@@ -51,7 +51,7 @@ for (const property of ['opacity', 'filter', 'visibility', 'clip-path', 'mix-ble
     const monitor = await startCaptureMonitor(page, createCaptureBudget(5000))
     try {
       await page.locator('#paint').evaluate(async (node, property) => {
-        const values = { opacity: '.3', filter: 'blur(2px)', visibility: 'hidden', 'clip-path': 'inset(50%)', 'mix-blend-mode': 'multiply', display: 'none' }
+        const values = { 'opacity': '.3', 'filter': 'blur(2px)', 'visibility': 'hidden', 'clip-path': 'inset(50%)', 'mix-blend-mode': 'multiply', 'display': 'none' }
         const element = node as HTMLElement
         element.style.setProperty(property, values[property])
         await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
