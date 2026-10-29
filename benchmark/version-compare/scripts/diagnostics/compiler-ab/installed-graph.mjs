@@ -5,9 +5,23 @@ import process from 'node:process'
 import { readPackage, sha256 } from './package-identity.mjs'
 import { packageName, target } from './lock-graph-core.mjs'
 
-export function platformMatches(values, actual) {
-  if (!values?.length) return true
-  return !values.includes(`!${actual}`) && (values.every(value => value.startsWith('!')) || values.includes(actual) || values.includes('any'))
+export function platformMatches(values, actual, field = 'platform') {
+  if (values === undefined) return true
+  // pnpm 12 的 libc 是 StringOrList；只在匹配边界建立单元素视图，不改原 metadata。
+  const entries = field === 'libc' && typeof values === 'string' ? [values] : values
+  assert.ok(Array.isArray(entries) && entries.every(value => typeof value === 'string'), `平台 ${field} 约束格式无效`)
+  if (entries.length === 1 && entries[0] === 'any') return true
+  // 与固定 pnpm 的有序匹配一致：首个匹配的正向或否定条目决定结果。
+  for (const entry of entries) {
+    if (entry === `!${actual}`) return false
+    if (!entry.startsWith('!') && entry === actual) return true
+  }
+  return entries.every(value => value.startsWith('!'))
+}
+
+/** 平台选择保持纯函数，Linux libc 分支无需安装或伪装当前主机即可验证。 */
+export function matchesPlatform(metadata, platform) {
+  return Object.entries(platform).every(([field, actual]) => actual === undefined || platformMatches(metadata[field], actual, field))
 }
 
 /** 从预先批准的准确锁边验证安装图，不通过观测到的目录反推授权。 */
@@ -19,7 +33,7 @@ export function installedLockGraph(lock, seeds) {
     const metadata = lock.packages[expected.id]
     assert.ok(metadata, `缺少安装包源码 metadata：${expected.id}`)
     assert.equal(typeof metadata.resolution?.integrity, 'string', `缺少批准的包来源 SRI：${expected.id}`)
-    if (optional && Object.entries(platform).some(([field, actual]) => actual && !platformMatches(metadata[field], actual))) {
+    if (optional && !matchesPlatform(metadata, platform)) {
       edges.push({ route, key: expected.key, unavailablePlatform: true })
       return
     }

@@ -30,6 +30,8 @@ previous 在该派生锁上，将目标 demo manifest 的准确 Webpack `5.91.0`
 
 [40901901583](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40901901583) 在两侧完整 frozen install 后发现 direct/runner 上下文分裂，失败清理无误；artifact SHA/CRC 已验证。旧 observer 仅接入 direct 类，错误的目录相等断言提前阻断了测量。此修复核对并绑定真实 runner 类，仍未产生该轮 A/B 样本。
 
+[40908914531](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40908914531) 的两侧 frozen install 与严格锁预验已成功，安装图观测随后在 `sass-embedded-linux-musl-x64@1.106.1` 的标量 `libc: musl` 上触发数组方法异常，仍未进入构建或产生 A/B 样本。artifact SHA/CRC 与两侧锁 SHA 已核对，全部任务进程已关闭、清理无错。固定 [pnpm 12.15 元数据类型](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/lockfile/src/package_metadata.rs) 明确规定 libc 为 StringOrList，os/cpu 为数组；诊断只在匹配边界把 libc 字符串视为单元素约束，原锁及 metadata 保持不变。平台匹配按[同版官方源码](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-is-installable/src/check_platform.rs#L229)处理独占 any 与有序正向/否定条目，未知类型明确失败；Linux/glibc 与 Linux/musl 分支通过纯函数 fixture 验证，不依赖 Mac 上不执行的 libc 分支。原锁没有触发混合 any 或正反冲突条目，这两项只用于核对同一谓词的官方语义。
+
 本地定向 fixture：
 
 ```sh
