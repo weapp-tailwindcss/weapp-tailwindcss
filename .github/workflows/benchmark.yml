@@ -1,4 +1,4 @@
-name: Taro Webpack compiler A/B diagnostic
+name: Taro Webpack and optional esbuild peer A/B diagnostic
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   compiler-chain-diagnostic:
-    name: Diagnostic / Taro Webpack compiler chain
+    name: Diagnostic / Taro compiler and optional esbuild peer
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo
       - name: Verify isolated diagnostic fixtures
         run: node --test benchmark/version-compare/scripts/diagnostics/compiler-ab/test.mjs
-      - name: Compare compiler chains in Git-free temporary copies
+      - name: Compare compiler and optional peer contexts in Git-free copies
         run: node benchmark/version-compare/scripts/diagnostics/compiler-ab/run.mjs --out-dir .tmp/taro-compiler-ab
       - name: Preserve full diagnostic evidence and generated locks
         if: always()
