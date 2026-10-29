@@ -5,6 +5,7 @@ baseline: db117f17e9083ab0a4575a46dc15e364569563d6
 regressions:
   - scripts/ci/demo-matrix/watch.test.mjs
   - scripts/ci/demo-matrix/virtual-removals.test.mjs
+  - scripts/ci/demo-matrix/process-completion.test.mjs
 ---
 
 # 虚拟文件的监听存在性边界
@@ -69,3 +70,9 @@ Vue I18n 9 的 legacy 正式通道仍为 9.14.5：部分新公告要求 11.4.14�
 样式采集测试原外层预算为 30 秒，内部三个启动轮询却各自允许 180 秒，因而外层超时会抢先丢失启动阶段诊断。修复使本测试使用 20 秒共享启动截止，包含 launcher、页面创建、导航、文档 load、探针及更新传输；其他入口仍保留 Chromium 原 30 秒 launcher 上限。启动失败记录具体阶段及全部待完成请求，原第三方样式不参与本地采集的断言保持。SSR 夹具先加载 Vue 模块，再单独放行实际挂载，避免动态 import 的依赖发现和页面重载混入 hydration 门控。页面创建或检查证据写入失败时仍回收已归属浏览器，并保留并发错误。当前证据不能确认原超时具体卡在外源请求、启动还是清理；修复预算与资源边界后，仍需以准确新 head 的 Windows CI 验证，不靠提高原 30 秒门槛或重跑旧提交放行。
 
 整合 main 的 0e9ceb823 时保留双方 CI 用例，由 pnpm 工具重新生成根锁并完成 frozen install。锁结构审计确认仅引入 main 的 postcss-pxtrans 1.1.0、postcss-rem-to-responsive-pixel 7.0.9 与 converter 0.3.0 配套及必要引用；其余解析图和补丁不变。原有本地与远端成功仍绑定各自旧 head/base，不能转移到整合后的提交。最终 static、完整多端和新 head CI 尚待完成，本记录继续保持 partial。
+
+## 构建进程终止的原始证据
+
+准确 3b06ba9af15b1605c09a3eee752de7e94a7bc22a 的 107 项 static 禁止更新复验在前八项通过后，Taro React Native 构建于 Metro 欢迎信息之后停止。`execa@9.6.1` 在进程被信号终止时没有 `exitCode`；旧 `complete()` 仅断言退出码为零，因而用 `undefined !== 0` 的新断言遮蔽了原始 ExecaError、信号及原因。既有日志不足以还原原信号和发送者，不能将这次失败归因为 Metro 编译错误，也不把它解释为成功退出。
+
+修复在完成边界直接传播 Execa 的失败对象，正常退出仍须严格等于零，原构建超时不变。使用实际 Node 子进程分别非零退出和被 SIGTERM 终止，两项回归在修复前均失败，修复后保持原错误对象及其 stderr、退出码和信号；连同停止、轮询和进程组信号回归，四文件 21 项通过，ESLint、agents:check 与 diff 检查通过。上述验证包含 3b06 后未提交的本节修复。随后独立 RN 构建和带进程诊断的相同探针用例均 exit 0；后者仍严格核对 static 基线，没有刷新基线。这些有界诊断未复现原终止，不能抹去首轮失败；当前源码的正常模式验收仍须重新执行。
