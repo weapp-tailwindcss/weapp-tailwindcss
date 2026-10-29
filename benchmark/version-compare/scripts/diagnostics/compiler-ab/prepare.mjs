@@ -1,0 +1,131 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { compilerIdentity, fileSha256, sha256 } from './identity.mjs'
+import { auditLockAxis, baselineRef, compilerSnapshot, compilerVersions, previousCompanions } from './lock-axis.mjs'
+import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
+
+export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..')
+
+export async function command(cwd, executable, args, options = {}) {
+  let output = ''
+  let error = ''
+  try {
+    await runOwned(executable, args, {
+      cwd, stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit', timeoutMs: options.timeoutMs ?? 1200000,
+      env: { ...process.env, CI: '1', LEFTHOOK: '0', HUSKY: '0', ...options.env },
+      onSpawn(child) {
+        child.stdout?.on('data', chunk => { output += chunk })
+        child.stderr?.on('data', chunk => { error += chunk })
+      },
+    })
+  }
+  catch (caught) { caught.stderr = error; throw caught }
+  return output
+}
+
+async function archive(archiveFile, directory) {
+  await fs.mkdir(directory)
+  await command(path.dirname(directory), 'tar', ['-xf', archiveFile, '-C', directory], { timeoutMs: 120000 })
+}
+
+export async function assertTemporaryRoot(root, sourceRoot) {
+  assert.notEqual(await fs.realpath(root), await fs.realpath(sourceRoot), '拒绝向源工作树写入')
+  await assert.rejects(fs.access(path.join(root, '.git')), { code: 'ENOENT' }, '临时副本不得包含 Git 元数据')
+}
+
+export function previousWorkspace(document, companions, patchFile) {
+  document.setIn(['overrides', `webpack@${compilerVersions.current}`], compilerVersions.previous)
+  for (const [name, version] of Object.entries(companions)) {
+    document.setIn(['overrides', `webpack@${compilerVersions.previous}>${name}`], version)
+  }
+  document.deleteIn(['patchedDependencies', `webpack@${compilerVersions.current}`])
+  document.setIn(['patchedDependencies', `webpack@${compilerVersions.previous}`], patchFile)
+  return document
+}
+
+export async function prepare(outDir) {
+  const { parseAllDocuments, parseDocument } = await import('yaml')
+  const parseLock = source => {
+    const docs = parseAllDocuments(source)
+    assert.ok(docs.every(doc => doc.errors.length === 0), '锁文件 YAML 无效')
+    return docs.find(doc => doc.has('snapshots')).toJS()
+  }
+  const sourceRef = (await command(repositoryRoot, 'git', ['rev-parse', 'HEAD'], { capture: true, timeoutMs: 30000 })).trim()
+  assert.match(sourceRef, /^[a-f\d]{40}$/)
+  const baselineLockSource = await command(repositoryRoot, 'git', ['show', `${baselineRef}:pnpm-lock.yaml`], { capture: true, timeoutMs: 30000 })
+  const accurateBaseline = parseLock(baselineLockSource)
+  const baselineWorkspace = parseDocument(await command(repositoryRoot, 'git', ['show', `${baselineRef}:pnpm-workspace.yaml`], { capture: true, timeoutMs: 30000 }))
+  const patchFile = baselineWorkspace.getIn(['patchedDependencies', `webpack@${compilerVersions.previous}`])
+  assert.equal(typeof patchFile, 'string', '准确基线必须包含对应 Webpack 补丁')
+  const patch = await command(repositoryRoot, 'git', ['show', `${baselineRef}:${patchFile}`], { capture: true, timeoutMs: 30000 })
+  const expected = previousCompanions(accurateBaseline)
+  const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'taro-compiler-ab-'))
+  const roots = Object.fromEntries(Object.keys(compilerVersions).map(role => [role, path.join(temporary, role)]))
+  await fs.mkdir(outDir, { recursive: true })
+  try {
+    const archiveFile = path.join(temporary, 'source.tar')
+    await command(repositoryRoot, 'git', ['archive', '--format=tar', '--output', archiveFile, sourceRef], { timeoutMs: 120000 })
+    for (const root of Object.values(roots)) {
+      await archive(archiveFile, root)
+      await assertTemporaryRoot(root, repositoryRoot)
+    }
+    const originalLock = await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))
+    const originalLockSha256 = sha256(originalLock)
+    const workspaceFile = path.join(roots.previous, 'pnpm-workspace.yaml')
+    const document = previousWorkspace(parseDocument(await fs.readFile(workspaceFile, 'utf8')), expected, patchFile)
+    await fs.writeFile(workspaceFile, String(document))
+    const patchPath = path.resolve(roots.previous, patchFile)
+    assert.ok(path.relative(roots.previous, patchPath) && !path.relative(roots.previous, patchPath).startsWith('..'), '补丁必须位于副本内')
+    await fs.writeFile(patchPath, patch)
+    await command(roots.current, 'pnpm', ['install', '--frozen-lockfile'])
+    await command(roots.previous, 'pnpm', ['install', '--no-frozen-lockfile'])
+    await command(roots.previous, 'pnpm', ['install', '--frozen-lockfile'])
+    for (const [role, root] of Object.entries(roots)) {
+      const evidenceDir = path.join(outDir, role)
+      await fs.mkdir(evidenceDir)
+      for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
+    }
+    assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), originalLockSha256, '当前原锁不允许变化')
+    const locks = Object.fromEntries(await Promise.all(Object.entries(roots).map(async ([role, root]) => [role, parseLock(await fs.readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))])))
+    const axis = auditLockAxis(locks.current, locks.previous, accurateBaseline)
+    const identities = {}
+    for (const [role, root] of Object.entries(roots)) {
+      const companions = Object.fromEntries(Object.entries(compilerSnapshot(locks[role], compilerVersions[role]).snapshot.dependencies).map(([name, ref]) => [name, ref.split('(')[0]]))
+      identities[role] = compilerIdentity(root, role, companions)
+    }
+    assert.equal(identities.current.configSha256, identities.previous.configSha256)
+    const preparation = {
+      schemaVersion: 1, diagnosticOnly: true, sourceRef, baselineRef, originalLockSha256,
+      sourceArchiveSha256: await fileSha256(archiveFile),
+      previousLockSha256: sha256(await fs.readFile(path.join(roots.previous, 'pnpm-lock.yaml'))),
+      patch: { file: patchFile, sha256: sha256(patch), baselineRef },
+      axis, identities, roots, temporary,
+    }
+    await fs.writeFile(path.join(outDir, 'preparation.json'), `${JSON.stringify(preparation, null, 2)}\n`)
+    await fs.writeFile(path.join(outDir, 'previous-webpack.patch'), patch)
+    for (const root of Object.values(roots)) await command(root, 'pnpm', ['build:pkgs'])
+    preparation.processes = processOwnership()
+    await fs.writeFile(path.join(outDir, 'preparation.json'), `${JSON.stringify(preparation, null, 2)}\n`)
+    return preparation
+  }
+  catch (error) {
+    const cleanupErrors = []
+    for (const [role, root] of Object.entries(roots)) {
+      try {
+        const evidenceDir = path.join(outDir, role)
+        await fs.mkdir(evidenceDir, { recursive: true })
+        for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
+      }
+      catch (caught) { cleanupErrors.push(caught.stack ?? String(caught)) }
+    }
+    let retainedTemporary = true
+    try { assertProcessesStopped(); await fs.rm(temporary, { recursive: true, force: true }); retainedTemporary = false }
+    catch (caught) { cleanupErrors.push(caught.stack ?? String(caught)) }
+    await fs.writeFile(path.join(outDir, 'preparation-error.json'), `${JSON.stringify({ temporary, roots, retainedTemporary, primaryError: failureEvidence(error), cleanupErrors, processes: processOwnership() }, null, 2)}\n`)
+    throw error
+  }
+}

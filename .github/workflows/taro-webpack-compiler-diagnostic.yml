@@ -1,0 +1,43 @@
+name: Taro Webpack compiler A/B diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: taro-webpack-compiler-diagnostic-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  compiler-chain-diagnostic:
+    name: Diagnostic / Taro Webpack compiler chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NODE_OPTIONS: ''
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.23.4
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install observation tooling in this checkout
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo
+      - name: Verify isolated diagnostic fixtures
+        run: node --test benchmark/version-compare/scripts/diagnostics/compiler-ab/test.mjs
+      - name: Compare compiler chains in Git-free temporary copies
+        run: node benchmark/version-compare/scripts/diagnostics/compiler-ab/run.mjs --out-dir .tmp/taro-compiler-ab
+      - name: Preserve full diagnostic evidence and generated locks
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: taro-webpack-compiler-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .tmp/taro-compiler-ab/**
+          if-no-files-found: error
+          retention-days: 14

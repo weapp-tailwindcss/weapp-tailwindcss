@@ -8,6 +8,7 @@
 - [benchmark/runtime-cn-vs-merge/AGENTS.md](../../benchmark/runtime-cn-vs-merge/AGENTS.md)
 - [benchmark/performance/AGENTS.md](../../benchmark/performance/AGENTS.md)
 - [benchmark/version-compare/scripts/diagnostics/AGENTS.md](../../benchmark/version-compare/scripts/diagnostics/AGENTS.md)
+- [benchmark/version-compare/scripts/diagnostics/compiler-ab/AGENTS.md](../../benchmark/version-compare/scripts/diagnostics/compiler-ab/AGENTS.md)
 - [demo/AGENTS.md](../../demo/AGENTS.md)
 - [e2e/AGENTS.md](../../e2e/AGENTS.md)
 - [e2e/lynx/decoder/AGENTS.md](../../e2e/lynx/decoder/AGENTS.md)
