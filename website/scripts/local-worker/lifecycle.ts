@@ -6,7 +6,8 @@ import process from 'node:process'
 import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
 import { includeWorkflowCancellation, observeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
 import { prepareWorkflowProcessObserver } from '../../../scripts/demo-e2e-workflow/process-observer'
-import { readProcessSubset, readProcessTable } from '../../../scripts/demo-e2e-workflow/process-table'
+import { createProcessScanScope, readPosixProcessScope } from '../../../scripts/demo-e2e-workflow/process-scope'
+import { readProcessSubset } from '../../../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../../../scripts/demo-e2e-workflow/process-tree'
 import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { prepareLocalCommandGate } from './launch-gate'
@@ -20,17 +21,33 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
   let timer: NodeJS.Timeout | undefined
   let pendingCapture: Promise<Map<number, ProcessIdentity>> | undefined
   let waitingForGate = gate !== undefined
+  let knownPids = command.child.pid ? [command.child.pid] : []
+  const runProbeScan = createProcessScanScope()
   const readTable = (timeoutMs: number, signal?: AbortSignal) => {
     if (waitingForGate) {
       // 用户 preload/CLI 尚未执行，启动握手只需登记本次 spawn 的根身份。
       const pids = command.child.pid ? [command.child.pid] : []
-      return observer ? observer.subset(pids, timeoutMs, signal) : readProcessSubset(undefined, pids, timeoutMs, signal)
+      return observer ? observer.subset(pids, timeoutMs, signal) : runProbeScan(owner => readProcessSubset(undefined, pids, timeoutMs, signal, undefined, owner))
     }
-    return observer ? observer.table(timeoutMs, signal) : readProcessTable(timeoutMs, signal)
+    if (observer) {
+      return observer.table(timeoutMs, signal)
+    }
+    const deadline = Date.now() + timeoutMs
+    return runProbeScan(owner => readPosixProcessScope({ rootPid: command.child.pid!, knownPids, group: command.child.pid! }, () => deadline, signal, owner)).then((rows) => {
+      // 这里只更新发现入口，真正归属仍由 tracker 的出生身份匹配决定。
+      knownPids = rows.map(row => row.pid)
+      return rows
+    })
   }
   // 根退出后仍从活着的身份锚扩展独立组后代，不按历史 PPID 领取归属。
   const tree = createWorkflowProcessTree(command.child, command.closed, {
-    observer: { table: readTable, subset: (_pids, timeoutMs, signal) => readTable(timeoutMs, signal) },
+    observer: {
+      table: readTable,
+      subset: (pids, timeoutMs, signal) => {
+        knownPids = [...pids]
+        return readTable(timeoutMs, signal)
+      },
+    },
     cooperativeMs: 1000,
     cleanupMs: 10_000,
   })
@@ -56,7 +73,11 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
   }
   command.child.once('exit', onExit)
   const capture = (deadline?: number) => {
-    pendingCapture ??= tree.capture(deadline).catch((error) => {
+    pendingCapture ??= tree.capture(deadline).then((owned) => {
+      // 正常周期以 tracker 实际领取的身份收窄下一轮发现入口。
+      knownPids = [...owned.keys()]
+      return owned
+    }).catch((error) => {
       controller.abort(error)
       throw error
     }).finally(() => {

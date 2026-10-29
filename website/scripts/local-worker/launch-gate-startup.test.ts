@@ -6,6 +6,7 @@ import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processObserver from '../../../scripts/demo-e2e-workflow/process-observer'
+import * as processScope from '../../../scripts/demo-e2e-workflow/process-scope'
 import * as processTable from '../../../scripts/demo-e2e-workflow/process-table'
 import { launchGateEnvironment } from './launch-gate'
 import { withLocalCommand } from './lifecycle'
@@ -55,16 +56,26 @@ it('Node 启动握手只查询本轮根 PID，共享 gate 截止；放行后恢�
   }
   else {
     const subset = processTable.readProcessSubset
-    vi.spyOn(processTable, 'readProcessSubset').mockImplementation(async (group, pids, timeoutMs = 5000, signal) => {
+    vi.spyOn(processTable, 'readProcessSubset').mockImplementation(async (...args) => {
+      const [group, pids, timeoutMs = 5000] = args
       expect(group).toBeUndefined()
-      assertStartup(pids, timeoutMs)
-      return await subset(group, pids, timeoutMs, signal)
+      if (!existsSync(path.join(payload.directory, 'released'))) {
+        assertStartup(pids, timeoutMs)
+      }
+      else {
+        assertReleased()
+        expect(timeoutMs).toBeGreaterThan(0)
+        expect(timeoutMs).toBeLessThanOrEqual(5000)
+      }
+      // 保留扫描归属域，放行后的候选详情不能被 mock 降为游离探针。
+      return await subset(...args)
     })
-    const table = processTable.readProcessTable
-    vi.spyOn(processTable, 'readProcessTable').mockImplementation(async (...args) => {
+    const scoped = processScope.readPosixProcessScope
+    vi.spyOn(processScope, 'readPosixProcessScope').mockImplementation(async (...args) => {
       assertReleased()
-      return await table(...args)
+      return await scoped(...args)
     })
+    vi.spyOn(processTable, 'readProcessTable').mockRejectedValue(new Error('POSIX 本地命令不得读取全机详细身份表'))
   }
   let fullScanObserved = false
   const collect = processTable.collectOwnedProcesses
