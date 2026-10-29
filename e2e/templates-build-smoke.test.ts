@@ -189,27 +189,29 @@ function createUniMiniBuildCase(template: string, platform: keyof typeof uniMini
     ],
     styleFiles: [outputDir],
     textFiles: [`${outputDir}/${output.pageFile}`],
-    ...(template === 'uni-app-webpack-tailwindcss-v4' && platform === 'mp-weixin' ? {
-      async verifyOutput(root: string, styles: string, texts: string) {
-        const classes = ['min-h-screen', 'p-_b40rpx_B', 'bg-_b_h877878_B']
-        const rules = collectCssRuleEvidence(styles)
-        expect(texts).toContain('p-_b40rpx_B')
-        const service = await fs.readFile(path.join(root, outputDir, 'pages', 'index', 'index.js'), 'utf8')
-        expect(scriptStringProperties(service, 'className')).toContain('bg-_b_h877878_B')
-        const baseline = {
-          target: 'mp-weixin',
-          classes: classes.map((className) => {
-            const identity = collectCssRuleEvidence(`.${className}{}`)[0]!.identity
-            return {
-              className,
-              declarations: rules.filter(rule => rule.identity === identity && rule.conditions.length === 0).flatMap(rule => rule.declarations),
+    ...(template === 'uni-app-webpack-tailwindcss-v4' && platform === 'mp-weixin'
+      ? {
+          async verifyOutput(root: string, styles: string, texts: string) {
+            const classes = ['min-h-screen', 'p-_b40rpx_B', 'bg-_b_h877878_B']
+            const rules = collectCssRuleEvidence(styles)
+            expect(texts).toContain('p-_b40rpx_B')
+            const service = await fs.readFile(path.join(root, outputDir, 'pages', 'index', 'index.js'), 'utf8')
+            expect(scriptStringProperties(service, 'className')).toContain('bg-_b_h877878_B')
+            const baseline = {
+              target: 'mp-weixin',
+              classes: classes.map((className) => {
+                const identity = collectCssRuleEvidence(`.${className}{}`)[0]!.identity
+                return {
+                  className,
+                  declarations: rules.filter(rule => rule.identity === identity && rule.conditions.length === 0).flatMap(rule => rule.declarations),
+                }
+              }),
             }
-          }),
+            expect(baseline.classes.every(item => item.declarations.length > 0)).toBe(true)
+            await expect(`${JSON.stringify(baseline, null, 2)}\n`).toMatchFileSnapshot(path.join(repoRoot, 'e2e', '__snapshots__', 'uni-app-webpack-tailwindcss-v4.mp-styles.json'))
+          },
         }
-        expect(baseline.classes.every(item => item.declarations.length > 0)).toBe(true)
-        await expect(`${JSON.stringify(baseline, null, 2)}\n`).toMatchFileSnapshot(path.join(repoRoot, 'e2e', '__snapshots__', 'uni-app-webpack-tailwindcss-v4.mp-styles.json'))
-      },
-    } : {}),
+      : {}),
   }
 }
 
