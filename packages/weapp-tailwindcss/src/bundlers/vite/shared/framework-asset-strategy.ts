@@ -1,6 +1,17 @@
 import type { FrameworkAssetAccess, FrameworkAssets } from './framework-assets'
 import type { CreateJsHandlerOptions, InternalUserDefinedOptions, JsHandlerResult } from '@/types'
 
+/** 模板只消费本轮构建图内与它关联的样式，不反查磁盘或推导源码目录。 */
+export interface ViteFrameworkTemplateAssetContext {
+  file: string
+  styles: readonly Readonly<{ fileName: string, source: string }>[]
+}
+
+export interface ViteFrameworkTemplateAssetTransform {
+  cacheKey: string
+  transform: (source: string) => string
+}
+
 /** 仅提供当前 JS 资产的转换服务；缓存提交与任务调度由构建器持有。 */
 export interface ViteFrameworkJsAssetContext {
   assets: FrameworkAssets
@@ -27,6 +38,7 @@ export interface ViteFrameworkStyleAssetContext {
 }
 
 export interface ViteFrameworkAssetPipelineStrategy {
+  prepareTemplateAsset?: (context: ViteFrameworkTemplateAssetContext) => ViteFrameworkTemplateAssetTransform | undefined
   createJsAssetTask?: (context: ViteFrameworkJsAssetContext) => (() => Promise<void>) | undefined
   /** 产物转换完成后执行；返回的操作只在本轮 CSS 同步后执行。 */
   afterTransform?: (context: ViteFrameworkStyleAssetContext) => Promise<(() => void) | undefined>

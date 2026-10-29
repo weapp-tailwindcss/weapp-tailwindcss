@@ -1,5 +1,6 @@
 import type { ViteFrameworkAssetPipelineStrategy, ViteFrameworkJsAssetContext } from '../../shared/framework-asset-strategy'
 import type { CreateJsHandlerOptions, UserDefinedOptions } from '@/types'
+import { hasCompiledBorderPreflight, injectCompiledBorderPreflight } from '@/uni-app-x/compiled-border-preflight'
 import { isUniAppXEnabled } from '@/uni-app-x/options'
 import { createUniAppXBundleAssetSourceGetter, injectUniAppXStylePlaceholder, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
 import { applyHarmonyBundleStyles, createHarmonyBundleStyleSources, handleUniAppXPostCssTasks } from './postprocess'
@@ -35,6 +36,15 @@ function createJsAssetTask(context: ViteFrameworkJsAssetContext, options: Readon
 /** 每个框架实例捕获自己的配置；产物阶段的临时状态仅存于本轮回调。 */
 export function createUniAppXAssetPipeline(options: Readonly<UserDefinedOptions>): ViteFrameworkAssetPipelineStrategy {
   return {
+    prepareTemplateAsset(context) {
+      if (context.styles.length !== 1 || !hasCompiledBorderPreflight(context.styles[0]!.source, options.cssPreflight)) {
+        return
+      }
+      return {
+        cacheKey: `uni-app-x:border-preflight:1:${options.cssPreflightRange ?? 'default'}`,
+        transform: source => injectCompiledBorderPreflight(source, options.cssPreflightRange),
+      }
+    },
     createJsAssetTask: context => createJsAssetTask(context, options),
     async afterTransform(context) {
       const applyStyleSources = await handleUniAppXPostCssTasks({

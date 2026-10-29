@@ -337,6 +337,9 @@ wx-root-portal-content {
 .border-_b_h111111_B {
   border-color: #111111;
 }
+.border-_b_he2e8f0_B {
+  border-color: #e2e8f0;
+}
 .border-_bred_B {
   border-color: red;
 }
@@ -571,6 +574,9 @@ wx-root-portal-content {
   font-size: var(--text-xs);
   line-height: var(--tw-leading, var(--text-xs--line-height));
 }
+.text-_b10px_B {
+  font-size: 10px;
+}
 .text-_b11px_B {
   font-size: 11px;
 }
@@ -617,6 +623,9 @@ wx-root-portal-content {
 }
 .text-_b_h94a3b8_B {
   color: #94a3b8;
+}
+.text-_b_h64748b_B {
+  color: #64748b;
 }
 .text-_b_h111111_B {
   color: #111111;

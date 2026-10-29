@@ -1,0 +1,46 @@
+<script lang="uts">
+export default {
+  styleIsolation: 'app',
+}
+</script>
+
+<template>
+  <view class="issue-1319-panel">
+    <text>Issue 1319：HTML 标签的单边边框</text>
+    <!-- #ifdef H5 || MP-WEIXIN -->
+    <div id="issue-1319-original" class="mt-[12px] pt-[10px] border-t-[1px] border-solid border-[#e2e8f0] flex flex-row items-center justify-between">
+      <span class="text-[10px] text-[#94a3b8]">.agents/skills/unibestX-skill/ · plopfile.js</span>
+      <span class="text-[10px] text-[#64748b]">单物理源 · 多端软链同步</span>
+    </div>
+    <div id="issue-1319-native" class="issue-1319-box issue-1319-native"><span>原生 CSS 顶边 1px</span></div>
+    <div id="issue-1319-top" class="issue-1319-box border-t-[1px] border-solid border-[#e2e8f0]"><span>顶边 1px</span></div>
+    <div id="issue-1319-right" class="issue-1319-box border-r-[1px] border-solid border-[#e2e8f0]"><span>右边 1px</span></div>
+    <div id="issue-1319-bottom" class="issue-1319-box border-b-[1px] border-solid border-[#e2e8f0]"><span>底边 1px</span></div>
+    <div id="issue-1319-left" class="issue-1319-box border-l-[1px] border-solid border-[#e2e8f0]"><span>左边 1px</span></div>
+    <div id="issue-1319-pair" class="issue-1319-box border-t-[1px] border-l-[2px] border-solid border-[#e2e8f0]"><span>顶边 1px + 左边 2px</span></div>
+    <div id="issue-1319-all" class="issue-1319-box border-[2px] border-solid border-[#e2e8f0]"><span>四边 2px</span></div>
+    <div id="issue-1319-override" class="issue-1319-box border-[2px] border-t-0 border-solid border-[#e2e8f0]"><span>四边 2px + 顶边 0</span></div>
+    <!-- #endif -->
+    <!-- #ifdef APP -->
+    <text>本页 HTML 标签复现针对 H5 与微信小程序。</text>
+    <!-- #endif -->
+  </view>
+</template>
+
+<style>
+.issue-1319-panel {
+  padding: 16px;
+  background-color: #ffffff;
+}
+.issue-1319-box {
+  margin-top: 8px;
+  height: 28px;
+  background-color: #f1f5f9;
+}
+.issue-1319-native {
+  border-width: 0;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #e2e8f0;
+}
+</style>

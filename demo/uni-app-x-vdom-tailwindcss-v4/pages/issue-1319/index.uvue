@@ -1,0 +1,13 @@
+<script lang="uts">
+import Issue1319Border from '../../components/issue-1319-border/issue-1319-border.uvue'
+
+export default {
+  components: { Issue1319Border },
+}
+</script>
+
+<template>
+  <scroll-view scroll-y style="flex: 1;">
+    <Issue1319Border />
+  </scroll-view>
+</template>

@@ -5,6 +5,9 @@ import { createCache } from '@/cache'
 import { buildBundleSnapshotForBuild } from '@/bundlers/vite/bundle-state'
 import { processHtmlBundleEntry } from '@/bundlers/vite/generate-bundle/html-processing'
 import { createEmptyMetrics } from '@/bundlers/vite/generate-bundle/metrics'
+import { collectTemplateAssetStyles } from '@/bundlers/vite/generate-bundle/template-assets'
+import { createUniAppXAssetPipeline } from '@/bundlers/vite/frameworks/uni-app-x/asset-pipeline'
+import type { ViteFrameworkTemplateAssetTransform } from '@/bundlers/vite/shared/framework-asset-strategy'
 import { replaceWxml } from '@/wxml'
 import { createTemplateHandler } from '@/wxml/utils'
 import { createContext, createRollupAsset } from './vite-plugin.testkit'
@@ -18,6 +21,7 @@ interface ProcessAssetOptions {
   source?: string
   sourceCandidate?: string
   templateHandler?: (source: string, options: { runtimeSet: Set<string> }) => string | Promise<string>
+  templateTransform?: ViteFrameworkTemplateAssetTransform
   transformRuntime?: Set<string>
 }
 
@@ -41,6 +45,7 @@ async function processAsset(options: ProcessAssetOptions) {
     resolveCurrentSourceCandidateSource: () => options.sourceCandidate,
     tasks,
     templateHandler: options.templateHandler ?? createTemplateHandler(),
+    templateTransform: options.templateTransform,
     timeTask: async (_name, task) => task(),
     transformRuntime: runtimeSet,
     transformRuntimeSignature: [...runtimeSet].sort().join(','),
@@ -49,6 +54,29 @@ async function processAsset(options: ProcessAssetOptions) {
 }
 
 describe('bundlers/vite html bundle processing', () => {
+  it('invalidates compiled-host transforms when their own style carrier changes', async () => {
+    const cache = createCache()
+    const templateHandler = vi.fn(createTemplateHandler())
+    const pipeline = createUniAppXAssetPipeline({ appType: 'uni-app-x', cssPreflight: { 'border-width': '0' } })
+    const source = '<view class="border-t-[1px] border-solid"><label>说明</label></view>'
+    const run = async (css: string) => {
+      const template = { ...createRollupAsset(source), fileName: 'widgets/footer.axml' }
+      const style = { ...createRollupAsset(css), fileName: 'widgets/footer.acss' }
+      const bundle = { [template.fileName]: template, [style.fileName]: style }
+      const snapshot = buildBundleSnapshotForBuild(bundle, createContext({ cssMatcher: (file: string) => file.endsWith('.acss'), htmlMatcher: (file: string) => file.endsWith('.axml') }) as any, '/virtual/dist')
+      const styles = collectTemplateAssetStyles(snapshot)(template.fileName)
+      await processAsset({ asset: template, cache, templateHandler, templateTransform: pipeline.prepareTemplateAsset?.({ file: template.fileName, styles }) })
+      return template.source.toString()
+    }
+    expect(await run('.weapp-tw-border{border-width:0}')).toContain('class="weapp-tw-border border-t-')
+    expect(await run('.weapp-tw-border{border-width:0}')).toContain('class="weapp-tw-border border-t-')
+    expect(templateHandler).toHaveBeenCalledTimes(1)
+    expect(await run('.author{border-top-width:1px}')).not.toContain('weapp-tw-border')
+    expect(templateHandler).toHaveBeenCalledTimes(2)
+    expect(await run('.weapp-tw-border{border-width:0}')).toContain('class="weapp-tw-border border-t-')
+    expect(templateHandler).toHaveBeenCalledTimes(2)
+  })
+
   it('transforms the current bundle asset without replacing structure from earlier plugins', async () => {
     const sourceCandidate = '<view class="tracking-[0.2em]">content</view>'
     const bundleSource = [
