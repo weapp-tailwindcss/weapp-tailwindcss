@@ -69,7 +69,10 @@ it('冷模块 5169ms 与首次 CIM 8100ms 只消耗一次准备查询，完成�
   const fixture = coldProvider(5761, 5169, 8100)
   let finished = false
   const preparing = prepareWorkflowProcessObserver(undefined, {
-    platform: 'win32', command: 'fixture', args: [], spawn: fixture.createChild,
+    platform: 'win32',
+    command: 'fixture',
+    args: [],
+    spawn: fixture.createChild,
   }).then((observer) => {
     finished = true
     return observer!

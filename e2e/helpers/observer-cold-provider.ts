@@ -74,4 +74,3 @@ export function createColdObserverProvider(hostMs = 12_000, moduleMs = 3000, que
   }) as unknown as typeof spawn
   return { child, requests, createChild, send }
 }
-
