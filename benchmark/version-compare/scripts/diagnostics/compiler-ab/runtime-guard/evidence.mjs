@@ -12,6 +12,7 @@ export function readEvidence(session, rootPid, digest) {
   for (const [filename, sha] of Object.entries(session.codeHashes)) {
     if (digest(filename) !== sha) invalid('runtime source hash mismatch')
   }
+  if (session.compilerSources && digest(session.compilerSources.file) !== session.compilerSources.sha256) invalid('compiler source contract hash mismatch')
   const records = []
   for (const filename of readdirSync(path.join(session.directory, 'events'))) {
     if (path.extname(filename) !== '.ndjson') invalid('unknown receipt file')
@@ -24,6 +25,7 @@ export function readEvidence(session, rootPid, digest) {
     if (!entries.length || entries[0].kind !== 'ready') invalid('missing ready')
     const ready = entries[0]
     if (JSON.stringify(ready.codeHashes) !== JSON.stringify(session.codeHashes)) invalid('ready source hashes mismatch')
+    if (ready.compilerSourceSha256 !== session.compilerSources?.sha256) invalid('ready compiler source contract mismatch')
     entries.forEach((entry, index) => {
       if (entry.session !== session.id || entry.isolate !== ready.isolate || entry.pid !== ready.pid || entry.ppid !== ready.ppid || entry.threadId !== ready.threadId || entry.sequence !== index + 1 || entry.bootstrapSha !== session.bootstrapSha) invalid('receipt identity or sequence mismatch')
     })
@@ -70,5 +72,5 @@ export function readEvidence(session, rootPid, digest) {
     if (previous === reachable.size) break
   }
   if (evidence.isolates.some(entry => !reachable.has(entry.isolate))) invalid('unowned runtime isolate')
-  return { ...evidence, passed: true }
+  return { ...evidence, compilerLoads: records.filter(entry => entry.kind === 'compiler-load'), passed: true }
 }

@@ -33,9 +33,31 @@ function install(session) {
   }
   if (typeof Module.registerHooks !== 'function') reject('synchronous module hooks unavailable')
   const identity = createIdentity()
+  const compilerSources = new Map()
+  if (session.compilerSources) {
+    if (digest(session.compilerSources.file) !== session.compilerSources.sha256) reject('compiler source contract hash mismatch')
+    for (const source of JSON.parse(fs.readFileSync(session.compilerSources.file, 'utf8'))) {
+      const root = fs.realpathSync(source.directory)
+      if (root !== source.directory || compilerSources.has(root)) reject('compiler source contract root mismatch')
+      if (digest(path.join(root, 'package.json')) !== source.files['package.json']) reject('webpack compiler manifest hash mismatch')
+      compilerSources.set(root, source)
+    }
+  }
+  const checkedCompilerFiles = new Set()
   const parents = new Map()
   function check(filename, parent) {
     const target = identity.owner(filename)
+    if (target?.name === 'webpack' && session.compilerSources) {
+      const approved = compilerSources.get(target.root)
+      if (!approved) reject('unapproved webpack compiler context', { filename, root: target.root })
+      if (!checkedCompilerFiles.has(target.file)) {
+        const relative = path.relative(target.root, target.file)
+        const actual = digest(target.file)
+        if (approved.files[relative] !== actual) reject('webpack compiler source hash mismatch', { filename, root: target.root, relative })
+        checkedCompilerFiles.add(target.file)
+        write('compiler-load', { filename: target.file, root: target.root, key: approved.key, sha256: actual })
+      }
+    }
     if (target?.name === 'webpack-cli') reject('webpack-cli was loaded', { filename, parent })
     if (target?.name === 'esbuild' && identity.owner(parent)?.name === 'terser-webpack-plugin') {
       reject('terser-webpack-plugin consumed esbuild', { filename, parent })
@@ -73,7 +95,7 @@ function install(session) {
     ? JSON.parse(process.env.WEAPP_TW_COMPILER_AB_PARENT)
     : undefined
   process.on('exit', code => write('exit', { code }))
-  write('ready', { node: process.version, execPath: fs.realpathSync(process.execPath), codeHashes: session.codeHashes, parent })
+  write('ready', { node: process.version, execPath: fs.realpathSync(process.execPath), codeHashes: session.codeHashes, compilerSourceSha256: session.compilerSources?.sha256, parent })
 }
 
 module.exports = { install }

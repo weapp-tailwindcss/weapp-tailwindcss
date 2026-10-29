@@ -134,7 +134,8 @@ export async function prepare(outDir) {
     const identities = {}, nativeHelpers = {}
     for (const [role, root] of Object.entries(roots)) {
       const companions = Object.fromEntries(Object.entries(compilerSnapshot(locks[role], compilerVersions[role]).snapshot.dependencies).map(([name, ref]) => [name, ref.split('(')[0]]))
-      identities[role] = compilerIdentity(root, role, companions)
+      const approvedWorkspace = parseDocument(role === 'current' ? currentWorkspace : previousWorkspaceSource).toJS()
+      identities[role] = compilerIdentity(root, role, companions, locks[role], approvedWorkspace.patchedDependencies)
       nativeHelpers[role] = nativeEsbuildHelpers(root, identities[role])
     }
     assert.equal(identities.current.configSha256, identities.previous.configSha256)

@@ -11,16 +11,23 @@ const runtimeFiles = [runtime, ...['identity.cjs', 'launch.cjs'].map(filename =>
 const digest = filename => createHash('sha256').update(readFileSync(filename)).digest('hex')
 
 /** 创建诊断专用的固定 bootstrap 与独立收据目录。 */
-export function createRuntimeGuardSession(destination, { nativeHelpers = [] } = {}) {
+export function createRuntimeGuardSession(destination, { nativeHelpers = [], webpackSources } = {}) {
   mkdirSync(destination, { recursive: true })
   const sessionDirectory = realpathSync(destination)
   const events = path.join(sessionDirectory, 'events')
   mkdirSync(events)
+  let compilerSources
+  if (webpackSources) {
+    const file = path.join(sessionDirectory, 'webpack-sources.json')
+    writeFileSync(file, `${JSON.stringify(webpackSources)}\n`, { flag: 'wx' })
+    compilerSources = { file, sha256: digest(file) }
+  }
   const session = {
     id: randomUUID(),
     directory: sessionDirectory,
     bootstrap: path.join(sessionDirectory, 'bootstrap.cjs'),
     codeHashes: Object.fromEntries(runtimeFiles.map(filename => [filename, digest(filename)])),
+    compilerSources,
     nativeHelpers: nativeHelpers.map(helper => {
       const filename = realpathSync(helper.path)
       if (!/^[a-f0-9]{64}$/.test(helper.sha256) || digest(filename) !== helper.sha256 || !Array.isArray(helper.args) || helper.args.some(value => typeof value !== 'string')) throw new Error('Invalid native helper identity')

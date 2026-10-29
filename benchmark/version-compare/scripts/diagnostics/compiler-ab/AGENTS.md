@@ -19,6 +19,7 @@
 - 按每个 importer 的实际可达图保留一般 opaque 歧义守卫；只有目标 manifest 与三个准确 Taro parent 路径能传入编译器轴授权。非轴 metadata/绑定保持，所有新增/移除 snapshot 均须有授权路径与 incoming 证据，不可达项保持原样。
 - 唯一附加轴为已核实的可选 Webpack/Terser 5.6.1/esbuild 0.21.5 上下文合入 esbuild 0.28.2；完整附着边与路径写入合同。Terser 源码和其它绑定相等，不得全图归一化其它 esbuild。
 - 所有 main/child/worker 启用真实加载守卫；webpack-cli 实际加载、Terser 实际消费 esbuild 或守卫缺证均使测量无效。不得 stub 模块、改变加载结果或减去编译工作。
+- 安装身份必须来自严格锁的准确 consumer 边；保留 direct/runner 的不同 peer 上下文，核对全部安装闭包与同侧完整源码（仅排除 node_modules）。批准加载根仅限该侧 direct/runner；完整源码合同绑定每个 isolate，实际 Compiler 加载、实例与全部 phase 必须核对批准 runner，额外编译器或缺证失败。不得强制改绑 require，也不预加载未消费的 direct 类。
 - 固定源码、Taro、压缩配置、完整编译工作量和原预算；不得主动请求 GC、关闭压缩或更改正式升级目标。
 - 此实验仅供因果诊断，不能替代正式性能门禁、全端预检或真实平台验收，check 名称及并发组必须独立。
 - 所有子命令必须有截止、定向终止及独立 close/reap 确认；未确认停止时保留临时副本，记录首错与清理错。

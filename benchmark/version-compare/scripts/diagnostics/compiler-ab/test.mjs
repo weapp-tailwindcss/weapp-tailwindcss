@@ -8,7 +8,8 @@ import process from 'node:process'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
-import { sha256 } from './identity.mjs'
+import { observerIdentity, readPackage, sha256 } from './identity.mjs'
+import { packageFiles } from './installed-graph.mjs'
 import { outputManifest, sampleRss, validatePhases } from './measure.mjs'
 import { assertTemporaryRoot, previousProjectManifest, previousWorkspace } from './prepare.mjs'
 import { runOrder } from './run.mjs'
@@ -21,6 +22,7 @@ import './lock-roots.test.mjs'
 import './optional-esbuild.test.mjs'
 import './runtime-guard.test.mjs'
 import './tool-metadata.test.mjs'
+import './compiler-context.test.mjs'
 
 const execute = promisify(execFile)
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -123,20 +125,27 @@ test('真实 Node 加载守卫与 preload 观测兼容，ESM Worker 的空环境
       }).catch(error => { console.error(error); process.exitCode = 1 });
     `)
     const file = path.join(temporary, 'compiler.ndjson')
-    const guard = createRuntimeGuardSession(path.join(temporary, 'guard'))
+    const runnerRoot = path.join(temporary, 'node_modules', '@tarojs', 'webpack5-runner')
+    await fs.mkdir(path.join(runnerRoot, 'dist'), { recursive: true })
+    await fs.writeFile(path.join(runnerRoot, 'package.json'), '{"name":"@tarojs/webpack5-runner","version":"fixture"}')
+    await fs.writeFile(path.join(runnerRoot, 'dist', 'index.mini.js'), '// fixture')
+    const actual = readPackage(temporary, 'webpack')
+    const contexts = [{ ...actual, key: 'webpack@fixture', files: packageFiles(actual.directory) }]
+    const compiler = observerIdentity({ webpack: actual, runner: readPackage(temporary, '@tarojs/webpack5-runner'), compilerContexts: contexts, runnerEntrySha256: sha256('// fixture') })
+    const guard = createRuntimeGuardSession(path.join(temporary, 'guard'), { webpackSources: contexts })
     const { stdout } = await execute(process.execPath, [...guard.execArgv, '--require', path.join(here, 'preload.cjs'), entry], {
-      env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file }) }, timeout: 10000,
+      env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file, compiler }) }, timeout: 10000,
     })
     readRuntimeGuardEvidence(guard.session, { rootPid: JSON.parse(stdout).pid })
     const records = (await fs.readFile(file, 'utf8')).trim().split('\n').map(JSON.parse)
-    validatePhases(records)
+    validatePhases(records, compiler)
     const phases = records.filter(item => item.type === 'phase')
     assert.deepEqual(phases.map(item => item.manifest[0].sha256), ['before', 'after', 'after'].map(sha256))
     assert.equal(records.at(-1).workers.created, 1)
     assert.equal(records.at(-1).workers.peak, 1)
     assert.equal(records.at(-1).workers.active, 0)
-    assert.throws(() => validatePhases(records.slice(0, -1)), /退出观测/)
-    assert.throws(() => validatePhases(records.filter(item => item.phase !== 'after-optimize-size')))
+    assert.throws(() => validatePhases(records.slice(0, -1), compiler), /退出观测/)
+    assert.throws(() => validatePhases(records.filter(item => item.phase !== 'after-optimize-size'), compiler))
     assert.equal(records.filter(item => item.type === 'compiler-options')[0].options.resolve.mainFields[0], 'main:mini')
   }
   finally { await fs.rm(temporary, { recursive: true, force: true }) }

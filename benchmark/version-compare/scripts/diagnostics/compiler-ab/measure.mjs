@@ -6,7 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parsePosixProcessRows, selectProcessTreeRows } from '../../process-memory.mjs'
-import { sha256 } from './identity.mjs'
+import { observerIdentity, sha256 } from './identity.mjs'
 import { readGcEvidence } from './gc-evidence.mjs'
 import { projectRelative } from './lock-axis.mjs'
 import { createRuntimeGuardSession, readRuntimeGuardEvidence } from './runtime-guard.mjs'
@@ -35,8 +35,10 @@ export function sampleRss(pid, deadline, execute = spawnSync, now = Date.now) {
   }
 }
 
-export function validatePhases(records) {
+export function validatePhases(records, compiler) {
   assert.equal(records[0]?.type, 'start', '缺少编译器 preload 身份')
+  assert.ok(compiler?.target, '缺少批准的编译器观测身份')
+  assert.deepEqual(records[0].compiler, compiler, '观测启动身份不符')
   assert.equal(records.at(-1)?.type, 'exit', '缺少正常退出观测')
   assert.equal(records.at(-1).exitCode, 0)
   const options = records.filter(item => item.type === 'compiler-options')
@@ -51,14 +53,23 @@ export function validatePhases(records) {
     assert.ok(actual.optimization.minimizer.every(item => item.options.parallel === true))
   }
   for (const item of options) {
+    assert.deepEqual(item.compiler, compiler.target, '观测到了批准 runner 以外的编译器')
     const phases = records.filter(record => record.type === 'phase' && record.number === item.number)
     assert.deepEqual(phases.map(record => record.phase), ['before-optimize-size', 'after-optimize-size', 'after-process-assets'])
     for (const phase of phases) {
+      assert.deepEqual(phase.compiler, item.compiler, '阶段与实际编译器身份不符')
       assert.equal(phase.manifest.length, phase.assetCount)
       assert.ok(phase.manifest.every(asset => /^[a-f\d]{64}$/.test(asset.sha256) && asset.bytes >= 0))
     }
   }
   return options
+}
+
+export function validateCompilerGuard(evidence, compiler, pid) {
+  assert.ok(evidence.compilerLoads?.some(item => item.root === compiler.target.directory && item.filename === path.join(compiler.target.directory, 'lib', 'Compiler.js') && item.key === compiler.target.key && item.pid === pid && item.threadId === 0), '缺少真实 runner 编译器的加载守卫证据')
+  for (const item of evidence.compilerLoads) {
+    if (item.filename === path.join(item.root, 'lib', 'Compiler.js')) assert.ok(item.pid === pid && item.threadId === 0, '未观测 isolate 加载了真实 Compiler，拒绝缺失的编译证据')
+  }
 }
 
 export async function outputManifest(directory) {
@@ -88,7 +99,9 @@ export async function measure(root, role, run, outDir, options = {}) {
   const project = path.join(root, projectRelative)
   const directory = path.join(outDir, role, `run-${run}`)
   await fsp.mkdir(directory)
-  const guard = createRuntimeGuardSession(path.join(directory, 'runtime-guard'), { nativeHelpers: options.nativeHelpers ?? [] })
+  assert.ok(options.identity, '测量必须使用准备阶段批准的编译器身份')
+  const compiler = observerIdentity(options.identity)
+  const guard = createRuntimeGuardSession(path.join(directory, 'runtime-guard'), { nativeHelpers: options.nativeHelpers ?? [], webpackSources: options.identity.compilerContexts })
   await fsp.writeFile(path.join(directory, 'runtime-guard-session.json'), `${JSON.stringify(guard.session, null, 2)}\n`)
   // 每轮都使用新进程；持久化缓存与 prebundle 在原 demo 配置中已经关闭。
   for (const name of ['dist', '.taro', '.swc', path.join('node_modules', '.cache')]) {
@@ -96,7 +109,7 @@ export async function measure(root, role, run, outDir, options = {}) {
   }
   const entry = path.join(root, 'scripts/taro-build-runner.mjs')
   const phaseFile = path.join(directory, 'compiler.ndjson')
-  const session = { root, project, expectedEntry: entry, file: phaseFile, role, run }
+  const session = { root, project, expectedEntry: entry, file: phaseFile, role, run, compiler }
   const gcIdentity = {
     role, run, kind: 'build', project: 'demo-taro-webpack-react-tailwindcss-v4__mp-weixin',
     sessionDirectory: directory,
@@ -179,7 +192,8 @@ export async function measure(root, role, run, outDir, options = {}) {
   assert.equal(probeFailures.length, 0, '存活进程的 RSS 采样失败')
   assert.ok(samples.length > 0 && samples.some(item => item.processes.some(row => row.pid === child.pid)), '缺少主 Node 的 RSS 证据')
   const phases = readRecords(phaseFile)
-  validatePhases(phases)
+  validatePhases(phases, compiler)
+  validateCompilerGuard(runtimeGuard, compiler, child.pid)
   assert.equal(phases[0].pid, child.pid)
   const gcFile = path.join(directory, `gc-${child.pid}.ndjson`)
   let gcEvidence

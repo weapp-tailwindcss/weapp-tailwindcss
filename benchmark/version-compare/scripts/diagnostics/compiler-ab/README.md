@@ -22,6 +22,14 @@ previous 在该派生锁上，将目标 demo manifest 的准确 Webpack `5.91.0`
 
 每次构建最长 300 秒；Git 读取 30 秒、archive/tar 120 秒、安装/准备构建 20 分钟。失败不重试、不修改阈值，保留首败；TERM 1.5 秒后 KILL，并独立确认进程组消失与 close/reap。无法确认停止时保留临时副本及归属。证据超限、部分写入、缺少观测、图漂移或采样失败均使诊断失败，不主动请求 GC。
 
+安装身份从已审计锁的目标 importer 取得种子，沿每条真实 dependency/optional 边核对版本、源码 metadata 与实际目录：同一 snapshot 必须指向同一目录，不同 snapshot 不得合并；仅锁明示不支持当前 OS/CPU/libc 的可选包可以缺席。单独记录项目 direct、runner、Taro、项目脚本重定向的 taro-loader、prebundle 与压缩器绑定。批准加载的 Webpack 仅限 direct 与 runner 两个根的并集；同侧完整包文件必须逐项相同，只排除包内 `node_modules`，JS、JSON 和隐藏文件都参与。记录完整文件 hash、锁内 patch 身份、补丁原文 hash 与全部 snapshot incoming。
+
+本轮真实图中，current 的 direct 编译器自带 Terser 绑定 esbuild 0.28.2，runner/Taro/loader/prebundle 的编译器自带 Terser 绑定 0.21.5；previous 的编译器上下文合入 0.28.2。runner 直接消费的主 Terser 及 CSS minimizer 则在两侧均保留自身 esbuild 0.21.5，不能与 Webpack 自带的 Terser 混为一谈。这些事实由原严格锁轴与安装图核验共同约束，没有增加新的依赖变化授权。
+
+完整 Webpack 源码清单写入独立合同文件，bootstrap 与每个 isolate 的 ready 绑定其 SHA；实际加载按 canonical root、准确 snapshot 和逐文件 hash 审核，拒绝其它版本、其它补丁或额外上下文，并留下不可撤销加载证据。observer 重新从真实 runner 解析主 Compiler，核对 runner 入口与 Compiler/Compilation hash 后接入；合法 direct 模块仍可加载。其它批准类只在业务首次加载后被动接入，保留原 exports、this、参数、结果及异常，不为观测预加载 direct。每次主编译、子编译及三阶段都须对应批准的 runner 身份；额外 context 真实创建编译器、缺主编译或缺真实 runner 加载守卫均失败。
+
+[40901901583](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40901901583) 在两侧完整 frozen install 后发现 direct/runner 上下文分裂，失败清理无误；artifact SHA/CRC 已验证。旧 observer 仅接入 direct 类，错误的目录相等断言提前阻断了测量。此修复核对并绑定真实 runner 类，仍未产生该轮 A/B 样本。
+
 本地定向 fixture：
 
 ```sh

@@ -59,7 +59,7 @@ export async function main() {
     await fs.writeFile(path.join(outDir, 'plan.json'), `${JSON.stringify({ diagnosticOnly: true, label: preparation.label, node: process.version, platform: process.platform, runOrder, metadataNormalization: preparation.metadataNormalization, optionalEsbuildMerge: preparation.axis.optionalEsbuildMerge }, null, 2)}\n`)
     for (const [role, run] of runOrder) {
       process.stdout.write(`[compiler-ab] ${role} ${run}/3：完整冷构建\n`)
-      runs.push(await measure(preparation.roots[role], role, run, outDir, { nativeHelpers: preparation.nativeHelpers[role].helpers }))
+      runs.push(await measure(preparation.roots[role], role, run, outDir, { nativeHelpers: preparation.nativeHelpers[role].helpers, identity: preparation.identities[role] }))
     }
     const report = { diagnosticOnly: true, preparation, runOrder, runs }
     const markdown = markdownReport(preparation, runs)
