@@ -2788,7 +2788,9 @@
       "originalDeclarations": 1717,
       "addedPairing": 27,
       "currentDeclarations": 1744,
-      "packageNames": 444,
+      "originalPackageNames": 444,
+      "currentPackageNames": 452,
+      "packageNameCounting": "按 npm alias 实际包名归一并去重；声明键由 449 增至 457，实际包名由 444 增至 452。",
       "addedPackage": "templates/taro-webpack-tailwindcss-v4 devDependencies postcss-rule-unit-converter@0.2.6",
       "physicalCheck": {
         "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/current-install-recheck.json",
@@ -3095,5 +3097,761 @@
       "limitation": "One bounded rerun only, same historical merge checkout; unchanged 10s threshold; unsupported does not mean supported"
     },
     "remaining": "Fresh extended preflight, current-session CU/verify, six real three-browser capture fixture files, complete website candidate/review/install/no-update, copied-template matrix and actual-browser, static 107+8 no-update, final full multi-platform/HMR/native ABI and applicable CI remain required. PR1320 is not merged."
+  },
+  "websiteReviewAndTemplateCallbackFollowup20261029": {
+    "recordedAt": "2026-10-29T05:46:11.914704+00:00",
+    "sourceHead": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+    "status": "截至本记录：网站正式审查/安装/身份核验、两actual-browser、完整107+8 static、根与七模板冻结安装、准确2c9适用CI已通过；整站禁更及完整full57未完成，后续新head CI与合并待另记。",
+    "scope": "追加本轮新的专项证据，保留失败及未完成边界；不把候选安装、纯VM或部分static结果当成完整网站/全仓/设备/CI通过。",
+    "mermaidRenderingExperiment": {
+      "controller": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mermaid-ab-2c9-1793250839055/controller.json",
+        "bytes": 720,
+        "sha256": "81ee3aac34c02757c4d61f2bf0315ed4ec9d3443f190b90a47411362cf84340f"
+      },
+      "playwrightReport": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/mermaid-ab-2c9-1793250839055/report.json",
+        "bytes": 16219,
+        "sha256": "da4f259b71a72ee1db7ca5a308693432cf8dd7948fafe75c2480be131a5bb761"
+      },
+      "analysis": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-analysis-6nCs4S/analysis.json",
+        "bytes": 135994,
+        "sha256": "737a5e9d2bc6ab6d0dd4d2e701476519661c28be32b50c13bf26b3de59e17699"
+      },
+      "reviewNotes": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-analysis-6nCs4S/review.md",
+        "bytes": 3919,
+        "sha256": "49b73b957b876f0da6a81b522b4ab30869e0d5fbf877611ffd1d154efaaf3c8c"
+      },
+      "preflightReport": "e2e/.artifacts/preflight/5b410d00-d8a1-4620-bd17-498cebac9a98/report.json",
+      "driverDirectory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-esm-HuHbTl",
+      "driverManifestSha256": "7ab1621b7703134d16602cff78390765ff3a495eac5b075537c09122668723bc",
+      "testResults": {
+        "passed": 6,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "reportErrors": 0
+      },
+      "preciseAbScope": {
+        "index": "006",
+        "route": "/docs/tailwindcss/history/component-evolution",
+        "browser": "Chromium 156.0.8078.4",
+        "viewport": {
+          "width": 1280,
+          "height": 720,
+          "deviceScaleFactor": 1
+        },
+        "theme": "dark",
+        "cases": 6,
+        "finalCaptures": 16,
+        "publicRawSamples": 22
+      },
+      "observations": {
+        "rgbaGroups": [
+          {
+            "sha256": "e11458d043d81d0ebdffedb0ef9e81821a0c7f5fd004257cb87876f9c083e05a",
+            "captures": 5
+          },
+          {
+            "sha256": "f5c7ba1c0151978dc01419831b0e5f2f671c523cf3aaa82003c301f81e492b79",
+            "captures": 11
+          }
+        ],
+        "difference": {
+          "width": 1280,
+          "height": 4212,
+          "changedPixels": 15248,
+          "maxChannelDelta": 85,
+          "absoluteChannelDelta": 1687030,
+          "bbox": {
+            "left": 336,
+            "top": 2220,
+            "right": 597,
+            "bottom": 2678
+          }
+        },
+        "normalizedSvgSha256": "f23930f3e8d170eb4dd66bd31f3f3349b399f5dc988f470b1820976b2e6919bc",
+        "allObservedGeometryAndCssCanonicalSha256": "a0d360b0ce04d5ba9a6e1451fb7e0b95b1beffdcd0aa6e8d058bbc740e16882f",
+        "all16NormalizedSvgAndObservedGeometryEqual": true,
+        "all22PublicRawEqualCorrespondingFinal": true,
+        "legacyActualSnapshotPersistedBytesEqual": true
+      },
+      "visualEvidence": [
+        {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-analysis-6nCs4S/fresh-all-captures.png",
+          "bytes": 58105,
+          "sha256": "5569260bf1264ff563fdaf112e27344f9c0bc355642e5d09d64be19a445ebc01"
+        },
+        {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-analysis-6nCs4S/forward-all-captures.png",
+          "bytes": 83132,
+          "sha256": "e78674fb5d923112e2ed7e1787ef5edaf5031ae8a08f586d0730cd3410ed001a"
+        },
+        {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-mermaid-ab-analysis-6nCs4S/reverse-all-captures.png",
+          "bytes": 109058,
+          "sha256": "382a4028d2edaf1607a134b0c8de1050562eca6e754d820ddd753f0feaae9832"
+        }
+      ],
+      "visualReviewAttribution": "phase_candidate_review实际查看三张atlas覆盖16张捕获；root本轮也实际查看三atlas并结合两份既有38变化区域报告作正式批准。本整理代理只读核对记录与SHA，不冒称重新亲自查看atlas。",
+      "conclusion": "同一SVG、已观测computed CSS、几何、DPR和主题下，旧原生路径与新路径都可得到软/锐两种RGBA输出，006证据不支持新helper专属锐度回归；本次实际候选渲染差异可批准。",
+      "limits": "仅006有精确A/B；不将其他Mermaid路由表述为都做了A/B。浏览器内部raster/compositor机制未定位，不能写成GPU、will-change、scale根因已证实，亦不证明整站确定性。",
+      "contractPreserved": "未改产品CSS、未加固定sleep、未盲增采样、未按黄金择样、未放宽整图maxDiffPixels=5；完整捕获期与连续RGBA合同保持。",
+      "readOnlyReverification": {
+        "analysisSourceFiles": 107,
+        "atlasFiles": 3,
+        "allHashesMatched": true
+      }
+    },
+    "websiteFormalReviewAndInstallation": {
+      "candidateDirectory": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793244683631",
+      "candidateManifest": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793244683631/manifest.json",
+        "bytes": 602935,
+        "sha256": "d4472511f0b40a9b4db9a2160e4dc4e08d7d2d278638977d5cb141c544c6d53e"
+      },
+      "candidateReport": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793244683631/report.json",
+        "bytes": 4603837,
+        "sha256": "8162c6f3a1ac46105dca8ce21eb29af4d3c0755144b642448593b8574dadbebf"
+      },
+      "candidateReview": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793244683631/review.json",
+        "bytes": 22514,
+        "sha256": "090b306ae0119140b2006e4e1edf55d9dae284500a97f29e4331802b97fc7950"
+      },
+      "source": {
+        "head": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+        "lock": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",
+        "contract": "d1179d23bae88bb73c36d8ed268cd041f7bf0a4c38d43df2583b322661489d46",
+        "node": "v24.22.1",
+        "build": "f0e5862b292686eab6986b4aae8d8d6bd798d2fc02af92e54db6c8cf80c39324"
+      },
+      "images": 1204,
+      "existingConditionalSkips": 602,
+      "comparison": {
+        "report": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-rgba-review-2c9-1793248180/comparison.json",
+          "bytes": 3797207,
+          "sha256": "1e6dcf695e644674d9c13d6392b8fbcfb5ac6993f4d34f10c901e564bdd564de"
+        },
+        "sameRgba": 1166,
+        "actualChangedImages": 38,
+        "reviewScope": "全部38张变化由两份独立报告逐区域查看；不宣称逐字阅读全部1204张长页。"
+      },
+      "formalReview": {
+        "reviewer": "Codex root；独立审查 phase_candidate_review 与 upgrade_scope_final_audit",
+        "reviewedAt": "2026-10-29T05:29:48.807Z",
+        "evidencePngCount": 106,
+        "manifestSha256": "d4472511f0b40a9b4db9a2160e4dc4e08d7d2d278638977d5cb141c544c6d53e",
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-2c9-formal-review.log",
+          "bytes": 15481,
+          "sha256": "809821f47817a0e235d40453375ca278625a31be5a3c02cb6f16c6ca699135a6"
+        },
+        "exitCode": 0
+      },
+      "installation": {
+        "command": "pnpm --filter @weapp-tailwindcss/website e2e:visual install --directory <上述候选目录>",
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-2c9-install.log",
+          "bytes": 215,
+          "sha256": "6d5cda0c8c25444d3fd288e6de683b19e117e4abfa280fa370469bcb0cd5aa2b"
+        },
+        "exitCode": 0,
+        "stagingDirectoriesRemaining": 0
+      },
+      "installedProvenanceVerification": {
+        "command": "pnpm --filter @weapp-tailwindcss/website e2e:visual verify",
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/website-2c9-installed-verify.log",
+          "bytes": 41,
+          "sha256": "88641c2dc1a3154bb60e558888571b5d01e8f1c7c155a7f1e57fb1e33031d765"
+        },
+        "exitCode": 0,
+        "executionSession": 26245,
+        "meaning": "验证已安装manifest、review、report、PNG身份及注册清单；没有运行整站禁止更新截图。"
+      },
+      "exitCodeAttribution": "三命令exit0由root本轮真实执行结果提供；本代理独立核对命令日志、候选/安装/注册三套manifest与review字节相等、106份审查PNG在候选和安装目录的bytes/SHA一致。",
+      "registeredTaskOwnedFiles": [
+        {
+          "path": "website/tests/visual-baselines/darwin.json",
+          "bytes": 602935,
+          "sha256": "d4472511f0b40a9b4db9a2160e4dc4e08d7d2d278638977d5cb141c544c6d53e"
+        },
+        {
+          "path": "website/tests/visual-baselines/darwin.review.json",
+          "bytes": 22514,
+          "sha256": "090b306ae0119140b2006e4e1edf55d9dae284500a97f29e4331802b97fc7950"
+        }
+      ],
+      "installedProvenance": {
+        "manifest": {
+          "path": "website/tests/index.spec.ts-snapshots/provenance/manifest.json",
+          "bytes": 602935,
+          "sha256": "d4472511f0b40a9b4db9a2160e4dc4e08d7d2d278638977d5cb141c544c6d53e"
+        },
+        "review": {
+          "path": "website/tests/index.spec.ts-snapshots/provenance/review.json",
+          "bytes": 22514,
+          "sha256": "090b306ae0119140b2006e4e1edf55d9dae284500a97f29e4331802b97fc7950"
+        },
+        "report": {
+          "path": "website/tests/index.spec.ts-snapshots/provenance/report.json",
+          "bytes": 4603837,
+          "sha256": "8162c6f3a1ac46105dca8ce21eb29af4d3c0755144b642448593b8574dadbebf"
+        }
+      },
+      "fullWebsiteNoUpdate": {
+        "status": "pending-as-of-recorded-time",
+        "result": null,
+        "report": null,
+        "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+        "meaning": "截至本历史记录，整站禁止更新截图尚未完成；后续结果由PR1320记录。"
+      }
+    },
+    "staticVerificationInterrupted": {
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-only-verify-1793251238182-76879/report.json",
+        "bytes": 1556113,
+        "sha256": "4419ec0cfd091d4aea9abbe8ddd829e39609bec54dd2a78aaa549e8697e8164e"
+      },
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/static-only-final.log",
+        "bytes": 16712,
+        "sha256": "b10d79b401c2317e918d9f8db0d961eb40d31731472a28ded81035e1d8034dd0"
+      },
+      "preflightReport": "e2e/.artifacts/preflight/be10a283-4095-4b33-96ec-6f3270aacae1/report.json",
+      "blockedReport": {
+        "path": "e2e/.artifacts/preflight/blocked-1793252020429-76879/report.json",
+        "bytes": 1324,
+        "sha256": "ee625eb3c3a823f32287154b9bb64c1e4db924a7f2f242be1eeab5b771c12c78"
+      },
+      "exitCode": 1,
+      "completedPortableCases": 29,
+      "allCompletedCaseExitCodes": 0,
+      "plannedPortableCases": 107,
+      "remainingPortableCasesThisRun": 78,
+      "htmlVariantsCompleted": 0,
+      "plannedHtmlVariants": 8,
+      "blockedBeforeStage": 30,
+      "blockedStage": "Web production static baseline read-only taro-webpack-vue3-tailwindcss-v4:alipay",
+      "directFailure": "门禁发现source身份变化，停止stage30及后续调度；不是该目标产品构建退出失败。",
+      "rootDiagnosedCause": "root并行进行网站黄金install，.visual-baseline-install-*临时目录进入source指纹；本轮门禁据此正确阻断。安装现已完成，暂存目录已清理。",
+      "causalAttribution": "临时目录引起source变化为root本轮诊断；子代理直接核对report的source变化阻断、29条exit0及安装后暂存目录为空。",
+      "gateDisposition": "不复用已失效gate，不将29项局部结果当作107+8禁更完成；以fresh prepare重新完整执行。",
+      "final107Plus8NoUpdate": {
+        "status": "passed",
+        "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+        "exitCode": 0,
+        "report": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/static-only-verify-1793253509253-16978/report.json",
+          "bytes": 3045454,
+          "sha256": "7894d92f2f1f3dd72777266921af91bd4c37f9690f32601a86c757c43c89120a"
+        },
+        "log": {
+          "path": "e2e/.artifacts/dependency-upgrade-20261028/static-only-after-install.log",
+          "bytes": 54204,
+          "sha256": "e790a6484a45bc310ae34d967dca3106996344921f7cf5486bbbbc3ef2e3b2c1"
+        },
+        "preflightReport": {
+          "path": "e2e/.artifacts/preflight/a9bbd70d-8838-43b4-bcef-1348fda729d1/report.json",
+          "bytes": 24320,
+          "sha256": "c6fa6bdacc4ac5e3fe17ad7a13046fda4eda47d24851700be1577fbc5413c43f"
+        },
+        "startedAt": "2026-10-29T05:58:29.254Z",
+        "finishedAt": "2026-10-29T06:25:59.776Z",
+        "workflowSteps": 108,
+        "portableCases": 107,
+        "htmlVariants": 8,
+        "htmlProjects": 4,
+        "allWorkflowStepExitCodes": 0,
+        "htmlProjectsCovered": [
+          "taro-webpack-react-tailwindcss-v4",
+          "taro-vite-react-tailwindcss-v4",
+          "taro-webpack-vue3-tailwindcss-v4",
+          "taro-vite-vue3-tailwindcss-v4"
+        ],
+        "stepCountMeaning": "107个portable目标各一阶段，最后一阶段验证4项目共8个HTML变体，共108 workflow steps；不写成115个workflow steps。",
+        "sourceScope": "HEAD为2c9，已完成网站baseline安装且登记文件已被fresh gate纳入本轮source身份；确切环境/source身份见预检报告。不借用失效gate，不将此专项结果称为完整full57。",
+        "verificationAttribution": "root真实执行exit0；本整理代理只读核对报告108条exitCode、107唯一case及对应阶段、日志和SHA，没有重跑测试。",
+        "historyPreserved": "首次29项通过后source变化退出1及stage30未调度的原始报告保持；本次为新的完整重跑，不覆盖首次失败。"
+      },
+      "historicalStatusNote": "首次中断为历史事实；此后完整复验通过见final107Plus8NoUpdate，不把首次29项局部结果改写为完整成功。"
+    },
+    "templateActualBrowserCallbackFailure": {
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-actual-final-1793251020/report.json",
+        "bytes": 3493,
+        "sha256": "b7f820b57b9ad19bdb29a4a5cfc358516f560b861198c81bb33270125ce9caf1"
+      },
+      "mode": "actual-browser",
+      "template": "taro-vite-tailwindcss-v4",
+      "buildBinding": {
+        "project": "taro-vite-tailwindcss-v4",
+        "target": "harmony-hybrid",
+        "status": "passed",
+        "head": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+        "sourceIdentity": "4a7d0bd418e411700bed3463b36f4d143e6828d7fca12848aed980dfc3c6026c",
+        "runnerIdentity": "e82f7cb451e075a1a8b524f6b406ba06bf10e07d0af311b5b8f1b91434320816",
+        "buildReportFile": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-1JsiHJ/report.json",
+        "buildReportSha256": "d54711b8f431b22451e7e5c685a5dd5d382c8c0ed80e593c5f325e0b05c39b24",
+        "artifactRoot": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-1JsiHJ",
+        "manifestSha256": "f2b8c19fa18b53b1b0bef9422206ea5141f4d6f30fb790564649b0abed6ea175",
+        "contractSha256": "374798d851b5b3f90812829cc660d9771284bee8114b4d0d4054dfec1e910dfc"
+      },
+      "status": "测量回调失败，真实浏览器样式验收未通过",
+      "error": "page.evaluate: ReferenceError: __name is not defined\n    at eval (eval at evaluate (:370:30), <anonymous>:1:28)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at <anonymous> (/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-browser-provider-driver-cblap86q/web-css-evidence.mts:133:35) {\n  log: []\n}",
+      "scope": "完整产物已在375×812无头浏览器启动尝试；不代表Harmony native bridge/设备。",
+      "startupObservation": {
+        "consoleRecords": 0,
+        "pageErrors": 0,
+        "requestFailures": 0,
+        "resources": {
+          "createdBrowser": true,
+          "headless": true,
+          "viewport": {
+            "width": 375,
+            "height": 812
+          },
+          "userProfileUsed": false,
+          "server": "http://127.0.0.1:50116",
+          "closed": true
+        }
+      },
+      "failureMeaning": "page.evaluate测量函数经tsx/esbuild keepNames注入Node词法__name辅助函数，跨进程序列化后浏览器没有该辅助函数；不是产品CSS断言失败，空错误列表也不能证明最终CSS计算通过。",
+      "retainedFailureScreenshot": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-actual-final-1793251020/failure-375px.png",
+        "bytes": 99618,
+        "sha256": "55bc0870bd74b6b0aaa6b95c8da008f983cb958a7a8acae98c414bc95fefcbdf"
+      },
+      "repair": {
+        "driverDirectory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b",
+        "driverManifestSha256": "52bbd34d758e58a1c9785d8a668bce6df831447e1a5dfe61366d7acd7313ce00",
+        "provenance": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b/browser-callback-revision-provenance.json",
+          "bytes": 8559,
+          "sha256": "77175b895b7fe9da75b22263b92737bddfdd611f4472dfa75783aee1d1cbc347"
+        },
+        "audit": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-browser-callback-audit-05n7y68_/audit.json",
+          "bytes": 22385,
+          "sha256": "d8ba4bf36ef20bd0c7b07ef11d394e21d13e6e378a6f658b8774f20dbe27b056"
+        },
+        "changedCallbackFiles": [
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b/web-css-evidence.mts",
+            "bytes": 12592,
+            "sha256": "435e738b207aa470ca6db451107583121e01c6177d94c3000dbd73b9591e5c9a"
+          },
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b/browser-callbacks.mjs",
+            "bytes": 2267,
+            "sha256": "e44ac0bc81dc4092326b1fb96235a360f3632dc4001ab1dc31034a4cc88b7b91"
+          },
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b/browser-callbacks.d.mts",
+            "bytes": 1109,
+            "sha256": "b27b8e4f776ce313cb741f90302fc84ae570371d676adc359b03594de2c69951"
+          },
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-template-native-browser-callbacks-2mbz_97b/browser-callbacks.test.mjs",
+            "bytes": 5608,
+            "sha256": "4c594c42392fd4ac94b65a2b93778102f5bea78e049cb8014d7bf88b4be32277"
+          }
+        ],
+        "change": "三个 page.evaluate/waitForFunction 回调统一从固定原生 JavaScript 字面量构造，参数仍由 Playwright 参数通道传递；去类型后与原回调语义逐项一致。",
+        "validation": {
+          "nativeVmFixtures": 6,
+          "nativeVmPassed": 6,
+          "realTsxLoaderFixtures": 6,
+          "realTsxLoaderPassed": 6,
+          "oldFailureReproducedWithActualEsbuild": true,
+          "allCallbackSemanticsEquivalent": true,
+          "unrelatedDriverBytesUnchanged": true
+        },
+        "semanticAudit": "三个回调去类型后与原语义相同；其他driver字节保持。纯Node与真实tsx loader各6/6仅验证序列化及合成VM，不算浏览器、构建或设备验收。"
+      },
+      "productSourceChangedForRepair": false
+    },
+    "finalTemplateCheckForNativeCallbacks": {
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-fmwRP2/report.json",
+        "bytes": 468371,
+        "sha256": "8184fe54dfc6440a41ae2f356b166c3bc59f0c52a3ce6f4ebf015c46d0f20729"
+      },
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-native-callback-check.log",
+        "bytes": 162,
+        "sha256": "b3d0fe53b10438924ba24551a75e00f5a515b97ade38d9a7dc8a0ced78c823da"
+      },
+      "preflightReport": "e2e/.artifacts/preflight/bf1192c0-9c9d-4d82-adec-13279480a40c/report.json",
+      "executionSession": 63875,
+      "exitCode": 0,
+      "sourceHead": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+      "runnerManifestSha256": "52bbd34d758e58a1c9785d8a668bce6df831447e1a5dfe61366d7acd7313ce00",
+      "frozenInstallsPassed": 7,
+      "executableTargetsPassed": 16,
+      "allExecutableTargetsPassed": true,
+      "status": "partial",
+      "temporaryRemoved": true,
+      "initialGitStatus": "?? website/tests/visual-baselines/darwin.json\n?? website/tests/visual-baselines/darwin.review.json",
+      "finalGitStatus": "?? website/tests/visual-baselines/darwin.json\n?? website/tests/visual-baselines/darwin.review.json",
+      "gitStatusMeaning": "初末仅本任务新增darwin.json和darwin.review.json；安装后的身份已纳入新的扩展门禁，不借用先前失效gate。",
+      "existingCapabilityGaps": [
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "rn",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "4b6e17cd7b2843482ac9728ec53b8fe799b1f4375d13be1dd8177446c30be615",
+          "missing": [
+            "react-native",
+            "@tarojs/taro-rn",
+            "@tarojs/rn-runner"
+          ],
+          "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。",
+          "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+          "meaning": "保留的准确基线能力缺口，不以普通浏览器或其他平台成功代替。"
+        },
+        {
+          "project": "taro-webpack-tailwindcss-v4",
+          "target": "rn",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "01f32bd2361e0f7d07766cb24f278fcfcaa8cb3a4b4687e3b1e98ad346c88498",
+          "missing": [
+            "react-native",
+            "@tarojs/taro-rn",
+            "@tarojs/rn-runner"
+          ],
+          "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。",
+          "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+          "meaning": "保留的准确基线能力缺口，不以普通浏览器或其他平台成功代替。"
+        },
+        {
+          "project": "uni-app-webpack-tailwindcss-v4",
+          "target": "quickapp-native",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "0f1ebc76db8b04a2e80710438dbcde8e4a1b6cb73ad3b028863ea7380ca63560",
+          "missing": [
+            "src/sign/release/private.pem",
+            "src/sign/release/certificate.pem"
+          ],
+          "reason": "基线与当前均无release签名；上游缺证仍exit0，不生成密钥、不将普通编译文件当作签名rpk成功。",
+          "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+          "meaning": "保留的准确基线能力缺口，不以普通浏览器或其他平台成功代替。"
+        }
+      ],
+      "limitation": "三缺口原样保留，整体partial；16静态目标与7冻结安装不代替实际浏览器或设备/HMR/完整cascade。Vite与Webpack普通浏览器均已通过，两者均不代表Harmony原生宿主。",
+      "actualBrowserResults": {
+        "taroVite": {
+          "status": "passed",
+          "mode": "actual-browser",
+          "exitCode": 0,
+          "exitCodeAttribution": "root本轮实际执行exit0；本整理代理只读核对report、computed-style、归档绑定与文件hash，未自行启动浏览器。",
+          "report": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-native-callback-actual/report.json",
+            "bytes": 7680,
+            "sha256": "2631bf71aa1104b33cce70b69ca665b8a99ca800a424c71e8fce38114bc81ef0"
+          },
+          "computedStyle": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-native-callback-actual/computed-style.json",
+            "bytes": 4245,
+            "sha256": "015b899c55aa186f8a5a25e687895ea20936a65ad3d860711eef802aa2b1f938"
+          },
+          "screenshot": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-native-callback-actual/375px.png",
+            "bytes": 99618,
+            "sha256": "55bc0870bd74b6b0aaa6b95c8da008f983cb958a7a8acae98c414bc95fefcbdf"
+          },
+          "log": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-vite-native-callback-actual.log",
+            "bytes": 155,
+            "sha256": "6d5e9ca1799a4bc2a5248c2d3888a08a2b003ad2ed667698d027de1e8a534ea0"
+          },
+          "preflightReport": {
+            "path": "e2e/.artifacts/preflight/0bdc1d0f-bac4-44d4-94ba-2130f91e80f9/report.json",
+            "bytes": 24320,
+            "sha256": "0696785bcd0f27a61365e3465054c7056ce49a75cab3faefb20b76a94d2cda54"
+          },
+          "binding": {
+            "project": "taro-vite-tailwindcss-v4",
+            "target": "harmony-hybrid",
+            "status": "passed",
+            "head": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+            "sourceIdentity": "4a7d0bd418e411700bed3463b36f4d143e6828d7fca12848aed980dfc3c6026c",
+            "runnerIdentity": "52bbd34d758e58a1c9785d8a668bce6df831447e1a5dfe61366d7acd7313ce00",
+            "buildReportFile": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-fmwRP2/report.json",
+            "buildReportSha256": "8184fe54dfc6440a41ae2f356b166c3bc59f0c52a3ce6f4ebf015c46d0f20729",
+            "artifactRoot": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-fmwRP2",
+            "manifestSha256": "20ccb039adcc456b63589403843b5b533a80f4da9918c3cb589d6f092c5ba857",
+            "contractSha256": "98cc02e449a1cae14b7cbcc9133b702182468fd76773173f955f221cf190d209"
+          },
+          "bindingRecheckedAt": "2026-10-29T05:52:22.997Z",
+          "measurements": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "rootFontSize": "16px",
+            "padding40rpx": "20px",
+            "slate800": "rgb(29, 41, 61)",
+            "radialGradient": "radial-gradient(circle at 18% 20%, rgb(224, 242, 254), rgb(253, 244, 255) 70%)",
+            "linearGradients": [
+              {
+                "className": "h-[72rpx] bg-linear-to-r from-cyan-500 to-blue-500",
+                "height": "36px",
+                "backgroundImage": "linear-gradient(to right, rgb(0, 182, 212) 0%, rgb(50, 128, 255) 100%)"
+              },
+              {
+                "className": "h-[72rpx] bg-linear-to-r from-sky-500 to-indigo-500",
+                "height": "36px",
+                "backgroundImage": "linear-gradient(to right, rgb(0, 165, 234) 0%, rgb(98, 96, 255) 100%)"
+              },
+              {
+                "className": "h-[72rpx] bg-linear-to-r from-violet-500 to-fuchsia-500",
+                "height": "36px",
+                "backgroundImage": "linear-gradient(to right, rgb(141, 86, 255) 0%, rgb(225, 42, 251) 100%)"
+              },
+              {
+                "className": "h-[72rpx] bg-linear-65 from-purple-500 to-pink-500",
+                "height": "36px",
+                "backgroundImage": "linear-gradient(65deg, rgb(171, 78, 255) 0%, rgb(246, 51, 154) 100%)"
+              }
+            ]
+          },
+          "runtimeObservations": {
+            "consoleRecords": 0,
+            "pageErrors": 0,
+            "requestFailures": 0,
+            "cleanupErrors": [],
+            "resourcesClosed": true,
+            "headless": true,
+            "userProfileUsed": false
+          },
+          "visualReviewAttribution": "root已实际查看375px.png与computed-style；本整理代理独立核对文件SHA和计算结果，未冒称亲自查看截图。",
+          "scope": "完整Hybrid归档在375×812普通浏览器中启动并完成实际computed-style断言；不代表Harmony原生宿主、native bridge或设备验收。"
+        },
+        "taroWebpack": {
+          "status": "passed",
+          "mode": "actual-browser",
+          "exitCode": 0,
+          "exitCodeAttribution": "root本轮实际执行exit0；本整理代理只读核对report、computed-style、归档绑定与文件hash，未自行启动浏览器。",
+          "report": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-webpack-native-callback-actual/report.json",
+            "bytes": 8142,
+            "sha256": "05342b6cf16a9ab8f43a75d4566821adb39a20fa34cecbe29ea57cf9f62e0e07"
+          },
+          "computedStyle": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-webpack-native-callback-actual/computed-style.json",
+            "bytes": 4527,
+            "sha256": "963377a31b1e2b7de7b025394b1bacfb9d425373391390b83a9c72d9fc196aee"
+          },
+          "screenshot": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-webpack-native-callback-actual/375px.png",
+            "bytes": 94705,
+            "sha256": "65522ab8c3d7ed4f23ccc8dfd8c17855348eb6f2f511ae0482b95c40c4f6b262"
+          },
+          "preflightReport": {
+            "path": "e2e/.artifacts/preflight/979e1d0a-3e3f-4da4-afbe-a86f420a1865/report.json",
+            "bytes": 24320,
+            "sha256": "8a884a644769768ce1b22d643acac12ebf05b26f7777be122a9ddcc1ebd1e9e6"
+          },
+          "binding": {
+            "project": "taro-webpack-tailwindcss-v4",
+            "target": "harmony-hybrid",
+            "status": "passed",
+            "head": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+            "sourceIdentity": "14cdc5150a3a323b3f0b02baadb3b6fbe0c3730fe3ffc39d7eb01f0f4a8b7fcf",
+            "runnerIdentity": "52bbd34d758e58a1c9785d8a668bce6df831447e1a5dfe61366d7acd7313ce00",
+            "buildReportFile": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-fmwRP2/report.json",
+            "buildReportSha256": "8184fe54dfc6440a41ae2f356b166c3bc59f0c52a3ce6f4ebf015c46d0f20729",
+            "artifactRoot": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-fmwRP2",
+            "manifestSha256": "13fea781b37163ddf3f05ccc52fb9ebade5ae1e5b83ed2756f49f71b2b94609e",
+            "contractSha256": "207a367195f479afea9e8c7f2f5394e546051ac91493b5f57fca4df92f6f0b5d"
+          },
+          "bindingRecheckedAt": "2026-10-29T05:54:41.304Z",
+          "measurements": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "rootFontSize": "16px",
+            "padding40rpx": "20px",
+            "slate800": "rgb(29, 41, 61)",
+            "radialGradient": "radial-gradient(circle at 18% 20%, rgb(224, 242, 254), rgb(253, 244, 255) 70%)",
+            "tokenBackgrounds": {
+              "bg-slate-900": "rgb(15, 23, 43)",
+              "bg-emerald-100": "rgb(208, 250, 229)",
+              "bg-sky-100": "rgb(223, 242, 254)",
+              "bg-violet-100": "rgb(237, 233, 254)"
+            }
+          },
+          "runtimeObservations": {
+            "consoleRecords": 2,
+            "console": [
+              {
+                "type": "log",
+                "text": "App launched."
+              },
+              {
+                "type": "log",
+                "text": "Page loaded."
+              }
+            ],
+            "consoleErrors": 0,
+            "pageErrors": 0,
+            "requestFailures": 0,
+            "cleanupErrors": [],
+            "resourcesClosed": true,
+            "headless": true,
+            "userProfileUsed": false
+          },
+          "visualReviewAttribution": "root已实际view_image查看375px.png并查看computed-style；本整理代理独立核对文件SHA和计算结果，未冒称亲自查看截图。",
+          "scope": "完整Hybrid归档在375×812普通浏览器中启动并完成实际computed-style断言；不代表Harmony原生宿主、native bridge或设备验收。",
+          "log": {
+            "path": "e2e/.artifacts/dependency-upgrade-20261028/taro-webpack-native-callback-actual.log",
+            "bytes": 158,
+            "sha256": "b7caf76176274d66926b03cbe16545880b726502664fc3f12fd056b2242a2de7"
+          }
+        }
+      }
+    },
+    "remaining": [
+      "截至asOfRecordedTime：黄金安装后的整站禁止更新验收仍未完成；候选/身份verify不能替代。",
+      "截至asOfRecordedTime：完整57阶段及其Rust/真实ABI/多端设备/HMR/基座验收仍未完成；本轮根与七模板冻结安装已有通过回执。",
+      "截至asOfRecordedTime：最终peer/安全风险与准确基线对比、既有失败和保留/阻塞范围的最终交付仍待收口。",
+      "截至asOfRecordedTime：准确2c9 CI已全部适用通过；后续metadata/证据新head仍需适用CI、agents/diff/release计划及实际合并回执，结果后续记录于PR1320。"
+    ],
+    "lastUpdatedAt": "2026-10-29T06:30:17.258226+00:00",
+    "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+    "recordType": "历史快照；仅记录本时间点、列明源码与来源的专项事实",
+    "laterResultsLocation": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1320",
+    "futureResultPolicy": "后续full57、新head CI、最终风险及合并结果由root记录于PR1320正文；本段pending均为asOfRecordedTime历史状态，不能作为后续最终结论。准确2c9的CI通过不自动证明文档/metadata提交后的新head。",
+    "rootFrozenInstallationAfterStatic": {
+      "status": "passed",
+      "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+      "command": "pnpm install --frozen-lockfile",
+      "exitCode": 0,
+      "packageManager": "pnpm@12.15.0",
+      "durationSeconds": 1.1,
+      "lockfileObservation": "Lockfile is up to date，resolution step is skipped",
+      "log": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/root-frozen-after-static.log",
+        "bytes": 401,
+        "sha256": "2423790eed35348d62bf183db232e70377aa5220b8c8fcd464c86463ef7e2f8a"
+      },
+      "executionAttribution": "root本轮真实执行exit0；本整理代理只读核对落盘日志与SHA。",
+      "coverage": "根与run-fmwRP2的七独立模板均已有本轮frozen install成功回执，覆盖八份pnpm锁；不代表完整full57通过。"
+    },
+    "accurate2c9CiFinalSnapshot": {
+      "status": "passed",
+      "asOfRecordedTime": "2026-10-29T06:06:30.638022+00:00",
+      "snapshotReceipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-final-result.json",
+        "bytes": 4551,
+        "sha256": "ccb506c5900fdc76eaed02f707c3e255132473ea0f4d55ca937e031105a2c3ab"
+      },
+      "headSha": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+      "baseSha": "dc0bfd9c2ef54dffad47640b48d0e23eceae7e98",
+      "mainTipAtSnapshot": "dc0bfd9c2ef54dffad47640b48d0e23eceae7e98",
+      "totalChecks": 285,
+      "successfulChecks": 255,
+      "legitimateSkippedChecks": 30,
+      "failedChecks": 0,
+      "unfinishedChecks": 0,
+      "allApplicablePRChecksSucceeded": true,
+      "skipSemanticsReceipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-skipped-semantics.json",
+        "bytes": 9565,
+        "sha256": "d53b5b19242f8aede7f277d89c9f52d197a56ec4a239df1f5293a6afd9270dc5"
+      },
+      "skipMeaning": "30项与已审查事件/适用条件集合完全一致，draft导致0项；skip不计通过，转ready不会使当前30项自动补跑。",
+      "sourceIdentityReceipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-source-identity.json",
+        "bytes": 6072,
+        "sha256": "69158869613c7ee1de6e4badc124538ebd7596882674e06209cae44bdaee608e"
+      },
+      "sourceMeaning": "所审查重点构建/运行时job实际checkout为synthetic 4c6940e，tree与raw 2c9相同；正式Uni直接raw 2c9。未宣称逐一审查所有portable job初始checkout日志。汇总PR Gate没有checkout步骤。",
+      "prGateRun": {
+        "conclusion": "success",
+        "created_at": "2026-10-29T03:20:57Z",
+        "event": "pull_request",
+        "head_branch": "codex/upgrade-dependencies-20261028",
+        "head_sha": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
+        "html_url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40811618905",
+        "id": 40811618905,
+        "name": "PR Gate",
+        "run_attempt": 1,
+        "run_started_at": "2026-10-29T03:20:57Z",
+        "status": "completed",
+        "updated_at": "2026-10-29T05:59:59Z"
+      },
+      "finalGateJobId": 123290842118,
+      "finalGateDependencyResults": {
+        "SCOPE_RESULT": "success",
+        "QUALITY_RESULT": "success",
+        "VITE_INTEGRATION_RESULT": "success",
+        "SMOKE_RESULT": "success",
+        "PLATFORM_RESULT": "success",
+        "DEV_RESULT": "success",
+        "UTILITIES_RESULT": "success",
+        "DEMOS_RESULT": "success",
+        "CSS_COMPAT_RESULT": "success",
+        "TAILWIND_RESULT": "success",
+        "ENV_RESULT": "success"
+      },
+      "evidenceFiles": [
+        {
+          "name": "ci2c9-final-checks.json",
+          "bytes": 122111,
+          "sha256": "6908438e7ff36418e79a20c74fa9707d34a68c6b95374d7ef365418867d35a55",
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-final-checks.json"
+        },
+        {
+          "name": "ci2c9-final-pr-gate-run.json",
+          "bytes": 479,
+          "sha256": "41ca363eb186cbf079754278f67827bf46b5d667b9f9cafa6f57467550dbca28",
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-final-pr-gate-run.json"
+        },
+        {
+          "name": "ci2c9-final-pr-gate-job.json",
+          "bytes": 882,
+          "sha256": "2add2112865b693941c06624aa3fa5c250665ac70d6fbfaa32aee993bb510210",
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-final-pr-gate-job.json"
+        },
+        {
+          "name": "ci2c9-final-pr-gate-123290842118.log",
+          "bytes": 3872,
+          "sha256": "45784efa252b529a5106da22ba516789b0d573dba923bb801c2edc945fdfc93f",
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/ci2c9-final-pr-gate-123290842118.log"
+        }
+      ],
+      "readOnlyVerification": "本整理代理从final-checks的285条rollup独立计数255 SUCCESS/30 SKIPPED，并重核四份底层回执bytes/SHA；没有触发远端操作或重跑。",
+      "reviewProtectionHistoricalReceipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main2c9-ci-audit-cvf1rxwy/review-protection-2c9.json",
+        "bytes": 6025,
+        "sha256": "9faaca70dd6db37d4005236566fb4c179eb747abba689c769df2d1d022a7576e"
+      },
+      "reviewAndMergeBoundary": "该2c9审计时PR仍draft/open，普通有效approval 0/1、作者不能自批；enforce_admins=false且当前admin权限下存在管理员豁免配置，尚未执行。不写成approval已满足，不增加所有路径必须另一人类审批的门槛。",
+      "limits": "仅证明准确2c9当时的全部适用PR CI通过，不证明之后新head、本地full57或已合入main。保护回执中更早的CI排队描述已由本最终CI快照更新，原回执保留历史。"
+    },
+    "finalWorkflow57": {
+      "status": "pending-as-of-recorded-time",
+      "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+      "meaning": "完整57阶段本轮尚未完成；已通过的独立static/frozen/browser专项不替代完整流程。后续新head的执行与结果另记PR1320。"
+    },
+    "laterHeadCiAndMerge": {
+      "status": "pending-as-of-recorded-time",
+      "asOfRecordedTime": "2026-10-29T06:30:17.258226+00:00",
+      "meaning": "root计划将metadata、已审查darwin登记与本历史证据提交为新head，再并行运行新head CI和full57；本记录不预判该新head检查或合并结果。"
+    }
   }
 }
