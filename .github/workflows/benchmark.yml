@@ -1,296 +1,43 @@
-name: Benchmark
+name: Taro Webpack exact source diagnostic
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - benchmark/**
-      - packages/weapp-tailwindcss/src/bundlers/**
-      - packages/weapp-tailwindcss/src/generator/**
-      - packages/postcss/src/**
-      - .github/workflows/benchmark.yml
-      - .github/workflows/performance-cross-platform.yml
-      - pnpm-lock.yaml
-  push:
-    branches:
-      - main
-      - alpha
-      - beta
-      - rc
-      - next
   workflow_dispatch:
-    inputs:
-      weekly_demo_cost:
-        description: 手动验证当前分支的每周发布版接入成本套件
-        type: boolean
-        default: false
-      baseline:
-        description: npm 发布基线；auto 会按当前包版本推断 next/beta/rc/latest
-        required: false
-        default: auto
-      baseline_ref:
-        description: 可选 Git 基线完整 40 位 commit SHA；指定后保留原性能预算及反向确认
-        type: string
-        required: false
-        default: ''
-      gc_diagnostics:
-        description: 为 only 指定的 Mpx、Uni 或 Taro Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.4
-        type: boolean
-        default: false
-      input_diagnostics:
-        description: Uni、Taro Vite 或 Mpx 的候选与来源证据；Mpx 额外记录有界操作，不启用 inspector，不参与正式预算
-        type: boolean
-        default: false
-      allocation_diagnostics:
-        description: Uni、Taro Vite 或 Mpx 的分配采样（包含已回收对象），独立诊断，要求 Git 基线与 build 3 / HMR 3
-        type: boolean
-        default: false
-      build_runs:
-        description: 每个项目的 build 采样次数
-        required: false
-        default: '3'
-      hmr_runs:
-        description: 每个项目的 HMR 采样次数
-        required: false
-        default: '5'
-      only:
-        description: 可选：只跑指定项目 key，多个 key 用逗号分隔
-        required: false
-        default: ''
-  workflow_call:
-    inputs:
-      full_verification:
-        description: 审批后完整执行版本 PR 验收，默认保留自动范围
-        type: boolean
-        required: false
-        default: false
-
-concurrency:
-  group: benchmark-${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && format('diagnostic-{0}', github.run_id) || inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: read
 
+concurrency:
+  group: taro-webpack-source-ab-${{ github.run_id }}
+  cancel-in-progress: false
+
 jobs:
-  scope:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Scope' || 'scope' }}
-    uses: ./.github/workflows/ci-scope.yml
-    with:
-      full_verification: ${{ inputs.full_verification || false }}
-
-  weekly-demo-cost:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Weekly Cost' || 'weekly-demo-cost' }}
-    if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost
-    uses: ./.github/workflows/demo-performance-weekly.yml
-    with:
-      only: ${{ inputs.only }}
-      version: latest
-
-  synthetic-performance:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Synthetic (ubuntu-latest, 22)' || 'Synthetic Performance Gate (ubuntu-latest, 22)' }}
+  source-diagnostic:
+    name: Diagnostic / Taro exact 2dd 0637 source and output
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
+    env:
+      NODE_OPTIONS: ''
     steps:
-      - name: Check out code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
-          check-latest: true
+          node-version: 22.23.4
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace packages for synthetic scenarios
-        run: pnpm build:pkgs
-
-      - name: Validate synthetic performance runner
-        run: pnpm --filter benchmark-performance test --update=none
-
-      - name: Validate benchmark report and memory evidence
-        run: pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none
-
-      - name: Run synthetic performance gate
-        # 至少 21 个样本，避免三次采样把单次调度抖动当作 P95 或复杂度趋势。
-        run: pnpm perf:synthetic:guard -- --runs 21 --warmups 5 --out-dir .tmp/performance-report
-
-      - name: Upload synthetic performance report
+      - name: Install isolated observation tooling
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo
+      - name: Verify exact source instrumentation
+        run: node --test benchmark/version-compare/scripts/diagnostics/source-ab/test.mjs
+      - name: Observe exact source candidates tasks and complete assets
+        run: node benchmark/version-compare/scripts/diagnostics/source-ab/run.mjs --out-dir .tmp/taro-source-ab
+      - name: Preserve diagnostic evidence and first failure
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: synthetic-performance-${{ github.run_id }}
-          path: .tmp/performance-report/**
+          name: taro-webpack-source-ab-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .tmp/taro-source-ab/**
           if-no-files-found: error
           retention-days: 14
-
-  benchmark-matrix:
-    needs: scope
-    if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Prepare benchmark diagnostic matrix' || 'Prepare benchmark matrix' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      include: ${{ steps.matrix.outputs.include }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-
-      - name: Validate dispatch diagnostic inputs
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          BENCH_DISPATCH_BASELINE_REF: ${{ inputs.baseline_ref }}
-          BENCH_DISPATCH_GC_DIAGNOSTICS: ${{ inputs.gc_diagnostics }}
-          BENCH_DISPATCH_INPUT_DIAGNOSTICS: ${{ inputs.input_diagnostics }}
-          BENCH_DISPATCH_ALLOCATION_DIAGNOSTICS: ${{ inputs.allocation_diagnostics }}
-          BENCH_BUILD_RUNS: ${{ inputs.build_runs }}
-          BENCH_HMR_RUNS: ${{ inputs.hmr_runs }}
-          BENCH_ONLY: ${{ inputs.only }}
-        run: node benchmark/version-compare/scripts/dispatch-inputs.mjs
-
-      - name: Generate benchmark matrix
-        id: matrix
-        env:
-          BENCH_ONLY: ${{ github.event.inputs.only || '' }}
-          BENCH_EVENT_NAME: ${{ inputs.full_verification && 'workflow_dispatch' || github.event_name }}
-        run: |
-          include="$(node benchmark/version-compare/scripts/ci-matrix.mjs --event "$BENCH_EVENT_NAME" --only "$BENCH_ONLY")"
-          echo "include=$include" >> "$GITHUB_OUTPUT"
-
-  benchmark-shard:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark diagnostic shard' || 'Benchmark shard' }} (${{ matrix.case_name }})
-    needs: benchmark-matrix
-    runs-on: ubuntu-latest
-    timeout-minutes: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && 30 || 45 }}
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        include: ${{ fromJSON(needs.benchmark-matrix.outputs.include) }}
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      WEAPP_TW_BENCH_BASELINE: ${{ github.event.inputs.baseline || 'auto' }}
-      WEAPP_TW_BENCH_BASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.baseline_ref || '' }}
-      BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
-      BENCH_HMR_RUNS: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && '3' || github.event.inputs.hmr_runs || '5' }}
-      BENCH_ONLY: ${{ matrix.bench_only }}
-      BENCH_INPUT_DIAGNOSTICS: ${{ github.event_name == 'workflow_dispatch' && inputs.input_diagnostics && 'true' || 'false' }}
-      BENCH_ALLOCATION_DIAGNOSTICS: ${{ github.event_name == 'workflow_dispatch' && inputs.allocation_diagnostics && 'true' || 'false' }}
-      # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
-      WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
-      # 私有自然 GC 证据与原 RSS 门禁隔离，两侧及已有确认轮次使用相同 preload。
-      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || (github.event_name == 'workflow_dispatch' && inputs.gc_diagnostics && (matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'))) && '1' || '0' }}
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && '22.23.4' || '22' }}
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Resolve the checked-out PR baseline
-        if: (github.event_name == 'pull_request' && !inputs.full_verification)
-        id: pr-baseline
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: node benchmark/version-compare/scripts/pr-baseline.mjs
-
-      - name: Run pull request performance guard
-        if: (github.event_name == 'pull_request' && !inputs.full_verification)
-        run: >
-          pnpm perf:guard --
-          --baseline-ref "${{ steps.pr-baseline.outputs.baseline }}"
-          --build-runs "$BENCH_BUILD_RUNS"
-          --hmr-runs "$BENCH_HMR_RUNS"
-          --timeout 180000
-          --poll-interval 30
-          --only "$BENCH_ONLY"
-          --result-dir .tmp/benchmark-ci/result
-
-      - name: Run current vs published benchmark
-        if: (github.event_name != 'pull_request' || inputs.full_verification)
-        run: |
-          benchmark_diagnostic_args=()
-          if [ "$BENCH_INPUT_DIAGNOSTICS" = true ]; then
-            benchmark_diagnostic_args+=(--input-diagnostics)
-          fi
-          if [ "$BENCH_ALLOCATION_DIAGNOSTICS" = true ]; then
-            benchmark_diagnostic_args+=(--allocation-diagnostics)
-          fi
-          pnpm bench:ci -- --build-runs "$BENCH_BUILD_RUNS" --hmr-runs "$BENCH_HMR_RUNS" --timeout 180000 --poll-interval 30 --only "$BENCH_ONLY" --result-dir .tmp/benchmark-ci/result "${benchmark_diagnostic_args[@]}"
-
-      - name: Upload benchmark artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: benchmark-performance-${{ matrix.case_name }}
-          path: .tmp/benchmark-ci/result/**
-          if-no-files-found: error
-
-  current-vs-published:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Summary' || 'Performance guard and published trend' }}
-    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    needs: [scope, benchmark-shard]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-
-      - name: Download benchmark reports
-        if: always()
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          pattern: benchmark-performance-*
-          path: .tmp/benchmark-ci/artifacts
-
-      - name: Report benchmark shard failures
-        if: always()
-        env:
-          BENCHMARK_RESULT: ${{ needs.benchmark-shard.result }}
-        run: |
-          if [ "$BENCHMARK_RESULT" = success ]; then
-            exit 0
-          fi
-          echo "benchmark-shard result: $BENCHMARK_RESULT"
-          node benchmark/version-compare/scripts/report-shard-failures.mjs .tmp/benchmark-ci/artifacts
-
-      - name: Require every benchmark shard
-        env:
-          BENCHMARK_RESULT: ${{ needs.benchmark-shard.result }}
-        run: |
-          if [ "$BENCHMARK_RESULT" != success ]; then
-            echo "::error title=Benchmark matrix failed::At least one benchmark shard failed. Review the Benchmark shard failure annotations above for the exact project and metric."
-          fi
-          test "$BENCHMARK_RESULT" = success
