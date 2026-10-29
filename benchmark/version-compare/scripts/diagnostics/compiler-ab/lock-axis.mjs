@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
+import { auditNonAxisGraph } from './lock-graph.mjs'
 
 export const baselineRef = '0e9ceb82321d49d145bf63c4adf84c7a8639e0e9'
 export const projectRelative = 'demo/taro-webpack-react-tailwindcss-v4'
 export const compilerVersions = { current: '5.91.0', previous: '5.105.4' }
 
-const stable = value => JSON.stringify(value, Object.keys(value ?? {}).sort())
 export const withoutPeers = value => value.split('(')[0]
+const patchHash = value => value.match(/^[^(]+\(patch_hash=([^()]+)\)/)?.[1]
 
 function packageId(name, reference) {
   if (/^(?:link:|file:|workspace:)/.test(reference)) return undefined
@@ -14,6 +15,32 @@ function packageId(name, reference) {
 
 function referenceKey(name, reference) {
   return reference.startsWith(`${name}@`) ? reference : `${name}@${reference}`
+}
+
+function auditPatches(lock) {
+  for (const key of Object.keys(lock.snapshots)) {
+    const expected = lock.patchedDependencies?.[withoutPeers(key)]
+    const hash = typeof expected === 'string' ? expected : expected?.hash
+    assert.equal(patchHash(key), hash, `snapshot 补丁身份与声明不符：${key}`)
+  }
+}
+
+function auditMetadata(current, previous, accurateBaseline, companions) {
+  const other = lock => Object.fromEntries(Object.entries(lock).filter(([key]) => ![
+    'packages', 'snapshots', 'importers', 'catalogs', 'overrides', 'patchedDependencies',
+  ].includes(key)))
+  assert.deepEqual(other(current), other(previous), '非编译器锁 metadata 发生漂移')
+  const overrides = { ...current.overrides, [`webpack@${compilerVersions.current}`]: compilerVersions.previous }
+  for (const [name, version] of Object.entries(companions)) overrides[`webpack@${compilerVersions.previous}>${name}`] = version
+  assert.deepEqual(previous.overrides, overrides, 'override 只能包含明确的编译器配套切换')
+  const previousKey = `webpack@${compilerVersions.previous}`
+  const baselinePatch = accurateBaseline.patchedDependencies?.[previousKey]
+  assert.ok(baselinePatch, '准确基线缺少旧编译器补丁身份')
+  const patches = { ...current.patchedDependencies, [previousKey]: baselinePatch }
+  delete patches[`webpack@${compilerVersions.current}`]
+  assert.deepEqual(previous.patchedDependencies, patches, '非编译器补丁身份发生漂移')
+  auditPatches(current)
+  auditPatches(previous)
 }
 
 export function compilerSnapshot(lock, version) {
@@ -47,29 +74,11 @@ export function previousCompanions(lock) {
   return Object.fromEntries(Object.entries(snapshot.dependencies).map(([name, reference]) => [name, withoutPeers(reference)]))
 }
 
-function normalizedSnapshots(lock, ignoreIds = new Set()) {
-  const result = new Map()
-  for (const [key, value] of Object.entries(lock.snapshots)) {
-    const id = withoutPeers(key)
-    if (ignoreIds.has(id)) continue
-    const edges = {}
-    for (const field of ['dependencies', 'optionalDependencies']) {
-      for (const [name, reference] of Object.entries(value[field] ?? {})) {
-        const child = packageId(name, reference)
-        if (!ignoreIds.has(child)) edges[`${field}:${name}`] = child ?? reference
-      }
-    }
-    const signatures = result.get(id) ?? new Set()
-    signatures.add(stable(edges))
-    result.set(id, signatures)
-  }
-  return Object.fromEntries([...result].sort().map(([key, signatures]) => [key, [...signatures].sort()]))
-}
-
 export function auditLockAxis(current, previous, accurateBaseline) {
   const left = compilerSnapshot(current, compilerVersions.current)
   const right = compilerSnapshot(previous, compilerVersions.previous)
   const expected = previousCompanions(accurateBaseline)
+  auditMetadata(current, previous, accurateBaseline, expected)
   const actual = Object.fromEntries(Object.entries(right.snapshot.dependencies).map(([name, ref]) => [name, withoutPeers(ref)]))
   assert.deepEqual(actual, expected, '旧编译器直接配套必须与准确 base0e9 一致')
   const allowed = new Set([withoutPeers(left.key), withoutPeers(right.key)])
@@ -91,18 +100,7 @@ export function auditLockAxis(current, previous, accurateBaseline) {
     assert.ok(allowed.has(withoutPeers(id)), `非编译器依赖发生漂移：${id}`)
     packageChanges.push({ id, current: a ?? null, previous: b ?? null })
   }
-  assert.deepEqual(normalizedSnapshots(current, allowed), normalizedSnapshots(previous, allowed), '非编译器依赖边发生漂移')
-  const normalizeImporters = lock => Object.fromEntries(Object.entries(lock.importers).map(([key, value]) => [key,
-    Object.fromEntries(Object.entries(value).map(([field, entries]) => [field,
-      ['dependencies', 'devDependencies', 'optionalDependencies'].includes(field)
-        ? Object.fromEntries(Object.entries(entries).map(([name, entry]) => [name, {
-            ...entry,
-            version: allowed.has(packageId(name, entry.version)) ? '<compiler-axis>' : withoutPeers(entry.version),
-          }]))
-        : entries,
-    ])),
-  ]))
-  assert.deepEqual(normalizeImporters(current), normalizeImporters(previous), '非编译器 importer 发生漂移')
+  auditNonAxisGraph(current, previous, allowed)
   assert.deepEqual(current.catalogs, previous.catalogs, 'catalog 不允许变化')
   const peerKeyChanges = {
     removed: Object.keys(current.snapshots).filter(key => !previous.snapshots[key]),

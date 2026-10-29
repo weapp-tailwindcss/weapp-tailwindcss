@@ -9,51 +9,29 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { sha256 } from './identity.mjs'
-import { auditLockAxis, projectRelative } from './lock-axis.mjs'
-import { outputManifest, validatePhases } from './measure.mjs'
+import { outputManifest, sampleRss, validatePhases } from './measure.mjs'
 import { assertTemporaryRoot, previousWorkspace } from './prepare.mjs'
 import { runOrder } from './run.mjs'
 import { assertProcessesStopped, groupStatus, pollGroup, processOwnership, runOwned, stopGroup } from './owned-process.mjs'
+import './lock-axis.test.mjs'
+import './gc-evidence.test.mjs'
 
 const execute = promisify(execFile)
 const here = path.dirname(fileURLToPath(import.meta.url))
 const { assetEvidence } = createRequire(import.meta.url)('./preload.cjs')
 
-function lock(version, sourceVersion) {
-  const reference = `${version}(patch_hash=fixture)(peer@1.0.0)`
-  return {
-    catalogs: { tools: { example: { specifier: '^1.0.0', version: '1.0.0' } } },
-    importers: { [projectRelative]: { devDependencies: { webpack: { specifier: '5.91.0', version: reference }, example: { specifier: '^1.0.0', version: '1.0.0' } } } },
-    packages: Object.fromEntries([`webpack@${version}`, `webpack-sources@${sourceVersion}`, 'example@1.0.0', '@tarojs/webpack5-runner@4.3.1', 'terser-webpack-plugin@5.6.1'].map(key => [key, { resolution: { integrity: key } }])),
-    snapshots: {
-      [`webpack@${reference}`]: { dependencies: { 'webpack-sources': sourceVersion, 'terser-webpack-plugin': '5.6.1' } },
-      [`webpack-sources@${sourceVersion}`]: {},
-      'example@1.0.0': {},
-      'terser-webpack-plugin@5.6.1': {},
-      [`@tarojs/webpack5-runner@4.3.1(webpack@${version})`]: { dependencies: { webpack: reference, example: '1.0.0' } },
-    },
+test('RSS 探针只领取剩余构建预算，过期不调度且失败不吞掉', () => {
+  let calls = 0
+  const execute = (_command, _args, options) => {
+    calls += 1
+    assert.equal(options.timeout, 40)
+    return { status: 0, stdout: '100 1 1024 node\n200 100 2048 child\n', stderr: '' }
   }
-}
-
-test('锁审查允许编译器闭包和 peer key 传播，阻断无关版本、metadata、边及 catalog 漂移', () => {
-  const current = lock('5.91.0', '3.6.0')
-  const previous = lock('5.105.4', '3.5.1')
-  const audit = auditLockAxis(current, previous, structuredClone(previous))
-  assert.deepEqual(audit.companionChanges, [{ name: 'webpack-sources', current: '3.6.0', previous: '3.5.1' }])
-  assert.ok(audit.peerKeyChanges.added.some(key => key.startsWith('@tarojs/webpack5-runner@')))
-  for (const mutate of [
-    item => { item.packages['example@1.0.0'].resolution.integrity = 'other' },
-    item => { item.snapshots['example@1.0.0'].dependencies = { unrelated: '2.0.0' } },
-    item => { item.catalogs.tools.example.version = '1.0.1' },
-    item => { item.importers[projectRelative].devDependencies.example.version = '1.0.1' },
-  ]) {
-    const changed = structuredClone(previous)
-    mutate(changed)
-    assert.throws(() => auditLockAxis(current, changed, previous))
-  }
-  const changed = structuredClone(previous)
-  changed.snapshots[Object.keys(changed.snapshots).find(key => key.startsWith('webpack@'))].dependencies['webpack-sources'] = '3.5.0'
-  assert.throws(() => auditLockAxis(current, changed, previous), /准确 base0e9/)
+  assert.equal(sampleRss(100, 100, execute, () => 60).rssMb, 3)
+  assert.throws(() => sampleRss(100, 60, execute, () => 60), /禁止新建探针/)
+  assert.equal(calls, 1)
+  const failure = new Error('ps timeout')
+  assert.throws(() => sampleRss(100, 100, () => ({ error: failure }), () => 60), error => error === failure)
 })
 
 test('只有临时副本可写；变更策略保留其它 overrides、catalog 和补丁', async () => {

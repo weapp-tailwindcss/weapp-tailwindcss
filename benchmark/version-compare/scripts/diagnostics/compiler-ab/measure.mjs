@@ -1,17 +1,38 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { sampleProcessTree } from '../../process-memory.mjs'
+import { parsePosixProcessRows, selectProcessTreeRows } from '../../process-memory.mjs'
 import { sha256 } from './identity.mjs'
+import { readGcEvidence } from './gc-evidence.mjs'
 import { projectRelative } from './lock-axis.mjs'
 import { failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const gcPreload = path.resolve(here, '../../gc-preload.mjs')
+const gcPreload = path.join(here, 'gc-preload.mjs')
 const gcPaths = path.resolve(here, '../../gc-paths.mjs')
+
+export function sampleRss(pid, deadline, execute = spawnSync, now = Date.now) {
+  const budget = deadline - now()
+  assert.ok(budget > 0, 'RSS 采样已耗尽构建截止，禁止新建探针')
+  const result = execute('ps', ['-Ao', 'pid=,ppid=,rss=,comm='], {
+    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: Math.min(3000, budget), env: { ...process.env, LC_ALL: 'C' },
+  })
+  if (result.error) throw result.error
+  assert.equal(result.status, 0, `RSS 探针失败：${result.stderr}`)
+  assert.ok(now() < deadline, 'RSS 采样结果超过构建截止')
+  const rows = selectProcessTreeRows(parsePosixProcessRows(result.stdout), pid)
+  if (!rows.length) return undefined
+  return {
+    at: now(), rssMb: rows.reduce((total, row) => total + row.rssKb, 0) / 1024,
+    processCount: rows.length,
+    processes: rows.map(({ pid, ppid, rssKb, command }) => ({ pid, ppid, rssMb: rssKb / 1024, command })),
+  }
+}
 
 export function validatePhases(records) {
   assert.equal(records[0]?.type, 'start', '缺少编译器 preload 身份')
@@ -80,6 +101,7 @@ export async function measure(root, role, run, outDir) {
     expectedPathHelperSha256: sha256(fs.readFileSync(gcPaths)),
   }
   const started = Date.now()
+  const deadline = started + 300000
   const log = fs.createWriteStream(path.join(directory, 'build.log'), { flags: 'wx' })
   let logError
   log.on('error', error => { logError = error })
@@ -89,7 +111,7 @@ export async function measure(root, role, run, outDir) {
   const sample = () => {
     if (!child?.pid) return
     try {
-      const value = sampleProcessTree(child.pid)
+      const value = sampleRss(child.pid, deadline)
       if (value) samples.push(value)
       else {
         try { process.kill(child.pid, 0); probeFailures.push({ at: Date.now(), error: '存活进程无样本' }) }
@@ -145,11 +167,15 @@ export async function measure(root, role, run, outDir) {
   validatePhases(phases)
   assert.equal(phases[0].pid, child.pid)
   const gcFile = path.join(directory, `gc-${child.pid}.ndjson`)
-  const gc = readRecords(gcFile)
-  assert.equal(gc[0]?.type, 'process-start')
-  assert.equal(gc[0].preloadMatchesController, true)
-  assert.equal(gc[0].pathHelperMatchesController, true)
-  assert.ok(!gc.some(item => item.type === 'recording-error' || item.counts?.eventsTruncated > 0 || item.observationStopped), '自然 GC 证据超限或不完整')
+  let gcEvidence
+  try {
+    gcEvidence = readGcEvidence(gcFile, { pid: child.pid, identity: gcIdentity, actualEntry: fs.realpathSync(entry), stderr: fs.readFileSync(path.join(directory, 'build.log'), 'utf8') })
+  }
+  catch (error) {
+    await fsp.writeFile(path.join(directory, 'gc-evidence.json'), `${JSON.stringify({ available: false, error: failureEvidence(error), pid: child.pid, identity: gcIdentity }, null, 2)}\n`)
+    throw error
+  }
+  await fsp.writeFile(path.join(directory, 'gc-evidence.json'), `${JSON.stringify(gcEvidence, null, 2)}\n`)
   const output = await outputManifest(path.join(project, 'dist'))
   assert.ok(output.some(file => file.name === 'app.js') && output.some(file => file.name === 'app.json'), '没有完整微信构建产物')
   await fsp.writeFile(path.join(directory, 'output.json'), `${JSON.stringify(output, null, 2)}\n`)
@@ -160,7 +186,7 @@ export async function measure(root, role, run, outDir) {
     observerPeakRssMb: Math.max(...phases.filter(item => item.memory).map(item => item.memory.rss / 1024 / 1024)),
     workers: phases.at(-1).workers, phases: phases.filter(item => item.type === 'phase'),
     options: phases.filter(item => item.type === 'compiler-options'),
-    naturalGcEvents: gc.filter(item => item.type === 'gc-batch').flatMap(item => item.events).length,
+    naturalGcEvents: gcEvidence.events,
     outputFiles: output.length, outputBytes: output.reduce((sum, file) => sum + file.bytes, 0),
   }
   await fsp.writeFile(path.join(directory, 'summary.json'), `${JSON.stringify(result, null, 2)}\n`)

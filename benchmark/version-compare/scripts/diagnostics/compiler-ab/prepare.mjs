@@ -6,6 +6,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { compilerIdentity, fileSha256, sha256 } from './identity.mjs'
 import { auditLockAxis, baselineRef, compilerSnapshot, compilerVersions, previousCompanions } from './lock-axis.mjs'
+import { auditLockDocuments, parseLockDocuments } from './lock-documents.mjs'
 import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
 export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..')
@@ -48,16 +49,11 @@ export function previousWorkspace(document, companions, patchFile) {
 }
 
 export async function prepare(outDir) {
-  const { parseAllDocuments, parseDocument } = await import('yaml')
-  const parseLock = source => {
-    const docs = parseAllDocuments(source)
-    assert.ok(docs.every(doc => doc.errors.length === 0), '锁文件 YAML 无效')
-    return docs.find(doc => doc.has('snapshots')).toJS()
-  }
+  const { parseDocument } = await import('yaml')
   const sourceRef = (await command(repositoryRoot, 'git', ['rev-parse', 'HEAD'], { capture: true, timeoutMs: 30000 })).trim()
   assert.match(sourceRef, /^[a-f\d]{40}$/)
   const baselineLockSource = await command(repositoryRoot, 'git', ['show', `${baselineRef}:pnpm-lock.yaml`], { capture: true, timeoutMs: 30000 })
-  const accurateBaseline = parseLock(baselineLockSource)
+  const accurateBaseline = parseLockDocuments(baselineLockSource).lock
   const baselineWorkspace = parseDocument(await command(repositoryRoot, 'git', ['show', `${baselineRef}:pnpm-workspace.yaml`], { capture: true, timeoutMs: 30000 }))
   const patchFile = baselineWorkspace.getIn(['patchedDependencies', `webpack@${compilerVersions.previous}`])
   assert.equal(typeof patchFile, 'string', '准确基线必须包含对应 Webpack 补丁')
@@ -90,7 +86,8 @@ export async function prepare(outDir) {
       for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
     }
     assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), originalLockSha256, '当前原锁不允许变化')
-    const locks = Object.fromEntries(await Promise.all(Object.entries(roots).map(async ([role, root]) => [role, parseLock(await fs.readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))])))
+    const documents = Object.fromEntries(await Promise.all(Object.entries(roots).map(async ([role, root]) => [role, parseLockDocuments(await fs.readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))])))
+    const locks = auditLockDocuments(documents.current, documents.previous)
     const axis = auditLockAxis(locks.current, locks.previous, accurateBaseline)
     const identities = {}
     for (const [role, root] of Object.entries(roots)) {

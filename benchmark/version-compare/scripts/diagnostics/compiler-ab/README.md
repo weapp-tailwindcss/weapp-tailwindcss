@@ -25,3 +25,7 @@ node benchmark/version-compare/scripts/diagnostics/compiler-ab/run.mjs --out-dir
 ```
 
 输出包含原锁 SHA、新锁、两侧 workspace 配置、原 Webpack 补丁、允许闭包与全部差异、真实依赖身份、每轮构建日志、自然 GC、逐资产 manifest、options、RSS 明细和汇总。成功或失败后，仅在确认本轮进程已经停止后清理临时副本；证据目录保留给 artifact 上传。
+
+私有 GC preload 保留正式观察器的 2048 事件、256 单批及 2MiB 上限，并在正常退出时先领取 `takeRecords()`，再停止观察、结算并写入绑定 PID/session 的结束回执。它只在主线程领取文件，继承 preload 的 worker thread 不争用同一 PID 的文件。成功仅证明本进程 observer 在结束前收到的事件完整，不代表 VM 或其它线程的全部 GC。缺尾、身份不符、截断或 stderr 写入错误均报告 `GC evidence unavailable` 并使实验失败；共享正式 preload 与性能门禁保持原样。
+
+pnpm 工具链与 workspace 的多个 YAML document 分别保留：按目标 demo 领取唯一 workspace 锁，其余 document 必须跨侧完全一致。锁审查同时验证 settings、checksum、明确的 override/补丁切换、非轴补丁 hash 和 snapshot metadata。联合细分 snapshot 图以保留边名和非编译器 peer 绑定；无法区分的不透明 peer context 直接失败。只有 Webpack 本身按全局 override 切换；闭包之外 consumer 与 importer 对配套包的准确引用必须保持一致。
