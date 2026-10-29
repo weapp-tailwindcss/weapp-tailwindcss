@@ -20900,6 +20900,679 @@
       "artifactIndex": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/artifact-index.json",
       "baselineDocumentProof": "e2e/.artifacts/dependency-upgrade-20261028/risk-refresh-final-locks/baseline-document-proof.json",
       "note": "保留原七模板28条命令历史；本轮仅刷新Mpx最终锁，其他六模板输入锁未变化。"
+    },
+    {
+      "capturedAt": "2026-10-29T01:49:39.387142+00:00",
+      "head": "537a5e2b14fecefd0c01b9373794cf81042554f3",
+      "scope": [
+        "templates/taro-webpack-tailwindcss-v4"
+      ],
+      "commandsCompleted": 4,
+      "comparisonKind": "same-round previous-upgrade-lock versus current-upgrade-lock",
+      "supersedes": "只更新 Taro Webpack 模板当前锁的风险采集身份；原 e769 基线比较、旧188条公告、其他六模板与所有历史原始报告保留。",
+      "previousTrackedReport": {
+        "file": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/docs/engineering/dependency-upgrade-20261028.template-risks.json",
+        "bytes": 619708,
+        "sha256": "3edbc4b2b9cb3c98a297724d1ba2028f619fe39d6c6a17cd078b5a7dff20d7ff"
+      },
+      "rawEvidenceRoot": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh",
+      "inputProjects": {
+        "current": {
+          "revision": "537a5e2b14fecefd0c01b9373794cf81042554f3",
+          "files": [
+            {
+              "file": "package.json",
+              "bytes": 3286,
+              "sha256": "14e270f359757fd73834d718a89314126619404656b2e17399049f6764e168c2"
+            },
+            {
+              "file": "pnpm-lock.yaml",
+              "bytes": 611666,
+              "sha256": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550"
+            },
+            {
+              "file": "pnpm-workspace.yaml",
+              "bytes": 956,
+              "sha256": "c8915776006ef994790df9b25da53ba4c8872ea1f7b7a6f04012c7e1f298690a"
+            },
+            {
+              "file": ".npmrc",
+              "bytes": 176,
+              "sha256": "a34962a8acfcec9de7b80d27c61593b60402facdcc39c3f0f920f3cfae100750"
+            },
+            {
+              "file": "patches/@tarojs__plugin-framework-react@4.3.1.patch",
+              "bytes": 2281,
+              "sha256": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a"
+            },
+            {
+              "file": "patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch",
+              "bytes": 5508,
+              "sha256": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b"
+            },
+            {
+              "file": "patches/webpack@5.91.0.patch",
+              "bytes": 2443,
+              "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+            }
+          ]
+        },
+        "previous": {
+          "revision": "5a5609ced1e356b7bdd14835663263e68f82413e",
+          "files": [
+            {
+              "file": "package.json",
+              "bytes": 3242,
+              "sha256": "0c22fd5131d73a557e9a2dfd6a5aff668768daab917e1ec7ce5d8c78afc523da"
+            },
+            {
+              "file": "pnpm-lock.yaml",
+              "bytes": 611567,
+              "sha256": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620"
+            },
+            {
+              "file": "pnpm-workspace.yaml",
+              "bytes": 956,
+              "sha256": "c8915776006ef994790df9b25da53ba4c8872ea1f7b7a6f04012c7e1f298690a"
+            },
+            {
+              "file": ".npmrc",
+              "bytes": 176,
+              "sha256": "a34962a8acfcec9de7b80d27c61593b60402facdcc39c3f0f920f3cfae100750"
+            },
+            {
+              "file": "patches/@tarojs__plugin-framework-react@4.3.1.patch",
+              "bytes": 2281,
+              "sha256": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a"
+            },
+            {
+              "file": "patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch",
+              "bytes": 5508,
+              "sha256": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b"
+            },
+            {
+              "file": "patches/webpack@5.91.0.patch",
+              "bytes": 2443,
+              "sha256": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+            }
+          ]
+        }
+      },
+      "commands": {
+        "previous": {
+          "scope": "previous",
+          "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/previous",
+          "tool": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+          "toolVersion": "12.15.0",
+          "startedAt": "2026-10-29T01:47:31.539297+00:00",
+          "inputs": {
+            "package.json": {
+              "sha256": "0c22fd5131d73a557e9a2dfd6a5aff668768daab917e1ec7ce5d8c78afc523da",
+              "bytes": 3242
+            },
+            "pnpm-lock.yaml": {
+              "sha256": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+              "bytes": 611567
+            },
+            "pnpm-workspace.yaml": {
+              "sha256": "c8915776006ef994790df9b25da53ba4c8872ea1f7b7a6f04012c7e1f298690a",
+              "bytes": 956
+            }
+          },
+          "commands": [
+            {
+              "command": [
+                "rtk",
+                "proxy",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+                "audit",
+                "--json"
+              ],
+              "semanticCommand": [
+                "pnpm",
+                "audit",
+                "--json"
+              ],
+              "startedAt": "2026-10-29T01:47:31.539757+00:00",
+              "finishedAt": "2026-10-29T01:47:51.641258+00:00",
+              "elapsedSeconds": 20.101,
+              "exitCode": 1,
+              "timedOut": false,
+              "lockSha256Before": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+              "lockSha256After": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+              "lockUnchanged": true,
+              "businessDocumentSha256Before": "cd292b3d8a7a14b48706aeb7bc77d6cec5a07eb765230104a799ea897cdc483e",
+              "businessDocumentSha256After": "cd292b3d8a7a14b48706aeb7bc77d6cec5a07eb765230104a799ea897cdc483e",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
+              "parseError": null,
+              "stdout": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/previous/audit.json",
+                "bytes": 819549,
+                "sha256": "31ad645509d535cab36706a357dd0245eb73ed7da5a198a6f12e22748f6fcd28"
+              },
+              "stderr": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/previous/audit.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "metadata": {
+                "vulnerabilities": {
+                  "info": 0,
+                  "low": 10,
+                  "moderate": 68,
+                  "high": 86,
+                  "critical": 27
+                },
+                "dependencies": 585,
+                "devDependencies": 1066,
+                "optionalDependencies": 207,
+                "totalDependencies": 1735
+              },
+              "advisoryRecords": 191,
+              "error": null
+            },
+            {
+              "command": [
+                "rtk",
+                "proxy",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "semanticCommand": [
+                "pnpm",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "startedAt": "2026-10-29T01:47:51.642163+00:00",
+              "finishedAt": "2026-10-29T01:47:51.693470+00:00",
+              "elapsedSeconds": 0.051,
+              "exitCode": 1,
+              "timedOut": false,
+              "lockSha256Before": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+              "lockSha256After": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+              "lockUnchanged": true,
+              "businessDocumentSha256Before": "cd292b3d8a7a14b48706aeb7bc77d6cec5a07eb765230104a799ea897cdc483e",
+              "businessDocumentSha256After": "cd292b3d8a7a14b48706aeb7bc77d6cec5a07eb765230104a799ea897cdc483e",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
+              "parseError": null,
+              "stdout": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/previous/peers.json",
+                "bytes": 738,
+                "sha256": "4c69991498cd998916ec4df1d20b044f37bf3f0db9a0b49cf25897c42729c82d"
+              },
+              "stderr": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/previous/peers.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "projects": 1
+            }
+          ],
+          "finishedAt": "2026-10-29T01:47:51.693800+00:00",
+          "inputsUnchanged": true
+        },
+        "current": {
+          "scope": "current",
+          "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/current",
+          "tool": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+          "toolVersion": "12.15.0",
+          "startedAt": "2026-10-29T01:47:31.539269+00:00",
+          "inputs": {
+            "package.json": {
+              "sha256": "14e270f359757fd73834d718a89314126619404656b2e17399049f6764e168c2",
+              "bytes": 3286
+            },
+            "pnpm-lock.yaml": {
+              "sha256": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+              "bytes": 611666
+            },
+            "pnpm-workspace.yaml": {
+              "sha256": "c8915776006ef994790df9b25da53ba4c8872ea1f7b7a6f04012c7e1f298690a",
+              "bytes": 956
+            }
+          },
+          "commands": [
+            {
+              "command": [
+                "rtk",
+                "proxy",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+                "audit",
+                "--json"
+              ],
+              "semanticCommand": [
+                "pnpm",
+                "audit",
+                "--json"
+              ],
+              "startedAt": "2026-10-29T01:47:31.539700+00:00",
+              "finishedAt": "2026-10-29T01:47:52.100566+00:00",
+              "elapsedSeconds": 20.561,
+              "exitCode": 1,
+              "timedOut": false,
+              "lockSha256Before": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+              "lockSha256After": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+              "lockUnchanged": true,
+              "businessDocumentSha256Before": "6f4a55940f8c27297562f68c44d4d294242d8636b3d83ecbd28f192aaddec037",
+              "businessDocumentSha256After": "6f4a55940f8c27297562f68c44d4d294242d8636b3d83ecbd28f192aaddec037",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
+              "parseError": null,
+              "stdout": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/current/audit.json",
+                "bytes": 803579,
+                "sha256": "b008a6f2c2170ee37655e33a17bd1527d5c4c7d869c8bad1376be751872deb9b"
+              },
+              "stderr": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/current/audit.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "metadata": {
+                "vulnerabilities": {
+                  "info": 0,
+                  "low": 10,
+                  "moderate": 68,
+                  "high": 86,
+                  "critical": 27
+                },
+                "dependencies": 585,
+                "devDependencies": 1066,
+                "optionalDependencies": 207,
+                "totalDependencies": 1735
+              },
+              "advisoryRecords": 191,
+              "error": null
+            },
+            {
+              "command": [
+                "rtk",
+                "proxy",
+                "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.15.0/pnpm-native",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "semanticCommand": [
+                "pnpm",
+                "peers",
+                "check",
+                "--lockfile-only",
+                "--json"
+              ],
+              "startedAt": "2026-10-29T01:47:52.101537+00:00",
+              "finishedAt": "2026-10-29T01:47:52.143668+00:00",
+              "elapsedSeconds": 0.042,
+              "exitCode": 1,
+              "timedOut": false,
+              "lockSha256Before": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+              "lockSha256After": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+              "lockUnchanged": true,
+              "businessDocumentSha256Before": "6f4a55940f8c27297562f68c44d4d294242d8636b3d83ecbd28f192aaddec037",
+              "businessDocumentSha256After": "6f4a55940f8c27297562f68c44d4d294242d8636b3d83ecbd28f192aaddec037",
+              "businessDocumentUnchanged": true,
+              "validJson": true,
+              "parseError": null,
+              "stdout": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/current/peers.json",
+                "bytes": 738,
+                "sha256": "4c69991498cd998916ec4df1d20b044f37bf3f0db9a0b49cf25897c42729c82d"
+              },
+              "stderr": {
+                "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/evidence/current/peers.stderr.log",
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "projects": 1
+            }
+          ],
+          "finishedAt": "2026-10-29T01:47:52.144058+00:00",
+          "inputsUnchanged": true
+        }
+      },
+      "audit": {
+        "previous": {
+          "rawAdvisoryCount": 191,
+          "uniqueAdvisoryCount": 178,
+          "pathCount": 5119,
+          "severityByRawAdvisory": {
+            "info": 0,
+            "low": 10,
+            "moderate": 68,
+            "high": 86,
+            "critical": 27
+          },
+          "metadataVulnerabilities": {
+            "info": 0,
+            "low": 10,
+            "moderate": 68,
+            "high": 86,
+            "critical": 27
+          },
+          "metadataMatchesRows": true
+        },
+        "current": {
+          "rawAdvisoryCount": 191,
+          "uniqueAdvisoryCount": 178,
+          "pathCount": 5119,
+          "severityByRawAdvisory": {
+            "info": 0,
+            "low": 10,
+            "moderate": 68,
+            "high": 86,
+            "critical": 27
+          },
+          "metadataVulnerabilities": {
+            "info": 0,
+            "low": 10,
+            "moderate": 68,
+            "high": 86,
+            "critical": 27
+          },
+          "metadataMatchesRows": true
+        },
+        "addedAdvisoryGroups": [],
+        "removedAdvisoryGroups": [],
+        "retainedAdvisoryGroups": 178,
+        "severityChanges": [],
+        "pathDelta": {
+          "added": 1312,
+          "resolved": 1312
+        },
+        "historicalDatabaseDrift": {
+          "historicalRawAdvisories": 188,
+          "currentRawAdvisories": 191,
+          "historicalGroups": 175,
+          "currentGroups": 178,
+          "addedAdvisoryGroups": [
+            {
+              "identity": "GHSA-7rv5-mrxv-xcr9",
+              "module": "seroval",
+              "sourceIds": [
+                "1243614"
+              ],
+              "titles": [
+                "Seroval: Deserialization invokes attacker-chosen callables: AsyncIteratorFactoryInstance calls source.on(listener) without type check"
+              ],
+              "severities": [
+                "high"
+              ],
+              "vulnerableRanges": [
+                "<=1.6.7"
+              ],
+              "patchedRanges": [
+                ">=1.6.8"
+              ],
+              "urls": [
+                "https://github.com/advisories/GHSA-7rv5-mrxv-xcr9"
+              ]
+            },
+            {
+              "identity": "GHSA-97r2-qh9m-474h",
+              "module": "seroval",
+              "sourceIds": [
+                "1243612"
+              ],
+              "titles": [
+                "Seroval: fromJSON deserializer trusts node-supplied array length and sequence doneAt (unauthenticated event-loop DoS)"
+              ],
+              "severities": [
+                "high"
+              ],
+              "vulnerableRanges": [
+                "<=1.6.7"
+              ],
+              "patchedRanges": [
+                ">=1.6.8"
+              ],
+              "urls": [
+                "https://github.com/advisories/GHSA-97r2-qh9m-474h"
+              ]
+            },
+            {
+              "identity": "GHSA-rmxm-3fg6-px4f",
+              "module": "@hono/node-server",
+              "sourceIds": [
+                "1243661"
+              ],
+              "titles": [
+                "@hono/node-server: `serveStatic` decodes the request path a second time, leading to bypass of middleware on static paths"
+              ],
+              "severities": [
+                "moderate"
+              ],
+              "vulnerableRanges": [
+                ">=1.19.10 <2.1.3"
+              ],
+              "patchedRanges": [
+                ">=2.1.3"
+              ],
+              "urls": [
+                "https://github.com/advisories/GHSA-rmxm-3fg6-px4f"
+              ]
+            },
+            {
+              "identity": "GHSA-wp97-x4hv-qvhp",
+              "module": "seroval",
+              "sourceIds": [
+                "1243613"
+              ],
+              "titles": [
+                "Seroval `fromJSON`/`fromCrossJSON` denial of service via unvalidated array node length"
+              ],
+              "severities": [
+                "high"
+              ],
+              "vulnerableRanges": [
+                ">=1.4.1 <=1.6.7"
+              ],
+              "patchedRanges": [
+                ">=1.6.8"
+              ],
+              "urls": [
+                "https://github.com/advisories/GHSA-wp97-x4hv-qvhp"
+              ]
+            }
+          ],
+          "removedAdvisoryGroups": [
+            {
+              "identity": "GHSA-ch52-4w7c-c8xp",
+              "module": "http-cache-semantics",
+              "sourceIds": [
+                "1240991"
+              ],
+              "titles": [
+                "http-cache-semantics max-stale handling can disclose cross-user cached responses"
+              ],
+              "severities": [
+                "high"
+              ],
+              "vulnerableRanges": [
+                "<=4.2.0"
+              ],
+              "patchedRanges": [
+                ">=4.3.0"
+              ],
+              "urls": [
+                "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"
+              ],
+              "logicalPathCount": 2,
+              "affectedVersions": [
+                "3.8.1",
+                "4.2.0"
+              ]
+            }
+          ],
+          "interpretation": "同轮旧锁和新锁的 GHSA/包组与严重度完全相同；这些相对历史报告的新增公告同时命中旧锁，不归因为本次单位转换配套。原报告按原数据库时间保留。"
+        },
+        "comparison": {
+          "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/same-round-audit-comparison.json",
+          "bytes": 1729982,
+          "sha256": "1676f28cf18828df2d2c640b795de7b7d3713f2aeb0eb0fdaaa173ef9e3b55e6"
+        }
+      },
+      "peers": {
+        "baseline": {
+          "projectCount": 1,
+          "nonemptyProjectCount": 1,
+          "rawProblemCount": 2,
+          "uniqueProblemCount": 2,
+          "projectDependencyRangeGroups": 2
+        },
+        "current": {
+          "projectCount": 1,
+          "nonemptyProjectCount": 1,
+          "rawProblemCount": 2,
+          "uniqueProblemCount": 2,
+          "projectDependencyRangeGroups": 2
+        },
+        "added": [],
+        "resolved": [],
+        "retainedCount": 2,
+        "retained": [
+          {
+            "baseline": {
+              "project": ".",
+              "kind": "bad",
+              "dependency": "less",
+              "wantedRange": "^4",
+              "optional": true,
+              "parentNames": [
+                "@tarojs/webpack5-runner"
+              ],
+              "foundVersions": [
+                "3.13.1"
+              ],
+              "parentVersionChains": [
+                [
+                  {
+                    "name": "@tarojs/webpack5-runner",
+                    "version": "4.3.1"
+                  }
+                ]
+              ],
+              "resolvedFrom": [
+                []
+              ],
+              "rawOccurrences": 1
+            },
+            "current": {
+              "project": ".",
+              "kind": "bad",
+              "dependency": "less",
+              "wantedRange": "^4",
+              "optional": true,
+              "parentNames": [
+                "@tarojs/webpack5-runner"
+              ],
+              "foundVersions": [
+                "3.13.1"
+              ],
+              "parentVersionChains": [
+                [
+                  {
+                    "name": "@tarojs/webpack5-runner",
+                    "version": "4.3.1"
+                  }
+                ]
+              ],
+              "resolvedFrom": [
+                []
+              ],
+              "rawOccurrences": 1
+            }
+          },
+          {
+            "baseline": {
+              "project": ".",
+              "kind": "bad",
+              "dependency": "react-refresh",
+              "wantedRange": "^0.14.0",
+              "optional": true,
+              "parentNames": [
+                "babel-preset-taro"
+              ],
+              "foundVersions": [
+                "0.18.0"
+              ],
+              "parentVersionChains": [
+                [
+                  {
+                    "name": "babel-preset-taro",
+                    "version": "4.3.1"
+                  }
+                ]
+              ],
+              "resolvedFrom": [
+                []
+              ],
+              "rawOccurrences": 1
+            },
+            "current": {
+              "project": ".",
+              "kind": "bad",
+              "dependency": "react-refresh",
+              "wantedRange": "^0.14.0",
+              "optional": true,
+              "parentNames": [
+                "babel-preset-taro"
+              ],
+              "foundVersions": [
+                "0.18.0"
+              ],
+              "parentVersionChains": [
+                [
+                  {
+                    "name": "babel-preset-taro",
+                    "version": "4.3.1"
+                  }
+                ]
+              ],
+              "resolvedFrom": [
+                []
+              ],
+              "rawOccurrences": 1
+            }
+          }
+        ],
+        "requirementChanges": [],
+        "supplemental": {
+          "baseline": {},
+          "current": {}
+        },
+        "algorithm": "以 project/kind/dependency/wantedRange/optional/父链包名分组，保留版本父链与 foundVersion；pnpm 的代表父链可能在等价图的重复采集中变化，added/resolved 不自动解释为实际依赖图新增/消失。"
+      },
+      "comparisonArtifacts": [
+        {
+          "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/same-round-audit-comparison.json",
+          "bytes": 1729982,
+          "sha256": "1676f28cf18828df2d2c640b795de7b7d3713f2aeb0eb0fdaaa173ef9e3b55e6"
+        },
+        {
+          "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/same-round-peer-comparison.json",
+          "bytes": 2969,
+          "sha256": "60a896b59e681e24dc2b5e32883577082b69d11769f3cb4eedcdb2e727f5d140"
+        },
+        {
+          "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-upgrade-scope-audit-mpnejhwk/risk-refresh/database-drift-review.json",
+          "bytes": 3107,
+          "sha256": "f833090617b4832838206fd153ca13c38f865785b533d7ffb338638140f40eab"
+        }
+      ],
+      "limitations": [
+        "audit 和 peers 均真实 exit1，表示已有公告和 peer 提示，不是无风险通过。",
+        "本轮未安装、未构建；临时副本无共享 node_modules。",
+        "audit 路径是工具选择的代表父链，路径差异不能单独解释成依赖图增删。",
+        "不使用同轮旧 eaff 锁冒充任务起始 e769 基线；原 e769 对比完整保留。"
+      ]
     }
   ]
 }

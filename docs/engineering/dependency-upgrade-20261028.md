@@ -2,7 +2,7 @@
 
 本轮基于main e769e69b97c88b379a80d3cabca4fa20330b999a，覆盖根项目、全部workspace、demo（含Web、issue复现和style-injector）及七个独立模板，共105个manifest。评估和安装阶段已完成，static及完整多端验收仍在进行；本记录不宣称全面升级已验收完成。
 
-[逐依赖清单](dependency-upgrade-20261028.inventory.tsv)含1743条当前外部声明：原始1717条，新增26条配套，无移除；原评估为739项升级、828项已最新、150项保留，725项已有声明的锁版本发生变化。评估数不等于实际版本上升数，兼容回退与配套修正单独说明。[105项目状态](dependency-upgrade-20261028.projects.tsv)区分安装、构建和定向验证；97个根importer及七模板纳入冻结安装，assets/package.json无外部依赖且不在workspace，无需安装。
+[逐依赖清单](dependency-upgrade-20261028.inventory.tsv)含1744条当前外部声明：原始1717条，新增27条配套，无移除；原评估为739项升级、828项已最新、150项保留，725项已有声明的锁版本发生变化。评估数不等于实际版本上升数，兼容回退与配套修正单独说明。[105项目状态](dependency-upgrade-20261028.projects.tsv)区分安装、构建和定向验证；97个根importer及七模板纳入冻结安装，assets/package.json无外部依赖且不在workspace，无需安装。
 
 前次安装快照采于2026-10-28T05:41:55.435Z；2026-10-28T15:13:48.408Z再次核验当前105manifest、八锁及1743项外部声明，包名/版本身份问题0。根和七模板均已真实frozen安装通过，最新根锁在图标入口配套修改后重新冻结安装通过，1743项外部声明的实际包名、版本均与锁一致，声明/物理身份问题0，采集中及完成后复核无变化。八份pnpm锁的升级前后身份、121个npm范围manifest/workspace/lock文件、24条补丁引用身份（含 PR 首轮新增的 Mpx 根与独立模板补丁），以及15项未引用catalog的逐项评估见[锁与补丁证据](dependency-upgrade-20261028.lock-evidence.json)。该结果只证明安装身份，不代表传递peer、漏洞或行为问题为0。根风险报告不覆盖独立模板，七模板的独立audit/peer基线对比另行附证，不能据根报告宣称模板风险为0。
 
@@ -217,3 +217,15 @@ HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tai
 准确63e的 `website-visual-candidate-1793232087026/`经只读审查和独立VM反例发现TOC祖先opacity/filter等绘制扰动漏检，已合作取消，不作为最终黄金候选。取消时828张PNG、无完整manifest；wrapper exit1、stage143，原stage正常清理未确认，之后全部记录归属PID已结束。取消、过程日志及白盒证据全部保留。001/002/008与旧图0RGBA差；003/004/005/007/009/010与上一候选相同且首TOC链接高亮符合所核上游几何规则，但像素相同不能补足捕获期观测。
 
 修复 `6cc16263b`（规范对齐`13f36e3fd`）按真实祖先链去重，采集完整computed style、parent身份、rect/client/scroll几何及未完成动画，并用MutationRecord.oldValue保留同任务改回历史。准确旧算法同组8项为7失败/1通过，其中6项功能漏检及1项祖先读取成本合同；修复后新增10+既有22=32纯回归及TS6严格检查通过。32链接/400属性白盒证明共享祖先每read仅读一次完整属性，未测实际浏览器CPU。新增16项/浏览器已加入三引擎CI四入口，但真实验收尚未运行；旧72项通过不能替代新监控验收。没有改生产样式、动画、共享60秒、完整双样本RGBA严格相同或原5像素门槛。新head的fresh gate、完整候选采集/人工审查/来源登记/禁更，以及最终全端与CI仍待完成；PR #1320尚不能宣称全部通过或据此合并。
+
+## 最新 main 整合、范围核对与网站采集首错
+
+本地 `642f88db9` 已无冲突整合 main `dc0bfd9c2` 的 #1322，保留 uni-app-x HTML 宿主边框与 H5 preflight 修复，未改变依赖锁；受影响四文件的38项定向单测通过，仍须最终整合 head 的完整验收。补登记 Taro Webpack 模板的 `postcss-rule-unit-converter@0.2.6` 后，当前范围为105个manifest、原1717条加27条配套，共1744条外部声明。2026-10-29T02:46:58.887Z 物理核对中，全部包名/版本与八锁一致，遗漏和身份问题均为0；此前1743项安装记录按原时间保留。同轮 Taro 模板前后两锁均为191条公告、178个GHSA/包组及2个bad peer，无新增、移除或严重度组合变化；audit/peers实际exit1，输入未变，不能称无风险。
+
+准确537的正式 Uni `40800145433` 已成功：准确e769基线、唯一mp-weixin、build3/HMR3、三个诊断开关关闭，固定5%/10ms/64MB/双尾门槛无违规。冷构建-0.266%、端到端HMR P95+4.559%、稳态plugin P95 121→126ms；部分指标上升，未称性能全面改善。Lynx双端成功且每端181份证据的runId、字节与SHA均核对，Android为54 supported/64 unsupported，iOS为53/65；不能把每端118项都称为支持。这些CI结果只绑定537，不能代替最终整合head。
+
+网站 `website-visual-candidate-1793237414535/` 整轮失败：外层在01:35:04Z遇周期ps身份探针5秒超时，额外1秒未确认退出，清理ps随后也超时；只安全终止spawn句柄，独立后代继续运行。末尾1204项通过、602项原条件skip、零unexpected/flaky/errors来自孤儿后代，不能覆盖控制器首错。候选无完整manifest或capture-failed文件，未补写、未安装；gate finished仅表示租约归还。重新核对出生时刻、工作目录、端口与原父链后，仅向本任务wrangler发送SIGTERM，5个遗留Worker均退出。原报告、首错和清理证据保留，内部失败先合作取消的生命周期修复正在实现。
+
+同一537的网站CI唯一失败为Linux WebKit原生截图32767单维上限，33001高夹具越界；刷新基线不能修复。尺寸能力修复保留Chromium原生路径，Firefox/WebKit超界走分片；还需补齐分片捕获期TOC/祖先监控，保留两张完整RGBA相等、60秒和5像素门槛。新合同的真实三引擎fixture、完整候选、人工审查、来源登记和禁更，以及模板、107 portable/8 HTML、最终完整多端与适用CI均未完成；PR #1320仍不能合并。
+
+微信会话定向回归首轮43项中21项失败：SDK 1.4 的disconnect要求连接支持off，旧mock缺失；真实就绪检查改用App.getCurrentPage的pageId/path，旧夹具仍返回截图数据；两处HBuilderX模拟结果未显式声明只编译。连接夹具改用真实EventEmitter，恢复用例验证同一连接及订阅释放，模拟命令补齐 `--compile true`，未削弱扫描边界。与会话保护、launch阶段和HBuilderX清理一起重跑，四文件66项全部通过，ESLint通过；仅为纯mock及源码边界回归，实际IDE仍待新预检。超时文案同步已授权的实例核对与受控恢复规则，登录态保护保持。

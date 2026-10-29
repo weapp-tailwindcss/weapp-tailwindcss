@@ -1548,6 +1548,7 @@ templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	eslint-plugin
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	eslint-plugin-react	^7.37.5	7.37.5	^7.37.5	7.37.5	^7.37.5	^7.37.5	7.37.5	7.37.5	已最新	按当前声明支持代际选择最新正式版本（npm官方注册表元数据）。	符合目标	锁解析符合声明及目标
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	eslint-plugin-react-hooks	^7.1.1	7.1.1	^4.6.2	4.6.2	4.6.2	4.6.2	4.6.2	4.6.2	升级	Taro局部旧eslint-config保留react-hooks4.6.2兼容矩阵。	目标版本已固定	锁解析符合声明及目标
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	postcss	^8.5.30	8.5.30	^8.5.32	8.5.32	^8.5.32	^8.5.32	8.5.32	8.5.32	升级	采用专项核对后的正式固定版本，保留编译器和消费者配套。	符合目标	锁解析符合声明及目标
+templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	postcss-rule-unit-converter			0.2.6	0.2.6	0.2.6	0.2.6	0.2.6	0.2.6	新增配套	为 Taro Webpack Harmony Hybrid 的真实 CSS processAssets 管线显式声明单位转换配套；固定正式 0.2.6，复制模板可独立安装。	新增配套已核对	锁解析符合声明及目标
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	react-refresh	^0.18.0	0.18.0	^0.18.0	0.18.0	^0.18.0	^0.18.0	0.18.0	0.18.0	已最新	按当前声明支持代际选择最新正式版本（npm官方兼容范围正式发布查询）。	符合目标	锁解析符合声明及目标
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	stylelint	^17.16.0	17.16.0	^17.16.0	17.16.0	^17.16.0	^17.16.0	17.16.0	17.16.0	已最新	按当前声明支持代际选择最新正式版本（npm官方同主版本正式发布查询）。	符合目标	锁解析符合声明及目标
 templates/taro-webpack-tailwindcss-v4/package.json	devDependencies	tailwindcss	^4.3.3	4.3.3	^4.3.3	4.3.3	^4.3.3	^4.3.3	4.3.3	4.3.3	已最新	按当前声明支持代际选择最新正式版本（npm官方注册表元数据）。	符合目标	锁解析符合声明及目标

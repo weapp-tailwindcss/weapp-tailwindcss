@@ -2765,5 +2765,201 @@
       }
     },
     "remaining": "最终准确head的新扩展预检、三浏览器新监控fixture、完整网站采集/审查/安装/禁更、复制模板最终矩阵、107portable/8HTML禁更、完整多端/设备/HMR/ABI及适用CI仍待完成；PR1320不能据上述局部结果认定全通过。"
+  },
+  "scopeAndCaptureControlFollowup20261029": {
+    "recordedAt": "2026-10-29T02:52:03.337Z",
+    "sourceHead": "537a5e2b14fecefd0c01b9373794cf81042554f3",
+    "integration": {
+      "head": "642f88db9aa9f0b7cd160bbfc5bdd26c2d4f9cd9",
+      "main": "dc0bfd9c2ef54dffad47640b48d0e23eceae7e98",
+      "conflicts": false,
+      "source": "保留 main #1322 的 uni-app-x HTML 宿主边框与 H5 preflight 修复；无依赖锁变动。",
+      "targeted": {
+        "command": "pnpm exec vitest run --project=weapp-tailwindcss packages/weapp-tailwindcss/test/uni-app-x/compiled-border-preflight.test.ts packages/weapp-tailwindcss/test/bundlers/vite-css-transform-task.unit.test.ts packages/weapp-tailwindcss/test/bundlers/vite-html-processing.unit.test.ts packages/weapp-tailwindcss/test/bundlers/vite-template-assets.unit.test.ts --coverage.enabled=false --update=none",
+        "files": 4,
+        "tests": 38,
+        "exitCode": 0,
+        "startedLocal": "2026-10-29 10:47:40 Asia/Shanghai",
+        "limitation": "定向单元回归不替代准确整合 head 的完整多端验收。"
+      }
+    },
+    "scopeReconciliation": {
+      "manifests": 105,
+      "originalDeclarations": 1717,
+      "addedPairing": 27,
+      "currentDeclarations": 1744,
+      "packageNames": 444,
+      "addedPackage": "templates/taro-webpack-tailwindcss-v4 devDependencies postcss-rule-unit-converter@0.2.6",
+      "physicalCheck": {
+        "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/current-install-recheck.json",
+        "bytes": 821820,
+        "sha256": "4f74c4c5b57098ec83775e2fe544f28288875c11f982d11dd76f5619509a8171"
+      },
+      "physicalCheckAt": "2026-10-29T02:46:58.887Z",
+      "issues": 0,
+      "newDeclarations": 0,
+      "limitation": "本轮只读物理核对，不改写历史1743项 frozen 安装的时间与覆盖范围；最终安装及构建仍须验收。"
+    },
+    "sameRoundTaroWebpackRiskRefresh": {
+      "previousLock": "eaff2549037e66cf6d1cd71d3ee401b991dde4e421e286da4205e076f5aa4620",
+      "currentLock": "f54a7f1c387e3acf8aabbcb32355bbe683a70a3548fb4179103c59b30e994550",
+      "auditRecordsPerLock": 191,
+      "advisoryPackageGroupsPerLock": 178,
+      "peerProblemsPerLock": {
+        "bad": 2,
+        "missing": 0
+      },
+      "addedGroups": 0,
+      "removedGroups": 0,
+      "severityCombinationChanges": 0,
+      "actualExits": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "interpretation": "真实audit/peers exit1，原始JSON有效且输入未变；两锁同轮风险相同，数据库更新不能归因新增converter。起始e769比较与历史报告保留。"
+    },
+    "formalUni": {
+      "result": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main537-merge-audit-f0k7a8js/formal-40800145433-result.json",
+        "bytes": 4862,
+        "sha256": "3942fb4ff690df52c81f8436e38248cecf22b17e3286f814bbd4168f73d1a7f5"
+      },
+      "runId": 40800145433,
+      "conclusion": "success",
+      "fixedBaseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+      "cases": [
+        "demo-uni-app-vite-tailwindcss-v4__mp-weixin"
+      ],
+      "buildRuns": 3,
+      "hmrRuns": 3,
+      "diagnosticSwitchesEnabled": false,
+      "performanceGuard": {
+        "passed": true,
+        "thresholds": {
+          "minimumMemoryRegressionMb": 64,
+          "minimumTailRegressionSamples": 2,
+          "minimumTimingRegressionMs": 10,
+          "maximumMedianRegressionPValue": 0.05,
+          "regressionPercent": 5
+        },
+        "violations": [],
+        "blocking": true
+      },
+      "hmrEndToEndP95DeltaPct": 4.5585638263368145,
+      "steadyPluginP95Ms": [
+        121,
+        126
+      ],
+      "limitation": "仅准确537的正式Ubuntu/Node22固定基线证据，不能替代最终整合head；未降低5%/10ms/64MB/双尾门槛。"
+    },
+    "lynxNative": {
+      "result": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main537-merge-audit-f0k7a8js/lynx-537-reports-audit.json",
+        "bytes": 4242,
+        "sha256": "bf3ed45ad154963c1e827f0083e5170ad7dbd1c27408fc075ddcef160114d770"
+      },
+      "platforms": [
+        {
+          "platform": "android",
+          "statuses": {
+            "supported": 54,
+            "unsupported": 64
+          },
+          "evidenceCount": 181,
+          "allEvidenceHashesVerified": true
+        },
+        {
+          "platform": "ios",
+          "statuses": {
+            "supported": 53,
+            "unsupported": 65
+          },
+          "evidenceCount": 181,
+          "allEvidenceHashesVerified": true
+        }
+      ],
+      "limitation": "每端118项分类含unsupported，不称全部能力已支持；仅准确537 CI证据。"
+    },
+    "websiteCaptureFailed": {
+      "candidate": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793237414535",
+      "preflightRun": "64b2a86e-8de0-41db-84a0-98cdd66d040c",
+      "status": "failed-controller-and-cleanup",
+      "firstFailureAt": "2026-10-29T01:35:04.424Z",
+      "firstError": "周期ps身份探针5秒超时，额外1秒仍未close/callback；清理ps2秒也超时。",
+      "diagnosis": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-capture-diagnosis-w063q0_b/receipt.json",
+        "bytes": 3752,
+        "sha256": "3f8ffd96354bae5e7fd6114c66f4395b317d1e4d3fa461d3029d26e4d32b83e0"
+      },
+      "diagnosisText": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-capture-diagnosis-w063q0_b/diagnosis.md",
+        "bytes": 4464,
+        "sha256": "a72143cda8c8ca65c57489aa63021e09dc58a8377fcd527388f420707c044414"
+      },
+      "observedPlaywrightReport": {
+        "expected": 1204,
+        "conditionallySkipped": 602,
+        "unexpected": 0,
+        "flaky": 0,
+        "reportErrors": 0
+      },
+      "completeManifestExists": false,
+      "captureFailureFileExists": false,
+      "accepted": false,
+      "reason": "后代在外层失败后成为孤儿继续运行；报告尾部通过不能补足capture成功和完整manifest。gate finished仅归还租约。",
+      "ownedWorkerCleanup": {
+        "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/website537-owned-worker-cleanup.json",
+        "bytes": 3297,
+        "sha256": "503f9e6874858291330afce05eff86308beb05a96320a8c9b6b904968f7196eb"
+      },
+      "ownedWorkerCleanupVerified": true,
+      "cleanupScope": "重新核对出生时刻、工作目录、端口与父链，仅SIGTERM本次wrangler69349；五个原任务进程全部退出，未批量杀进程。"
+    },
+    "websiteCIKnownFailure": {
+      "runId": 40799447302,
+      "jobId": 123216321372,
+      "log": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main537-merge-audit-f0k7a8js/website-537-job-123216321372.log",
+        "bytes": 85012,
+        "sha256": "35e168c0f34a31adbc03f9ed19dd5720f5b7cab6d4b5c6a5eb39a080d461d9fa"
+      },
+      "reason": "Linux WebKit原生截图单维上限32767，33001夹具失败；不是黄金图像素差异。",
+      "fixStatus": "独立尺寸能力修复已提交，分片捕获期监测仍在补齐；须新合同、新完整采集和禁止更新复验。"
+    },
+    "remaining": "内部fatal合作取消、分片捕获期监测正在独立修复；完整网站采集/审查/来源登记/禁更、复制模板最终矩阵、107portable/8HTML禁更、完整多端/设备/HMR/ABI及准确最终head适用CI仍未完成；PR1320继续draft，不能合并。",
+    "wechatSdk140TargetedRegression": {
+      "firstAttempt": {
+        "files": 3,
+        "tests": 43,
+        "passed": 22,
+        "failed": 21,
+        "exitCode": 1,
+        "errors": [
+          "SDK disconnect calls connection.off; old mock lacks EventEmitter unsubscribe",
+          "SDK readiness uses App.getCurrentPage pageId/path; fixture still returns screenshot data",
+          "two HBuilderX result fixtures omit explicit --compile true"
+        ]
+      },
+      "changes": [
+        "Connection fixture uses actual node:events EventEmitter on/off",
+        "Actual SDK retry fixture returns valid pageId/path and verifies subscriptions released",
+        "HBuilderX failure result fixtures explicitly model compile-only launch",
+        "Timeout diagnostic follows controlled recovery policy while preserving session boundary"
+      ],
+      "command": "E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/wechat-automator.test.ts e2e/wechat-session-boundary.test.ts e2e/wechat-launch-stages.test.ts e2e/project-build-hbuilderx-cleanup.test.ts --update=none --reporter=json --outputFile=e2e/.artifacts/dependency-upgrade-20261028/wechat-sdk140-mock-regression.json",
+      "files": 4,
+      "tests": 66,
+      "passed": 66,
+      "failed": 0,
+      "exitCode": 0,
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/wechat-sdk140-mock-regression.json",
+        "bytes": 25154,
+        "sha256": "8f00dbf49f9535bdbe4f92d619718bbbff046fd0d038d962d58294aa365723e8"
+      },
+      "scope": "Mock and source-boundary regressions; no browser or IDE runtime claim"
+    }
   }
 }

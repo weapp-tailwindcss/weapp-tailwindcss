@@ -61,7 +61,7 @@ export class Launcher {
     const remaining = () => {
       const ms = deadline - Date.now()
       if (ms <= 0) {
-        throw new WechatEnvironmentError('微信 IDE 本轮自动化连接超时；不启动或重启 IDE。')
+        throw new WechatEnvironmentError('微信 IDE 本轮自动化连接超时；核对现有实例与服务端口，必要时受控恢复后重新预检，保留登录态。')
       }
       return ms
     }

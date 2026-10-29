@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -18,7 +19,7 @@ vi.mock('../scripts/wechat/service', () => ({ assertWechatLogin: vi.fn(), existi
 
 function miniProgram() {
   const send = vi.fn().mockResolvedValue({})
-  const connection = { send, dispose: vi.fn(), on: vi.fn() }
+  const connection = Object.assign(new EventEmitter(), { send, dispose: vi.fn() })
   const mini = new MiniProgram(connection as never)
   vi.spyOn(mini, 'waitForAppReady').mockResolvedValue(undefined)
   return { mini, connection, send }
@@ -74,16 +75,17 @@ describe('微信会话保护', () => {
   })
 
   it('真实 SDK 就绪检查首轮超时后恢复时仍移交同一连接，不提前阻断或重连', async () => {
-    const { mini, send } = miniProgram()
+    const { mini, connection, send } = miniProgram()
     vi.mocked(mini.waitForAppReady).mockRestore()
-    const primary = Object.assign(new Error('first readiness probe timed out'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' })
-    send.mockRejectedValueOnce(primary).mockResolvedValueOnce({ data: 'ready' })
+    const primary = Object.assign(new Error('first readiness probe timed out'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.getCurrentPage' })
+    send.mockRejectedValueOnce(primary).mockResolvedValueOnce({ pageId: 1, path: 'pages/index/index' })
     connect.mockResolvedValue(mini)
     await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 2000 })).resolves.toBe(mini)
     expect(connect).toHaveBeenCalledOnce()
-    expect(send.mock.calls.map(call => call[0])).toEqual(['App.captureScreenshot', 'App.captureScreenshot'])
+    expect(send.mock.calls.map(call => call[0])).toEqual(['App.getCurrentPage', 'App.getCurrentPage'])
     expect(wechatRequest).toHaveBeenCalledOnce()
-    mini.disconnect()
+    await mini.disconnect()
+    expect(connection.eventNames()).toEqual([])
   })
 
   it('App 就绪协议超时与断连同时失败，两个原异常均保留且不重连', async () => {

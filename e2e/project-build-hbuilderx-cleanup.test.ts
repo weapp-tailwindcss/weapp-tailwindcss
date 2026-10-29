@@ -119,7 +119,7 @@ describe('HBuilderX static 构建的项目释放边界', () => {
     'DONE  Build complete.\nBuild failed with errors.',
   ])('退出零但编译以失败终态结束时保留首错并立即关闭：%s', async (terminal) => {
     const output = `08:51:29.689 [plugin:source-candidates] EISDIR: illegal operation on a directory, read\n${terminal}\n`
-    const launch = result(['launch', 'mp-weixin'], output)
+    const launch = result(['launch', 'mp-weixin', '--compile', 'true'], output)
     mocks.run.mockImplementation(async ({ args }: { args: string[] }) => args[0] === 'launch' ? launch : result(args))
     const error = await ensureProjectBuilt(directory, { force: true }).catch(error => error)
     expect(error).toBeInstanceOf(HBuilderXCommandError)
@@ -207,7 +207,7 @@ describe('HBuilderX static 构建的项目释放边界', () => {
   it('产物仍未就绪时保留本轮 launch 原结果和完整诊断', async () => {
     vi.stubEnv('E2E_IDE_HBUILDERX_DEV_BUILD_TIMEOUT_MS', '0')
     mocks.exists.mockResolvedValue(false)
-    const launch = result(['launch', 'mp-weixin'], '08:51:29.690 compiler entry=/owned/entry\nfirst actionable detail\n')
+    const launch = result(['launch', 'mp-weixin', '--compile', 'true'], '08:51:29.690 compiler entry=/owned/entry\nfirst actionable detail\n')
     mocks.run.mockImplementation(async ({ args }: { args: string[] }) => args[0] === 'launch' ? launch : result(args))
     const error = await ensureProjectBuilt(directory, { force: true }).catch(error => error)
     expect(error).toBeInstanceOf(HBuilderXCommandError)
