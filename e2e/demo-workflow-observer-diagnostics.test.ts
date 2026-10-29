@@ -4,6 +4,7 @@ import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
 import { createProcessObserverTransport } from '../scripts/demo-e2e-workflow/process-observer/transport'
+import { observerPreparation } from './helpers/observer-preparation'
 
 let child: ChildProcess & { stdin: PassThrough, stdout: PassThrough, stderr: PassThrough }
 let requests: Array<{ id: number, kind: string }>
@@ -154,7 +155,7 @@ it('合法握手后的坏进度尾行仍阻断业务准备', async () => {
   const preparing = prepareWorkflowProcessObserver(undefined, { platform: 'win32', command: 'fixture', args: [], spawn: createChild }).catch(error => error)
   emit({ event: 'observer-ready', pid: child.pid })
   await vi.advanceTimersByTimeAsync(0)
-  child.stdout.write(`${JSON.stringify({ id: 1, rows: [{ pid: child.pid, parent: 1, group: 0, started: '2026-10-04T12:00:00Z' }] })}\n${JSON.stringify({ event: 'request-received', id: 999, kind: 'identity' })}\n`)
+  child.stdout.write(`${JSON.stringify({ id: 1, rows: observerPreparation({ pid: child.pid!, parent: 1, group: 0, started: '2026-10-04T12:00:00Z' }) })}\n${JSON.stringify({ event: 'request-received', id: 999, kind: 'prepare' })}\n`)
   expect(await preparing).toBeInstanceOf(Error)
   expect(createChild).toHaveBeenCalledOnce()
   expect(child.kill).toHaveBeenCalledWith('SIGKILL')

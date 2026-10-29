@@ -1,75 +1,13 @@
-import type { ChildProcess, spawn } from 'node:child_process'
-import { EventEmitter } from 'node:events'
-import { PassThrough } from 'node:stream'
 import { afterEach, expect, it, vi } from 'vitest'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
 import { createProcessObserverTransport } from '../scripts/demo-e2e-workflow/process-observer/transport'
 import { prepareWatchMemorySource, spawnWithWatchMemorySource } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source'
+import { createColdObserverProvider } from './helpers/observer-cold-provider'
 
 const fixtures: ReturnType<typeof coldProvider>[] = []
 
-function coldProvider(hostMs = 12_000, moduleMs = 3000, queryMs = 4000) {
-  const timers = new Set<ReturnType<typeof setTimeout>>()
-  const later = (fn: () => void, ms: number) => {
-    const timer = setTimeout(() => {
-      timers.delete(timer)
-      fn()
-    }, ms)
-    timers.add(timer)
-  }
-  const child = Object.assign(new EventEmitter(), {
-    pid: 424242,
-    stdin: new PassThrough(),
-    stdout: new PassThrough(),
-    stderr: new PassThrough(),
-    kill: vi.fn(() => {
-      queueMicrotask(() => child.emit('close', null, 'SIGKILL'))
-      return true
-    }),
-  }) as unknown as ChildProcess & { stdin: PassThrough, stdout: PassThrough, stderr: PassThrough, kill: ReturnType<typeof vi.fn> }
-  child.once('close', () => {
-    for (const timer of timers) {
-      clearTimeout(timer)
-    }
-  })
-  const requests: Array<{ id: number, kind: string, sentAt: number }> = []
-  const queued: typeof requests = []
-  const send = (value: unknown) => child.stdout.write(`${JSON.stringify(value)}\n`)
-  const respond = (request: typeof requests[number]) => {
-    send({ event: 'request-received', id: request.id, kind: request.kind })
-    later(() => {
-      send({ event: 'query-completed', id: request.id, kind: request.kind })
-      send({ event: 'response-ready', id: request.id, kind: request.kind })
-      send({ id: request.id, rows: request.kind === 'identity'
-        ? [{ pid: child.pid, parent: 1, group: 0, started: '2026-10-13T00:00:00Z' }]
-        : { rssMb: 10, maxProcessRssMb: 10, processCount: 1, topProcesses: [{ pid: child.pid, ppid: 1, rssMb: 10 }] } })
-    }, queryMs)
-  }
-  let serving = false
-  child.stdin.on('data', (data) => {
-    const request = { ...JSON.parse(String(data)), sentAt: Date.now() }
-    requests.push(request)
-    if (serving) {
-      respond(request)
-    }
-    else {
-      queued.push(request)
-    }
-  })
-  child.stdin.on('finish', () => queueMicrotask(() => child.emit('close', 0, null)))
-  const createChild = vi.fn(() => {
-    later(() => {
-      send({ event: 'observer-ready', pid: child.pid })
-      later(() => {
-        serving = true
-        for (const request of queued.splice(0)) {
-          respond(request)
-        }
-      }, moduleMs)
-    }, hostMs)
-    return child
-  }) as unknown as typeof spawn
-  const fixture = { child, requests, createChild, send }
+function coldProvider(...args: Parameters<typeof createColdObserverProvider>) {
+  const fixture = createColdObserverProvider(...args)
   fixtures.push(fixture)
   return fixture
 }
@@ -107,7 +45,7 @@ it('Watch 的 12 秒宿主启动与 7 秒真实预热分开计时，预热完成
   expect(fixture.child.kill).not.toHaveBeenCalled()
 })
 
-it('Workflow 的同一宿主握手后才查询身份和内存，两项真实预热共享截止', async () => {
+it('Workflow 的同一宿主握手后只读一次真实本体快照，同时预热身份和内存', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(0)
   const fixture = coldProvider()
@@ -117,11 +55,32 @@ it('Workflow 的同一宿主握手后才查询身份和内存，两项真实预�
     args: [],
     spawn: fixture.createChild,
   }).catch(error => error)
-  await vi.advanceTimersByTimeAsync(23_000)
+  await vi.advanceTimersByTimeAsync(19_000)
   const observer = await preparing
   expect(observer).not.toBeInstanceOf(Error)
-  expect(fixture.requests.map(request => [request.kind, request.sentAt])).toEqual([['identity', 12_000], ['memory', 19_000]])
+  expect(fixture.requests.map(request => [request.kind, request.sentAt])).toEqual([['prepare', 12_000]])
   expect(fixture.createChild).toHaveBeenCalledOnce()
+  await observer.close()
+})
+
+it('冷模块 5169ms 与首次 CIM 8100ms 只消耗一次准备查询，完成前不放行业务', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(0)
+  const fixture = coldProvider(5761, 5169, 8100)
+  let finished = false
+  const preparing = prepareWorkflowProcessObserver(undefined, {
+    platform: 'win32', command: 'fixture', args: [], spawn: fixture.createChild,
+  }).then((observer) => {
+    finished = true
+    return observer!
+  })
+  await vi.advanceTimersByTimeAsync(19_029)
+  expect(finished).toBe(false)
+  await vi.advanceTimersByTimeAsync(1)
+  const observer = await preparing
+  expect(finished).toBe(true)
+  expect(fixture.requests.map(request => [request.kind, request.sentAt])).toEqual([['prepare', 5761]])
+  expect(fixture.child.kill).not.toHaveBeenCalled()
   await observer.close()
 })
 
@@ -143,10 +102,10 @@ it('宿主启动超时前不发查询或启动业务，失败仅回收本轮持�
   expect(vi.getTimerCount()).toBe(0)
 })
 
-it('身份和内存共用 ready 接收后 15 秒的预热截止，不能按总上限续借', async () => {
+it('单次准备仍受 ready 接收后 15 秒的截止约束，不能按宿主上限续借', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(0)
-  const fixture = coldProvider(10_000, 1, 10_000)
+  const fixture = coldProvider(10_000, 5000, 10_000)
   const preparing = prepareWorkflowProcessObserver(undefined, {
     platform: 'win32',
     command: 'fixture',
@@ -157,8 +116,8 @@ it('身份和内存共用 ready 接收后 15 秒的预热截止，不能按总�
   expect(fixture.child.kill).not.toHaveBeenCalled()
   await vi.advanceTimersByTimeAsync(1)
   const error = await preparing
-  expect(String(error.cause)).toContain('timeoutMs=4999')
-  expect(fixture.requests.map(request => [request.kind, request.sentAt])).toEqual([['identity', 10_000], ['memory', 20_001]])
+  expect(String(error.cause)).toContain('timeoutMs=15000')
+  expect(fixture.requests.map(request => [request.kind, request.sentAt])).toEqual([['prepare', 10_000]])
   expect(fixture.createChild).toHaveBeenCalledOnce()
   expect(fixture.child.kill).toHaveBeenCalledOnce()
   expect(vi.getTimerCount()).toBe(0)

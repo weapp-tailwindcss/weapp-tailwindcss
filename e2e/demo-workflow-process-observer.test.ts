@@ -9,6 +9,7 @@ import * as observerModule from '../scripts/demo-e2e-workflow/process-observer'
 import * as treeModule from '../scripts/demo-e2e-workflow/process-tree'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
+import { observerPreparation } from './helpers/observer-preparation'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({
@@ -23,10 +24,10 @@ const options = { platform: 'win32' as const, command: 'fixture-observer', args:
 const live: ChildProcess[] = []
 let realSpawn: typeof spawn
 let child: ChildProcess & { stdin: PassThrough, stdout: PassThrough, stderr: PassThrough }
-let requests: Array<{ id: number, pids: number[] | null }>
+let requests: Array<{ id: number, kind: string, rootPid?: number, pids: number[] | null }>
 
 function reply(index: number, rows: unknown = [own]) {
-  child.stdout.write(`${JSON.stringify({ id: requests[index]!.id, rows })}\n`)
+  child.stdout.write(`${JSON.stringify({ id: requests[index]!.id, rows: index === 0 ? { ...observerPreparation(own), identities: rows } : rows })}\n`)
 }
 
 async function initialized() {
@@ -83,7 +84,7 @@ it('6 秒冷准备完成真实身份握手；热查询仍按原 5 秒截止失�
   await vi.advanceTimersByTimeAsync(6000)
   reply(0)
   const observer = (await initializing)!
-  expect(requests[0]?.pids).toEqual([own.pid])
+  expect(requests[0]).toMatchObject({ kind: 'prepare', rootPid: own.pid })
   expect(mocks.spawn).toHaveBeenCalledOnce()
   const reading = observer.table(5000).catch(error => error)
   await vi.advanceTimersByTimeAsync(5000)
@@ -111,7 +112,7 @@ it.each(['invalid JSON', JSON.stringify({ id: 123, rows: [own] })])('同一 chun
   vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockImplementation(signal => prepare(signal, options))
   const running = runStep({ name: 'unstarted', command: 'workload', args: [] }, 1, 1).catch(error => error)
   await vi.advanceTimersByTimeAsync(0)
-  child.stdout.write(`${JSON.stringify({ id: requests[0]!.id, rows: [own] })}\n${tail}\n`)
+  child.stdout.write(`${JSON.stringify({ id: requests[0]!.id, rows: observerPreparation(own) })}\n${tail}\n`)
   expect(await running).toBeInstanceOf(Error)
   expect(mocks.spawn).toHaveBeenCalledOnce()
   expect(child.kill).toHaveBeenCalledWith('SIGKILL')
@@ -272,7 +273,7 @@ it('排队等待也消耗本轮绝对预算，定时器迟到时仍拒绝过期�
 
 it('真实单个热进程连续刷新表和子集；warmup 数据不复用，finally 已回收', async () => {
   vi.useRealTimers()
-  const worker = `console.log(JSON.stringify({event:'observer-ready',pid:process.pid})); const readline=require('node:readline'); let count=0; const input=readline.createInterface({input:process.stdin}); input.on('line',line=>{const request=JSON.parse(line); const rows=request.kind==='memory'?{rssMb:0,maxProcessRssMb:0,processCount:0,topProcesses:[]}:[{pid:process.pid,parent:1,group:0,started:'2026-10-04T12:00:00Z'},{pid:100,parent:1,group:0,started:'2026-10-04T12:00:'+String(++count).padStart(2,'0')+'Z'}].filter(row=>request.pids==null||request.pids.includes(row.pid)); console.log(JSON.stringify({id:request.id,rows}));}); input.on('close',()=>process.exit(0));`
+  const worker = `console.log(JSON.stringify({event:'observer-ready',pid:process.pid})); const readline=require('node:readline'); let count=1; const input=readline.createInterface({input:process.stdin}); input.on('line',line=>{const request=JSON.parse(line); const self={pid:process.pid,parent:1,group:0,started:'2026-10-04T12:00:00Z'}; const metric={rssMb:10,maxProcessRssMb:10,processCount:1,topProcesses:[{pid:process.pid,ppid:1,rssMb:10}]}; const rows=request.kind==='prepare'?{identities:[self],memory:metric}:request.kind==='memory'?metric:[self,{pid:100,parent:1,group:0,started:'2026-10-04T12:00:'+String(++count).padStart(2,'0')+'Z'}].filter(row=>request.pids==null||request.pids.includes(row.pid)); console.log(JSON.stringify({id:request.id,rows}));}); input.on('close',()=>process.exit(0));`
   const createChild: typeof spawn = ((...args: Parameters<typeof spawn>) => {
     const item = realSpawn(...args)
     live.push(item)

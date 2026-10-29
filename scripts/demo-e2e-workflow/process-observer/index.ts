@@ -6,6 +6,7 @@ import type { ProcessObserverQuery } from './transport'
 import process from 'node:process'
 import { parseWindowsMemorySample } from '../../demo-e2e-memory/windows'
 import { parseWindowsProcesses } from '../process-table'
+import { parseObserverPreparation } from './preparation'
 import { windowsObserverArgs } from './script'
 import { createProcessObserverTransport, PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from './transport'
 
@@ -60,15 +61,10 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
     const readyAt = await transport.waitUntilReady(startupDeadline - Date.now(), signal)
     transport.assertHealthy()
     signal?.throwIfAborted()
-    // 宿主启动与真实查询各有独立绝对截止；身份与内存共享预热预算，结果不领取业务归属。
+    // 宿主启动与真实查询各有独立绝对截止；同一快照验证身份与内存，不领取业务归属。
     const prepareDeadline = readyAt + (options.prepareMs ?? PROCESS_OBSERVER_PREPARE_MS)
-    // 冷准备只需确认采集器本体身份；全表 CIM 查询留到业务启动后的首次 capture，
-    // 否则 Windows 高负载 runner 会在预热截止内扫描整个进程表而迟迟不返回。
-    const ready = await identity([transport.pid!], prepareDeadline - Date.now(), signal)
-    if (!ready.some(row => row.pid === transport.pid)) {
-      throw new Error('身份采集器准备结果缺少本体出生身份，不能启动业务。')
-    }
-    await memory(transport.pid!, prepareDeadline - Date.now(), signal)
+    // 业务尚未存在，只查询本体一次；运行采样仍重新读取完整进程树，不能借用准备结果。
+    await read({ kind: 'prepare', rootPid: transport.pid!, cwd: process.cwd() }, value => parseObserverPreparation(value, transport.pid!), prepareDeadline - Date.now(), signal)
     signal?.throwIfAborted()
     transport.assertHealthy()
     if (Date.now() >= prepareDeadline) {

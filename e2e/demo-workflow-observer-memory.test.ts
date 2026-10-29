@@ -7,6 +7,7 @@ import { sampleProcessTreeAsync } from '../scripts/demo-e2e-memory'
 import { containsWorkflowError, WorkflowCancellationError } from '../scripts/demo-e2e-workflow/cancellation'
 import * as observerModule from '../scripts/demo-e2e-workflow/process-observer'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
+import { observerPreparation } from './helpers/observer-preparation'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), command: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({ ...await importOriginal<object>(), spawn: mocks.spawn }))
@@ -26,10 +27,7 @@ function reply(index: number, rows: unknown) {
 async function initialized() {
   const preparing = prepare(undefined, options)
   await vi.advanceTimersByTimeAsync(0)
-  reply(0, [identity])
-  await Promise.resolve()
-  await Promise.resolve()
-  reply(1, metric)
+  reply(0, observerPreparation(identity))
   return (await preparing)!
 }
 
@@ -61,16 +59,15 @@ afterEach(() => {
   child.stderr.destroy()
 })
 
-it('身份 10 秒与内存 5 秒共用单一准备截止；不能重置预算或启动业务', async () => {
+it('单次真实准备共用 15 秒绝对截止；不能重置预算或启动业务', async () => {
   vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockImplementation(signal => prepare(signal, options))
   const running = runStep({ name: 'unstarted', command: 'workload', args: [] }, 1, 1).catch(error => error)
   await vi.advanceTimersByTimeAsync(10_000)
-  reply(0, [identity])
-  await vi.advanceTimersByTimeAsync(0)
-  expect(requests[1]).toMatchObject({ kind: 'memory', rootPid: identity.pid, cwd: process.cwd() })
+  expect(requests).toHaveLength(1)
+  expect(requests[0]).toMatchObject({ kind: 'prepare', rootPid: identity.pid, cwd: process.cwd() })
   await vi.advanceTimersByTimeAsync(5000)
   const error = await running
-  expect(String(error.cause)).toContain('timeoutMs=5000')
+  expect(String(error.cause)).toContain('timeoutMs=15000')
   expect(mocks.spawn).toHaveBeenCalledOnce()
   expect(child.kill).toHaveBeenCalledWith('SIGKILL')
 })
@@ -81,11 +78,11 @@ it('连续内存采样重新查询同一热会话，丢弃 warmup 且没有额�
     for (let index = 0; index < 2; index++) {
       const reading = sampleProcessTreeAsync(100, observer)
       const rssMb = 20 + index
-      reply(2 + index, { ...metric, rssMb })
+      reply(1 + index, { ...metric, rssMb })
       expect(await reading).toMatchObject({ rssMb, processCount: 2, topProcesses: metric.topProcesses })
     }
-    expect(requests.map(request => request.kind)).toEqual(['identity', 'memory', 'memory', 'memory'])
-    expect(requests.slice(2).every(request => request.rootPid === 100)).toBe(true)
+    expect(requests.map(request => request.kind)).toEqual(['prepare', 'memory', 'memory'])
+    expect(requests.slice(1).every(request => request.rootPid === 100)).toBe(true)
     expect(mocks.spawn).toHaveBeenCalledOnce()
     expect(mocks.command).not.toHaveBeenCalled()
   }
@@ -99,7 +96,7 @@ it('热内存采样仍在原 5 秒截止失败，不能缓存旧样本或重启�
   const reading = sampleProcessTreeAsync(100, observer).catch(error => error)
   await vi.advanceTimersByTimeAsync(5000)
   expect(String(await reading)).toContain('timeoutMs=5000')
-  reply(2, metric)
+  reply(1, metric)
   await expect(observer.memory(100, 5000)).rejects.toThrow('timeoutMs=5000')
   await expect(observer.close()).rejects.toThrow('timeoutMs=5000')
   expect(mocks.spawn).toHaveBeenCalledOnce()
@@ -110,7 +107,7 @@ it('内存请求排队与身份请求共享失效边界，清理身份不能越�
   const reading = observer.memory(100, 5000).catch(error => error)
   const identityReading = observer.table(2000).catch(error => error)
   vi.setSystemTime(2000)
-  reply(3, [identity])
+  reply(2, [identity])
   expect(String(await identityReading)).toContain('绝对截止')
   expect(await reading).toBeInstanceOf(Error)
   await expect(observer.close()).rejects.toThrow('绝对截止')
@@ -119,7 +116,7 @@ it('内存请求排队与身份请求共享失效边界，清理身份不能越�
 it('响应已经到达但 Promise 续体或解析越过截止时，不能接受迟到内存样本', async () => {
   const observer = await initialized()
   const reading = observer.memory(100, 5000).catch(error => error)
-  reply(2, metric)
+  reply(1, metric)
   vi.setSystemTime(5000)
   expect(String(await reading)).toContain('结果超过本轮绝对截止')
   await expect(observer.close()).rejects.toThrow('结果超过本轮绝对截止')
@@ -211,7 +208,7 @@ it.each(['SIGINT', 'SIGTERM'] as const)('%s 与真正退出未确认并存时仍
 it.each([{ rssMb: -1 }, { processCount: 1.5 }, { topProcesses: [{ pid: 1, ppid: 0, rssMb: 'bad' }] }])('坏内存结果使会话失效并保留失败：%j', async (invalid) => {
   const observer = await initialized()
   const reading = observer.memory(100, 5000).catch(error => error)
-  reply(2, { ...metric, ...invalid })
+  reply(1, { ...metric, ...invalid })
   expect(String(await reading)).toContain('响应无效')
   await expect(observer.table(5000)).rejects.toThrow('响应无效')
   await expect(observer.close()).rejects.toThrow('响应无效')

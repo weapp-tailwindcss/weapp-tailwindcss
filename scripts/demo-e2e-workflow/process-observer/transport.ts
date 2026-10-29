@@ -6,7 +6,7 @@ import { observerInputRequest } from './input'
 import { resolveObserverLaunchEnvironment } from './launch-environment'
 import { createObserverReapWindow } from './reap-window'
 
-export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
+export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory' | 'prepare', rootPid: number, cwd: string }
 
 export const PROCESS_OBSERVER_HOST_STARTUP_MS = 15_000
 export const PROCESS_OBSERVER_PREPARE_MS = 15_000

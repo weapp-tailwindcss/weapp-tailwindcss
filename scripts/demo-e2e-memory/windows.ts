@@ -1,9 +1,9 @@
 import type { DemoE2eMemorySample } from '../demo-e2e-memory'
 import process from 'node:process'
 
+const query = '$processes = @(Get-CimInstance -Query "SELECT ProcessId, ParentProcessId, WorkingSetSize, CommandLine FROM Win32_Process")'
 const statements = [
   '$watchCommandPatterns = @("weapp-vite(?:\\.js)?\\s+dev", "taro-build-guard\\.mjs\\s+--watch", "taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch", "run-mpx-cli-service\\.js\\s+serve", "webpack(?:\\.js)?\\s+--watch", "gulp[\\s\\S]+gulpfile\\.ts", "\\bpnpm\\b[\\s\\S]+build:weapp[\\s\\S]+--watch", "hbuilderx[\\s\\S]+launch[\\s\\S]+mp-weixin", "uni\\.js[\\s\\S]+-p\\s+mp-weixin")',
-  '$processes = @(Get-CimInstance -Query "SELECT ProcessId, ParentProcessId, WorkingSetSize, CommandLine FROM Win32_Process")',
   '$children = @{}',
   'foreach ($process in $processes) { $parent = [int]$process.ParentProcessId; if (-not $children.ContainsKey($parent)) { $children[$parent] = @() }; $children[$parent] += $process }',
   '$tracked = @{}',
@@ -25,8 +25,8 @@ const statements = [
 ]
 const result = '@{ rssMb = [int][Math]::Round($total / 1MB); maxProcessRssMb = [int][Math]::Round($max / 1MB); processCount = [int]$tracked.Count; topProcesses = $top }'
 
-/** 同一测量函数供独立探针和受管会话使用；命令匹配仅决定指标范围，不授予清理归属。 */
-export const windowsProcessTreeMemoryFunction = `function Get-WorkflowMemory {\nparam([int]$root, [string]$repositoryRoot)\n${statements.join('\n')}\nreturn ${result}\n}`
+/** 同一测量函数供独立探针和受管会话使用；仅启动准备传入本次快照，其余调用逐次新查。命令匹配不授予清理归属。 */
+export const windowsProcessTreeMemoryFunction = `function Get-WorkflowMemory {\nparam([int]$root, [string]$repositoryRoot, [object[]]$processes)\nif ($null -eq $processes) { ${query} }\n${statements.join('\n')}\nreturn ${result}\n}`
 
 export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = process.cwd()) {
   return [
@@ -34,6 +34,7 @@ export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = proc
     '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)',
     `$root = [int]${JSON.stringify(rootPid)}`,
     `$repositoryRoot = '${cwd.replaceAll('\'', '\'\'')}'`,
+    query,
     ...statements,
     `[Console]::Out.WriteLine((${result} | ConvertTo-Json -Compress -Depth 4))`,
   ].join('; ')
