@@ -90,12 +90,14 @@ for (const platform of ['linux', 'win32']) {
       const clock = createClock(platform)
       try {
         clock.owner.setDirectory(clock.target, 1000, true, 'scan (dir)')
+        expect(clock.owner.directorySafeTimes.get(clock.target)).toBe(3000)
         expect(clock.watch(clock.target, 1100).events).toEqual([{ type: 'change', args: [3000, 'watch (outdated on attach)', true] }])
         clock.learnAccuracy(1001)
         for (const startTime of [1500, 1800, 2100]) {
           clock.setNow(startTime + 100)
           expect(clock.watch(clock.target, startTime).events).toEqual([])
         }
+        expect(clock.owner.directorySafeTimes.get(clock.target)).toBe(1010)
       }
       finally {
         clock.close()
