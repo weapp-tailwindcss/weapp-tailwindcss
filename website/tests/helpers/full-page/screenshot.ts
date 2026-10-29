@@ -3,6 +3,7 @@ import type { CaptureBudget } from './capture'
 import type { TocObservation } from './toc/model'
 import type { TocOptions } from './toc/observe'
 import { expect, test } from '@playwright/test'
+import { supportsNativeFullPageCapture } from './capabilities'
 import { createCaptureBudget, readDocumentGeometry } from './capture'
 import { prepareFullPageImages } from './images'
 import { captureStableNativeFullPage, NativeCaptureError } from './native'
@@ -38,14 +39,13 @@ export async function prepareFullPageToc(page: Page, budget: CaptureBudget, opti
   }
 }
 
-/** 仅 Firefox 的协议尺寸超限使用分片，其余使用带捕获期观测的原生 fullPage。 */
+/** 按浏览器尺寸能力分片；原生路径保留捕获期观测，分片路径保持既有几何与 RGBA 稳定合同。 */
 export async function expectFullPageScreenshot(page: Page, tocOptions: TocPolicy = null) {
   const budget = createCaptureBudget(test.info().timeout || 60_000)
   await prepareFullPageImages(page, budget)
   const policy = await prepareFullPageToc(page, budget, tocOptions)
   const geometry = await budget.run(() => readDocumentGeometry(page))
-  const tiled = page.context().browser()?.browserType().name() === 'firefox'
-    && (geometry.width > 32_767 || geometry.height > 32_767)
+  const tiled = !supportsNativeFullPageCapture(page.context().browser()?.browserType().name(), geometry)
   const name = '__full-page-template-check__.png'
   if (test.info().snapshotPath(name, { kind: 'screenshot' }) !== test.info().snapshotPath(name, { kind: 'snapshot' })) {
     throw new Error('整页截图与 PNG 快照模板必须一致，禁止改变既有快照路径')
