@@ -243,3 +243,11 @@ HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tai
 完整本地验收在 db117f17 的第 26 阶段发现 Watchpack 2.6.3 将虚拟文件误报为删除。根及 Mpx、Taro Webpack、uni-app Vite 三个独立模板同步 webpack-virtual-modules 0.6.2 的虚拟 FS 存在性补丁；保持上游 Watchpack 配套，不降低现代 Webpack 的要求。72 个矩阵测试文件、1222 项通过，真实物理更新、删除与恢复回归均保留；完整验收和当前 head CI 继续以最终记录为准。根因及移除条件见[监听边界复盘](lessons/virtual-watch-fs-ownership.md)。
 
 同轮安全刷新进一步按上游允许范围更新 Solid 1.9.17、seroval/seroval-plugins 1.6.12、Hono node-server 2.1.5，并为 weapp-vite 模板更新 MCP node 2.1.2。六个模板各自生成锁并 frozen 安装；uni-app Vite 模板另有 11 条锁内既有 Babel 补丁版去重边，已核对官方允许范围并纳入构建验收。最终根风险采集为 358 条公告记录、325 个 GHSA/包组，仍有既有 peer 与框架绑定风险，不能写成安全审计全绿。完整八锁身份、版本/范围、风险差异与尚未完成范围见[本次补充证据](dependency-upgrade-20261028.virtual-watch-evidence.json)。
+
+## 9b20 全量首败与独立性能回归
+
+准确 `9b20e6089ee329b8149741e0942c0026b61f8fc5` 经新扩展预检 `72fc6523-be62-417b-bff3-c21e632a04df`、当前会话 computer use、verify 和单次领取启动完整 57 阶段。根构建通过；第二阶段全仓单测为 12192 项通过、21 项失败、44 项既有跳过和 1 项预期失败，另有 2 个未处理错误，后续 55 阶段停止。父阶段周期 `ps` 身份探针超过原 5 秒及额外 1 秒退出确认预算，触发合作取消；其中 19 项 Watch 测试继承本轮取消文件，在业务准备前退出。独立的真实内存探针超过原 1 秒预算；Webpack Web watch 的主题更新超时早于父阶段取消，不能并入同一原因。6 文件定向诊断复验为 63 项通过、1 项平台跳过，但不替代全量验收，也未证明两个独立超时的根因。
+
+Webpack 用例补充每轮输入编辑、invalid、watchRun、构建回调及实际监听重挂事件，并保留生成/优化阶段已捕获的 CSS、错误和路径过滤结果；不改监听行为或原超时。诊断首轮在完成回调读取 `SizeOnlySource` 抛错，已改为消费原有阶段缓存，完整文件 5 项通过。下一轮失败可区分未产生回调、构建未完成和回调被过滤，不先认定为文件事件丢失。
+
+准确该 head 的 Benchmark [40860278161](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40860278161) 也失败：实际 PR 合并树 `f8b911ad9fd2b780dfd1a44859e4f99272b88f96` 对比 main `0e9ceb82321d49d145bf63c4adf84c7a8639e0e9`，Taro Webpack React v4 构建峰值 RSS 中位 1316.0195→1397.6836 MiB，增加 81.6641 MiB（6.2054%），满足原 5%、64 MiB、双尾及精确 p≤0.05 的阻断条件。增量集中在主 Node 进程的编译中后段；尚无证据将其定为泄漏或归因于特定依赖。汇总 job 仅传播该首因，其余四个 demo 性能分片和 Synthetic gate 成功。保留首败，不提高预算，也不把诊断或其他 head 成功当作本轮通过。

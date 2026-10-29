@@ -17,6 +17,7 @@ const { getMinimizers } = bundlerRequire('./lib/minification.js')
 const { createStyleLoadersFactory } = bundlerRequire('./lib/loaders/styleLoader.js')
 const { getCSSExtractPlugin } = bundlerRequire('./lib/currentBundler.js')
 const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
+
 const taroRequire = createRequire(fileURLToPath(new URL('../../../../demo/taro-webpack-react-tailwindcss-v4/package.json', import.meta.url)))
 const taroRunnerRequire = createRequire(taroRequire.resolve('@tarojs/webpack5-runner/package.json'))
 const TaroCssMinimizerPlugin = taroRunnerRequire('css-minimizer-webpack-plugin')
@@ -242,28 +243,59 @@ it('真实 Web watch 在来源新增、替换、删除和主题变值后保留�
   const browser = await chromium.launch({ headless: true })
   let pending = Promise.withResolvers<webpack.Stats>()
   let expectedChange: string | undefined
+  let phase = 'initial'
+  let build = 0
+  const events: unknown[] = []
+  const startedAt = Date.now()
+  const record = (event: string, detail: object = {}) => events.push({ at: Date.now() - startedAt, event, phase, build, ...detail })
+  const watchFileSystem = compiler.watchFileSystem!
+  const originalWatch = watchFileSystem.watch
+  watchFileSystem.watch = function (...args) {
+    const result = originalWatch.apply(this, args)
+    record('attached', { startTime: args[3] })
+    return result
+  }
+  compiler.hooks.watchRun.tap('cascade-watch-evidence', () => {
+    record('watchRun', { modified: [...compiler.modifiedFiles ?? []], removed: [...compiler.removedFiles ?? []] })
+  })
+  compiler.hooks.invalid.tap('cascade-watch-evidence', (file, time) => record('invalid', { file, time }))
   const watcher = compiler.watch({ aggregateTimeout: 10 }, (error, stats) => {
+    build += 1
+    const changes = [...compiler.modifiedFiles ?? [], ...compiler.removedFiles ?? []]
+    const matchesChange = !expectedChange || changes.some(file => path.resolve(file) === path.resolve(expectedChange!))
+    record('callback', {
+      changes,
+      expectedChange,
+      matchesChange,
+      hasErrors: stats?.hasErrors(),
+      error: error?.message,
+      themeDependency: stats?.compilation.fileDependencies.has(cssEntry),
+      generatedCss: fixture.generatedCss(),
+      optimizedCss: fixture.optimizedCss(),
+    })
     if (error || !stats || stats.hasErrors()) {
       pending.reject(error ?? new Error(stats?.toString({ all: false, errors: true }) ?? '缺少构建结果'))
     }
     else {
       // 文件系统可额外报告输出目录的首次创建，只消费明确属于本轮编辑的构建。
-      const changes = [...compiler.modifiedFiles ?? [], ...compiler.removedFiles ?? []]
-      if (expectedChange && !changes.some(file => path.resolve(file) === path.resolve(expectedChange!))) {
+      if (!matchesChange) {
         return
       }
       pending.resolve(stats)
     }
   })
-  const next = async (change?: { file: string, edit: () => Promise<unknown> }) => {
+  const next = async (change?: { phase: string, file: string, edit: () => Promise<unknown> }) => {
     if (change) {
+      phase = change.phase
       pending = Promise.withResolvers<webpack.Stats>()
       expectedChange = change.file
     }
     const result = pending.promise
     const timeout = setTimeout(() => pending.reject(new Error(`Web watch 没有响应本轮来源变化：${change?.file ?? '初次构建'}`)), 20_000)
     try {
+      record('edit-start', { file: change?.file })
       await change?.edit()
+      record('edit-complete', { file: change?.file })
       await result
       const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
       expect(css).toBe(fixture.optimizedCss())
@@ -279,7 +311,9 @@ it('真实 Web watch 在来源新增、替换、删除和主题变值后保留�
     const page = await browser.newPage()
     const assertHeight = async (css: string, height: number, color: string) => {
       await page.setContent(`<style>${css}</style><div id="probe" class="h-[${height}px] bg-white/80 dark:bg-slate-900/75"></div>`)
-      await page.evaluate(() => { document.documentElement.dataset.theme = 'dark' })
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = 'dark'
+      })
       const result = await page.locator('#probe').evaluate((element, reference) => {
         const context = document.createElement('canvas').getContext('2d')!
         const raster = (value: string) => {
@@ -295,19 +329,22 @@ it('真实 Web watch 在来源新增、替换、删除和主题变值后保留�
     }
     await assertHeight(await next(), 137, 'rgba(18, 52, 86, 0.75)')
     const template = path.join(root, 'template.html')
-    let css = await next({ file: template, edit: () => writeFile(template, '<div class="h-[138px]"></div>') })
+    let css = await next({ phase: 'replace-template', file: template, edit: () => writeFile(template, '<div class="h-[138px]"></div>') })
     expect(css).not.toContain('.h-\\[137px\\]')
     await assertHeight(css, 138, 'rgba(18, 52, 86, 0.75)')
     const extra = path.join(root, 'parts', 'new.html')
-    css = await next({ file: path.dirname(extra), edit: () => writeFile(extra, '<div class="w-[39px]"></div>') })
+    css = await next({ phase: 'add-source', file: path.dirname(extra), edit: () => writeFile(extra, '<div class="w-[39px]"></div>') })
     expect(css).toContain('.w-\\[39px\\]')
-    css = await next({ file: extra, edit: () => rm(extra) })
+    css = await next({ phase: 'remove-source', file: extra, edit: () => rm(extra) })
     expect(css).not.toContain('.w-\\[39px\\]')
     const original = await readFile(cssEntry, 'utf8')
-    css = await next({ file: cssEntry, edit: () => writeFile(cssEntry, original.replace('--color-slate-900: #123456', '--color-slate-900: #345678')) })
+    css = await next({ phase: 'change-theme', file: cssEntry, edit: () => writeFile(cssEntry, original.replace('--color-slate-900: #123456', '--color-slate-900: #345678')) })
     await assertHeight(css, 138, 'rgba(52, 86, 120, 0.75)')
-    css = await next({ file: cssEntry, edit: () => writeFile(cssEntry, original) })
+    css = await next({ phase: 'restore-theme', file: cssEntry, edit: () => writeFile(cssEntry, original) })
     await assertHeight(css, 138, 'rgba(18, 52, 86, 0.75)')
+  }
+  catch (error) {
+    throw new Error(`${String(error)}\nCascade watch trace: ${JSON.stringify({ expectedChange, events })}`, { cause: error })
   }
   finally {
     await browser.close()
