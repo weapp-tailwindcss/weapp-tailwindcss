@@ -36,6 +36,8 @@ An explicit `env` object is an isolated snapshot: missing fields never inherit p
 
 `resolvePlatformIdentity(platform, appType?)` preserves the raw input, trims and lowercases `normalized`, and provides a known `canonical` identity. Taro `weapp`, MPX `wx` and uni-app `mp-weixin` resolve to `mp-weixin`; `h5` and `web` resolve to `web`. MPX-specific `ali` and `dd` resolve only when `appType` is `mpx`.
 
+Taro's `harmony-hybrid` is a WebView target: its Taro platform resolvers set `isWeb` to `true`, and its canonical identity is `web` when `appType` is `taro`. This alias does not apply to native `harmony` or to other frameworks.
+
 The canonical identities are `mp-weixin`, `mp-alipay`, `mp-baidu`, `mp-qq`, `mp-toutiao`, `mp-jd`, `mp-dingtalk`, `web`, `app`, `app-plus`, `app-android`, `app-ios` and `app-harmony`. Unknown or empty input has an `undefined` canonical identity. `app` and `app-plus` remain distinct. The existing platform resolvers retain their return shape, including `raw`, `normalized` and classification flags; a canonical identity does not select a compiler target or declare host support.
 
 ## Detection reports

@@ -1,4 +1,5 @@
 import process from 'node:process'
+import { resolveTaroPlatformFromEnv } from '@weapp-tailwindcss/env'
 
 type WeappTailwindcssGeneratorTarget = 'weapp' | 'web'
 
@@ -70,7 +71,7 @@ export function shouldUseWebGeneratorTargetFromEnv(): boolean {
       && !isUniNativeAppPlatform(getEnvValue('UNI_UTS_PLATFORM'))
     )
     || mpxWebPlatformEnvKeys.some(key => isMpxWebPlatform(getEnvValue(key)))
-    || getEnvValue('TARO_ENV') === 'h5'
+    || resolveTaroPlatformFromEnv({ TARO_ENV: getEnvValue('TARO_ENV') }).isWeb
 }
 
 export function shouldUseUniAppWebRpxCompatibility(appType: string | undefined, webTarget = shouldUseWebGeneratorTargetFromEnv()): boolean {

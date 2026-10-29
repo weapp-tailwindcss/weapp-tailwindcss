@@ -34,9 +34,9 @@ describe('taro preset', () => {
     expect(result.tailwindcss?.version).toBe(4)
   })
 
-  it('enables web compatibility for H5 by default', () => {
+  it.each(['h5', 'harmony-hybrid'])('enables web compatibility for %s by default', (platform) => {
     env.clearBaseEnv()
-    process.env.TARO_ENV = 'h5'
+    process.env.TARO_ENV = platform
     const result = taro({
       base: '/Users/foo/taro-vite-react-tailwindcss-v4',
     })
@@ -47,9 +47,9 @@ describe('taro preset', () => {
     })
   })
 
-  it('keeps explicit H5 web compatibility overrides', () => {
+  it.each(['h5', 'harmony-hybrid'])('keeps explicit %s web compatibility overrides', (platform) => {
     env.clearBaseEnv()
-    process.env.TARO_ENV = 'h5'
+    process.env.TARO_ENV = platform
     const result = taro({
       base: '/Users/foo/taro-vite-react-tailwindcss-v4',
       generator: {
@@ -61,5 +61,13 @@ describe('taro preset', () => {
       target: 'web',
       webCompat: false,
     })
+  })
+
+  it('keeps an explicit mini-program target in a Hybrid build', () => {
+    env.clearBaseEnv()
+    process.env.TARO_ENV = 'harmony-hybrid'
+    const result = taro({ generator: { target: 'weapp', webCompat: false } })
+
+    expect(result.generator).toMatchObject({ target: 'weapp', webCompat: false })
   })
 })
