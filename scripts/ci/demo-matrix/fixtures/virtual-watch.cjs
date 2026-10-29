@@ -52,7 +52,7 @@ async function main() {
           const item = eventArgs[0]
           const directoryWatcher = this.fileWatchers.get(item)?.watcher.directoryWatcher
           const directoryTime = directoryWatcher?.directorySafeTimes.get(item)
-          // 固定事件当时的精度数据，避免后续重挂载修改同一个对象而覆盖证据。
+          // 固定事件当时的诊断值，兼容数字与对象记录，避免后续更新覆盖证据。
           record({ event: method, args: eventArgs, directoryTime: directoryTime && typeof directoryTime === 'object' ? { ...directoryTime } : directoryTime })
           return original.apply(this, eventArgs)
         }
