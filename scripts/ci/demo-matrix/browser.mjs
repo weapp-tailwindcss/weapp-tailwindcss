@@ -2,17 +2,19 @@ import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from 'playwright'
+import { closeBrowserInspection, createBrowserStartup, launchBrowserPage, within } from './browser-startup.mjs'
 import { coverage, isWeb } from './catalog.mjs'
 import { assertRenderedColors } from './color-contract.mjs'
 import { inspectStyles } from './output.mjs'
 import { probeClasses } from './probe.mjs'
 import { until } from './process.mjs'
 
-export async function openBrowser(url, session, artifactDir, { vueHydration = false } = {}) {
-  const browser = await chromium.launch({ headless: true })
-  const page = await browser.newPage({ viewport: { width: 1200, height: 900 } })
+export async function openBrowser(url, session, artifactDir, { vueHydration = false, startupTimeout = 180_000 } = {}) {
+  const startup = createBrowserStartup(startupTimeout, session)
+  const { browser, page } = await launchBrowserPage(chromium, startup)
   const events = []
   const pendingModules = new Set()
+  const pendingRequests = new Set()
   const origin = new URL(url).origin
   let documentResponse
   let transportReady = false
@@ -39,6 +41,7 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
     }
   })
   page.on('request', (request) => {
+    pendingRequests.add(request)
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       documentResponse = undefined
     }
@@ -46,8 +49,12 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
       pendingModules.add(request)
     }
   })
-  page.on('requestfinished', request => pendingModules.delete(request))
+  page.on('requestfinished', (request) => {
+    pendingModules.delete(request)
+    pendingRequests.delete(request)
+  })
   page.on('requestfailed', (request) => {
+    pendingRequests.delete(request)
     if (pendingModules.has(request) && /ERR_NO_BUFFER_SPACE|ERR_EMPTY_RESPONSE/.test(request.failure()?.errorText ?? '')) {
       transientModuleFailure = `${request.url()}: ${request.failure()?.errorText}`
     }
@@ -74,19 +81,19 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
     events.push(`${message.type()}: ${message.text()}`)
   })
   try {
-    await until(async () => {
-      const response = await fetch(url, { signal: AbortSignal.timeout(5000) })
+    await startup.run('document reachability', timeout => until(async () => {
+      const response = await fetch(url, { signal: AbortSignal.timeout(Math.min(5000, startup.remaining())) })
       await response.arrayBuffer()
       assert.ok(response.ok, url)
-    }, session)
-    await until(async () => {
+    }, startup.session, timeout))
+    await startup.run('navigation', timeout => until(async () => {
       // 已收到成功主文档后只等待当前页面，开发重载不能触发第二次主动导航。
       if (documentVersion > 0) {
         return
       }
       let response
       try {
-        response = await page.goto(url, { waitUntil: 'commit', timeout: 15_000 })
+        response = await page.goto(url, { waitUntil: 'commit', timeout: Math.min(15_000, startup.remaining()) })
       }
       catch (error) {
         if (documentVersion > 0) {
@@ -101,30 +108,35 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
         ? documentResponse
         : response
       assert.ok(currentDocument?.ok(), url)
-    }, session)
-    await until(async () => {
+    }, startup.session, timeout))
+    await startup.run('page and update transport', timeout => until(async () => {
       if (transientModuleFailure) {
         assert.equal(startupReloads, 0, `Module transport failed again after startup recovery: ${transientModuleFailure}`)
         events.push(`startup-reload: ${transientModuleFailure}`)
         startupReloads++
-        await page.reload({ waitUntil: 'commit', timeout: 15_000 })
+        await page.reload({ waitUntil: 'commit', timeout: Math.min(15_000, startup.remaining()) })
       }
       const version = documentVersion
-      await page.locator('#tw-matrix-height').waitFor({ timeout: 5000 })
+      startup.mark('probe element')
+      await page.locator('#tw-matrix-height').waitFor({ timeout: Math.min(5000, startup.remaining()) })
       // requestfinished 只证明响应已下载，async 脚本可能尚未执行；load 不等待后台 fetch。
-      await page.waitForLoadState('load', { timeout: 5000 })
+      startup.mark('document load')
+      await page.waitForLoadState('load', { timeout: Math.min(5000, startup.remaining()) })
       if (vueHydration) {
         // SSR 探针可能先于客户端页面模块出现，保存源码前须确认所属组件已经挂载。
+        startup.mark('Vue hydration')
         const mounted = await page.locator('#tw-matrix-height').evaluate(element => element.__vueParentComponent?.isMounted === true)
         assert.ok(mounted, 'SSR probe component has not completed Vue hydration')
       }
+      startup.mark('update idle')
       await assertUpdateIdle()
       // 最后一次异步检查也可能跨越导航，返回前同步复核当前文档和连接。
       assert.equal(documentVersion, version, 'Document changed while waiting for local scripts')
       assert.equal(pendingModules.size, 0, `Local modules still loading: ${[...pendingModules].map(request => request.url()).join(', ')}`)
       assert.ok(documentResponse?.ok(), 'Current document navigation is not complete')
+      startup.mark('update transport')
       assert.ok(transportReady, 'Development update transport is not ready')
-    }, session)
+    }, startup.session, timeout))
     return {
       events,
       async waitForUpdateIdle() { await until(assertUpdateIdle, session) },
@@ -231,19 +243,18 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
       },
       async screenshot(round) { await page.screenshot({ path: path.join(artifactDir, `${round}.png`), fullPage: false }) },
       async reload() { await page.reload({ waitUntil: 'domcontentloaded' }) },
-      async close() {
-        await writeFile(path.join(artifactDir, 'last-inspection.json'), JSON.stringify(lastInspection ?? {}, null, 2))
-        await browser.close()
-      },
+      async close() { await closeBrowserInspection(browser, artifactDir, lastInspection) },
     }
   }
   catch (error) {
     // 单测临时目录随后会被清理，关键就绪状态也必须进入 CI 错误链。
     const state = {
+      startup: startup.state(),
       documentVersion,
       pageUrl: page.url(),
       documentResponse: documentResponse && { url: documentResponse.url(), status: documentResponse.status() },
       pendingModules: [...pendingModules].map(request => request.url()),
+      pendingRequests: [...pendingRequests].map(request => ({ url: request.url(), type: request.resourceType() })),
       transportReady,
       transientModuleFailure,
       startupReloads,
@@ -254,9 +265,9 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
     // 任一证据写入失败也继续采集其余证据并关闭本次浏览器。
     for (const task of [
       () => writeFile(path.join(artifactDir, 'browser-errors.json'), JSON.stringify(events, null, 2)),
-      async () => writeFile(path.join(artifactDir, 'browser-failure.html'), await page.content()),
-      () => page.screenshot({ path: path.join(artifactDir, 'browser-failure.png') }),
-      () => browser.close(),
+      () => within(2000, async () => writeFile(path.join(artifactDir, 'browser-failure.html'), await page.content()), () => 'Browser HTML evidence exceeded 2000ms'),
+      () => page.screenshot({ path: path.join(artifactDir, 'browser-failure.png'), timeout: 2000 }),
+      () => within(5000, () => browser.close(), () => 'Browser startup cleanup exceeded 5000ms'),
     ]) {
       try {
         await task()
