@@ -2961,5 +2961,139 @@
       },
       "scope": "Mock and source-boundary regressions; no browser or IDE runtime claim"
     }
+  },
+  "captureLifecycleIntegration20261029": {
+    "recordedAt": "2026-10-29T03:17:55.918499+00:00",
+    "sourceHead": "83063f0bc",
+    "commits": {
+      "fatalCooperation": "f5e2cef39",
+      "browserCapability": "38a83e218",
+      "sharedCaptureMonitor": "3a60167fa",
+      "explicitRegressionEntries": "8d274faad",
+      "firstCancellationCause": "83063f0bc"
+    },
+    "contracts": {
+      "ownership": "Per-stage cancellation file is owned, written and removed only by creator; inherited cancellation forwards; website consumers only read parent credential",
+      "failureOrder": "Write cooperative file before abort/cleanup; preserve first reason/cause and 130/143 exits; late sampling and cleanup errors remain visible",
+      "budgets": {
+        "identityProbeMs": 5000,
+        "forcedCleanupMs": 2000,
+        "cooperativeMs": 30000,
+        "captureMaxMs": 60000,
+        "wholeImageMaxDiffPixels": 5
+      },
+      "capture": "Native and all tiled fragments share one observed sample lifecycle, TOC/ancestor fingerprint, cross-sample document watcher and two consecutive equal full RGBA images; disturbed samples clear pairing; native decoding remains after finish/valid"
+    },
+    "integratedChecks": {
+      "fullPagePure": {
+        "tests": 154,
+        "passed": 154,
+        "failed": 0,
+        "exitCode": 0,
+        "report": {
+          "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/website-fullpage-integrated-pure.json",
+          "bytes": 53417,
+          "sha256": "9e062ee1165e8c3f4a8919e873050048b2fbb9bfc05a6583f63660f88f702c8a"
+        }
+      },
+      "cancelCauseAndRealProcesses": {
+        "tests": 14,
+        "passed": 14,
+        "failed": 0,
+        "exitCode": 0,
+        "report": {
+          "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/workflow-cancel-cause-integrated.json",
+          "bytes": 6323,
+          "sha256": "ded40f2477663eb2b359da2d7351f6aa617cd99a938483085d5a54ce33bc6160"
+        }
+      },
+      "workflowEntryContracts": {
+        "tests": 42,
+        "passed": 42,
+        "failed": 0,
+        "exitCode": 0,
+        "report": {
+          "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/workflow-entry-integrated-final.json",
+          "bytes": 16154,
+          "sha256": "78f458047d513ed9068435892b2a71f979ae8c619fae2e79b14c4eabe2ed7205"
+        }
+      },
+      "websiteTypecheck": {
+        "command": "pnpm --filter @weapp-tailwindcss/website typecheck",
+        "exitCode": 0
+      },
+      "entryFirstFailurePreserved": {
+        "report": {
+          "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/workflow-entry-integrated.json",
+          "bytes": 17483,
+          "sha256": "e6827d286b31c5f514b960d03aa7f619c8e3ebe8946c994a3c60f6529e303be5"
+        },
+        "passed": 41,
+        "failed": 1,
+        "explanation": "Expected command omitted monitor and all new capture contracts; updated explicit entry expectation and retained all existing tests"
+      }
+    },
+    "independentChecks": {
+      "fatalAndLifecycleTests": 124,
+      "fatalReceipt": {
+        "path": "/Users/icebreaker/.codex/worktrees/workflow-probe-cancel/weapp-tailwindcss/e2e/.artifacts/workflow-probe-cancel/verification.json",
+        "bytes": 4888,
+        "sha256": "02c36ee36117cc81760c5972eae2c2ecc7d8c30e18379c392cc3b0773e809fbf"
+      },
+      "strictTypeComparison": {
+        "path": "/Users/icebreaker/.codex/worktrees/workflow-probe-cancel/weapp-tailwindcss/e2e/.artifacts/workflow-probe-cancel/type-comparison.json",
+        "bytes": 9572,
+        "sha256": "c6c4e822382dd8671f4240d98f339b1e767c0efe792e92b135e6c5f1d52debf4"
+      },
+      "strictTypeStatus": "Both exact642 baseline reachable sources and current have 9 existing diagnostics, added0; this focused strict check is not green",
+      "crossReview": "Capture lifecycle and cancellation code independently reviewed; first-cause ordering issue reproduced and fixed; native Windows/Linux not exercised locally"
+    },
+    "ciHistoricalSourceClarification": {
+      "identities": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main537-merge-audit-f0k7a8js/ci537-checkout-identities.json",
+        "bytes": 7926,
+        "sha256": "ec4a722bb730341e34bcaa04e9e500413087bf9a36a77cad1a6420a185bb53cd"
+      },
+      "prHeadSha": "537a5e2b14fecefd0c01b9373794cf81042554f3",
+      "lynxWebsiteAndExpoActualCheckout": "359b8df7aa2dbe7f4afc586cf394e546bfc81fd0",
+      "mergeParents": [
+        "dc0bfd9c2ef54dffad47640b48d0e23eceae7e98",
+        "537a5e2b14fecefd0c01b9373794cf81042554f3"
+      ],
+      "actualTree": "a19a9904943adb96af58eeabfe581a08d9541237",
+      "equivalentHistoricalRoot": "642f88db9aa9f0b7cd160bbfc5bdd26c2d4f9cd9",
+      "formalUniActualCheckout": "537a5e2b14fecefd0c01b9373794cf81042554f3",
+      "limitation": "These clarify historical test source identity and do not validate later integrated heads"
+    },
+    "expoIosBoundedRerun": {
+      "runId": 40799447270,
+      "attempt": 2,
+      "jobId": 123224453045,
+      "conclusion": "success",
+      "artifactId": 12869471356,
+      "artifactDigest": "e0981cd66cf2affc086cef551d6468362a077d9f7cfb406f398f68f0df8bd916",
+      "artifactBytes": 29043705,
+      "reportAudit": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-main537-merge-audit-f0k7a8js/expo-ios-537-attempt2-reports-audit.json",
+        "bytes": 3796,
+        "sha256": "f376641e389fd437e6c492ab897f6fb36a5f907343598587502ced05f11e33ff"
+      },
+      "perPhaseStatuses": {
+        "supported": 31,
+        "unsupported": 87
+      },
+      "phases": 3,
+      "semanticReceipts": 132,
+      "pairBudgetMs": 10000,
+      "requiredFrames": 2,
+      "maxAssessmentMs": 8405.093083,
+      "imageReferencesVerified": 396,
+      "phaseReferencesVerified": 33,
+      "simctlCommands": 270,
+      "cleanupSettled": true,
+      "initialFailurePreserved": true,
+      "limitation": "One bounded rerun only, same historical merge checkout; unchanged 10s threshold; unsupported does not mean supported"
+    },
+    "remaining": "Fresh extended preflight, current-session CU/verify, six real three-browser capture fixture files, complete website candidate/review/install/no-update, copied-template matrix and actual-browser, static 107+8 no-update, final full multi-platform/HMR/native ABI and applicable CI remain required. PR1320 is not merged."
   }
 }

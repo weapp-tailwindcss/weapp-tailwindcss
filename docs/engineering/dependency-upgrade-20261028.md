@@ -229,3 +229,11 @@ HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tai
 同一537的网站CI唯一失败为Linux WebKit原生截图32767单维上限，33001高夹具越界；刷新基线不能修复。尺寸能力修复保留Chromium原生路径，Firefox/WebKit超界走分片；还需补齐分片捕获期TOC/祖先监控，保留两张完整RGBA相等、60秒和5像素门槛。新合同的真实三引擎fixture、完整候选、人工审查、来源登记和禁更，以及模板、107 portable/8 HTML、最终完整多端与适用CI均未完成；PR #1320仍不能合并。
 
 微信会话定向回归首轮43项中21项失败：SDK 1.4 的disconnect要求连接支持off，旧mock缺失；真实就绪检查改用App.getCurrentPage的pageId/path，旧夹具仍返回截图数据；两处HBuilderX模拟结果未显式声明只编译。连接夹具改用真实EventEmitter，恢复用例验证同一连接及订阅释放，模拟命令补齐 `--compile true`，未削弱扫描边界。与会话保护、launch阶段和HBuilderX清理一起重跑，四文件66项全部通过，ESLint通过；仅为纯mock及源码边界回归，实际IDE仍待新预检。超时文案同步已授权的实例核对与受控恢复规则，登录态保护保持。
+
+## 捕获生命周期修复整合与实际 CI 源码身份
+
+内部fatal合作取消已整合为 `f5e2cef39`：每阶段持有独立取消文件，先写文件再abort并进入原30秒合作窗口，故障探针不再提前杀死负责收尾的消费者；身份探针5秒、强制清理2秒及出生身份保护保持。网站消费者只读父文件，原wrapper API兼容；清理失败仍使阶段失败。交叉审查另复现先外部取消、后采样拒绝时迟到错误覆盖cause，`83063f0bc` 恢复取消首因和130/143退出码，保留迟到及清理错误。整合后14项通过，包括真实launcher/消费者/独立Worker退出及旧watch信号恢复；独立完整124项通过。额外严格TS焦点检查在准确642可达源码和修复后均有9条既有诊断，新增0，不把它称为通过；正常website typecheck通过。
+
+尺寸能力 `38a83e218` 和共享观察 `3a60167fa` 保留Chromium原生截图，Firefox/WebKit超界分片；一个monitor覆盖全部二维分片，TOC/祖先完整状态、跨样本document身份和两张连续完整RGBA配对共用，扰动清空前张。原生仍在finish且valid后解码，60秒与整图5像素保持。根整合后的154项纯回归和typecheck通过；专门CI及扩展入口补齐新合同，42项入口回归通过，初轮41通过/1旧命令期望失败的JSON保留。真实六文件三引擎fixture、新完整候选、审查、安装与禁更仍待fresh gate，不能把纯夹具当真实浏览器通过。
+
+此前“准确537”的普通PR CI表述补充实际来源：Lynx双端、Website及Expo两次真正checkout为 `359b8df7aa2dbe7f4afc586cf394e546bfc81fd0`，父提交为dc0与537，tree `a19a9904` 与历史本地642相同；正式Uni的prepare/shard/guard才是raw537。Expo iOS唯一有界attempt2已成功，29,043,705字节归档与官方SHA匹配；三阶段各31 supported/87 unsupported，132份语义回执均为原10000ms、2帧，最大assessment8405.093ms；396图像、33阶段引用、270条simctl命令和settled清理均核验。原attempt1失败保留，不追加同head重试；这些历史合并树证据不能替代后续最终整合提交。
