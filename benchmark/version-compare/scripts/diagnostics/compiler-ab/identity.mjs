@@ -50,6 +50,12 @@ export function compilerIdentity(root, role, expectedCompanions) {
   }))
   const terserPlugin = readPackage(runner.directory, 'terser-webpack-plugin')
   const cssPlugin = readPackage(runner.directory, 'css-minimizer-webpack-plugin')
+  const compilerConsumers = Object.fromEntries(['@tarojs/taro-loader', '@tarojs/webpack5-prebundle', 'terser-webpack-plugin', 'css-minimizer-webpack-plugin'].map((name) => {
+    const consumer = readPackage(runner.directory, name)
+    const actual = readPackage(consumer.directory, 'webpack')
+    assert.equal(actual.directory, webpack.directory, `编译器 consumer 解析到其它 Webpack：${name}`)
+    return [name, { consumer, webpack: actual }]
+  }))
   const minimizers = {
     terserPlugin, terser: readPackage(terserPlugin.directory, 'terser'),
     cssPlugin, cssnano: readPackage(cssPlugin.directory, 'cssnano'),
@@ -59,7 +65,7 @@ export function compilerIdentity(root, role, expectedCompanions) {
     terserPlugin: '5.6.1', terser: '5.51.2', cssPlugin: '6.0.0', cssnano: '6.1.2', postcss: '8.5.32',
   }, '两侧必须保持当前 Taro 的真实压缩配套')
   return {
-    runner, webpack, direct, minimizers,
+    runner, webpack, direct, minimizers, compilerConsumers,
     compilerFiles: Object.fromEntries(['lib/Compiler.js', 'lib/Compilation.js', 'hot/only-dev-server.js'].map(file => [file, sha256(fs.readFileSync(path.resolve(webpack.directory, file)))])),
     configSha256: sha256(fs.readFileSync(path.join(project, 'config/index.ts'))),
   }

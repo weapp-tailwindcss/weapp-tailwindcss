@@ -1,0 +1,63 @@
+{
+  "pnpm": "12.15.0",
+  "command": [
+    "install",
+    "--lockfile-only",
+    "--ignore-scripts"
+  ],
+  "baseline": {
+    "lockSha256": "943784de3215439e6a9fa66aaeb662d9ed3d89a5fb1d3297bc2972c197e1013c",
+    "runnerPeer": "5.91.0",
+    "widePeer": "^5",
+    "targetCompiler": "5.91.0",
+    "modernCompiler": "5.112.2",
+    "widePeerCompilerBindings": [
+      "5.112.2",
+      "5.91.0"
+    ]
+  },
+  "cases": [
+    {
+      "name": "global",
+      "selector": "webpack@5.91.0",
+      "targetManifestChanged": false,
+      "lockSha256": "51ddeada531af6b094d3efbc3c61717e8b89a271cf6578b2eca36600701d2385",
+      "runnerPeer": "5.105.4",
+      "widePeer": "5.105.4",
+      "targetCompiler": "5.105.4",
+      "modernCompiler": "5.112.2",
+      "widePeerCompilerBindings": [
+        "5.105.4",
+        "5.112.2"
+      ]
+    },
+    {
+      "name": "equals",
+      "selector": "webpack@=5.91.0",
+      "targetManifestChanged": false,
+      "lockSha256": "6a00f03e8901d7d0e46f627b236b191ea431fb87e2dec76df5d1d47cde7ccf6b",
+      "runnerPeer": "5.105.4",
+      "widePeer": "5.105.4",
+      "targetCompiler": "5.105.4",
+      "modernCompiler": "5.112.2",
+      "widePeerCompilerBindings": [
+        "5.105.4",
+        "5.112.2"
+      ]
+    },
+    {
+      "name": "scoped",
+      "selector": "@compiler-ab-fixture/runner@1.0.0>webpack",
+      "targetManifestChanged": true,
+      "lockSha256": "ca50c188600bcadb562357aa7ebd76a2b957de1dc8cc8ef66fae742b2b7c1d98",
+      "runnerPeer": "5.105.4",
+      "widePeer": "^5",
+      "targetCompiler": "5.105.4",
+      "modernCompiler": "5.112.2",
+      "widePeerCompilerBindings": [
+        "5.105.4",
+        "5.112.2"
+      ]
+    }
+  ]
+}

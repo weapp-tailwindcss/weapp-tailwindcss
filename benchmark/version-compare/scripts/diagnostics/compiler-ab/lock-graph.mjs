@@ -82,7 +82,7 @@ function graph(lock, allowed, side) {
     const metadata = Object.fromEntries(Object.entries(node.value).filter(([field]) => !fields.includes(field)))
     node.label = stable({ id: node.id, patchHash: patchHash(node.key), metadata, peers: peerContext(node.key, compilerIds(allowed), node.reachesAxis) })
   }
-  return { lock, nodes, byKey }
+  return { lock, nodes, byKey, side }
 }
 
 function assign(nodes, signatures) {
@@ -113,7 +113,7 @@ function normalizeSnapshots({ nodes }) {
   return Object.fromEntries([...result].sort().map(([id, colors]) => [id, [...colors].sort((a, b) => a - b)]))
 }
 
-function normalizeImporters({ lock, byKey }, allowed) {
+function normalizeImporters({ lock, byKey, side }, allowed, compilerAxis) {
   const normalizeReference = (name, reference) => {
     const child = target(lock, name, reference)
     if (child.local) return { local: child.local }
@@ -122,14 +122,19 @@ function normalizeImporters({ lock, byKey }, allowed) {
   return Object.fromEntries(Object.entries(lock.importers).map(([key, value]) => [key,
     Object.fromEntries(Object.entries(value).map(([field, entries]) => [field,
       ['dependencies', 'devDependencies', 'optionalDependencies'].includes(field)
-        ? Object.fromEntries(Object.entries(entries).map(([name, entry]) => [name, { ...entry, version: normalizeReference(name, entry.version) }]))
+        ? Object.fromEntries(Object.entries(entries).map(([name, entry]) => [name, {
+            ...entry,
+            ...(key === compilerAxis.projectRelative && name === 'webpack' && entry.specifier === compilerAxis.versions[side]
+              && withoutPeers(entry.version) === compilerAxis.versions[side] ? { specifier: '<target-compiler-manifest>' } : {}),
+            version: normalizeReference(name, entry.version),
+          }]))
         : entries,
     ])),
   ]))
 }
 
 /** 联合细分两侧 snapshot 图；仅编译器轴可变，保留边名、其余 peer 绑定和完整 metadata。 */
-export function auditNonAxisGraph(current, previous, allowed) {
+export function auditNonAxisGraph(current, previous, allowed, compilerAxis) {
   const left = graph(current, allowed, 'current')
   const right = graph(previous, allowed, 'previous')
   const nodes = [...left.nodes, ...right.nodes]
@@ -142,5 +147,5 @@ export function auditNonAxisGraph(current, previous, allowed) {
   }
   assert.ok(stablePartition, '锁图细分超过 256 轮，无法确认 peer 传播边界')
   assert.deepEqual(normalizeSnapshots(left), normalizeSnapshots(right), '非编译器依赖边或 peer 绑定发生漂移')
-  assert.deepEqual(normalizeImporters(left, allowed), normalizeImporters(right, allowed), '非编译器 importer 发生漂移')
+  assert.deepEqual(normalizeImporters(left, allowed, compilerAxis), normalizeImporters(right, allowed, compilerAxis), '非编译器 importer 发生漂移')
 }

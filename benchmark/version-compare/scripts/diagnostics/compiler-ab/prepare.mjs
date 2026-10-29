@@ -5,7 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { compilerIdentity, fileSha256, sha256 } from './identity.mjs'
-import { auditLockAxis, baselineRef, compilerSnapshot, compilerVersions, previousCompanions } from './lock-axis.mjs'
+import { auditLockAxis, baselineRef, compilerOverrides, compilerSnapshot, compilerVersions, previousCompanions, projectRelative } from './lock-axis.mjs'
 import { auditLockDocuments, parseLockDocuments } from './lock-documents.mjs'
 import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
@@ -39,13 +39,14 @@ export async function assertTemporaryRoot(root, sourceRoot) {
 }
 
 export function previousWorkspace(document, companions, patchFile) {
-  document.setIn(['overrides', `webpack@${compilerVersions.current}`], compilerVersions.previous)
-  for (const [name, version] of Object.entries(companions)) {
-    document.setIn(['overrides', `webpack@${compilerVersions.previous}>${name}`], version)
-  }
-  document.deleteIn(['patchedDependencies', `webpack@${compilerVersions.current}`])
+  for (const [selector, version] of Object.entries(compilerOverrides(companions))) document.setIn(['overrides', selector], version)
   document.setIn(['patchedDependencies', `webpack@${compilerVersions.previous}`], patchFile)
   return document
+}
+
+export function previousProjectManifest(manifest) {
+  assert.equal(manifest.devDependencies?.webpack, compilerVersions.current, '只允许替换目标 demo 的准确 Webpack 声明')
+  return { ...manifest, devDependencies: { ...manifest.devDependencies, webpack: compilerVersions.previous } }
 }
 
 export async function prepare(outDir) {
@@ -71,6 +72,10 @@ export async function prepare(outDir) {
     }
     const originalLock = await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))
     const originalLockSha256 = sha256(originalLock)
+    const manifestFile = path.join(roots.previous, projectRelative, 'package.json')
+    const originalManifest = await fs.readFile(manifestFile)
+    const previousManifest = `${JSON.stringify(previousProjectManifest(JSON.parse(originalManifest)), null, 2)}\n`
+    await fs.writeFile(manifestFile, previousManifest)
     const workspaceFile = path.join(roots.previous, 'pnpm-workspace.yaml')
     const document = previousWorkspace(parseDocument(await fs.readFile(workspaceFile, 'utf8')), expected, patchFile)
     await fs.writeFile(workspaceFile, String(document))
@@ -84,6 +89,7 @@ export async function prepare(outDir) {
       const evidenceDir = path.join(outDir, role)
       await fs.mkdir(evidenceDir)
       for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
+      await fs.copyFile(path.join(root, projectRelative, 'package.json'), path.join(evidenceDir, 'target-package.json'))
     }
     assert.equal(sha256(await fs.readFile(path.join(roots.current, 'pnpm-lock.yaml'))), originalLockSha256, '当前原锁不允许变化')
     const documents = Object.fromEntries(await Promise.all(Object.entries(roots).map(async ([role, root]) => [role, parseLockDocuments(await fs.readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))])))
@@ -100,6 +106,7 @@ export async function prepare(outDir) {
       sourceArchiveSha256: await fileSha256(archiveFile),
       previousLockSha256: sha256(await fs.readFile(path.join(roots.previous, 'pnpm-lock.yaml'))),
       patch: { file: patchFile, sha256: sha256(patch), baselineRef },
+      manifestAxis: { file: path.join(projectRelative, 'package.json'), currentSha256: sha256(originalManifest), previousSha256: sha256(previousManifest), current: compilerVersions.current, previous: compilerVersions.previous },
       axis, identities, roots, temporary,
     }
     await fs.writeFile(path.join(outDir, 'preparation.json'), `${JSON.stringify(preparation, null, 2)}\n`)
@@ -116,6 +123,7 @@ export async function prepare(outDir) {
         const evidenceDir = path.join(outDir, role)
         await fs.mkdir(evidenceDir, { recursive: true })
         for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) await fs.copyFile(path.join(root, file), path.join(evidenceDir, file))
+        await fs.copyFile(path.join(root, projectRelative, 'package.json'), path.join(evidenceDir, 'target-package.json'))
       }
       catch (caught) { cleanupErrors.push(caught.stack ?? String(caught)) }
     }

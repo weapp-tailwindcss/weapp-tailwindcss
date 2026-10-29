@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { sha256 } from './identity.mjs'
 import { outputManifest, sampleRss, validatePhases } from './measure.mjs'
-import { assertTemporaryRoot, previousWorkspace } from './prepare.mjs'
+import { assertTemporaryRoot, previousProjectManifest, previousWorkspace } from './prepare.mjs'
 import { runOrder } from './run.mjs'
 import { assertProcessesStopped, groupStatus, pollGroup, processOwnership, runOwned, stopGroup } from './owned-process.mjs'
 import './lock-axis.test.mjs'
@@ -52,10 +52,14 @@ test('只有临时副本可写；变更策略保留其它 overrides、catalog �
     }
     previousWorkspace(doc, { 'webpack-sources': '3.5.1' }, 'previous.patch')
     assert.deepEqual(value, {
-      overrides: { existing: '1.0.0', 'webpack@5.91.0': '5.105.4', 'webpack@5.105.4>webpack-sources': '3.5.1' },
-      patchedDependencies: { other: 'other.patch', 'webpack@5.105.4': 'previous.patch' },
+      overrides: { existing: '1.0.0', '@tarojs/webpack5-runner@4.3.1>webpack': '5.105.4', '@tarojs/taro-loader@4.3.1>webpack': '5.105.4', '@tarojs/webpack5-prebundle@4.3.1>webpack': '5.105.4', 'webpack@5.105.4>webpack-sources': '3.5.1' },
+      patchedDependencies: { 'webpack@5.91.0': 'current.patch', other: 'other.patch', 'webpack@5.105.4': 'previous.patch' },
       catalogs: { original: true },
     })
+    const manifest = { dependencies: { other: 'catalog:tools' }, devDependencies: { webpack: '5.91.0', taro: '4.3.1' } }
+    assert.deepEqual(previousProjectManifest(manifest), { ...manifest, devDependencies: { webpack: '5.105.4', taro: '4.3.1' } })
+    assert.equal(manifest.devDependencies.webpack, '5.91.0')
+    assert.throws(() => previousProjectManifest({ devDependencies: { webpack: 'catalog:webpack' } }), /准确 Webpack/)
   }
   finally { await fs.rm(temporary, { recursive: true, force: true }) }
 })
@@ -152,7 +156,7 @@ test('有界 runner 在超时后终止本轮父子进程，确认 close/reap 并
       assert.match(error.cause.message, /固定 200ms 截止/)
       assert.equal(error.ownership.closed, true)
       assert.equal(error.ownership.groupGone, true)
-      assert.deepEqual(error.ownership.cleanupErrors, [])
+      assert.deepEqual(error.errors.slice(1).map(item => item.message), error.ownership.cleanupErrors, '已确认回收后也必须保留阶段查询错误')
       return true
     })
     assert.ok(Number(await fs.readFile(pidFile, 'utf8')) > 0)
@@ -209,4 +213,21 @@ test('绝对截止耗尽后不再创建探针，也不发送未及时核对身�
   assert.equal(probes, 2)
   assert.deepEqual(signals, [])
   assert.equal(owner.groupGone, false)
+})
+
+test('TERM 查询失败后独立确认组消失，仍保留原始清理错误', async () => {
+  const owner = { pid: 100, members: { 100: 'original' }, groupGone: false, cleanupErrors: [] }
+  const rows = [{ pid: 100, ppid: 1, pgid: 100, state: 'S', birth: 'original' }]
+  const failure = new Error('fixture ps ETIMEDOUT')
+  let probes = 0
+  const signals = []
+  await stopGroup(owner, {
+    now: () => 0,
+    inspect() { probes += 1; if (probes === 2) throw failure; return probes === 1 ? rows : [] },
+    signal(_state, _status, name) { signals.push(name) },
+  })
+  assert.equal(owner.groupGone, true)
+  assert.equal(probes, 3)
+  assert.deepEqual(signals, ['SIGTERM'])
+  assert.deepEqual(owner.cleanupErrors, [failure.stack])
 })

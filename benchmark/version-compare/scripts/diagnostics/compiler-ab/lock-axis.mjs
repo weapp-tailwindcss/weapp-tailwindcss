@@ -1,9 +1,24 @@
 import assert from 'node:assert/strict'
+import { isDeepStrictEqual } from 'node:util'
 import { auditNonAxisGraph } from './lock-graph.mjs'
 
 export const baselineRef = '0e9ceb82321d49d145bf63c4adf84c7a8639e0e9'
 export const projectRelative = 'demo/taro-webpack-react-tailwindcss-v4'
 export const compilerVersions = { current: '5.91.0', previous: '5.105.4' }
+export const compilerParents = ['@tarojs/webpack5-runner@4.3.1', '@tarojs/taro-loader@4.3.1', '@tarojs/webpack5-prebundle@4.3.1']
+
+export function compilerOverrides(companions) {
+  return Object.fromEntries([
+    ...compilerParents.map(id => [`${id}>webpack`, compilerVersions.previous]),
+    ...Object.entries(companions).map(([name, version]) => [`webpack@${compilerVersions.previous}>${name}`, version]),
+  ])
+}
+
+function exactCompilerPeerChange(id, current, previous) {
+  if (!compilerParents.includes(id) || current?.peerDependencies?.webpack !== compilerVersions.current || previous?.peerDependencies?.webpack !== compilerVersions.previous) return false
+  const expected = { ...current, peerDependencies: { ...current.peerDependencies, webpack: compilerVersions.previous } }
+  return isDeepStrictEqual(expected, previous)
+}
 
 export const withoutPeers = value => value.split('(')[0]
 const patchHash = value => value.match(/^[^(]+\(patch_hash=([^()]+)\)/)?.[1]
@@ -30,14 +45,12 @@ function auditMetadata(current, previous, accurateBaseline, companions) {
     'packages', 'snapshots', 'importers', 'catalogs', 'overrides', 'patchedDependencies',
   ].includes(key)))
   assert.deepEqual(other(current), other(previous), '非编译器锁 metadata 发生漂移')
-  const overrides = { ...current.overrides, [`webpack@${compilerVersions.current}`]: compilerVersions.previous }
-  for (const [name, version] of Object.entries(companions)) overrides[`webpack@${compilerVersions.previous}>${name}`] = version
+  const overrides = { ...current.overrides, ...compilerOverrides(companions) }
   assert.deepEqual(previous.overrides, overrides, 'override 只能包含明确的编译器配套切换')
   const previousKey = `webpack@${compilerVersions.previous}`
   const baselinePatch = accurateBaseline.patchedDependencies?.[previousKey]
   assert.ok(baselinePatch, '准确基线缺少旧编译器补丁身份')
   const patches = { ...current.patchedDependencies, [previousKey]: baselinePatch }
-  delete patches[`webpack@${compilerVersions.current}`]
   assert.deepEqual(previous.patchedDependencies, patches, '非编译器补丁身份发生漂移')
   auditPatches(current)
   auditPatches(previous)
@@ -93,18 +106,23 @@ export function auditLockAxis(current, previous, accurateBaseline) {
     }
   }
   const packageChanges = []
+  const compilerPeerChanges = []
   for (const id of new Set([...Object.keys(current.packages), ...Object.keys(previous.packages)])) {
     const a = current.packages[id]
     const b = previous.packages[id]
-    if (JSON.stringify(a) === JSON.stringify(b)) continue
+    if (isDeepStrictEqual(a, b)) continue
+    if (exactCompilerPeerChange(id, a, b)) {
+      compilerPeerChanges.push({ id, current: a.peerDependencies.webpack, previous: b.peerDependencies.webpack })
+      continue
+    }
     assert.ok(allowed.has(withoutPeers(id)), `非编译器依赖发生漂移：${id}`)
     packageChanges.push({ id, current: a ?? null, previous: b ?? null })
   }
-  auditNonAxisGraph(current, previous, allowed)
+  auditNonAxisGraph(current, previous, allowed, { projectRelative, versions: compilerVersions })
   assert.deepEqual(current.catalogs, previous.catalogs, 'catalog 不允许变化')
   const peerKeyChanges = {
     removed: Object.keys(current.snapshots).filter(key => !previous.snapshots[key]),
     added: Object.keys(previous.snapshots).filter(key => !current.snapshots[key]),
   }
-  return { companionChanges, allowedPackageIdentities: [...allowed].sort(), packageChanges, peerKeyChanges }
+  return { companionChanges, allowedPackageIdentities: [...allowed].sort(), packageChanges, compilerPeerChanges, peerKeyChanges }
 }
