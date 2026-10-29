@@ -54,6 +54,29 @@ test('a failed image rejects capture and restores scroll instead of accepting an
   expect(await page.evaluate(() => scrollY)).toBe(23)
 })
 
+test('a failed first image rejects before requesting a later stalled lazy image', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 240 })
+  await page.route('http://capture.fixture/broken-first.svg', route => route.fulfill({ status: 404, body: 'missing first image' }))
+  let laterRequested = false
+  let blocked: Route | undefined
+  await page.route('http://capture.fixture/later-stalled.svg', (route) => {
+    laterRequested = true
+    blocked = route
+  })
+  await page.setContent(`<style>body{margin:0}div{height:6000px}img{width:32px;height:20px}</style>
+    <div></div><img loading="lazy" src="http://capture.fixture/broken-first.svg">
+    <div></div><img loading="lazy" src="http://capture.fixture/later-stalled.svg">`)
+  await page.evaluate(() => scrollTo(0, 23))
+  try {
+    await expect(captureStableFullPage(page, { timeout: 1000 })).rejects.toThrow('图片加载失败：http://capture.fixture/broken-first.svg')
+    expect(laterRequested).toBe(false)
+    expect(await page.evaluate(() => scrollY)).toBe(23)
+  }
+  finally {
+    await blocked?.abort()
+  }
+})
+
 test('a stalled lazy image consumes the shared deadline and still restores scroll', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 240 })
   let blocked: Route | undefined

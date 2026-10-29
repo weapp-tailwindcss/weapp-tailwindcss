@@ -363,3 +363,7 @@ Taro 独立 A/B 的 run `40901901583` 已在两侧 frozen install 后因真实 p
 8 项新增回归在准确 `2dd3baec854c50f53b62c24d0aae6fe4259272fb` 负对照为 2 失败 / 6 通过，修复后根项目标准配置的 5 个相关文件共 188 项通过，核心包类型检查通过。旧 compiler-axis 实验确有一次 JS 未转义而 CSS 已转义，但旧样本没有 loader 集合成员证据；该实验不能证明本次确定性缺口是旧失败的唯一原因。独立审查回执位于 `webpack-loader-classset-d2mmgeyi/independent-final-review.json`，SHA256 为 `bc926cc287089d8be8413bc26fc1f7391b40476ab103f5b1237d1f2269cb8fb6`。
 
 Watch 内存探针增加有界首败快照和独立的迟到 close 证据，记录查询、命令、参数、持有者 PID、句柄 PID、退出、管道、kill 返回及时间。首错不会被迟到 close 改写；没有调整原截止、回收预算、重试或通过条件，也不宣称原 CI 超时已解决。最终代码的两文件 31 项标准回归通过，日志 SHA256 为 `d96f19acaa5a76e424bc43ecd7712e7879bb925a362e4b0615b73faecfcb96f8`；12 个本轮代码与测试文件显式 `eslint --no-ignore` 通过。规则、架构及中文 change intent 检查通过；上述定向验证不替代最终提交的完整验收。
+
+## 网站图片解码准备修复
+
+准确 `0637f78ed5c23a216be01a835f101074a373490f` 的完整验收在第 24 阶段 WebKit 中文 showcase 首败，原 72 像素差异与后续真实页面干预的证据、限制见[图片解码屏障复盘](lessons/website-image-decoding-barrier.md)。修复补齐已加载图片的显式解码等待，按节点与资源代次失效，保持取消、滚动恢复和原截图门槛；原 helper、失败传播与不等待解码的负对照均实际失败，最终四文件三浏览器 66 项、网站类型及改动文件 lint 通过。旧黄金已正式 verify 并完整保全；新截图合同的黄金采集、审查、禁止更新、最终完整多端及新 head CI 仍待完成，PR 保持未合并。
