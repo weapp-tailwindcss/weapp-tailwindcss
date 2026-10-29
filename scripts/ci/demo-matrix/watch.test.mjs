@@ -72,27 +72,37 @@ it('requires this Vite build to finish before reading its output', () => {
   expect(() => assertViteWatchBuildComplete(`${initial}build started...\nbuilt in 400ms.\n`, initial.length)).not.toThrow()
 })
 
-it('keeps the default virtual-module watcher idle and accepts genuine module updates', async () => {
-  const { stdout } = await execa(process.execPath, [path.join(repo, 'scripts/ci/demo-matrix/fixtures/virtual-watch.cjs')], {
-    cwd: repo,
-    env: developmentEnvironment({}),
-  })
-  const result = JSON.parse(stdout)
-  expect(result.initialBuilds).toBeGreaterThan(0)
-  expect(result.updatedBuilds).toBeGreaterThan(result.initialBuilds)
-  for (const graph of result.dependencyGraphs) {
-    expect(graph.files).toContain(result.projectRoot)
-    expect(graph.missing).toEqual([])
+for (const webpack of ['taro', 'modern']) {
+  for (const polling of [false, true]) {
+    it(`keeps ${webpack} virtual modules idle and updates their bundle with polling=${polling}`, async () => {
+      const { stdout } = await execa(process.execPath, [path.join(repo, 'scripts/ci/demo-matrix/fixtures/virtual-watch.cjs'), webpack], {
+        cwd: repo,
+        env: developmentEnvironment({ ...(polling ? { WATCHPACK_POLLING: '100' } : {}) }),
+      })
+      const result = JSON.parse(stdout)
+      expect(result.webpack).toBe(webpack === 'taro' ? '5.91.0' : '5.112.2')
+      expect(result.watchpack).toBe('2.6.3')
+      expect(result.initialBuilds).toBeGreaterThan(0)
+      expect(result.updatedBuilds).toBeGreaterThan(result.initialBuilds)
+      expect(result.value).toBe(84)
+      for (const graph of result.dependencyGraphs) {
+        expect(graph.files).toContain(result.projectRoot)
+        expect(graph.missing).toEqual([])
+      }
+    }, 20_000)
   }
-}, 20_000)
+}
 
-it('rejects virtual-module polling rebuild loops after project initialization', async () => {
-  const result = await execa(process.execPath, [path.join(repo, 'scripts/ci/demo-matrix/fixtures/virtual-watch.cjs')], {
-    cwd: repo,
-    env: developmentEnvironment({ WATCHPACK_POLLING: '100' }),
-    reject: false,
-  })
-  expect(result.exitCode).not.toBe(0)
-  expect(result.stderr).toMatch(/Idle virtual module repeatedly rebuilt:|Virtual module update did not settle/)
-  expect(result.stderr).toContain('Virtual watcher evidence:')
-}, 20_000)
+for (const webpack of ['taro', 'modern']) {
+  for (const polling of [false, true]) {
+    it(`preserves ${webpack} physical update, deletion and recovery with polling=${polling}`, async () => {
+      const { stdout } = await execa(process.execPath, [path.join(repo, 'scripts/ci/demo-matrix/fixtures/physical-virtual-watch.cjs'), webpack], {
+        cwd: repo,
+        env: developmentEnvironment({ ...(polling ? { WATCHPACK_POLLING: '100' } : {}) }),
+      })
+      const result = JSON.parse(stdout)
+      expect(result.values).toEqual([43, 44, 45, 88])
+      expect(result.deletionErrors).toBe(2)
+    }, 20_000)
+  }
+}

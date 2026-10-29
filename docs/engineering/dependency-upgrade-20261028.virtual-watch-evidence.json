@@ -1,0 +1,1347 @@
+{
+  "asOf": "2026-10-29T08:58:29.656606+00:00",
+  "status": "final-security-lock-read-only-audit-complete",
+  "baseline": "watcher-only frozen captures, following db117f17e9083ab0a4575a46dc15e364569563d6",
+  "graphs": [
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "d39f1c60b3dbd042425b8b37a65e80f9f6346bf0fadaa354a11bad52be080f7d",
+      "bytes": 3036950,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5",
+        "seroval-plugins@1.6.12",
+        "seroval@1.6.12",
+        "solid-js@1.9.17"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@1.19.17",
+        "seroval-plugins@1.3.3",
+        "seroval@1.3.2",
+        "solid-js@1.9.10"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "1.19.17",
+          "2.1.5"
+        ],
+        "seroval-plugins": [
+          "1.3.3",
+          "1.6.12"
+        ],
+        "seroval": [
+          "1.3.2",
+          "1.6.12"
+        ],
+        "solid-js": [
+          "1.9.10",
+          "1.9.17"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": false,
+      "virtualModulePatch": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "knownDifferenceClassification": "accepted target versions + propagated opaque peer hashes",
+      "rawDifferencePaths": [
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(39276414a162e6a9ae95d0fd5b4518d3)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(defd17e3d8af957d15a016d101e42558)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(54d3ca6c8b30a5437e395b4b4192f33c)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(2892bd375d7b4cb00cc177c4f703cb0d)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(4b80746091b3ac1bfe76ad97c71f60aa)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(e17f7b81b2e182da4ea9bb8027113a1e)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(d104cdeb647f57bbe970de86547d8773)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(37008d8c8ce9f3ae24964283f9f1aebd)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(f1db633e024fb3124d9a10ce6c560e05)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(ce6e5972463f1945a8dcff0bf14ad88a)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(17e084767cf199cd28c8833639f20cb4)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(cb2c4f03de1deb63eb67a5fd42b41088)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(4a9edb57112a0a6edb16fca2fb135349)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(de8c329938bd6cdcbcf5ac21609eacc8)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(ce89994ed3c275e72cb2f3f62f1c3373)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(7f54105eade82d057af82e2ebc1e144c)",
+        "/importers/demo/subpackage-taro-webpack-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-vite-vue3-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-vite-vue3-tailwindcss-v4/dependencies/@tarojs/plugin-platform-harmony-hybrid/version",
+        "/importers/demo/taro-webpack-vue3-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-webpack-vue3-tailwindcss-v4/dependencies/@tarojs/plugin-platform-harmony-hybrid/version",
+        "/importers/demo/taro-vite-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-vite-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-harmony-hybrid/version",
+        "/importers/demo/issue-951-taro-vite-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/issue-951-taro-vite-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-harmony-hybrid/version",
+        "/importers/starter/taro-vite-react/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/starter/taro-webpack-react/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/style-injector-taro-webpack-react/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-webpack-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/demo/taro-webpack-react-tailwindcss-v4/dependencies/@tarojs/plugin-platform-harmony-hybrid/version",
+        "/importers/demo/style-injector-taro-vite-react/dependencies/@tarojs/plugin-platform-h5/version"
+      ]
+    },
+    {
+      "path": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "6e278d287513350d29859e116c52c9c8854893403a94fbab4d05d83fec2f9e2b",
+      "bytes": 520381,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@2.1.1"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "2.1.1",
+          "2.1.5"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": true,
+      "virtualModulePatch": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "knownDifferenceClassification": "only accepted target version normalization; entire residual business YAML equal",
+      "rawDifferencePaths": []
+    },
+    {
+      "path": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "fd5e78479248e0e787d230517bf1925123688035ee4e89fbe1d6e353beb5b017",
+      "bytes": 506774,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5",
+        "seroval-plugins@1.6.12",
+        "seroval@1.6.12",
+        "solid-js@1.9.17"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@2.1.1",
+        "seroval-plugins@1.5.4",
+        "seroval@1.5.4",
+        "solid-js@1.9.5"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "2.1.1",
+          "2.1.5"
+        ],
+        "seroval-plugins": [
+          "1.5.4",
+          "1.6.12"
+        ],
+        "seroval": [
+          "1.5.4",
+          "1.6.12"
+        ],
+        "solid-js": [
+          "1.9.5",
+          "1.9.17"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": true,
+      "virtualModulePatch": null,
+      "knownDifferenceClassification": "only accepted target version normalization; entire residual business YAML equal",
+      "rawDifferencePaths": []
+    },
+    {
+      "path": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "b043d17e73cd5fd8b7175179e2e199a0a39193879a1877a5b4253522ed8b2e27",
+      "bytes": 612019,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5",
+        "seroval-plugins@1.6.12",
+        "seroval@1.6.12",
+        "solid-js@1.9.17"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@2.1.1",
+        "seroval-plugins@1.5.4",
+        "seroval@1.5.4",
+        "solid-js@1.9.5"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "2.1.1",
+          "2.1.5"
+        ],
+        "seroval-plugins": [
+          "1.5.4",
+          "1.6.12"
+        ],
+        "seroval": [
+          "1.5.4",
+          "1.6.12"
+        ],
+        "solid-js": [
+          "1.9.5",
+          "1.9.17"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": false,
+      "virtualModulePatch": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "knownDifferenceClassification": "accepted target versions + propagated opaque peer hashes",
+      "rawDifferencePaths": [
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(6a5e381e306c786d22f51b8a1f621ed8)",
+        "/snapshots/@tarojs/components-react@4.3.1(57a8fd819a7273b481a8fe87d06c862e)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(365869710e769ffc469e658b4d6115c6)",
+        "/snapshots/@tarojs/plugin-platform-h5@4.3.1(2b175df2aab51cfcd83475a8cb39ae14)",
+        "/snapshots/@tarojs/components-react@4.3.1(7f0ce5506d56bab94d47bee802df7da5)",
+        "/snapshots/@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(5ad3200de8e1955ce0535515810f9274)",
+        "/importers/./dependencies/@tarojs/plugin-platform-h5/version",
+        "/importers/./dependencies/@tarojs/plugin-platform-harmony-hybrid/version"
+      ]
+    },
+    {
+      "path": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "d2614c7e04b0168b378de6e474b7a2e8b2f6b32d0aa892a76dd7ed41ed0761cb",
+      "bytes": 114516,
+      "byteIdentical": true,
+      "packageAdded": [],
+      "packageRemoved": [],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {},
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": true,
+      "virtualModulePatch": null,
+      "knownDifferenceClassification": "only accepted target version normalization; entire residual business YAML equal",
+      "rawDifferencePaths": []
+    },
+    {
+      "path": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "0b4181e7a6be0dc042576c781dc159cbc44218b62165deb607130c7ab810c34d",
+      "bytes": 445822,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@2.1.1"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "2.1.1",
+          "2.1.5"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": false,
+      "virtualModulePatch": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "knownDifferenceClassification": "11 in-range Babel edges + accepted Hono update",
+      "rawDifferencePaths": [
+        "/snapshots/@types/babel__generator@7.27.0/dependencies/@babel/types",
+        "/snapshots/@types/babel__template@7.4.4/dependencies/@babel/types",
+        "/snapshots/@types/babel__template@7.4.4/dependencies/@babel/parser",
+        "/snapshots/@types/babel__core@7.20.5/dependencies/@babel/types",
+        "/snapshots/@types/babel__core@7.20.5/dependencies/@babel/parser",
+        "/snapshots/@babel/core@7.26.9(supports-color@8.1.1)/dependencies/@babel/types",
+        "/snapshots/@babel/core@7.26.9(supports-color@8.1.1)/dependencies/@babel/parser",
+        "/snapshots/jest-snapshot@27.5.1(supports-color@8.1.1)/dependencies/@babel/types",
+        "/snapshots/@types/babel__traverse@7.28.0/dependencies/@babel/types",
+        "/snapshots/babel-plugin-jest-hoist@27.5.1/dependencies/@babel/types",
+        "/snapshots/istanbul-lib-instrument@5.2.1(supports-color@8.1.1)/dependencies/@babel/parser"
+      ]
+    },
+    {
+      "path": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "6bfc81c7fc90a989dedf4698362f9f7548031fc2a36143d7583ccd803cbdd201",
+      "bytes": 646598,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@2.1.1"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "2.1.1",
+          "2.1.5"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": true,
+      "virtualModulePatch": null,
+      "knownDifferenceClassification": "only accepted target version normalization; entire residual business YAML equal",
+      "rawDifferencePaths": []
+    },
+    {
+      "path": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "sha256": "2ee27b0f07206f1192a2b0ec33d7f84f0a2ac7d5ed2cd9d06067706e8df98bba",
+      "bytes": 287959,
+      "byteIdentical": false,
+      "packageAdded": [
+        "@hono/node-server@2.1.5",
+        "@modelcontextprotocol/node@2.1.2"
+      ],
+      "packageRemoved": [
+        "@hono/node-server@1.19.17",
+        "@modelcontextprotocol/node@2.1.1"
+      ],
+      "packageMetadataModified": [],
+      "toolDocumentEqual": true,
+      "versionMap": {
+        "@hono/node-server": [
+          "1.19.17",
+          "2.1.5"
+        ],
+        "@modelcontextprotocol/node": [
+          "2.1.1",
+          "2.1.2"
+        ]
+      },
+      "entireBusinessGraphEqualAfterOnlyAcceptedVersionNormalization": true,
+      "virtualModulePatch": null,
+      "knownDifferenceClassification": "only accepted target version normalization; entire residual business YAML equal",
+      "rawDifferencePaths": []
+    }
+  ],
+  "patchFiles": [
+    {
+      "path": "patches/webpack-virtual-modules@0.6.2.patch",
+      "sha256": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/mpx-tailwindcss-v4/patches/webpack-virtual-modules@0.6.2.patch",
+      "sha256": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/taro-webpack-tailwindcss-v4/patches/webpack-virtual-modules@0.6.2.patch",
+      "sha256": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/uni-app-tailwindcss-v4/patches/webpack-virtual-modules@0.6.2.patch",
+      "sha256": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+      "unchangedFromWatcherOnly": true
+    }
+  ],
+  "workspaces": [
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "c8728adf8573104ea91911a7c32af4d78d91cb26b45634fcfe3a5968d6252cdf",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/mpx-tailwindcss-v4/pnpm-workspace.yaml",
+      "sha256": "50587ebeb91ca5949d0cb8beba8df4609e22cb648dd19f59724e13f170cb460b",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/taro-webpack-tailwindcss-v4/pnpm-workspace.yaml",
+      "sha256": "37e83faf7a34f349a5c68dccdc6e947862cada28d39212eda555a8524427a429",
+      "unchangedFromWatcherOnly": true
+    },
+    {
+      "path": "templates/uni-app-tailwindcss-v4/pnpm-workspace.yaml",
+      "sha256": "b0aa847df57000e825303706315faf2fa9680a6292ab7e667dde7012060cf243",
+      "unchangedFromWatcherOnly": true
+    }
+  ],
+  "risks": [
+    {
+      "project": ".",
+      "label": "root",
+      "lockSha256": "d39f1c60b3dbd042425b8b37a65e80f9f6346bf0fadaa354a11bad52be080f7d",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 1,
+      "rawAdvisories": 358,
+      "ghsaPackageGroups": 325,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 30,
+        "moderate": 137,
+        "high": 149,
+        "critical": 42
+      },
+      "peerCounts": {
+        "bad": 20,
+        "missing": 20,
+        "conflicts": 3
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {
+        "GHSA-x8qp-wqqm-57ph / @intlify/core-base": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "9.1.9"
+          ],
+          "patchedRanges": [
+            ">=9.14.5"
+          ]
+        },
+        "GHSA-p2ph-7g93-hw3m / @intlify/core-base": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.1.9"
+          ],
+          "patchedRanges": [
+            ">=9.1.11"
+          ]
+        },
+        "GHSA-8rc2-428q-7ww3 / @intlify/core-base": {
+          "severities": [
+            "low"
+          ],
+          "versions": [
+            "9.1.9",
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            ">=11.4.14"
+          ]
+        },
+        "GHSA-8rc2-428q-7ww3 / vue-i18n": {
+          "severities": [
+            "low"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            ">=11.4.14"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/shared": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/core-base": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / vue-i18n": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        }
+      },
+      "comparisonBaseline": "same-session watcher-only capture",
+      "previousRawAdvisories": 369,
+      "previousGhsaPackageGroups": 336,
+      "addedGroups": {},
+      "removedGroups": {
+        "GHSA-7rv5-mrxv-xcr9 / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.6.8"
+          ]
+        },
+        "GHSA-hx9m-jf43-8ffr / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.4.1"
+          ]
+        },
+        "GHSA-3rxj-6cgf-8cfw / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.4.1"
+          ]
+        },
+        "GHSA-hj76-42vx-jwp4 / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.4.1"
+          ]
+        },
+        "GHSA-rmxm-3fg6-px4f / @hono/node-server": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "1.19.17"
+          ],
+          "patchedRanges": [
+            ">=2.1.3"
+          ]
+        },
+        "GHSA-mv8w-475r-vwqw / seroval": {
+          "severities": [
+            "critical"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.5.3"
+          ]
+        },
+        "GHSA-66fc-rw6m-c2q6 / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.4.1"
+          ]
+        },
+        "GHSA-3j22-8qj3-26mx / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.4.1"
+          ]
+        },
+        "GHSA-p6vx-979v-rg4c / seroval": {
+          "severities": [
+            "critical"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.6.1"
+          ]
+        },
+        "GHSA-jp82-f5mq-hwhp / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.6.3"
+          ]
+        },
+        "GHSA-97r2-qh9m-474h / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.3.2"
+          ],
+          "patchedRanges": [
+            ">=1.6.8"
+          ]
+        }
+      },
+      "previousPeerCounts": {
+        "bad": 20,
+        "missing": 20,
+        "conflicts": 3
+      },
+      "peerSemanticGroupsAndMultiplicityEqual": true,
+      "peerSemanticAdded": [],
+      "peerSemanticRemoved": []
+    },
+    {
+      "project": "templates/mpx-tailwindcss-v4",
+      "label": "mpx-tailwindcss-v4",
+      "lockSha256": "6e278d287513350d29859e116c52c9c8854893403a94fbab4d05d83fec2f9e2b",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 0,
+      "rawAdvisories": 122,
+      "ghsaPackageGroups": 115,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 9,
+        "moderate": 53,
+        "high": 57,
+        "critical": 3
+      },
+      "peerCounts": {
+        "bad": 0,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {
+        "GHSA-8rc2-428q-7ww3 / @intlify/core-base": {
+          "severities": [
+            "low"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            ">=11.4.14"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/shared": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/core-base": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        }
+      },
+      "comparisonBaseline": "same-session watcher-only capture",
+      "previousRawAdvisories": 123,
+      "previousGhsaPackageGroups": 116,
+      "addedGroups": {},
+      "removedGroups": {
+        "GHSA-rmxm-3fg6-px4f / @hono/node-server": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "2.1.1"
+          ],
+          "patchedRanges": [
+            ">=2.1.3"
+          ]
+        }
+      },
+      "previousPeerCounts": {
+        "bad": 0,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "peerSemanticGroupsAndMultiplicityEqual": true,
+      "peerSemanticAdded": [],
+      "peerSemanticRemoved": []
+    },
+    {
+      "project": "templates/taro-webpack-tailwindcss-v4",
+      "label": "taro-webpack-tailwindcss-v4",
+      "lockSha256": "b043d17e73cd5fd8b7175179e2e199a0a39193879a1877a5b4253522ed8b2e27",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 1,
+      "rawAdvisories": 185,
+      "ghsaPackageGroups": 172,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 10,
+        "moderate": 67,
+        "high": 82,
+        "critical": 26
+      },
+      "peerCounts": {
+        "bad": 2,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {},
+      "comparisonBaseline": "same-session watcher-only capture",
+      "previousRawAdvisories": 191,
+      "previousGhsaPackageGroups": 178,
+      "addedGroups": {},
+      "removedGroups": {
+        "GHSA-7rv5-mrxv-xcr9 / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.5.4"
+          ],
+          "patchedRanges": [
+            ">=1.6.8"
+          ]
+        },
+        "GHSA-p6vx-979v-rg4c / seroval": {
+          "severities": [
+            "critical"
+          ],
+          "versions": [
+            "1.5.4"
+          ],
+          "patchedRanges": [
+            ">=1.6.1"
+          ]
+        },
+        "GHSA-wp97-x4hv-qvhp / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.5.4"
+          ],
+          "patchedRanges": [
+            ">=1.6.8"
+          ]
+        },
+        "GHSA-rmxm-3fg6-px4f / @hono/node-server": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "2.1.1"
+          ],
+          "patchedRanges": [
+            ">=2.1.3"
+          ]
+        },
+        "GHSA-jp82-f5mq-hwhp / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.5.4"
+          ],
+          "patchedRanges": [
+            ">=1.6.3"
+          ]
+        },
+        "GHSA-97r2-qh9m-474h / seroval": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "1.5.4"
+          ],
+          "patchedRanges": [
+            ">=1.6.8"
+          ]
+        }
+      },
+      "previousPeerCounts": {
+        "bad": 2,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "peerSemanticGroupsAndMultiplicityEqual": true,
+      "peerSemanticAdded": [],
+      "peerSemanticRemoved": []
+    },
+    {
+      "project": "templates/uni-app-tailwindcss-v4",
+      "label": "uni-app-tailwindcss-v4",
+      "lockSha256": "0b4181e7a6be0dc042576c781dc159cbc44218b62165deb607130c7ab810c34d",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 1,
+      "rawAdvisories": 119,
+      "ghsaPackageGroups": 112,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 17,
+        "moderate": 49,
+        "high": 52,
+        "critical": 1
+      },
+      "peerCounts": {
+        "bad": 1,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {
+        "GHSA-x8qp-wqqm-57ph / @intlify/core-base": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "9.1.9"
+          ],
+          "patchedRanges": [
+            ">=9.14.5"
+          ]
+        },
+        "GHSA-p2ph-7g93-hw3m / @intlify/core-base": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.1.9"
+          ],
+          "patchedRanges": [
+            ">=9.1.11"
+          ]
+        },
+        "GHSA-8rc2-428q-7ww3 / @intlify/core-base": {
+          "severities": [
+            "low"
+          ],
+          "versions": [
+            "9.1.9",
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            ">=11.4.14"
+          ]
+        },
+        "GHSA-8rc2-428q-7ww3 / vue-i18n": {
+          "severities": [
+            "low"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            ">=11.4.14"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/shared": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / @intlify/core-base": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        },
+        "GHSA-83rm-6c8r-g728 / vue-i18n": {
+          "severities": [
+            "high"
+          ],
+          "versions": [
+            "9.14.5"
+          ],
+          "patchedRanges": [
+            "None"
+          ]
+        }
+      },
+      "comparisonBaseline": "same-session watcher-only capture",
+      "previousRawAdvisories": 120,
+      "previousGhsaPackageGroups": 113,
+      "addedGroups": {},
+      "removedGroups": {
+        "GHSA-rmxm-3fg6-px4f / @hono/node-server": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "2.1.1"
+          ],
+          "patchedRanges": [
+            ">=2.1.3"
+          ]
+        }
+      },
+      "previousPeerCounts": {
+        "bad": 1,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "peerSemanticGroupsAndMultiplicityEqual": true,
+      "peerSemanticAdded": [],
+      "peerSemanticRemoved": []
+    },
+    {
+      "project": "templates/taro-vite-tailwindcss-v4",
+      "label": "taro-vite-tailwindcss-v4",
+      "lockSha256": "fd5e78479248e0e787d230517bf1925123688035ee4e89fbe1d6e353beb5b017",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 1,
+      "rawAdvisories": 136,
+      "ghsaPackageGroups": 123,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 9,
+        "moderate": 54,
+        "high": 69,
+        "critical": 4
+      },
+      "peerCounts": {
+        "bad": 3,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {}
+    },
+    {
+      "project": "templates/uni-app-webpack-tailwindcss-v4",
+      "label": "uni-app-webpack-tailwindcss-v4",
+      "lockSha256": "6bfc81c7fc90a989dedf4698362f9f7548031fc2a36143d7583ccd803cbdd201",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 1,
+      "rawAdvisories": 149,
+      "ghsaPackageGroups": 142,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 16,
+        "moderate": 57,
+        "high": 66,
+        "critical": 10
+      },
+      "peerCounts": {
+        "bad": 2,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {}
+    },
+    {
+      "project": "templates/weapp-vite-tailwindcss-v4",
+      "label": "weapp-vite-tailwindcss-v4",
+      "lockSha256": "2ee27b0f07206f1192a2b0ec33d7f84f0a2ac7d5ed2cd9d06067706e8df98bba",
+      "lockUnchangedDuringAudit": true,
+      "lockUnchangedDuringPeers": true,
+      "auditExit": 1,
+      "peerExit": 0,
+      "rawAdvisories": 2,
+      "ghsaPackageGroups": 2,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 0,
+        "critical": 0
+      },
+      "peerCounts": {
+        "bad": 0,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "honoSerovalFinalGroups": {},
+      "intlifyRemainingGroups": {},
+      "comparisonBaseline": "same-session final-risk capture before MCP/Hono update",
+      "previousRawAdvisories": 3,
+      "previousGhsaPackageGroups": 3,
+      "addedGroups": {},
+      "removedGroups": {
+        "GHSA-rmxm-3fg6-px4f / @hono/node-server": {
+          "severities": [
+            "moderate"
+          ],
+          "versions": [
+            "1.19.17"
+          ],
+          "patchedRanges": [
+            ">=2.1.3"
+          ]
+        }
+      },
+      "previousPeerCounts": {
+        "bad": 0,
+        "missing": 0,
+        "conflicts": 0
+      },
+      "peerSemanticGroupsAndMultiplicityEqual": true,
+      "peerSemanticAdded": [],
+      "peerSemanticRemoved": []
+    }
+  ],
+  "riskSources": [
+    {
+      "scope": "root",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/root-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/root/audit.json",
+      "sha256": "d88352452747abf35832d5c3ebf9b125af97e95a1b72f1745470ab95ceb8ba97",
+      "bytes": 3702965
+    },
+    {
+      "scope": "root",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/root-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/root/peers.json",
+      "sha256": "c5124867f057e8d21894732d11f7dccfa6b04d7ff2976f2eddf2393dbac357ba",
+      "bytes": 34090
+    },
+    {
+      "scope": "root",
+      "phase": "before-security",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/root-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/root/audit.json",
+      "sha256": "37b6ac3039df4b4a1aa6b8682784356cb08e88512da78b9075da69d5661cf2fb",
+      "bytes": 3572481
+    },
+    {
+      "scope": "root",
+      "phase": "before-security",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/root-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/root/peers.json",
+      "sha256": "4fc1b0fcf19749203e3c8e3e479cb4e932f082763f4606b87a9910185c127d5a",
+      "bytes": 33759
+    },
+    {
+      "scope": "mpx-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/mpx-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/mpx-tailwindcss-v4/audit.json",
+      "sha256": "3550d6c21c4c3848a0dfc61752d6ac6c6a78ce0ce9867d973ac481307aa3d213",
+      "bytes": 493726
+    },
+    {
+      "scope": "mpx-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/mpx-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/mpx-tailwindcss-v4/peers.json",
+      "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7",
+      "bytes": 96
+    },
+    {
+      "scope": "mpx-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/mpx-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/mpx-tailwindcss-v4/audit.json",
+      "sha256": "f271ecd43f0fbff00aabb687e3ed5b2a87f26d8fb74f0041da65061baa1df16a",
+      "bytes": 490828
+    },
+    {
+      "scope": "mpx-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/mpx-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/mpx-tailwindcss-v4/peers.json",
+      "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7",
+      "bytes": 96
+    },
+    {
+      "scope": "taro-webpack-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/taro-webpack-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/taro-webpack-tailwindcss-v4/audit.json",
+      "sha256": "e7f6f0d81a5914cb2933aae1bff92fc735ab25a849395b6f037c67797a0961f1",
+      "bytes": 825331
+    },
+    {
+      "scope": "taro-webpack-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/taro-webpack-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/taro-webpack-tailwindcss-v4/peers.json",
+      "sha256": "4c69991498cd998916ec4df1d20b044f37bf3f0db9a0b49cf25897c42729c82d",
+      "bytes": 738
+    },
+    {
+      "scope": "taro-webpack-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/taro-webpack-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/taro-webpack-tailwindcss-v4/audit.json",
+      "sha256": "d37e1511f013e8eee53b51686fe8e3a217abb7c6e12bc1bb56a84f92d0491ead",
+      "bytes": 856529
+    },
+    {
+      "scope": "taro-webpack-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/taro-webpack-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/taro-webpack-tailwindcss-v4/peers.json",
+      "sha256": "4c69991498cd998916ec4df1d20b044f37bf3f0db9a0b49cf25897c42729c82d",
+      "bytes": 738
+    },
+    {
+      "scope": "uni-app-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/uni-app-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/uni-app-tailwindcss-v4/audit.json",
+      "sha256": "0ee3c764a6289bb710e672e12906d5576d63d93159262994df4a1cd97dfe948a",
+      "bytes": 620166
+    },
+    {
+      "scope": "uni-app-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/uni-app-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/uni-app-tailwindcss-v4/peers.json",
+      "sha256": "e38b6597d1bdfb3c120b3da11de3dce03cf8e6abd771b1df2956b095a4ea0c3c",
+      "bytes": 674
+    },
+    {
+      "scope": "uni-app-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/uni-app-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/uni-app-tailwindcss-v4/audit.json",
+      "sha256": "92a563a98c8772400c211e6e299e008ad0f1772b2d58b5d178da63dfc359fdac",
+      "bytes": 619348
+    },
+    {
+      "scope": "uni-app-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-risk/uni-app-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/uni-app-tailwindcss-v4/peers.json",
+      "sha256": "4526265d51e11989e1df0f4c175747e0ce1ac9de11a612e570ea8b011c8e52b0",
+      "bytes": 546
+    },
+    {
+      "scope": "taro-vite-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/taro-vite-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/taro-vite-tailwindcss-v4/audit.json",
+      "sha256": "251f4c6d37ed177842755999bdcf9b4f39de7030480bd4515c1dadbac53b8931",
+      "bytes": 410478
+    },
+    {
+      "scope": "taro-vite-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/taro-vite-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/taro-vite-tailwindcss-v4/peers.json",
+      "sha256": "54d7f03c0a343621f36bb5797c4ed9e1c5558dae534cf69239ef1f5729ad91d1",
+      "bytes": 1205
+    },
+    {
+      "scope": "uni-app-webpack-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/uni-app-webpack-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/uni-app-webpack-tailwindcss-v4/audit.json",
+      "sha256": "1e760b9a451b2a39001716fbc9d6c6e4e3a56910d20235f6e502b5b2e51c076c",
+      "bytes": 597260
+    },
+    {
+      "scope": "uni-app-webpack-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/uni-app-webpack-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/uni-app-webpack-tailwindcss-v4/peers.json",
+      "sha256": "644c8a36ac4bd70f934338b9d57ed4706322f8aee96b533523c075c40e154998",
+      "bytes": 838
+    },
+    {
+      "scope": "weapp-vite-tailwindcss-v4",
+      "phase": "final",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-weapp-mcp/within-range/audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/weapp-vite-tailwindcss-v4/audit.json",
+      "sha256": "2ffe51a3c076ad8fed0b98f1e0e357dd181279f4c77f77573bd2c18377b9a1ee",
+      "bytes": 2162
+    },
+    {
+      "scope": "weapp-vite-tailwindcss-v4",
+      "phase": "final",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-weapp-mcp/within-range/peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/final/weapp-vite-tailwindcss-v4/peers.json",
+      "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7",
+      "bytes": 96
+    },
+    {
+      "scope": "weapp-vite-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "audit",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/weapp-vite-tailwindcss-v4-audit.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/weapp-vite-tailwindcss-v4/audit.json",
+      "sha256": "a4243fb2526163457f8d64bdf05b9eab33830dce8586f1985f2b0d3223c2a175",
+      "bytes": 3000
+    },
+    {
+      "scope": "weapp-vite-tailwindcss-v4",
+      "phase": "before-security",
+      "kind": "peers",
+      "path": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/weapp-vite-tailwindcss-v4-peers.json",
+      "archive": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/risk-sources/before-security/weapp-vite-tailwindcss-v4/peers.json",
+      "sha256": "0e14586670331ed931a1f413f94244c9d29acf4dd964cf5ebaf5c1e96a2a9fc7",
+      "bytes": 96
+    }
+  ],
+  "finalReceipts": [
+    "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-risk/receipt.json",
+    "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-weapp-mcp/within-range/receipt.json"
+  ],
+  "limitations": [
+    "Full57 / CI / merge status belongs to root; this audit runs no pnpm/tests/devices/GitHub mutations.",
+    "Taro Vite and Vue2 final security reports are current-only here; no invented same-round baseline.",
+    "Retained Vue I18n 9 advisories need upstream supported backport or a separately validated framework migration."
+  ],
+  "graphFinding": "No non-approved package-version or metadata changes. Root/Taro opaque peer hash propagation is present. Uni Vue3 additionally has 11 approved in-range Babel edge selections among existing package versions; strict whole YAML equality is not claimed.",
+  "babelEdgeResolution": {
+    "scope": "templates/uni-app-tailwindcss-v4",
+    "count": 11,
+    "parentCount": 8,
+    "dependencies": [
+      "@babel/parser",
+      "@babel/types"
+    ],
+    "from": "7.29.8",
+    "to": "7.29.11",
+    "newPackageVersions": false,
+    "acceptedByRoot": true,
+    "upstreamRangesVerified": true,
+    "parentRanges": [
+      {
+        "package": "@types/babel__traverse",
+        "version": "7.28.0",
+        "source": "https://registry.npmjs.org/%40types%2Fbabel__traverse/7.28.0",
+        "ranges": {
+          "@babel/types": "^7.28.2"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/types__babel__traverse@7.28.0.json"
+      },
+      {
+        "package": "babel-plugin-jest-hoist",
+        "version": "27.5.1",
+        "source": "https://registry.npmjs.org/babel-plugin-jest-hoist/27.5.1",
+        "ranges": {
+          "@babel/types": "^7.3.3"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/babel-plugin-jest-hoist@27.5.1.json"
+      },
+      {
+        "package": "@types/babel__core",
+        "version": "7.20.5",
+        "source": "https://registry.npmjs.org/%40types%2Fbabel__core/7.20.5",
+        "ranges": {
+          "@babel/types": "^7.20.7",
+          "@babel/parser": "^7.20.7"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/types__babel__core@7.20.5.json"
+      },
+      {
+        "package": "@types/babel__template",
+        "version": "7.4.4",
+        "source": "https://registry.npmjs.org/%40types%2Fbabel__template/7.4.4",
+        "ranges": {
+          "@babel/types": "^7.0.0",
+          "@babel/parser": "^7.1.0"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/types__babel__template@7.4.4.json"
+      },
+      {
+        "package": "jest-snapshot",
+        "version": "27.5.1",
+        "source": "https://registry.npmjs.org/jest-snapshot/27.5.1",
+        "ranges": {
+          "@babel/types": "^7.0.0"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/jest-snapshot@27.5.1.json"
+      },
+      {
+        "package": "@babel/core",
+        "version": "7.26.9",
+        "source": "https://registry.npmjs.org/%40babel%2Fcore/7.26.9",
+        "ranges": {
+          "@babel/types": "^7.26.9",
+          "@babel/parser": "^7.26.9"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/babel__core@7.26.9.json"
+      },
+      {
+        "package": "istanbul-lib-instrument",
+        "version": "5.2.1",
+        "source": "https://registry.npmjs.org/istanbul-lib-instrument/5.2.1",
+        "ranges": {
+          "@babel/parser": "^7.14.7"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/istanbul-lib-instrument@5.2.1.json"
+      },
+      {
+        "package": "@types/babel__generator",
+        "version": "7.27.0",
+        "source": "https://registry.npmjs.org/%40types%2Fbabel__generator/7.27.0",
+        "ranges": {
+          "@babel/types": "^7.0.0"
+        },
+        "file": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-virtual-modules-scope-881d71ik/post-security/upstream/types__babel__generator@7.27.0.json"
+      }
+    ],
+    "verificationRequired": "uni template real build and fresh full validation owned by root"
+  },
+  "validationState": {
+    "demoMatrix": {
+      "files": 72,
+      "passed": 1222,
+      "command": "CI=1 pnpm test:demo:matrix",
+      "log": "e2e/.artifacts/dependency-upgrade-20261028/virtual-removal-final-demo-matrix.log"
+    },
+    "rootAndSixTemplateFrozenInstalls": "passed",
+    "agentsCheck": "passed",
+    "eslintForChangedMjs": "passed",
+    "gitDiffCheck": "passed",
+    "releaseStatus": "passed",
+    "affectedStaticBaselines": "pending",
+    "full57AfterCurrentChanges": "pending",
+    "currentHeadCi": "pending",
+    "merge": "pending"
+  },
+  "scopeAuditSource": {
+    "sha256": "e317dafb59842febae37453e43217b32324df9588ed6ce45246214566abd87a8",
+    "note": "独立只读审计，不能以包图审计代替运行验收。"
+  }
+}

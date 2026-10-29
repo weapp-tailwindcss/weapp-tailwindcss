@@ -171,6 +171,7 @@ packageExtensionsChecksum: sha256-O4LGlfmfks38/AZlS9Tscmt5ZjiMCqQkGyrfjThC2BU=
 patchedDependencies:
   '@tarojs/plugin-framework-react@4.3.1': fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1': ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b
+  webpack-virtual-modules@0.6.2: 083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681
   webpack@5.91.0: d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b
 
 importers:
@@ -194,10 +195,10 @@ importers:
         version: 4.3.1(@tarojs/service@4.3.1(supports-color@10.2.2))(@tarojs/shared@4.3.1)
       '@tarojs/plugin-platform-h5':
         specifier: 4.3.1
-        version: 4.3.1(2b175df2aab51cfcd83475a8cb39ae14)
+        version: 4.3.1(6a5e381e306c786d22f51b8a1f621ed8)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: 4.3.1
-        version: 4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(5ad3200de8e1955ce0535515810f9274)
+        version: 4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(365869710e769ffc469e658b4d6115c6)
       '@tarojs/plugin-platform-jd':
         specifier: 4.3.1
         version: 4.3.1(@tarojs/service@4.3.1(supports-color@10.2.2))(@tarojs/shared@4.3.1)
@@ -1739,11 +1740,11 @@ packages:
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
 
-  '@hono/node-server@2.1.1':
-    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+  '@hono/node-server@2.1.5':
+    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
     engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4
+      hono: ^4 || ^5.0.0-0
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -7278,14 +7279,14 @@ packages:
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
 
-  seroval-plugins@1.5.4:
-    resolution: {integrity: sha512-S0xQPhUTefAhNvNWFg0c1J8qJArHt5KdtJ/cFAofo06KD1MVSeFWyl4iiu+ApDIuw0WhjpOfCdgConOfAnLgkw==}
+  seroval-plugins@1.6.12:
+    resolution: {integrity: sha512-+reiwp/lYxiyctSrdvX7OQ1YLrcbWYgBiZrhSFL+V43b0/DGRLNVSDyZINbQe+tWplPOI2fw2dPrdv6hcc09kQ==}
     engines: {node: '>=10'}
     peerDependencies:
       seroval: ^1.0
 
-  seroval@1.5.4:
-    resolution: {integrity: sha512-46uFvgrXTVxZcUorgSSRZ4y+ieqLLQRMlG4bnCZKW3qI6BZm7Rg4ntMW4p1mILEEBZWrFlcpp0AyIIlM6jD9iw==}
+  seroval@1.6.12:
+    resolution: {integrity: sha512-CqbIVfk/7GL3ITwZI55lcPbpQbjHZ2DD5cUj4iH7E9YsCfHNJV1mx7yNp86Z84w5IpmkZZS/2s5vPOWmVWSdQg==}
     engines: {node: '>=10'}
 
   serve-index@1.9.2:
@@ -7389,8 +7390,8 @@ packages:
   sockjs@0.3.24:
     resolution: {integrity: sha512-GJgLTZ7vYb/JtPSSZ10hsOYIvEYsjbNU+zPdIHcUaWVNUEPivzxku31865sSSud0Da0W4lEeOPlmw93zLQchuQ==}
 
-  solid-js@1.9.5:
-    resolution: {integrity: sha512-ogI3DaFcyn6UhYhrgcyRAMbu/buBJitYQASZz5WzfQVPP10RD2AbCoRZ517psnezrasyCbWzIxZ6kVqet768xw==}
+  solid-js@1.9.17:
+    resolution: {integrity: sha512-4GAmLOWPfNV8H9Jfn2LSFTpNEG6jiOKPiwd5lnLGQtehHaX6l3TOLzJqQ7mqwB/3k1Yy3zyumFVopmc/tm34ow==}
 
   sort-keys-length@1.0.1:
     resolution: {integrity: sha512-GRbEOUqCxemTAk/b32F2xa8wDTs+Z1QHOkbhJDQTvv/6G3ZkbJ+frYWsTcc7cBB3Fu4wy4XlLCuNtJuMn7Gsvw==}
@@ -9674,7 +9675,7 @@ snapshots:
     dependencies:
       '@hapi/hoek': 9.3.0
 
-  '@hono/node-server@2.1.1(hono@4.13.5)':
+  '@hono/node-server@2.1.5(hono@4.13.5)':
     dependencies:
       hono: 4.13.5
 
@@ -9884,7 +9885,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.30.0(supports-color@10.2.2)(zod@4.5.4)':
     dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.5)
+      '@hono/node-server': 2.1.5(hono@4.13.5)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -10274,7 +10275,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@tarojs/components-react@4.3.1(57a8fd819a7273b481a8fe87d06c862e)':
+  '@tarojs/components-react@4.3.1(7f0ce5506d56bab94d47bee802df7da5)':
     dependencies:
       '@babel/runtime': 7.29.10
       '@tarojs/components': 4.3.1(9d87daa3b7b698344c17964401ee5c63)
@@ -10283,7 +10284,7 @@ snapshots:
       classnames: 2.5.1
       identity-obj-proxy: 3.0.0
       react: 18.3.1
-      solid-js: 1.9.5
+      solid-js: 1.9.17
       swiper: 11.1.15
       tlbs-map-react: 1.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tslib: 2.8.1
@@ -10417,11 +10418,11 @@ snapshots:
       '@tarojs/service': 4.3.1(supports-color@10.2.2)
       '@tarojs/shared': 4.3.1
 
-  '@tarojs/plugin-platform-h5@4.3.1(2b175df2aab51cfcd83475a8cb39ae14)':
+  '@tarojs/plugin-platform-h5@4.3.1(6a5e381e306c786d22f51b8a1f621ed8)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@tarojs/components': 4.3.1(9d87daa3b7b698344c17964401ee5c63)
-      '@tarojs/components-react': 4.3.1(57a8fd819a7273b481a8fe87d06c862e)
+      '@tarojs/components-react': 4.3.1(7f0ce5506d56bab94d47bee802df7da5)
       '@tarojs/helper': 4.3.1(supports-color@10.2.2)
       '@tarojs/runtime': 4.3.1
       '@tarojs/service': 4.3.1(supports-color@10.2.2)
@@ -10447,14 +10448,14 @@ snapshots:
       - webpack-chain
       - webpack-dev-server
 
-  '@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(5ad3200de8e1955ce0535515810f9274)':
+  '@tarojs/plugin-platform-harmony-hybrid@4.3.1(patch_hash=ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b)(365869710e769ffc469e658b4d6115c6)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@tarojs/api': 4.3.1(@tarojs/runtime@4.3.1)(@tarojs/shared@4.3.1)
       '@tarojs/components': 4.3.1(9d87daa3b7b698344c17964401ee5c63)
-      '@tarojs/components-react': 4.3.1(57a8fd819a7273b481a8fe87d06c862e)
+      '@tarojs/components-react': 4.3.1(7f0ce5506d56bab94d47bee802df7da5)
       '@tarojs/helper': 4.3.1(supports-color@10.2.2)
-      '@tarojs/plugin-platform-h5': 4.3.1(2b175df2aab51cfcd83475a8cb39ae14)
+      '@tarojs/plugin-platform-h5': 4.3.1(6a5e381e306c786d22f51b8a1f621ed8)
       '@tarojs/router': 4.3.1(@tarojs/runtime@4.3.1)(@tarojs/shared@4.3.1)(@tarojs/taro@4.3.1(3572eb12ae714271cd10a87f256cd821))
       '@tarojs/runtime': 4.3.1
       '@tarojs/service': 4.3.1(supports-color@10.2.2)
@@ -10616,7 +10617,7 @@ snapshots:
       es-module-lexer: 0.10.5
       lodash: 4.18.1
       webpack: 5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3)
-      webpack-virtual-modules: 0.6.2
+      webpack-virtual-modules: 0.6.2(patch_hash=083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681)
     transitivePeerDependencies:
       - '@swc/helpers'
       - supports-color
@@ -10672,7 +10673,7 @@ snapshots:
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3))
       webpack-format-messages: 3.0.1
-      webpack-virtual-modules: 0.6.2
+      webpack-virtual-modules: 0.6.2(patch_hash=083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681)
       webpackbar: 5.0.2(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3))
     optionalDependencies:
       less: 3.13.1
@@ -15924,11 +15925,11 @@ snapshots:
     dependencies:
       randombytes: 2.1.0
 
-  seroval-plugins@1.5.4(seroval@1.5.4):
+  seroval-plugins@1.6.12(seroval@1.6.12):
     dependencies:
-      seroval: 1.5.4
+      seroval: 1.6.12
 
-  seroval@1.5.4: {}
+  seroval@1.6.12: {}
 
   serve-index@1.9.2(supports-color@10.2.2):
     dependencies:
@@ -16098,11 +16099,11 @@ snapshots:
       uuid: 8.3.2
       websocket-driver: 0.7.5
 
-  solid-js@1.9.5:
+  solid-js@1.9.17:
     dependencies:
       csstype: 3.2.3
-      seroval: 1.5.4
-      seroval-plugins: 1.5.4(seroval@1.5.4)
+      seroval: 1.6.12
+      seroval-plugins: 1.6.12(seroval@1.6.12)
 
   sort-keys-length@1.0.1:
     dependencies:
@@ -16874,7 +16875,7 @@ snapshots:
 
   webpack-sources@3.5.0: {}
 
-  webpack-virtual-modules@0.6.2: {}
+  webpack-virtual-modules@0.6.2(patch_hash=083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681): {}
 
   webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3):
     dependencies:

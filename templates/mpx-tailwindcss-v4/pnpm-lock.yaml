@@ -169,6 +169,7 @@ overrides:
 patchedDependencies:
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': 1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8
   '@mpxjs/webpack-plugin@2.11.1': dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4
+  webpack-virtual-modules@0.6.2: 083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681
   webpack@5.112.2: d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b
 
 importers:
@@ -1300,11 +1301,11 @@ packages:
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
 
-  '@hono/node-server@2.1.1':
-    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+  '@hono/node-server@2.1.5':
+    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
     engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4
+      hono: ^4 || ^5.0.0-0
 
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
@@ -8034,7 +8035,7 @@ snapshots:
     dependencies:
       '@hapi/hoek': 9.3.0
 
-  '@hono/node-server@2.1.1(hono@4.13.5)':
+  '@hono/node-server@2.1.5(hono@4.13.5)':
     dependencies:
       hono: 4.13.5
 
@@ -8217,7 +8218,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.30.0(supports-color@8.1.1)(zod@4.5.4)':
     dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.5)
+      '@hono/node-server': 2.1.5(hono@4.13.5)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -8612,7 +8613,7 @@ snapshots:
       source-list-map: 2.0.1
       source-map: 0.7.6
       webpack: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10)
-      webpack-virtual-modules: 0.6.2
+      webpack-virtual-modules: 0.6.2(patch_hash=083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681)
     optionalDependencies:
       vue: 2.7.16
     transitivePeerDependencies:
@@ -13997,7 +13998,7 @@ snapshots:
 
   webpack-virtual-modules@0.4.6: {}
 
-  webpack-virtual-modules@0.6.2: {}
+  webpack-virtual-modules@0.6.2(patch_hash=083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681): {}
 
   webpack@5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.32))(csso@4.2.0)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.4(@types/node@25.9.3))(svgo@2.8.2)(uglify-js@3.4.10):
     dependencies:

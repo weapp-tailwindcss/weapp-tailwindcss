@@ -21,6 +21,7 @@ minimumReleaseAgeExclude:
   - '@weapp-tailwindcss/postcss@3.3.3'
   - weapp-tailwindcss@5.5.5
 patchedDependencies:
+  webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch
   webpack@5.91.0: patches/webpack@5.91.0.patch
   "@tarojs/plugin-framework-react@4.3.1": patches/@tarojs__plugin-framework-react@4.3.1.patch
   "@tarojs/plugin-platform-harmony-hybrid@4.3.1": patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch

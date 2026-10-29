@@ -8,7 +8,8 @@ const { setTimeout: delay } = require('node:timers/promises')
 
 const demoRequire = createRequire(path.resolve('demo/subpackage-taro-webpack-react-tailwindcss-v4/package.json'))
 const taroRequire = createRequire(demoRequire.resolve('@tarojs/webpack5-runner/package.json'))
-const webpack = taroRequire('webpack')
+const webpackRequire = process.argv[2] === 'modern' ? require : taroRequire
+const webpack = webpackRequire('webpack')
 const VirtualModulesPlugin = taroRequire('webpack-virtual-modules')
 
 async function main() {
@@ -25,7 +26,7 @@ async function main() {
   const file = path.join(root, 'virtual-entry.js')
   const modules = new VirtualModulesPlugin({ [file]: 'export default 42' })
   // 输出与输入分离，避免创建产物目录触发真实的输入目录变更。
-  const compiler = webpack({ mode: 'development', context: root, entry: './virtual-entry.js', output: { path: output }, plugins: [modules] })
+  const compiler = webpack({ mode: 'development', context: root, entry: './virtual-entry.js', output: { path: output, filename: 'main.cjs', library: { type: 'commonjs2' } }, plugins: [modules] })
   // 编译跨过轮询间隔，稳定复现虚拟文件被重复报告缺失的条件。
   compiler.hooks.beforeCompile.tapPromise('BuildDuration', () => delay(100))
   const invalidations = []
@@ -64,15 +65,26 @@ async function main() {
     await delay(1500)
     const initialBuilds = builds
     assert.ok(initialBuilds <= 2, `Idle virtual module repeatedly rebuilt: ${initialBuilds}; invalidations=${JSON.stringify(invalidations)}`)
+    const bundlePath = path.join(output, 'main.cjs')
+    const readValue = () => {
+      delete require.cache[require.resolve(bundlePath)]
+      return require(bundlePath).default
+    }
+    assert.equal(readValue(), 42)
     modules.writeModule(file, 'export default 84')
+    let watchFileSystem = compiler.watchFileSystem
+    while (watchFileSystem.wfs) watchFileSystem = watchFileSystem.wfs
+    // 重现真实更新与磁盘缺失通知同批到达，不能让缺失通知覆盖已聚合的更新。
+    watchFileSystem.watcher._onRemove(file, file, 'watch (missing on attach)')
     await waitForBuild(initialBuilds)
     const updatedBuilds = builds
     await delay(1000)
     assert.ifError(buildError)
     assert.equal(builds, updatedBuilds, 'Virtual module update did not settle')
+    assert.equal(readValue(), 84)
     assert.deepEqual(await readdir(root), initialSourceEntries, 'Compilation changed the watched input directory')
     assert.deepEqual(await readdir(temporaryRoot), initialProjectEntries, 'Compilation changed the watched project parent directory')
-    process.stdout.write(`${JSON.stringify({ initialBuilds, updatedBuilds, projectRoot: temporaryRoot, dependencyGraphs })}\n`)
+    process.stdout.write(`${JSON.stringify({ initialBuilds, updatedBuilds, value: readValue(), webpack: webpackRequire('webpack/package.json').version, watchpack: createRequire(webpackRequire.resolve('webpack/package.json'))('watchpack/package.json').version, projectRoot: temporaryRoot, dependencyGraphs })}\n`)
   }
   catch (error) {
     process.stderr.write(`Virtual watcher evidence: ${JSON.stringify({ invalidations, dependencyGraphs })}\n`)

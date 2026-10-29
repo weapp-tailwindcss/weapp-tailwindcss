@@ -237,3 +237,9 @@ HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tai
 尺寸能力 `38a83e218` 和共享观察 `3a60167fa` 保留Chromium原生截图，Firefox/WebKit超界分片；一个monitor覆盖全部二维分片，TOC/祖先完整状态、跨样本document身份和两张连续完整RGBA配对共用，扰动清空前张。原生仍在finish且valid后解码，60秒与整图5像素保持。根整合后的154项纯回归和typecheck通过；专门CI及扩展入口补齐新合同，42项入口回归通过，初轮41通过/1旧命令期望失败的JSON保留。真实六文件三引擎fixture、新完整候选、审查、安装与禁更仍待fresh gate，不能把纯夹具当真实浏览器通过。
 
 此前“准确537”的普通PR CI表述补充实际来源：Lynx双端、Website及Expo两次真正checkout为 `359b8df7aa2dbe7f4afc586cf394e546bfc81fd0`，父提交为dc0与537，tree `a19a9904` 与历史本地642相同；正式Uni的prepare/shard/guard才是raw537。Expo iOS唯一有界attempt2已成功，29,043,705字节归档与官方SHA匹配；三阶段各31 supported/87 unsupported，132份语义回执均为原10000ms、2帧，最大assessment8405.093ms；396图像、33阶段引用、270条simctl命令和settled清理均核验。原attempt1失败保留，不追加同head重试；这些历史合并树证据不能替代后续最终整合提交。
+
+## 虚拟模块监听后续修复
+
+完整本地验收在 db117f17 的第 26 阶段发现 Watchpack 2.6.3 将虚拟文件误报为删除。根及 Mpx、Taro Webpack、uni-app Vite 三个独立模板同步 webpack-virtual-modules 0.6.2 的虚拟 FS 存在性补丁；保持上游 Watchpack 配套，不降低现代 Webpack 的要求。72 个矩阵测试文件、1222 项通过，真实物理更新、删除与恢复回归均保留；完整验收和当前 head CI 继续以最终记录为准。根因及移除条件见[监听边界复盘](lessons/virtual-watch-fs-ownership.md)。
+
+同轮安全刷新进一步按上游允许范围更新 Solid 1.9.17、seroval/seroval-plugins 1.6.12、Hono node-server 2.1.5，并为 weapp-vite 模板更新 MCP node 2.1.2。六个模板各自生成锁并 frozen 安装；uni-app Vite 模板另有 11 条锁内既有 Babel 补丁版去重边，已核对官方允许范围并纳入构建验收。最终根风险采集为 358 条公告记录、325 个 GHSA/包组，仍有既有 peer 与框架绑定风险，不能写成安全审计全绿。完整八锁身份、版本/范围、风险差异与尚未完成范围见[本次补充证据](dependency-upgrade-20261028.virtual-watch-evidence.json)。
