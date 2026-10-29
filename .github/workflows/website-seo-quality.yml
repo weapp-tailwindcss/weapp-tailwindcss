@@ -62,7 +62,13 @@ jobs:
       - name: Verify preinstalled Playwright browsers
         run: node scripts/ci/verify-playwright-image.mjs chromium firefox webkit
       - name: Verify visual baseline contracts
-        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts scripts/full-page-toc-entry.test.ts scripts/full-page-toc-policy.test.ts scripts/full-page-toc.test.ts scripts/full-page-monitor.test.ts --update=none
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts scripts/full-page-toc-entry.test.ts scripts/full-page-toc-policy.test.ts scripts/full-page-toc.test.ts scripts/full-page-monitor.test.ts scripts/full-page-composition.test.ts --update=none
+      - name: Verify full page capture in three browsers
+        run: >
+          pnpm --filter @weapp-tailwindcss/website exec playwright test --config playwright.config.mts
+          tests/full-page-composition.spec.ts tests/full-page-monitor.spec.ts tests/full-page-toc.spec.ts tests/full-page-snapshot.spec.ts
+          --project=chromium --project=firefox --project=webkit --workers=1 --retries=0 --max-failures=1
+          --reporter=line --update-snapshots=none
       - name: Verify real three browser pipeline
         run: pnpm --filter @weapp-tailwindcss/website e2e:visual:test
 
