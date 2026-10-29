@@ -257,3 +257,13 @@ Webpack 用例补充每轮输入编辑、invalid、watchRun、构建回调及实
 准确 `3fd8e5f30f606c6459d5e20037edd0eba44b67c8` 经新扩展预检 `c517324d-876d-45ca-8146-345c8c98226c`、当前会话 computer use、verify 和单次领取，在禁止更新模式完成 107 个 portable 目标、四个 Taro 项目的八个 plugin-html 变体，以及七个独立模板复制消费的 16 个可执行静态目标。全部构建及产物合同通过，源码与八份 pnpm 锁保持干净；独立副本已删除，原日志、产物与逐文件身份保存在 `e2e/.artifacts/dependency-upgrade-20261028/supplemental-3fd8/run-YkVFv9/`。其 `report.json` 的 SHA256 为 `a0b3a30a634c3e07100df6fe8d5233ea11c19f252fb0ee898bb0c7571e9a7960`。
 
 该报告总体保留 `partial`：Taro 两模板缺少 RN 配套、Vue2 quickapp-native 缺少 release 签名，共三项准确 e769 基线已有的能力缺口仍为 pending。HBuilderX 目标只证明正式 IDE 内置编译器的微信静态编译与产物合同，不代表 IDE 页面、cascade 或设备运行通过。此轮结果不替代完整 57 阶段、HMR、设备验收或准确最终 head 的 CI，Taro 内存性能阻塞仍未解决，PR #1320 保持未合并。用户已授权与「修复 issue #1278」任务协调微信 IDE 串行验收；补充静态结束后已通知释放本轮窗口。
+
+## 8609 完整验收首败
+
+准确 `8609a88da` 经新扩展预检 `6a0b60c2-e63f-4590-9ef4-9c32dd328de0`、当前会话 IAB 真实输入/点击/截图、verify 和单次领取重新执行 57 阶段。此前原生 Chrome 入口返回 `-10005: timeoutReached` 的预检 `b9895853-d6ec-428b-babc-9d5a0e9ded57` 已阻断，未用于放行。根构建通过；第二阶段 1157 个测试文件通过、4 个失败、5 个既有跳过，12208 项测试通过、5 项失败、44 项既有跳过和 1 项预期失败；后续 55 阶段停止。原始完整日志 SHA256 为 `5a1293c3d429e76cb9cd66740fee1b62c57f92327345658503f04520c8bf118f`，内存报告为 `6cda2ddaee4cf5ef086a63f93ad96bbd231f76dc94da60bfc32b267938625c22`，归档位于 `e2e/.artifacts/dependency-upgrade-20261028/full57-8609-run1/`。
+
+本轮父阶段没有触发全局取消。Vite/webpack watcher 基准分别在主题恢复/输入恢复超时，PostCSS 的 single quote 用例超时；后代清理用例在生产 stop 已传播原内存错误后，其独立验证 ps 未确认退出，兜底最终确认 manifest 中登记的业务进程已全部结束；该确认不包含未收到 close 的 ps 探针。Web CSS watch 的 trace 明确记录新增来源已构建且监听重挂，但紧接删除后未出现 invalid、watchRun 或回调；这仍不足以确定底层事件丢失的根因。Web watch 与两个 watcher 基准分开定向运行均通过，仅用于限定复现条件，不覆盖原失败，也不代表完整验收通过。完整多端、最终 CI 和 Taro RSS 阻塞仍待处理；本轮浏览器临时标签已关闭，并已向串行任务释放微信 IDE。
+
+四文件限定并发的原五项失败用例均通过，仅为诊断；同轮负载采样为 42.2/52.1/58.8（16 逻辑核），不能据此证明原失败属于环境噪声。PostCSS 分段计时显示 CSS 生成约 124ms，而之后未参与断言的无参 `getClassCacheSet()` 以仓库根为 basedir，额外全量提取 8232 个候选，耗时 14546ms。两个引号用例移除该脱离输入的扫描和私有辅助函数，保留原 CSS 快照、全部断言与超时；全文件禁止更新复验 15 项通过，耗时 1.45s。此结论不还原原超时的具体分段，也不表示其他监听失败已修复。
+
+远端准确 9b20 的全部检查已结束：253 成功、30 个已核条件跳过、2 失败。PR Gate 的 demo/watch 开关均为 true，11 项依赖结果均成功；两项失败仍仅为 Taro RSS 分片和传播同一首因的汇总，PR 保持阻断。旧 head 的完成不替代最终 head 的验证。
