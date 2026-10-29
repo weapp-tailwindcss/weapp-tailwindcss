@@ -20,6 +20,7 @@ import './optional-cli.test.mjs'
 import './lock-roots.test.mjs'
 import './optional-esbuild.test.mjs'
 import './runtime-guard.test.mjs'
+import './tool-metadata.test.mjs'
 
 const execute = promisify(execFile)
 const here = path.dirname(fileURLToPath(import.meta.url))

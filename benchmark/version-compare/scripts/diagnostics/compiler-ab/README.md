@@ -4,6 +4,10 @@
 
 两侧来自同一准确源码 SHA 的 `git archive`，均为无 `.git` 临时副本、独立安装依赖。原正式锁与 workspace 配置完整归档并记录 SHA；current 和 previous 均使用工具生成的派生锁，分别执行 frozen install 并核对锁 SHA。
 
+对称工具 metadata 规范化单独审查：仅允许准确 `@expo/bunyan@4.0.1`、原归档 SRI 的缺失 `engines` 补为 `{ node: ">=0.10.0" }`。每轮从固定官方 registry 保存版本与完整 packument 原响应，并下载同 SRI tarball，核对固定 SHA1/SHA256、manifest SHA256 和旧 `engines: ["node >=0.10.0"]` 形态；记录实际 Node 22.23.4 的兼容收据。首次工具派生若保留字段缺失，比较参考也保持原样；若补写精确官方对象，才记录 `applied: true`，不能强迫写入或接受两侧不对称。比较参考是原锁逻辑对象的明确副本，保存为 JSON，不是 pnpm 生成锁；原字节及 SHA 保持。两侧派生锁的完整 bunyan 条目必须等于该参考，其它 metadata/绑定/图仍按原严格规则检查。请求共用 60 秒截止并限制压缩与解压证据大小，不加载发布实现。
+
+两侧先用 `pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts` 生成锁，完成来源、规范化、CLI 隔离、编译器轴与全图预验后，才分别完整 frozen install，并复核锁 SHA 与配置。该顺序提前发现漂移；lockfile-only 本身仍可能补写已核实的 registry metadata。
+
 先对两侧精确移除 `webpack@5.91.0>webpack-cli`、`webpack@5.105.4>webpack-cli` 与 `webpack-dev-server@4.15.2>webpack-cli` 的可选 peer。original→current 的严格审查只允许这两种准确 consumer 的可选边/meta 移除及可证明的上下文传播，保留原 CLI 三个 context 的版本、其它绑定和 metadata。CLI 指向同一 WDS4 的引用仅能去掉该 WDS4 的 CLI peer group。现代 Webpack 5.112.2 逐项原样；不能机械删除全图 CLI 或改变其它平台/工具依赖。
 
 previous 在该派生锁上，将目标 demo manifest 的准确 Webpack `5.91.0` 切为 `5.105.4`。配套来源为准确基线 `0e9ceb82321d49d145bf63c4adf84c7a8639e0e9`，保留原补丁，加入该基线的 Webpack 5.105.4 补丁。对子依赖仅使用三个 `@tarojs/{webpack5-runner,taro-loader,webpack5-prebundle}@4.3.1` 的父包限定 override，Webpack 直接配套也精确限定父包。
@@ -32,6 +36,6 @@ node benchmark/version-compare/scripts/diagnostics/compiler-ab/run.mjs --out-dir
 
 artifact 包含原正式锁及 SHA、两侧派生锁/workspace/manifest、原补丁、差异轴与逐 importer 路径、可选配套合同、实际模块/实现 hash、加载守卫证据、每轮日志、GC、options、资产 hash 和 RSS。所有本轮进程确认停止后才清理副本。
 
-历史首败必须保留：[40874665892](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40874665892) 暴露 pnpm12 全局 selector 改写宽 peer metadata；[40878658733](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40878658733) 暴露 Webpack/WDS 可选 CLI 双向 peer 上下文漂移。两次均在 prepare 阶段失败，未执行 A/B 测量。后续轻量锁预验又明确发现可选 Terser/esbuild 附着上下文变化，本合同按该证据建立；不得以 fixture 或锁预验成功宣称框架性能验收通过。
+历史首败必须保留：[40874665892](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40874665892) 暴露 pnpm12 全局 selector 改写宽 peer metadata；[40878658733](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40878658733) 暴露 Webpack/WDS 可选 CLI 双向 peer 上下文漂移。两次均在 prepare 阶段失败，未执行 A/B 测量。后续轻量锁预验又明确发现可选 Terser/esbuild 附着上下文变化，本合同按该证据建立。[40896320294](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40896320294) 在 original→current 的严格 metadata 审查中发现 bunyan engine 补写，artifact SHA/CRC 已验证，仅有这一项额外 metadata 变化；同 SRI 官方来源和最小 fresh 项目证明这是独立工具规范化，仍未产生 A/B 样本。不得以 fixture 或锁预验成功宣称框架性能验收通过。
 
 pnpm `12.15.0` 的子依赖 selector 采用[范围交集](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-manager/src/overrides/selectors.rs#L16)，即使 `webpack@=5.91.0` 也会重写 `^5` 等宽 peer；[父包限定](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-manager/src/overrides.rs#L216)才按 consumer 身份隔离。真实最小安装证据位于 `fixtures/pnpm12-selector-output.json`。

@@ -14,6 +14,7 @@
 ## 变更原则
 
 - 编译器、workspace、补丁和锁的实验性变更只允许写入本轮拥有且不含 `.git` 的临时副本，不能写源 checkout 或借用其它任务的依赖目录。
+- 对称工具 metadata 规范化仅限准确 `@expo/bunyan@4.0.1` 和归档 SRI 的缺失 engine 补为官方对象；当轮保存官方 packument、同 SRI tarball 和实际 Node 22.23.4 兼容收据。比较参考是显式逻辑副本，两侧工具生成锁的完整包条目须相等，不放宽其它 metadata/图。两侧先生成锁并通过全部严格预验，再进行完整 frozen install 和 SHA/config 复核。
 - 原正式锁及完整 SHA 单独归档；两侧使用对称移除准确 Webpack/WDS 可选 CLI peer 后的工具派生锁，不能称 current 仍是原锁。
 - 按每个 importer 的实际可达图保留一般 opaque 歧义守卫；只有目标 manifest 与三个准确 Taro parent 路径能传入编译器轴授权。非轴 metadata/绑定保持，所有新增/移除 snapshot 均须有授权路径与 incoming 证据，不可达项保持原样。
 - 唯一附加轴为已核实的可选 Webpack/Terser 5.6.1/esbuild 0.21.5 上下文合入 esbuild 0.28.2；完整附着边与路径写入合同。Terser 源码和其它绑定相等，不得全图归一化其它 esbuild。
