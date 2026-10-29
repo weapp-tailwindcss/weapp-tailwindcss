@@ -1,0 +1,35 @@
+{
+  "target": "mp-weixin",
+  "classes": [
+    {
+      "className": "min-h-screen",
+      "declarations": [
+        {
+          "property": "min-height",
+          "value": "100vh",
+          "important": false
+        }
+      ]
+    },
+    {
+      "className": "p-_b40rpx_B",
+      "declarations": [
+        {
+          "property": "padding",
+          "value": "40rpx",
+          "important": false
+        }
+      ]
+    },
+    {
+      "className": "bg-_b_h877878_B",
+      "declarations": [
+        {
+          "property": "background-color",
+          "value": "#877878",
+          "important": false
+        }
+      ]
+    }
+  ]
+}
