@@ -4,7 +4,7 @@ import type { ProcessIdentity } from '../../../scripts/demo-e2e-workflow/process
 import type { LocalCommandGate } from './launch-gate'
 import process from 'node:process'
 import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
-import { includeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
+import { includeWorkflowCancellation, observeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
 import { prepareWorkflowProcessObserver } from '../../../scripts/demo-e2e-workflow/process-observer'
 import { readProcessTable } from '../../../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../../../scripts/demo-e2e-workflow/process-tree'
@@ -126,25 +126,30 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
 /** 观察已登记的出生身份并持有 POSIX 独立组；未登记且失去活锚的孤儿不在快照确认范围。 */
 export async function withLocalCommand<T>(options: HBuilderXCommandOptions, signal: AbortSignal, action: (command: SpawnedHBuilderXCommand, signal: AbortSignal) => Promise<T>, onSpawn?: (command: SpawnedHBuilderXCommand, isStopping: () => boolean) => void): Promise<T> {
   signal.throwIfAborted()
+  const inherited = observeWorkflowCancellation({ ...process.env, ...options.env })
+  const managedSignal = AbortSignal.any([signal, inherited.signal])
   let observer: WorkflowProcessObserver | undefined
   let gate: LocalCommandGate
   try {
     const result = await runWithCleanup(async () => {
       if (process.platform === 'win32') {
-        observer = await prepareWorkflowProcessObserver(signal)
+        observer = await prepareWorkflowProcessObserver(managedSignal)
         if (!observer) {
           throw new Error('Windows 身份观察器未准备，禁止启动本地命令。')
         }
       }
       gate = await prepareLocalCommandGate(options)
-      signal.throwIfAborted()
+      managedSignal.throwIfAborted()
       const command = spawnCommand({ ...(gate?.options ?? options), detached: process.platform !== 'win32' })
-      return await runOwnedCommand(command, signal, observer, gate, action, onSpawn)
+      return await runOwnedCommand(command, managedSignal, observer, gate, action, onSpawn)
     }, async () => runWithCleanup(async () => observer?.close(), async () => gate?.close()))
-    signal.throwIfAborted()
+    managedSignal.throwIfAborted()
     return result
   }
   catch (error) {
-    throw includeWorkflowCancellation(error, signal)
+    throw includeWorkflowCancellation(error, managedSignal)
+  }
+  finally {
+    inherited.dispose()
   }
 }

@@ -86,6 +86,6 @@ it('身份采集失败时不等父 close，立即停止阶段并保留原始原�
   const error = await runStep({ name: 'failed identity', command: 'test', args: [] }, 1, 1).catch(error => error)
   expect(error.stepReport.exitCode).toBe(1)
   expect(error.stepReport.error).toContain('identity probe failed')
-  expect(mocks.stop).toHaveBeenCalledExactlyOnceWith(false)
+  expect(mocks.stop).toHaveBeenCalledExactlyOnceWith(true)
   expect(mocks.sample).not.toHaveBeenCalled()
 })

@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -12,40 +12,90 @@ export class WorkflowCancellationError extends Error {
   }
 }
 
-/** 复用 watch 的取消文件；重复信号不能绕过阶段及门禁的收尾。 */
-export function createWorkflowCancellation() {
+interface WorkflowCancellationOptions {
+  signal?: AbortSignal | undefined
+  listenForSignals?: boolean
+}
+
+/** 仅创建者写入和删除取消文件；阶段可继承取消原因，但必须拥有自己的子任务凭据。 */
+export function createWorkflowCancellation(options: WorkflowCancellationOptions = {}) {
   const controller = new AbortController()
   const directory = mkdtempSync(path.join(tmpdir(), 'demo-workflow-cancel-'))
   const file = path.join(directory, 'cancel')
-  const cancel = (signal: 'SIGINT' | 'SIGTERM') => {
+  const cancel = (reason: unknown) => {
     if (controller.signal.aborted) {
       return
     }
-    let failure: unknown
     try {
-      writeFileSync(file, `${signal}\n`)
+      // 先通知独立进程组中的消费者，再触发父侧清理，避免 launcher 提前退出截断恢复。
+      writeFileSync(file, `${String(reason)}\n`)
     }
     catch (error) {
-      failure = error
+      reason = reason instanceof WorkflowCancellationError
+        ? new WorkflowCancellationError(reason.signal, error)
+        : new AggregateError([reason, error], '工作流取消文件写入失败。', { cause: reason })
     }
-    controller.abort(new WorkflowCancellationError(signal, failure))
+    controller.abort(reason)
   }
-  const handlers = { SIGINT: () => cancel('SIGINT'), SIGTERM: () => cancel('SIGTERM') }
-  process.on('SIGINT', handlers.SIGINT)
-  process.on('SIGTERM', handlers.SIGTERM)
+  const inherited = () => cancel(options.signal!.reason)
+  options.signal?.addEventListener('abort', inherited, { once: true })
+  const handlers = { SIGINT: () => cancel(new WorkflowCancellationError('SIGINT')), SIGTERM: () => cancel(new WorkflowCancellationError('SIGTERM')) }
+  if (options.listenForSignals !== false) {
+    process.on('SIGINT', handlers.SIGINT)
+    process.on('SIGTERM', handlers.SIGTERM)
+  }
+  if (options.signal?.aborted) {
+    inherited()
+  }
   return {
     signal: controller.signal,
     env: { E2E_WATCH_CANCEL_FILE: file },
+    cancel,
     async dispose() {
       try {
         await rm(directory, { recursive: true, force: true })
       }
       finally {
-        process.removeListener('SIGINT', handlers.SIGINT)
-        process.removeListener('SIGTERM', handlers.SIGTERM)
+        options.signal?.removeEventListener('abort', inherited)
+        if (options.listenForSignals !== false) {
+          process.removeListener('SIGINT', handlers.SIGINT)
+          process.removeListener('SIGTERM', handlers.SIGTERM)
+        }
       }
     },
   }
+}
+
+export type WorkflowCancellation = ReturnType<typeof createWorkflowCancellation>
+
+/** 消费者只读父侧凭据；不得创建、改写或删除借用的取消文件。 */
+export function observeWorkflowCancellation(env: NodeJS.ProcessEnv = process.env) {
+  const controller = new AbortController()
+  const file = env['E2E_WATCH_CANCEL_FILE']
+  let timer: NodeJS.Timeout | undefined
+  const check = () => {
+    if (!file || controller.signal.aborted) {
+      return
+    }
+    try {
+      const reason = readFileSync(file, 'utf8')
+      controller.abort(new Error(`父工作流请求合作取消，停止本轮命令：${reason.trim()}`))
+    }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        controller.abort(new Error('父工作流取消凭据读取失败，停止本轮命令。', { cause: error }))
+      }
+    }
+    if (controller.signal.aborted) {
+      clearInterval(timer)
+    }
+  }
+  check()
+  if (file && !controller.signal.aborted) {
+    timer = setInterval(check, 100)
+    timer.unref?.()
+  }
+  return { signal: controller.signal, dispose: () => clearInterval(timer) }
 }
 
 /** 按对象身份检查 cause/errors 图，循环引用不能阻断查询或制造重复错误。 */

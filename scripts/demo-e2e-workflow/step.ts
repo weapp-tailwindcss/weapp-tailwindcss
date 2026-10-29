@@ -1,22 +1,28 @@
 import type { DemoE2eMemorySample, DemoE2eMemoryStepReport } from '../demo-e2e-memory'
+import type { WorkflowCancellation } from './cancellation'
 import type { WorkflowProcessObserver } from './process-observer'
 import type { WorkflowStep } from './quality-steps'
 import { spawn } from 'node:child_process'
 import process from 'node:process'
 import { sampleProcessTreeAsync, summarizeMemorySamples } from '../demo-e2e-memory'
-import { formatWorkflowError } from '../e2e-preflight/cleanup'
+import { formatWorkflowError, runWithCleanup } from '../e2e-preflight/cleanup'
 import { createPnpmCommand } from '../pnpm-command.mjs'
-import { containsWorkflowError, WorkflowCancellationError } from './cancellation'
+import { containsWorkflowError, createWorkflowCancellation, WorkflowCancellationError } from './cancellation'
 import { prepareWorkflowProcessObserver } from './process-observer'
 import { createWorkflowProcessTree } from './process-tree'
 
 export async function runStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string> = {}, workflowEnv = process.env, cancellation?: AbortSignal) {
-  const observer = await prepareWorkflowProcessObserver(cancellation)
+  const scope = createWorkflowCancellation({ signal: cancellation, listenForSignals: false })
+  return await runWithCleanup(() => runManagedStep(step, index, total, preflightEnv, workflowEnv, scope), () => scope.dispose())
+}
+
+async function runManagedStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string>, workflowEnv: NodeJS.ProcessEnv, cancellation: WorkflowCancellation) {
+  const observer = await prepareWorkflowProcessObserver(cancellation.signal)
   let failure: unknown
   let report: DemoE2eMemoryStepReport | undefined
   try {
     // 准备完成与业务启动之间再次检查取消；基础设施耗时不计入业务阶段报告。
-    cancellation?.throwIfAborted()
+    cancellation.signal.throwIfAborted()
     report = await runObservedStep(step, index, total, preflightEnv, workflowEnv, cancellation, observer)
   }
   catch (error) {
@@ -52,12 +58,13 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
   return report!
 }
 
-async function runObservedStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string>, workflowEnv: NodeJS.ProcessEnv, cancellation?: AbortSignal, observer?: WorkflowProcessObserver) {
-  cancellation?.throwIfAborted()
+async function runObservedStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string>, workflowEnv: NodeJS.ProcessEnv, cancellation: WorkflowCancellation, observer?: WorkflowProcessObserver) {
+  const signal = cancellation.signal
+  signal.throwIfAborted()
   process.stdout.write(`[demo-e2e] ${index}/${total}${step.local ? ' local' : ''} ${step.name}: ${step.command} ${step.args.join(' ')}\n`)
   const startedAt = Date.now()
   const samples: DemoE2eMemorySample[] = []
-  const environment = { ...workflowEnv, ...step.env, ...preflightEnv }
+  const environment: NodeJS.ProcessEnv = { ...workflowEnv, ...step.env, ...preflightEnv, ...cancellation.env }
   const invocation = step.command === 'pnpm'
     ? createPnpmCommand(step.args, { npmExecPath: environment['npm_execpath'] })
     : { command: step.command, args: step.args, shell: false }
@@ -99,7 +106,7 @@ async function runObservedStep(step: WorkflowStep, index: number, total: number,
     stop(true)
     resolveCancelled()
   }
-  cancellation?.addEventListener('abort', onAbort, { once: true })
+  signal.addEventListener('abort', onAbort, { once: true })
   let failure: unknown
   let exitCode = 1
   const record = () => {
@@ -125,41 +132,42 @@ async function runObservedStep(step: WorkflowStep, index: number, total: number,
           return
         }
         void record().catch((error) => {
-          failure = error
-          stop()
-          resolveCancelled()
+          failure ??= error
+          cancellation.cancel(error)
         })
       }, 1000)
       timer.unref?.()
     }
-    if (cancellation?.aborted) {
+    if (signal.aborted) {
       onAbort()
     }
     const outcome = await Promise.race([closed, cancelled])
     exitCode = typeof outcome === 'number' ? outcome : 1
   }
   catch (error) {
-    failure = error
+    failure ??= error
+    cancellation.cancel(error)
   }
   finally {
     clearInterval(timer)
-    if (!cancellation?.aborted && failure === undefined && child.exitCode !== null) {
+    if (!signal.aborted && failure === undefined && child.exitCode !== null) {
       // 正常退出先让已启动的有界采集落定；不能用清理预算截断 Windows 冷启动的身份探针。
       await pendingSample?.catch((error) => {
         failure ??= error
+        cancellation.cancel(error)
       })
     }
-    stop()
+    stop(signal.aborted)
     child.removeListener('exit', onExit)
-    cancellation?.removeEventListener('abort', onAbort)
+    signal.removeEventListener('abort', onAbort)
   }
   const cleanupResult = await cleanup!
   // 收尾等待最后一轮采样落定，不能让晚到的错误或样本越过阶段边界。
   await pendingSample?.catch((error) => {
     failure ??= error
   })
-  const reason = cancellation?.aborted ? cancellation.reason : undefined
-  const errors = [...new Set([reason, failure, spawnError, cleanupResult.error].filter(error => error !== undefined))]
+  const reason = signal.aborted ? signal.reason : undefined
+  const errors = [...new Set([failure ?? reason, reason, failure, spawnError, cleanupResult.error].filter(error => error !== undefined))]
   const cancelledError = reason instanceof WorkflowCancellationError ? reason : undefined
   if (cancelledError) {
     exitCode = cancelledError.exitCode

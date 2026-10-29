@@ -73,7 +73,9 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         if (!errors.includes(error)) {
           errors.push(error)
         }
-        terminateSpawnedChild(Date.now() >= deadline ? 'SIGKILL' : 'SIGTERM')
+        if (Date.now() >= cooperativeDeadline) {
+          terminateSpawnedChild(Date.now() >= deadline ? 'SIGKILL' : 'SIGTERM')
+        }
         return false
       }
       finally {
@@ -96,12 +98,18 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     const cleanupMs = options.cleanupMs ?? 2000
     const deadline = cooperativeDeadline + cleanupMs
     const graceDeadline = cooperativeDeadline + Math.floor(cleanupMs / 2)
-    if (ownership.failure !== undefined) {
+    if (ownership.failure !== undefined && !cooperative) {
       terminateSpawnedChild('SIGTERM')
     }
     while (Date.now() < cooperativeDeadline) {
       // 合作窗口决定何时强制终止，不是身份查询预算；跨边界查询仍消耗预先固定的总截止。
       if (!await read(Math.min(Date.now() + 5000, deadline))) {
+        // 合作窗口用于等待调用方请求的退出，探针失败不能抢先杀死负责收尾的消费者。
+        // 错误仍保留，合作窗口结束后才用原清理预算重新核对身份并执行严格回收。
+        const remaining = cooperativeDeadline - Date.now()
+        if (remaining > 0) {
+          await delay(remaining)
+        }
         break
       }
       if (complete()) {
