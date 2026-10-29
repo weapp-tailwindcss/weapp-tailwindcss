@@ -1,130 +1,11 @@
 import type { MemoryProcessSample, MemoryUsageSample } from '../types'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
+import { samplePosixProcessTreeMemory } from './posix'
 import { runMemoryProbe } from './probe'
 import { createWindowsProcessTreeMemoryScript } from './windows'
 
 export { createWindowsProcessTreeMemoryScript } from './windows'
-
-interface ProcessTreeRow {
-  pid: number
-  ppid: number
-  rssKb: number
-  command?: string
-}
-
-function readPsToken(value: string, start: number) {
-  let index = start
-  while (index < value.length && value.charCodeAt(index) <= 32) {
-    index += 1
-  }
-  const tokenStart = index
-  while (index < value.length && value.charCodeAt(index) > 32) {
-    index += 1
-  }
-  if (tokenStart === index) {
-    return undefined
-  }
-  return {
-    token: value.slice(tokenStart, index),
-    nextIndex: index,
-  }
-}
-
-function parseProcessTreeRowLine(value: string): ProcessTreeRow | undefined {
-  const pidColumn = readPsToken(value, 0)
-  const ppidColumn = pidColumn ? readPsToken(value, pidColumn.nextIndex) : undefined
-  const rssColumn = ppidColumn ? readPsToken(value, ppidColumn.nextIndex) : undefined
-  if (!pidColumn || !ppidColumn || !rssColumn) {
-    return undefined
-  }
-  const pid = Number(pidColumn.token)
-  const ppid = Number(ppidColumn.token)
-  const rssKb = Number(rssColumn.token)
-  if (!Number.isInteger(pid) || !Number.isInteger(ppid) || !Number.isFinite(rssKb)) {
-    return undefined
-  }
-  const command = value.slice(rssColumn.nextIndex).trim()
-  return {
-    pid,
-    ppid,
-    rssKb,
-    ...(command ? { command: command.slice(0, 240) } : {}),
-  }
-}
-
-function parseProcessTreeMemoryOnPosix(rootPid: number, stdout: string): Omit<MemoryUsageSample, 'at'> | undefined {
-  const rows: ProcessTreeRow[] = []
-  for (const line of stdout.split(/\r?\n/)) {
-    const normalized = line.trim()
-    if (!normalized) {
-      continue
-    }
-
-    const row = parseProcessTreeRowLine(normalized)
-    if (row) {
-      rows.push(row)
-    }
-  }
-
-  const childrenByParent = new Map<number, ProcessTreeRow[]>()
-  const byPid = new Map<number, ProcessTreeRow>()
-  for (const row of rows) {
-    byPid.set(row.pid, row)
-    const siblings = childrenByParent.get(row.ppid)
-    if (siblings) {
-      siblings.push(row)
-    }
-    else {
-      childrenByParent.set(row.ppid, [row])
-    }
-  }
-
-  const tracked = new Map<number, ProcessTreeRow>()
-  const root = byPid.get(rootPid)
-  if (root) {
-    tracked.set(root.pid, root)
-  }
-
-  const stack = [...(childrenByParent.get(rootPid) ?? [])]
-  while (stack.length > 0) {
-    const current = stack.pop()
-    if (current == null || tracked.has(current.pid)) {
-      continue
-    }
-    tracked.set(current.pid, current)
-    const children = childrenByParent.get(current.pid)
-    if (children?.length) {
-      stack.push(...children)
-    }
-  }
-
-  if (tracked.size === 0) {
-    return undefined
-  }
-
-  let totalRssKb = 0
-  let maxProcessRssKb = 0
-  for (const row of tracked.values()) {
-    totalRssKb += row.rssKb
-    maxProcessRssKb = Math.max(maxProcessRssKb, row.rssKb)
-  }
-
-  return {
-    rssMb: Math.round(totalRssKb / 1024),
-    maxProcessRssMb: Math.round(maxProcessRssKb / 1024),
-    processCount: tracked.size,
-    topProcesses: [...tracked.values()]
-      .sort((a, b) => b.rssKb - a.rssKb)
-      .slice(0, 8)
-      .map(row => ({
-        pid: row.pid,
-        ppid: row.ppid,
-        rssMb: Math.round(row.rssKb / 1024),
-        ...(row.command ? { command: row.command } : {}),
-      })),
-  }
-}
 
 export function parseProcessTreeMemoryOnWindows(stdout: string): Omit<MemoryUsageSample, 'at'> | undefined {
   try {
@@ -183,12 +64,9 @@ export async function sampleProcessTreeMemory(rootPid: number | undefined, signa
   const windows = process.platform === 'win32'
   const timeoutMs = windows ? 5000 : 1000
   const expiresAt = Date.now() + timeoutMs
-  const command = windows ? 'powershell' : 'ps'
-  const args = windows
-    ? ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(createWindowsProcessTreeMemoryScript(rootPid, cwd), 'utf16le').toString('base64')]
-    : ['-Ao', 'pid=,ppid=,rss=,command=']
-  const stdout = await runMemoryProbe(command, args, { signal, timeoutMs })
-  const sample = windows ? parseProcessTreeMemoryOnWindows(stdout) : parseProcessTreeMemoryOnPosix(rootPid, stdout)
+  const sample = windows
+    ? parseProcessTreeMemoryOnWindows(await runMemoryProbe('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(createWindowsProcessTreeMemoryScript(rootPid, cwd), 'utf16le').toString('base64')], { signal, timeoutMs }))
+    : await samplePosixProcessTreeMemory(rootPid, signal, expiresAt)
   if (Date.now() >= expiresAt) {
     throw new Error(`memory probe exceeded ${timeoutMs}ms deadline before sample acceptance`)
   }
