@@ -2232,5 +2232,538 @@
     ],
     "scope": "fixtures only; production website and copied-template acceptance remain pending; formal Uni performance still blocked",
     "thresholdsChanged": false
+  },
+  "formal63eAndAppTemplateFollowup": {
+    "recordedAt": "2026-10-29T01:13:14.504547+00:00",
+    "scope": "准确63e正式CI、已整合Vue2/Taro修复、复制模板首错、HX隔离编译及网站监控补强；完整最终验收仍待完成。历史失败原样保留，不用旧head成功放行新head。",
+    "formalUni": {
+      "head": "63e3e5a4649058b8d4625226e9aa3f7fff28ddd3",
+      "baseline": "base:e769e69b97c88b379a80d3cabca4fa20330b999a",
+      "run": 40789766677,
+      "attempt": 1,
+      "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40789766677",
+      "conclusion": "success",
+      "only": "demo-uni-app-vite-tailwindcss-v4__mp-weixin",
+      "buildRuns": 3,
+      "hmrRuns": 3,
+      "diagnostics": {
+        "gc": false,
+        "input": false,
+        "allocation": false
+      },
+      "artifact": {
+        "id": 12862207991,
+        "sha256": "dd72c728364458970977859e1a3abe60c9def2ada9a425376a912c45c3db609d",
+        "bytes": 31756,
+        "entries": [
+          "matrix-raw.json",
+          "report.md",
+          "versions.json",
+          "summary.json"
+        ]
+      },
+      "zipIntegrity": {
+        "sha256Matches": true,
+        "bytesMatch": true,
+        "crcError": null,
+        "summaryEqualsReceipt": true
+      },
+      "metrics": {
+        "baselineBuild": 4709.419927,
+        "currentBuild": 4691.837031000003,
+        "buildDeltaPct": -0.37335587551220645,
+        "baselineHmr": 2189.479862,
+        "currentHmr": 2157.7404349999997,
+        "hmrDeltaPct": -1.4496332005998798,
+        "baselineHmrPlugin": 299,
+        "currentHmrPlugin": 297,
+        "hmrPluginStatistic": "p95",
+        "hmrPluginDeltaPct": -0.6688963210702341,
+        "baselineHmrPluginSteadySamples": [
+          98,
+          97
+        ],
+        "currentHmrPluginSteadySamples": [
+          95,
+          143
+        ],
+        "baselineHmrSteadyRssMb": 1048.55078125,
+        "currentHmrSteadyRssMb": 1142.328125,
+        "hmrSteadyRssDeltaPct": 8.943519515402583,
+        "hmrPeakRssDeltaPct": 1.00652736210609
+      },
+      "guard": {
+        "passed": true,
+        "thresholds": {
+          "minimumMemoryRegressionMb": 64,
+          "minimumTailRegressionSamples": 2,
+          "minimumTimingRegressionMs": 10,
+          "maximumMedianRegressionPValue": 0.05,
+          "regressionPercent": 5
+        },
+        "violations": [],
+        "blocking": true
+      },
+      "assessment": {
+        "guardPassed": true,
+        "violations": [],
+        "limitations": [
+          "稳态插件样本为 [98,97] → [95,143] ms，中位门禁统计增加 45.92%，单个尾部样本增加；固定规则要求至少两尾样本同步越界，未满足。",
+          "HMR steady RSS 增加 8.94%，但 peak RSS 仅增加 1.01%，未满足两项同步越界与反向顺序独立复验的固定规则。",
+          "最终提交仍需运行正式性能 workflow；此结果仅绑定上述 head。"
+        ]
+      },
+      "receipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-63e-ci-audit-1rrzkxb1/formal-uni-40789766677-result.json",
+        "bytes": 8335,
+        "sha256": "2404d71200ed1d60da7a34b369d0348238f89c5d8a9af6753a8e971783e36b43"
+      },
+      "limitation": "本轮正式固定规则通过，仅绑定63e；原155→168ms失败及诊断保留。稳态95/143ms的单个尾样本与steady RSS上涨没有满足原同步越界规则，不能称所有指标均改善；最终交付head须重新执行适用正式CI。"
+    },
+    "lynxAndroidAttempt2": {
+      "head": "63e3e5a4649058b8d4625226e9aa3f7fff28ddd3",
+      "workflowRun": 40789722996,
+      "attempt": 2,
+      "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40789722996/attempts/2",
+      "workflowConclusion": "success",
+      "rerun": "只实际重跑首轮失败Android job一次；先前请求在创建attempt前被拒绝。",
+      "preservedFirstFailure": {
+        "job": 123172031635,
+        "failure": "adb could not connect to TCP port 5554: Connection refused; shell exit1",
+        "log": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-63e-ci-audit-1rrzkxb1/job-123172031635.log",
+          "bytes": 213168,
+          "sha256": "5471a278ed085128e87f99cd9b9223afca503eb795878749c89815b45e374b1e"
+        }
+      },
+      "nativeReceipt": {
+        "artifactId": 12863831198,
+        "bytes": 56556702,
+        "sha256": "25afeb088a2701c25ae6b10ea812acc39a35dd29963a7e08709f9d1bf9bbe340",
+        "digestMatchesGitHub": true,
+        "report": "lynx-native/android-1793234099221/report.json",
+        "platform": "android",
+        "verifiedAt": "2026-10-29T00:37:15.914Z",
+        "catalogHash": "0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff",
+        "runId": "76f9e4c3-43bc-4a9d-93f4-ea2eb332ad0e",
+        "bundleSha256": "3bf2f49ff421a16fecc29aa8d4f3ae8769527c405a0694ae0642652e1e9d07ee",
+        "caseCount": 118,
+        "statuses": {
+          "supported": 54,
+          "unsupported": 64
+        },
+        "environment": {
+          "deviceName": "sdk_phone_x86_64",
+          "deviceModel": "Android SDK built for x86_64",
+          "osName": "Android",
+          "osVersion": "11",
+          "osBuild": "RSR1.210722.013.A2",
+          "runtimeIdentifier": "android-30",
+          "abi": "x86_64",
+          "viewport": {
+            "width": 1080,
+            "height": 1920,
+            "pixelRatio": 2.625
+          },
+          "apiLevel": 30
+        },
+        "versions": {
+          "tailwindcss": "4.3.3",
+          "reactLynx": "0.129.0",
+          "reactRsbuildPlugin": "0.22.0",
+          "rspeedy": "0.18.3",
+          "lynxTypes": "4.3.0",
+          "templateWebpackPlugin": "0.16.5",
+          "lynxEngine": "4.0.1",
+          "engineVersion": "3.9",
+          "cssDefines": "0.0.18",
+          "tasmEncoder": "0.0.49",
+          "cssSerializer": "0.1.9",
+          "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+          "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b"
+        },
+        "evidenceArtifactCount": 181,
+        "runIdConsistent": true
+      },
+      "receipt": {
+        "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-63e-ci-audit-1rrzkxb1/lynx-android-attempt2-receipt.json",
+        "bytes": 1556,
+        "sha256": "32a9106a2a0d52c0a6da598f72965073cbdd99684d89d31cb55ea258e8a92d7c"
+      },
+      "zipIntegrity": {
+        "sha256Matches": true,
+        "bytesMatch": true,
+        "crcError": null,
+        "entries": 220
+      },
+      "limitation": "118项为54 supported/64 unsupported，不把unsupported写成已支持；该CI运行不替代最终head或本地完整双端原生验收，未据此刷新已冻结基线。"
+    },
+    "integratedVue2AndTaro": {
+      "vue2": {
+        "sourceCommit": "6c8f3ff672d3b0610108f6035e0aa140f9db27d3",
+        "integratedCommit": "89a6b36e6a5795a024ff55124b5f464bd1b4c96b",
+        "scope": "独立Vue2 Webpack模板通过真实App style入口恢复一次业务CSS注入，并保持service/view Web class身份一致；不在产物阶段读取源码补状态。",
+        "helperSha256": "79478f0b9fa8112ae894923dad5c4743a97aef8aef828c1da0f69c805479690e",
+        "frozenArtifacts": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-uni2-app-baseline-f7udxn7k/current-fixed-final",
+        "targeted": {
+          "purePassed": 19,
+          "artifactNoUpdatePassed": 2
+        },
+        "semanticReview": "App一次12128B业务CSS；MP WXML/JS字节一致、56条CSS规则AST相同但新增1023换行；H5/360各13576B、148规则且CSS字节一致。",
+        "limitation": "App/MP static基线已定向更新和禁更；不代表原生基座或WebView运行通过。"
+      },
+      "taro": {
+        "integratedPolicyCommit": "fc03daeacdbaf2f393dba9e1ef1ccd46869ff3ef",
+        "integratedSnapshotCommit": "eef2240e4b1303db565123a2351cd2687e610121",
+        "integratedReactStaticCommits": [
+          "40e053f818460069d1f6f9f913650913187b25bd",
+          "05ec68c48dbc5576eada0c89ad02fb20038de8f1"
+        ],
+        "scope": "Harmony Hybrid在框架环境和策略边界按Web处理，恢复原生Web class、rem及主题作用域；React Vite/Webpack基线按designWidth750/deviceRatio750:1修正0.2rem→0.1rem，Vue3产物保持既有配套。显式rem2rpx:true的独立Vite快照由1.5rem同步为48rpx。",
+        "targeted": {
+          "envPassed": 309,
+          "frameworkPassed": 128,
+          "viteSnapshotPassed": 4,
+          "existingViteSkipped": 2
+        },
+        "candidateReceipt": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-63e-ci-audit-1rrzkxb1/taro-hybrid-candidate-validation.json",
+          "bytes": 29628,
+          "sha256": "cda00e9cf1b500985f65c097a9c5169928a6fbe1d7ac52d5288f5efa66ca591d"
+        },
+        "limitation": "隔离候选四个Hybrid生产构建及普通浏览器computed/pixel通过，只证明WebView CLI/产物；最终整合head、Harmony设备、桥接及HMR仍须单独验收。"
+      }
+    },
+    "copiedTemplatesAppAttempt": {
+      "head": "eef2240e4b1303db565123a2351cd2687e610121",
+      "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+      "preflightRun": "f8a2bdf6-b4cf-467d-8176-9f98b828a478",
+      "node": {
+        "version": "v24.22.1",
+        "executable": "/Users/icebreaker/.nvm/versions/node/v24.22.1/bin/node",
+        "platform": "darwin",
+        "arch": "arm64"
+      },
+      "pnpm": "12.15.0",
+      "initialGitStatus": "",
+      "status": "failed",
+      "passedExecutableTargets": 15,
+      "results": [
+        {
+          "project": "mpx-tailwindcss-v4",
+          "target": "wx",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "weapp",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "swan",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "alipay",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "tt",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "qq",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "jd",
+          "status": "passed"
+        },
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "harmony-hybrid",
+          "status": "passed"
+        },
+        {
+          "project": "taro-webpack-tailwindcss-v4",
+          "target": "weapp",
+          "status": "passed"
+        },
+        {
+          "project": "taro-webpack-tailwindcss-v4",
+          "target": "harmony-hybrid",
+          "status": "passed"
+        },
+        {
+          "project": "uni-app-tailwindcss-v4",
+          "target": "mp-weixin",
+          "status": "passed"
+        },
+        {
+          "project": "uni-app-tailwindcss-v4",
+          "target": "app",
+          "status": "passed"
+        },
+        {
+          "project": "uni-app-webpack-tailwindcss-v4",
+          "target": "mp-weixin",
+          "status": "passed"
+        },
+        {
+          "project": "uni-app-webpack-tailwindcss-v4",
+          "target": "app-plus",
+          "status": "passed"
+        },
+        {
+          "project": "weapp-vite-tailwindcss-v4",
+          "target": "weapp",
+          "status": "passed"
+        },
+        {
+          "project": "uni-app-hbuilderx-tailwindcss-v4",
+          "target": "mp-weixin",
+          "status": "failed"
+        }
+      ],
+      "failedTarget": "uni-app-hbuilderx-tailwindcss-v4:mp-weixin",
+      "pending": [
+        {
+          "project": "taro-vite-tailwindcss-v4",
+          "target": "rn",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "4b6e17cd7b2843482ac9728ec53b8fe799b1f4375d13be1dd8177446c30be615",
+          "missing": [
+            "react-native",
+            "@tarojs/taro-rn",
+            "@tarojs/rn-runner"
+          ],
+          "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。"
+        },
+        {
+          "project": "taro-webpack-tailwindcss-v4",
+          "target": "rn",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "01f32bd2361e0f7d07766cb24f278fcfcaa8cb3a4b4687e3b1e98ad346c88498",
+          "missing": [
+            "react-native",
+            "@tarojs/taro-rn",
+            "@tarojs/rn-runner"
+          ],
+          "reason": "基线与当前均缺RN配套；CLI会隐式安装并改写manifest/锁，本轮不裸跑或扩展模板能力。"
+        },
+        {
+          "project": "uni-app-webpack-tailwindcss-v4",
+          "target": "quickapp-native",
+          "status": "pending",
+          "origin": "baseline-capability-gap",
+          "baseline": "e769e69b97c88b379a80d3cabca4fa20330b999a",
+          "baselinePackageSha256": "0f1ebc76db8b04a2e80710438dbcde8e4a1b6cb73ad3b028863ea7380ca63560",
+          "missing": [
+            "src/sign/release/private.pem",
+            "src/sign/release/certificate.pem"
+          ],
+          "reason": "基线与当前均无release签名；上游缺证仍exit0，不生成密钥、不将普通编译文件当作签名rpk成功。"
+        }
+      ],
+      "report": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/copied-template-verification/run-g1KSdm/report.json",
+        "bytes": 452857,
+        "sha256": "95d924e182d9b07bfb291157d963fc78a477066ffd4f430ddfbef57abaf24226"
+      },
+      "runnerInventorySha256": "c929e7bb92f33ba869408991f6c53be5be7f9cc500ac5a580d34b513709c75d2",
+      "temporaryRetainedForFailureReview": true,
+      "limitation": "前15目标通过不能改写本轮总体failed；两Taro RN与Vue2 quickapp-native三个准确基线能力缺口继续pending。构建/CSS正向规则合同不证明完整cascade、设备、HMR或签名包运行。"
+    },
+    "hbuilderxTemplateDiagnosis": {
+      "failedSourceHead": "eef2240e4b1303db565123a2351cd2687e610121",
+      "ide": "stable 5.33.2026102401",
+      "compiler": "HBuilderX内置5.33 vue3",
+      "consumer": "npm weapp-tailwindcss5.6.3 / Tailwind CSS4.3.3",
+      "rootCause": "模板tailwindcss.v4.cssEntries错误传入path.resolve(__dirname, main.css)标量，按字符迭代后把根目录及IDE cwd当文件读取，产生source-candidates EISDIR；准确e769基线同样存在该配置且公开类型已为string[]，不归因为本轮API收窄或scanner错误。",
+      "templateCommit": "5228d2c04896401a2db8c3ab7dbda88631a154ac",
+      "change": "cssEntries改为单项数组，保留main.css与main.js样式导入。",
+      "preservedFirstCompile": {
+        "exitCode": 1,
+        "result": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/result.json",
+          "bytes": 144,
+          "sha256": "76bf70982c2022ac8f2a8dd6287e005b2427a35e20f1785272dfb4c7b8fb05a1"
+        },
+        "log": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/compile.log",
+          "bytes": 2405,
+          "sha256": "b48561cd674d19a168db51ba8c58c7c6c8614876f14e5b2c135cd9926cde6525"
+        },
+        "trace": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/trace-compile.log",
+          "bytes": 6387,
+          "sha256": "6a0eb4b12cb03ca9f17aec558ac57d2e2f295a73afe9f34b6672b05246c96909"
+        },
+        "secondaryFailure": "旧helper只等待产物120秒；IDE showAiErrorRecovery二次异常遮挡真实编译首错。"
+      },
+      "fixedCompile": {
+        "receipt": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/fixed-compile-receipt.json",
+          "bytes": 702,
+          "sha256": "c8c7e208f885a8199858196b349e6cf90bb1c6ee068fd91462cbd8de6dc5b0c4"
+        },
+        "result": {
+          "scope": "isolated HBuilderX mp-weixin static compile; no IDE page/device runtime proof",
+          "exitCode": 0,
+          "source": "actual completed command execution output",
+          "executionItemId": "exec-81f66aca-ee5f-4b32-9519-cad937de328e",
+          "observedAt": "2026-10-29T00:58:05.424Z",
+          "toolTranscript": "fixed-compile-tool-output.json",
+          "log": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/fixed-compile.log",
+          "logSha256": "3bfe24b386d6516c9b4b118f3c5b10a58c73b0be9516804e8968a9a8a8490c57",
+          "diagnosticInstrumentationRemoved": true,
+          "change": "cssEntries scalar to array",
+          "originalFailurePreserved": "compile.log",
+          "tracePreserved": "trace-compile.log"
+        },
+        "log": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-hx-template-diagnostic-ltn9qcz5/fixed-compile.log",
+          "bytes": 1415,
+          "sha256": "3bfe24b386d6516c9b4b118f3c5b10a58c73b0be9516804e8968a9a8a8490c57"
+        },
+        "readyMs": 5436,
+        "projectCloseLogged": true
+      },
+      "helperFollowup": {
+        "sourceCommit": "391da8b9f595a4638e5209b9861c809c7143e366",
+        "integratedCommit": "b56fb97bda7d32e0daafd064cde059440e0705ac",
+        "scope": "保留真实CLI命令结果和compiler首错，退出0但编译失败不得仅等产物；归属项目清理与错误聚合保持。",
+        "rootTargetedPassed": 24,
+        "rootTargetedBreakdown": "helper23+模板1",
+        "rootLintExitCode": 0
+      },
+      "limitation": "fixed-compile真实exit0只证明隔离副本Stable微信目标编译和任务项目关闭；不代表IDE页面、设备、runtime/cascade、完整复制矩阵或全端验收。"
+    },
+    "websiteAncestorMonitorFollowup": {
+      "cancelledSourceHead": "63e3e5a4649058b8d4625226e9aa3f7fff28ddd3",
+      "preflightRun": "64e82169-6166-41d6-bc76-d9f2b40565eb",
+      "candidate": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793232087026",
+      "status": "cancelled-not-a-final-candidate",
+      "capturedPngCount": 828,
+      "completeManifestExists": false,
+      "control": {
+        "verifiedWorkflowPid": 32069,
+        "signal": "SIGTERM",
+        "wrapperExitCode": 1,
+        "stageCancellationExitCode": 143,
+        "normalCleanupVerified": false,
+        "cleanupDetail": "合作取消后进程树对已确认归属的后代发送定向SIGTERM，原stage明确报告非正常清理；不改写为正常完成。",
+        "allRecordedPids": [
+          32038,
+          32039,
+          32040,
+          32043,
+          32069,
+          34646,
+          34679,
+          34693,
+          34694,
+          34772,
+          52652,
+          52668,
+          52724,
+          52765,
+          52773,
+          52825,
+          53387,
+          29082,
+          29162,
+          29293,
+          29360,
+          29424,
+          88399,
+          88498,
+          88610,
+          88612,
+          88658
+        ],
+        "allRecordedPidsEnded": true,
+        "preflightDaemonExitCode": 0
+      },
+      "cancellationReceipt": {
+        "path": "e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793232087026/cancellation-review.json",
+        "bytes": 1675,
+        "sha256": "aded8ac0f3e66b8071a1ebd6e2dca0d878652752600ec5634461cd00d27fa01b"
+      },
+      "review": "001/002/008与旧黄金0RGBA差；003/004/005/007/009/010与前一候选相同且仅首TOC高亮变化。003/005/009首h2位于上半视口，上游几何规则允许该高亮。006原比较器门槛结果保留；这些像素审查不能补足捕获期证据。",
+      "counterexample": {
+        "kind": "准确63e独立VM白盒算法反例，不冒充真实浏览器验收",
+        "proof": {
+          "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-monitor-review-jx16kdey/ancestor-opacity-proof.json",
+          "bytes": 948,
+          "sha256": "e744274ce574b7fcf6b0979f4d7e5ce3656864485373922f83cfade0a668e060"
+        },
+        "oldAlgorithmRegression": {
+          "tests": 8,
+          "passed": 1,
+          "failed": 7,
+          "functionalMisses": 6,
+          "costContractMisses": 1,
+          "log": {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-monitor-review-jx16kdey/composition-63e-regressions.log",
+            "bytes": 4433,
+            "sha256": "f0d09b613909500898d0d5c2f0590fc0661b38484cd0dc641397b9dd3049f70f"
+          }
+        }
+      },
+      "sourceCommit": "bba189479c16b26d1f28e3842e98759d05bb4d68",
+      "integratedCommit": "6cc16263b317358006d08c3197c24560b20fe7cb",
+      "lintCommit": "13f36e3fd950014c8aed1eb8fb36a0f99414ea3f",
+      "scope": "真实TOC祖先链去重，核对完整computed style、parent身份、rect/client/scroll几何及初始running动画；MutationRecord.oldValue保留同任务改回历史。自包含browser函数仅type import。未更改生产样式、动画、共享60s、RGBA连续完整双样本或原5像素比较门槛。",
+      "targeted": {
+        "purePassed": 32,
+        "pureCompositionPassed": 10,
+        "existingMonitorPassed": 22,
+        "strictTypeScript": "6.0.3 passed",
+        "logs": [
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-monitor-review-jx16kdey/composition-final-confirmed-pure.log",
+            "bytes": 249,
+            "sha256": "2b8c5e9e1541d887148b1390f1091bc187f5650b463a4475ce95ba1994fbc05a"
+          },
+          {
+            "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/wt-website-monitor-review-jx16kdey/composition-final-confirmed-types.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "costEvidence": "32links/400properties/4共同祖先，每read每祖先仅读完整属性一次；未测实际browser CPU。"
+      },
+      "realFixtures": {
+        "status": "pending",
+        "newCasesPerBrowser": 16,
+        "projects": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "files": [
+          "tests/full-page-composition.spec.ts",
+          "tests/full-page-monitor.spec.ts",
+          "tests/full-page-toc.spec.ts",
+          "tests/full-page-snapshot.spec.ts"
+        ],
+        "workers": 1,
+        "retries": 0,
+        "maxFailures": 1,
+        "updateSnapshots": "none",
+        "limitation": "旧72项只覆盖旧monitor；新祖先合成fixture、完整候选、人工审查、来源登记和禁更均待准确新head fresh gate。旧候选未安装为最终黄金。"
+      }
+    },
+    "remaining": "最终准确head的新扩展预检、三浏览器新监控fixture、完整网站采集/审查/安装/禁更、复制模板最终矩阵、107portable/8HTML禁更、完整多端/设备/HMR/ABI及适用CI仍待完成；PR1320不能据上述局部结果认定全通过。"
   }
 }

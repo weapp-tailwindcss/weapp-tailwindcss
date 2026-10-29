@@ -199,3 +199,21 @@ Taro Webpack 独立模板改为在 `processAssets` 的 `SUMMARIZE + 1` 处理真
 网站捕获期观察覆盖 document、节点身份、真实颜色、动画、视口、标题和 TOC 链接几何，只有连续两张完整、无扰动且 RGBA 严格相同的截图才进入原有一次整图比较，仍使用原 60 秒与 5 像素门槛。首轮 fixture 的 1 项失败、68 项未运行已保留：字体就绪后直接调用原生 fullPage 也会改变默认 Times 的文本宽度，monospace 对照同样有较小变化，普通视口截图没有该变化；底层排版机制尚未确认。稳定采样合同允许拒绝污染样本后重采，因此回归精确检查最后两张各自前后几何及相互一致，保留完整尺寸、底部像素、固定位置和视口断言，没有固定容器宽度、替换生产字体或放宽容差。另以不调用截图的祖先几何变化与恢复验证观察器，避免原生首图扰动替代测试目标。
 
 准确 `cdf138589977369cad509f5f10a57cd658b5f487` 经新扩展预检 `32470ffc-12b4-44be-bd2d-ce2098813f32`、当前会话真实界面交互、verify 与单次领取，Chromium、Firefox、WebKit 的捕获监测、TOC 与匿名快照合同共 72 项通过，零重试、禁止更新；纯回归另有 48 项通过。该结果只证明夹具合同，不替代真实网站候选、黄金图审查、网站禁更或最终完整多端验收。Uni 正式性能的 155→168ms 阻塞仍保留，PR #1320 尚不能合并。
+
+## 准确 63e 正式 CI 与 App 模板补齐
+
+准确 `63e3e5a4649058b8d4625226e9aa3f7fff28ddd3` 的 [正式 Uni 性能 run 40789766677](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40789766677) 已 success：准确 e769 基线、Uni 唯一 case、build3/HMR3，GC/input/allocation 三诊断开关均关闭，原预算无违规。build 4709.42→4691.84ms，端到端 HMR 2189.48→2157.74ms，plugin p95 299→297ms。稳态 plugin 为 [98,97]→[95,143]ms，单尾上涨未满足原“两尾同时越界”规则；steady RSS +8.94%、peak +1.01%也未同时越界，不能称全部指标改善。原155→168ms失败及2×2诊断保留；本次成功只绑定63e，最终交付head仍须重跑正式CI。下载ZIP的SHA、大小、CRC及summary与receipt均重新核对。
+
+同一63e的 [Lynx run 40789722996 attempt2](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40789722996/attempts/2) 已 success。首轮Android adb连接5554被拒绝、shell exit1的日志保留，只实际重跑该失败job一次。Android新artifact 12863831198的56556702字节、SHA及全CRC重新核对；118项为54 supported/64 unsupported、181条evidence，bundle与run身份一致，实际宿主Android11/API30/x86_64。unsupported不等于已支持，该CI不替代最终head或本地完整双端原生验收，也未据此刷新冻结基线。
+
+Vue2模板修复已整合为 `89a6b36e6`：沿真实App样式入口恢复一次12128B业务CSS，service/view的Web class身份一致；App/MP两份static基线定向更新后，19纯合同及2实际产物禁更通过。MP WXML/JS字节一致，56条CSS规则AST相同，仅新增1023换行；H5/360各13576B、148规则且CSS字节一致。Taro Harmony Hybrid在环境/策略边界按Web处理（`fc03daeac`），显式rem2rpx:true的Vite快照同步1.5rem→48rpx（`eef2240e4`），React Vite/Webpack Hybrid静态基线按designWidth750/deviceRatio750:1同步0.2rem→0.1rem（`40e053f81`、`05ec68c48`）。隔离候选四个Hybrid生产构建与普通浏览器computed/pixel通过；这些产物证据不代表Harmony原生桥接、HMR或设备验收。
+
+复制模板在准确 `eef2240e4b1303db565123a2351cd2687e610121`、新门禁 `f8a2bdf6-b4cf-467d-8176-9f98b828a478` 后运行，`copied-template-verification/run-g1KSdm/report.json`记录前15可执行目标通过，包括Mpx wx、Taro Vite六小程序与Hybrid、Taro Webpack weapp与Hybrid、Vue3/Vue2微信与App、weapp-vite。第16个HBuilderX微信编译失败，报告总体仍为failed；两Taro RN及Vue2 quickapp-native三个准确基线能力缺口继续pending，原副本与失败日志保留。
+
+HBuilderX隔离诊断在Stable5.33.2026102401内置Vue3编译器、npm weapp-tailwindcss5.6.3/TW4.3.3重现source-candidates EISDIR。真实readFileSync追踪证实模板把cssEntries传为标量，按字符迭代后将根目录和IDE cwd当文件读取；准确e769基线同配置及string[]公开类型已存在，不能归因为本轮API收窄。模板改为单项数组并保留原样式导入（`5228d2c04`），去掉诊断注入后实际编译exit0、ready5436ms且任务项目关闭；fixed receipt与原exit1的result.json分开保存。helper另在真实命令结果边界保留首错并改善归属清理（整合`b56fb97bd`，23 helper+1模板回归通过），不以CLI exit0等同编译成功。当前只证明该隔离副本微信静态编译，完整复制矩阵、IDE页面、设备和cascade仍待验收。
+
+## 网站候选取消与祖先合成监控补强
+
+准确63e的 `website-visual-candidate-1793232087026/`经只读审查和独立VM反例发现TOC祖先opacity/filter等绘制扰动漏检，已合作取消，不作为最终黄金候选。取消时828张PNG、无完整manifest；wrapper exit1、stage143，原stage正常清理未确认，之后全部记录归属PID已结束。取消、过程日志及白盒证据全部保留。001/002/008与旧图0RGBA差；003/004/005/007/009/010与上一候选相同且首TOC链接高亮符合所核上游几何规则，但像素相同不能补足捕获期观测。
+
+修复 `6cc16263b`（规范对齐`13f36e3fd`）按真实祖先链去重，采集完整computed style、parent身份、rect/client/scroll几何及未完成动画，并用MutationRecord.oldValue保留同任务改回历史。准确旧算法同组8项为7失败/1通过，其中6项功能漏检及1项祖先读取成本合同；修复后新增10+既有22=32纯回归及TS6严格检查通过。32链接/400属性白盒证明共享祖先每read仅读一次完整属性，未测实际浏览器CPU。新增16项/浏览器已加入三引擎CI四入口，但真实验收尚未运行；旧72项通过不能替代新监控验收。没有改生产样式、动画、共享60秒、完整双样本RGBA严格相同或原5像素门槛。新head的fresh gate、完整候选采集/人工审查/来源登记/禁更，以及最终全端与CI仍待完成；PR #1320尚不能宣称全部通过或据此合并。
