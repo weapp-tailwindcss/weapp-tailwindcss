@@ -2,7 +2,7 @@ import type { TailwindV4GenerationCoreInput } from '@/context/generation'
 import type { TailwindV4GenerationCoreResult } from '@/generation/service'
 import { stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { generateTailwindV4Css } from '@/context/generation'
-import { hasTailwindRootDirectives } from '../../../generation/directives'
+import { hasTailwindRootImportDirectives } from '../../../generation/directives'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { hasBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
 import { normalizeCssSourceForCompare } from '../css-output'
@@ -81,7 +81,7 @@ export async function executeViteCssTransformTask(
   const shouldGenerateCssWithCore = (hasTailwindGenerationSource(options.generatorRawSource)
     && (!options.isWebGeneratorTarget
       || !hasBundlerGeneratedCssMarker(options.rawSource)
-      || hasTailwindRootDirectives(options.generatorRawSource, { importFallback: true })))
+      || hasTailwindRootImportDirectives(options.generatorRawSource, { importFallback: true })))
     || (!options.isWebGeneratorTarget && hasBundlerGeneratedCssMarker(options.rawSource))
 
   if (shouldGenerateCssWithCore) {

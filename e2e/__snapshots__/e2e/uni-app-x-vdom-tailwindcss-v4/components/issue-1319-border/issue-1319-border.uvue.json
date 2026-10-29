@@ -1,0 +1,24 @@
+{
+  "file": "components/issue-1319-border/issue-1319-border.uvue",
+  "count": 18,
+  "tokens": [
+    "border-[#e2e8f0]",
+    "border-[2px]",
+    "border-b-[1px]",
+    "border-l-[1px]",
+    "border-l-[2px]",
+    "border-r-[1px]",
+    "border-solid",
+    "border-t-0",
+    "border-t-[1px]",
+    "flex",
+    "flex-row",
+    "items-center",
+    "justify-between",
+    "mt-[12px]",
+    "pt-[10px]",
+    "text-[#64748b]",
+    "text-[#94a3b8]",
+    "text-[10px]"
+  ]
+}

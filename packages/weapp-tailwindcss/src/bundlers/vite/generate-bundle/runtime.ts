@@ -1,6 +1,7 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 /* eslint-disable style/max-statements-per-line */
 import type { BundleStateEntry } from '../bundle-state'
+import type { ViteFrameworkTemplateAssetContext } from '../shared/framework-asset-strategy'
 import type { SourceCandidateCollector } from '../source-candidates'
 import type { GenerateBundleContext, GenerateBundleRoundServices, GenerateBundleThis, PendingRememberedCssReplayUpdate } from './types'
 import type { CreateJsHandlerOptions } from '@/types'
@@ -61,6 +62,7 @@ import { createCandidateSignature, hasRuntimeAffectingSourceChanges } from './si
 import { createSubpackageSourceCandidateScope } from './source-candidate-scope'
 import { resolveCurrentSourceCandidateFile, resolveCurrentSourceCandidateSource } from './source-candidate-source'
 import { collectMiniProgramSubpackageRoots, isSubpackageOutputFile } from './subpackages'
+import { collectTemplateAssetStyles } from './template-assets'
 import { collectTemporaryCssSourceEntries, createTemporaryCssAssetSourceResolver, isTemporaryCssAssetFile } from './temporary-css-assets'
 import { createBundleTaskTimer } from './timing'
 import { createTransformFilter, createTransformFilterSignature, shouldSkipViteAssetTransform, shouldSkipViteJsChunkTransform } from './transform-filter'
@@ -79,6 +81,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
   const lastCssResultByFile = new Map<string, string>()
   const lastCssSourceHashByFile = new Map<string, string>()
   const lastCssRawSourceHashByFile = new Map<string, string>()
+  const templateStyleAssets = new Map<string, ViteFrameworkTemplateAssetContext['styles'][number]>()
   const frameworkRootImportShellTargetByFile = context.frameworkRootImportShellTargetByFile ?? new Map<string, string>()
   let currentOutDir: string | undefined
   let currentSubpackageRoots: Set<string> | undefined
@@ -156,6 +159,9 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const hasPreviousBundleState = state.iteration > 0 || state.sourceHashByFile.size > 0
     const hasOmittedKnownFiles = hasOmittedKnownBundleFiles(bundleFiles, state.sourceHashByFile.keys())
     const useIncrementalMode = !buildCommand || hasPreviousBundleState || hasOmittedKnownFiles
+    if (currentOutDir !== outDir) {
+      templateStyleAssets.clear()
+    }
     currentOutDir = outDir
     const snapshotStart = performance.now()
     const snapshot = buildBundleSnapshot(bundle, opts, outDir, state, envFlags.disableDirtyOptimization || !useIncrementalMode, { hasOmittedKnownFiles })
@@ -304,6 +310,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const jsTaskFactories: Array<() => Promise<void>> = []
     const pendingRememberedCssReplayUpdates: PendingRememberedCssReplayUpdate[] = []
     const entryPlanningStartedAt = performance.now()
+    const getTemplateStyles = context.assetPipelineStrategy?.prepareTemplateAsset && !isWebGeneratorTarget ? collectTemplateAssetStyles(snapshot, templateStyleAssets) : undefined
     for (const entry of snapshot.entries) {
       const { file, output: originalSource, source: originalEntrySource, type } = entry
       if (processMarkupAndScripts && type === 'html' && originalSource.type === 'asset') {
@@ -317,10 +324,11 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           debug('html skip transform (filtered): %s', file)
           continue
         }
+        const templateTransform = context.assetPipelineStrategy?.prepareTemplateAsset?.(Object.freeze({ file, styles: getTemplateStyles?.(file) ?? Object.freeze([]) }))
         if (!processFiles.html.has(file)) {
           continue
         }
-        processHtmlBundleEntry({ cache, context, debug, dynamicRetryCandidates, file, metrics, onUpdate, originalEntrySource, originalSource, rememberProcessCacheKey, resolveCurrentSourceCandidateSource: file2 => resolveCurrentSourceCandidateSource({ file: file2, getSourceCandidateSource, getSourceCandidateSources, outDir, rootDir, sourceRoot }), tasks, templateHandler, timeTask, transformRuntime, transformRuntimeSignature })
+        processHtmlBundleEntry({ cache, context, debug, dynamicRetryCandidates, file, metrics, onUpdate, originalEntrySource, originalSource, rememberProcessCacheKey, resolveCurrentSourceCandidateSource: file2 => resolveCurrentSourceCandidateSource({ file: file2, getSourceCandidateSource, getSourceCandidateSources, outDir, rootDir, sourceRoot }), tasks, templateHandler, templateTransform, timeTask, transformRuntime, transformRuntimeSignature })
         continue
       }
       if (processStyles && type === 'css' && originalSource.type === 'asset') {
