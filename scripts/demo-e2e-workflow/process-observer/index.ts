@@ -13,7 +13,9 @@ export interface WorkflowProcessObserver {
   table: (timeoutMs: number, signal?: AbortSignal) => Promise<ProcessIdentity[]>
   subset: (pids: readonly number[], timeoutMs: number, signal?: AbortSignal) => Promise<ProcessIdentity[]>
   memory: (rootPid: number, timeoutMs: number, signal?: AbortSignal) => Promise<DemoE2eMemorySample>
-  close: () => Promise<void>
+  close: (options?: { deadline?: number }) => Promise<void>
+  constrainShutdown?: (deadline: number) => void
+  assertHealthy?: () => void
   diagnostics?: () => ObserverDiagnostics
 }
 
@@ -98,7 +100,9 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
       return ids.length ? identity(ids, timeoutMs, requestSignal) : Promise.resolve([])
     },
     memory,
-    close: () => transport.close(),
+    close: options => transport.close(options),
+    constrainShutdown: transport.constrainShutdown,
+    assertHealthy: transport.assertHealthy,
     diagnostics: transport.diagnostics,
   }
 }

@@ -1,8 +1,10 @@
 import type { ChildProcess } from 'node:child_process'
 import type { ProcessIdentity } from '../../../../scripts/demo-e2e-workflow/process-table'
+import type { WatchIdentitySource } from './process-identity'
 import process from 'node:process'
 import { createProcessOwnershipTracker } from '../../../../scripts/demo-e2e-workflow/process-ownership'
 import { readProcessSubset, readProcessTable } from '../../../../scripts/demo-e2e-workflow/process-table'
+import { stopWithWatchIdentity } from './process-identity'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 interface StopPhase {
@@ -11,6 +13,7 @@ interface StopPhase {
 }
 interface ControllerOptions {
   phases?: readonly StopPhase[]
+  identitySource?: WatchIdentitySource
   observer?: {
     table: typeof readProcessTable
     subset: (group: number | undefined, pids: readonly number[], timeoutMs: number, signal?: AbortSignal) => Promise<ProcessIdentity[]>
@@ -48,7 +51,7 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
     }
   }
   child.on('error', onError)
-  const observer = options.observer ?? { table: readProcessTable, subset: readProcessSubset }
+  const observer = options.identitySource?.observer ?? options.observer ?? { table: readProcessTable, subset: readProcessSubset }
   const ownership = createProcessOwnershipTracker(child, closed, {
     observer: {
       table: (timeoutMs, signal) => observer.table(queryBudget(timeoutMs), signal),
@@ -131,9 +134,7 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
       remember(error)
     }
   }
-  const stop = async () => {
-    const phases = options.phases ?? WATCH_STOP_PHASES
-    const started = Date.now()
+  const stopTarget = async (phases: readonly StopPhase[], started: number) => {
     let until = started
     let verified = false
     const complete = () => didClose && verified && ownership.current.size === 0
@@ -243,6 +244,10 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
     if (errors.length) {
       throw new AggregateError(errors, `watch 子进程收尾失败：${errors.map(String).join('；')}`)
     }
+  }
+  const stop = async () => {
+    const phases = options.phases ?? WATCH_STOP_PHASES
+    await stopWithWatchIdentity(options.identitySource, phases.reduce((total, phase) => total + phase.waitMs, 0), started => stopTarget(phases, started))
   }
   return {
     snapshot: () => ownership.current,

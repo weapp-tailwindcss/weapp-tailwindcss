@@ -139,6 +139,10 @@ describe('ci workflows', () => {
     expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'vite-integration', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'tailwind-capabilities', 'env'])
     expect(source).toContain('test "$result" = success')
     expect(source).toContain('pr-gate-package-build-${{ github.run_id }}')
+    const coreSmoke = workflow.jobs['core-smoke']
+    expect(coreSmoke.needs).toContain('prepare-build')
+    expect(coreSmoke.steps.some((step: Record<string, any>) => String(step.uses ?? '').startsWith('actions/download-artifact@') && step.with?.name === 'pr-gate-package-build-${{ github.run_id }}')).toBe(true)
+    expect(stepRuns(workflow, 'core-smoke').some(run => run.includes('e2e/issue-1318-px-fallback.test.ts') && run.includes('--update=none'))).toBe(true)
   })
 
   it('bounds PR unit test concurrency without relaxing memory or coverage gates', () => {
