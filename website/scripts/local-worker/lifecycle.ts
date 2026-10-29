@@ -6,7 +6,7 @@ import process from 'node:process'
 import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
 import { includeWorkflowCancellation, observeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
 import { prepareWorkflowProcessObserver } from '../../../scripts/demo-e2e-workflow/process-observer'
-import { readProcessTable } from '../../../scripts/demo-e2e-workflow/process-table'
+import { readProcessSubset, readProcessTable } from '../../../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../../../scripts/demo-e2e-workflow/process-tree'
 import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { prepareLocalCommandGate } from './launch-gate'
@@ -19,7 +19,15 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
   let stopPromise: Promise<void> | undefined
   let timer: NodeJS.Timeout | undefined
   let pendingCapture: Promise<Map<number, ProcessIdentity>> | undefined
-  const readTable = observer ? observer.table : readProcessTable
+  let waitingForGate = gate !== undefined
+  const readTable = (timeoutMs: number, signal?: AbortSignal) => {
+    if (waitingForGate) {
+      // 用户 preload/CLI 尚未执行，启动握手只需登记本次 spawn 的根身份。
+      const pids = command.child.pid ? [command.child.pid] : []
+      return observer ? observer.subset(pids, timeoutMs, signal) : readProcessSubset(undefined, pids, timeoutMs, signal)
+    }
+    return observer ? observer.table(timeoutMs, signal) : readProcessTable(timeoutMs, signal)
+  }
   // 根退出后仍从活着的身份锚扩展独立组后代，不按历史 PPID 领取归属。
   const tree = createWorkflowProcessTree(command.child, command.closed, {
     observer: { table: readTable, subset: (_pids, timeoutMs, signal) => readTable(timeoutMs, signal) },
@@ -47,8 +55,8 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
     }
   }
   command.child.once('exit', onExit)
-  const capture = () => {
-    pendingCapture ??= tree.capture().catch((error) => {
+  const capture = (deadline?: number) => {
+    pendingCapture ??= tree.capture(deadline).catch((error) => {
       controller.abort(error)
       throw error
     }).finally(() => {
@@ -99,12 +107,13 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
   try {
     const result = await runWithCleanup(async () => {
       onSpawn?.(command, () => stopping)
-      const owned = await capture()
+      const owned = await capture(gate?.deadline)
       managedSignal.throwIfAborted()
       if (!owned.has(command.child.pid!)) {
         throw new Error(`${process.platform === 'win32' ? 'Windows' : 'POSIX'} 本地命令 pid=${command.child.pid ?? 'unknown'} 的启动身份未确认：根进程已退出或首次采集缺失，不能确认后代归属。`)
       }
       gate?.release()
+      waitingForGate = false
       observe()
       managedSignal.throwIfAborted()
       const result = await action(command, managedSignal)

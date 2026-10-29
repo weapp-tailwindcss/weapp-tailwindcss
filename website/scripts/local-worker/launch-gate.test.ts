@@ -55,25 +55,33 @@ function controlledProbe(options: HBuilderXCommandOptions, signal = new AbortCon
   const ready = new Promise<{ directory: string, pid: number }>((resolve) => {
     entered = resolve
   })
-  const control = (readTable: typeof processTable.readProcessTable) => vi.fn(readTable).mockImplementationOnce(async (...args) => {
+  const beforeStartupProbe = async () => {
     const payload = JSON.parse(spawn.mock.calls[0][0].env![launchGateEnvironment]!) as { directory: string, deadline: number }
     const pid = spawn.mock.results[0].value.child.pid as number
     await vi.waitFor(() => expect(existsSync(path.join(payload.directory, `ready-${pid}`))).toBe(true), { timeout: Math.max(1, payload.deadline - Date.now()) })
     entered({ directory: payload.directory, pid })
     await released
     fail?.()
-    return await readTable(...args)
-  })
+  }
   if (process.platform === 'win32') {
     const prepare = processObserver.prepareWorkflowProcessObserver
     vi.spyOn(processObserver, 'prepareWorkflowProcessObserver').mockImplementation(async (signal) => {
       const observer = await prepare(signal)
-      return observer ? { ...observer, table: control((timeoutMs = 5000, signal) => observer.table(timeoutMs, signal)) } : undefined
+      if (!observer) {
+        return undefined
+      }
+      return { ...observer, subset: vi.fn(observer.subset).mockImplementationOnce(async (...args) => {
+        await beforeStartupProbe()
+        return await observer.subset(...args)
+      }) }
     })
   }
   else {
-    const readTable = processTable.readProcessTable
-    vi.spyOn(processTable, 'readProcessTable').mockImplementation(control(readTable))
+    const readSubset = processTable.readProcessSubset
+    vi.spyOn(processTable, 'readProcessSubset').mockImplementationOnce(async (...args) => {
+      await beforeStartupProbe()
+      return await readSubset(...args)
+    })
   }
   const done = runLocalCommand(options, signal).then(() => undefined, error => error)
   pending.push({ release, done })

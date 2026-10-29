@@ -190,12 +190,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     fail(`阶段子进程有界清理未成功；close=${ownership.didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
   }
   return {
-    capture() {
+    capture(deadline?: number) {
       // 停止后不再接受周期扫描；只有 stop 内部可以继续核对本轮身份。
       if (stopping) {
         return Promise.resolve(ownership.current)
       }
-      return capture()
+      return capture(deadline)
     },
     stop(cooperative = false) {
       stopping ??= stop(cooperative)

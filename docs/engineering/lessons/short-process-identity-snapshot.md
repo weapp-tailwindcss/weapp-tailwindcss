@@ -9,6 +9,8 @@ regressions:
   - e2e/demo-workflow-exit-lifecycle.test.ts
   - e2e/demo-workflow-windows-cleanup.test.ts
   - e2e/demo-workflow-native-cancellation.test.ts
+  - website/scripts/local-worker/launch-gate-startup.test.ts
+  - website/scripts/local-worker/launch-gate.test.ts
 ---
 
 # 短进程退出与首次身份快照
@@ -40,3 +42,11 @@ POSIX 未能登记身份的非空进程组仍然阻断；不能通过重复扫�
 ## 规则评估
 
 不新增 AGENTS 条目。已有进程归属、截止时间、取消和错误保留规则充分；通过持久的退出时序回归补齐异步快照与实时生命周期不同步的缺口。
+
+## 2026-10-29：暂停中的 Node CLI 先登记根身份
+
+PR #1320 的 Website SEO Quality run `40857489265` 在 Node `22.23.4` 下构建成功，随后 `test:worker` 在 Wrangler 入口执行前失败。子进程 preload 等待启动身份登记超过五秒，父侧首次全表扫描也报告超过截止时间。日志没有证明 `ps` 本体为何延迟，不能将其归为 Worker 路由或 SEO 失败；修复前同版 Node 及 Node 24 的本地 Worker 定向验收均通过。
+
+启动 gate 会阻止用户 preload 和 CLI 执行，因此放行前只需从操作系统确认本次 spawn 的根 PID、出生时间和进程组。此前扫描整个系统的工作量与握手目标无关，且 gate 与 capture 各自起算五秒，存在预算错位。现在 POSIX 只查询该 PID，Windows 使用已预热观察器的 PID 子集；gate、首次 capture 和 release 共享原五秒绝对截止。放行后立即恢复原完整进程表观察，继续按活身份锚登记和回收同组、独立组后代，非 Node 命令不采用这个前提。
+
+新增启动回归在修复前失败；修复后与 gate、命令、Worker 生命周期、Windows 合成用例共七文件 62 项通过。另有四文件 32 项进程身份、短进程、共享采集与取消回归通过。受控测试消耗一秒启动预算，验证首次查询不能重新领取五秒，并验证放行前仅查询本轮根 PID、放行后恢复全树观察。缺根、取消、迟到结果和收尾失败仍阻断，没有延长窗口或扩大终止范围。真实 Worker 定向验收在 Node `24.22.1` 与 `22.23.4` 上均通过；当前 CI 及完整扩展验收仍须绑定后续提交重新执行。
