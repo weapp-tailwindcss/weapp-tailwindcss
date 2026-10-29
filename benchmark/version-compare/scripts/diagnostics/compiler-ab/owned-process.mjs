@@ -16,8 +16,10 @@ export function failureEvidence(error) {
   }
 }
 
+export const ownershipStopped = item => item.closed && item.groupGone && (!item.externalTermination || item.externalTermination.stopped === true)
+
 export function assertProcessesStopped() {
-  assert.ok(owned.every(item => item.closed && item.groupGone), '仍有未确认 close/reap 的诊断进程，必须保留副本')
+  assert.ok(owned.every(ownershipStopped), '仍有未确认 close/reap 或精确 OS 停止边界的诊断进程，必须保留副本')
 }
 
 function remaining(deadline, now = Date.now) {
@@ -111,7 +113,10 @@ export async function stopGroup(state, dependencies = {}) {
       remaining(deadline, now)
       if (status.gone) { state.groupGone = true; return }
       assert.ok(status.safeToSignal, '组内仅有未登记身份，禁止推断其归属')
-      signal(state, status, name)
+      const attempt = { issuedAt: now(), signal: name, pgid: state.pid, identities: status.matching.map(item => ({ ...item })), result: 'attempted' }
+      ;(state.signalAttempts ??= []).push(attempt)
+      try { signal(state, status, name); attempt.result = 'returned' }
+      catch (error) { attempt.result = 'error'; attempt.error = String(error); throw error }
       const settled = await pollGroup(state, deadline, { ...dependencies, inspect, now })
       if (settled.gone) { state.groupGone = true; return }
     }
@@ -125,18 +130,19 @@ async function waitClose(state, deadline) {
   return state.closed
 }
 
-export async function runOwned(executable, args, { cwd, env, stdio = 'inherit', timeoutMs = 600000, onSpawn } = {}) {
+export async function runOwned(executable, args, { cwd, env, stdio = 'inherit', timeoutMs = 600000, onSpawn, onPoll, onSettled } = {}) {
   assert.notEqual(process.platform, 'win32', '完整诊断限定 Linux；进程组 fixture 也支持 macOS')
   assert.ok(Number.isFinite(timeoutMs) && timeoutMs > 0)
   const expires = Date.now() + timeoutMs
   const child = spawn(executable, args, { cwd, env, stdio, detached: true })
-  const state = { pid: child.pid, executable, args, cwd, members: {}, closed: false, groupGone: false, cleanupErrors: [] }
+  const state = { pid: child.pid, executable, args, cwd, members: {}, closed: false, groupGone: false, cleanupErrors: [], signalAttempts: [] }
   owned.push(state)
   let spawnError
   let closeValue
   const closed = new Promise((resolve) => {
     child.once('error', (error) => { spawnError = error })
-    child.once('close', (code, signal) => { state.closed = true; closeValue = { code, signal }; resolve(closeValue) })
+    child.once('exit', (code, signal) => { state.exit = { code, signal, observedAt: Date.now() } })
+    child.once('close', (code, signal) => { state.closed = true; state.closeAt = Date.now(); closeValue = { code, signal }; resolve(closeValue) })
   })
   let timer
   let monitor
@@ -156,11 +162,11 @@ export async function runOwned(executable, args, { cwd, env, stdio = 'inherit', 
       registerMembers(state, rows)
       monitor = setInterval(() => {
         if (Date.now() >= expires || state.closed) return
-        try { registerMembers(state, inspectGroup(child.pid, Math.min(expires, Date.now() + 1000))) }
+        try { registerMembers(state, inspectGroup(child.pid, Math.min(expires, Date.now() + 1000))); onPoll?.() }
         catch (error) { interrupt({ monitorError: error }) }
       }, 250)
     }
-    onSpawn?.(child)
+    onSpawn?.(child, state)
     outcome = await Promise.race([
       closed, interrupted,
       new Promise(resolve => { timer = setTimeout(() => resolve({ timeout: true }), Math.max(0, expires - Date.now())) }),
@@ -170,6 +176,7 @@ export async function runOwned(executable, args, { cwd, env, stdio = 'inherit', 
     if (outcome.interrupted) throw new Error(`命令被 ${outcome.interrupted} 中断：${executable}`)
     if (outcome.monitorError) throw outcome.monitorError
     if (outcome.code !== 0) throw new Error(`命令退出 ${outcome.code ?? outcome.signal}：${executable} ${args.join(' ')}`)
+    await onSettled?.({ ...closeValue, pid: child.pid, observedAt: state.closeAt, exit: state.exit }, state)
   }
   catch (error) { primary = error }
   finally {

@@ -10,6 +10,7 @@ import { observerIdentity, sha256 } from './identity.mjs'
 import { readGcEvidence } from './gc-evidence.mjs'
 import { projectRelative } from './lock-axis.mjs'
 import { createRuntimeGuardSession, readRuntimeGuardEvidence } from './runtime-guard.mjs'
+import { createTerminationObserver } from './runtime-guard/external.mjs'
 import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -101,7 +102,8 @@ export async function measure(root, role, run, outDir, options = {}) {
   await fsp.mkdir(directory)
   assert.ok(options.identity, '测量必须使用准备阶段批准的编译器身份')
   const compiler = observerIdentity(options.identity)
-  const guard = createRuntimeGuardSession(path.join(directory, 'runtime-guard'), { nativeHelpers: options.nativeHelpers ?? [], webpackSources: options.identity.compilerContexts })
+  const guard = createRuntimeGuardSession(path.join(directory, 'runtime-guard'), { nativeHelpers: options.nativeHelpers ?? [], webpackSources: options.identity.compilerContexts, unrefServices: options.unrefServices ?? [] })
+  const termination = createTerminationObserver(guard.session)
   await fsp.writeFile(path.join(directory, 'runtime-guard-session.json'), `${JSON.stringify(guard.session, null, 2)}\n`)
   // 每轮都使用新进程；持久化缓存与 prebundle 在原 demo 配置中已经关闭。
   for (const name of ['dist', '.taro', '.swc', path.join('node_modules', '.cache')]) {
@@ -151,14 +153,17 @@ export async function measure(root, role, run, outDir, options = {}) {
         WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify(session),
         WEAPP_TW_BENCH_GC_EXPECTED_ENTRY: entry, WEAPP_TW_BENCH_GC_SESSION: JSON.stringify(gcIdentity),
       },
-      onSpawn(ownedChild) {
+      onSpawn(ownedChild, ownership) {
         child = ownedChild
+        termination.start(child.pid, ownership)
         child.stdout.pipe(log, { end: false })
         child.stderr.pipe(log, { end: false })
         sample()
         sampler = setInterval(sample, 250)
         child.once('close', () => clearInterval(sampler))
       },
+      onPoll: () => termination.sample(),
+      onSettled: (close, ownership) => termination.finish(close, ownership),
     })
   }
   catch (error) { primary = error }
@@ -178,8 +183,9 @@ export async function measure(root, role, run, outDir, options = {}) {
     catch (error) { cleanupErrors.push(error) }
   }
   try {
+    await fsp.writeFile(path.join(directory, 'external-termination.json'), `${JSON.stringify(termination.evidence(), null, 2)}\n`)
     assertProcessesStopped()
-    runtimeGuard = readRuntimeGuardEvidence(guard.session, { rootPid: child?.pid })
+    runtimeGuard = readRuntimeGuardEvidence(guard.session, { rootPid: child?.pid, termination: termination.evidence() })
     await fsp.writeFile(path.join(directory, 'runtime-guard-evidence.json'), `${JSON.stringify({ available: true, ...runtimeGuard }, null, 2)}\n`)
   }
   catch (error) {
@@ -210,6 +216,8 @@ export async function measure(root, role, run, outDir, options = {}) {
   await fsp.writeFile(path.join(directory, 'output.json'), `${JSON.stringify(output, null, 2)}\n`)
   const result = {
     role, run, pid: child.pid, runtimeGuard, durationMs: Date.now() - started,
+    buildProcessDurationMs: termination.evidence().rootClose.observedAt - started,
+    externalConfirmationDurationMs: termination.evidence().confirmationDurationMs,
     mainNodePeakRssMb: Math.max(...samples.flatMap(item => item.processes.filter(row => row.pid === child.pid).map(row => row.rssMb))),
     treePeakRssMb: Math.max(...samples.map(item => item.rssMb)),
     observerPeakRssMb: Math.max(...phases.filter(item => item.memory).map(item => item.memory.rss / 1024 / 1024)),

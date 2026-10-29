@@ -234,6 +234,14 @@ test('ESM命名导入也使用包装后的spawn与Worker', async (t) => {
   assert.equal(result.evidence().isolates.length, 3)
 })
 
+test('普通 unref Worker 即使 root 退出 0 也不能借用官方 service 的外部停止例外', async (t) => {
+  const result = await run(t, 'const worker = new (require("node:worker_threads").Worker)(require("node:path").resolve("./worker.cjs")); worker.unref(); setTimeout(()=>{},200)', {
+    setup: fixture => fixture.file(['worker.cjs'], 'setInterval(()=>{},1000)'),
+  })
+  assert.equal(result.code, 0, result.stderr)
+  assert.throws(result.evidence, /launch close missing|launch ready missing/)
+})
+
 test('shell即使被业务catch仍被独立收据拒绝', async (t) => {
   const result = await run(t, 'try {require("node:child_process").execSync("echo bypass")}catch{}')
   assert.equal(result.code, 0)

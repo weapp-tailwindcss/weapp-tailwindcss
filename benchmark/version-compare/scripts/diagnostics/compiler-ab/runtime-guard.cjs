@@ -6,6 +6,7 @@ const { randomUUID } = require('node:crypto')
 const threads = require('node:worker_threads')
 const { createIdentity, digest } = require('./runtime-guard/identity.cjs')
 const { installLaunchGuard } = require('./runtime-guard/launch.cjs')
+const { currentTask } = require('./runtime-guard/linux.cjs')
 
 const installed = Symbol.for('weapp-tailwindcss.compiler-ab.runtime-guard')
 
@@ -20,7 +21,7 @@ function install(session) {
   const output = path.join(session.directory, 'events', `${process.pid}-${threads.threadId}-${isolate}.ndjson`)
   let sequence = 0
   function write(kind, details = {}) {
-    fs.appendFileSync(output, `${JSON.stringify({ ...details, session: session.id, isolate, pid: process.pid, ppid: process.ppid, threadId: threads.threadId, sequence: ++sequence, bootstrapSha, kind })}\n`)
+    fs.appendFileSync(output, `${JSON.stringify({ ...details, session: session.id, isolate, pid: process.pid, ppid: process.ppid, threadId: threads.threadId, sequence: ++sequence, bootstrapSha, kind, atEpochMs: Date.now(), atMonotonicNs: process.hrtime.bigint().toString() })}\n`)
   }
   function reject(reason, details = {}) {
     write('violation', { reason, ...details })
@@ -44,9 +45,16 @@ function install(session) {
     }
   }
   const checkedCompilerFiles = new Set()
+  const checkedServiceFiles = new Set()
   const parents = new Map()
   function check(filename, parent) {
     const target = identity.owner(filename)
+    const service = session.unrefServices?.find(item => item.entry === target?.file)
+    if (service && !checkedServiceFiles.has(service.entry)) {
+      if (digest(service.entry) !== service.sha256 || digest(service.manifest) !== service.manifestSha256) reject('unref service source identity mismatch')
+      checkedServiceFiles.add(service.entry)
+      write('service-load', { filename: service.entry, sha256: service.sha256, version: service.version })
+    }
     if (target?.name === 'webpack' && session.compilerSources) {
       const approved = compilerSources.get(target.root)
       if (!approved) reject('unapproved webpack compiler context', { filename, root: target.root })
@@ -95,7 +103,8 @@ function install(session) {
     ? JSON.parse(process.env.WEAPP_TW_COMPILER_AB_PARENT)
     : undefined
   process.on('exit', code => write('exit', { code }))
-  write('ready', { node: process.version, execPath: fs.realpathSync(process.execPath), codeHashes: session.codeHashes, compilerSourceSha256: session.compilerSources?.sha256, parent })
+  const osIdentity = session.unrefServices?.length && process.platform === 'linux' ? currentTask() : undefined
+  write('ready', { node: process.version, execPath: fs.realpathSync(process.execPath), codeHashes: session.codeHashes, compilerSourceSha256: session.compilerSources?.sha256, parent, osIdentity })
 }
 
 module.exports = { install }

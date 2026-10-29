@@ -8,6 +8,8 @@ const { randomUUID } = require('node:crypto')
 const { syncBuiltinESMExports } = require('node:module')
 const { promisify } = require('node:util')
 const { executableCandidates } = require('./identity.cjs')
+const { readEntity } = require('./linux.cjs')
+const { observeReferences } = require('./lifetime.cjs')
 
 function installLaunchGuard(context) {
   const { session, isolate, write, reject, digest } = context
@@ -39,12 +41,18 @@ function installLaunchGuard(context) {
     const identity = target(command, args, options)
     const launch = randomUUID()
     write('launch-intent', { launch, method, args: [...args], ...identity })
-    return { launch, identity, options: identity.targetKind === 'node' ? optionsFor(options, launch) : { ...options } }
+    return { launch, identity, args: [...args], options: identity.targetKind === 'node' ? optionsFor(options, launch) : { ...options } }
   }
   function observe(child, descriptor) {
     const { launch } = descriptor
     const pid = child.pid
-    write('launch-start', { launch, targetPid: pid ?? null, targetThreadId: 0 })
+    const osIdentity = descriptor.identity.targetKind === 'native' && session.unrefServices?.length && process.platform === 'linux'
+      ? readEntity(pid, pid, { executable: true, hashExecutable: true }) : undefined
+    if (osIdentity && (osIdentity.executable !== descriptor.identity.filename || osIdentity.sha256 !== descriptor.identity.sha256 || osIdentity.ppid !== process.pid || JSON.stringify(osIdentity.argv.slice(1)) !== JSON.stringify(descriptor.args))) reject('native OS identity mismatch')
+    write('launch-start', { launch, targetPid: pid ?? null, targetThreadId: 0, osIdentity })
+    observeReferences(child, launch, 'handle', write)
+    observeReferences(child.stdin, launch, 'stdin', write)
+    observeReferences(child.stdout, launch, 'stdout', write)
     const emit = child.emit
     child.emit = function (event, ...args) {
       if (event === 'error') write('launch-error', { launch, message: String(args[0]) })
@@ -134,11 +142,16 @@ function installLaunchGuard(context) {
     construct(constructor, args, newTarget) {
       const [filename, provided = {}] = args
       const launch = randomUUID()
-      write('launch-intent', { launch, method: 'Worker', targetKind: 'worker' })
+      let entry
+      try { entry = fs.realpathSync(filename instanceof URL ? fileURLToPath(filename) : filename) }
+      catch {}
+      const service = session.unrefServices?.find(item => item.entry === entry)
+      write('launch-intent', { launch, method: 'Worker', targetKind: 'worker', filename: entry, sha256: service && digest(entry), serviceVersion: service && provided.workerData?.esbuildVersion })
       const options = { ...provided, execArgv: [...preload, ...(provided.execArgv ?? process.execArgv)] }
       const worker = Reflect.construct(constructor, [filename, options], newTarget)
       const targetThreadId = worker.threadId
       write('launch-start', { launch, targetPid: process.pid, targetThreadId })
+      observeReferences(worker, launch, 'handle', write)
       const emit = worker.emit
       worker.emit = function (event, ...values) {
         if (event === 'error') write('launch-error', { launch, message: String(values[0]) })

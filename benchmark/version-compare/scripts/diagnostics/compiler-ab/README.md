@@ -16,7 +16,7 @@ previous 在该派生锁上，将目标 demo manifest 的准确 Webpack `5.91.0`
 
 逐 importer 从 dependencies/devDependencies/optionalDependencies 构建实际可达图并联合细分。目标 manifest 作为初始轴授权，其它 importer 只有经过三个准确 Taro parent 才能进入轴；未获授权路径保持准确 Webpack 与配套身份。每个 importer 独立保留 opaque context 唯一性，避免把不同 importer 的可证明 context 分裂当成全局歧义，也不能把同一入口的真实双绑定合并。所有新增/移除 snapshot 必须有授权路径、全部 incoming 和源码身份；不可达快照与非轴路径消费的轴包 snapshot 保持原样。全局 package metadata、锁配置、catalog、工具链 YAML document、补丁与无关引用另行审查。
 
-运行时 bootstrap 在 phase/GC observer 之前安装同步 CJS/ESM 加载守卫，并传播到 main/child/worker。所有实际 webpack-cli 加载都拒绝；从 Terser 实现消费 esbuild 同样拒绝。固定 Terser 5.6.1 的实际入口为 `dist/utils.js` 内两处 `require("esbuild")`，其异常可能被自身 catch，因此控制器独立审核不可撤销 violation，不能只看退出码。每个启动必须匹配 session/hash、ready 与父级 close/exit 回执；缺证使测量无效。普通其它来源的 esbuild 加载仍可进行；仅准确登记 realpath/SHA/参数的官方 esbuild 原生 service 可获放行。shell、未登记原生 helper 或无法证明传播的启动均阻断，不 stub 模块，不更改 specifier、加载结果或工作量。
+运行时 bootstrap 在 phase/GC observer 之前安装同步 CJS/ESM 加载守卫，并传播到 main/child/worker。所有实际 webpack-cli 加载都拒绝；从 Terser 实现消费 esbuild 同样拒绝。固定 Terser 5.6.1 的实际入口为 `dist/utils.js` 内两处 `require("esbuild")`，其异常可能被自身 catch，因此控制器独立审核不可撤销 violation，不能只看退出码。普通启动必须匹配 session/hash、ready 与父级 close/exit 回执；仅精确官方 esbuild 的成功 unref 服务可采用[独立 OS 停止路径](runtime-guard/README.md)，保留内部 partial 与未知独立退出状态。缺证仍使测量无效。普通其它来源的 esbuild 加载仍可进行；仅准确登记 realpath/SHA/参数的官方 esbuild 原生 service 可获放行。shell、未登记原生 helper 或无法证明传播的启动均阻断，不 stub 模块，不更改 specifier、加载结果或工作量。
 
 每侧三次新进程生产完整冷构建，顺序为 current/previous、previous/current、current/previous。保留 demo 的 cache/prebundle、mainFields、生产压缩器与所有资产。记录主 Node/进程树 RSS、自然 GC、worker 创建/峰值、实际 options、OPTIMIZE_SIZE 前后及全部 processAssets 后的内存、逐资产 bytes/SHA256，磁盘输出也完整核对。phase 内存在 `source.source()` 求值/哈希前记录，哈希成本与之后内存另存；该操作可能物化缓存源码，必须解释为对称诊断。map 只统计实际资产与 related.sourceMap，不调用 `source.map()`。
 
@@ -31,6 +31,8 @@ previous 在该派生锁上，将目标 demo manifest 的准确 Webpack `5.91.0`
 [40901901583](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40901901583) 在两侧完整 frozen install 后发现 direct/runner 上下文分裂，失败清理无误；artifact SHA/CRC 已验证。旧 observer 仅接入 direct 类，错误的目录相等断言提前阻断了测量。此修复核对并绑定真实 runner 类，仍未产生该轮 A/B 样本。
 
 [40908914531](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40908914531) 的两侧 frozen install 与严格锁预验已成功，安装图观测随后在 `sass-embedded-linux-musl-x64@1.106.1` 的标量 `libc: musl` 上触发数组方法异常，仍未进入构建或产生 A/B 样本。artifact SHA/CRC 与两侧锁 SHA 已核对，全部任务进程已关闭、清理无错。固定 [pnpm 12.15 元数据类型](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/lockfile/src/package_metadata.rs) 明确规定 libc 为 StringOrList，os/cpu 为数组；诊断只在匹配边界把 libc 字符串视为单元素约束，原锁及 metadata 保持不变。平台匹配按[同版官方源码](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-is-installable/src/check_platform.rs#L229)处理独占 any 与有序正向/否定条目，未知类型明确失败；Linux/glibc 与 Linux/musl 分支通过纯函数 fixture 验证，不依赖 Mac 上不执行的 libc 分支。原锁没有触发混合 any 或正反冲突条目，这两项只用于核对同一谓词的官方语义。
+
+[40912631290](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40912631290) 已完成两侧 prepare，并首次执行 current/1 完整冷构建，但缺少官方 esbuild 0.21.5 的 unref Worker 和 native helper 的内部 close，仍为零个有效 A/B 样本。12 个 isolate ready、12 个 launch start 中只有 10 个 close；无 violation，root exit 0 与外部 groupGone 不能代替逐服务关闭证据。新协议保留此首败，只有新运行记录成功 unref、独立首见活的 Linux 出生身份与清理信号前的逐实例消失后，才能说明资源已停止；旧 artifact 不含这些信息，不追认。
 
 本地定向 fixture：
 
