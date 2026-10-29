@@ -28,7 +28,10 @@ export async function compilerFixture(root) {
         const source = { source: () => value, size: () => Buffer.byteLength(value), map: () => { throw new Error('source.map called') } };
         const hooks = { processAssets: new Hook(), afterProcessAssets: new Hook() };
         hooks.processAssets.tap({ stage: 400 }, () => { value = 'after' });
-        return { original: token, hooks, modules: new Set([1, 2]), chunks: new Set([1]), getAssets: () => [{ name: 'app.js', source, info: {} }] };
+        const modules = new Set([1, 2].map(id => ({ identifier: () => 'fixture-' + id, type: 'javascript/auto', buildInfo: { hash: 'fixture-' + id } })));
+        const chunk = { id: 1, name: 'main', files: new Set(['app.js']), auxiliaryFiles: new Set() };
+        const chunkGraph = { getModuleId: module => [...modules].indexOf(module), getChunkModulesIterable: () => modules };
+        return { original: token, hooks, modules, chunks: new Set([chunk]), chunkGraph, getAssets: () => [{ name: 'app.js', source, info: {} }] };
       }
     };
   `

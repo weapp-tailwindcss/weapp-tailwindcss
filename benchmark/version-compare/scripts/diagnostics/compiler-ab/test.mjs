@@ -27,6 +27,7 @@ import './runtime-guard.test.mjs'
 import './tool-metadata.test.mjs'
 import './compiler-context.test.mjs'
 import './platform.test.mjs'
+import './assets/archive.test.mjs'
 
 const execute = promisify(execFile)
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -110,7 +111,10 @@ test('真实 Node 加载守卫与 preload 观测兼容，ESM Worker 的空环境
           const source = { source: () => value, size: () => Buffer.byteLength(value), map: () => { throw new Error('source.map called') } };
           const hooks = { processAssets: new Hook(), afterProcessAssets: new Hook() };
           hooks.processAssets.tap({ stage: 400 }, () => { value = 'after' });
-          return { original: true, hooks, modules: new Set([1, 2]), chunks: new Set([1]), getAssets: () => [{ name: 'app.js', source, info: {} }] };
+          const modules = new Set([1, 2].map(id => ({ identifier: () => 'fixture-' + id, type: 'javascript/auto', buildInfo: { hash: 'fixture-' + id } })));
+          const chunk = { id: 1, name: 'main', files: new Set(['app.js']), auxiliaryFiles: new Set() };
+          const chunkGraph = { getModuleId: module => [...modules].indexOf(module), getChunkModulesIterable: () => modules };
+          return { original: true, hooks, modules, chunks: new Set([chunk]), chunkGraph, getAssets: () => [{ name: 'app.js', source, info: {} }] };
         }
       };
     `)
@@ -138,7 +142,7 @@ test('真实 Node 加载守卫与 preload 观测兼容，ESM Worker 的空环境
     const compiler = observerIdentity({ webpack: actual, runner: readPackage(temporary, '@tarojs/webpack5-runner'), compilerContexts: contexts, runnerEntrySha256: sha256('// fixture') })
     const guard = createRuntimeGuardSession(path.join(temporary, 'guard'), { webpackSources: contexts })
     const { stdout } = await execute(process.execPath, [...guard.execArgv, '--require', path.join(here, 'preload.cjs'), entry], {
-      env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file, compiler }) }, timeout: 10000,
+      env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root: temporary, project: temporary, expectedEntry: entry, file, compiler, role: 'current', run: 1, sourceIdentity: { ref: 'a'.repeat(40), archiveSha256: 'b'.repeat(64) } }) }, timeout: 10000,
     })
     readRuntimeGuardEvidence(guard.session, { rootPid: JSON.parse(stdout).pid })
     const records = (await fs.readFile(file, 'utf8')).trim().split('\n').map(JSON.parse)

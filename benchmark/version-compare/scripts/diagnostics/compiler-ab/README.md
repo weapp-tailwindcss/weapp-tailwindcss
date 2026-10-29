@@ -48,6 +48,12 @@ node benchmark/version-compare/scripts/diagnostics/compiler-ab/run.mjs --out-dir
 
 artifact 包含原正式锁及 SHA、两侧派生锁/workspace/manifest、原补丁、差异轴与逐 importer 路径、可选配套合同、实际模块/实现 hash、加载守卫证据、每轮日志、GC、options、资产 hash 和 RSS。所有本轮进程确认停止后才清理副本。
 
+[40921010208](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40921010208) 首次完成六轮构建、准确来源与逐实例生命周期取证。但 current 第一轮的 `sub-normal/pages/index.js` 在 `after-optimize-size` 后比同侧后两轮少 5 字节，未保存正文，无法证明语义可比；因此不能用这六轮完成可比性能判断或排除编译器轴，原报告和 artifact 保持原样。
+
+后续每个 phase 复用原 `source.source()` 返回的字节、最终输出复用已有 `readFile` Buffer，归档到各轮独占的摘要正文库。资产逻辑名只保存在 JSON，不参与磁盘路径。快照绑定准确源码 SHA/archive SHA256、侧、轮次、真实编译器、compilation 和 phase，并从 `chunk.files`、`auxiliaryFiles`、`chunkGraph`、`module.buildInfo.assets` 记录显式归属及插件 tap 清单；没有来源边的资产明确保持无归属，不推断文件布局。module identifier/resource/buildHash 是构建图身份，不代表已保存源码正文。阶段与最终目录分别保存，先核同一快照 Buffer 摘要，再解析并逐一核正文。缺证、篡改、重复名、链接或超过固定上限均失败。归档和图序列化属于对称诊断开销，计入阶段 `evidenceCostMs` 与 `memoryAfterEvidence`，不改变采样或正式预算。
+
+最终产物归档及正文复核由父控制器在构建 child close 后执行，计入父 `durationMs`，不计入 child `buildProcessDurationMs` 或 child RSS。正文摘要去重仅减少磁盘读取；每个逻辑资产的路径、长度、摘要仍须与首次实际读取的回执比较。
+
 历史首败必须保留：[40874665892](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40874665892) 暴露 pnpm12 全局 selector 改写宽 peer metadata；[40878658733](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40878658733) 暴露 Webpack/WDS 可选 CLI 双向 peer 上下文漂移。两次均在 prepare 阶段失败，未执行 A/B 测量。后续轻量锁预验又明确发现可选 Terser/esbuild 附着上下文变化，本合同按该证据建立。[40896320294](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/40896320294) 在 original→current 的严格 metadata 审查中发现 bunyan engine 补写，artifact SHA/CRC 已验证，仅有这一项额外 metadata 变化；同 SRI 官方来源和最小 fresh 项目证明这是独立工具规范化，仍未产生 A/B 样本。不得以 fixture 或锁预验成功宣称框架性能验收通过。
 
 pnpm `12.15.0` 的子依赖 selector 采用[范围交集](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-manager/src/overrides/selectors.rs#L16)，即使 `webpack@=5.91.0` 也会重写 `^5` 等宽 peer；[父包限定](https://github.com/pnpm/pnpm/blob/v12.15.0/pnpm/crates/package-manager/src/overrides.rs#L216)才按 consumer 身份隔离。真实最小安装证据位于 `fixtures/pnpm12-selector-output.json`。

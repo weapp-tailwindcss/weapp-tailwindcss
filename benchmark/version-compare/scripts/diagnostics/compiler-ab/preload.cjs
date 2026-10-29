@@ -8,6 +8,8 @@ const path = require('node:path')
 const { performance } = require('node:perf_hooks')
 const process = require('node:process')
 const threads = require('node:worker_threads')
+const { createAssetArchive, phaseArchiveDirectory } = require('./assets/archive.cjs')
+const { assetOwnership } = require('./assets/ownership.cjs')
 
 const hash = value => createHash('sha256').update(value).digest('hex')
 
@@ -25,15 +27,18 @@ function serializable(value, seen = new WeakSet(), depth = 0) {
   }
 }
 
-function assetEvidence(compilation) {
+function assetEvidence(compilation, archive) {
   const assets = compilation.getAssets().sort((a, b) => a.name.localeCompare(b.name, 'en'))
   assert.ok(assets.length <= 16384, '资产数量超过观测上限，拒绝截断')
   const manifest = assets.map(({ name, source, info }) => {
     const value = source.source()
     assert.ok(typeof value === 'string' || Buffer.isBuffer(value), `资产必须提供完整正文：${name}`)
+    const bytes = Buffer.isBuffer(value) ? value : Buffer.from(value)
+    const sha256 = hash(bytes)
     const related = info.related?.sourceMap
     return {
-      name, bytes: Buffer.byteLength(value), size: source.size(), sha256: hash(value),
+      name, bytes: bytes.length, size: source.size(), sha256,
+      ...(archive ? { body: archive.store(bytes, sha256) } : {}),
       sourceType: source.constructor.name,
       mapAsset: /\.map$/i.test(name),
       relatedSourceMaps: related === undefined ? [] : Array.isArray(related) ? related : [related],
@@ -74,6 +79,9 @@ function start() {
     compilerModules.set(path.join(context.directory, 'lib', 'Compiler.js'), context)
   }
   const fd = fs.openSync(session.file, 'wx')
+  const archive = createAssetArchive(phaseArchiveDirectory(session.file), {
+    sourceIdentity: session.sourceIdentity, role: session.role, run: session.run,
+  })
   let bytesWritten = 0
   let records = 0
   const workers = { created: 0, active: 0, peak: 0, exited: 0 }
@@ -95,7 +103,7 @@ function start() {
   write('start', {
     session, node: process.version, execArgv: process.execArgv, ppid: process.ppid,
     preloadSha256: hash(fs.readFileSync(__filename)), webpackRoot, compiler: session.compiler,
-    observation: 'phase memory precedes full source.source() hashing; hashing can materialize cached sources; source.map() is never requested',
+    observation: 'phase memory precedes full source.source() hashing, byte archival and graph serialization; source.map() is never requested',
     ...memory(),
   })
 
@@ -142,9 +150,11 @@ function start() {
       const capture = phase => () => {
         const before = memory()
         const started = performance.now()
-        const assets = assetEvidence(compilation)
+        const assets = assetEvidence(compilation, archive)
+        const ownership = assetOwnership(compilation, assets.manifest)
+        const assetArchive = archive.snapshot({ compilation: number, phase, compiler: context }, assets.manifest, ownership)
         write('phase', {
-          number, phase, compiler: context, ...before, ...assets,
+          number, phase, compiler: context, ...before, ...assets, assetArchive,
           evidenceCostMs: performance.now() - started,
           memoryAfterEvidence: process.memoryUsage(),
         })

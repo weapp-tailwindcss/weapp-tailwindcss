@@ -27,7 +27,7 @@ async function launch(root, fixture, source, suffix = 'run', override) {
   const guard = createRuntimeGuardSession(path.join(root, `${suffix}-guard`), { webpackSources: fixture.contexts })
   const compiler = override ?? fixture.binding
   const result = await execute(process.execPath, [...guard.execArgv, '--require', preload, entry], {
-    timeout: 10000, env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root, project: root, expectedEntry: entry, file, compiler }) },
+    timeout: 10000, env: { ...process.env, ...guard.env, WEAPP_TW_COMPILER_AB_SESSION: JSON.stringify({ root, project: root, expectedEntry: entry, file, compiler, role: 'current', run: 1, sourceIdentity: { ref: 'a'.repeat(40), archiveSha256: 'b'.repeat(64) } }) },
   })
   const evidence = readRuntimeGuardEvidence(guard.session, { rootPid: JSON.parse(result.stdout).pid })
   const records = (await fs.readFile(file, 'utf8')).trimEnd().split('\n').map(JSON.parse)

@@ -21,6 +21,7 @@
 - 所有 main/child/worker 启用真实加载守卫；webpack-cli 实际加载、Terser 实际消费 esbuild 或守卫缺证均使测量无效。不得 stub 模块、改变加载结果或减去编译工作。
 - 安装身份必须来自严格锁的准确 consumer 边；保留 direct/runner 的不同 peer 上下文，核对全部安装闭包与同侧完整源码（仅排除 node_modules）。批准加载根仅限该侧 direct/runner；完整源码合同绑定每个 isolate，实际 Compiler 加载、实例与全部 phase 必须核对批准 runner，额外编译器或缺证失败。不得强制改绑 require，也不预加载未消费的 direct 类。
 - 固定源码、Taro、压缩配置、完整编译工作量和原预算；不得主动请求 GC、关闭压缩或更改正式升级目标。
+- phase 正文只复用原 source.source() 返回值，最终正文只复用已有 readFile Buffer；构建图归属只来自 chunkGraph、chunk/module 的显式资产边与 tap 清单，不额外读取源码或 source.map。归档与图序列化开销必须对称披露；正文、准确源码/编译器/phase 绑定或归属图缺证均失败。样本间产物发生未解释差异时，不能完成可比性能结论。
 - 此实验仅供因果诊断，不能替代正式性能门禁、全端预检或真实平台验收，check 名称及并发组必须独立。
 - 所有子命令必须有截止、定向终止及独立 close/reap 确认；未确认停止时保留临时副本，记录首错与清理错。
 - 普通资源保留完整内部 close。仅精确官方 esbuild 源码、版本、Worker 入口和 native SHA/argv 的成功 unref 服务，允许采用独立 Linux OS 停止证据：先独立见活出生身份，root 真实 exit/close 0 且消失，清理信号前逐 PID/TID 确认消失；未 reap 的 Z、超时或缺证均失败。内部回执仍标 partial，独立退出状态与原因标 unknown，不得伪造 close 或改变业务关闭顺序，旧 artifact 不追认。

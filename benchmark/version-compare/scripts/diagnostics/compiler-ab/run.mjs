@@ -23,7 +23,8 @@ export function markdownReport(preparation, runs) {
     '仅准确 bunyan 4.0.1 的历史 engine 遗漏采用独立、对称的工具 metadata 参考；官方原响应、同 SRI tarball 与实际固定 Node 兼容收据另存，其它 metadata 和锁图审查保持严格。',
     '每个 main/child/worker 必须有加载守卫证据；实际加载 webpack-cli 或从 Terser 实现消费 esbuild、以及守卫缺证均使该轮测量无效。',
     '自然 GC 只记录运行时事件；没有主动 GC。worker_threads 的 RSS 属于主 Node，另记录线程创建数及峰值。',
-    '逐资产完整 SHA256 来自 source.source()；phase 内存在求值/哈希前记录，哈希耗时及之后内存另存。此操作可能物化缓存源码，因此仅用于对称诊断。',
+    '逐资产完整 SHA256 与正文归档复用同次 source.source()；phase 内存在求值前记录，哈希、归档与构建图序列化的合计耗时及之后内存另存。此操作可能物化缓存源码，因此仅用于对称诊断。',
+    '最终产物归档和正文复核在构建 child close 后由父控制器执行；计入父 durationMs，不计入 child buildProcessDurationMs 或 child RSS。',
     'map 数量仅指实际 .map 资产与 related.sourceMap 元数据；不调用 source.map() 物化内部映射。', '',
     '| 编译器 | 轮次 | 主 Node 峰值 MiB | 进程树峰值 MiB | worker 创建/峰值 | 自然 GC 事件 | 产物数量/字节 |',
     '| --- | ---: | ---: | ---: | ---: | ---: | ---: |',
@@ -32,7 +33,7 @@ export function markdownReport(preparation, runs) {
     const version = preparation.identities[run.role].webpack.version
     lines.push(`| ${version} | ${run.run} | ${run.mainNodePeakRssMb.toFixed(2)} | ${run.treePeakRssMb.toFixed(2)} | ${run.workers.created}/${run.workers.peak} | ${run.naturalGcEvents} | ${run.outputFiles}/${run.outputBytes} |`)
   }
-  lines.push('', '| 编译器/轮次/compilation | 阶段 | RSS MiB | heapUsed MiB | external MiB | 资产数/字节 | map/related map | 哈希耗时 ms |', '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |')
+  lines.push('', '| 编译器/轮次/compilation | 阶段 | RSS MiB | heapUsed MiB | external MiB | 资产数/字节 | map/related map | 取证耗时 ms |', '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |')
   for (const run of runs) {
     for (const phase of run.phases) {
       lines.push(`| ${preparation.identities[run.role].webpack.version}/${run.run}/${phase.number} | ${phase.phase} | ${(phase.memory.rss / 2 ** 20).toFixed(2)} | ${(phase.memory.heapUsed / 2 ** 20).toFixed(2)} | ${(phase.memory.external / 2 ** 20).toFixed(2)} | ${phase.assetCount}/${phase.bytes} | ${phase.mapAssetCount}/${phase.relatedSourceMapCount} | ${phase.evidenceCostMs.toFixed(2)} |`)
@@ -59,7 +60,7 @@ export async function main() {
     await fs.writeFile(path.join(outDir, 'plan.json'), `${JSON.stringify({ diagnosticOnly: true, label: preparation.label, node: process.version, platform: process.platform, runOrder, metadataNormalization: preparation.metadataNormalization, optionalEsbuildMerge: preparation.axis.optionalEsbuildMerge }, null, 2)}\n`)
     for (const [role, run] of runOrder) {
       process.stdout.write(`[compiler-ab] ${role} ${run}/3：完整冷构建\n`)
-      runs.push(await measure(preparation.roots[role], role, run, outDir, { nativeHelpers: preparation.nativeHelpers[role].helpers, unrefServices: preparation.nativeHelpers[role].packages, identity: preparation.identities[role] }))
+      runs.push(await measure(preparation.roots[role], role, run, outDir, { nativeHelpers: preparation.nativeHelpers[role].helpers, unrefServices: preparation.nativeHelpers[role].packages, identity: preparation.identities[role], sourceIdentity: { ref: preparation.sourceRef, archiveSha256: preparation.sourceArchiveSha256 } }))
     }
     const report = { diagnosticOnly: true, preparation, runOrder, runs }
     const markdown = markdownReport(preparation, runs)

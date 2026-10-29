@@ -5,6 +5,8 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { verifyAssetSnapshot, verifyPhaseAssetArchives } from './assets/verify.mjs'
 import { parsePosixProcessRows, selectProcessTreeRows } from '../../process-memory.mjs'
 import { observerIdentity, sha256 } from './identity.mjs'
 import { readGcEvidence } from './gc-evidence.mjs'
@@ -16,6 +18,7 @@ import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } f
 const here = path.dirname(fileURLToPath(import.meta.url))
 const gcPreload = path.join(here, 'gc-preload.mjs')
 const gcPaths = path.resolve(here, '../../gc-paths.mjs')
+const { createAssetArchive, phaseArchiveDirectory } = createRequire(import.meta.url)('./assets/archive.cjs')
 
 export function sampleRss(pid, deadline, execute = spawnSync, now = Date.now) {
   const budget = deadline - now()
@@ -73,7 +76,7 @@ export function validateCompilerGuard(evidence, compiler, pid) {
   }
 }
 
-export async function outputManifest(directory) {
+export async function outputManifest(directory, archive) {
   const files = []
   async function visit(current) {
     for (const entry of await fsp.readdir(current, { withFileTypes: true })) {
@@ -81,7 +84,8 @@ export async function outputManifest(directory) {
       if (entry.isDirectory()) await visit(file)
       else if (entry.isFile()) {
         const contents = await fsp.readFile(file)
-        files.push({ name: path.relative(directory, file), bytes: contents.length, sha256: sha256(contents) })
+        const digest = sha256(contents)
+        files.push({ name: path.relative(directory, file), bytes: contents.length, sha256: digest, ...(archive ? { body: archive.store(contents, digest) } : {}) })
       }
       else throw new Error(`构建输出包含意外类型：${file}`)
     }
@@ -111,7 +115,8 @@ export async function measure(root, role, run, outDir, options = {}) {
   }
   const entry = path.join(root, 'scripts/taro-build-runner.mjs')
   const phaseFile = path.join(directory, 'compiler.ndjson')
-  const session = { root, project, expectedEntry: entry, file: phaseFile, role, run, compiler }
+  const binding = { sourceIdentity: options.sourceIdentity, role, run }
+  const session = { root, project, expectedEntry: entry, file: phaseFile, ...binding, compiler }
   const gcIdentity = {
     role, run, kind: 'build', project: 'demo-taro-webpack-react-tailwindcss-v4__mp-weixin',
     sessionDirectory: directory,
@@ -199,6 +204,7 @@ export async function measure(root, role, run, outDir, options = {}) {
   assert.ok(samples.length > 0 && samples.some(item => item.processes.some(row => row.pid === child.pid)), '缺少主 Node 的 RSS 证据')
   const phases = readRecords(phaseFile)
   validatePhases(phases, compiler)
+  verifyPhaseAssetArchives(phases, phaseArchiveDirectory(phaseFile), binding)
   validateCompilerGuard(runtimeGuard, compiler, child.pid)
   assert.equal(phases[0].pid, child.pid)
   const gcFile = path.join(directory, `gc-${child.pid}.ndjson`)
@@ -211,7 +217,12 @@ export async function measure(root, role, run, outDir, options = {}) {
     throw error
   }
   await fsp.writeFile(path.join(directory, 'gc-evidence.json'), `${JSON.stringify(gcEvidence, null, 2)}\n`)
-  const output = await outputManifest(path.join(project, 'dist'))
+  const emittedArchive = path.join(directory, 'emitted-assets')
+  const archive = createAssetArchive(emittedArchive, binding)
+  const output = await outputManifest(path.join(project, 'dist'), archive)
+  const descriptor = { compilation: null, phase: 'emitted-output', compiler: compiler.target }
+  const outputArchive = archive.snapshot(descriptor, output, { source: 'emitted-filesystem', boundary: '仅最终已有文件，不推断 compilation 归属；归属见逐 phase 的真实构建图。' })
+  verifyAssetSnapshot(emittedArchive, outputArchive, binding, descriptor, output)
   assert.ok(output.some(file => file.name === 'app.js') && output.some(file => file.name === 'app.json'), '没有完整微信构建产物')
   await fsp.writeFile(path.join(directory, 'output.json'), `${JSON.stringify(output, null, 2)}\n`)
   const result = {
@@ -224,7 +235,7 @@ export async function measure(root, role, run, outDir, options = {}) {
     workers: phases.at(-1).workers, phases: phases.filter(item => item.type === 'phase'),
     options: phases.filter(item => item.type === 'compiler-options'),
     naturalGcEvents: gcEvidence.events,
-    outputFiles: output.length, outputBytes: output.reduce((sum, file) => sum + file.bytes, 0),
+    outputFiles: output.length, outputBytes: output.reduce((sum, file) => sum + file.bytes, 0), outputArchive,
   }
   await fsp.writeFile(path.join(directory, 'summary.json'), `${JSON.stringify(result, null, 2)}\n`)
   return result
