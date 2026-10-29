@@ -2308,7 +2308,7 @@
         "guardPassed": true,
         "violations": [],
         "limitations": [
-          "稳态插件样本为 [98,97] → [95,143] ms，中位门禁统计增加 45.92%，单个尾部样本增加；固定规则要求至少两尾样本同步越界，未满足。",
+          "稳态插件样本为 [98,97] → [95,143] ms，p95 门禁统计增加 45.92%，单个尾部样本增加；固定规则要求至少两尾样本同步越界，未满足。",
           "HMR steady RSS 增加 8.94%，但 peak RSS 仅增加 1.01%，未满足两项同步越界与反向顺序独立复验的固定规则。",
           "最终提交仍需运行正式性能 workflow；此结果仅绑定上述 head。"
         ]
@@ -2329,7 +2329,7 @@
       "rerun": "只实际重跑首轮失败Android job一次；先前请求在创建attempt前被拒绝。",
       "preservedFirstFailure": {
         "job": 123172031635,
-        "failure": "adb could not connect to TCP port 5554: Connection refused; shell exit1",
+        "failure": "sdkmanager安装Android Emulator首先报Error reading Zip content from a SeekableByteChannel；随后清理adb连接5554被拒绝；shell exit1",
         "log": {
           "path": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-63e-ci-audit-1rrzkxb1/job-123172031635.log",
           "bytes": 213168,
