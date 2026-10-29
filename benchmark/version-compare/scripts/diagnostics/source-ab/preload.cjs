@@ -99,7 +99,7 @@ function start() {
     records += 1
   }
 
-  require('./product-observer.cjs').install({ write, archive, root: session.root })
+  const productObserver = require('./product-observer.cjs').install({ write, archive, root: session.root })
 
   const memory = () => ({ memory: process.memoryUsage(), workers: { ...workers } })
   write('start', {
@@ -139,6 +139,7 @@ function start() {
     Compiler.prototype.newCompilation = function diagnosticCompilation(...args) {
       const compilation = original.apply(this, args)
       const number = ++compilationNumber
+      productObserver.created(compilation, { number, child: Boolean(this.parentCompilation), compiler: context })
       write('compiler-options', {
         number, name: this.name, child: Boolean(this.parentCompilation), compiler: context,
         options: serializable({
@@ -181,6 +182,7 @@ function start() {
   timer.unref()
   process.once('exit', (exitCode) => {
     clearInterval(timer)
+    productObserver.finish()
     write('exit', { exitCode, compilations: compilationNumber, bytesBeforeExit: bytesWritten, recordsBeforeExit: records, ...memory() })
     fs.closeSync(fd)
   })

@@ -14,6 +14,7 @@ import { projectRelative } from './identity.mjs'
 import { createRuntimeGuardSession, readRuntimeGuardEvidence } from './runtime-guard.mjs'
 import { createTerminationObserver } from './runtime-guard/external.mjs'
 import { assertProcessesStopped, failureEvidence, processOwnership, runOwned } from './owned-process.mjs'
+import { verifyProductEvidence } from './product-evidence.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const gcPreload = path.join(here, 'gc-preload.mjs')
@@ -204,6 +205,7 @@ export async function measure(root, role, run, outDir, options = {}) {
   assert.ok(samples.length > 0 && samples.some(item => item.processes.some(row => row.pid === child.pid)), '缺少主 Node 的 RSS 证据')
   const phases = readRecords(phaseFile)
   validatePhases(phases, compiler)
+  const productVerification = verifyProductEvidence(phases, phaseArchiveDirectory(phaseFile))
   const product = phases.filter(item => item.type === 'product')
   const before = product.filter(item => item.event === 'sets' && item.phase === 'before-tasks')
   const after = product.filter(item => item.event === 'sets' && item.phase === 'after-tasks')
@@ -241,7 +243,7 @@ export async function measure(root, role, run, outDir, options = {}) {
     treePeakRssMb: Math.max(...samples.map(item => item.rssMb)),
     observerPeakRssMb: Math.max(...phases.filter(item => item.memory).map(item => item.memory.rss / 1024 / 1024)),
     workers: phases.at(-1).workers, phases: phases.filter(item => item.type === 'phase'),
-    product: { sets: [...before, ...after], taskCounts: product.filter(item => item.event === 'task-count'), inputs, outputs },
+    product: { verification: productVerification, sets: [...before, ...after], taskCounts: product.filter(item => item.event === 'task-count'), inputs, outputs },
     options: phases.filter(item => item.type === 'compiler-options'),
     naturalGcEvents: gcEvidence.events,
     outputFiles: output.length, outputBytes: output.reduce((sum, file) => sum + file.bytes, 0), outputArchive,

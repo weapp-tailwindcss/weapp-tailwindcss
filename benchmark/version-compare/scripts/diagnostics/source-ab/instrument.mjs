@@ -26,27 +26,27 @@ export function instrumentSource(source, relative) {
   assert.equal(ast.parseDiagnostics.length, 0, '原文必须可解析')
   assert.ok(!source.includes('weapp-tailwindcss.source-ab.v1'), '拒绝重复插桩')
   const edits = []
-  const before = (node, value) => edits.push({ start: node.getStart(ast), end: node.getStart(ast), value })
-  const after = (node, value) => edits.push({ start: node.end, end: node.end, value })
+  const before = (node, value) => edits.push({ start: node.getStart(ast), end: node.getStart(ast), value: `;${value}` })
+  const after = (node, value) => edits.push({ start: node.end, end: node.end, value: `;${value}` })
   const call = name => unique(ast, node => ts.isCallExpression(node) && node.expression.getText(ast) === name, name)
   if (relative.endsWith('v5-assets.ts')) {
-    const sets = phase => `${observer}?.sets(${JSON.stringify(phase)}, { runtime: runtimeSet, transform: transformRuntimeSet, generator: generatorRuntimeSet, sourceCandidates: webpackSourceCandidateSet, sources: cssSources, loaders: generatedCssSources, grouped: groupedEntries });\n`
+    const sets = phase => `${observer}?.sets(${JSON.stringify(phase)}, { compilation, runtime: runtimeSet, transform: transformRuntimeSet, generator: generatorRuntimeSet, sourceCandidates: webpackSourceCandidateSet, sources: cssSources, loaders: generatedCssSources, grouped: groupedEntries });\n`
     before(statement(call('enqueueWebpackHtmlAndJsTasks')), sets('before-tasks'))
-    before(statement(call('finalizeWebpackProcessAssets')), `${observer}?.tasks(htmlTaskFactories.length, jsTaskFactories.length, cssTaskFactories.length);\n`)
+    before(statement(call('finalizeWebpackProcessAssets')), `${observer}?.tasks(htmlTaskFactories.length, jsTaskFactories.length, cssTaskFactories.length, compilation);\n`)
     before(statement(call('finalizeCompilerShadowRun')), sets('after-tasks'))
   }
   else {
     const template = call('compilerOptions.templateHandler')
     const templateStatement = statement(template)
     assert.equal(template.arguments[0].getText(ast), 'readRawSource()')
-    before(templateStatement, `const diagnosticHtmlSource = readRawSource();\n${observer}?.input('html', file, diagnosticHtmlSource, transformRuntimeSet);\n`)
+    before(templateStatement, `const diagnosticHtmlSource = readRawSource();\nconst diagnosticHtmlCall = ${observer}?.input('html', file, diagnosticHtmlSource, transformRuntimeSet, compilation);\n`)
     edits.push({ start: template.arguments[0].getStart(ast), end: template.arguments[0].end, value: 'diagnosticHtmlSource' })
-    after(templateStatement, `\n${observer}?.output('html', file, wxml);`)
+    after(templateStatement, `\n${observer}?.output(diagnosticHtmlCall, 'html', file, wxml, compilation);`)
     const skip = unique(ast, node => ts.isIfStatement(node) && ts.isCallExpression(node.expression) && node.expression.expression.getText(ast) === 'shouldSkipJsTransform', 'JS skip')
-    before(skip, `${observer}?.input('js', file, currentSource, transformRuntimeSet);\n`)
+    before(skip, `const diagnosticJsCall = ${observer}?.input('js', file, currentSource, transformRuntimeSet, compilation);\n`)
     const returned = unique(skip, node => ts.isReturnStatement(node), 'JS skip return')
-    before(returned, `${observer}?.output('js', file, currentSource, true);\n`)
-    after(statement(call('compilerOptions.jsHandler')), `\n${observer}?.output('js', file, code);`)
+    before(returned, `${observer}?.output(diagnosticJsCall, 'js', file, currentSource, compilation, true);\n`)
+    after(statement(call('compilerOptions.jsHandler')), `\n${observer}?.output(diagnosticJsCall, 'js', file, code, compilation);`)
   }
   edits.sort((a, b) => b.start - a.start)
   let output = source

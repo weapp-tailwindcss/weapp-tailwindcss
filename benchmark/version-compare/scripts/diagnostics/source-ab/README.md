@@ -19,11 +19,19 @@ packageManager、demo manifest、配置相同，然后各自 frozen install。
 没有主动 GC、inspector 或正式预算变更。自然 GC 只观察主进程回调收到的事件。
 归档可能物化 Webpack source 缓存，集合序列化也会分配内存；保存取证前后内存与耗时。
 这些 RSS 数值仅用于解释阶段和工作量，不作为正式预算验收。
+每个 handler 都完整排序、序列化候选，分配随调用数与候选数乘积增长。
+`evidenceCostMs` 与 `memoryAfterEvidence` 覆盖正文/集合取证，不含最终 NDJSON 编码和写入；
+后续阶段内存已包含此前 observer 的成本，不能通过减去取证耗时或内存推回正式样本。
 
 每个 run 的 `compiler.ndjson` 保存完整类集、来源正文回执、handler 与任务证据。
 同目录的 `compiler.ndjson-assets/bytes` 保存各正文的准确字节。
 `output.json` 和 `emitted-assets/` 是 child 正常 close 后父控制器读取的最终产物。
 有差异时必须审查正文语义，不能以 hash 不同推断某一侧正确。
 跨编译器生成 chunk hash 不用于证明函数差异，候选与正文不能归一化后丢失原证据。
+产品事件以实际 compilation 编号、child 标记和编译器身份隔离，逐调用 ID 配对输入/输出；
+独有缓存来源、loader 与 handler 正文均从归档实读校验长度和 SHA，不以 phase 资产覆盖替代。
+任务数表示已排队的 HTML/JS/CSS factory，调用记录表示实际执行的 HTML/JS transform 或 skip；
+`processCachedTask` 命中缓存时不会执行 transform，因此任务数与 handler 调用数不要求相等。
+CSS factory 只记数量，CSS 转换结果由阶段完整资产与最终输出审查，不声称记录 CSS handler 调用。
 
 本目录与手动 workflow 只留在诊断分支，不合入根任务。

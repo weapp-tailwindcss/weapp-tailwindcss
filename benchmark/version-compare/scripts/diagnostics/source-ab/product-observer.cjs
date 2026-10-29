@@ -9,6 +9,14 @@ const hash = value => createHash('sha256').update(value).digest('hex')
 
 function install({ write, archive }) {
   assert.equal(globalThis[symbol], undefined, '产品诊断 observer 重复注册')
+  const compilations = new WeakMap()
+  const pending = new Map()
+  let nextCall = 0
+  const compilationIdentity = compilation => {
+    const identity = compilations.get(compilation)
+    assert.ok(identity, '产品事件缺少真实 compilation 登记')
+    return identity
+  }
   const candidates = value => {
     assert.ok(value instanceof Set, '候选必须是既有 Set')
     assert.ok(value.size <= 100000, '候选超过完整取证上限')
@@ -29,9 +37,13 @@ function install({ write, archive }) {
     write('product', { event, memory, ...detail, evidenceCostMs: performance.now() - started, memoryAfterEvidence: process.memoryUsage() })
   }
   globalThis[symbol] = {
+    created(compilation, identity) {
+      assert.ok(!compilations.has(compilation), 'compilation 重复登记')
+      compilations.set(compilation, identity)
+    },
     sets(phase, detail) {
       record('sets', () => ({
-        phase,
+        phase, compilation: compilationIdentity(detail.compilation),
         runtime: candidates(detail.runtime), transform: candidates(detail.transform), generator: candidates(detail.generator),
         sourceCandidates: detail.sourceCandidates === undefined ? undefined : candidates(detail.sourceCandidates),
         sources: [...detail.sources].map(([file, value]) => ({ file, body: text(value.css) })),
@@ -39,16 +51,26 @@ function install({ write, archive }) {
         assets: Object.fromEntries(Object.entries(detail.grouped).map(([kind, values]) => [kind, values.map(([file]) => file)])),
       }))
     },
-    input(kind, file, code, classes) {
-      record('handler-input', () => ({ kind, file, body: text(code), classes: candidates(classes) }))
+    input(kind, file, code, classes, compilation) {
+      const identity = { kind, file, compilation: compilationIdentity(compilation), callId: ++nextCall }
+      pending.set(identity.callId, identity)
+      record('handler-input', () => ({ ...identity, body: text(code), classes: candidates(classes) }))
+      return identity.callId
     },
-    output(kind, file, code, skipped = false) {
-      record('handler-output', () => ({ kind, file, body: text(code), skipped }))
+    output(callId, kind, file, code, compilation, skipped = false) {
+      const identity = pending.get(callId)
+      assert.deepEqual(identity, { kind, file, compilation: compilationIdentity(compilation), callId }, '调用输出身份不匹配')
+      pending.delete(callId)
+      record('handler-output', () => ({ ...identity, body: text(code), skipped }))
     },
-    tasks(html, js, css) {
-      record('task-count', () => ({ html, js, css }))
+    tasks(html, js, css, compilation) {
+      record('task-count', () => ({ html, js, css, compilation: compilationIdentity(compilation) }))
+    },
+    finish() {
+      assert.equal(pending.size, 0, '正常退出时仍有未完成 handler 调用')
     },
   }
+  return globalThis[symbol]
 }
 
 module.exports = { install, symbol }
