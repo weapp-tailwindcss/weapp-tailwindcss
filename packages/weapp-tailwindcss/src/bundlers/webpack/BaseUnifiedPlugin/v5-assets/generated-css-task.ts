@@ -8,12 +8,12 @@ import { removeGeneratedSelectorCompatCss } from '../../../../generation/legacy-
 import { isCommentOnlyCss } from '../../../../generation/user-css'
 import { processCachedTask } from '../../../shared/cache'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../../shared/generated-css-marker'
-import { resolveTailwindV4EntriesFromCssCached } from '../../../shared/source-scan'
 import { createScopedGeneratorRuntime } from '../../../vite/generate-bundle/scoped-generator'
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import { finalizeWebpackGeneratedCssResult } from './generated-css-result'
 import { createWebpackGeneratorRequestOptions } from './generator-request'
+import { resolveWebpackLoaderGeneratedCss } from './loader-css-metadata'
 import { preserveLoaderProcessedWebCssAsset } from './loader-css-source'
 
 import {
@@ -27,13 +27,12 @@ import {
   removeWebpackTailwindGeneratedAssetCss,
   resolveWebpackGeneratorRawSource,
   shouldAppendCurrentWebpackAssetUserCss,
-  shouldConsumeWebpackLoaderGeneratedCss,
   shouldFallbackToWebpackUserCssOnGeneratorError,
   shouldUseWebpackAssetAsGeneratorUserCss,
 } from './pipeline-helpers'
 
 export async function processWebpackGeneratedCssAsset(element: any, context: WebpackCssAssetTaskContext) {
-  const { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isSameWebpackSourceScope, isWebGeneratorTarget, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateValueSignature, webpackSourceCandidates } = context
+  const { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isSameWebpackSourceScope, isWebGeneratorTarget, loaderGeneratedCssByAsset, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateValueSignature, webpackSourceCandidates } = context
   const [file, originalSource] = element
   const currentRawSource = originalSource.source().toString()
   const chunkHash = assetHashByChunk.get(file)
@@ -111,40 +110,18 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
           && hasTailwindRootDirectives(sourceCss, { importFallback: true })
         const shouldPreserveExistingPreflight = cssHandlerOptions.isMainChunk
           || (!isConfiguredMainCssSource && (isConfiguredCssSource || sourceCssHasTailwindRoot))
-        const loaderGeneratedCss = sourceFile
-          ? generatedCssSources.get(path.resolve(sourceFile))
-          : undefined
-        const shouldRegenerateExplicitTailwindV4CssSource = sourceCss !== undefined
-          && (
-            hasTailwindSourceDirectives(sourceCss, { importFallback: true })
-            || sourceCss.includes('@config')
-          )
-        const explicitTailwindV4SourceCandidates = shouldRegenerateExplicitTailwindV4CssSource
-          && sourceCss
-          && sourceFile
-          && webpackSourceCandidates?.getSourceCandidatesForEntries
-          ? await resolveTailwindV4EntriesFromCssCached(sourceCss, path.dirname(sourceFile))
-              .then(resolved => resolved?.entries
-                ? webpackSourceCandidates.getSourceCandidatesForEntries(resolved.entries)
-                : undefined)
-          : undefined
-        if (
-          loaderGeneratedCss
-          && shouldConsumeWebpackLoaderGeneratedCss({
-            allowMarkerlessRegistryMatch: configuredCssEntryFiles.length === 1,
-            hasBundlerGeneratedCssMarker: hasBundlerGeneratedCssMarker(currentRawSource),
-            loaderGeneratedClassSet: loaderGeneratedCss.classSet,
-            sourceCandidates: explicitTailwindV4SourceCandidates,
-            shouldRegenerateExplicitTailwindV4CssSource,
-            watchMode,
-          })
-        ) {
-          for (const className of loaderGeneratedCss.classSet) {
-            generatorRuntimeSet.add(className)
-            transformRuntimeSet.add(className)
-          }
-          for (const dependency of loaderGeneratedCss.dependencies) {
-            compilation.fileDependencies?.add?.(dependency)
+        const loaderGeneratedCss = loaderGeneratedCssByAsset === undefined
+          ? await resolveWebpackLoaderGeneratedCss(file, currentRawSource, context)
+          : loaderGeneratedCssByAsset.get(file)
+        if (loaderGeneratedCss) {
+          if (loaderGeneratedCssByAsset === undefined) {
+            for (const className of loaderGeneratedCss.classSet) {
+              generatorRuntimeSet.add(className)
+              transformRuntimeSet.add(className)
+            }
+            for (const dependency of loaderGeneratedCss.dependencies) {
+              compilation.fileDependencies?.add?.(dependency)
+            }
           }
           const currentRawSourceWithoutBundlerMarkers = stripBundlerGeneratedCssMarkers(currentRawSource)
           const currentAssetHasProcessedUrl = hasProcessedCssAssetUrl(currentRawSourceWithoutBundlerMarkers)

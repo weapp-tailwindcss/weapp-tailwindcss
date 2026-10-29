@@ -35,6 +35,10 @@ it('只读取全表轻量身份，仅向目标树查询 RSS 和命令，不查�
     ['-p', '20,21,22', '-o', 'pid=,ppid=,rss=,lstart=,stat=,command='],
   ])
   expect(probe.mock.calls.every(call => call[2].launchOptions?.env?.LC_ALL === 'C')).toBe(true)
+  expect(probe.mock.calls.map(call => call[2].diagnosticContext)).toEqual([
+    { query: 'posix-topology', rootPid: 20 },
+    { query: 'posix-memory', rootPid: 20 },
+  ])
   expect(sample).toEqual({
     rssMb: 175,
     maxProcessRssMb: 100,

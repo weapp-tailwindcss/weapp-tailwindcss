@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "capturedAt": "2026-10-29T04:28:29.276Z",
+  "capturedAt": "2026-10-29T18:28:49.167Z",
   "source": {
-    "head": "2c9ef71d06594cb5bd742b533e15334afe14d1da",
-    "lock": "ed21eaa5eca5d3e62be69b44131094ddc2d01677fe611eb3dbde2a2ef1cb5cb4",
+    "head": "2dd3baec854c50f53b62c24d0aae6fe4259272fb",
+    "lock": "0473c1a7ac031c77f2b8225140832a0c0b324ace083f3092c84426f49b79eeac",
     "contract": "d1179d23bae88bb73c36d8ed268cd041f7bf0a4c38d43df2583b322661489d46",
     "node": "v24.22.1",
-    "build": "f0e5862b292686eab6986b4aae8d8d6bd798d2fc02af92e54db6c8cf80c39324"
+    "build": "63e964e468e45399b6ab0454a896a041730f5e1c1063cf7a9bc8eaebe8479051"
   },
   "environment": {
     "platform": "darwin",
@@ -23,8 +23,8 @@
       "vips": "8.18.7"
     }
   },
-  "reportSha256": "8162c6f3a1ac46105dca8ce21eb29af4d3c0755144b642448593b8574dadbebf",
-  "snapshotRoot": "/Users/icebreaker/.codex/worktrees/dependency-upgrade-policy/weapp-tailwindcss/e2e/.artifacts/dependency-upgrade-20261028/website-visual-candidate-1793244683631/snapshots",
+  "reportSha256": "8d44aeae9014a2f8c621670d5404e58a22784ba8926c9dae3931ce7ab9bb4ef0",
+  "snapshotRoot": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-website-2dd-golden-z1cud96v/candidate/snapshots",
   "skipped": [
     "firefox:mobile / screenshot",
     "firefox:mobile /blog screenshot",
@@ -4057,10 +4057,10 @@
       "title": "desktop /docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-css-unit-transform-screenshot-1-chromium-darwin.png",
-      "bytes": 628387,
-      "sha256": "07752f55c468977eb6170289d26b6231cef7f299bb493e6a949dbb6aabbb975c",
+      "bytes": 769421,
+      "sha256": "346bf0689b5ec4a9200cbe46a3fcaf170da00affd5efe3b4f494bc592d1cbef7",
       "width": 1280,
-      "height": 3412
+      "height": 4169
     },
     {
       "project": "firefox",
@@ -4069,10 +4069,10 @@
       "title": "desktop /docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-css-unit-transform-screenshot-1-firefox-darwin.png",
-      "bytes": 626723,
-      "sha256": "a4b4991c3563b42075ffa96420d52362e0a72439d0aba620a0e4c85bb36be924",
+      "bytes": 768304,
+      "sha256": "c889de4546e989b0f90a6bfedeca2bb66c87e65badba74458a14a86e29b158d5",
       "width": 1280,
-      "height": 3418
+      "height": 4178
     },
     {
       "project": "webkit",
@@ -4081,10 +4081,10 @@
       "title": "desktop /docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-css-unit-transform-screenshot-1-webkit-darwin.png",
-      "bytes": 630936,
-      "sha256": "0ffc3091b3026c99bf4512c0fe96e896dddd26e2b17d9dc64ca1f3d88e433c65",
+      "bytes": 772881,
+      "sha256": "ffc96ca4f1d4638311c2eb1f64fb36765fd011c0f46169a19b30856419611964",
       "width": 1280,
-      "height": 3417
+      "height": 4176
     },
     {
       "project": "chromium",
@@ -9601,10 +9601,10 @@
       "title": "desktop /zh-cn/docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-css-unit-transform-screenshot-1-chromium-darwin.png",
-      "bytes": 571466,
-      "sha256": "8f4561e5be964e67856e91cdbd9e818fcf506244e0268acd96fabada6ffb9fe0",
+      "bytes": 697560,
+      "sha256": "327bc386b4215154c19c928a4902a790f42834471bbb39feb460a5135e991653",
       "width": 1280,
-      "height": 3240
+      "height": 3939
     },
     {
       "project": "firefox",
@@ -9613,10 +9613,10 @@
       "title": "desktop /zh-cn/docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-css-unit-transform-screenshot-1-firefox-darwin.png",
-      "bytes": 568472,
-      "sha256": "34da07481b73a6c4ce0897fb10110243a1d590dde086b4656120cb9d2f580a7c",
+      "bytes": 694692,
+      "sha256": "1dc91884fd7eb06c2bb3d9c8edb01fdc2f393c28b6d5a19a0e2258d8eb56808e",
       "width": 1280,
-      "height": 3245
+      "height": 3946
     },
     {
       "project": "webkit",
@@ -9625,10 +9625,10 @@
       "title": "desktop /zh-cn/docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-css-unit-transform-screenshot-1-webkit-darwin.png",
-      "bytes": 568701,
-      "sha256": "baf2d2794bf7a722d588cb711f1c5bf16b6991f86aef3004588ad69eeca272fe",
+      "bytes": 695363,
+      "sha256": "e447d1b26a5637f698391e9f48b15e6716e49442c8f4fc8572801549aa0edc67",
       "width": 1280,
-      "height": 3244
+      "height": 3945
     },
     {
       "project": "chromium",
@@ -11209,8 +11209,8 @@
       "title": "desktop /zh-cn/docs/tailwindcss/unocss-compatibility screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-tailwindcss-unocss-compatibility-screenshot-1-webkit-darwin.png",
-      "bytes": 550349,
-      "sha256": "85cd62b100d88fdbf7d878ae8a5af3aabfc194610c530da9f37965b033b2065f",
+      "bytes": 550299,
+      "sha256": "1c0ad4321614b8543040b19366a7b33b30315d65ed80cb3c53c789b8b7bffc6b",
       "width": 1280,
       "height": 3241
     },
@@ -12613,10 +12613,10 @@
       "title": "mobile /docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-quick-start-css-unit-transform-screenshot-1-chromium-darwin.png",
-      "bytes": 496267,
-      "sha256": "122564980cfbabc3439a855c12fe94d40962c87c9ce88fae07336fa8bce910cb",
+      "bytes": 631451,
+      "sha256": "b6b86aedb6eb78e278b3d1d06938f362ed8fed0a65ea16229f65bbba61497d27",
       "width": 390,
-      "height": 4468
+      "height": 5429
     },
     {
       "project": "chromium",
@@ -12865,8 +12865,8 @@
       "title": "mobile /docs/showcase screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-showcase-screenshot-1-chromium-darwin.png",
-      "bytes": 3156248,
-      "sha256": "e34930fdd349870ffe8c7c22413ac26ee14cf9f347fca2e32971d69ff9f0914a",
+      "bytes": 3160523,
+      "sha256": "804682eb5ffaf3a718d1f2fdf72a47a4345e1c10b052acad5f0563f28e0c5ec4",
       "width": 390,
       "height": 14877
     },
@@ -14461,10 +14461,10 @@
       "title": "mobile /zh-cn/docs/quick-start/css-unit-transform screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-zh-cn-docs-quick-start-css-unit-transform-screenshot-1-chromium-darwin.png",
-      "bytes": 437593,
-      "sha256": "1d5b1e8d88fa394046e984642f51fe6c1d3eda5fa96a5df88f89152fb263f0f2",
+      "bytes": 557352,
+      "sha256": "62e3bdcaa984a3f77edea8fcc4f1410c7ed6b73b99c3380a2777c365d1cbc962",
       "width": 390,
-      "height": 4104
+      "height": 4948
     },
     {
       "project": "chromium",
