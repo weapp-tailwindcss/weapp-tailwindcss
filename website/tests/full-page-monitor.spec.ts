@@ -1,40 +1,12 @@
-import type { Page } from '@playwright/test'
-import type { NativeCaptureEvidence } from './helpers/full-page/native'
 import { expect, test } from '@playwright/test'
 import { PNG } from 'pngjs'
 import { createCaptureBudget } from './helpers/full-page/capture'
+import { active, fixture, observation, ownedMonitors, policy } from './helpers/full-page/fixtures/monitor'
 import { startCaptureMonitor, validCaptureWindow } from './helpers/full-page/monitor'
 import { captureNativeSample, captureStableNativeFullPage } from './helpers/full-page/native'
+import { captureStableFullPage, captureTiledSample } from './helpers/full-page/stable'
 
 test.use({ headless: true, viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 })
-const policy = { hideOnScroll: false, minHeadingLevel: 2, maxHeadingLevel: 3 }
-const active = 'table-of-contents__link--active'
-
-async function fixture(page: Page) {
-  await page.setContent(`<style>
-    body{margin:0;height:3000px;background:linear-gradient(red,blue)}
-    .navbar{position:fixed;top:0;height:63px}
-    .table-of-contents{position:fixed;top:80px;right:10px}
-    .toc-highlight{color:rgb(220,220,220);transition:color 200ms}
-    .${active}{color:rgb(20,100,240)}
-    #first{position:absolute;top:200px;height:30px;margin:0}
-    #bottom{position:absolute;top:2980px;left:20px;width:20px;height:20px;background:lime}
-    </style><nav class="navbar">nav</nav><h2 class="anchor" id="first">first</h2>
-    <ul class="table-of-contents"><li><a class="toc-highlight table-of-contents__link ${active}" href="#first">first</a></li></ul>
-    <div id="bottom"></div>`)
-  await page.evaluate(async () => {
-    await document.fonts.ready
-    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
-  })
-}
-
-function observation(): NativeCaptureEvidence {
-  return { window: null, before: null, after: null }
-}
-
-async function ownedMonitors(page: Page) {
-  return page.evaluate(() => Object.getOwnPropertySymbols(window).filter(symbol => symbol.description?.startsWith('weapp-full-page-monitor:')).length)
-}
 
 test('keeps native fullPage complete and accepts only captures with consistent TOC geometry', async ({ page }) => {
   await fixture(page)
@@ -225,6 +197,81 @@ test('screenshot failures retain the original error and clean up the owned monit
   }
   try {
     await expect(captureNativeSample(page, createCaptureBudget(2000), policy, observation())).rejects.toBe(error)
+    expect(await ownedMonitors(page)).toBe(0)
+  }
+  finally {
+    page.screenshot = screenshot
+  }
+})
+
+for (const mode of ['active-return', 'ancestor-return', 'remount'] as const) {
+  test(`rejects ${mode} inside a middle tile even when the final TOC recovers`, async ({ page }) => {
+    await fixture(page)
+    const screenshot = page.screenshot.bind(page)
+    const monitors = new Set<string>()
+    let calls = 0
+    page.screenshot = async (options) => {
+      expect(options?.clip).toBeDefined()
+      for (const key of await page.evaluate(() => Object.getOwnPropertySymbols(window).map(symbol => symbol.description!).filter(key => key?.startsWith('weapp-full-page-monitor:')))) {
+        monitors.add(key)
+      }
+      if (++calls === 2) {
+        await page.evaluate(async ({ mode, active }) => {
+          const toc = document.querySelector('.table-of-contents')! as HTMLElement
+          const link = toc.querySelector('.toc-highlight')!
+          if (mode === 'active-return') {
+            link.classList.remove(active)
+            link.classList.add(active)
+          }
+          else if (mode === 'ancestor-return') {
+            toc.style.filter = 'blur(2px)'
+            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+            toc.style.filter = ''
+          }
+          else {
+            toc.replaceWith(toc.cloneNode(true))
+          }
+        }, { mode, active })
+      }
+      return screenshot(options)
+    }
+    const evidence = observation()
+    try {
+      expect(await captureTiledSample(page, createCaptureBudget(10_000), policy, evidence, 1000)).toBeUndefined()
+      expect(calls).toBe(6)
+      expect(monitors.size).toBe(1)
+      expect(evidence.before?.ready).toBe(true)
+      expect(evidence.after?.ready).toBe(true)
+      expect(evidence.window?.disturbances.length).toBeGreaterThan(0)
+      expect(await ownedMonitors(page)).toBe(0)
+    }
+    finally {
+      page.screenshot = screenshot
+    }
+  })
+}
+
+test('a rejected tiled sample clears the preceding complete image before collecting a new pair', async ({ page }) => {
+  await fixture(page)
+  const screenshot = page.screenshot.bind(page)
+  const monitors = new Set<string>()
+  let rejected = false
+  page.screenshot = async (options) => {
+    const key = await page.evaluate(() => Object.getOwnPropertySymbols(window).find(symbol => symbol.description?.startsWith('weapp-full-page-monitor:'))?.description)
+    expect(key).toBeDefined()
+    monitors.add(key!)
+    if (monitors.size === 2 && !rejected) {
+      rejected = true
+      await page.locator('.table-of-contents').evaluate(node => node.replaceWith(node.cloneNode(true)))
+    }
+    return screenshot(options)
+  }
+  try {
+    const image = PNG.sync.read(await captureStableFullPage(page, { budget: createCaptureBudget(10_000), toc: policy, tileSize: 1000 }))
+    expect(monitors.size).toBeGreaterThanOrEqual(4)
+    expect([image.width, image.height]).toEqual([1280, 3000])
+    const offset = (2990 * image.width + 30) * 4
+    expect([...image.data.subarray(offset, offset + 4)]).toEqual([0, 255, 0, 255])
     expect(await ownedMonitors(page)).toBe(0)
   }
   finally {

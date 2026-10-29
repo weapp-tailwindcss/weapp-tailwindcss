@@ -6,7 +6,8 @@ import { expect, test } from '@playwright/test'
 import { supportsNativeFullPageCapture } from './capabilities'
 import { createCaptureBudget, readDocumentGeometry } from './capture'
 import { prepareFullPageImages } from './images'
-import { captureStableNativeFullPage, NativeCaptureError } from './native'
+import { captureStableNativeFullPage } from './native'
+import { FullPageCaptureError } from './stability'
 import { captureStableFullPage } from './stable'
 import { evaluateTocReadiness } from './toc/model'
 import { observeToc } from './toc/observe'
@@ -39,7 +40,7 @@ export async function prepareFullPageToc(page: Page, budget: CaptureBudget, opti
   }
 }
 
-/** 按浏览器尺寸能力分片；原生路径保留捕获期观测，分片路径保持既有几何与 RGBA 稳定合同。 */
+/** 按浏览器尺寸能力分片，两条路径共享完整捕获期观测、语义和 RGBA 稳定合同。 */
 export async function expectFullPageScreenshot(page: Page, tocOptions: TocPolicy = null) {
   const budget = createCaptureBudget(test.info().timeout || 60_000)
   await prepareFullPageImages(page, budget)
@@ -52,10 +53,10 @@ export async function expectFullPageScreenshot(page: Page, tocOptions: TocPolicy
   }
   let buffer
   try {
-    buffer = tiled ? await captureStableFullPage(page, { budget }) : await captureStableNativeFullPage(page, budget, policy)
+    buffer = tiled ? await captureStableFullPage(page, { budget, toc: policy }) : await captureStableNativeFullPage(page, budget, policy)
   }
   catch (error) {
-    if (error instanceof NativeCaptureError) {
+    if (error instanceof FullPageCaptureError) {
       await test.info().attach('full-page-capture-observation', {
         body: JSON.stringify({ totalSamples: error.attempts, lastSamples: error.evidence, failure: String(error.cause) }, null, 2),
         contentType: 'application/json',
