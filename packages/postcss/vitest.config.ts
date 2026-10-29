@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { configDefaults, defineProject } from 'vitest/config'
+import { workspaceMaxWorkers } from '../../scripts/testing/vitest-workers.mjs'
 
 const alias = [
   {
@@ -22,6 +23,7 @@ const alias = [
 
 export default defineProject({
   test: {
+    maxWorkers: workspaceMaxWorkers,
     alias,
     exclude: [...configDefaults.exclude, 'test/native/**'],
     globals: true,

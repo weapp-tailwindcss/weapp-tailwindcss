@@ -1,3 +1,4 @@
 import { defineProject } from 'vitest/config'
+import { workspaceMaxWorkers } from '../../scripts/testing/vitest-workers.mjs'
 
-export default defineProject({ test: { name: '@weapp-tailwindcss/env', globals: true } })
+export default defineProject({ test: { maxWorkers: workspaceMaxWorkers, name: '@weapp-tailwindcss/env', globals: true } })

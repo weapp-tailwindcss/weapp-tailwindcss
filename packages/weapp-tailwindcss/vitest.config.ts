@@ -1,10 +1,12 @@
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 import { createNativeNodeConditionsPlugin } from '../../scripts/testing/native-node-conditions.mjs'
+import { workspaceMaxWorkers } from '../../scripts/testing/vitest-workers.mjs'
 
 export default defineConfig({
   plugins: [createNativeNodeConditionsPlugin()],
   test: {
+    maxWorkers: workspaceMaxWorkers,
     setupFiles: ['./test/setup/esbuild-cleanup.ts'],
     alias: [
       { find: /^@weapp-tailwindcss\/env$/, replacement: path.resolve(__dirname, '../env/src/index.ts') },

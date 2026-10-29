@@ -1,9 +1,9 @@
 import fs from 'node:fs'
-import { availableParallelism } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import YAML from 'yaml'
+import { workspaceMaxWorkers } from './scripts/testing/vitest-workers.mjs'
 
 const ROOT_DIR = path.dirname(fileURLToPath(new URL(import.meta.url)))
 const WORKSPACE_FILE = path.resolve(ROOT_DIR, 'pnpm-workspace.yaml')
@@ -110,12 +110,11 @@ function resolveProjects(): string[] {
 }
 
 const projects = resolveProjects()
-const maxWorkers = Math.min(4, availableParallelism())
 
 export default defineConfig(() => {
   return {
     test: {
-      maxWorkers,
+      maxWorkers: workspaceMaxWorkers,
       projects,
       coverage: {
         enabled: false,
