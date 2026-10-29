@@ -101,20 +101,20 @@ function parseMemoryRows(output: string, identities: Map<number, ProcessIdentity
  * 出生时间使用 ps 的秒级精度；拓扑读取后新生的后代不属于本次查询集合。
  */
 export async function samplePosixProcessTreeMemory(rootPid: number, signal: AbortSignal, expiresAt: number, probe: Probe = runMemoryProbe): Promise<Omit<MemoryUsageSample, 'at'>> {
-  const read = (args: string[]) => {
+  const read = (query: 'posix-topology' | 'posix-memory', args: string[]) => {
     signal.throwIfAborted()
     const remaining = expiresAt - Date.now()
     if (!Number.isFinite(remaining) || remaining <= 0) {
       throw new Error('memory probe exceeded its absolute deadline before query dispatch')
     }
-    return probe('ps', args, { signal, timeoutMs: remaining, launchOptions: { env: { ...process.env, LC_ALL: 'C' } } })
+    return probe('ps', args, { signal, timeoutMs: remaining, launchOptions: { env: { ...process.env, LC_ALL: 'C' } }, diagnosticContext: { query, rootPid } })
   }
   const topologyStartedAt = Date.now()
-  const topology = await read(['-Ao', 'pid=,ppid=,pgid=,lstart=,stat='])
+  const topology = await read('posix-topology', ['-Ao', 'pid=,ppid=,pgid=,lstart=,stat='])
   const topologyCompletedAt = Date.now()
   const identities = selectTree(parsePosixProcesses(topology), rootPid)
   const memoryStartedAt = Date.now()
-  const output = await read(['-p', [...identities.keys()].join(','), '-o', 'pid=,ppid=,rss=,lstart=,stat=,command='])
+  const output = await read('posix-memory', ['-p', [...identities.keys()].join(','), '-o', 'pid=,ppid=,rss=,lstart=,stat=,command='])
   const memoryCompletedAt = Date.now()
   const result = parseMemoryRows(output, identities, rootPid)
   signal.throwIfAborted()
