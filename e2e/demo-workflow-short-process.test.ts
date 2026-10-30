@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'node:child_process'
 import type { ProcessIdentity } from '../scripts/demo-e2e-workflow/process-table'
+import * as childProcess from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -8,12 +9,15 @@ import * as table from '../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
 
+vi.mock('node:child_process', { spy: true })
+
 const root = { pid: 100, parent: 1, group: 100, started: '2026-10-04T12:00:10Z' }
 const descendant = { pid: 200, parent: 1, group: 100, started: '2026-10-04T12:00:11Z' }
 const reused = { ...root, started: '2026-10-04T12:00:20Z' }
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
+  vi.mocked(childProcess.spawn).mockReset()
 })
 
 function pendingSnapshot(later: ProcessIdentity[]) {
@@ -180,6 +184,10 @@ it('真实空 Node 进程退出通过 runStep，不要求短阶段必须产生�
 })
 
 it('短命令正常退出不会把仍在有界采集的身份探针截短为清理预算', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(0)
+  const child = Object.assign(new EventEmitter(), { pid: 100, exitCode: null, signalCode: null, kill: vi.fn(() => true) }) as unknown as ChildProcess
+  const spawn = vi.mocked(childProcess.spawn).mockReturnValue(child)
   const scan = vi.fn<observers.WorkflowProcessObserver['table']>().mockImplementation((_timeout, signal) => new Promise((resolve, reject) => {
     // 复现 Windows 冷 PowerShell 超过 2 秒清理预算、仍处于 5 秒采集预算内的响应。
     const timer = setTimeout(resolve, 2200, [])
@@ -195,11 +203,23 @@ it('短命令正常退出不会把仍在有界采集的身份探针截短为清�
     memory: vi.fn().mockRejectedValue(new Error('已退出的短命令不应采集内存')),
     close,
   })
-  const report = await runStep({ name: 'slow identity probe', command: process.execPath, args: ['-e', ''] }, 1, 1)
+  const pending = runStep({ name: 'slow identity probe', command: process.execPath, args: ['-e', ''] }, 1, 1).catch(error => error)
+  await vi.advanceTimersByTimeAsync(10)
+  expect(spawn).toHaveBeenCalledOnce()
+  Object.assign(child, { exitCode: 0 })
+  child.emit('exit', 0, null)
+  child.emit('close', 0, null)
+  await vi.advanceTimersByTimeAsync(2090)
+  expect(scan.mock.calls[0]?.[1]?.aborted).toBe(false)
+  expect(close).not.toHaveBeenCalled()
+  await vi.advanceTimersByTimeAsync(100)
+  const report = await pending
   expect(report.exitCode).toBe(0)
   expect(report.error).toBeUndefined()
   expect(scan).toHaveBeenCalledOnce()
   expect(scan.mock.calls[0]?.[0]).toBe(5000)
   expect(scan.mock.calls[0]?.[1]?.aborted).toBe(false)
   expect(close).toHaveBeenCalledOnce()
+  expect(child.kill).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
 })
