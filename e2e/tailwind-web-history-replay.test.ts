@@ -1,9 +1,10 @@
 import type { CapabilityReport } from './tailwind-capabilities/types'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { PNG } from 'pngjs'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { digest } from './tailwind-capabilities/identity'
 import { receipt, verifyReportArtifacts } from './tailwind-capabilities/report'
 import { historyIdentity, historyToken } from './tailwind-capabilities/web-history/fixtures'
@@ -12,12 +13,13 @@ import { deferredHistory, syntheticHistory } from './tailwind-capabilities/web-h
 
 const directories: string[] = []
 afterEach(async () => {
+  vi.useRealTimers()
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
 })
 async function prepared(deferred = false) {
   const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-history-replay-'))
   directories.push(directory)
-  const observedAt = new Date().toISOString()
+  const observedAt = filesystemObservedAt(directory)
   const fixture = deferred ? deferredHistory() : syntheticHistory()
   const { raw, screenshots, runId, css } = fixture
   await writeFile(path.join(directory, 'generated.css'), css)
@@ -39,6 +41,17 @@ async function prepared(deferred = false) {
 it('统一产物门禁重读CSS、独占profile、导航与四边PNG', async () => {
   const { directory, report } = await prepared()
   await expect(verifyReportArtifacts(report, directory)).resolves.toBeUndefined()
+})
+
+it.each(['css', 'screenshot', 'measurements'] as const)('Date 超前时本轮重放通过，旧 %s 仍被拒绝', async (kind) => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(Date.now() + 60_000)
+  const { report, directory } = await prepared()
+  await expect(verifyReportArtifacts(report, directory)).resolves.toBeUndefined()
+  const artifact = report.artifacts.find(item => item.kind === kind)!
+  const old = new Date(Date.parse(report.observedAt) - 60_000)
+  await utimes(path.join(directory, artifact.path), old, old)
+  await expect(verifyReportArtifacts(report, directory)).rejects.toThrow('早于本轮')
 })
 
 it('生产重放接受首张旧色后同帧probe与reference达成的完整连续轨迹', async () => {
