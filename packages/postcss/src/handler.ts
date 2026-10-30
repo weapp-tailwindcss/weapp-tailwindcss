@@ -20,6 +20,7 @@ import { resolvePostcssFrameworkProfile } from './frameworks'
 import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
 import { createInjectPreflight } from './preflight'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 import { StyleProcessorCache } from './processor-cache'
 import { captureRootCacheSnapshot, cloneRootWithCurrentSources, hasOnlyCapturedInputs, matchRootCacheSnapshot } from './root-cache'
 import { contentHash } from './utils/content-hash'
@@ -87,7 +88,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
     const hasExternalPlugins = hasUserPlugins && !configured.every(isKnownPurePostcssPlugin)
-    let cacheable = !hasExternalPlugins
+    const hasOpaqueOptions = hasOpaqueProcessOptions(resolvedOptions.postcssOptions?.options)
+    let cacheable = !hasExternalPlugins && !hasOpaqueOptions
     // 确定性准备属于缓存未命中的处理；原始输入和配置已经完整标识其输出。
     const optsFp = cacheable ? fingerprintStyleOptions(resolvedOptions) : ''
     const cacheKey = `${optsFp}|${contentHash(rawSource)}|${root === undefined ? 'text' : 'root'}|${sourcePrepared ? 'prepared' : 'raw'}`
@@ -179,7 +181,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     }
     // 外部插件已经完成，平台阶段探测本轮实际输入；包内 macro 仍随管线执行时保持保守探测。
     let signal: FeatureSignal | undefined
-    if (!hasUserPlugins) {
+    if (!hasUserPlugins && !hasOpaqueOptions) {
       try {
         signal = probeFeatures(source)
       }

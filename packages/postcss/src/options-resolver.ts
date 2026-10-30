@@ -2,6 +2,7 @@ import type { IStyleHandlerOptions } from './types'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
 import { LRUCache } from 'lru-cache'
 import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 
 const SIMPLE_OVERRIDE_UNSET = '__unset__'
 const CSS_OPTION_KEYS = [
@@ -239,9 +240,11 @@ export function createOptionsResolver(baseOptions: IStyleHandlerOptions): Option
     }
 
     // 调用方可以原位修改 Map、白名单或嵌套选项，不能只按对象身份复用旧签名。
-    const key = getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides)
+    const cacheable = !hasOpaqueProcessOptions(normalizedBaseOptions.postcssOptions?.options)
+      && !hasOpaqueProcessOptions(overrides.postcssOptions?.options)
+    const key = cacheable ? getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides) : undefined
 
-    const cached = cacheByKey.get(key)
+    const cached = key === undefined ? undefined : cacheByKey.get(key)
     if (cached && fingerprintStyleOptions(cached.options) === cached.fingerprint) {
       return cached.options
     }
@@ -259,7 +262,9 @@ export function createOptionsResolver(baseOptions: IStyleHandlerOptions): Option
       base,
     )
     const normalized = normalizeCssOptions(merged)
-    cacheByKey.set(key, { options: normalized, fingerprint: fingerprintStyleOptions(normalized) })
+    if (key !== undefined) {
+      cacheByKey.set(key, { options: normalized, fingerprint: fingerprintStyleOptions(normalized) })
+    }
     return normalized
   }
 

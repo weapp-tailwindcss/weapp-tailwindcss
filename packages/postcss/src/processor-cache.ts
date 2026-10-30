@@ -7,6 +7,7 @@ import postcss from 'postcss'
 import { signalToCacheKey } from './content-probe'
 import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
 import { createStylePipeline } from './pipeline'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 
 function createProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
   return {
@@ -97,6 +98,9 @@ export class StyleProcessorCache {
 
   getProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
     const source = options.postcssOptions?.options
+    if (hasOpaqueProcessOptions(source)) {
+      return createProcessOptions(options)
+    }
     const cacheKey = source
       ? getSimpleProcessOptionsCacheKey(source as Record<string, unknown>) ?? fingerprintOptions(source)
       : undefined
