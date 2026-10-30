@@ -26130,7 +26130,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 108546,
+      "bytes": 101512,
       "selectors": [
         "#app",
         "*",
@@ -26618,7 +26618,6 @@
         "[nvue] uni-view",
         "abc",
         "body",
-        "button:after",
         "code.hljs",
         "input[type='search']::-webkit-search-cancel-button",
         "pre code.hljs",
@@ -26812,7 +26811,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 108546,
+      "bytes": 101512,
       "selectors": [
         "#app",
         "*",
@@ -27300,7 +27299,6 @@
         "[nvue] uni-view",
         "abc",
         "body",
-        "button:after",
         "code.hljs",
         "input[type='search']::-webkit-search-cancel-button",
         "pre code.hljs",

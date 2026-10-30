@@ -8,6 +8,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-web-units.integration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-web-units.integration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-web-rpx-finalizer.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-web-css-stage.test.ts
   - e2e/apps-generator-mode-compare.test.ts
 ---
 
@@ -51,6 +52,24 @@ Webpack 样例还纠正了作者 CSS 的源顺序：统一单位后，card/loadi
 本地 Node 24.22.1 与 CI Node 22.23.4 的该目标五份正规化 CSS 全量字节及 SHA256 相同，稳定复现总字节数 443880 → 443764。四个 Taro 紧凑模式限定重生成后的差异与普通 Web 已审查的单位、作者顺序和重复规则去重一致；选择器、文件集合和兼容性指标保留。四个目标总字节分别减少 116、80、153、6，不把这些变化解释成无语义的大小漂移。
 
 定向命令沿用上述项目过滤，将平台过滤改为 `E2E_GENERATOR_PLATFORM_FILTER='^web-compact$'`；`-u` 生成后审查 CSS 与汇总报告，再使用 `--update=none` 复验，11 项通过。Web 单位流程变化必须同时盘点普通与紧凑模式，不能用一种模式的证据覆盖另一种模式。
+
+### 生成缓存不是框架处理后的资产
+
+后续 head `fd36ffb3d` 的 Android App 比基线多 2,004 字节。本地准确复现后发现，Vite 生成器在真实框架 PostCSS 之前把 `tracedCss` 登记成 processed。框架把来源 `theme.css` 合成到另一输出时，collector 不能用新资产覆盖原来源记录，最终注入又追加原始规则，将已经转换的 rem 覆盖回 rpx；原生 HTML preflight 选择器也绕过了 DCloud 的改写。
+
+Web 生成阶段只保留 clean/traced/classSet 缓存和来源身份，processed 记录由实际框架资产采集建立。非 Web 仍保留原来的生成结果重放。删除同一分支内重复登记，不新增单位重算、文件名特判或后置源码读取。
+
+新回归串联真实生成缓存、PostCSS、collector 与注入，模拟框架改名输出，分别验证默认和自定义单位比例、作者 `3rem` 与颜色、原始 `button::after` 改写成框架选择器。原生产源码下两种单位场景均在最终资产多出 `20rpx`，修复后只保留框架结果；未产生框架资产时也不把模块缓存注入无关输出。
+
+修复后 Android 与 iOS 的正规化 App CSS 相同，主文件由 93,370 减至 86,336 字节，总 CSS 由 108,546 减至 101,512 字节。相对旧快照减少的 7 组规则均为重复的框架处理前 preflight；逐条映射到现有的 `uni-progress`、媒体组合、表单组合、`uni-textarea` 与按钮框架选择器，原声明、顺序和重要性保留，`appearance` 另保留框架的两项前缀。其余 AST 规则没有新增或丢失，`@property` 定义完整；其余减少来自重复定义与注释。原 HTML 选择器不作为 App 语义替代品保留。
+
+先保留原失败产物和完整 AST 审计，再限定生成：
+
+```sh
+CI=1 E2E_PROJECT_FILTER='^uni-app-vite-tailwindcss-v4$' E2E_GENERATOR_PLATFORM_FILTER='^app-(android|ios)$' pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/apps-generator-mode-compare.test.ts -t 'builds retained demos' --update
+```
+
+生成后审查两份主 CSS 和对应报告。将项目过滤扩为 Uni v4 和四个 Taro v4、平台过滤扩为 `^(app-(android|ios)|web(-compact)?)$`，使用 `--update=none` 复验，12 个构建目标、11 项测试通过；其他 Web/compact 基线无变化。生成缓存、Web 单位、只含 CSS 与非微信重放回归共 8 文件 102 项通过；核心构建、架构检查、修改源码及测试的显式 ESLint、规则检查和 diff 检查通过。真实 App 构建产物只能验证 CSS 链路；不能替代 IDE、原生基座或设备验收。
 
 ## 适用边界
 
