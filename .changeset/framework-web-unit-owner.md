@@ -26,3 +26,5 @@ UVUE 后处理按 Document 内各 Root 独立消费主题、求值和判定作�
 空块清理与未解析作者变量 fallback 拆分明确接收 Root 或 Document，保留原有共同容器遍历、删除计数、变量表及节点来源，不因类型修正展平多文档。
 
 Root 结果缓存把 Input.document 的完整来源文档纳入快照与匹配，避免相同 CSS 和文件名下复用旧文档的序列化结果；保留等价来源的缓存命中、逐 Input 重新绑定和输出树隔离。
+
+选择器类型守卫通过 postcss-selector-parser 的真实 CommonJS 默认导出对象消费，避免 ESM 产物在 Node 中加载时因动态挂载的命名导出无法识别而失败；保留相同守卫、AST 算法和外部依赖边界。

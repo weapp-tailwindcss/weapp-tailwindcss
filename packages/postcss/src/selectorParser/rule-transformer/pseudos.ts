@@ -1,7 +1,7 @@
 import type { Container, Node, Pseudo, Selector } from 'postcss-selector-parser'
 import type { IStyleHandlerOptions } from '../../types'
 import type { TransformContext } from './types'
-import { isContainer, isSelector } from 'postcss-selector-parser'
+import selectorParser from 'postcss-selector-parser'
 import { isUniAppXEnabled } from '../../compat/uni-app-x'
 import { internalCssSelectorReplacer } from '../../shared'
 import { transformSpacingSelector } from '../spacing'
@@ -65,7 +65,7 @@ function getTopLevelSelector(node: Selector): Selector {
     if (parent.type === 'root') {
       break
     }
-    if (isSelector(parent)) {
+    if (selectorParser.isSelector(parent)) {
       topLevel = parent
     }
     current = parent
@@ -76,7 +76,7 @@ function getTopLevelSelector(node: Selector): Selector {
 
 function stripUnsupportedRtlLanguagePseudo(node: Pseudo) {
   const selectorParent = node.parent
-  if (!isSelector(selectorParent)) {
+  if (!selectorParser.isSelector(selectorParent)) {
     return
   }
 
@@ -118,7 +118,7 @@ function getNodePath(root: Selector, target: Node) {
 
   while (current && current !== root) {
     const parent: Node['parent'] = current.parent
-    if (!isContainer(parent) || !Array.isArray(parent.nodes)) {
+    if (!selectorParser.isContainer(parent) || !Array.isArray(parent.nodes)) {
       return undefined
     }
 
@@ -315,7 +315,7 @@ export function prunePseudoNode(node: Node, context: TransformContext) {
   // 保留原 uni-app x 多分支拒绝资格，不能因后代裁剪而降为可接受的单分支。
   if (node.value === ':where' && isUniAppXEnabled(context.options)) {
     const parent = node.parent
-    if (isSelector(parent) && parent.parent && node.length > 0 && collectExpandedWhereBranches(node).length > 1) {
+    if (selectorParser.isSelector(parent) && parent.parent && node.length > 0 && collectExpandedWhereBranches(node).length > 1) {
       parent.remove()
       return true
     }
