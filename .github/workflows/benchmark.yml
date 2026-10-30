@@ -20,6 +20,15 @@ on:
       - next
   workflow_dispatch:
     inputs:
+      source_diagnostics:
+        description: 仅收集准确 Git 版本的独立源码诊断，不满足正式预算
+        type: choice
+        default: none
+        options: [none, watch, taro, runtime]
+      current_ref:
+        description: 源码诊断的 current 产品完整 40 位 commit SHA，独立于 driver
+        type: string
+        default: ''
       weekly_demo_cost:
         description: 手动验证当前分支的每周发布版接入成本套件
         type: boolean
@@ -66,7 +75,7 @@ on:
         default: false
 
 concurrency:
-  group: benchmark-${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && format('diagnostic-{0}', github.run_id) || inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
+  group: benchmark-${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && format('diagnostic-{0}', github.run_id) || inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -74,14 +83,15 @@ permissions:
 
 jobs:
   scope:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Scope' || 'scope' }}
+    if: github.event_name != 'workflow_dispatch' || !inputs.source_diagnostics || inputs.source_diagnostics == 'none'
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Benchmark Diagnostic Scope' || 'scope' }}
     uses: ./.github/workflows/ci-scope.yml
     with:
       full_verification: ${{ inputs.full_verification || false }}
 
   weekly-demo-cost:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Weekly Cost' || 'weekly-demo-cost' }}
-    if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Benchmark Diagnostic Weekly Cost' || 'weekly-demo-cost' }}
+    if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost && (!inputs.source_diagnostics || inputs.source_diagnostics == 'none')
     uses: ./.github/workflows/demo-performance-weekly.yml
     with:
       only: ${{ inputs.only }}
@@ -90,7 +100,7 @@ jobs:
   synthetic-performance:
     needs: scope
     if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Synthetic (ubuntu-latest, 22)' || 'Synthetic Performance Gate (ubuntu-latest, 22)' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Benchmark Diagnostic Synthetic (ubuntu-latest, 22)' || 'Synthetic Performance Gate (ubuntu-latest, 22)' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -137,7 +147,7 @@ jobs:
   benchmark-matrix:
     needs: scope
     if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Prepare benchmark diagnostic matrix' || 'Prepare benchmark matrix' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Prepare benchmark diagnostic matrix' || 'Prepare benchmark matrix' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -171,7 +181,7 @@ jobs:
           echo "include=$include" >> "$GITHUB_OUTPUT"
 
   benchmark-shard:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark diagnostic shard' || 'Benchmark shard' }} (${{ matrix.case_name }})
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Benchmark diagnostic shard' || 'Benchmark shard' }} (${{ matrix.case_name }})
     needs: benchmark-matrix
     runs-on: ubuntu-latest
     timeout-minutes: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && 30 || 45 }}
@@ -207,7 +217,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && '22.23.4' || '22' }}
+          node-version: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && '22.23.4' || '22' }}
           check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
@@ -256,7 +266,7 @@ jobs:
           if-no-files-found: error
 
   current-vs-published:
-    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics) && 'Benchmark Diagnostic Summary' || 'Performance guard and published trend' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.gc_diagnostics || inputs.input_diagnostics || inputs.allocation_diagnostics || (inputs.source_diagnostics && inputs.source_diagnostics != 'none')) && 'Benchmark Diagnostic Summary' || 'Performance guard and published trend' }}
     if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
     needs: [scope, benchmark-shard]
     runs-on: ubuntu-latest
@@ -294,3 +304,54 @@ jobs:
             echo "::error title=Benchmark matrix failed::At least one benchmark shard failed. Review the Benchmark shard failure annotations above for the exact project and metric."
           fi
           test "$BENCHMARK_RESULT" = success
+
+  source-diagnostics:
+    name: Source Diagnostic Evidence (${{ inputs.source_diagnostics }})
+    if: github.event_name == 'workflow_dispatch' && inputs.source_diagnostics && inputs.source_diagnostics != 'none'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_DIAGNOSTIC_KIND: ${{ inputs.source_diagnostics }}
+      SOURCE_DIAGNOSTIC_BASE: ${{ inputs.baseline_ref }}
+      SOURCE_DIAGNOSTIC_CURRENT: ${{ inputs.current_ref }}
+      SOURCE_DIAGNOSTIC_DRIVER: ${{ github.sha }}
+    steps:
+      - name: Check out exact diagnostic driver
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Initialize failure evidence
+        run: node benchmark/version-compare/scripts/source-diagnostics/run.mjs --initialize
+      - uses: pnpm/action-setup@v4
+      - name: Setup exact diagnostic Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.23.4
+          check-latest: false
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install driver dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate source diagnostic fixtures
+        run: >
+          pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs
+          benchmark/version-compare/test/source-diagnostics.test.mjs
+          benchmark/version-compare/test/source-diagnostics-entry.test.mjs
+          benchmark/version-compare/test/runtime-versions.test.mjs
+          benchmark/version-compare/test/runtime-join.test.mjs
+          benchmark/version-compare/test/source-diagnostics-workflow.test.mjs
+          benchmark/version-compare/test/runtime-diagnostics.test.mjs
+          benchmark/version-compare/test/taro-cpu-diagnostics.test.mjs
+          benchmark/version-compare/test/watch-consumer.test.mjs
+          --update=none --maxWorkers=1
+      - name: Collect exact product source evidence
+        run: pnpm exec node benchmark/version-compare/scripts/source-diagnostics/run.mjs
+      - name: Upload source diagnostic evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-diagnostic-${{ inputs.source_diagnostics }}-${{ github.run_id }}
+          path: .tmp/source-diagnostics/**
+          if-no-files-found: error
+          retention-days: 14

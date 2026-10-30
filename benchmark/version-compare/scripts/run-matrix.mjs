@@ -10,6 +10,8 @@ import { runWithCleanup } from './diagnostics/failures.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
 import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
+import { createRuntimeDiagnostics } from './runtime-diagnostics/controller.mjs'
+import { validateRuntimeRequest } from './runtime-diagnostics/request.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
 import { isWatchReady } from './watch-readiness.mjs'
@@ -365,7 +367,10 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
         reject(new Error(`build timeout ${timeoutMs}ms`))
       }, timeoutMs)
 
-      child.once('error', (error) => { clearTimeout(timer); reject(error) })
+      child.once('error', (error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
       child.once('close', (exitCode) => {
         clearTimeout(timer)
         resolve(exitCode ?? 1)
@@ -479,6 +484,9 @@ async function runHmrRounds({
       throw new Error(`dev warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
     diagnostics?.mark('watch-ready')
+    if (diagnostics?.checkpoint) {
+      await diagnostics.checkpoint('watch-ready')
+    }
 
     const times = []
 
@@ -511,6 +519,9 @@ async function runHmrRounds({
         throw new Error(`hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('mutation-observed', i + 1)
+      if (diagnostics?.checkpoint) {
+        await diagnostics.checkpoint('mutation-observed', i + 1)
+      }
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
       times.push({
@@ -543,6 +554,9 @@ async function runHmrRounds({
       if (diagnostics?.source) {
         await diagnostics.source('rollback-observed', sourcePath, original, marker)
       }
+      if (diagnostics?.checkpoint) {
+        await diagnostics.checkpoint('rollback-observed', i + 1)
+      }
     }
 
     if (diagnostics?.beforeStop) {
@@ -558,7 +572,9 @@ async function runHmrRounds({
     async () => {
       if (sourceDirty) {
         await fs.writeFile(sourcePath, original, 'utf8')
-        if (diagnostics?.source) await diagnostics.source('failure-restored', sourcePath, original)
+        if (diagnostics?.source) {
+          await diagnostics.source('failure-restored', sourcePath, original)
+        }
       }
     },
   ])
@@ -747,7 +763,9 @@ export async function runCase(versionMeta, projectMeta, options) {
       hmrPluginTimings.push(...result.samples.flatMap(sample => sample.pluginTiming ? [sample.pluginTiming] : []))
     }
     else {
-      const diagnostics = await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
+      const diagnostics = options.runtimeDiagnosticDir
+        ? await createRuntimeDiagnostics({ cwd, versionMeta, projectMeta, directory: options.runtimeDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv })
+        : await createCaseDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv, allocation: options.allocationDiagnostics ? 'allocation' : options.inputDiagnostics ? 'inputs' : undefined })
       const result = await runWithCleanup(
         () => runHmrRounds({
           cwd,
@@ -824,6 +842,20 @@ async function main() {
   const versions = await parseVersions()
   const allocationDiagnostics = process.argv.includes('--allocation-diagnostics')
   const inputDiagnostics = process.argv.includes('--input-diagnostics')
+  const runtimeDiagnostics = process.argv.includes('--weapp-runtime-diagnostics')
+  const runtimeDiagnosticDir = parseString('--runtime-diagnostic-dir', '')
+  validateRuntimeRequest({
+    enabled: runtimeDiagnostics,
+    guardMode: process.argv.includes('--guard'),
+    baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',
+    selectedProjects,
+    buildRuns,
+    hmrRuns,
+    otherDiagnostics: allocationDiagnostics || inputDiagnostics || Boolean(gcDiagnosticDir),
+  })
+  if (runtimeDiagnostics !== Boolean(runtimeDiagnosticDir)) {
+    throw new Error('weapp runtime 模式必须显式指定专用结果目录')
+  }
   if (allocationDiagnostics && inputDiagnostics) {
     throw new Error('输入证据与分配采样必须分开运行')
   }
@@ -835,7 +867,7 @@ async function main() {
     buildRuns,
     hmrRuns,
   })
-  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}), ...(allocationDiagnostics ? { allocationDiagnostics: true } : {}), ...(inputDiagnostics ? { inputDiagnostics: true } : {}) }
+  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}), ...(allocationDiagnostics ? { allocationDiagnostics: true } : {}), ...(inputDiagnostics ? { inputDiagnostics: true } : {}), ...(runtimeDiagnostics ? { runtimeDiagnosticDir: path.resolve(runtimeDiagnosticDir) } : {}) }
   const rows = []
 
   for (const projectMeta of selectedProjects) {
@@ -862,6 +894,7 @@ async function main() {
     versions,
     projects,
     selectedProjectKeys: selectedProjects.map(project => project.key),
+    ...(runtimeDiagnostics ? { diagnosticOnly: true, budgetAcceptance: false } : {}),
     rows,
   }
 

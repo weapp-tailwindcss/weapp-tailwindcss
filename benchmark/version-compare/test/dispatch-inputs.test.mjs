@@ -74,7 +74,7 @@ describe('Benchmark 工作流诊断装配', () => {
       matrix: { case_name: 'uni' },
       format: (template, argument) => template.replace('{0}', argument),
     }, { timeout: 100 }))
-    expect(Object.keys(workflow.jobs).sort()).toEqual(Object.keys(formalNames).sort())
+    expect(Object.keys(workflow.jobs).sort()).toEqual([...Object.keys(formalNames), 'source-diagnostics'].sort())
     for (const [id, name] of Object.entries(formalNames)) {
       expect(render(workflow.jobs[id].name, 'pull_request', {})).toBe(name)
       expect(render(workflow.jobs[id].name, 'workflow_dispatch', {})).toBe(name)
