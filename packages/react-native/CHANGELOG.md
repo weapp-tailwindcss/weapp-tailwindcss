@@ -1,5 +1,106 @@
 # @weapp-tailwindcss/react-native
 
+## 0.3.5
+
+### Patch Changes
+
+- 隔离 React Native 的多个 Tailwind 样式入口，避免前缀、主题和配置相互污染；解析原生排版中的主题变量，未解析或循环变量保留明确诊断。按最终字号层叠结果换算相对行高，支持内联字号及静态样式查找；完整保留多层阴影与 spread，避免局部变量污染其它规则。
+
+  在最终 class、important 和内联样式层叠后解析阴影变量，完整组合 ring、inset、颜色与透明度修饰符；保留入口默认值边界和 currentColor 上下文，输出 RN 与 Expo Web 均可消费的颜色格式。新增不依赖 Node 的原生值解析子入口供运行时复用。
+
+  复杂选择器按 AST 精确诊断，避免 group、peer 等规则静默丢失；在最终变量层叠后组合双轴 skew。运行时实例分别维护注册表及元数据，样式工厂更新后刷新缓存；深层数组采用迭代解析并拒绝循环引用，保留近零但非零的阴影透明度。
+
+  重要相对行高或 currentColor 阴影覆盖已结算值时，同步清除被覆盖的重要样式属性，避免缺少字号或颜色上下文时，内联样式组合重新带回旧值；保留其它重要属性及既有层叠优先级。
+
+- 更新公开包的直接依赖及配套开发工具链，保留 catalog 和 workspace 关系。React 18 UI 包的类型声明与现有运行时配对；React Native 包的开发构建使用 Babel 7 与 TypeScript 5.9.3，保持 Expo/Metro 既有配套。框架 peer 支持范围保持现有契约。
+
+  ### @weapp-tailwindcss/css-compat
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 `devDependencies` 的 `vite`：`7.2.7` → `7.3.7`。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 `devDependencies` 的 `@lynx-js/rspeedy`：`^0.18.1` → `^0.18.3`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 `dependencies` 的 `autoprefixer`：`^10.6.1` → `^10.6.2`。
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+  - 更新 `devDependencies` 的 `eslint`：`^10.12.0` → `^10.13.0`。
+  - 更新 `devDependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `devDependencies` 的 `@babel/core`：`^8.0.7` → `^7.29.7`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^19.3.0`。
+  - 更新 `devDependencies` 的 `react`：`^19.2.8` → `^19.3.1`。
+  - 更新 `devDependencies` 的 `typescript`：未声明 → `^5.9.3`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 `devDependencies` 的 `@storybook/addon-a11y`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react-vite`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^18.3.31`。
+  - 更新 `devDependencies` 的 `@types/react-dom`：`^19.2.5` → `^18.3.7`。
+  - 更新 `devDependencies` 的 `storybook`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+
+  ### tailwindcss-config
+
+  - 更新 `dependencies` 的 `lilconfig`：`^3.1.3` → `^3.1.4`。
+
+  ### tailwindcss-injector
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+
+  ### weapp-tailwindcss
+
+  - 更新 `dependencies` 的 `@babel/parser`：`^8.0.7` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@vue/compiler-dom`：`^3.5.41` → `^3.5.44`。
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `oxc-parser`：`^0.154.0` → `^0.156.0`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+  - 更新 `devDependencies` 的 `webpack`：`5.105.4` → `5.112.2`。
+
+  ### wetw
+
+  - 更新 `dependencies` 的 `@inquirer/prompts`：`^8.7.3` → `^8.7.5`。
+
+- 修复 React Native 默认 spacing 简写中 calc() 被空格拆分的问题，完整保留四边数值并拒绝超过四项的非法简写。按 React Native 0.81 布局 API 校验 display、position 与 flex 对齐关键字，保留 contents，对 fixed、sticky 和浏览器独有布局值明确诊断。原生平台变体与浏览器状态或响应式条件复合时不再丢弃条件并无条件套用基础样式；派生规则使用独立 StyleSheet ID，避免覆盖基础规则的运行时条件。
+
+- 将 Metro 的 manifest、虚拟模块与 ready 标记绑定到同一不可变发布快照和实际 JSON 字节摘要。全部文件发布成功后才切换内存状态，启动占位文件失败不污染旧入口；刷新失败和摘要错配明确传递给读取者。
+
+  运行时先完成 manifest 副本、发布身份与宿主 StyleSheet 注册，再原子安装。注册失败保留旧缓存和 important 元数据，独立实例不再污染默认实例。提供 getPublication() 读取安装身份；手工匿名安装清除旧身份，宿主注册器保留独立可变副本。
+
+  宿主读取发布快照时支持取消文件读取及轮询等待，取消后拒绝交付旧快照；默认读取与截止时间保持不变。兼容 React Native consumer 的 AbortSignal 全局声明，不依赖 throwIfAborted 方法，保留原始取消原因及旧信号的 AbortError 回退。
+
+- 修复 Metro 文件监听遗漏原生通知时首次保存和后续保存不刷新的问题；同步建立文件版本基线并定期核对，关闭监听时释放核对计时器。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss@3.4.4
+  - weapp-tailwindcss@5.6.4
+
 ## 0.3.4
 
 ### Patch Changes
