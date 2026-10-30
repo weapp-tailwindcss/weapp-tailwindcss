@@ -16,6 +16,10 @@
   intents:
     - ancient-cats-peel
     - great-emus-refuse
+"@weapp-tailwindcss/cli@5.6.4":
+  dir: packages/cli
+  intents:
+    - native-toolchain-upgrade-20261028
 "@weapp-tailwindcss/cn@0.1.1":
   dir: packages-runtime/cn
   intents:
@@ -41,6 +45,11 @@
   dir: packages/css-compat
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/css-compat@0.1.3":
+  dir: packages/css-compat
+  intents:
+    - dependency-upgrade-20261028
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/cva@0.1.12":
   dir: packages-runtime/cva
   intents:
@@ -49,6 +58,10 @@
   dir: packages-runtime/cva
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/debug-uni-app-x@1.0.10":
+  dir: packages/debug-uni-app-x
+  intents:
+    - dependency-upgrade-20261028
 "@weapp-tailwindcss/debug-uni-app-x@1.0.5":
   dir: packages/debug-uni-app-x
   intents:
@@ -104,6 +117,11 @@
   dir: packages/engine
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/engine@0.1.7":
+  dir: packages/engine
+  intents:
+    - dependency-upgrade-20261028
+    - tall-trees-dream
 "@weapp-tailwindcss/env@0.1.0":
   dir: packages/env
   intents:
@@ -115,6 +133,10 @@
     - lucky-monkeys-travel
     - smooth-bears-study
     - strong-squids-help
+"@weapp-tailwindcss/env@0.2.1":
+  dir: packages/env
+  intents:
+    - taro-hybrid-web-platform
 "@weapp-tailwindcss/escape@0.0.2":
   dir: packages/escape
   intents:
@@ -162,6 +184,10 @@
   intents:
     - hbuilderx-process-closure
     - organization-repository-metadata
+"@weapp-tailwindcss/hbuilderx-runner@0.1.8":
+  dir: packages/hbuilderx-runner
+  intents:
+    - weak-bats-knock
 "@weapp-tailwindcss/init@1.0.16":
   dir: packages/init
   intents:
@@ -223,6 +249,12 @@
   dir: packages/lynx
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/lynx@0.5.0":
+  dir: packages/lynx
+  intents:
+    - curly-dragons-care
+    - dependency-upgrade-20261028
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -240,6 +272,38 @@
   intents:
     - migrate-weapp-core-escape
     - organization-repository-metadata
+"@weapp-tailwindcss/native-darwin-arm64@5.6.4":
+  dir: packages-native/darwin-arm64
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-darwin-x64@5.6.4":
+  dir: packages-native/darwin-x64
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-linux-arm64-gnu@5.6.4":
+  dir: packages-native/linux-arm64-gnu
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-linux-arm64-musl@5.6.4":
+  dir: packages-native/linux-arm64-musl
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-linux-x64-gnu@5.6.4":
+  dir: packages-native/linux-x64-gnu
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-linux-x64-musl@5.6.4":
+  dir: packages-native/linux-x64-musl
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-win32-arm64-msvc@5.6.4":
+  dir: packages-native/win32-arm64-msvc
+  intents:
+    - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/native-win32-x64-msvc@5.6.4":
+  dir: packages-native/win32-x64-msvc
+  intents:
+    - native-toolchain-upgrade-20261028
 "@weapp-tailwindcss/postcss-calc@1.0.10":
   dir: packages/postcss-calc
   intents:
@@ -250,6 +314,11 @@
   dir: packages/postcss-calc
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/postcss-calc@1.0.12":
+  dir: packages/postcss-calc
+  intents:
+    - dependency-upgrade-20261028
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -380,6 +449,18 @@
   dir: packages/postcss
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/postcss@3.4.4":
+  dir: packages/postcss
+  intents:
+    - css-var-fallback-pixels
+    - curly-kiwis-refuse
+    - dependency-upgrade-20261028
+    - lazy-knives-invent
+    - lynx-evidence-and-theme-boundary
+    - native-layout-contract
+    - place-alignment-groups
+    - web-generator-unit-conversion
+    - webpack-web-production-cascade
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -411,6 +492,14 @@
   dir: packages/react-native
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/react-native@0.3.5":
+  dir: packages/react-native
+  intents:
+    - curly-kiwis-refuse
+    - dependency-upgrade-20261028
+    - native-layout-contract
+    - rn-manifest-publication
+    - wise-wolves-eat
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
@@ -470,6 +559,10 @@
   intents:
     - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
     - organization-repository-metadata
+"@weapp-tailwindcss/typography@1.0.8":
+  dir: packages-runtime/typography
+  intents:
+    - dependency-upgrade-20261028
 "@weapp-tailwindcss/ui@0.0.12":
   dir: packages-runtime/ui
   intents:
@@ -495,6 +588,10 @@
   dir: packages-runtime/ui
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/ui@0.0.20":
+  dir: packages-runtime/ui
+  intents:
+    - dependency-upgrade-20261028
 "@weapp-tailwindcss/variants@0.2.10":
   dir: packages-runtime/variants
   intents:
@@ -524,6 +621,10 @@ tailwindcss-config@2.0.6:
   dir: packages/tailwindcss-config
   intents:
     - organization-repository-metadata
+tailwindcss-config@2.0.7:
+  dir: packages/tailwindcss-config
+  intents:
+    - dependency-upgrade-20261028
 tailwindcss-core-plugins-extractor@0.2.2:
   dir: packages/tailwindcss-core-plugins-extractor
   intents:
@@ -549,6 +650,10 @@ tailwindcss-injector@1.0.23:
   intents:
     - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
     - organization-repository-metadata
+tailwindcss-injector@1.0.28:
+  dir: packages/tailwindcss-injector
+  intents:
+    - dependency-upgrade-20261028
 theme-transition@2.1.0:
   dir: packages-runtime/theme-transition
   intents:
@@ -578,6 +683,10 @@ weapp-style-injector@1.0.7:
   dir: packages/weapp-style-injector
   intents:
     - organization-repository-metadata
+weapp-style-injector@1.0.8:
+  dir: packages/weapp-style-injector
+  intents:
+    - framework-compilation-ownership
 weapp-tailwindcss-monorepo@0.0.0:
   dir: ""
   intents:
@@ -775,6 +884,21 @@ weapp-tailwindcss@5.6.3:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
     - lucky-monkeys-travel
     - smooth-bears-study
+weapp-tailwindcss@5.6.4:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - css-var-fallback-pixels
+    - dependency-upgrade-20261028
+    - framework-compilation-ownership
+    - lynx-evidence-and-theme-boundary
+    - native-toolchain-upgrade-20261028
+    - slow-doors-promise
+    - taro-hybrid-web-platform
+    - uni-app-x-compiled-border-preflight
+    - vite-style-identity-snapshot
+    - web-generator-unit-conversion
+    - webpack-loader-confirmed-classes
+    - webpack-web-production-cascade
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
@@ -797,3 +921,7 @@ wetw@0.1.8:
   dir: packages/wetw
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+wetw@0.1.9:
+  dir: packages/wetw
+  intents:
+    - dependency-upgrade-20261028

@@ -1,5 +1,183 @@
 # weapp-tailwindcss
 
+## 5.6.4
+
+### Patch Changes
+
+- 修复开启 `px2rpx` 时 CSS `var()` 回退长度中的 `px` 漏转换问题，嵌套回退值按配置倍率转换，同时保留变量名、变量引用关系、字符串和 URL。可通过 `transformVarFallbacks: false` 恢复跳过整段 `var()` 的旧行为。
+
+  升级到已包含上游修复的 `postcss-pxtrans@1.1.0`、`postcss-rule-unit-converter@0.3.0` 与 `postcss-rem-to-responsive-pixel@7.0.9` 正式版，统一共享转换器依赖，无需额外安装临时依赖补丁。
+
+- 更新公开包的直接依赖及配套开发工具链，保留 catalog 和 workspace 关系。React 18 UI 包的类型声明与现有运行时配对；React Native 包的开发构建使用 Babel 7 与 TypeScript 5.9.3，保持 Expo/Metro 既有配套。框架 peer 支持范围保持现有契约。
+
+  ### @weapp-tailwindcss/css-compat
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 `devDependencies` 的 `vite`：`7.2.7` → `7.3.7`。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 `devDependencies` 的 `@lynx-js/rspeedy`：`^0.18.1` → `^0.18.3`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 `dependencies` 的 `autoprefixer`：`^10.6.1` → `^10.6.2`。
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+  - 更新 `devDependencies` 的 `eslint`：`^10.12.0` → `^10.13.0`。
+  - 更新 `devDependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `devDependencies` 的 `@babel/core`：`^8.0.7` → `^7.29.7`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^19.3.0`。
+  - 更新 `devDependencies` 的 `react`：`^19.2.8` → `^19.3.1`。
+  - 更新 `devDependencies` 的 `typescript`：未声明 → `^5.9.3`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 `devDependencies` 的 `@storybook/addon-a11y`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react-vite`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^18.3.31`。
+  - 更新 `devDependencies` 的 `@types/react-dom`：`^19.2.5` → `^18.3.7`。
+  - 更新 `devDependencies` 的 `storybook`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+
+  ### tailwindcss-config
+
+  - 更新 `dependencies` 的 `lilconfig`：`^3.1.3` → `^3.1.4`。
+
+  ### tailwindcss-injector
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+
+  ### weapp-tailwindcss
+
+  - 更新 `dependencies` 的 `@babel/parser`：`^8.0.7` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@vue/compiler-dom`：`^3.5.41` → `^3.5.44`。
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `oxc-parser`：`^0.154.0` → `^0.156.0`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+  - 更新 `devDependencies` 的 `webpack`：`5.105.4` → `5.112.2`。
+
+  ### wetw
+
+  - 更新 `dependencies` 的 `@inquirer/prompts`：`^8.7.3` → `^8.7.5`。
+
+- 统一收口框架配置解析、只读能力契约与编译状态所有权。同配置的独立实例拥有各自的候选、缓存、revision 和运行时；watch 保留会话，后续独立构建创建新会话。配置与环境按实例快照，异步旧结果不能覆盖新配置。
+
+  修正集合快照的间接修改入口，保持内部快照只读、用户原始配置可变。
+
+  Vite 框架按来源、生成、样式和产物职责协作，dispatcher 与内置 injector 共用保留 hook 语义的逐插件代理。Webpack/Rspack、Vite 和 Gulp 在永久关闭时等待已接收任务，释放资源并拒绝后续任务。保持现有公开入口、类型、配置和支持组合。
+
+  异步任务结束时释放活动租约对编译实例的引用，后续任务只继承仍有效的租约，避免长期 watch 上下文保留已完成实例；关闭时继续排空此前已接收的嵌套任务。
+
+  所有实例都没有在途活动时停用共享异步上下文，避免宿主后续任务继续承担传播开销；保持其他实例排空、用户上下文及同步异常释放的正确性。
+
+  Webpack 明确区分宿主任务接收与已接收任务的内部协作。关闭期间从 handler 异步后续重入产物钩子或 loader 时拒绝新任务，原任务仍可完成候选准备与产物提交，再统一释放资源。
+
+  框架请求上下文保留资产视图的惰性访问，避免不使用资产的 JS/CSS 钩子逐请求复制完整 bundle；实际访问仍提供当前产物的只读视图与受限提交操作。
+
+  永久关闭解除真实插件、配置与转换服务的引用；Gulp 排空已接受的文件写入及受管管线转发，保留调用者显式缓存的所有权。Vite 使用当前模块图识别已提交样式，避免连续构建时重复回放并误删合并产物中的框架样式。
+
+  同一编译实例内按完整来源和配置复用串行生成服务，各 root 独立维护候选、revision 与输出缓存；实例之间继续隔离。生成器释放兼容同步实现并允许异步完成结果，关闭时排空在途原生生成任务后再释放资源。
+
+  Vite 按来源标记与具名产物关系撤销 watch 旧哈希样式及派生别名，保留部分构建中的独立投影与有效来源记录；来源删除、产物裁剪和永久关闭同步释放归属索引，避免旧规则重新注入。
+
+  Vite 的 CSS 处理轮次显式传递来源捕获服务，移除每个产物钩子的异步局部存储。迟到调用不能借用新轮次权限，嵌套与并发轮次独立释放凭据；规划或清理失败仍释放全部已接收来源并保留原始错误。
+
+  生成兼容桥在单次请求内共用来源快照，同一实例的未变配置复用最近一个只读 profile；阶段覆盖与真实配置版本独立，显式样式目标、诊断策略和插件身份更新均使旧配置结果失效。永久关闭后显式清除配置缓存，释放回调与插件引用，保留不同请求和不同实例的隔离。
+
+- 按 CSS token 身份分析自定义属性和注册指令，保留转义覆盖、元素相关 attr()、空声明冲突及未证明稳定的完整依赖链，避免跨元素或过早删除定义改变主题语义。
+  静态百分比颜色权重复用完整依赖分析并乘以原色透明度，仅在小程序生成链降低可完全证明的颜色能力分支；增量缓存记录静态兼容上下文，局部覆盖撤销资格后重新转换已有样式，不依赖是否启用 calc。
+  样式结果缓存先按完整原始输入、配置及当前来源快照判断命中，避免命中后仍重复执行颜色资格分析；作者插件仍逐轮执行。新合成来源或携带消息的根节点结果不进入缓存，防止后续调用沿用旧输入或警告节点。来源追踪只缓存完整选择器的不可变类名解析结果，并同时限制条目数与字符总量，每轮继续查询当前来源映射，不保留旧资产的路径或可变语法树。
+  主题资格分析先排除不含目标函数的普通值，直接颜色和数学函数不再逐项构造变量及关键字语法树；转义、注释、元素相关函数和完整变量依赖继续走原有 token 解析，保留动态覆盖及循环的安全边界。
+  现代颜色兼容分析直接复用已有函数节点分类，普通非颜色声明不再创建颜色语法树；未修改的输入复用当前节点检验，转换器生成的新文本仍重新解析，避免动态透明度 fallback 中的现代子函数被不透明替换节点隐藏。
+  全部注册、描述符和变量依赖保持原文，前缀不推断作者归属；默认值兼容仅匹配真实编译器合同中的完整签名，条件或冲突注册否决默认合成，保留层时使用最低优先级层且重复处理幂等。通用 calc 插件提供声明过滤回调，使调用方明确保护注册描述符，不将无效初值改成有效注册。
+  legacy layer 内核保留注册子树的原子边界，禁止把其中无效嵌套描述符提升成有效注册；默认兼容块保留 import 的合法顺序，不压过作者已有的级联层。
+  保留公开变量名上的显式 initial，避免破坏阻断继承和 use-site fallback；渐变位置仅在当前完整消费图能够证明用途时兼容，转义身份、别名、注册描述符、style 查询、循环及不完整 chunk 均参与判断。多类渐变共用空位置时保留原 token，不按局部规则推测最终级联，也不引入与 CSSOM 更新失联的镜像变量。
+  Webpack/Rspack 在本轮 CSS 导入合并后、压缩和 Lynx 编码前重新核对完整渐变消费图，通过构建器资产 API 与精确编辑保留来源映射；兼容处理计入真实 HMR 耗时并在结束回调之前完成。
+  对只包含变量声明的 `:root, :host` 根组，在完成依赖分析后保留 Lynx encoder 支持的根分支，避免动态主题的初始定义被整组丢弃。
+
+  Lynx 诊断通过构建图的实际已发出模板和固定解码器核对声明，分别保留编码日志、静默删除与无法确证的结果；严格模式只拒绝确证被删除的业务样式。解码器资源与许可证随发布包交付，来源位置绑定本轮输入及 source map；同时对齐 Node 必装依赖链、构建插件要求和中英文支持边界。
+  核心入口复用 PostCSS 的只读规则证据接口，保持原生适配包的依赖边界；诊断补充可审计的版本来源、拒绝原因和保守建议。
+
+- 更新主包与 PostCSS Rust 内核的 Node-API 配套依赖：`napi` 由 `3.14.0` 升至 `3.15.0`，`napi-derive` 由 `3.6.10` 升至 `3.6.13`，继续使用精确版本并提交两份 Cargo.lock。
+
+  两个内核随相同八个平台包交付，主包、CLI 和平台包按现有固定版本组共同发布，避免只发布上层 PostCSS 包而继续消费旧二进制。原生二进制仍由同一提交的发布矩阵构建，保留 JavaScript 回退和现有 Node-API 级别。
+
+- 隔离各框架的配置策略、构建阶段扩展与样式注入实现，统一共享编译会话和产物调度；增加递归架构边界与跨框架实例隔离回归，保持现有安装方式、公开入口和配置行为。
+
+  上下文缓存同时区分框架平台与生成目标环境，避免显式指定同一项目目录后，从 Web 切换小程序或原生平台时继续复用旧上下文。
+
+  已有实例固定自身环境事实，后续显式配置仍可更新；交错创建其他框架或平台实例时，不再改变原实例的生成目标、Web 单位兼容、原生样式与 Taro 专属资产处理。
+
+- 将 Taro 的 Harmony Hybrid 识别为 WebView 平台，使生成器、框架样式策略和 Taro preset 一致保留 Web rem 单位，避免进入 Taro 自身转换前先转为 rpx 而导致不同来源的样式尺寸不一致。该平台别名仅属于 Taro，继续保留 Harmony 原生、小程序、显式 target 和通用单位转换配置的既有边界。
+
+- 修复 uni-app x 小程序中 HTML 标签编译为原生宿主后缺少边框默认值的问题。按组件实际关联样式中的基础规则补齐重置类，避免单边边框出现额外的三边框；保留作者覆盖、动态类名、组件隔离与增量构建语义。Refs #1319。
+
+  修复 H5 收尾阶段把已完成生成的样式按上下文指令再次生成、丢失全局边框重置的问题，保留真实 Tailwind 入口的候选更新能力。
+
+- Vite 样式来源匹配在单次计算中复用文件的真实路径，并去重重复的匹配根，减少多入口规划的同步文件系统访问。保留符号链接、尚未生成的文件和路径评分语义；后续计算重新读取路径身份，避免跨轮缓存过期。
+
+- Web 生成器在计算表达式后执行显式单位规则，使任意值工具类直接得到约定的 Web 单位。Vite 的跨资产计算阶段继续延迟单位处理，避免同单位缩放与组合转换被重复执行；完整生成、增量生成和缓存复用共用相同约束。
+
+- 在 Webpack 小程序产物转译前，按本轮活动样式资产的真实来源关系收集可复用 loader 已确认的类名，避免这些类名直到 CSS 阶段才加入集合而使 HTML、JS 漏转译。继续拒绝陈旧或未绑定的 loader 记录，不扩大未确认字符串的转译范围，CSS 生成仍可消费 JS 转译后发现的候选。
+
+  HTML、JS 处理缓存同时绑定本轮精确类名集合；JS chunk 不变而 loader 确认集合变化时重新转译，避免回放旧结果或复活已移除的类名。
+
+- Webpack 的 Web 样式在生产压缩前完成生成，已通过框架 CSS loader 的资产保留实际转换结果，不再插回转换前的注册表内容，避免基础样式晚于深色变体并覆盖其效果。清理生成样式时逐项处理混有业务规则的条件容器，保留业务规则及独立嵌套层的归属。
+
+  清理内部元数据时在框架提供的 Source 上精确删除标记，保留已有 source map；相同 CSS 的再次编译也使用本轮框架映射，不从文本缓存复用旧 Source。
+
+  显式开启 `cssSourceTrace` 时在框架资产上精确插入来源注释并保留映射，使用 Taro 默认生产压缩器保留的重要注释；来源回溯、重复标注和清理兼容历史及压缩格式，不在压缩后回填原始样式。压缩器显式删除所有注释的配置仍由用户控制。
+
+  仅在颜色、权重和插值方法可证明等价时降级透明混色，原色透明度与百分比权重相乘；动态颜色、未知变量 fallback、currentColor、动态权重和无效表达式保持原语义。渐变消费分析识别已知厂商前缀，避免漏掉明确方向的降级，同时保留旧前缀空方向的差异。
+
+  来源追踪按真实选择器 token 覆盖任意值与转义；规则删除时清除所属追踪，声明合并时同步迁移来源，避免注释错误归属后续注册或初始化规则，并保留作者说明。
+
+  Web 构建片段保留注册证据，在框架完成合并、重放和注入后统一生成注册默认值，避免尾部默认值覆盖反向间距与分隔线等零 specificity utility。完整资产共同否决冲突或条件注册，作者 reset 保持原位；watch 从原始资产重新分析，Webpack 插入保留原始字节位置和 source map，兼容 BOM、中文及 emoji。
+
+  最终默认值沿用资产已有的独立 backdrop 前缀，并识别框架转换后的等价零长度，避免 ring 初值遗漏；未知语法、动态表达式、非零初值及条件注册继续否决合成。结构转换仅保护嵌套注册的原始语境，同层普通样式仍正常转换，注册内部的非法子规则不会被提升为有效注册。
+
+  小程序已处理 CSS 的颜色、平台清理、交互选择器和 legacy layer 消费在成功解析路径共用一次 AST，保留完整变量资格分析和编辑中不完整输入的原回退顺序。已有公开平台清理入口保留原处理范围；仅在渐变降级实际消费时构造规范化颜色上下文，避免在反复构建中重复生成随即丢弃的结果。
+
+  候选来源变化与编译依赖变化分别失效：仅命中来源 glob 的文件变化保留 Tailwind 编译会话，仍重扫候选并拒绝复用旧输出；精确依赖、显式入口和来源配置变化继续重建。生成期间的新失效不会被迟到结果覆盖，文件创建、删除和候选清空与全新编译结果一致。样式结果缓存同时计入输入来源快照与输出 AST 的节点规模，保留原容量预算，避免文本输入的大树绕过容量约束。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.7
+  - @weapp-tailwindcss/env@0.2.1
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.4
+  - @weapp-tailwindcss/native-darwin-x64@5.6.4
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.4
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.4
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.4
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.4
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.4
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.4
+  - @weapp-tailwindcss/postcss@3.4.4
+  - tailwindcss-config@2.0.7
+  - weapp-style-injector@1.0.8
+
 ## 5.6.3
 
 ### Patch Changes

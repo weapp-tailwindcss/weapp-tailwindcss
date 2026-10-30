@@ -1,5 +1,150 @@
 # @weapp-tailwindcss/postcss
 
+## 3.4.4
+
+### Patch Changes
+
+- 修复开启 `px2rpx` 时 CSS `var()` 回退长度中的 `px` 漏转换问题，嵌套回退值按配置倍率转换，同时保留变量名、变量引用关系、字符串和 URL。可通过 `transformVarFallbacks: false` 恢复跳过整段 `var()` 的旧行为。
+
+  升级到已包含上游修复的 `postcss-pxtrans@1.1.0`、`postcss-rule-unit-converter@0.3.0` 与 `postcss-rem-to-responsive-pixel@7.0.9` 正式版，统一共享转换器依赖，无需额外安装临时依赖补丁。
+
+- 隔离 React Native 的多个 Tailwind 样式入口，避免前缀、主题和配置相互污染；解析原生排版中的主题变量，未解析或循环变量保留明确诊断。按最终字号层叠结果换算相对行高，支持内联字号及静态样式查找；完整保留多层阴影与 spread，避免局部变量污染其它规则。
+
+  在最终 class、important 和内联样式层叠后解析阴影变量，完整组合 ring、inset、颜色与透明度修饰符；保留入口默认值边界和 currentColor 上下文，输出 RN 与 Expo Web 均可消费的颜色格式。新增不依赖 Node 的原生值解析子入口供运行时复用。
+
+  复杂选择器按 AST 精确诊断，避免 group、peer 等规则静默丢失；在最终变量层叠后组合双轴 skew。运行时实例分别维护注册表及元数据，样式工厂更新后刷新缓存；深层数组采用迭代解析并拒绝循环引用，保留近零但非零的阴影透明度。
+
+  重要相对行高或 currentColor 阴影覆盖已结算值时，同步清除被覆盖的重要样式属性，避免缺少字号或颜色上下文时，内联样式组合重新带回旧值；保留其它重要属性及既有层叠优先级。
+
+- 更新公开包的直接依赖及配套开发工具链，保留 catalog 和 workspace 关系。React 18 UI 包的类型声明与现有运行时配对；React Native 包的开发构建使用 Babel 7 与 TypeScript 5.9.3，保持 Expo/Metro 既有配套。框架 peer 支持范围保持现有契约。
+
+  ### @weapp-tailwindcss/css-compat
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 `devDependencies` 的 `vite`：`7.2.7` → `7.3.7`。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 `devDependencies` 的 `@lynx-js/rspeedy`：`^0.18.1` → `^0.18.3`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 `dependencies` 的 `autoprefixer`：`^10.6.1` → `^10.6.2`。
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+  - 更新 `devDependencies` 的 `eslint`：`^10.12.0` → `^10.13.0`。
+  - 更新 `devDependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `devDependencies` 的 `@babel/core`：`^8.0.7` → `^7.29.7`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^19.3.0`。
+  - 更新 `devDependencies` 的 `react`：`^19.2.8` → `^19.3.1`。
+  - 更新 `devDependencies` 的 `typescript`：未声明 → `^5.9.3`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 `devDependencies` 的 `@storybook/addon-a11y`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react-vite`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^18.3.31`。
+  - 更新 `devDependencies` 的 `@types/react-dom`：`^19.2.5` → `^18.3.7`。
+  - 更新 `devDependencies` 的 `storybook`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+
+  ### tailwindcss-config
+
+  - 更新 `dependencies` 的 `lilconfig`：`^3.1.3` → `^3.1.4`。
+
+  ### tailwindcss-injector
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+
+  ### weapp-tailwindcss
+
+  - 更新 `dependencies` 的 `@babel/parser`：`^8.0.7` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@vue/compiler-dom`：`^3.5.41` → `^3.5.44`。
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `oxc-parser`：`^0.154.0` → `^0.156.0`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+  - 更新 `devDependencies` 的 `webpack`：`5.105.4` → `5.112.2`。
+
+  ### wetw
+
+  - 更新 `dependencies` 的 `@inquirer/prompts`：`^8.7.3` → `^8.7.5`。
+
+- 修复 Lynx 动态颜色变量的级联安全分析，保留存在覆盖、条件或别名依赖的 var()，同时安全静态化稳定颜色。
+
+- 按 CSS token 身份分析自定义属性和注册指令，保留转义覆盖、元素相关 attr()、空声明冲突及未证明稳定的完整依赖链，避免跨元素或过早删除定义改变主题语义。
+  静态百分比颜色权重复用完整依赖分析并乘以原色透明度，仅在小程序生成链降低可完全证明的颜色能力分支；增量缓存记录静态兼容上下文，局部覆盖撤销资格后重新转换已有样式，不依赖是否启用 calc。
+  样式结果缓存先按完整原始输入、配置及当前来源快照判断命中，避免命中后仍重复执行颜色资格分析；作者插件仍逐轮执行。新合成来源或携带消息的根节点结果不进入缓存，防止后续调用沿用旧输入或警告节点。来源追踪只缓存完整选择器的不可变类名解析结果，并同时限制条目数与字符总量，每轮继续查询当前来源映射，不保留旧资产的路径或可变语法树。
+  主题资格分析先排除不含目标函数的普通值，直接颜色和数学函数不再逐项构造变量及关键字语法树；转义、注释、元素相关函数和完整变量依赖继续走原有 token 解析，保留动态覆盖及循环的安全边界。
+  现代颜色兼容分析直接复用已有函数节点分类，普通非颜色声明不再创建颜色语法树；未修改的输入复用当前节点检验，转换器生成的新文本仍重新解析，避免动态透明度 fallback 中的现代子函数被不透明替换节点隐藏。
+  全部注册、描述符和变量依赖保持原文，前缀不推断作者归属；默认值兼容仅匹配真实编译器合同中的完整签名，条件或冲突注册否决默认合成，保留层时使用最低优先级层且重复处理幂等。通用 calc 插件提供声明过滤回调，使调用方明确保护注册描述符，不将无效初值改成有效注册。
+  legacy layer 内核保留注册子树的原子边界，禁止把其中无效嵌套描述符提升成有效注册；默认兼容块保留 import 的合法顺序，不压过作者已有的级联层。
+  保留公开变量名上的显式 initial，避免破坏阻断继承和 use-site fallback；渐变位置仅在当前完整消费图能够证明用途时兼容，转义身份、别名、注册描述符、style 查询、循环及不完整 chunk 均参与判断。多类渐变共用空位置时保留原 token，不按局部规则推测最终级联，也不引入与 CSSOM 更新失联的镜像变量。
+  Webpack/Rspack 在本轮 CSS 导入合并后、压缩和 Lynx 编码前重新核对完整渐变消费图，通过构建器资产 API 与精确编辑保留来源映射；兼容处理计入真实 HMR 耗时并在结束回调之前完成。
+  对只包含变量声明的 `:root, :host` 根组，在完成依赖分析后保留 Lynx encoder 支持的根分支，避免动态主题的初始定义被整组丢弃。
+
+  Lynx 诊断通过构建图的实际已发出模板和固定解码器核对声明，分别保留编码日志、静默删除与无法确证的结果；严格模式只拒绝确证被删除的业务样式。解码器资源与许可证随发布包交付，来源位置绑定本轮输入及 source map；同时对齐 Node 必装依赖链、构建插件要求和中英文支持边界。
+  核心入口复用 PostCSS 的只读规则证据接口，保持原生适配包的依赖边界；诊断补充可审计的版本来源、拒绝原因和保守建议。
+
+- 修复 React Native 默认 spacing 简写中 calc() 被空格拆分的问题，完整保留四边数值并拒绝超过四项的非法简写。按 React Native 0.81 布局 API 校验 display、position 与 flex 对齐关键字，保留 contents，对 fixed、sticky 和浏览器独有布局值明确诊断。原生平台变体与浏览器状态或响应式条件复合时不再丢弃条件并无条件套用基础样式；派生规则使用独立 StyleSheet ID，避免覆盖基础规则的运行时条件。
+
+- 按 CSS Alignment 的完整值组展开 `place-content`、`place-items` 和 `place-self`，保留 `safe center`、基线位置及双值对齐的语义；内容基线省略第二值时正确回退为 `start`。无法静态解析的变量或无效简写保留原声明，避免生成错误长写或丢失输入，并继续尊重 preset-env 的功能与保留配置。
+
+- Web 生成器在计算表达式后执行显式单位规则，使任意值工具类直接得到约定的 Web 单位。Vite 的跨资产计算阶段继续延迟单位处理，避免同单位缩放与组合转换被重复执行；完整生成、增量生成和缓存复用共用相同约束。
+
+- Webpack 的 Web 样式在生产压缩前完成生成，已通过框架 CSS loader 的资产保留实际转换结果，不再插回转换前的注册表内容，避免基础样式晚于深色变体并覆盖其效果。清理生成样式时逐项处理混有业务规则的条件容器，保留业务规则及独立嵌套层的归属。
+
+  清理内部元数据时在框架提供的 Source 上精确删除标记，保留已有 source map；相同 CSS 的再次编译也使用本轮框架映射，不从文本缓存复用旧 Source。
+
+  显式开启 `cssSourceTrace` 时在框架资产上精确插入来源注释并保留映射，使用 Taro 默认生产压缩器保留的重要注释；来源回溯、重复标注和清理兼容历史及压缩格式，不在压缩后回填原始样式。压缩器显式删除所有注释的配置仍由用户控制。
+
+  仅在颜色、权重和插值方法可证明等价时降级透明混色，原色透明度与百分比权重相乘；动态颜色、未知变量 fallback、currentColor、动态权重和无效表达式保持原语义。渐变消费分析识别已知厂商前缀，避免漏掉明确方向的降级，同时保留旧前缀空方向的差异。
+
+  来源追踪按真实选择器 token 覆盖任意值与转义；规则删除时清除所属追踪，声明合并时同步迁移来源，避免注释错误归属后续注册或初始化规则，并保留作者说明。
+
+  Web 构建片段保留注册证据，在框架完成合并、重放和注入后统一生成注册默认值，避免尾部默认值覆盖反向间距与分隔线等零 specificity utility。完整资产共同否决冲突或条件注册，作者 reset 保持原位；watch 从原始资产重新分析，Webpack 插入保留原始字节位置和 source map，兼容 BOM、中文及 emoji。
+
+  最终默认值沿用资产已有的独立 backdrop 前缀，并识别框架转换后的等价零长度，避免 ring 初值遗漏；未知语法、动态表达式、非零初值及条件注册继续否决合成。结构转换仅保护嵌套注册的原始语境，同层普通样式仍正常转换，注册内部的非法子规则不会被提升为有效注册。
+
+  小程序已处理 CSS 的颜色、平台清理、交互选择器和 legacy layer 消费在成功解析路径共用一次 AST，保留完整变量资格分析和编辑中不完整输入的原回退顺序。已有公开平台清理入口保留原处理范围；仅在渐变降级实际消费时构造规范化颜色上下文，避免在反复构建中重复生成随即丢弃的结果。
+
+  候选来源变化与编译依赖变化分别失效：仅命中来源 glob 的文件变化保留 Tailwind 编译会话，仍重扫候选并拒绝复用旧输出；精确依赖、显式入口和来源配置变化继续重建。生成期间的新失效不会被迟到结果覆盖，文件创建、删除和候选清空与全新编译结果一致。样式结果缓存同时计入输入来源快照与输出 AST 的节点规模，保留原容量预算，避免文本输入的大树绕过容量约束。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/css-compat@0.1.3
+  - @weapp-tailwindcss/engine@0.1.7
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.4
+  - @weapp-tailwindcss/native-darwin-x64@5.6.4
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.4
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.4
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.4
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.4
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.4
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.4
+  - @weapp-tailwindcss/postcss-calc@1.0.12
+  - tailwindcss-config@2.0.7
+
 ## 3.4.3
 
 ### Patch Changes
