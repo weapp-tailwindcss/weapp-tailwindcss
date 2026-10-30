@@ -21,6 +21,8 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import pc from 'picocolors'
+import { parseBenchmarkNumber } from './benchmark/options'
+import { percentile } from './benchmark/statistics'
 import { resolveCorePackagePath } from './paths'
 
 // Resolve repo root independenty of CWD.
@@ -67,8 +69,8 @@ function parseArgs(): RunOptions {
   const enginesStr = get('engines', 'babel,swc,oxc')!
   const engines = enginesStr.split(',').map(s => s.trim()).filter(Boolean) as EngineId[]
   const glob = get('glob', 'packages/weapp-tailwindcss/test/fixtures/**/*.{js,jsx,ts,tsx,wxs}')!
-  const iter = Number(get('iter', '5'))
-  const warmup = Number(get('warmup', '1'))
+  const iter = parseBenchmarkNumber(get('iter'), 5, '--iter', 'positive-integer')
+  const warmup = parseBenchmarkNumber(get('warmup'), 1, '--warmup', 'nonnegative-integer')
   return { engines, glob, iter, warmup }
 }
 
@@ -78,14 +80,6 @@ function now() {
 
 function toFixed2(n: number) {
   return Number.isFinite(n) ? n.toFixed(2) : String(n)
-}
-
-function percentile(sorted: number[], p: number) {
-  if (sorted.length === 0) {
-    return 0
-  }
-  const idx = Math.ceil((p / 100) * sorted.length) - 1
-  return sorted[Math.min(Math.max(idx, 0), sorted.length - 1)]
 }
 
 async function loadFiles(globPattern: string | string[]) {
