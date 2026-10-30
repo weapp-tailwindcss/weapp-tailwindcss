@@ -337,6 +337,7 @@ jobs:
         run: >
           pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs
           benchmark/version-compare/test/source-diagnostics.test.mjs
+          benchmark/version-compare/test/source-diagnostics-gitlinks.test.mjs
           benchmark/version-compare/test/source-diagnostics-entry.test.mjs
           benchmark/version-compare/test/runtime-versions.test.mjs
           benchmark/version-compare/test/runtime-join.test.mjs
