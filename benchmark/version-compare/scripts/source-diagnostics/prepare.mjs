@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { archiveGitArgs, archiveGitOptions, readArchiveSource } from './archive-attributes.mjs'
 import { executeCommand } from './command.mjs'
 import { errorRecord, fileReceipt, inside, limits, readBounded, writeJson } from './files.mjs'
 import { assertCommit, assertDriverClean, extractArchive, readGitIdentity, snapshotTracked } from './git-source.mjs'
@@ -69,7 +70,7 @@ async function toolsFor(sourceRepository, injected) {
     })
   }
   const controllerSources = []
-  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'gitlinks.mjs', 'inputs.mjs', 'verify.mjs']) {
+  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'gitlinks.mjs', 'archive-attributes.mjs', 'source-bytes.mjs', 'inputs.mjs', 'verify.mjs']) {
     controllerSources.push(await fileReceipt(fileURLToPath(new URL(name, import.meta.url))))
   }
   return {
@@ -236,11 +237,13 @@ export async function prepareSourceDiagnostics(options) {
       const run = runner(roleDirectory, execute, role.commands)
       let roleStage = 'source'
       try {
-        const source = await readGitIdentity(run, sourceRepository, product.sourceCommit)
+        const canonicalSource = await readGitIdentity(run, sourceRepository, product.sourceCommit)
+        const source = await readArchiveSource(run, sourceRepository, canonicalSource)
         role.sourceTree = source.sourceTree
         role.objectFormat = source.objectFormat
         const archive = path.join(output, 'archives', `${product.role}.tar`)
-        await run('archive', 'git', ['archive', '--format=tar', product.sourceCommit], sourceRepository, {
+        await run('archive', 'git', archiveGitArgs(['archive', '--format=tar', product.sourceCommit]), sourceRepository, {
+          ...archiveGitOptions(product.sourceCommit),
           stdoutFile: archive,
           stdoutLimit: limits.archiveBytes,
           capture: false,
@@ -265,6 +268,7 @@ export async function prepareSourceDiagnostics(options) {
           objectFormat: source.objectFormat,
           files: extracted.snapshot,
           gitlinks: source.gitlinks,
+          exportPolicy: source.exportPolicy,
         })
         role.trackedManifestSha256 = role.sourceManifest.sha256
         const lock = await fileReceipt(path.join(root, 'pnpm-lock.yaml'), {

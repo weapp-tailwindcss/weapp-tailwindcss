@@ -43,6 +43,10 @@ async function fixture(behavior = {}) {
   await fs.mkdir(sourceRepository)
   await git(sourceRepository, ['init'])
   await write(sourceRepository, '.gitignore', 'node_modules/\n')
+  if (behavior.crlf) {
+    await write(sourceRepository, '.gitattributes', '* text=auto eol=lf\n*.ps1 text eol=crlf\n')
+    await write(sourceRepository, 'script.ps1', 'Write-Output "fixture"\n')
+  }
   await write(sourceRepository, 'package.json', JSON.stringify({
     name: 'fixture-root',
     private: true,
@@ -228,6 +232,18 @@ it.skipIf(process.platform === 'win32')('真实 Git archive 两个准确 tree，
   }
   await expect(verifyPreparedRole(report.roles[0])).rejects.toThrow('注入 fixture')
   await expect(verifyDriverReceipt(report.driver)).rejects.toThrow('注入 fixture')
+}, 30000)
+it.skipIf(process.platform === 'win32')('真实准备链允许准确提交声明的 CRLF 导出并拒绝后续改写', async () => {
+  const { options } = await fixture({ crlf: true })
+  const report = await prepareSourceDiagnostics(options)
+  expect(report.status).toBe('complete')
+  for (const role of report.roles) {
+    const script = path.join(role.root, 'script.ps1')
+    expect(await fs.readFile(script, 'utf8')).toBe('Write-Output "fixture"\r\n')
+    await expect(verifyPreparedRole(role, { allowInjected: true })).resolves.toMatchObject({ trackedSourcesVerified: true })
+    await fs.writeFile(script, 'Write-Output "fixture"\n')
+    await expect(verifyPreparedRole(role, { allowInjected: true })).rejects.toThrow('改写')
+  }
 }, 30000)
 it.skipIf(process.platform === 'win32')('native pnpm 入口使用 shell:false 直接 argv，独立流式工具回执', async () => {
   const {

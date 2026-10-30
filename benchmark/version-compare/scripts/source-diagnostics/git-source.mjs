@@ -3,8 +3,9 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { fileReceipt, fromLogical, inside, limits, logical, readBounded, sha256, unsafePathCharacters, walkFiles, writeJson } from './files.mjs'
+import { fileReceipt, fromLogical, inside, limits, logical, readBounded, unsafePathCharacters, walkFiles, writeJson } from './files.mjs'
 import { assertEmptyGitlinks } from './gitlinks.mjs'
+import { sourceByteIdentity } from './source-bytes.mjs'
 
 export function assertCommit(commit) {
   if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/.test(commit)) {
@@ -198,6 +199,7 @@ export async function extractArchive({
     sourceCommit: identity.sourceCommit,
     sourceTree: identity.sourceTree,
     gitlinks: identity.gitlinks,
+    exportPolicy: identity.exportPolicy,
     entries,
   })
   return {
@@ -244,14 +246,9 @@ export async function snapshotTracked(root, identity, expectedSnapshot) {
         throw new Error(`Git executable mode 变化：${source.logical}`)
       }
     }
-    const gitBlob = createHash(identity.objectFormat).update(`blob ${bytes.length}\0`).update(bytes).digest('hex')
-    if (gitBlob !== source.gitBlob) {
-      throw new Error(`tracked 源文件与准确 Git tree 不一致：${source.logical}`)
-    }
     const item = {
       ...source,
-      bytes: bytes.length,
-      sha256: sha256(bytes),
+      ...sourceByteIdentity(source, bytes, identity.objectFormat, previous?.get(source.logical)),
       ...(symlinkTarget === undefined
         ? {}
         : {

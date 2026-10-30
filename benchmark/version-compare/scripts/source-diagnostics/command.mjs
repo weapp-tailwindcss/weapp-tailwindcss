@@ -144,6 +144,7 @@ export async function executeCommand(request) {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
+        ...request.environment,
         CI: '1',
         HUSKY: '0',
         LEFTHOOK: '0',
