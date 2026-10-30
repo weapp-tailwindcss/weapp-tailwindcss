@@ -1046,6 +1046,7 @@ export async function runClassMutation(
     }
   }
 
+  const roundComparison = buildRoundComparison(roundMetrics)
   return {
     mutationKind,
     sourceFile: sourcePath,
@@ -1054,7 +1055,7 @@ export async function runClassMutation(
     classTokens: preferredRound.classTokens,
     escapedClasses: preferredRound.escapedClasses,
     rounds: roundMetrics,
-    roundComparison: buildRoundComparison(roundMetrics),
+    ...(roundComparison ? { roundComparison } : {}),
     verifyEscapedIn: mutation.verifyEscapedIn,
     verifyClassLiteralIn,
     globalStyleOutputs,
@@ -1068,8 +1069,8 @@ export async function runClassMutation(
     rollbackEffectiveMs: preferredRound.rollbackEffectiveMs,
     rollbackPluginProcessMs: preferredRound.rollbackPluginProcessMs,
     rollbackPluginProcessSamples: preferredRound.rollbackPluginProcessSamples,
-    addedClassHmr,
-    sameClassLiteralHmr,
-    commentCarrierHmr,
+    ...(addedClassHmr ? { addedClassHmr } : {}),
+    ...(sameClassLiteralHmr ? { sameClassLiteralHmr } : {}),
+    ...(commentCarrierHmr ? { commentCarrierHmr } : {}),
   }
 }

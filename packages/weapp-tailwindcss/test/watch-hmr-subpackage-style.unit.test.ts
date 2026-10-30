@@ -8,7 +8,7 @@ import * as classes from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr
 import * as mainStyle from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/main-style'
 import * as shared from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
 import * as style from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/style'
-import { runSubPackageMutation } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
+import { createSubPackageWatchCase, runSubPackageMutation } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
 import * as session from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { createCssClassSignatureReader } from '../../postcss/src/selectorParser/class-signatures'
 
@@ -16,6 +16,22 @@ const roots: string[] = []
 afterEach(async () => {
   vi.restoreAllMocks()
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })))
+})
+
+it('分包派生移除父级执行面并保留显式零阈值，不修改父配置', () => {
+  const base = buildCases('/repo').find(item => item.name === 'mpx-tailwindcss-v4')!
+  const parent = { ...base, contentMutation: base.scriptMutation, minGlobalStyleEscapedClasses: 7 }
+  const mutation = { ...parent.subPackageMutations![0]!, minGlobalStyleEscapedClasses: 0 }
+  const derived = createSubPackageWatchCase(parent, mutation)
+
+  expect(derived.contentMutation).toBeUndefined()
+  expect(derived.subPackageMutations).toBeUndefined()
+  expect(derived.minGlobalStyleEscapedClasses).toBe(0)
+  expect(derived.templateMutation).toBe(mutation.templateMutation)
+  expect(derived.globalStyleCandidates).toBe(mutation.globalStyleCandidates)
+  expect(parent.contentMutation).toBe(base.scriptMutation)
+  expect(parent.subPackageMutations).toBe(base.subPackageMutations)
+  expect(parent.minGlobalStyleEscapedClasses).toBe(7)
 })
 
 it.each([

@@ -10,12 +10,14 @@ function withIconifyHmr(cases: WatchCase[]): WatchCase[] {
     iconifyHmr: watchCase.iconifyHmr ?? {
       sourceFile: watchCase.templateMutation.sourceFile,
     },
-    webHmr: watchCase.webHmr
+    ...(watchCase.webHmr
       ? {
-          ...watchCase.webHmr,
-          iconifyHmr: watchCase.webHmr.iconifyHmr ?? {},
+          webHmr: {
+            ...watchCase.webHmr,
+            iconifyHmr: watchCase.webHmr.iconifyHmr ?? {},
+          },
         }
-      : watchCase.webHmr,
+      : {}),
   }))
 }
 
@@ -25,9 +27,10 @@ function withFinalStyleIntegrity(cases: WatchCase[]): WatchCase[] {
     const styleDirectories = new Set(watchCase.globalStyleCandidates.map(candidate => path.dirname(candidate)))
     for (const directory of styleDirectories) {
       const existingIndex = outputIntegrityGuards.findIndex(guard => guard.directory === directory)
-      if (existingIndex >= 0) {
+      const existingGuard = outputIntegrityGuards[existingIndex]
+      if (existingGuard) {
         outputIntegrityGuards[existingIndex] = {
-          ...outputIntegrityGuards[existingIndex],
+          ...existingGuard,
           forbidEmptyBlockAtRules: true,
         }
       }

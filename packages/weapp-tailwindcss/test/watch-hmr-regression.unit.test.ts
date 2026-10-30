@@ -1837,11 +1837,14 @@ describe('watch-hmr regression summary helpers', () => {
       skipBuild: true,
       quietSass: true,
       webOnly: false,
+      miniProgramOnly: false,
       miniProgramScope: 'main-package',
       styleOnly: false,
       mainStyleOnly: false,
       reportFile,
       maxHotUpdateMs: 100,
+      maxPluginProcessMs: 0,
+      maxMemoryRssDeltaMb: 0,
     }
 
     expect(resolveReportPath(tempDir, reportFile)).toBe(path.join(tempDir, reportFile))
@@ -1862,6 +1865,9 @@ describe('watch-hmr regression summary helpers', () => {
     expect(report.repositoryRoot).toBe(path.basename(tempDir))
     expect(report.options.caseName).toBe('demo')
     expect(report.options.webOnly).toBe(false)
+    expect(report.options.miniProgramOnly).toBe(false)
+    expect(report.options.maxPluginProcessMs).toBe(0)
+    expect(report.options.maxMemoryRssDeltaMb).toBe(0)
     expect(report.options.miniProgramScope).toBe('main-package')
     expect(report.options.mainStyleOnly).toBe(false)
     expect(report.summary).toMatchObject({ count: 1, hotUpdateAvgMs: 30, rollbackAvgMs: 40 })
