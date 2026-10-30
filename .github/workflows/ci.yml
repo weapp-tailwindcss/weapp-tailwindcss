@@ -354,6 +354,16 @@ jobs:
       - name: Run focused e2e
         run: pnpm ci:memory --label e2e-focused-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- ${{ matrix.command }}
 
+      - name: Upload generator build evidence
+        if: always() && matrix.case_name == 'apps-generator'
+        uses: actions/upload-artifact@v7
+        with:
+          name: apps-generator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/.artifacts/apps-generator-mode/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload Lynx failure diagnostics
         if: failure() && matrix.case_name == 'lynx-rspeedy'
         uses: actions/upload-artifact@v7
