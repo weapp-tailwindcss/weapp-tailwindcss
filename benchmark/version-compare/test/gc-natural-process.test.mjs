@@ -106,6 +106,13 @@ describe('真实 Node 子进程的天然 GC 证据', () => {
     expect(batches.length).toBeGreaterThan(0)
     const major = batches.find(record => record.majorCallbackMemory)
     expect(major.majorCallbackMemory).toMatchObject({ samplePoint: 'observer-callback', rss: expect.any(Number), heapUsed: expect.any(Number), external: expect.any(Number), arrayBuffers: expect.any(Number) })
+    expect(major.majorCallbackMemory.heapSpaces.some(space => space.space_name === 'old_space')).toBe(true)
+    for (const space of major.majorCallbackMemory.heapSpaces) {
+      expect(space).toMatchObject({ space_name: expect.any(String), space_size: expect.any(Number), space_used_size: expect.any(Number), space_available_size: expect.any(Number), physical_space_size: expect.any(Number) })
+      expect(space.space_used_size).toBeGreaterThanOrEqual(0)
+      expect(space.space_used_size).toBeLessThanOrEqual(space.space_size)
+    }
+    expect(major.majorCallbackMemory.heapStatistics).toMatchObject({ total_heap_size: expect.any(Number), used_heap_size: expect.any(Number), malloced_memory: expect.any(Number), external_memory: expect.any(Number) })
     for (const batch of batches) {
       expect(batch.callbackAtEpochMs).toBeCloseTo(records[0].timeOrigin + batch.callbackAtMonotonicMs, 3)
       expect(batch.events.every(entry => entry.startEpochMs <= batch.callbackAtEpochMs)).toBe(true)

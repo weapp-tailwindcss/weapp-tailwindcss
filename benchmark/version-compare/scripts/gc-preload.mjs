@@ -5,6 +5,7 @@ import path from 'node:path'
 import { constants, performance, PerformanceObserver } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { getHeapSpaceStatistics, getHeapStatistics } from 'node:v8'
 import { sameFilesystemPath } from './gc-paths.mjs'
 
 const maxEvents = 2048
@@ -120,7 +121,16 @@ function start() {
         callbackAtEpochMs,
         events: retained,
         // major 内存为 observer 回调时的快照，不能解释为 GC 刚结束时的内存。
-        majorCallbackMemory: hasMajor ? { atEpochMs: Date.now(), samplePoint: 'observer-callback', ...process.memoryUsage() } : undefined,
+        majorCallbackMemory: hasMajor
+          ? {
+              atEpochMs: Date.now(),
+              samplePoint: 'observer-callback',
+              ...process.memoryUsage(),
+              // 直接记录 V8 空间；heapTotal 不能替代 old_space，也不主动请求 GC。
+              heapSpaces: getHeapSpaceStatistics(),
+              heapStatistics: getHeapStatistics(),
+            }
+          : undefined,
       }
       if (costs.bytesWritten + Buffer.byteLength(JSON.stringify(record)) + 2048 > maxBytes) {
         record.events = []
