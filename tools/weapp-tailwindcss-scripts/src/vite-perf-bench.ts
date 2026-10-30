@@ -1,4 +1,4 @@
-import type { ChildProcessWithoutNullStreams } from 'node:child_process'
+import type { ChildProcessWithoutNullStreams, SpawnOptionsWithoutStdio } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { existsSync, promises as fs, realpathSync } from 'node:fs'
 import path from 'node:path'
@@ -199,7 +199,7 @@ function resolvePnpmCommand(): PnpmCommand {
   }
 }
 
-function spawnPnpm(args: string[], options: Parameters<typeof spawn>[2]) {
+function spawnPnpm(args: string[], options: SpawnOptionsWithoutStdio) {
   const pnpmCommand = resolvePnpmCommand()
   return spawn(pnpmCommand.command, [...pnpmCommand.args, ...args], options)
 }
