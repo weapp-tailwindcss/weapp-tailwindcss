@@ -208,8 +208,8 @@ jobs:
       # 会互相覆盖 dist 和快照，导致非确定性的产物断言失败。
       max-parallel: 1
       matrix:
-        shard: [1, 2, 3]
-        shard_total: [3]
+        shard: [1, 2, 3, 4, 5, 6]
+        shard_total: [6]
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
