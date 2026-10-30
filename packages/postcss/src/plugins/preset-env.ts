@@ -4,6 +4,12 @@ import postcssPresetEnv from 'postcss-preset-env'
 import { preservePlaceValueGroups } from './preset-env/place'
 import { preserveTailwindRuntimeVariables } from './preset-env/runtime-variables'
 
+function getDeclarationIdentity(declaration: Declaration): object {
+  // PostCSS 的原节点与 visitor 代理共享同一个原节点缓存键。
+  const original = 'proxyOf' in declaration ? declaration.proxyOf : undefined
+  return typeof original === 'object' && original !== null ? original : declaration
+}
+
 function isolateDeclaration(declaration: Declaration) {
   const parent = declaration.parent
   const container = parent?.type === 'atrule'
@@ -25,15 +31,15 @@ function preserveIndependentHexAlphaFallback(plugin: Plugin): Plugin {
     ...plugin,
     prepare(result) {
       const prepared = plugin.prepare?.(result)
-      const visited = new WeakMap<Declaration, string>()
+      const visited = new WeakMap<object, string>()
       return {
         ...prepared,
         Declaration(declaration, helpers) {
           if (!/#[\da-f]{4}(?:[\da-f]{4})?\b/i.test(declaration.value)
-            || visited.get(declaration.proxyOf) === declaration.value) {
+            || visited.get(getDeclarationIdentity(declaration)) === declaration.value) {
             return
           }
-          visited.set(declaration.proxyOf, declaration.value)
+          visited.set(getDeclarationIdentity(declaration), declaration.value)
 
           // 前面的同名属性可能是厂商前缀或动态变量，不能代表本声明已有兼容回退。
           // 复用已按浏览器和 feature 配置选中的转换器，仅隔离相邻声明的影响。
@@ -57,7 +63,7 @@ function preserveIndependentHexAlphaFallback(plugin: Plugin): Plugin {
             }
             for (const node of nodes) {
               if (node.type === 'decl') {
-                visited.set(node.proxyOf, node.value)
+                visited.set(getDeclarationIdentity(node), node.value)
               }
             }
             declaration.replaceWith(...nodes)

@@ -36,7 +36,7 @@ function hasClassSelector(selector: string) {
 }
 
 function hasClassRuleAncestor(rule: postcss.Rule) {
-  let parent = rule.parent
+  let parent: postcss.Rule['parent'] | postcss.Document = rule.parent
   while (parent) {
     if (parent.type === 'rule' && hasClassSelector(parent.selector)) {
       return true
@@ -166,12 +166,12 @@ function moveTailwindV4GradientRuntimeDeclarations(rule: postcss.Rule) {
 }
 
 function isKeyframesRule(rule: postcss.Rule) {
-  let parent = rule.parent as postcss.Container | undefined
+  let parent: postcss.Rule['parent'] | postcss.Document = rule.parent
   while (parent) {
-    if (parent.type === 'atrule' && (parent as postcss.AtRule).name.endsWith('keyframes')) {
+    if (parent.type === 'atrule' && parent.name.endsWith('keyframes')) {
       return true
     }
-    parent = parent.parent as postcss.Container | undefined
+    parent = parent.parent
   }
   return false
 }
