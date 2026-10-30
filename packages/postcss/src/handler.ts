@@ -19,6 +19,7 @@ import { processUserCss } from './framework-pipeline'
 import { resolvePostcssFrameworkProfile } from './frameworks'
 import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
+import { hasDynamicPxDesignWidth } from './plugins/getPxTransformPlugin'
 import { createInjectPreflight } from './preflight'
 import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 import { StyleProcessorCache } from './processor-cache'
@@ -89,7 +90,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
     const hasExternalPlugins = hasUserPlugins && !configured.every(isKnownPurePostcssPlugin)
     const hasOpaqueOptions = hasOpaqueProcessOptions(resolvedOptions.postcssOptions?.options)
-    let cacheable = !hasExternalPlugins && !hasOpaqueOptions
+    let cacheable = !hasExternalPlugins && !hasOpaqueOptions && !hasDynamicPxDesignWidth(resolvedOptions)
     // 确定性准备属于缓存未命中的处理；原始输入和配置已经完整标识其输出。
     const optsFp = cacheable ? fingerprintStyleOptions(resolvedOptions) : ''
     const cacheKey = `${optsFp}|${contentHash(rawSource)}|${root === undefined ? 'text' : 'root'}|${sourcePrepared ? 'prepared' : 'raw'}`
