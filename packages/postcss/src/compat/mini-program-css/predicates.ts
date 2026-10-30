@@ -106,7 +106,7 @@ export function usesTwContentVariable(root: postcss.Root) {
   return used
 }
 
-export function isMiniProgramPreflightRule(node: postcss.Node): node is postcss.Rule {
+export function isMiniProgramPreflightRule(node: postcss.AnyNode): boolean {
   if (node.type !== 'rule') {
     return false
   }
@@ -125,17 +125,18 @@ export function isMiniProgramPreflightRule(node: postcss.Node): node is postcss.
     && hasTailwindPreflightDeclaration(node)
 }
 
-export function isBrowserElementPreflightRule(node: postcss.Node): node is postcss.Rule {
+export function isBrowserElementPreflightRule(node: postcss.AnyNode): boolean {
   if (node.type !== 'rule') {
     return false
   }
 
   const selectors = getRuleSelectors(node)
-  if (selectors.length !== 1) {
+  const selector = selectors[0]
+  if (selectors.length !== 1 || selector === undefined) {
     return false
   }
 
-  const declarations = BROWSER_PREFLIGHT_SINGLE_ELEMENT_DECLARATIONS.get(selectors[0])
+  const declarations = BROWSER_PREFLIGHT_SINGLE_ELEMENT_DECLARATIONS.get(selector)
   if (!declarations) {
     return false
   }
@@ -156,7 +157,7 @@ export function isBrowserElementPreflightRule(node: postcss.Node): node is postc
   return hasDeclaration && allBrowserPreflightDeclarations
 }
 
-export function isMiniProgramThemeVariableRule(node: postcss.Node): node is postcss.Rule {
+export function isMiniProgramThemeVariableRule(node: postcss.AnyNode): boolean {
   if (node.type !== 'rule') {
     return false
   }

@@ -52,7 +52,7 @@ export function collectPreflightRules(root: postcss.Root, options: { cssPrefligh
   const preflightNodes: postcss.Rule[] = []
 
   for (const node of root.nodes ?? []) {
-    if (isMiniProgramPreflightRule(node)) {
+    if (node.type === 'rule' && isMiniProgramPreflightRule(node)) {
       preflightNodes.push(node)
     }
   }

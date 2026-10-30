@@ -1,3 +1,4 @@
+import postcss, { AtRule, Declaration } from 'postcss'
 import { describe, expect, it } from 'vitest'
 import {
   finalizeMiniProgramCss,
@@ -7,19 +8,17 @@ import {
   normalizeMiniProgramPrefixedDeclaration,
   pruneMiniProgramGeneratedCss,
   removeUnsupportedCascadeLayers,
-  removeUnsupportedMiniProgramPrefixedAtRule,
   removeUnsupportedMiniProgramAtRules,
+  removeUnsupportedMiniProgramPrefixedAtRule,
   stripMiniProgramCssSpecificityPlaceholders,
   unwrapUnsupportedCascadeLayers,
 } from '../src'
-import postcss, { AtRule, Declaration } from 'postcss'
 import {
   hasTailwindcssV4Signal,
   removeTailwindGenerationDirectives,
   unwrapTailwindSourceMedia,
 } from '../src/compat/mini-program-css/directives'
 import { createHoistInsertionAnchor, insertHoistedRules, mergeEquivalentHoistedRules } from '../src/compat/mini-program-css/hoist'
-import { collectPreflightRules, createPreflightResetRule } from '../src/compat/mini-program-css/preflight'
 import {
   hasTailwindPreflightDeclaration,
   hasTwContentDeclaration,
@@ -31,6 +30,7 @@ import {
   isPseudoContentInitRule,
   usesTwContentVariable,
 } from '../src/compat/mini-program-css/predicates'
+import { collectPreflightRules, createPreflightResetRule } from '../src/compat/mini-program-css/preflight'
 import {
   removeDisplayP3Declarations,
   removeEmptyAtRules,
@@ -85,6 +85,27 @@ describe('mini-program css cleanup', () => {
     expect(isCustomPropertyRule(rules[10])).toBe(false)
     expect(isMiniProgramThemeVariableRule(rules[10])).toBe(false)
     expect(usesTwContentVariable(root)).toBe(true)
+  })
+
+  it('keeps semantic classifications separate from the underlying node type', () => {
+    const ordinary = postcss.rule({ selector: '.card', nodes: [postcss.decl({ prop: 'color', value: 'red' })] })
+    const otherNodes = [
+      postcss.comment({ text: 'author CSS' }),
+      postcss.atRule({ name: 'media', params: '(width > 1px)' }),
+      postcss.decl({ prop: 'color', value: 'red' }),
+      postcss.root(),
+      postcss.document(),
+    ]
+    for (const classify of [isMiniProgramPreflightRule, isBrowserElementPreflightRule, isMiniProgramThemeVariableRule]) {
+      expect(classify(ordinary)).toBe(false)
+      if (!classify(ordinary)) {
+        expect(ordinary.selector).toBe('.card')
+        expect(ordinary.nodes).toHaveLength(1)
+      }
+      for (const node of otherNodes) {
+        expect(classify(node)).toBe(false)
+      }
+    }
   })
 
   it('unwraps unsupported cascade layer blocks', () => {
@@ -473,7 +494,7 @@ describe('mini-program css cleanup', () => {
     const rules = collectPreflightRules(root, {
       cssPreflight: {
         'border-width': false,
-        margin: '0',
+        'margin': '0',
       },
     })
 
@@ -681,7 +702,7 @@ describe('mini-program css cleanup', () => {
     const css = finalizeMiniProgramCss('.card{display:flex}', {
       cssPreflight: {
         'box-sizing': 'border-box',
-        margin: false,
+        'margin': false,
       },
     })
 

@@ -51,7 +51,7 @@ const NORMALIZED_PSEUDO_ELEMENT_SELECTOR = new Map([
   [':after', '::after'],
 ])
 
-function isRtlLanguageAnyPseudo(node: Node): node is Pseudo {
+function isRtlLanguageAnyPseudo(node: Node): boolean {
   return node.type === 'pseudo' && RTL_LANGUAGE_ANY_PSEUDO_SET.has(node.value)
 }
 
