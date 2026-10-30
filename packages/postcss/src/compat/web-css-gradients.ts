@@ -5,9 +5,9 @@ import { decodeCssIdentifier, getCssAtRulePrelude, getCssCustomPropertyName, isC
 import { normalizeTailwindcssV4GradientPosition } from './tailwindcss-v4'
 
 type Gradient = 'linear' | 'radial' | 'conic'
-interface Context { gradient?: Gradient, legacyGradient?: boolean, transparent: boolean, query?: boolean }
+interface Context { gradient?: Gradient | undefined, legacyGradient?: boolean, transparent: boolean, query?: boolean | undefined }
 interface Reference extends Context { name: string }
-interface Consumer { alias?: string, gradient?: Gradient, legacyGradient?: boolean, background?: boolean }
+interface Consumer { alias?: string, gradient?: Gradient | undefined, legacyGradient?: boolean | undefined, background?: boolean }
 
 function gradientKind(name: string): Gradient | undefined {
   return /^(?:-(?:webkit|moz|o)-)?(?:repeating-)?linear-gradient$/.test(name)
@@ -99,7 +99,7 @@ function gradientConsumers(root: postcss.Root, registered: ReturnType<typeof col
   let legacyGradient = false
   const seen = new Set<string>()
   const active = new Set<string>()
-  const stack: { name: string, gradient?: Gradient, exit?: boolean }[] = [{ name: '--tw-gradient-position' }]
+  const stack: { name: string, gradient?: Gradient | undefined, exit?: boolean }[] = [{ name: '--tw-gradient-position' }]
   while (stack.length) {
     const item = stack.pop()!
     const key = JSON.stringify([item.name, item.gradient])

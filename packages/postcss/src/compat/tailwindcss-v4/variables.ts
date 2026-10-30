@@ -47,7 +47,7 @@ const DEFAULT_VARIABLE_SCOPE_SELECTORS = new Set([
   '::backdrop',
 ])
 
-export function isTailwindcssV4(options?: { majorVersion?: 4 }) {
+export function isTailwindcssV4(options?: { majorVersion?: 4 | undefined }) {
   return options?.majorVersion === 4
 }
 
@@ -110,8 +110,8 @@ export function createUsedCssVarsV4Nodes(usedProps: ReadonlySet<string>) {
     }))
 }
 
-function isInsideAtRule(decl: PostcssDeclaration, name: string) {
-  let parent = decl.parent
+function isInsideAtRule(decl: Declaration, name: string) {
+  let parent: Declaration['parent'] | Root['parent'] = decl.parent
   while (parent) {
     if (parent.type === 'atrule' && parent.name === name) {
       return true

@@ -36,10 +36,11 @@ function normalizeSimpleMiniProgramSelectorNode(node: Node) {
 }
 
 function normalizeSimpleMiniProgramSelector(selector: Selector) {
-  if (selector.nodes.length !== 1) {
+  const node = selector.nodes[0]
+  if (selector.nodes.length !== 1 || !node) {
     return undefined
   }
-  return normalizeSimpleMiniProgramSelectorNode(selector.nodes[0])
+  return normalizeSimpleMiniProgramSelectorNode(node)
 }
 
 function collectMiniProgramSelectorSet(selector: string) {

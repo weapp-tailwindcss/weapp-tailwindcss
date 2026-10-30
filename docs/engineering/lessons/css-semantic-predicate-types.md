@@ -10,6 +10,11 @@ regressions:
   - packages/postcss/test/css-macro-idempotency.test.ts
   - packages/postcss/test/unit-conversion.test.ts
   - packages/postcss/test/coverage-extra.test.ts
+  - packages/postcss/test/class-presence.test.ts
+  - packages/postcss/test/empty-blocks.test.ts
+  - packages/postcss/test/web-css-compat.test.ts
+  - packages/postcss/test/mp.test.ts
+  - packages/postcss/test/vite-css-rules-selector-prefilter.test.ts
 ---
 
 # CSS 内容分类与节点种类判别
@@ -26,6 +31,8 @@ regressions:
 
 相邻严格检查还要求把“已经检查过派生结果”与“节点本身已判别”分开：CSS macro 先确认 comment 再解析条件，selector fallback 捕获唯一子节点后检查 id。macro 平台接收端允许既有调用方的显式 undefined，递归扫描明确返回 boolean，walk 回调只做收集、不返回数组长度。环境字典按原键访问，单位配置删除已被前置否定覆盖的 false 比较；这些修改保留原分支与 CSS 转换结果。
 
+数组边界同样应捕获将要消费的节点：class 存在条件只在同一复合选择器内查找已有 class，保留组合子边界；空块扫描只标记实际存在的当前块或父块；唯一小程序选择器先检查节点。渐变与 selector 转换上下文的可选类型准确保留现有显式 undefined 字段，不改变对象键。Tailwind v4 版本接收端与调用方对齐，变量祖先声明使用真实 Declaration 类型并覆盖 Root 的 Document 父节点，不以假定祖先一定是 Rule 或 AtRule 截断遍历。
+
 这修复的是类型契约。现有证据没有显示对应 CSS 输出发生了运行时错误，不把原有通过结果重新归因为本次修复。
 
 ## 验证
@@ -35,6 +42,7 @@ regressions:
 - `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/mini-program-css.test.ts test/root-cleanups-selectors.test.ts test/selectorParser.test.ts --update=none`：3文件82项通过。新增边界要求普通 Rule 不命中这些分类时仍可消费 selector/nodes，其他五类节点全部返回 false；既有用例覆盖主题、preflight、普通 class/id、复杂原生标签、嵌套清理、RTL 以及 before/after/root 伪类。
 - 原配置 `pnpm --filter @weapp-tailwindcss/scripts exec tsc --noEmit --pretty false`：98→72条诊断，26条相关错误消失，整体仍失败。没有修改 flags、noCheck 或源码包含范围。
 - 后续四文件边界修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/css-macro.test.ts test/css-macro-idempotency.test.ts test/selectorParser.test.ts test/unit-conversion.test.ts test/coverage-extra.test.ts --update=none`：5文件119项通过；相同严格入口72→60条，仍失败。四个源码文件显式 lint 通过，既有条件编译、平台别名、嵌套注释、缺失 endif、空分支、唯一 id 与禁用单位配置断言保留。
+- 后续六文件索引与上下文修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/class-presence.test.ts test/empty-blocks.test.ts test/coverage-extra.test.ts test/web-css-compat.test.ts test/mp.test.ts test/selectorParser.test.ts test/vite-css-rules-selector-prefilter.test.ts --update=none`：7文件148项通过；相同严格入口60→45条，仍失败。六个源码文件显式 lint 通过，未更新快照或 CSS 基线。
 
 ## 适用边界
 
