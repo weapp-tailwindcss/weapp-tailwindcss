@@ -36,6 +36,9 @@ export default defineConfig(async () => {
     ? process.env.WEAPP_TW_WEB_COMPAT !== '0'
     : undefined
   return {
+    define: {
+      'import.meta.env.SKYLINE_PROBE_BUILD': JSON.stringify(process.env.SKYLINE_PROBE_BUILD ?? 'demo'),
+    },
     plugins: [
       // 改成 mts，则爆 uni is not a function
       uni(),

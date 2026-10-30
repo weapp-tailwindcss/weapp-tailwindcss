@@ -71,10 +71,14 @@ wx-root-portal-content {
   --text-sm--line-height: calc(1.25 / 0.875);
   --text-base: 32rpx;
   --text-base--line-height: calc(1.5 / 1);
+  --font-weight-normal: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
+  --text-header-md: 20px;
+  --text-header-md--line-height: 32px;
+  --text-header-md--font-weight: 700;
   --color-neutral-1B: #1b1b1b;
   --color-neutral-66: #666;
   --color-midnight: #121063;
@@ -604,6 +608,12 @@ wx-button {
 .text-center {
   text-align: center;
 }
+/*! tokens: text-header-md <= src/components/SkylineTypographyProbe.vue */
+.text-header-md {
+  font-size: var(--text-header-md);
+  line-height: var(--tw-leading, var(--text-header-md--line-height));
+  font-weight: var(--tw-font-weight, var(--text-header-md--font-weight));
+}
 /*! tokens: text-base <= src/pages/index/index.vue */
 .text-base {
   font-size: var(--text-base);
@@ -648,10 +658,20 @@ wx-button {
   --tw-leading: calc(var(--spacing) * 5);
   line-height: calc(var(--spacing) * 5);
 }
+/*! tokens: leading-[36px] <= src/components/SkylineTypographyProbe.vue */
+.leading-_b36px_B {
+  --tw-leading: 36px;
+  line-height: 36px;
+}
 /*! tokens: font-bold <= src/pages/index/index.vue */
 .font-bold {
   --tw-font-weight: var(--font-weight-bold);
   font-weight: var(--font-weight-bold);
+}
+/*! tokens: font-normal <= src/components/SkylineTypographyProbe.vue */
+.font-normal {
+  --tw-font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-normal);
 }
 /*! tokens: font-semibold <= src/pages/index/index.vue */
 .font-semibold {

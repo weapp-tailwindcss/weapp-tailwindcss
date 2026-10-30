@@ -1,0 +1,60 @@
+{
+  "pages": [
+    {
+      "route": "pages/skyline-typography/webview",
+      "config": {
+        "navigationBarTitleText": "字体变量 WebView 对照",
+        "renderer": "webview",
+        "navigationStyle": "custom",
+        "usingComponents": {
+          "skyline-typography-probe": "../../components/SkylineTypographyProbe"
+        }
+      },
+      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"1e681546-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
+    },
+    {
+      "route": "pages/skyline-typography/skyline",
+      "config": {
+        "navigationBarTitleText": "字体变量 Skyline 对照",
+        "renderer": "skyline",
+        "navigationStyle": "custom",
+        "usingComponents": {
+          "skyline-typography-probe": "../../components/SkylineTypographyProbe"
+        }
+      },
+      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"5373c03c-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
+    }
+  ],
+  "componentWxml": "<view class=\"typography-probe\" style=\"{{A}}\"><text id=\"probe-marker\" class=\"probe-label\">Skyline typography · {{a}}</text><text id=\"probe-build\" data-build=\"{{c}}\" class=\"probe-label\">{{b}}</text><text id=\"probe-phase\" class=\"probe-label\">{{d}}</text><view class=\"probe-controls\"><button id=\"probe-inline\" bindtap=\"{{e}}\">变量覆盖</button><button id=\"probe-utility-toggle\" bindtap=\"{{f}}\">工具类覆盖</button><button id=\"probe-theme\" bindtap=\"{{g}}\">主题切换</button><button id=\"probe-reset\" bindtap=\"{{h}}\">恢复</button></view><text class=\"probe-label\">原始 initial（Skyline 失败对照）</text><text id=\"probe-original\" class=\"probe-sample text-header-md\" style=\"--tw-leading:initial;--tw-font-weight:initial\">{{i}}</text><text class=\"probe-label\">插件输出 / 原生基准</text><text id=\"probe-utility\" class=\"{{['probe-sample', 'text-header-md', k && 'leading-_b36px_B font-normal']}}\" style=\"{{l}}\">{{j}}</text><text id=\"probe-reference\" class=\"probe-sample\" style=\"{{n}}\">{{m}}</text><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text class=\"probe-label\">祖先变量不能穿过子节点 reset</text><text id=\"probe-child\" class=\"probe-sample text-header-md\">{{o}}</text></view><text class=\"probe-label\">独立字重：原始 / 插件 / 原生主题 / 原生常规</text><text id=\"probe-weight-original\" class=\"probe-weight text-header-md\" style=\"font-size:32px;line-height:48px;--tw-font-weight:initial\">{{p}}</text><text id=\"probe-weight\" class=\"{{['probe-weight', 'text-header-md', r && 'font-normal']}}\" style=\"{{s}}\">{{q}}</text><text id=\"probe-weight-reference\" class=\"probe-weight\" style=\"{{v}}\">{{t}}</text><text id=\"probe-weight-regular\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:400\">{{w}}</text><text class=\"probe-label\">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text><text id=\"probe-normal\" class=\"probe-sample\" style=\"line-height:normal\">{{x}}</text><text wx:for=\"{{y}}\" wx:for-item=\"item\" wx:key=\"b\" id=\"{{item.a}}\" class=\"{{['probe-sample', item.c]}}\">{{z}}</text></view>",
+  "typography": {
+    "font-size": "var(--text-header-md)",
+    "line-height": "var(--tw-leading, var(--text-header-md--line-height))",
+    "font-weight": "var(--tw-font-weight, var(--text-header-md--font-weight))"
+  },
+  "resets": {
+    "--tw-leading": [
+      " ",
+      "calc(var(--spacing) * 5)",
+      "36px",
+      " ",
+      "calc(var(--spacing) * 6)",
+      " ",
+      "calc(var(--spacing) * 6)"
+    ],
+    "--tw-font-weight": [
+      " ",
+      "var(--font-weight-semibold)",
+      "var(--font-weight-bold)",
+      "var(--font-weight-normal)",
+      "var(--font-weight-semibold)",
+      " ",
+      "var(--font-weight-bold)",
+      "var(--font-weight-medium)",
+      "var(--font-weight-semibold)",
+      " ",
+      "var(--font-weight-bold)",
+      "var(--font-weight-medium)",
+      "var(--font-weight-semibold)"
+    ]
+  }
+}

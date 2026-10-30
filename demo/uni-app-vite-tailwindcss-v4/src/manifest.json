@@ -52,8 +52,12 @@
     "mp-weixin" : {
         "appid": "wxb3d842a4a7e3440d",
         "libVersion" : "3.10.3",
+        "componentFramework": "glass-easel",
+        "lazyCodeLoading": "requiredComponents",
+        "rendererOptions": { "skyline": { "defaultDisplayBlock": true, "disableABTest": true } },
         "setting" : {
-            "urlCheck" : false
+            "urlCheck" : false,
+            "skylineRenderEnable": true
         },
         "usingComponents" : true
     },

@@ -1,0 +1,5 @@
+/*! tokens: typography-page <= src/pages/skyline-typography/skyline.vue, src/pages/skyline-typography/webview.vue */
+.typography-page {
+  min-height: 100vh;
+  background: #fff;
+}

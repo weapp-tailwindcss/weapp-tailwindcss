@@ -1,0 +1,9 @@
+{
+  "file": "src/components/SkylineTypographyProbe.vue",
+  "count": 3,
+  "tokens": [
+    "font-normal",
+    "leading-[36px]",
+    "text-header-md"
+  ]
+}
