@@ -264,3 +264,9 @@ H5、支付宝仅做构建产物验证，不推定其运行时语义。实现阶
 同一提交的 Agent Workflow Contract 两个已创建任务均成功，最终 gate 未创建；工作流页面报告 `Internal server error. Correlation ID: de1fb85f-03c7-4564-8bfd-8a4c971d60a2`。这是 Actions 基础设施失败，不修改代码或门禁规避。入口更名后会由新提交自动触发该工作流，不额外重跑过时 head。
 
 此次更名不修改编译器、插件、Vite 配置或复现组件。`followup-evidence.json` 仍保存原运行的准确源码清单；其中仅 demo 的 `package.json` 因四个脚本名称变化而与后续提交不同，其余 70 个文件摘要一致，不能将历史记录改写成再次执行了 IDE。
+
+### 有效性能对照与固定时钟隔离
+
+提交 `04fa36e622993c1626c3a333201a7ce62f2ea2ca` 的 [uni-app 分片](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41074040592/job/124133283952) 完成两侧各 3 次构建与 3 次真实 HMR，没有错误或缺失样本，原有门禁通过。构建插件中位数为 2527 → 2477ms，首轮预热后的 HMR 插件样本为 149/142 → 134/127ms；HMR peak / steady RSS 为 1178.57/1066.34 → 1120.79/1001.85MiB。端到端 HMR P95 为 1993.70 → 1811.33ms，但中位数为 1018.62 → 1151.01ms，不能概括成所有耗时都改善。完整样本、原始报告摘要和预算保存在 [benchmark-evidence.json](./assets/skyline-typography/benchmark-evidence.json)。其他四个真实框架分片及汇总任务也成功，但此处只保存并分析了 uni-app 的原始样本。
+
+同一 Benchmark 工作流仍因前置测试失败而整体失败：GC 工作量隔离测试将 `performance.now()` 固定为 100，新增的保存等待因时钟不前进而无法结束，四项均在 5000ms 超时；实际 synthetic gate 尚未执行，缺产物上传错误是后果。本地先重现相同四项失败，再只在该 GC 隔离测试中 mock 保存等待，保留原有 3 build / 3 HMR、回滚、环境、RSS 及预算相等断言，真实等待仍由独立 `watch-output` 回归验证。不修改等待实现、超时或性能阈值。完整 runner 以 `CI=1 pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none --coverage.enabled=false` 验证，48 文件 343 项通过。此轮仅修改测试与记录，最新提交的全部远端检查仍须完成后才能合并。

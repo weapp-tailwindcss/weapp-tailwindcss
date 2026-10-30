@@ -13,6 +13,10 @@ import { createServiceFixture, createUniServiceFixture, mpxProject, uniProject, 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), sampler: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({ ...await importOriginal(), spawn: mocks.spawn }))
 vi.mock('../scripts/process-memory.mjs', async importOriginal => ({ ...await importOriginal(), createProcessMemorySampler: mocks.sampler }))
+// 此处冻结样本时钟以比较诊断工作量；真实保存间隔由 watch-output 回归独立验证。
+vi.mock('../../performance/demo/save-pacing.mjs', () => ({
+  createSavePacer: () => ({ settled() {}, async beforeSave() {} }),
+}))
 const roots = []
 afterEach(async () => {
   vi.restoreAllMocks()
