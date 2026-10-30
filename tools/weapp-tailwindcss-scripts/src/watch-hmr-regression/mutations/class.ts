@@ -96,8 +96,8 @@ function isIssue33Round(roundConfig: MutationRoundConfig) {
 }
 
 function shouldPersistIssue33Snapshot() {
-  return process.env.E2E_WATCH_SAVE_SNAPSHOTS === '1'
-    || process.env.E2E_WATCH_ROUND_PROFILE === 'issue33'
+  return process.env['E2E_WATCH_SAVE_SNAPSHOTS'] === '1'
+    || process.env['E2E_WATCH_ROUND_PROFILE'] === 'issue33'
 }
 
 function sanitizePathSegment(value: string) {

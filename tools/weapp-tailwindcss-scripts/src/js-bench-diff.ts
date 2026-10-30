@@ -293,9 +293,9 @@ function compareToBabel(files: PerFileResult[]) {
     oxcVsBabel?: string
   }> = []
   for (const f of files) {
-    const babel = f.engines.babel?.median
-    const swc = f.engines.swc?.median
-    const oxc = f.engines.oxc?.median
+    const babel = f.engines['babel']?.median
+    const swc = f.engines['swc']?.median
+    const oxc = f.engines['oxc']?.median
     rows.push({
       file: f.id,
       swcVsBabel: (typeof swc === 'number' && typeof babel === 'number') ? percent(1 - ratio(swc, babel)) : undefined,

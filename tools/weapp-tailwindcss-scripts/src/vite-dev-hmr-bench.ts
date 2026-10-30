@@ -124,7 +124,7 @@ function parseBooleanFlag(value: string | undefined) {
 }
 
 function resolveBaseCwd() {
-  let cursor = path.resolve(process.env.INIT_CWD || process.cwd())
+  let cursor = path.resolve(process.env['INIT_CWD'] || process.cwd())
   while (true) {
     if (existsSync(path.join(cursor, 'pnpm-workspace.yaml'))) {
       return cursor
@@ -172,8 +172,8 @@ function now() {
 
 function createEnv(mode: 'optimized' | 'legacy', options: BenchCliOptions) {
   const env = { ...process.env }
-  const pathValue = env.PATH || env.Path || env.path
-  env.PATH = [
+  const pathValue = env['PATH'] || env['Path'] || env['path']
+  env['PATH'] = [
     path.dirname(process.execPath),
     pathValue,
     '/usr/local/bin',
@@ -181,24 +181,24 @@ function createEnv(mode: 'optimized' | 'legacy', options: BenchCliOptions) {
     '/bin',
   ].filter(Boolean).join(path.delimiter)
   if (mode === 'legacy') {
-    env.WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH = '1'
-    env.WEAPP_TW_VITE_DISABLE_DIRTY = '1'
-    env.WEAPP_TW_VITE_DISABLE_JS_PRECHECK = '1'
+    env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] = '1'
+    env['WEAPP_TW_VITE_DISABLE_DIRTY'] = '1'
+    env['WEAPP_TW_VITE_DISABLE_JS_PRECHECK'] = '1'
   }
   else {
-    delete env.WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH
-    delete env.WEAPP_TW_VITE_DISABLE_DIRTY
-    delete env.WEAPP_TW_VITE_DISABLE_JS_PRECHECK
+    delete env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH']
+    delete env['WEAPP_TW_VITE_DISABLE_DIRTY']
+    delete env['WEAPP_TW_VITE_DISABLE_JS_PRECHECK']
   }
   if (options.forcePolling) {
-    env.CHOKIDAR_USEPOLLING = '1'
+    env['CHOKIDAR_USEPOLLING'] = '1'
   }
-  env.WEAPP_TW_BENCH = '1'
+  env['WEAPP_TW_BENCH'] = '1'
   return env
 }
 
 function resolvePnpmCommand(): PnpmCommand {
-  const pathPnpm = process.env.PATH
+  const pathPnpm = process.env['PATH']
     ?.split(path.delimiter)
     .map(item => path.join(item, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'))
     .find(item => existsSync(item))
@@ -206,8 +206,8 @@ function resolvePnpmCommand(): PnpmCommand {
     return createExecutableCommand(pathPnpm)
   }
 
-  const pnpmBin = process.env.PNPM_HOME
-    ? path.join(process.env.PNPM_HOME, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm')
+  const pnpmBin = process.env['PNPM_HOME']
+    ? path.join(process.env['PNPM_HOME'], process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm')
     : undefined
   if (pnpmBin && existsSync(pnpmBin)) {
     return createExecutableCommand(pnpmBin)
