@@ -44,7 +44,7 @@ export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal, o
   try {
     output = await runProcessCommand(windows ? 'powershell' : 'ps', windows
       ? ['-NoProfile', '-Command', '$rows = @(Get-CimInstance -Query "SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process" | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject $rows -Compress']
-      : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, { owner })
+      : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, owner === undefined ? {} : { owner })
   }
   catch (error) {
     throw new Error(`无法确认本轮子进程归属：${error instanceof Error ? error.message : String(error)}`, { cause: error })
@@ -74,7 +74,7 @@ export async function readProcessSubset(group: number | undefined, pids: readonl
         '-NoProfile',
         '-Command',
         `$ids = @(${values.join(',')}); $filter = [string]::Join(' OR ', ($ids | ForEach-Object { "ProcessId = $_" })); $query = 'SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process WHERE ' + $filter; $rows = @(Get-CimInstance -Query $query | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject @($rows) -Compress`,
-      ], timeoutMs, signal, { owner })
+      ], timeoutMs, signal, owner === undefined ? {} : { owner })
     }
     catch (error) {
       throw new Error(`无法确认本轮子进程身份：${error instanceof Error ? error.message : String(error)}`, { cause: error })
@@ -100,7 +100,7 @@ export async function readProcessSubset(group: number | undefined, pids: readonl
   let output: string
   try {
     output = await runProcessCommand('ps', [...filters, '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, {
-      owner,
+      ...(owner === undefined ? {} : { owner }),
       acceptFailure: (error, stdout, stderr) => {
         const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
         return code === 1 && stdout.length === 0 && stderr.length === 0
