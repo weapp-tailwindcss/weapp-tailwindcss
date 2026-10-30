@@ -21,6 +21,7 @@ import { linkEntryChunkStyles } from '../generate-bundle/entry-style-graph'
 import { normalizeRootMiniProgramImportShellAssets } from '../generate-bundle/finalize'
 import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramImportShellAssets } from '../generate-bundle/root-style-output'
 import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets } from '../processed-css-assets'
+import { readAssetSource } from '../processed-css-assets/markers-imports'
 import { createFrameworkCssContext, extendFrameworkCssContext } from '../shared/framework-css-context'
 import { createFrameworkStyleAssetContext } from '../shared/framework-style-assets'
 import { isHTMLRequest } from '../utils'
@@ -289,7 +290,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }
         await Promise.all(entries.map(async ([bundleFile, output]) => {
           const file = output.fileName || bundleFile
-          const rawSource = output.source.toString()
+          const rawSource = readAssetSource(output)
           if (isViteProcessedCssAsset?.(output, file)) {
             const cleanRawSource = stripBundlerGeneratedCssMarkers(rawSource)
             const cssHandlerOptions = createCssHandlerOptions(
