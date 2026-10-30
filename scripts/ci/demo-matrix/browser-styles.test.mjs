@@ -3,7 +3,7 @@ import { createServer as createHttpServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createServer } from 'vite'
-import { expect, it } from 'vitest'
+import { expect, it, onTestFailed } from 'vitest'
 import { authoredCss } from './authored.mjs'
 import { openBrowser } from './browser.mjs'
 import { cases } from './catalog.mjs'
@@ -17,14 +17,14 @@ function markup(round) {
   ).join('\n')
 }
 
-async function cleanup(root, browser, server, foreign) {
+async function cleanup(root, browser, server, foreign, track = (name, operation) => operation()) {
   // 独立收回自有资源；任意关闭失败都不能阻止其余资源清理。
   const results = await Promise.allSettled([
-    browser?.close(),
-    server?.close(),
-    foreign && new Promise((resolve, reject) => foreign.close(error => error ? reject(error) : resolve())),
+    track('browser close', () => browser?.close(), Boolean(browser)),
+    track('Vite close', () => server?.close(), Boolean(server)),
+    foreign && track('foreign server close', () => new Promise((resolve, reject) => foreign.close(error => error ? reject(error) : resolve()))),
   ])
-  results.push(...await Promise.allSettled([rm(root, { recursive: true, force: true })]))
+  results.push(...await Promise.allSettled([track('fixture removal', () => rm(root, { recursive: true, force: true }))]))
   const errors = results.filter(result => result.status === 'rejected').map(result => result.reason)
   if (errors.length) {
     throw new AggregateError(errors, '浏览器样式回归资源清理失败')
@@ -130,13 +130,32 @@ it.each([
   { status: 200, type: 'text/css', body: '.broken {', error: /Unclosed block/ },
   { status: 200, type: 'text/css', body: '/* pending', hanging: true, error: /timed out|aborted|exceeded 5000ms/ },
 ])('本地外链采集失败不能由其他有效样式掩盖：$status / $type / $hanging', async ({ status, type, body, hanging, error }) => {
-  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-style-errors-')))
+  const stages = []
+  // 超时钩子在异步 finally 完成前也可输出当前阶段，保留原始错误与全部预算。
+  onTestFailed(() => console.error(`Browser stylesheet stages: ${JSON.stringify(stages)}`))
+  const track = async (name, operation, acquired = true) => {
+    const stage = { name, status: acquired ? 'running' : 'not-acquired' }
+    stages.push(stage)
+    if (!acquired) {
+      return
+    }
+    try {
+      const result = await operation()
+      stage.status = 'completed'
+      return result
+    }
+    catch (error) {
+      stage.status = 'failed'
+      throw error
+    }
+  }
+  const root = await track('fixture allocation', async () => realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-style-errors-'))))
   let failing = false
   let pendingResponse
   let browser
   let server
   try {
-    server = await createServer({
+    server = await track('Vite creation', () => createServer({
       root,
       configFile: false,
       logLevel: 'silent',
@@ -164,16 +183,16 @@ it.each([
           })
         },
       }],
-    })
-    await server.listen()
-    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root, { startupTimeout: 20_000 })
-    await browser.inspect(item, 'initial')
+    }))
+    await track('Vite listen', () => server.listen())
+    browser = await track('browser startup', () => openBrowser(server.resolvedUrls.local[0], undefined, root, { startupTimeout: 20_000 }))
+    await track('initial inspection', () => browser.inspect(item, 'initial'))
     failing = true
-    await expect(browser.inspect(item, 'initial')).rejects.toThrow(error)
+    await track('expected inspection rejection', () => expect(browser.inspect(item, 'initial')).rejects.toThrow(error))
   }
   finally {
     pendingResponse?.end()
-    await cleanup(root, browser, server)
+    await cleanup(root, browser, server, undefined, track)
   }
 }, 30_000)
 
