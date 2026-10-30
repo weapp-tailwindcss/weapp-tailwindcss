@@ -456,5 +456,83 @@
     ]
   },
   "ideBoundary": "未重新执行 IDE；旧22阶段来自 c00d624f-47a5-49e1-8995-00addff98c0f。此次重新构建的9个WXSS逐一同哈希，但旧83源码清单不作为新源码绑定。",
-  "mergeAcceptance": "性能正式门禁与独立 review 仍未满足，此记录不宣称全部通过或可合并。"
+  "mergeAcceptance": "性能正式门禁与独立 review 仍未满足，此记录不宣称全部通过或可合并。",
+  "nonWeixinArtifacts": {
+    "buildSourceCommit": "fc394e58b2b212cb3ba4d37822527e4086196427",
+    "commands": [
+      "pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 exec node fixtures/skyline-typography/run.mjs build -p h5",
+      "pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 exec node fixtures/skyline-typography/run.mjs build -p mp-alipay"
+    ],
+    "validation": "逐资产拒绝内部 reset，使用 PostCSS AST 核对主题行高和字重的嵌套 fallback；仅构建产物验证",
+    "results": [
+      {
+        "platform": "h5",
+        "assets": [
+          {
+            "file": "assets/SkylineTypographyProbe-Cn7RvtN0.css",
+            "sha256": "d190fb7496bcffc9cd6d9a1bdb68657b714bdf7c9059fc66321312964986d8d1"
+          },
+          {
+            "file": "assets/index-DuSG4Z6H.css",
+            "sha256": "2aa8a499eedb92765a003f9a0a8cc806450d86092c2fa89aaf065cb0f3203b5f"
+          },
+          {
+            "file": "assets/skyline-Cu3ZIs6b.css",
+            "sha256": "fa073f79b2f53b2ad64f07d90411e6a0f3f49b15c95731644aa16d88a80badd4"
+          },
+          {
+            "file": "assets/uni.70497163.css",
+            "sha256": "70497163db6c10c2aa660459fe72f86a31068927262a457a5087e51fe0be5a09"
+          },
+          {
+            "file": "assets/webview-CeuDdNue.css",
+            "sha256": "604fc03956aa513b665e792f4c330d71c89b84960a9a9b2cd26afae05de5ea21"
+          }
+        ],
+        "internalReset": false,
+        "nestedLineHeight": true,
+        "nestedFontWeight": true
+      },
+      {
+        "platform": "mp-alipay",
+        "assets": [
+          {
+            "file": "app.acss",
+            "sha256": "fb16719b99ecb9758aaab86c90b9dfb5870d0376825c1fc3ed262cded7849155"
+          },
+          {
+            "file": "components/HelloWorld.acss",
+            "sha256": "0e804fbbb0f1925416128f5498dae79ab17f9960d72e10609659eb14eb6cb0f6"
+          },
+          {
+            "file": "components/SkylineTypographyExternal.acss",
+            "sha256": "dd3b1c0bc8ded06013d99284e856e9729f9d718f98ad7eed517d95b033c69bb9"
+          },
+          {
+            "file": "components/SkylineTypographyProbe.acss",
+            "sha256": "b397a73e373ca44678ae2c7ab25d553308619c91d341aef7cec3ef3187d5cb92"
+          },
+          {
+            "file": "components/SkylineTypographyScoped.acss",
+            "sha256": "7c867cef9562cf136ec5c674eb4cc2fdb576cf12d9c21a472ca82206a9c30e58"
+          },
+          {
+            "file": "main.acss",
+            "sha256": "765576db356e0ddf5059a3d6c87fedeac9003459d09847331d675450bf86215e"
+          },
+          {
+            "file": "pages/skyline-typography/skyline.acss",
+            "sha256": "2f0f904050d6964d481d05110254da62a6a393d90023ff6f15c5e4f1007f16e2"
+          },
+          {
+            "file": "pages/skyline-typography/webview.acss",
+            "sha256": "2f0f904050d6964d481d05110254da62a6a393d90023ff6f15c5e4f1007f16e2"
+          }
+        ],
+        "internalReset": false,
+        "nestedLineHeight": true,
+        "nestedFontWeight": true
+      }
+    ]
+  }
 }

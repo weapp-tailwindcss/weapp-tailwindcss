@@ -1,0 +1,128 @@
+{
+  "description": "独立诊断保留正式失败；不属于性能预算验收。分配数据包含已回收对象，不能与RSS相减或当作无泄漏证明。",
+  "recordedAt": "2026-10-30T18:41:44.851777+00:00",
+  "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+  "current": "beb717a4214d9fa932d40b283daf1b1e63c76c27",
+  "workerNode": "22.23.4",
+  "platform": "linux",
+  "taroInput": {
+    "run": 41105184687,
+    "artifactId": 13002115468,
+    "zipSha256": "1c8225f9cbe57a9cd7ebf443a3e3ed3094874922dfa4f8f5bf068226ed176e10",
+    "completeWorkers": 8,
+    "buildSnapshotsEachSide": [
+      1,
+      1,
+      1
+    ],
+    "watchSnapshotsEachSide": 8,
+    "comparedStages": 11,
+    "candidateSetDifferences": 0,
+    "sourceHashDifferencesEachStage": 6,
+    "sourceTextInterpretation": "全文核对仅@config中各准备副本base/current绝对根不同，保留实际哈希，不更改canExplainFormalRegression=false结论",
+    "callsEachColdBuild": {
+      "generatorGenerate": 5,
+      "nativeGenerate": 5,
+      "engineCompile": 6
+    },
+    "callsEachWatch": {
+      "generatorGenerate": 20,
+      "nativeGenerate": 20,
+      "engineCompile": 8,
+      "nativeReuse": 13,
+      "operationEvents": 491
+    },
+    "firstMutationThenRollbackGeneration": {
+      "base": [
+        3,
+        4
+      ],
+      "current": [
+        4,
+        3
+      ]
+    },
+    "laterEachMutationAndRollbackGeneration": 2,
+    "candidateOrder": "候选集合相同但数组顺序不同；8并发扫描及Map/Set提交允许完成时序影响顺序，基线自身三轮也存在请求顺序变化，尚无因果trace证明PR导致回归",
+    "formalAcceptance": false
+  },
+  "mpxAllocation": {
+    "run": 41105163602,
+    "artifactId": 13001890705,
+    "zipSha256": "6bf9f67dd76918dd69d23b5250185f7aa20f81a12053c5a5540622b82c1f7ec1",
+    "fullDiagnosticComplete": false,
+    "failures": {
+      "baseRollback3": "frames解码文档67898105字节超过67108864字节固定上限",
+      "currentWatchStop": "没有活动候选store，拒绝空证据"
+    },
+    "coldSessions": [
+      {
+        "directory": "base-build-1-ddLiJB",
+        "totalSelfSize": 3424008000,
+        "diagnosticSelfSize": 39820352
+      },
+      {
+        "directory": "base-build-2-iBjsNr",
+        "totalSelfSize": 3453133736,
+        "diagnosticSelfSize": 44222128
+      },
+      {
+        "directory": "base-build-3-wCjZ4C",
+        "totalSelfSize": 3453912376,
+        "diagnosticSelfSize": 38485712
+      },
+      {
+        "directory": "current-build-1-S7eVPN",
+        "totalSelfSize": 3400365808,
+        "diagnosticSelfSize": 40848824
+      },
+      {
+        "directory": "current-build-2-HghWps",
+        "totalSelfSize": 3437266992,
+        "diagnosticSelfSize": 42841648
+      },
+      {
+        "directory": "current-build-3-fUF7NY",
+        "totalSelfSize": 3411067000,
+        "diagnosticSelfSize": 43044520
+      }
+    ],
+    "boundedProfileAndFramesReceiptDecode": "6/6通过；identity/phase/index、profile与frames回执及node对应一致",
+    "samplesWithoutNode": 0,
+    "sourceMapAttributedFrames": 0,
+    "allocationPreloadValidation": "6/6实际startup.preloadSha256匹配allocation controller.moduleHashes[preload.mjs]",
+    "naturalGcPreloadValidation": "6/6自然GC process-start匹配identity.expectedPreloadSha256；该字段不用于allocation preload，二者哈希不同是两个独立模块",
+    "coldOperationsEachSession": {
+      "events": 229,
+      "textFiles": 41,
+      "snapshots": 1,
+      "webpackCreated": 2,
+      "webpackRootCompleted": 1,
+      "generatorGenerate": 7,
+      "nativeGenerate": 7,
+      "engineBuild": 7,
+      "engineCompile": 14,
+      "serviceCreate": 3,
+      "serviceAcquire": 3,
+      "serviceRelease": 3,
+      "serviceDispose": 3,
+      "engineDispose": 6
+    },
+    "candidateAndRawSourceHashes": "3/3配对相同；保序调用输入30项比较不相同，不宣称调用输入等价",
+    "medianTotalSelfSize": {
+      "base": 3453133736,
+      "current": 3411067000
+    },
+    "medianDiagnosticSelfSize": {
+      "base": 39820352,
+      "current": 42841648
+    },
+    "limits": [
+      "没有source-map归因，不能用生成chunk hash比较新增热点",
+      "缺少与普通RSS峰时刻的对齐，根compilation完成时停止采样不能覆盖全部构建尾部",
+      "原始采样与观察器会改变分配及GC，不能替代正式门禁",
+      "watch闭环缺证，不为取样延长生产store生命周期"
+    ],
+    "formalAcceptance": false
+  }
+}
