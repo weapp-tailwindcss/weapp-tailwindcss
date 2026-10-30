@@ -24,7 +24,7 @@ function normalizePlatformToken(value: string | undefined): string | undefined {
   return normalized || undefined
 }
 
-function resolveCssMacroPlatform(options: { platform?: string } | undefined): string | undefined {
+function resolveCssMacroPlatform(options: { platform?: string | undefined } | undefined): string | undefined {
   const explicit = normalizePlatformToken(options?.platform)
   if (explicit) { return explicit }
   for (const key of PLATFORM_ENV_KEYS) {
@@ -132,7 +132,8 @@ function rewriteCustomVariantConditionalComments(root: postcss.Root) {
     const nodes = [...container.nodes ?? []]
     for (let index = 0; index < nodes.length; index += 1) {
       const node = nodes[index]
-      const start = node?.type === 'comment' ? parseConditionalStart(node.text) : undefined
+      if (node?.type !== 'comment') { continue }
+      const start = parseConditionalStart(node.text)
       if (!start) { continue }
       const endIndex = findConditionalEnd(nodes, index)
       if (endIndex < 0) { continue }
@@ -157,7 +158,7 @@ function rewriteCustomVariantConditionalComments(root: postcss.Root) {
     return false
   }
   const variants: postcss.AtRule[] = []
-  root.walkAtRules('custom-variant', rule => variants.push(rule))
+  root.walkAtRules('custom-variant', (rule) => { variants.push(rule) })
   for (const variant of variants) { transformContainer(variant, variant) }
   return changed
 }
@@ -168,7 +169,8 @@ function rewriteOuterCustomVariantConditionalComments(root: postcss.Root) {
     const nodes = [...container.nodes ?? []]
     for (let index = 0; index < nodes.length; index += 1) {
       const node = nodes[index]
-      const start = node?.type === 'comment' ? parseConditionalStart(node.text) : undefined
+      if (node?.type !== 'comment') { continue }
+      const start = parseConditionalStart(node.text)
       if (!start) { continue }
       const endIndex = findConditionalEnd(nodes, index)
       if (endIndex < 0) { continue }
@@ -199,7 +201,7 @@ function rewriteOuterCustomVariantConditionalComments(root: postcss.Root) {
   return changed
 }
 
-export function compileCssMacroConditionalComments(css: string, options?: { platform?: string }) {
+export function compileCssMacroConditionalComments(css: string, options?: { platform?: string | undefined }) {
   const platformTokens = createPlatformTokenSet(resolveCssMacroPlatform(options))
   if (platformTokens.size === 0 || !css.includes('#if')) { return css }
   try {
@@ -262,7 +264,7 @@ export function hasCssMacroTailwindV4CustomVariantConditionalComments(css: strin
     root.walkAtRules('custom-variant', (rule) => {
       if (hasConditionalSlot(rule)) { found = true }
     })
-    const scanOuterConditional = (container: postcss.Container) => {
+    const scanOuterConditional = (container: postcss.Container): boolean => {
       const nodes = [...container.nodes ?? []]
       for (let index = 0; index < nodes.length; index += 1) {
         const node = nodes[index]

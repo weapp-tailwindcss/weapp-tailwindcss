@@ -6,6 +6,10 @@ regressions:
   - packages/postcss/test/mini-program-css.test.ts
   - packages/postcss/test/root-cleanups-selectors.test.ts
   - packages/postcss/test/selectorParser.test.ts
+  - packages/postcss/test/css-macro.test.ts
+  - packages/postcss/test/css-macro-idempotency.test.ts
+  - packages/postcss/test/unit-conversion.test.ts
+  - packages/postcss/test/coverage-extra.test.ts
 ---
 
 # CSS 内容分类与节点种类判别
@@ -20,6 +24,8 @@ regressions:
 
 四个内容分类器明确返回 boolean。小程序分类器接收 PostCSS 的 AnyNode 判别联合，保留 comment、at-rule、declaration、root、document 的非匹配语义；只有 `node.type === 'rule'` 才进入规则内容判断。theme 和 preflight 收集器分别在需要 Rule 操作的边界显式判别。单个 selector 也在 Map 查询前检查实际取值，不用断言隐藏索引边界。RTL 分类体与集合保持原样。
 
+相邻严格检查还要求把“已经检查过派生结果”与“节点本身已判别”分开：CSS macro 先确认 comment 再解析条件，selector fallback 捕获唯一子节点后检查 id。macro 平台接收端允许既有调用方的显式 undefined，递归扫描明确返回 boolean，walk 回调只做收集、不返回数组长度。环境字典按原键访问，单位配置删除已被前置否定覆盖的 false 比较；这些修改保留原分支与 CSS 转换结果。
+
 这修复的是类型契约。现有证据没有显示对应 CSS 输出发生了运行时错误，不把原有通过结果重新归因为本次修复。
 
 ## 验证
@@ -28,6 +34,7 @@ regressions:
 
 - `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/mini-program-css.test.ts test/root-cleanups-selectors.test.ts test/selectorParser.test.ts --update=none`：3文件82项通过。新增边界要求普通 Rule 不命中这些分类时仍可消费 selector/nodes，其他五类节点全部返回 false；既有用例覆盖主题、preflight、普通 class/id、复杂原生标签、嵌套清理、RTL 以及 before/after/root 伪类。
 - 原配置 `pnpm --filter @weapp-tailwindcss/scripts exec tsc --noEmit --pretty false`：98→72条诊断，26条相关错误消失，整体仍失败。没有修改 flags、noCheck 或源码包含范围。
+- 后续四文件边界修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/css-macro.test.ts test/css-macro-idempotency.test.ts test/selectorParser.test.ts test/unit-conversion.test.ts test/coverage-extra.test.ts --update=none`：5文件119项通过；相同严格入口72→60条，仍失败。四个源码文件显式 lint 通过，既有条件编译、平台别名、嵌套注释、缺失 endif、空分支、唯一 id 与禁用单位配置断言保留。
 
 ## 适用边界
 
