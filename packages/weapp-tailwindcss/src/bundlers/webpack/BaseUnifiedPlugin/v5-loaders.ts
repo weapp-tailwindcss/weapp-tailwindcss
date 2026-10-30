@@ -15,6 +15,7 @@ import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsF
 import { deleteWebpackLoaderRuntime, setWebpackLoaderRuntime } from '../loaders/runtime-registry'
 import { createDefaultLoaderAnchorFinders, findCssPreprocessorIndex } from '../shared/loader-anchors'
 import { hasLoaderEntry, isCssLikeModuleResource } from './shared'
+import { injectWebRpxFinalizer } from './v5-loaders/web-rpx-finalizer'
 
 interface SetupWebpackV5LoadersOptions {
   compiler: Compiler
@@ -282,6 +283,9 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
             }
             rewriteAnchorIdx = findRewriteAnchor(loaderEntries)
           }
+        }
+        if (shouldInjectCssGenerationLoader && generatorTarget === 'web' && isCssModule && !isLynxMainThreadCss) {
+          injectWebRpxFinalizer(loaderEntries, path.resolve(__dirname, './weapp-tw-web-rpx-finalize-loader.cjs'), runtimeRegistryKey)
         }
         if (
           shouldInjectRuntimeClassSetLoader
