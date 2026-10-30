@@ -754,7 +754,7 @@ export function createClassMutationScenario(
 export function createStyleMutationPayload(watchCase: WatchCase): StyleMutationPayload {
   const seed = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
   const marker = `tw-watch-style-${watchCase.name}-${seed}`
-  const policyCaseName = getBaseWatchCaseName(watchCase.name) ?? watchCase.name
+  const policyCaseName = getBaseWatchCaseName(watchCase.name)
   const applyValidation = STYLE_APPLY_UNSUPPORTED_CASES.has(policyCaseName)
     ? undefined
     : DEFAULT_STYLE_APPLY_VALIDATION
