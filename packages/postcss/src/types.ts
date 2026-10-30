@@ -199,7 +199,7 @@ export type IStyleHandlerOptions = {
     phase: 'postcss'
     durationMs: number
     cache?: { hit: boolean, key?: string }
-    error?: { name?: string, message: string }
+    error?: { name?: string | undefined, message: string }
   }) => void | Promise<void>
   appType?: PostcssAppType | undefined
   ctx?: PostcssContext | undefined

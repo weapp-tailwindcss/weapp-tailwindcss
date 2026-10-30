@@ -157,7 +157,9 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
           let result = restoreProtectedResult(transformed)
           // 作者删除首节点的空白归属必须跨 layer 提升保留，不能重新暴露块内缩进。
           if (firstUserNode && !firstUserNode.parent && result.root.first && result.root.first.raws.before !== firstUserBefore) {
-            result.root.first.raws.before = firstUserBefore
+            // 显式 undefined 与缺失键都参与来源快照，保留原写入语义。
+            const leadingRaws: Record<string, unknown> & { before?: string | undefined } = result.root.first.raws
+            leadingRaws.before = firstUserBefore
             const updated = result.root.toResult(result.opts)
             updated.messages.push(...result.messages)
             result = updated

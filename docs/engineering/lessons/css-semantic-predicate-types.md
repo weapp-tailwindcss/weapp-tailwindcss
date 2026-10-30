@@ -16,6 +16,7 @@ regressions:
   - packages/postcss/test/mp.test.ts
   - packages/postcss/test/vite-css-rules-selector-prefilter.test.ts
   - packages/postcss/test/container-node-identity.test.ts
+  - packages/postcss/test/handler-object-shapes.test.ts
 ---
 
 # CSS 内容分类与节点种类判别
@@ -40,6 +41,8 @@ regressions:
 
 PostCSS 的声明原对象与 visitor 代理也不能当作两个缓存身份。真实运行时的 `proxyOf` 返回同一个原对象，公开类型未声明此属性；在属性存在且值为非空对象时使用它，否则使用声明本身。三个读写点都消费同一身份函数和 `WeakMap<object, string>`，不能直接以代理对象替代，也不借助强转隐藏上游边界。真实 preset-env 在同一 AST 上两次处理，验证 preserve 开关、精确回退、声明身份与次序。
 
+handler 的空白和诊断字段也须区分“字段不存在”和“字段值为 undefined”。删除作者首节点后，原 before 值可能确实缺失，输出原本仍显式写入 `raws.before = undefined`；通过真实 raws 对象的局部接收契约保留该赋值，不删除字段或改成空串。上游各 raws 是可扩展字典，局部类型同时保留 `Record<string, unknown>` 与具体 before 契约；首次仅含可选 before 的弱类型与 RootRaws 没有共同显式字段，严格检查仍报错，该日志保留。非 Error 作者异常的诊断同样原本含 own `name: undefined`，公开事件接收端允许此既有形状。两者只补正类型边界，不改变 CSS、异常拒绝值或事件对象。
+
 ## 验证
 
 在本任务独立依赖工作树、Node24.22.1/pnpm12.15.0、包含本地改动的源码下：
@@ -49,6 +52,7 @@ PostCSS 的声明原对象与 visitor 代理也不能当作两个缓存身份。
 - 后续四文件边界修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/css-macro.test.ts test/css-macro-idempotency.test.ts test/selectorParser.test.ts test/unit-conversion.test.ts test/coverage-extra.test.ts --update=none`：5文件119项通过；相同严格入口72→60条，仍失败。四个源码文件显式 lint 通过，既有条件编译、平台别名、嵌套注释、缺失 endif、空分支、唯一 id 与禁用单位配置断言保留。
 - 后续六文件索引与上下文修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/class-presence.test.ts test/empty-blocks.test.ts test/coverage-extra.test.ts test/web-css-compat.test.ts test/mp.test.ts test/selectorParser.test.ts test/vite-css-rules-selector-prefilter.test.ts --update=none`：7文件148项通过；相同严格入口60→45条，仍失败。六个源码文件显式 lint 通过，未更新快照或 CSS 基线。
 - 祖先与身份组的五个新增控制用例在修改前已通过，运行时没有新失败复现；类型失败由原严格入口的十条诊断证明。修改后 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/container-node-identity.test.ts test/mini-program-generated-css.test.ts test/web-property-framework-normalization.test.ts test/web-property-fallback-phases.test.ts test/style-transform-ownership.test.ts test/local-imports.test.ts test/handler-gradient-fallback.test.ts --update=none --coverage.enabled=false`：7文件117项通过，注册正常/异常恢复和相邻 Root 身份、class/关键帧及真实 raw/proxy 重访均覆盖。原严格入口34→24条，仍失败；未修改编译配置、快照或 CSS 基线。
+- handler 两个新增形状控制在修改生产代码前已经通过，不记录为新运行时缺陷。首次新 CSS 缩进期望误写，修正为实际 PostCSS 默认输出后两项通过，原日志保留；明确验证 own before/own name、输入根不变及原拒绝值。`CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/handler-object-shapes.test.ts test/user-stage-leading-source.test.ts test/handler.root.test.ts test/handler.cache.test.ts test/handler-cache-preparation.test.ts --update=none --coverage.enabled=false`：五文件20项通过，覆盖相邻来源和缓存边界。原严格入口7→4条，整体仍失败，未放宽编译参数或输入域。
 
 ## 适用边界
 
