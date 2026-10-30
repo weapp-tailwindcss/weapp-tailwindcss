@@ -17,6 +17,7 @@ regressions:
   - packages/postcss/test/vite-css-rules-selector-prefilter.test.ts
   - packages/postcss/test/container-node-identity.test.ts
   - packages/postcss/test/handler-object-shapes.test.ts
+  - packages/postcss/test/container-cleanup-contract.test.ts
 ---
 
 # CSS 内容分类与节点种类判别
@@ -43,6 +44,8 @@ PostCSS 的声明原对象与 visitor 代理也不能当作两个缓存身份。
 
 handler 的空白和诊断字段也须区分“字段不存在”和“字段值为 undefined”。删除作者首节点后，原 before 值可能确实缺失，输出原本仍显式写入 `raws.before = undefined`；通过真实 raws 对象的局部接收契约保留该赋值，不删除字段或改成空串。上游各 raws 是可扩展字典，局部类型同时保留 `Record<string, unknown>` 与具体 before 契约；首次仅含可选 before 的弱类型与 RootRaws 没有共同显式字段，严格检查仍报错，该日志保留。非 Error 作者异常的诊断同样原本含 own `name: undefined`，公开事件接收端允许此既有形状。两者只补正类型边界，不改变 CSS、异常拒绝值或事件对象。
 
+清理 helper 的容器域也应由实际算法决定。`removeEmptyBlockAtRules` 仅使用共同的 `walkAtRules` 与节点删除，`splitUnresolvedAuthorVariableFallbacks` 仅使用 `walkDecls`、声明克隆及父容器插入；二者原本就能处理 Document，没有 Root 专用来源、主题或 banner 逻辑。接收类型明确补全为 Root 或 Document，保持原遍历和共享只读变量表；不把其他 Root-only 算法一起扩大输入域。
+
 ## 验证
 
 在本任务独立依赖工作树、Node24.22.1/pnpm12.15.0、包含本地改动的源码下：
@@ -54,9 +57,13 @@ handler 的空白和诊断字段也须区分“字段不存在”和“字段值
 - 祖先与身份组的五个新增控制用例在修改前已通过，运行时没有新失败复现；类型失败由原严格入口的十条诊断证明。修改后 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/container-node-identity.test.ts test/mini-program-generated-css.test.ts test/web-property-framework-normalization.test.ts test/web-property-fallback-phases.test.ts test/style-transform-ownership.test.ts test/local-imports.test.ts test/handler-gradient-fallback.test.ts --update=none --coverage.enabled=false`：7文件117项通过，注册正常/异常恢复和相邻 Root 身份、class/关键帧及真实 raw/proxy 重访均覆盖。原严格入口34→24条，仍失败；未修改编译配置、快照或 CSS 基线。
 - handler 两个新增形状控制在修改生产代码前已经通过，不记录为新运行时缺陷。首次新 CSS 缩进期望误写，修正为实际 PostCSS 默认输出后两项通过，原日志保留；明确验证 own before/own name、输入根不变及原拒绝值。`CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/handler-object-shapes.test.ts test/user-stage-leading-source.test.ts test/handler.root.test.ts test/handler.cache.test.ts test/handler-cache-preparation.test.ts --update=none --coverage.enabled=false`：五文件20项通过，覆盖相邻来源和缓存边界。原严格入口7→4条，整体仍失败，未放宽编译参数或输入域。
 
+- 清理契约三个新增运行时控制在源码修改前已全部通过，原失败是严格入口的两个参数类型错误。修改后 `pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/container-cleanup-contract.test.ts test/root-cleanups-selectors.test.ts test/empty-blocks.test.ts test/uni-app-x-document.test.ts test/uni-app-x.test.ts test/handler.root.test.ts --update=none --coverage.enabled=false`：6文件56项通过，覆盖嵌套空块多轮计数、保留 statement/comment、空 Document、多个 Root 的 fallback 及声明/Input 身份。三文件显式 lint 通过；首次新测试的五条格式错误已修正并保留失败日志。原严格入口4→2条，剩作者阶段受保护接口访问，仍未通过。
+
 ## 适用边界
 
 PostCSS 包自己的 tsconfig 仍带既有 noCheck，普通构建不代表严格类型验收。本次使用原 scripts 严格入口观察其实际消费的源码，剩余错误继续阻断整包类型通过。内部内容分类签名和收集边界变化不改变正式 RSS 预算、原生事件链路或平台支持范围。
+
+清理契约补正没有改变 handler 的 parser、保护占位、缓存或 source map 流程。已知 opaque parser/stringifier 与 Document 准备边界的设计仍未实施，不能把这两个参数错误消失写成完整多文档处理修复。
 
 ## 规则评估
 

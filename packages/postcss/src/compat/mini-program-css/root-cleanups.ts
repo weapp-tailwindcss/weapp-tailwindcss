@@ -104,7 +104,7 @@ export function removeEmptyAtRules(root: postcss.Root) {
   return removed
 }
 
-export function removeEmptyBlockAtRules(root: postcss.Root) {
+export function removeEmptyBlockAtRules(root: postcss.Root | postcss.Document) {
   let removed = 0
   root.walkAtRules((atRule) => {
     if (atRule.nodes?.length === 0) {
