@@ -69,7 +69,7 @@ async function toolsFor(sourceRepository, injected) {
     })
   }
   const controllerSources = []
-  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'inputs.mjs', 'verify.mjs']) {
+  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'gitlinks.mjs', 'inputs.mjs', 'verify.mjs']) {
     controllerSources.push(await fileReceipt(fileURLToPath(new URL(name, import.meta.url))))
   }
   return {
@@ -264,6 +264,7 @@ export async function prepareSourceDiagnostics(options) {
           sourceTree: source.sourceTree,
           objectFormat: source.objectFormat,
           files: extracted.snapshot,
+          gitlinks: source.gitlinks,
         })
         role.trackedManifestSha256 = role.sourceManifest.sha256
         const lock = await fileReceipt(path.join(root, 'pnpm-lock.yaml'), {

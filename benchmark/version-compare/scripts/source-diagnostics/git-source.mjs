@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileReceipt, fromLogical, inside, limits, logical, readBounded, sha256, unsafePathCharacters, walkFiles, writeJson } from './files.mjs'
+import { assertEmptyGitlinks } from './gitlinks.mjs'
 
 export function assertCommit(commit) {
   if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/.test(commit)) {
@@ -24,18 +25,23 @@ export async function readGitIdentity(run, repository, commit) {
   const raw = (await run('ls-tree', 'git', ['ls-tree', '-rz', '--full-tree', commit], repository, {
     stdoutLimit: limits.manifestBytes,
   })).stdout
-  const files = raw.split('\0').filter(Boolean).map((row) => {
-    const match = /^(100644|100755|120000) blob ([a-f0-9]{40})\t([\s\S]+)$/.exec(row)
-    if (!match) {
-      throw new Error('不支持的 Git tree 项（含 gitlink 或未知文件类型）')
+  const files = []
+  const gitlinks = []
+  for (const row of raw.split('\0').filter(Boolean)) {
+    const match = /^(100644|100755|120000|160000) (blob|commit) ([a-f0-9]{40})\t([\s\S]+)$/.exec(row)
+    if (!match || (match[1] === '160000') !== (match[2] === 'commit')) {
+      throw new Error('不支持的 Git tree mode/type 组合')
     }
-    return {
-      logical: logical(match[3]),
-      mode: match[1],
-      gitBlob: match[2],
+    const entry = { logical: logical(match[4]), mode: match[1] }
+    if (entry.mode === '160000') {
+      gitlinks.push({ ...entry, gitCommit: match[3] })
     }
-  })
-  if (!files.length || files.length > limits.entries || new Set(files.map(file => file.logical)).size !== files.length) {
+    else {
+      files.push({ ...entry, gitBlob: match[3] })
+    }
+  }
+  const names = [...files, ...gitlinks].map(file => file.logical)
+  if (!files.length || names.length > limits.entries || new Set(names).size !== names.length) {
     throw new Error('Git 文件清单为空、重复或超限')
   }
   return {
@@ -43,6 +49,7 @@ export async function readGitIdentity(run, repository, commit) {
     sourceTree: tree,
     objectFormat,
     files,
+    gitlinks,
   }
 }
 export async function assertDriverClean(run, repository, expectedCommit) {
@@ -81,6 +88,8 @@ export async function extractArchive({
     }
   }
   const expected = new Map(identity.files.map(file => [file.logical, file]))
+  const gitlinks = new Map(identity.gitlinks.map(entry => [entry.logical, entry]))
+  const seenGitlinks = new Set()
   const entries = []
   const seen = new Set()
   let firstError
@@ -97,7 +106,13 @@ export async function extractArchive({
           mode: entry.mode,
         }
         if (entry.type === 'Directory') {
-          if (![...expected.keys()].some(file => file.startsWith(`${name}/`))) {
+          if (gitlinks.has(name)) {
+            if (seenGitlinks.has(name) || entry.size !== 0) {
+              throw new Error(`归档 gitlink 必须为唯一空目录：${name}`)
+            }
+            seenGitlinks.add(name)
+          }
+          else if (![...expected.keys(), ...gitlinks.keys()].some(file => file.startsWith(`${name}/`))) {
             throw new Error(`归档含未知目录：${name}`)
           }
         }
@@ -139,7 +154,7 @@ export async function extractArchive({
   if (firstError) {
     throw firstError
   }
-  if (seen.size !== expected.size) {
+  if (seen.size !== expected.size || seenGitlinks.size !== gitlinks.size) {
     throw new Error('git archive 未覆盖全部 ls-tree 文件，可能有 export-ignore/subst')
   }
   await assertArchiveUnchanged()
@@ -182,6 +197,7 @@ export async function extractArchive({
     schemaVersion: 1,
     sourceCommit: identity.sourceCommit,
     sourceTree: identity.sourceTree,
+    gitlinks: identity.gitlinks,
     entries,
   })
   return {
@@ -200,6 +216,7 @@ export async function snapshotTracked(root, identity, expectedSnapshot) {
       throw error
     }
   }
+  await assertEmptyGitlinks(root, identity.gitlinks)
   const previous = expectedSnapshot && new Map(expectedSnapshot.map(file => [file.logical, file]))
   const files = []
   for (const source of identity.files) {

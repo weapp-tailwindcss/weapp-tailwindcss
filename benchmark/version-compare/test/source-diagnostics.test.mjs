@@ -78,6 +78,12 @@ async function fixture(behavior = {}) {
   await write(sourceRepository, 'source-note.txt', 'base\n')
   const commit = async (message) => {
     await git(sourceRepository, ['add', '-A'])
+    if (behavior.gitlinks) {
+      for (const [name, target] of [['tailwindcss-v3', 'a'.repeat(40)], ['tailwindcss-v4', 'b'.repeat(40)]]) {
+        await fs.mkdir(path.join(sourceRepository, 'submodules', name), { recursive: true })
+        await git(sourceRepository, ['update-index', '--add', '--cacheinfo', `160000,${target},submodules/${name}`])
+      }
+    }
     await git(sourceRepository, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', message])
     return git(sourceRepository, ['rev-parse', 'HEAD'])
   }
@@ -407,4 +413,33 @@ it.skipIf(process.platform === 'win32')('准备失败的原始日志直接位于
   expect(await fs.readFile(failedInstall.logs.stdout.physical, 'utf8')).toContain('FIRST INSTALL FAILURE')
   expect(report.roles[0].root.startsWith(options.outputDirectory + path.sep)).toBe(true)
   await expect(fs.lstat(path.join(evidenceDirectory, 'products'))).rejects.toMatchObject({ code: 'ENOENT' })
+}, 30000)
+
+it.skipIf(process.platform === 'win32')('真实 Git gitlink 保留准确引用与空目录，before/after 拒绝初始化的内容', async () => {
+  const { options } = await fixture({ gitlinks: true })
+  const report = await prepareSourceDiagnostics(options)
+  expect(report.status).toBe('complete')
+  const expected = [
+    { logical: 'submodules/tailwindcss-v3', mode: '160000', gitCommit: 'a'.repeat(40) },
+    { logical: 'submodules/tailwindcss-v4', mode: '160000', gitCommit: 'b'.repeat(40) },
+  ]
+  const driver = JSON.parse(await fs.readFile(report.driver.manifest.physical, 'utf8'))
+  expect(driver.gitlinks).toEqual(expected)
+  for (const role of report.roles) {
+    const source = JSON.parse(await fs.readFile(role.sourceManifest.physical, 'utf8'))
+    const archive = JSON.parse(await fs.readFile(role.sourceArchive.manifest.physical, 'utf8'))
+    expect(source.gitlinks).toEqual(expected)
+    expect(archive.gitlinks).toEqual(expected)
+    expect(source.files.every(file => file.mode !== '160000' && file.gitBlob && file.sha256)).toBe(true)
+    for (const entry of expected) {
+      expect(archive.entries.filter(item => item.logical === entry.logical)).toEqual([
+        expect.objectContaining({ type: 'Directory', bytes: 0 }),
+      ])
+      expect(await fs.readdir(path.join(role.root, ...entry.logical.split('/')))).toEqual([])
+    }
+    await expect(verifyPreparedRole(role, { phase: 'after', allowInjected: true })).resolves.toMatchObject({ trackedSourcesVerified: true })
+  }
+  const role = report.roles[0]
+  await write(role.root, 'submodules/tailwindcss-v3/unexpected.txt', 'not exported by the parent repository\n')
+  await expect(verifyPreparedRole(role, { phase: 'after', allowInjected: true })).rejects.toThrow('gitlink')
 }, 30000)

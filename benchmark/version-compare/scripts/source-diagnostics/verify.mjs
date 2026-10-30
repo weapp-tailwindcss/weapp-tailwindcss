@@ -143,11 +143,11 @@ export async function verifyPreparedRole(input, {
     throw new Error('driver/product 根重叠')
   }
   const source = await readJsonReceipt(role.sourceManifest)
-  if (role.trackedManifestSha256 !== role.sourceManifest.sha256 || source.role !== role.role || source.sourceCommit !== role.sourceCommit || source.sourceTree !== role.sourceTree || source.objectFormat !== 'sha1' || !Array.isArray(source.files) || !source.files.length) {
+  if (role.trackedManifestSha256 !== role.sourceManifest.sha256 || source.role !== role.role || source.sourceCommit !== role.sourceCommit || source.sourceTree !== role.sourceTree || source.objectFormat !== 'sha1' || !Array.isArray(source.files) || !source.files.length || !Array.isArray(source.gitlinks)) {
     throw new Error('source manifest 与 role 身份不一致')
   }
   const archive = await readJsonReceipt(role.sourceArchive.manifest)
-  if (archive.sourceCommit !== role.sourceCommit || archive.sourceTree !== role.sourceTree || !Array.isArray(archive.entries)) {
+  if (archive.sourceCommit !== role.sourceCommit || archive.sourceTree !== role.sourceTree || !Array.isArray(archive.entries) || JSON.stringify(archive.gitlinks) !== JSON.stringify(source.gitlinks)) {
     throw new Error('archive manifest 与 role 身份不一致')
   }
   if (phase !== 'checkpoint') {
