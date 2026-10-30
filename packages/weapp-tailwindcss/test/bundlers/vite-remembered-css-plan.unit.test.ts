@@ -108,6 +108,7 @@ describe('vite remembered css source plan', () => {
       outputFile: 'pages/index/index.wxss',
       rawSource: '.latest { @apply flex; }',
       sourceFile,
+      sourceInputs: [{ rawSource: '.latest { @apply flex; }', sourceFile: `${sourceFile}?vue=&type=style&index=0` }],
     }])
     expect(plan.hasUsableTailwindSource).toBe(true)
   })

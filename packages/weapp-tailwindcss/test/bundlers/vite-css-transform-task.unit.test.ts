@@ -36,14 +36,14 @@ function createOptions(
 }
 
 describe('vite css transform task', () => {
-  it('只适配本轮已编译的 apply 资产，保留独立 reset、条件和 scoped 声明顺序', async () => {
+  it.each(['', '.author{color:red; // 作者 SCSS 注释\n}'])('只适配本轮已编译的 apply 资产，保留独立 reset、条件和 scoped 声明顺序：%s', async (comment) => {
     const rawSource = 'view,text{--tw-leading:var(--weapp-tw-invalid-reset)}@media(min-width:1px){.label[data-v-a]{display:flex}}.label[data-v-a]{color:blue!important}'
     const generateCss = vi.fn()
     const styleHandler = vi.fn(async source => ({ css: source }))
     const result = await executeViteCssTransformTask(createOptions({
       annotateCss: css => css,
       generateCss,
-      generatorRawSource: 'view,text{--tw-leading:var(--weapp-tw-invalid-reset)}@reference "./theme.css";.label{@apply flex}.label{color:blue!important}',
+      generatorRawSource: comment + 'view,text{--tw-leading:var(--weapp-tw-invalid-reset)}@reference "./theme.css";.label{@apply flex}.label{color:blue!important}',
       hasCompiledGeneratorSource: true,
       rawSource,
       removeRootCoveredCssFromScopedAsset: css => css,

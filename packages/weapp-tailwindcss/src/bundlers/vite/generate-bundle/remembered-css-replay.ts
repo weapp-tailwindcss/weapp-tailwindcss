@@ -234,6 +234,13 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       continue
     }
     const { sourceFile } = rememberedCssSource
+    // 当前资产已拥有输出时仍须保活每个贡献模块，不能在跳过回放后被 prune 淘汰。
+    for (const { remembered } of replayableRememberedGroup) {
+      activeViteCssCacheFiles.add(normalizeViteCssCacheKey(remembered.sourceFile))
+      for (const input of remembered.sourceInputs ?? []) {
+        activeViteCssCacheFiles.add(normalizeViteCssCacheKey(input.sourceFile))
+      }
+    }
     // 异步 CSS 任务尚未写入 bundle 时，本轮输出计划也拥有该目标，不能再排入旧回放。
     if (
       activeViteCssCacheFiles.has(`planned:${normalizeViteCssCacheKey?.(outputFile) ?? normalizeOutputPathKey(outputFile)}`)

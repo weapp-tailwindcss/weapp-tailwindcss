@@ -121,14 +121,15 @@ async function processViteCssEntryTransformNow(options: any) {
   const shouldRecordVitePipelineCssByOutput = normalizeOutputPathKey(vitePipelineCssInjectionOutputFile) === normalizeOutputPathKey(outputFile)
   const shouldInjectVitePipelineCssIntoMain = vitePipelineCssAsset && !resolvedFromConfiguredOriginalCssEntry && outputCssHandlerOptions.isMainChunk !== true && (webviewRootCssInjectionTarget != null || shouldInjectCssIntoMainFromOutput(outputFile, generatorSourceFile, outputCssHandlerOptions))
   const isRuntimeLinkedCss = runtimeLinkedCssFiles.has(file) || runtimeLinkedCssFiles.has(outputFile)
-  const cssTransformDecisionPlan = resolveViteCssTransformDecisionPlan({ alreadyProcessedCssAsset, cssAssetIdentityKind: cssAssetIdentity.kind, cssAssetSourceFile: cssAssetIdentity.sourceFile, cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, generatorCandidateSignatureInitialized: state.generatorCandidateSignature !== void 0, generatorCandidatesChanged, generatorRawSource, hasCurrentTailwindGenerationDirective, hasRememberedApplySource, hasRuntimeAffectingChanges, hasSameOutputRememberedTailwindGenerationSource, hasStaleViteProcessedCssSource, isCollectedBundlerGeneratedCssFile: collectedBundlerGeneratedCssFiles.has(file), isProcessCssFile: processFiles.css.has(file), isRuntimeLinkedCss, rawSource, rememberedRawSource: rememberedCssSource?.rawSource, shouldProcessTailwindGeneration, shouldRegenerateMainPackageCssWithScopedCandidates, useIncrementalMode, vitePipelineCssAsset, viteProcessedCssAsset })
+  const cssTransformDecisionPlan = resolveViteCssTransformDecisionPlan({ alreadyProcessedCssAsset, cssAssetIdentityKind: cssAssetIdentity.kind, cssAssetSourceFile: cssAssetIdentity.sourceFile, cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, generatorCandidateSignatureInitialized: state.generatorCandidateSignature !== void 0, generatorCandidatesChanged, generatorRawSource, hasCompiledGeneratorSource: cssCompositionPlan.hasCompiledGeneratorSource, hasCurrentTailwindGenerationDirective, hasRememberedApplySource, hasRuntimeAffectingChanges, hasSameOutputRememberedTailwindGenerationSource, hasStaleViteProcessedCssSource, isCollectedBundlerGeneratedCssFile: collectedBundlerGeneratedCssFiles.has(file), isProcessCssFile: processFiles.css.has(file), isRuntimeLinkedCss, rawSource, rememberedRawSource: rememberedCssSource?.rawSource, shouldProcessTailwindGeneration, shouldRegenerateMainPackageCssWithScopedCandidates, useIncrementalMode, vitePipelineCssAsset, viteProcessedCssAsset })
   const { shouldReplayLastCss, shouldReuseProcessedCss, shouldTrackGeneratorRuntime, strippedViteProcessedCss } = cssTransformDecisionPlan
   if (shouldReuseProcessedCss) {
     const nextCss = removeRootCoveredCssFromScopedAsset(strippedViteProcessedCss)
     applyCssResult(nextCss)
     markCssAssetProcessed?.(originalSource, outputFile)
     recordCssAssetResult?.(outputFile, nextCss)
-    if (vitePipelineCssAsset && rememberedCssSource && generatorSourceKind) {
+    if (vitePipelineCssAsset && rememberedCssSource && generatorSourceKind
+      && rememberedCssSources.length <= 1 && (rememberedCssSources[0]?.sourceInputs?.length ?? 0) <= 1) {
       rememberCssSource?.({ kind: generatorSourceKind, outputFile: vitePipelineCssInjectionOutputFile, rawSource: generatorRawSource, sourceFile: generatorSourceFile })
     }
     // 普通作者样式的兼容处理不能升级为生成来源，否则回滚时会误用旧 remembered source。

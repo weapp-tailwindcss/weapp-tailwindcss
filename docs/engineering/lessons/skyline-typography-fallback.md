@@ -270,3 +270,52 @@ H5、支付宝仅做构建产物验证，不推定其运行时语义。实现阶
 提交 `04fa36e622993c1626c3a333201a7ce62f2ea2ca` 的 [uni-app 分片](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41074040592/job/124133283952) 完成两侧各 3 次构建与 3 次真实 HMR，没有错误或缺失样本，原有门禁通过。构建插件中位数为 2527 → 2477ms，首轮预热后的 HMR 插件样本为 149/142 → 134/127ms；HMR peak / steady RSS 为 1178.57/1066.34 → 1120.79/1001.85MiB。端到端 HMR P95 为 1993.70 → 1811.33ms，但中位数为 1018.62 → 1151.01ms，不能概括成所有耗时都改善。完整样本、原始报告摘要和预算保存在 [benchmark-evidence.json](./assets/skyline-typography/benchmark-evidence.json)。其他四个真实框架分片及汇总任务也成功，但此处只保存并分析了 uni-app 的原始样本。
 
 同一 Benchmark 工作流仍因前置测试失败而整体失败：GC 工作量隔离测试将 `performance.now()` 固定为 100，新增的保存等待因时钟不前进而无法结束，四项均在 5000ms 超时；实际 synthetic gate 尚未执行，缺产物上传错误是后果。本地先重现相同四项失败，再只在该 GC 隔离测试中 mock 保存等待，保留原有 3 build / 3 HMR、回滚、环境、RSS 及预算相等断言，真实等待仍由独立 `watch-output` 回归验证。不修改等待实现、超时或性能阈值。完整 runner 以 `CI=1 pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none --coverage.enabled=false` 验证，48 文件 343 项通过。此轮仅修改测试与记录，最新提交的全部远端检查仍须完成后才能合并。
+
+### CI 失败回归：编译证明与样式生命周期（2026-10-31）
+
+`825760e14ac9192d0c0cd60c3fc60d07638d5299` 的 PR Gate 单测出现四项失败，本地用原测试重现：demo 路径入口缺少显式 `@config`，以及 uni-app-x apply、扫描范围外 SCSS 和合并 SFC 作者样式更新未生效。fixture 增加独立空 content 配置；生成载荷复用改用当前作者输入及编译依赖版本，来源路径本身不再被当作已完成当前生成的证明。
+
+Vite marker 的可选摘要包含样式请求身份、语言、scoped、作者原文及编译 scope 的注册代次和依赖 revision。未注册、淘汰重建或排队期间作者输入变化时不能签发当前证明。同一来源的全部 marker 都必须匹配，资产中的 marker 和当前生成输入还须双向完整对应；旧格式继续可解析，但不能用作新证明。普通导入或根生成指令仍走原生成路径。SCSS 行尾注释由 PostCSS 包解析，不能误判为普通 CSS。
+
+真实 Vue/Vite watch 进一步固化了多样式块的问题：合并资产需为每个 marker 登记来源，已有输出时仍须保活组内来源；缓存写回按独立 style 请求登记，不把聚合原文写入首个模块。候选扫描范围外的 Vue 主模块更新时，由 transform 的本轮源码同步和撤销样式记录，无需在 generateBundle 读源码或猜输出文件名。回归依次修改两套独立 reference 主题、删除第二个 style，再修改剩余主题，核对 scoped、媒体条件、作者 `!important`、reset 及旧规则撤销。临时目录显式使用文件轮询以排除 macOS 原生事件长延迟，断言与等待预算不放宽。
+
+默认关闭路径另有两处修正：只在实际启用 Skyline 后读取 Webpack 资产进行保留名校验；平台环境 fallback 与归一化只供开启分支消费，不改变原有 Taro / Mpx 平台和自动 calc 默认值。新增 hook 检查点回归证明关闭时没有提前调用 asset.source，启用时仍拒绝无字体消费者的独立冲突资产。
+
+| 本轮定向验证 | 结果 |
+| --- | --- |
+| CI 原失败与缓存 / 来源 / scope / Webpack / 实际 watch | 17 文件、560 项通过，禁止更新快照 |
+| 构建与类型 | PostCSS build、主包 build、主包 strict tsc 及 tsd 通过 |
+| static | 默认 demo 与独立 fixture 两入口共 3 项禁止更新复验通过；此前单独更新审查无快照净变化 |
+| 生产 IDE | 运行 `c00d624f-47a5-49e1-8995-00addff98c0f` 两端 22 阶段通过，9 个 WXSS 摘要、83 个生产源码指纹运行前后一致 |
+| H5 / 支付宝严格构建 | 5 个 CSS / 8 个 ACSS 保留主题嵌套 fallback，无内部 reset；仅产物验证 |
+| 工程 | ESLint 无错误、architecture、agents 和 diff 检查通过 |
+
+源码 manifest 为 `0f8e14a2f4d8a802ad08ca12939721cb5860b462a22f176f243066ba4401b659`，观测与原始文件摘要保存在 [ci-followup-evidence.json](./assets/skyline-typography/ci-followup-evidence.json)。截图：[Skyline](./assets/skyline-typography/ci-followup-skyline.png)、[WebView](./assets/skyline-typography/ci-followup-webview.png)。项目已由原绑定服务关闭，登录态保留；`af5f5ff4-6c4b-4bfb-ad51-0a99207c3594` 是本轮中间源码运行，不冒充最终版本证据。仍只覆盖 DevTools `2.02.2608080` / 基础库 `3.10.3`，无手机真机证据。
+
+### 825760 的有效性能阻断
+
+[Benchmark run 41080961313](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41080961313) attempt 1 整体失败，关联 head 为 `825760`，基线为 `35762afa58b7bdd665324e46e23011106d2727fb`，实际 checkout 为 PR merge commit `53d5a8d2390abb4e3e2536ab4a2cc877fdbce28e`。两失败项目均有两侧各 3 次构建 / 3 次真实 HMR，无执行错误或缺失样本，Node `22.23.4`。
+
+| 目标 / 指标 | 首轮 baseline → current（MiB） | 反序独立确认 baseline → current（MiB） |
+| --- | --- | --- |
+| Mpx HMR peak RSS | 1562.00 → 2033.21（+30.17%） | 1574.80 → 1950.39（+23.85%） |
+| Mpx HMR steady RSS | 1541.09 → 1796.83（+16.59%） | 1555.96 → 1721.91（+10.66%） |
+| Taro Webpack build peak RSS 中位数 | 1304.92 → 1397.99（+93.07 / +7.13%） | 不适用，构建峰值不触发 HMR 反序确认 |
+
+[Mpx job 124150480861](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41080961313/job/124150480861) 的反序确认仍有两项违例；[Taro Webpack job 124150480809](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41080961313/job/124150480809) 的原样本为 baseline `[1304.921875,1280.48046875,1392.296875]`、current `[1428.7578125,1393.16015625,1397.98828125]`，达到原有 5% / 64MiB、尾部样本和显著性要求。这些是有效阻断，不能归为基础设施失败。原始 artifacts 保存在 `e2e/.artifacts/skyline-implementation/ci-825760-benchmark/`。
+
+同轮 [Synthetic Performance Gate job 124150134187](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41080961313/job/124150134187) 的 runner 验证与实际 gate 均成功：78 cases、warmups 5 / runs 21，`passed=true`、无违例。这不替代真实 demo RSS 门禁；`04fa36` 的历史成功也不作为最新 head 的通过。
+
+### 本轮本地性能复验的有效范围
+
+在 macOS、Node `24.22.1` 下执行以下对照，两个项目及两侧版本串行运行，测量期间没有并行执行 IDE、构建或测试。原始摘要、完整样本及报告摘要见 [ci-benchmark-evidence.json](./assets/skyline-typography/ci-benchmark-evidence.json)。当前侧准备副本与最终 IDE 的 83 个生产源文件摘要一致；这是包含未提交修复的工作树证据，不将 `825760` 当作已包含修复。
+
+```sh
+CI=1 WEAPP_TW_HMR_MEMORY_DEBUG=0 WEAPP_TW_BENCH_GC_DIAGNOSTICS=0 pnpm perf:guard -- --baseline-ref 35762afa58b7bdd665324e46e23011106d2727fb --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30 --only demo-mpx-tailwindcss-v4__mp-weixin,demo-taro-webpack-react-tailwindcss-v4__mp-weixin --result-dir e2e/.artifacts/skyline-implementation/local-working-two-framework-guard
+```
+
+Taro Webpack 两侧各完成 3 次构建 / 3 次 HMR，没有错误或缺失样本，原有门禁无违例。构建插件中位数 1168 → 1167ms，构建 peak RSS 中位数 1541.94 → 1525.06MiB；HMR 插件中位数 762 → 852ms（+11.81%），端到端 HMR 中位数 9724.31 → 10292.03ms（+5.84%），不能概括为全部指标改善。
+
+Mpx baseline 首轮修改完成后，源码已回滚，但输出 WXML 仍保留测量 marker，最终以 `hmr rollback 1 timeout 180000ms marker=twbench17933804111440` 退出。current 完成 3 次构建 / 3 次 HMR，仍不足以形成有效双侧结论，不拼接其他轮次基线。CLI 排除失败 baseline 后退出 0 并报告通过，不能据此宣称整轮性能通过。
+
+本地 Node 24 / macOS 不替代远端 Node 22 / Linux。新提交仍须完成全部实际适用 CI、完整有效的真实框架性能对照及独立 approving review 后才合并；本轮没有修改性能预算、超时或 runner。没有扩大为全仓本地全面验收。

@@ -7,7 +7,7 @@ import { beginCompilerShadowRun, createCompilationDependencyChanges, createRunti
 import { ensureCompilerOwnerActive, runCompilerOwnerActivity, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { pluginName } from '@/constants'
 import { finalizeCompilerShadowRun } from '@/context/shadow-gate'
-import { assertSkylineTypographyAsset } from '@/context/skyline-typography'
+import { assertSkylineTypographyAsset, isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
@@ -114,7 +114,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
         compilerOptions.onStart()
         debug('start')
         await runtimeState.readyPromise
-        if (!isWebGeneratorTarget) {
+        if (!isWebGeneratorTarget && isSkylineTypographyEnabledForContext(compilerOptions, runtimeState.tailwindRuntime.majorVersion)) {
           for (const [, asset] of groupedEntries.css) {
             assertSkylineTypographyAsset(asset.source().toString(), compilerOptions, runtimeState.tailwindRuntime.majorVersion)
           }

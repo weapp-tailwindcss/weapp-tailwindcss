@@ -21,9 +21,12 @@ export function resolveStyleOptionsFromContext(
 ): ResolvedStyleOptions {
   // Vite 适配可能通过 getter 提供配置，同次解析只读取一次，避免重复解析及混用不同快照。
   const inputCssOptions = ctx.cssOptions
-  const environment = resolveFrameworkEnvironment(ctx)
-  const configuredPlatform = normalizeFrameworkStylePlatform(inputCssOptions?.platform ?? ctx.platform ?? platformFallback
-    ?? (environment.uniPlatform || environment.uniUtsPlatform.normalized || environment.mpxPlatform || environment.values.TARO_ENV), ctx.appType)
+  const explicitPlatform = inputCssOptions?.platform ?? ctx.platform ?? platformFallback
+  const environment = inputCssOptions?.skyline === true ? resolveFrameworkEnvironment(ctx) : undefined
+  const configuredPlatform = environment
+    ? normalizeFrameworkStylePlatform(explicitPlatform
+      ?? (environment.uniPlatform || environment.uniUtsPlatform.normalized || environment.mpxPlatform || environment.values.TARO_ENV), ctx.appType)
+    : explicitPlatform
   const { options: generatorOptions, frameworkPolicy } = resolveContextGeneratorConfiguration(ctx, {
     appType: ctx.appType,
     platform: configuredPlatform,

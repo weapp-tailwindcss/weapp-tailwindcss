@@ -29,6 +29,34 @@ function createObjectSourceStore(initial: Record<string, string>) {
 }
 
 describe('bundlers/webpack v5-assets hook branch coverage', () => {
+  it.each([undefined, false, true])('仅显式启用 Skyline 时在运行时准备前读取并校验 CSS：%s', async (skyline) => {
+    const css = 'view{--weapp-tw-invalid-reset:1}'
+    const source = vi.fn(() => css)
+    const checkpoint = new Error('runtime-checkpoint')
+    const getRuntimeRefreshRequirement = vi.fn(() => { throw checkpoint })
+    const context = Object.assign(createContext({
+      generator: { target: 'weapp' },
+      cssMatcher: (file: string) => file.endsWith('.css'),
+      mainCssChunkMatcher: vi.fn(() => false),
+    }), skyline === undefined ? {} : { cssOptions: { skyline } })
+    const harness = createHookHarness({
+      assetStore: { 'isolated.css': css },
+      context,
+      hookOptions: { getRuntimeRefreshRequirement },
+    })
+    const task = harness.processAssetsWith({ 'isolated.css': { source } })
+    if (skyline === true) {
+      await expect(task).rejects.toThrow('保留变量')
+      expect(source).toHaveBeenCalledOnce()
+      expect(getRuntimeRefreshRequirement).not.toHaveBeenCalled()
+    }
+    else {
+      await expect(task).rejects.toBe(checkpoint)
+      expect(getRuntimeRefreshRequirement).toHaveBeenCalledOnce()
+      expect(source).not.toHaveBeenCalled()
+    }
+  })
+
   it('keeps css-loader runtime sources unchanged and hits its cache on repeated builds', async () => {
     const assetStore = {
       'runtime.css': [

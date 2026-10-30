@@ -13,6 +13,8 @@ import {
   removeScopedTailwindPreflightCss,
 } from '@/bundlers/vite/processed-css-assets'
 
+import { createViteSourceOutputRelationOwner, withViteSourceOutputRelationOwner } from '@/bundlers/vite/source-output-relations'
+
 function asset(fileName: string, source: string): OutputAsset {
   return {
     type: 'asset',
@@ -40,6 +42,19 @@ preferMatchedRootWebTarget: true } }
 const taroImportShellStrategy = { styles: { rootImportShell: 'extract' as const } }
 
 describe('vite processed css assets', () => {
+  it('从多个生成标记登记合并资产的全部来源，不依赖 CSS 与 JS 同名', () => {
+    const owner = createViteSourceOutputRelationOwner()
+    const first = '/repo/Label.vue?vue&type=style&index=1'
+    const second = 'C:\\repo\\Other.vue?vue&type=style&index=2'
+    const file = 'assets/entry-css-hash.css'
+    const css = `${createBundlerGeneratedCssMarker('vite', first)}.first{display:flex}${createBundlerGeneratedCssMarker('vite', second)}.second{display:block}`
+    withViteSourceOutputRelationOwner(owner, () => collectViteProcessedCssAssetResults({ [file]: asset(file, css) }, { isViteProcessedCssAsset: () => false }))
+    expect(owner.getOwnedOutputs(first)).toEqual(new Set([file]))
+    expect(owner.getOwnedOutputs(second)).toEqual(new Set([file]))
+    expect(owner.getOutputSources(file)).toEqual(new Set(['/repo/Label.vue', 'C:/repo/Other.vue']))
+    owner.dispose()
+  })
+
   it('collects marker scoped css and removes covered generated source assets', () => {
     const bundle: OutputBundle = {
       'app.wxss': asset('app.wxss', '.root{color:red}'),

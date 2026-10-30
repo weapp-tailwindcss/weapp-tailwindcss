@@ -14,6 +14,7 @@ export interface ResolveViteCssTransformDecisionPlanOptions {
   generatorCandidatesChanged: boolean
   generatorRawSource: string
   hasCurrentTailwindGenerationDirective: boolean
+  hasCompiledGeneratorSource?: boolean | undefined
   hasRememberedApplySource: boolean
   hasRuntimeAffectingChanges: boolean
   hasSameOutputRememberedTailwindGenerationSource: boolean
@@ -93,6 +94,7 @@ export function resolveViteCssTransformDecisionPlan(
   // 首次完整构建的结构化来源已证明框架完成生成；原始 apply 缓存只供后续增量重放。
   // 不能把已压缩、已合并的当前产物再当作者源码生成，否则会重复贡献局部规则。
   const shouldReuseCompletedBuildCss = !options.useIncrementalMode
+    && options.hasCompiledGeneratorSource === true
     && options.cssAssetIdentityKind === 'bundler-generated'
     && options.cssAssetSourceFile != null
     && !hasTailwindGenerationSource(strippedViteProcessedCss)

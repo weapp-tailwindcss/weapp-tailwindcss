@@ -1,19 +1,20 @@
 import { deferredCssSourceMarkerRanges, stripDeferredCssSourceMarkers } from './deferred-css-source'
 
-const BUNDLER_GENERATED_CSS_MARKER_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?\s*\*\/\s*/i
-const BUNDLER_GENERATED_CSS_MARKER_GLOBAL_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?\s*\*\/\s*/gi
-const BUNDLER_GENERATED_CSS_MARKER_CAPTURE_RE = /\/\*!?\s*weapp-tailwindcss (gulp|vite|webpack)-generated-css(?:\s*:\s*([^\s*]+))?\s*\*\/\s*/gi
+const BUNDLER_GENERATED_CSS_MARKER_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?(?:\s+source-hash=[a-f\d]+)?\s*\*\/\s*/i
+const BUNDLER_GENERATED_CSS_MARKER_GLOBAL_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?(?:\s+source-hash=[a-f\d]+)?\s*\*\/\s*/gi
+const BUNDLER_GENERATED_CSS_MARKER_CAPTURE_RE = /\/\*!?\s*weapp-tailwindcss (gulp|vite|webpack)-generated-css(?:\s*:\s*([^\s*]+))?(?:\s+source-hash=([a-f\d]+))?\s*\*\/\s*/gi
 const BUNDLER_GENERATED_CSS_END_MARKER_GLOBAL_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css-end\s*:\s*[^\s*]+\s*\*\/\s*/gi
 const VITE_INTERNAL_CSS_MARKER_GLOBAL_RE = /\/\*\$vite\$:\d+\*\/\s*/g
 
 export interface BundlerGeneratedCssMarkerBlock {
   bundler: 'gulp' | 'vite' | 'webpack'
   file?: string | undefined
+  sourceHash?: string | undefined
   css: string
 }
 
-export function createBundlerGeneratedCssMarker(bundler: 'gulp' | 'vite' | 'webpack', file: string) {
-  return `/*! weapp-tailwindcss ${bundler}-generated-css:${encodeURIComponent(file)} */`
+export function createBundlerGeneratedCssMarker(bundler: 'gulp' | 'vite' | 'webpack', file: string, sourceHash?: string) {
+  return `/*! weapp-tailwindcss ${bundler}-generated-css:${encodeURIComponent(file)}${sourceHash ? ` source-hash=${sourceHash}` : ''} */`
 }
 
 export function createBundlerGeneratedCssEndMarker(bundler: 'gulp' | 'vite' | 'webpack', file: string) {
@@ -63,6 +64,7 @@ export function parseBundlerGeneratedCssMarkerBlocks(source: string): BundlerGen
     blocks.push({
       bundler: match[1] as 'gulp' | 'vite' | 'webpack',
       file,
+      ...(match[3] ? { sourceHash: match[3] } : {}),
       css: source.slice(cssStart, cssEnd),
     })
     match = nextMatch
@@ -72,7 +74,7 @@ export function parseBundlerGeneratedCssMarkerBlocks(source: string): BundlerGen
 
 /** 仅替换 transform 阶段标记的模块区间，保留 bundler 合并的前后样式及其层叠顺序。 */
 export function replaceViteGeneratedCssModule(source: string, generated: string, matchesSource: (file: string) => boolean) {
-  const markers = [...source.matchAll(/\/\*!?\s*weapp-tailwindcss vite-generated-css(-end)?\s*:\s*([^\s*]+)\s*\*\//gi)]
+  const markers = [...source.matchAll(/\/\*!?\s*weapp-tailwindcss vite-generated-css(-end)?\s*:\s*([^\s*]+)(?:\s+source-hash=[a-f\d]+)?\s*\*\//gi)]
   let cursor = 0
   let result = ''
   let replaced = false

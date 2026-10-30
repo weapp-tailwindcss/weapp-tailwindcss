@@ -43,6 +43,25 @@ describe('Skyline 配置全链路', () => {
     }
   })
 
+  it.each([undefined, false])('Skyline 关闭时不改变既有 Taro 平台及自动 calc 默认值：%s', (skyline) => {
+    vi.stubEnv('TARO_ENV', 'weapp')
+    const context = { appType: 'taro', cssOptions: { skyline } } as InternalUserDefinedOptions
+    initializeFrameworkEnvironment(context)
+    const resolved = resolveStyleOptionsFromContext(context, 4)
+    expect(resolved.platform).toBeUndefined()
+    expect(resolved.cssCalc).toBeUndefined()
+  })
+
+  it.each([undefined, false])('Skyline 关闭时保留 Mpx wx 平台与自动 calc 默认值：%s', (skyline) => {
+    vi.stubEnv('MPX_CURRENT_TARGET_MODE', 'wx')
+    const context = createCompilerContext({ appType: 'mpx', cssOptions: { skyline } })
+    const resolved = resolveStyleOptionsFromContext(context, 4)
+    expect(resolved.platform).toBe('mp-weixin')
+    expect(resolved.cssCalc).toBe('auto')
+    expect(resolved.cssOptions?.platform).toBe('mp-weixin')
+    expect(resolved.cssOptions?.cssCalc).toBe('auto')
+  })
+
   it.each(['view{--weapp-tw-invalid-reset:1}', '@property --weapp-tw-invalid-reset{syntax:"*";inherits:false}'])('最终资产校验包括不含消费者的独立资产：%s', (conflict) => {
     const opts = createCompilerContext({ ...options, platform: 'mp-weixin' })
     opts.tailwindRuntime.majorVersion = 4

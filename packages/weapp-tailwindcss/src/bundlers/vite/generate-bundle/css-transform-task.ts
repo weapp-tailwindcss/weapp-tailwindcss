@@ -1,8 +1,8 @@
 import type { TailwindV4GenerationCoreInput } from '@/context/generation'
 import type { TailwindV4GenerationCoreResult } from '@/generation/service'
-import { postcss, stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
+import { analyzeTailwindCssDirectives, parseScssSource, stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { generateTailwindV4Css } from '@/context/generation'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindRootImportDirectives } from '../../../generation/directives'
+import { hasTailwindRootImportDirectives } from '../../../generation/directives'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeCssSourceForCompare } from '../css-output'
@@ -73,13 +73,15 @@ function resolveBundleUserRawSource(options: ExecuteViteCssTransformTaskOptions)
 }
 
 function hasOnlyLocalApplyGeneration(source: string) {
-  if (!hasTailwindApplyDirective(source) || hasTailwindRootDirectives(source, { importFallback: true })) {
-    return false
-  }
   try {
+    const root = parseScssSource(source)
+    const analysis = analyzeTailwindCssDirectives(root, { importFallback: true })
+    if (!analysis.hasTailwindApplyDirective || analysis.hasTailwindRootDirectives) {
+      return false
+    }
     let hasImports = false
     // reference 不输出依赖样式；普通导入可能间接包含随候选变化的根入口。
-    postcss.parse(source).walkAtRules(/^(?:import|use|forward)$/i, () => {
+    root.walkAtRules(/^(?:import|use|forward)$/i, () => {
       hasImports = true
     })
     return !hasImports

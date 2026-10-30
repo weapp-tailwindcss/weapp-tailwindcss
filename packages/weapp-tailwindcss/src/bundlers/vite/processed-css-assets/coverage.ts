@@ -107,7 +107,7 @@ export function removeCssCoveredByRootStyleAssets(
       previousRootSources = rootSources
       rootCoverage = collectRootScopedComparableCssCoverage(rootSources)
     }
-    const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage, options)
+    const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage, { preserveSkylineTypography: options.preserveSkylineTypography === true })
     if (nextCss === rawSource) {
       continue
     }

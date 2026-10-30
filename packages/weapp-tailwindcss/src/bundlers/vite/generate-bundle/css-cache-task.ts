@@ -20,6 +20,7 @@ export interface ApplyViteCssCacheResultOptions {
   outputFile: string
   rememberedCssRuntimeSignature: string
   rememberedSourcesCount: number
+  rememberedSourceInputs?: readonly Pick<RememberedCssSource, 'rawSource' | 'sourceFile' | 'delivery' | 'kind'>[] | undefined
   rememberCssSource?: ((entry: RememberedCssSource, cssRuntimeSignature?: string) => void) | undefined
   vitePipelineCssInjectionOutputFile: string
 }
@@ -41,7 +42,20 @@ export function applyViteCssCacheResult(
   // 产物缓存不授予生成来源所有权，普通 CSS 不能在 watch 中覆盖本轮框架贡献。
   const sourceKind = options.generatorSourceKind
     ?? (hasTailwindGenerationSource(options.generatorRawSource) ? 'generation' : undefined)
-  if (options.rememberedSourcesCount <= 1 && sourceKind) {
+  if (sourceKind && options.rememberedSourceInputs && options.rememberedSourceInputs.length > 1) {
+    // 合并产物只共享输出，作者输入仍按各自模块身份登记，不能写回首个样式块。
+    for (const input of options.rememberedSourceInputs) {
+      if (input.kind !== 'output-import-shell' && !hasTailwindGenerationSource(input.rawSource)) {
+        continue
+      }
+      options.rememberCssSource?.({
+        ...input,
+        kind: input.kind ?? sourceKind,
+        outputFile: options.vitePipelineCssInjectionOutputFile,
+      }, options.rememberedCssRuntimeSignature)
+    }
+  }
+  else if (options.rememberedSourcesCount <= 1 && sourceKind) {
     options.rememberCssSource?.({
       kind: sourceKind,
       outputFile: options.vitePipelineCssInjectionOutputFile,

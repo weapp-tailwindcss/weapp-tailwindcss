@@ -8,6 +8,7 @@ import type { CreateJsHandlerOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
 import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
+import { getRegisteredCompilationScopeVersion } from '@/compiler'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
@@ -26,6 +27,7 @@ import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '..
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
 import { normalizeBundleFileNameKeysForTest } from './bundle-file-names'
 import { collectBundleMarkupCandidates } from './bundle-markup-candidates'
+import { compiledCssSourceScopeId } from './compiled-css-source'
 import { createCssAssetEmitter, resolveAssetSourceFile } from './css-assets'
 import { applyViteCssCacheResult, processViteCssCacheTask } from './css-cache-task'
 import { resolveViteCssCompositionPlan } from './css-composition-plan'
@@ -122,7 +124,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     await runtimeState.readyPromise
     debug('start')
     onStart()
-    const { files: collectedBundlerGeneratedCssFiles, sourceFilesByAsset: generatedSourceFilesByAsset } = snapshotGeneratedCssAssetSources(bundle)
+    const { files: collectedBundlerGeneratedCssFiles, sourceFilesByAsset: generatedSourceFilesByAsset, sourceMarkersByAsset: generatedSourceMarkersByAsset } = snapshotGeneratedCssAssetSources(bundle)
     const subpackageRoots = collectMiniProgramSubpackageRoots(bundle)
     if (subpackageRoots) {
       currentSubpackageRoots = subpackageRoots
@@ -370,6 +372,8 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           generatorPlatform,
           generatorRuntime,
           generatedSourceFiles: generatedSourceFilesByAsset.get(originalSource),
+          generatedSourceMarkers: generatedSourceMarkersByAsset.get(originalSource),
+          getCssSourceVersion: (sourceFile: string) => getRegisteredCompilationScopeVersion(runtimeState, compiledCssSourceScopeId(sourceFile)),
           getConfiguredTailwindV4CssSourceEntries,
           getCssHandlerOptions,
           getCssSource,

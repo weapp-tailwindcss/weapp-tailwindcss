@@ -6,6 +6,7 @@ const componentScope = { id: 'pages/index.css', kind: 'component' as const }
 describe('CompilationSessionPool', () => {
   it('owns candidates and validation for one scope revision', async () => {
     const pool = new CompilationSessionPool()
+    expect(pool.getRegisteredScopeDependencyRevision(componentScope.id)).toBeUndefined()
     const compile = vi.fn(async (compilation) => ({
       classSet: compilation.candidates,
       css: '.generated{}',
@@ -27,6 +28,39 @@ describe('CompilationSessionPool', () => {
     expect(second.compilation.candidates).toEqual(new Set(['text-red-500']))
     expect(second.compilation.candidatesBySource.get('/src/app.css')).toEqual(new Set(['text-red-500']))
     expect(second.compilation.invalidatedScopes).toEqual(new Set([componentScope.id]))
+    expect(pool.getRegisteredScopeDependencyRevision(componentScope.id)).toBe(0)
+    pool.invalidateScope(componentScope.id)
+    expect(pool.getRegisteredScopeDependencyRevision(componentScope.id)).toBeUndefined()
+    await pool.dispose()
+  })
+
+  it('invalidates compiled proof across dependency changes, scope recreation and pool replacement', async () => {
+    const request = {
+      scope: componentScope,
+      outputId: 'pages/index.css',
+      sources: [{ id: '/src/label.css', kind: 'css' as const, dependencies: [{ id: '/src/theme.css', kind: 'css' as const }] }],
+    }
+    const compile = async () => undefined
+    const pool = new CompilationSessionPool()
+    expect(pool.getRegisteredScopeVersion(componentScope.id)).toBeUndefined()
+    await pool.run(request, compile)
+    const initial = pool.getRegisteredScopeVersion(componentScope.id)
+    expect(initial).toBeDefined()
+    pool.recordDependencyChanges(createCompilationDependencyChanges(['/src/theme.css']))
+    expect(pool.getRegisteredScopeVersion(componentScope.id)).not.toBe(initial)
+    pool.invalidateScope(componentScope.id)
+    expect(pool.getRegisteredScopeVersion(componentScope.id)).toBeUndefined()
+    await pool.run(request, compile)
+    expect(pool.getRegisteredScopeDependencyRevision(componentScope.id)).toBe(0)
+    const recreated = pool.getRegisteredScopeVersion(componentScope.id)
+    expect(recreated).toBeDefined()
+    expect(recreated).not.toBe(initial)
+    const replacement = new CompilationSessionPool()
+    await replacement.run(request, compile)
+    expect(replacement.getRegisteredScopeVersion(componentScope.id)).not.toBe(recreated)
+    await pool.dispose()
+    await replacement.dispose()
+    expect(pool.getRegisteredScopeVersion(componentScope.id)).toBeUndefined()
   })
 
   it('isolates scopes and ignores stale revision commits without blocking generation', async () => {

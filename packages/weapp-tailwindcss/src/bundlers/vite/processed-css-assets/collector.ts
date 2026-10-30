@@ -2,7 +2,7 @@ import type { OutputBundle } from 'rollup'
 import type { CollectViteProcessedCssAssetOptions, InjectViteProcessedCssAssetOptions } from './markers-imports'
 import { containsCssAfterMinify, filterExistingCssRules, mergeCoveredCssRuleDeclarations, mergeMiniProgramPreflightRuleDeclarations, mergeMiniProgramThemeScopeRuleDeclarations } from '@weapp-tailwindcss/postcss/transform'
 import { extractMarkedUserLayerComponentsCss, mergeMarkedUserLayerComponentsCss } from '../../../generation/user-layer-order'
-import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
+import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
 import { getActiveViteSourceOutputRelationOwner } from '../source-output-relations'
@@ -30,10 +30,13 @@ export function collectViteProcessedCssAssetResults(
     }
     const rawSource = readAssetSource(output)
     const singleMarkerFile = collectSingleViteGeneratedCssMarkerFile(rawSource)
-    if (singleMarkerFile) {
-      // 框架可能改变样式文件名；生成标记提供源码与实际产物的身份关系。
-      getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(singleMarkerFile, file)
-      options.debug?.('css marker ownership: %s -> %s', singleMarkerFile, file)
+    for (const marker of parseBundlerGeneratedCssMarkerBlocks(rawSource)) {
+      if (marker.bundler !== 'vite' || !marker.file) {
+        continue
+      }
+      // 合并资产也须保留每个样式模块的归属；唯一来源判断仅用于后续搬移。
+      getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(marker.file, file)
+      options.debug?.('css marker ownership: %s -> %s', marker.file, file)
     }
     if (!options.isViteProcessedCssAsset?.(output, file)) {
       continue
