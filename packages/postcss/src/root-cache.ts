@@ -11,6 +11,7 @@ interface FieldsSnapshot {
 interface InputSnapshot {
   input: Input
   css: string
+  document: string
   file: string | undefined
   hasBOM: boolean
   map: string | undefined
@@ -99,7 +100,7 @@ export function captureRootCacheSnapshot(root: Root): RootCacheSnapshot {
       if (id === undefined) {
         id = inputIds.size
         inputIds.set(input, id)
-        snapshot.inputs.push({ input, css: input.css, file: input.file, hasBOM: input.hasBOM, map: inputMap(input) })
+        snapshot.inputs.push({ input, css: input.css, document: input.document, file: input.file, hasBOM: input.hasBOM, map: inputMap(input) })
       }
       source = { input: id, start: node.source.start ? { ...node.source.start } : undefined, end: node.source.end ? { ...node.source.end } : undefined }
     }
@@ -130,7 +131,7 @@ export function matchRootCacheSnapshot(snapshot: RootCacheSnapshot, root: Root) 
         id = inputIds.size
         inputIds.set(input, id)
         const old = snapshot.inputs[id]
-        if (!old || old.css !== input.css || old.file !== input.file || old.hasBOM !== input.hasBOM || old.map !== inputMap(input)) {
+        if (!old || old.css !== input.css || old.document !== input.document || old.file !== input.file || old.hasBOM !== input.hasBOM || old.map !== inputMap(input)) {
           matched = false
           return false
         }
