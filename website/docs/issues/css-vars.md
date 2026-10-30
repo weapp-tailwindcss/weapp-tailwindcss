@@ -175,3 +175,60 @@ view,text,::before,::after {
 这块区域是 Tailwind 入口展开后生成的变量初始化代码，来自 `@import "tailwindcss";` 对应的生成结果。
 
 丢失这块区域会导致 `bg-gradient-to-r` 这类依赖 CSS 变量的工具类失效。
+
+## Skyline 字体变量回退
+
+微信小程序使用 Skyline 时，即使已经声明 `--tw-leading: initial`，下面的行高仍可能没有采用后面的主题变量；同一份样式在 WebView 中表现正常：
+
+```css
+.text-header-md {
+  line-height: var(--tw-leading, var(--text-header-md--line-height));
+}
+```
+
+这是 Skyline 对自定义属性重置的运行时差异，补充普通的变量初始化作用域不能直接解决。Tailwind CSS 4 项目可以显式开启 `cssOptions.skyline`，默认关闭。uni-app 多端构建按微信目标开启：
+
+```ts title="vite.config.ts"
+import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
+
+WeappTailwindcss({
+  cssOptions: {
+    skyline: process.env.UNI_PLATFORM === 'mp-weixin',
+    // 已关闭视觉 preflight 的项目也可以开启 Skyline 字体变量兼容。
+    cssPreflight: false,
+  },
+})
+```
+
+该开关只接受嵌套的 `cssOptions.skyline`。H5、其他小程序平台及 uni-app x 原生 App 不启用这项转换，也不会根据页面文件名猜测 renderer。
+
+兼容后的重置形态如下，消费端仍保留上面的完整 `var()` 表达式：
+
+```css
+view,text {
+  --tw-leading: var(--weapp-tw-invalid-reset);
+  --tw-font-weight: var(--weapp-tw-invalid-reset);
+}
+```
+
+插件处理这两个变量的纯 `initial` 声明及自己生成的默认值，保留作者的有效值、空值和动态 setter。不能直接把消费端改成 `var(--text-header-md--line-height)`，否则 `leading-*`、`font-*` 工具类以及内联变量覆盖会失去作用。
+
+uni-app Vite 还会为 `.vue` 组件的本地 `<style>` 补充组件自己的字体变量初始化，放在业务样式之前，避免依赖全局样式穿透组件隔离。`cssPreflight: false` 只关闭视觉重置，仍保留这部分运行时初始化。
+
+自定义框架适配可以通过 PostCSS 的公开工厂取得同一份初始化 CSS，在已确认微信目标、Tailwind CSS 4 且兼容开关开启的分支中，作为组件自己的样式放到业务规则之前：
+
+```ts
+import { createSkylineTypographyResetCss } from '@weapp-tailwindcss/postcss/transform'
+
+const resetCss = createSkylineTypographyResetCss()
+```
+
+该工厂只生成初始化 CSS，不替代框架对组件样式归属、注入顺序和最终资产校验的处理。
+
+`--weapp-tw-invalid-reset` 必须保持未定义：
+
+- 在经过插件处理的任意 CSS 中声明它，包括空值、条件规则中的声明或 `@property` 注册，构建都会报错。最终 CSS 资产也会校验。
+- 运行时内联样式、未经过插件处理的第三方样式同样不得定义或注册它；这些输入需要由应用保证。
+- 开启兼容时，`cssOptions.cssRemoveProperty: false`、`cssOptions.atRules: { property: false }` 及对应的旧版顶层配置会被拒绝，因为保留注册会改变 reset 的计算语义。
+
+当前模拟器实验仍记录了两个独立问题：移除祖先的主题变量后，Skyline 可能继续使用旧值；作者声明的空变量被临时 setter 覆盖再清除后，也可能没有恢复。该开关不改写作者空值，不冻结主题变量来掩盖这些异常。当前证据仅覆盖微信开发者工具模拟器，尚无真机验收结果。

@@ -1,0 +1,9 @@
+view,
+text {
+  --tw-leading: var(--weapp-tw-invalid-reset);
+  --tw-font-weight: var(--weapp-tw-invalid-reset);
+}
+/*! tokens: external-fixture <= src/components/SkylineTypographyExternal.vue */
+.external-fixture {
+  display: block;
+}

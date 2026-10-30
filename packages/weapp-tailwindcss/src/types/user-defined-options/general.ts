@@ -239,7 +239,10 @@ export interface UserDefinedOptionsGeneralPart {
    * `cssPreflight`、`cssPreflightRange`、`cssChildCombinatorReplaceValue`、`cssPresetEnv`、`autoprefixer`、
    * `atRules`、`injectAdditionalCssVarScope`、`cssSelectorReplacement`、`rem2rpx`、`px2rpx`、`unitsToPx`、
    * `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
-   * 与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties` 都推荐放在这里。
+   * 与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
+   *
+   * `cssOptions.skyline: true` 启用微信 Skyline 的 Tailwind CSS v4 字体变量初始化兼容，默认关闭；
+   * 保留运行时覆盖与主题 fallback，不能与 `cssRemoveProperty: false` 同时启用。
    *
    * 小程序兼容处理默认保留 `-webkit-font-smoothing`，因此不会因本项目的属性删除策略丢失
    * `antialiased` 或 `subpixel-antialiased` 的字体平滑声明。

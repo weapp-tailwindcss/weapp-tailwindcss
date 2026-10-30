@@ -109,6 +109,7 @@ export function shouldCollectTransformedSourceCandidates(id: string) {
 export function createViteCssMemory(options: {
   debug: (format: string, ...args: unknown[]) => void
   getSourceCandidateSource: (file: string) => string | undefined
+  normalizeSfcSource?: ((source: string, id: string) => string) | undefined
 }) {
   const rememberedCssSources = new Map<string, RememberedCssSource>()
   const rememberedCssSignatureByFile = new Map<string, string>()
@@ -139,15 +140,18 @@ export function createViteCssMemory(options: {
       return undefined
     }
     const scanSource = options.getSourceCandidateSource(file)
-    if (scanSource && hasSfcStyleBlocks(scanSource)) {
-      return scanSource
+    if (scanSource != null) {
+      const preparedSource = options.normalizeSfcSource?.(scanSource, file) ?? scanSource
+      if (hasSfcStyleBlocks(preparedSource)) {
+        return preparedSource
+      }
     }
     const key = normalizeKnownSfcSourceKey(file)
     const source = knownSfcSources.get(key)
     if (source != null) {
       touchMapEntry(knownSfcSources, key, source)
     }
-    return source
+    return source == null ? source : options.normalizeSfcSource?.(source, file) ?? source
   }
 
   const getKnownCssSource = (file: string) => {

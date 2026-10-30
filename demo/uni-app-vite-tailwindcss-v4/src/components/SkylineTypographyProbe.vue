@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import SkylineTypographyNoStyle from './SkylineTypographyNoStyle.vue'
 
 defineProps<{ renderer: string }>()
 
@@ -15,8 +16,8 @@ const fallbackCases = ['missing', 'initial', 'empty', 'valid', 'cycle'].flatMap(
 })))
 const phase = computed(() => `${Number(inlineOverride.value)}/${Number(utilityOverride.value)}/${Number(themeChanged.value)}`)
 const inlineStyle = computed(() => inlineOverride.value ? '--tw-leading:44px;--tw-font-weight:400' : '')
-const themeStyle = computed(() => themeChanged.value ? '--text-header-md--line-height:40px;--text-header-md--font-weight:400' : '')
-const referenceStyle = computed(() => `line-height:${inlineOverride.value ? 44 : utilityOverride.value ? 36 : themeChanged.value ? 40 : 32}px;font-weight:${inlineOverride.value || utilityOverride.value || themeChanged.value ? 400 : 700}`)
+const themeStyle = computed(() => themeChanged.value ? '--text-header-md--line-height:40px;--text-header-md--font-weight:400;--text-probe-small--line-height:24px' : '')
+const referenceStyle = computed(() => `line-height:${utilityOverride.value ? 36 : inlineOverride.value ? 44 : themeChanged.value ? 40 : 32}px;font-weight:${inlineOverride.value || utilityOverride.value || themeChanged.value ? 400 : 700}`)
 const weightStyle = computed(() => `font-size:32px;line-height:48px;${inlineStyle.value}`)
 const weightReferenceStyle = computed(() => `font-size:32px;line-height:48px;font-weight:${inlineOverride.value || utilityOverride.value || themeChanged.value ? 400 : 700}`)
 
@@ -25,17 +26,23 @@ function reset() {
   utilityOverride.value = false
   themeChanged.value = false
 }
+
+function toggleInline() { inlineOverride.value = !inlineOverride.value }
+function toggleUtility() { utilityOverride.value = !utilityOverride.value }
+function toggleTheme() { themeChanged.value = !themeChanged.value }
+
+defineExpose({ toggleInline, toggleUtility, toggleTheme, reset })
 </script>
 
 <template>
   <view class="typography-probe" :style="themeStyle">
     <text id="probe-marker" class="probe-label">Skyline typography · {{ renderer }}</text>
     <text id="probe-build" :data-build="buildMarker" class="probe-label">{{ buildMarker }}</text>
-    <text id="probe-phase" class="probe-label">{{ phase }}</text>
+    <text id="probe-phase" :data-phase="phase" class="probe-label">{{ phase }}</text>
     <view class="probe-controls">
-      <button id="probe-inline" @tap="inlineOverride = !inlineOverride">变量覆盖</button>
-      <button id="probe-utility-toggle" @tap="utilityOverride = !utilityOverride">工具类覆盖</button>
-      <button id="probe-theme" @tap="themeChanged = !themeChanged">主题切换</button>
+      <button id="probe-inline" @tap="toggleInline">变量覆盖</button>
+      <button id="probe-utility-toggle" @tap="toggleUtility">工具类覆盖</button>
+      <button id="probe-theme" @tap="toggleTheme">主题切换</button>
       <button id="probe-reset" @tap="reset">恢复</button>
     </view>
     <text class="probe-label">原始 initial（Skyline 失败对照）</text>
@@ -45,13 +52,21 @@ function reset() {
     <text id="probe-reference" class="probe-sample" :style="referenceStyle">{{ sample }}</text>
     <view style="--tw-leading:48px;--tw-font-weight:400">
       <text class="probe-label">祖先变量不能穿过子节点 reset</text>
-      <text id="probe-child" class="probe-sample text-header-md">{{ sample }}</text>
+      <text id="probe-child" class="probe-sample text-header-md" :class="{ 'leading-[36px] font-normal': utilityOverride }" :style="inlineStyle">{{ sample }}</text>
+      <text id="probe-child-small" class="probe-sample text-probe-small" :class="{ 'leading-[36px] font-normal': utilityOverride }" :style="inlineStyle">{{ sample }}</text>
+      <text id="probe-child-weight" class="probe-weight text-header-md" :class="{ 'font-normal': utilityOverride }" :style="weightStyle">{{ weightSample }}</text>
     </view>
     <text class="probe-label">独立字重：原始 / 插件 / 原生主题 / 原生常规</text>
     <text id="probe-weight-original" class="probe-weight text-header-md" style="font-size:32px;line-height:48px;--tw-font-weight:initial">{{ weightSample }}</text>
     <text id="probe-weight" class="probe-weight text-header-md" :class="{ 'font-normal': utilityOverride }" :style="weightStyle">{{ weightSample }}</text>
     <text id="probe-weight-reference" class="probe-weight" :style="weightReferenceStyle">{{ weightSample }}</text>
     <text id="probe-weight-regular" class="probe-weight" style="font-size:32px;line-height:48px;font-weight:400">{{ weightSample }}</text>
+    <text class="probe-label">独立负控：直接主题变量的 style 清空</text>
+    <text id="probe-theme-variable" class="probe-sample" style="line-height:var(--text-header-md--line-height);font-weight:var(--text-header-md--font-weight)">{{ sample }}</text>
+    <text id="probe-theme-small-variable" class="probe-sample" style="line-height:var(--text-probe-small--line-height);font-weight:400">{{ sample }}</text>
+    <text id="probe-theme-weight" class="probe-weight" style="font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)">{{ weightSample }}</text>
+    <text id="probe-author-empty" class="probe-sample text-header-md" style="--tw-leading: ;--tw-font-weight: ">{{ sample }}</text>
+    <SkylineTypographyNoStyle class="probe-no-style" :inline-style="inlineStyle" :utility-override="utilityOverride" :sample="sample" :weight-sample="weightSample" />
     <text class="probe-label">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text>
     <text id="probe-normal" class="probe-sample" style="line-height:normal">{{ sample }}</text>
     <text v-for="item in fallbackCases" :id="item.id" :key="item.id" class="probe-sample" :class="item.className">{{ sample }}</text>

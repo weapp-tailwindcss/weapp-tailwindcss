@@ -2,6 +2,7 @@ import type { ApplyConfiguredCssCalcOptions } from '../../plugins/applyConfigure
 import type { IStyleHandlerOptions } from '../../types'
 import postcss from 'postcss'
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../mini-program-prefixes'
+import { assertSkylineTypographyInput, isSkylineTypographyResetRule, resolveSkylineTypographyCompatibility } from '../tailwindcss-v4/skyline-typography'
 import { removeUnsupportedCascadeLayers } from './at-rules'
 import { unwrapTailwindSourceMedia } from './directives'
 import {
@@ -193,6 +194,10 @@ export function pruneMiniProgramGeneratedCssRoot(
   root: postcss.Root,
   options: PruneMiniProgramGeneratedCssOptions = {},
 ) {
+  const skyline = resolveSkylineTypographyCompatibility(options, true)
+  if (skyline) {
+    assertSkylineTypographyInput(root)
+  }
   const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.cssOptions?.preserveWebkitProperties).preserveProperties
   const shouldPreserveContentInit = options.preserveContentInit
     ?? (options.preservePreflight || usesTwContentVariable(root))
@@ -222,6 +227,9 @@ export function pruneMiniProgramGeneratedCssRoot(
   })
 
   root.walkRules((rule) => {
+    if (skyline && isSkylineTypographyResetRule(rule)) {
+      return
+    }
     if (isKeyframesRule(rule)) {
       return
     }

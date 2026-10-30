@@ -51,8 +51,8 @@ export function shouldFilterRootGeneratedCssMarkerForScopedAsset(
   return !isMatchingGeneratedCssMarkerFile(targetFile, markerFile, resolveViteProcessedCssOutputFile)
 }
 
-export function removeCssCoveredByRootStyleBundleSources(bundle: OutputBundle, file: string, css: string) {
-  return removeCssCoveredByRootStyleSources(css, collectRootStyleBundleCssSources(bundle, file))
+export function removeCssCoveredByRootStyleBundleSources(bundle: OutputBundle, file: string, css: string, options?: { preserveSkylineTypography?: boolean }) {
+  return removeCssCoveredByRootStyleSources(css, collectRootStyleBundleCssSources(bundle, file), undefined, options)
 }
 
 export function removeCssCoveredByRootStyleAssets(
@@ -65,6 +65,7 @@ export function removeCssCoveredByRootStyleAssets(
     onUpdate?: ((file: string, original: string, generated: string) => void) | undefined
     recordCssAssetResult?: CssAssetResultRecorder | undefined
     subpackageRoots?: Set<string> | undefined
+    preserveSkylineTypography?: boolean | undefined
   },
 ) {
   let updated = 0
@@ -106,7 +107,7 @@ export function removeCssCoveredByRootStyleAssets(
       previousRootSources = rootSources
       rootCoverage = collectRootScopedComparableCssCoverage(rootSources)
     }
-    const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage)
+    const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage, options)
     if (nextCss === rawSource) {
       continue
     }

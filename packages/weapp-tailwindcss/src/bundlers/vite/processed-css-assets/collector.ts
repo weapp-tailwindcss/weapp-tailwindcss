@@ -51,7 +51,7 @@ export function collectViteProcessedCssAssetResults(
       )
       && shouldFilterRootGeneratedCssMarkerForScopedAsset(file, singleMarkerFile, options.resolveViteProcessedCssOutputFile)
     ) {
-      nextCss = removeCssCoveredByRootStyleBundleSources(bundle, file, nextCss)
+      nextCss = removeCssCoveredByRootStyleBundleSources(bundle, file, nextCss, { preserveSkylineTypography: Boolean(options.createCssPipelineContext?.(file).getSkylineTypographyResetCss?.()) })
     }
     nextCss = options.transformCss?.(nextCss, file) ?? nextCss
     if (nextCss !== rawSource) {
@@ -238,10 +238,12 @@ export function injectViteProcessedCssIntoMainCssAssets(
     const importedStyleFiles = normalizedOriginalCss.importedStyleFiles
     const importedBundleCssSources = collectImportedBundleCssSources(bundle, importedStyleFiles)
     const importedBundleCssCoverage = prepareImportedCssCoverage(importedBundleCssSources)
+    const resetPreservation = { preserveSkylineTypography: Boolean(options.createCssPipelineContext?.(file).getSkylineTypographyResetCss?.()) }
     nextCss = removeCssCoveredByImportedViteResults(
       nextCss,
       importedBundleCssSources,
       importedBundleCssCoverage,
+      resetPreservation,
     )
     const importedViteCssResults = viteCssResults.filter(record => isViteProcessedCssResultImported(record, importedStyleFiles))
     const bundleAssetFiles = collectBundleAssetFiles(bundle)
@@ -257,6 +259,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       nextCss,
       uncoveredImportedCssSources,
       prepareImportedCssCoverage(uncoveredImportedCssSources),
+      resetPreservation,
     )
     const importedCssCoverage = prepareImportedCssCoverage(importedCssSources)
     const targetViteCssResults: typeof viteCssResults = []
@@ -277,7 +280,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       }
       targetViteCssResults.push(record)
       let css = measure('normalizeRecord', () => normalizeInjectableCssForTarget(stripBundlerGeneratedCssMarkers(record.css).trim(), file).trim())
-      css = measure('importCoverage', () => removeCssCoveredByImportedViteResults(css, importedCssSources, importedCssCoverage).trim())
+      css = measure('importCoverage', () => removeCssCoveredByImportedViteResults(css, importedCssSources, importedCssCoverage, resetPreservation).trim())
       if (css.length === 0) {
         continue
       }
@@ -328,7 +331,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
           removeCssRulesCoveredBySources(
             nextCss,
             finalImportedCssSources,
-            { exactOnly: true },
+            { exactOnly: true, ...resetPreservation },
             finalImportedCssCoverage?.coverage,
           ).trim(),
           file,

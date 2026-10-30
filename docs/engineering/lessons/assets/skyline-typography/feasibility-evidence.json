@@ -1,0 +1,638 @@
+{
+  "kind": "实验可行性摘要",
+  "productionValidation": "待补充：不能将原生项目或 test-copy 观测视为当前插件生产管线验收",
+  "physicalDeviceValidation": "未验证",
+  "reproductionCommit": "4c94ab4b4d14464dca9cc8cd67fbdeed816e688b",
+  "environment": {
+    "devtools": "2.02.2608080",
+    "SDKVersion": "3.10.3",
+    "model": "iPhone 12/13 (Pro)",
+    "platform": "devtools"
+  },
+  "measurement": "同一文本样本的 SelectorQuery 矩形高度；Skyline 未返回的 line-height/font-weight 字段不补造，相同高度不证明字重相同",
+  "runs": [
+    {
+      "runId": "3b30cbb8-f947-44b5-baf3-166c4c4b2985",
+      "sourceEvidence": "skyline-reset-strategies/3b30cbb8-f947-44b5-baf3-166c4c4b2985/evidence.json",
+      "sourceEvidenceSha256": "59ae6a862f4d2e55db172026636b870ba8815e33e57e64410aceb6f2f6f2cf37",
+      "purpose": "独立原生项目的 reset 策略可行性对照，非生产插件输出",
+      "phases": [
+        "default",
+        "override",
+        "restored"
+      ],
+      "samples": [
+        "default",
+        "child",
+        "small",
+        "initial",
+        "empty"
+      ],
+      "rows": [
+        {
+          "renderer": "webview",
+          "variant": "missing",
+          "phase": "default",
+          "heightPx": [
+            64,
+            64,
+            40,
+            64,
+            56
+          ]
+        },
+        {
+          "renderer": "webview",
+          "variant": "missing",
+          "phase": "override",
+          "heightPx": [
+            88,
+            88,
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "webview",
+          "variant": "missing",
+          "phase": "restored",
+          "heightPx": [
+            64,
+            64,
+            40,
+            64,
+            56
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing",
+          "phase": "default",
+          "heightPx": [
+            64,
+            64,
+            40,
+            56,
+            56
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing",
+          "phase": "override",
+          "heightPx": [
+            88,
+            88,
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing",
+          "phase": "restored",
+          "heightPx": [
+            64,
+            64,
+            40,
+            56,
+            88
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "4bc7354e-34dd-433f-83d2-189f9fbd416b",
+      "sourceEvidence": "skyline-uniapp-scope/4bc7354e-34dd-433f-83d2-189f9fbd416b/evidence.json",
+      "sourceEvidenceSha256": "4d8e55a89dbc3fcf8e916744f918a7251d544602457920ebb77fddeceb8767a7",
+      "purpose": "修改 uni-app 构建产物的 test-copy，比较全局与组件本地标签初始化；非生产插件注入验收",
+      "samples": [
+        "probe-utility",
+        "probe-child"
+      ],
+      "rows": [
+        {
+          "renderer": "webview",
+          "variant": "global-tags",
+          "identity": {
+            "route": "pages/skyline-typography/webview",
+            "renderer": "webview"
+          },
+          "heightPx": [
+            64,
+            64
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "variant": "global-tags",
+          "identity": {
+            "route": "pages/skyline-typography/skyline",
+            "renderer": "skyline"
+          },
+          "heightPx": [
+            64,
+            96
+          ]
+        },
+        {
+          "renderer": "webview",
+          "variant": "local-tags",
+          "identity": {
+            "route": "pages/skyline-typography/webview",
+            "renderer": "webview"
+          },
+          "heightPx": [
+            64,
+            64
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "variant": "local-tags",
+          "identity": {
+            "route": "pages/skyline-typography/skyline",
+            "renderer": "skyline"
+          },
+          "heightPx": [
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "5c3b3a03-3f0d-489c-88bf-7c18a63fce36",
+      "sourceEvidence": "skyline-uniapp-local-dynamic/5c3b3a03-3f0d-489c-88bf-7c18a63fce36/retry-evidence.json",
+      "sourceEvidenceSha256": "3c58f30d9f074eada9d471c00c026053a8233c00ca9f6adf5d2cd34f8a2c1550",
+      "purpose": "test-copy 的 Vue ref 与子节点测试绑定；只记录重试实际观测的阶段，非生产验收",
+      "samples": [
+        "probe-utility",
+        "probe-child",
+        "probe-small"
+      ],
+      "rows": [
+        {
+          "renderer": "webview",
+          "phase": "default",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "inline",
+          "phaseValue": "1/0/0",
+          "heightPx": [
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "inline-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "utility",
+          "phaseValue": "0/1/0",
+          "heightPx": [
+            72,
+            72,
+            72
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "utility-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme",
+          "phaseValue": "0/0/1",
+          "heightPx": [
+            80,
+            80,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "default",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "inline",
+          "phaseValue": "1/0/0",
+          "heightPx": [
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "inline-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "utility",
+          "phaseValue": "0/1/0",
+          "heightPx": [
+            72,
+            72,
+            72
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "utility-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme",
+          "phaseValue": "0/0/1",
+          "heightPx": [
+            80,
+            80,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme-clear",
+          "phaseValue": "0/0/0",
+          "heightPx": [
+            80,
+            80,
+            40
+          ]
+        }
+      ],
+      "inputCssSha256": "6fe4e4630961ead3533dec5f5b9540393dd4bcb2c43052ea2ded21e267d11763",
+      "inputWxmlSha256": "23f72a6571b193830c07c0668d3b1368cf70cfc3c5335325e1ffd72b1e9e3d96",
+      "limitation": "第一次连接失败的记录保留在原目录；不把计划中的 combined 等未观测阶段计为通过"
+    },
+    {
+      "runId": "113b5e2b-b333-4d42-a52e-30a5300d695f",
+      "sourceEvidence": "skyline-env-dimension/113b5e2b-b333-4d42-a52e-30a5300d695f/evidence.json",
+      "sourceEvidenceSha256": "493f2933882cf0847be3cefc42b4d3ed7b00f74203b61f16c7c6ab33c3686b08",
+      "purpose": "独立原生项目的缺失引用、env 维度与已知环境值对照；非生产验收",
+      "sample": "default",
+      "rows": [
+        {
+          "renderer": "webview",
+          "variant": "missing-control",
+          "expression": "var(--weapp-tw-invalid-reset)",
+          "phase": "default",
+          "heightPx": 64
+        },
+        {
+          "renderer": "webview",
+          "variant": "missing-control",
+          "expression": "var(--weapp-tw-invalid-reset)",
+          "phase": "clear",
+          "heightPx": 64
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing-control",
+          "expression": "var(--weapp-tw-invalid-reset)",
+          "phase": "default",
+          "heightPx": 64
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing-control",
+          "expression": "var(--weapp-tw-invalid-reset)",
+          "phase": "clear",
+          "heightPx": 64
+        },
+        {
+          "renderer": "webview",
+          "variant": "missing-indices",
+          "expression": "env(viewport-segment-width)",
+          "phase": "default",
+          "heightPx": 64
+        },
+        {
+          "renderer": "webview",
+          "variant": "missing-indices",
+          "expression": "env(viewport-segment-width)",
+          "phase": "clear",
+          "heightPx": 64
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing-indices",
+          "expression": "env(viewport-segment-width)",
+          "phase": "default",
+          "heightPx": 56
+        },
+        {
+          "renderer": "skyline",
+          "variant": "missing-indices",
+          "expression": "env(viewport-segment-width)",
+          "phase": "clear",
+          "heightPx": 56
+        },
+        {
+          "renderer": "webview",
+          "variant": "extra-index",
+          "expression": "env(safe-area-inset-top 0)",
+          "phase": "default",
+          "heightPx": 88
+        },
+        {
+          "renderer": "webview",
+          "variant": "extra-index",
+          "expression": "env(safe-area-inset-top 0)",
+          "phase": "clear",
+          "heightPx": 88
+        },
+        {
+          "renderer": "skyline",
+          "variant": "extra-index",
+          "expression": "env(safe-area-inset-top 0)",
+          "phase": "default",
+          "heightPx": 56
+        },
+        {
+          "renderer": "skyline",
+          "variant": "extra-index",
+          "expression": "env(safe-area-inset-top 0)",
+          "phase": "clear",
+          "heightPx": 76
+        },
+        {
+          "renderer": "webview",
+          "variant": "known-env-control",
+          "expression": "env(safe-area-inset-top)",
+          "phase": "default",
+          "heightPx": 0
+        },
+        {
+          "renderer": "webview",
+          "variant": "known-env-control",
+          "expression": "env(safe-area-inset-top)",
+          "phase": "clear",
+          "heightPx": 0
+        },
+        {
+          "renderer": "skyline",
+          "variant": "known-env-control",
+          "expression": "env(safe-area-inset-top)",
+          "phase": "default",
+          "heightPx": 94
+        },
+        {
+          "renderer": "skyline",
+          "variant": "known-env-control",
+          "expression": "env(safe-area-inset-top)",
+          "phase": "clear",
+          "heightPx": 94
+        }
+      ],
+      "safeAreaTopPx": 47,
+      "limitation": "已知 env 值对照在 Skyline 中为两行 94px，不能据失败推断完全不支持 env"
+    },
+    {
+      "runId": "85ff23b6-4940-40ab-baa1-e4e0167f4ced",
+      "sourceEvidence": "skyline-dependency/85ff23b6-4940-40ab-baa1-e4e0167f4ced/evidence.json",
+      "sourceEvidenceSha256": "cdd5c75fafba10a24cc3864252483dc29e445e82e907e58be3b73296479a1253",
+      "purpose": "直接主题消费与局部别名、链式依赖的独立运行时对照；非生产验收",
+      "samples": [
+        "direct",
+        "direct-deep",
+        "nested",
+        "nested-deep",
+        "literal",
+        "small"
+      ],
+      "rows": [
+        {
+          "renderer": "webview",
+          "phase": "default",
+          "heightPx": [
+            64,
+            64,
+            64,
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme-set",
+          "heightPx": [
+            80,
+            80,
+            80,
+            80,
+            64,
+            48
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme-clear",
+          "heightPx": [
+            64,
+            64,
+            64,
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "inline",
+          "heightPx": [
+            64,
+            64,
+            88,
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "inline-clear",
+          "heightPx": [
+            64,
+            64,
+            64,
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme-set-second",
+          "heightPx": [
+            72,
+            72,
+            72,
+            72,
+            64,
+            44
+          ]
+        },
+        {
+          "renderer": "webview",
+          "phase": "theme-clear-second",
+          "heightPx": [
+            64,
+            64,
+            64,
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "default",
+          "heightPx": [
+            64,
+            64,
+            64,
+            64,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme-set",
+          "heightPx": [
+            80,
+            80,
+            80,
+            80,
+            64,
+            48
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme-clear",
+          "heightPx": [
+            80,
+            80,
+            80,
+            80,
+            64,
+            48
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "inline",
+          "heightPx": [
+            64,
+            80,
+            88,
+            88,
+            88,
+            88
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "inline-clear",
+          "heightPx": [
+            64,
+            80,
+            64,
+            80,
+            64,
+            40
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme-set-second",
+          "heightPx": [
+            72,
+            72,
+            72,
+            72,
+            64,
+            44
+          ]
+        },
+        {
+          "renderer": "skyline",
+          "phase": "theme-clear-second",
+          "heightPx": [
+            72,
+            72,
+            72,
+            72,
+            64,
+            44
+          ]
+        }
+      ],
+      "inputCssSha256": "011783a9f94a32bec3031a4ae9c67ccdfeaf9b56fc46b8fd9eb80bdebbc524c1",
+      "directConsumer": "line-height:var(--lh);font-weight:var(--weight)",
+      "themeLineHeightPx": {
+        "default": 32,
+        "theme-set": 40,
+        "theme-set-second": 36
+      },
+      "limitation": "移除主题覆盖后 Skyline 的直接与深层消费者也残留旧值，属于独立主题依赖更新问题"
+    }
+  ]
+}

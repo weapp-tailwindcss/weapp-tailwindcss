@@ -16,9 +16,10 @@ import { createFrameworkProcessedCssRegistry } from './framework-processed-css-r
 interface FrameworkCssAssetsOptions {
   debug: ReturnType<typeof createDebug>
   getSourceCandidateSource: SourceCandidateCollector['source']
+  normalizeSfcSource?: ((source: string, id: string) => string) | undefined
 }
 /** CSS 资产状态属于当前插件实例，统一维护记录、裁剪及释放。 */
-export function createFrameworkCssAssets({ debug, getSourceCandidateSource }: FrameworkCssAssetsOptions) {
+export function createFrameworkCssAssets({ debug, getSourceCandidateSource, normalizeSfcSource }: FrameworkCssAssetsOptions) {
   const originalCssLayerSourceByFile = new LRUCache<string, string>({ max: 128 })
   const rememberOriginalCssLayerSource = (id: string, code: string) => {
     const file = cleanUrl(id)
@@ -37,7 +38,7 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource }: Fr
   const tracedGeneratedCssByFile = new Map<string, string>()
   const generatedClassSetByFile = new Map<string, Set<string>>()
   const processedCssRegistry = createFrameworkProcessedCssRegistry()
-  const cssMemory = createViteCssMemory({ debug, getSourceCandidateSource })
+  const cssMemory = createViteCssMemory({ debug, getSourceCandidateSource, normalizeSfcSource })
   const readCssAssetSource = (asset: OutputAsset) => {
     return typeof asset.source === 'string' ? asset.source : asset.source instanceof Uint8Array ? Buffer.from(asset.source).toString() : String(asset.source ?? '')
   }

@@ -1,3 +1,4 @@
+import { isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
 import { captureViteCssSources } from '../css-memory/source-lifecycle'
 import { createScopedGeneratorCandidateSignatureForSources, createScopedGeneratorSourceData } from './scoped-generator-sources'
 import { scheduleViteCssTransform } from './transform-scheduling'
@@ -113,7 +114,7 @@ async function processViteCssEntryTransformNow(options: any) {
       )
     return isRootOrSubpackageCss
       ? css
-      : removeCssCoveredByRootStyleBundleSources(bundle, outputFile, css)
+      : removeCssCoveredByRootStyleBundleSources(bundle, outputFile, css, { preserveSkylineTypography: isSkylineTypographyEnabledForContext(opts, runtimeState.tailwindRuntime.majorVersion, generatorPlatform) })
   }
   const shouldRegenerateMainPackageCssWithScopedCandidates = vitePipelineCssAsset && shouldExcludeSubpackageSourceCandidates(outputFile, generatorCssHandlerOptions)
   const vitePipelineCssInjectionOutputFile = webviewRootCssInjectionTarget ?? outputFile

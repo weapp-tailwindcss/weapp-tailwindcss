@@ -98,6 +98,22 @@ WeappTailwindcss({
 </style>
 ```
 
+## 微信 Skyline 字体变量兼容
+
+使用 Skyline 且遇到 `--tw-leading: initial` 无法触发行高 fallback 时，可以按微信构建目标开启默认关闭的兼容开关：
+
+```ts
+WeappTailwindcss({
+  cssOptions: {
+    skyline: process.env.UNI_PLATFORM === 'mp-weixin',
+  },
+})
+```
+
+开启后，插件保留字体工具类的嵌套变量链和动态覆盖，并为 `.vue` 组件本地 `<style>` 补充自己的初始化规则，不依赖全局样式穿透组件隔离。即使配置了 `cssOptions.cssPreflight: false`，这部分运行时初始化仍会保留。
+
+保留变量名称、`@property` 配置限制、作者空值与主题变量移除的独立问题见 [Skyline 字体变量回退](/docs/issues/css-vars#skyline-字体变量回退)。当前已有模拟器实验记录，尚无真机验收结果。
+
 ## 扫描范围提醒
 
 ### 问题现象

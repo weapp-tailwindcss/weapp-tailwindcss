@@ -29,6 +29,7 @@ export interface ViteFrameworkBranchContext {
   styleInjectorDelegate: ViteStyleInjectorDelegateFactory
   isRuntimeClassSetFeatureEnabled?: () => boolean
   sourceCandidatesBeforeExtraPlugin?: (plugin: Plugin) => boolean
+  normalizeSfcSource?: (source: string, id: string) => string
 }
 
 function wrapPluginHook(

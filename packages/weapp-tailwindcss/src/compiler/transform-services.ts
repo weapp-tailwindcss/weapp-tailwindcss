@@ -6,5 +6,7 @@ export interface CompilerTransformServices {
   readonly styleHandler: StyleHandler
   readonly jsHandler: JsHandler
   readonly templateHandler: (source: string, options?: ITemplateHandlerOptions) => Promise<string>
+  readonly skyline?: boolean | undefined
+  readonly stylePlatform?: string | undefined
   readonly preserveWebkitProperties?: readonly string[] | undefined
 }

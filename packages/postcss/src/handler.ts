@@ -11,12 +11,13 @@ import { isAutoprefixerPlugin } from './autoprefixer'
 import { protectDynamicColorMixAlpha, protectDynamicVarFallbacks } from './compat/color-mix'
 import { normalizeCssLineComments } from './compat/line-comments'
 import { removeEmptyBlockAtRules } from './compat/mini-program-css/root-cleanups'
+import { assertSkylineTypographyInput, resolveSkylineTypographyCompatibility } from './compat/tailwindcss-v4/skyline-typography'
 import { splitUnresolvedAuthorVariableFallbacks } from './compat/uni-app-x-uvue/theme'
 import { probeFeatures } from './content-probe'
 import { getDefaultOptions } from './defaults'
 import { fingerprintStyleOptions } from './fingerprint'
 import { processUserCss } from './framework-pipeline'
-import { resolvePostcssFrameworkProfile } from './frameworks'
+import { resolvePostcssFrameworkProfile, resolvePostcssStyleTarget } from './frameworks'
 import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
 import { createInjectPreflight } from './preflight'
@@ -83,6 +84,11 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     sourcePrepared = false,
   ) {
     const resolvedOptions = resolver.resolve(opt)
+    const target = resolvePostcssStyleTarget(resolvedOptions)
+    const skyline = resolveSkylineTypographyCompatibility(resolvedOptions, resolvedOptions.majorVersion === 4 && !resolvedOptions.uniAppX && (target === 'generic' || target === 'mini-program'))
+    if (skyline) {
+      assertSkylineTypographyInput(root ?? postcss.parse(normalizeCssLineComments(rawSource)))
+    }
     const plugins = resolvedOptions.postcssOptions?.plugins
     const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
@@ -217,6 +223,9 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
         }
       }
       finalResult = restoreProtectedResult(finalResult)
+      if (skyline) {
+        assertSkylineTypographyInput(finalResult.root as Root)
+      }
       const shouldSplitAuthorVariableFallbacks = resolvedOptions.uniAppX
         && (resolvedOptions.uniAppXCssTarget === 'uvue' || !isUniAppXFramework)
       if (shouldSplitAuthorVariableFallbacks && finalResult.root) {

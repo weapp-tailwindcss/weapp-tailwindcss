@@ -1,7 +1,7 @@
 import type { StyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import type { Compiler, CompilerCssTransformOptions, CompilerSnapshot } from './types'
 import type { CompilerTransformServices } from '@/compiler/transform-services'
-import { finalizeMiniProgramCssRoot, stripTailwindBannerComments } from '@weapp-tailwindcss/postcss/transform'
+import { finalizeMiniProgramCssRoot, resolveSkylineTypographyCompatibility, stripTailwindBannerComments } from '@weapp-tailwindcss/postcss/transform'
 import { getInternalCompilerSnapshot } from './snapshot'
 
 const DEFAULT_JS_OPTIONS = Object.freeze({ tailwindcssMajorVersion: 4 as const })
@@ -23,31 +23,44 @@ function resolveStyleOptions(options?: Parameters<StyleHandler>[1]): NonNullable
     : options
 }
 
-function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: readonly string[] | undefined, target: CompilerSnapshot['target']) {
+function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: readonly string[] | undefined, baseSkyline: boolean | undefined, target: CompilerSnapshot['target'], styleHandler: StyleHandler, basePlatform?: string) {
   const { finalize: _finalize, ...styleOptions } = options ?? {}
   const properties = target === 'web' ? [] : styleOptions.cssOptions?.preserveWebkitProperties ?? baseProperties
-  // 样式处理和最终清理共享本次调用的名单快照，避免异步阶段读取不同配置。
+  let skyline = target === 'weapp' ? styleOptions.cssOptions?.skyline ?? baseSkyline : false
+  // 样式处理和最终清理共享本次调用的配置快照，避免异步阶段读取不同配置。
   const preserveWebkitProperties = properties === undefined ? undefined : [...properties]
   const resolved = resolveStyleOptions(styleOptions)
+  let resolvedStyleOptions = preserveWebkitProperties === undefined && skyline === undefined
+    ? resolved
+    : {
+        ...resolved,
+        cssOptions: { ...resolved.cssOptions, preserveWebkitProperties, ...(skyline === undefined ? {} : { skyline }) },
+      }
+  if (skyline === true) {
+    // 快照目标不覆盖实际样式目标，复用管线解析合并后的平台及 native 配置。
+    const styleTarget = styleHandler.getPipeline(resolvedStyleOptions).target
+    const platform = resolvedStyleOptions.cssOptions?.platform ?? resolvedStyleOptions.platform ?? basePlatform
+    if (!resolveSkylineTypographyCompatibility({ ...resolvedStyleOptions, platform }, styleTarget === 'generic' || styleTarget === 'mini-program')) {
+      skyline = false
+      resolvedStyleOptions = { ...resolvedStyleOptions, cssOptions: { ...resolvedStyleOptions.cssOptions, skyline } }
+    }
+  }
   return {
     finalize: _finalize,
     preserveWebkitProperties,
-    styleOptions: preserveWebkitProperties === undefined
-      ? resolved
-      : {
-          ...resolved,
-          cssOptions: { ...resolved.cssOptions, preserveWebkitProperties },
-        },
+    skyline,
+    styleOptions: resolvedStyleOptions,
   }
 }
 
-function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean, preserveWebkitProperties: string[] | undefined) {
+function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean, preserveWebkitProperties: string[] | undefined, skyline: boolean | undefined) {
   if (!shouldFinalize) {
     return
   }
   if (result.root.type === 'root') {
     finalizeMiniProgramCssRoot(result.root, {
       isTailwindcssV4: snapshot.target === 'weapp',
+      cssOptions: { skyline },
       preserveWebkitProperties,
     })
   }
@@ -68,6 +81,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   let jsHandler: CompilerTransformServices['jsHandler'] | undefined = services.jsHandler
   let templateHandler: CompilerTransformServices['templateHandler'] | undefined = services.templateHandler
   let preserveWebkitProperties = services.preserveWebkitProperties
+  let skyline = services.skyline
   let cachedTemplateClassSet: Set<string> | undefined
   let cachedTemplateOptions: Parameters<CompilerTransformServices['templateHandler']>[1]
 
@@ -83,6 +97,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
     jsHandler = undefined
     templateHandler = undefined
     preserveWebkitProperties = undefined
+    skyline = undefined
   }
 
   function createTemplateOptions(
@@ -113,11 +128,11 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCss(css: string, snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCss']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, snapshot.target)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, services.stylePlatform)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!(css, resolved.styleOptions).then((result) => {
       const cloned = clonePostcssResult(result)
-      finalizeResultRoot(cloned, snapshot, shouldFinalize, resolved.preserveWebkitProperties)
+      finalizeResultRoot(cloned, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline)
       return cloned
     }))
   }
@@ -125,10 +140,10 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCssRoot(root: Parameters<Compiler['transformCssRoot']>[0], snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCssRoot']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, snapshot.target)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, services.stylePlatform)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!.transformRoot(root, resolved.styleOptions).then((result) => {
-      finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties)
+      finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline)
       return result
     }))
   }

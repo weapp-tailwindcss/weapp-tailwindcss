@@ -1,3 +1,8 @@
+view,
+text {
+  --tw-leading: var(--weapp-tw-invalid-reset);
+  --tw-font-weight: var(--weapp-tw-invalid-reset);
+}
 /*! tokens: typography-probe <= src/components/SkylineTypographyProbe.vue */
 .typography-probe {
   padding: 12px;

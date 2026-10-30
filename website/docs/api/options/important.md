@@ -343,7 +343,15 @@ CSS 生成与兼容后处理的微调配置。
 `cssPreflight`、`cssPreflightRange`、`cssChildCombinatorReplaceValue`、`cssPresetEnv`、`autoprefixer`、
 `atRules`、`injectAdditionalCssVarScope`、`cssSelectorReplacement`、`rem2rpx`、`px2rpx`、`unitsToPx`、
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
-与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties` 都推荐放在这里。
+与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
+
+`cssOptions.skyline`（`boolean`）默认 `false`，用于微信小程序 Skyline 的 Tailwind CSS 4 字体变量初始化兼容，必须放在 `cssOptions` 中。多端项目应仅在微信构建目标开启；H5、其他小程序平台及 uni-app x 原生 App 不启用这项转换。
+
+开启后，插件把 `--tw-leading`、`--tw-font-weight` 的纯 `initial` 重置和插件生成的对应默认值转换为 `var(--weapp-tw-invalid-reset)`，保留消费端的嵌套 `var()`、有效 setter 和作者空值。uni-app Vite 的组件本地 `<style>` 会获得自己的初始化规则，业务样式仍可覆盖；该初始化独立于视觉 preflight，搭配 `cssOptions.cssPreflight: false` 也可使用。
+
+`--weapp-tw-invalid-reset` 是必须保持未定义的保留变量。在处理的样式或最终 CSS 资产中声明、注册该变量会报错；运行时内联样式和未经过插件处理的第三方样式也不得定义它。开启兼容时，显式配置 `cssRemoveProperty: false` 或 `atRules: { property: false }` 会报错，包含对应的旧版顶层配置。
+
+Skyline 移除祖先主题变量后保留旧值、作者空变量被临时覆盖再清除后的恢复异常是独立问题，不在此开关的修复范围内。当前复现证据来自微信开发者工具模拟器，尚无真机验收结果。配置与示例见 [Skyline 字体变量回退](/docs/issues/css-vars#skyline-字体变量回退)。
 
 小程序兼容处理默认保留 `-webkit-font-smoothing`，因此不会因本项目的属性删除策略丢失
 `antialiased` 或 `subpixel-antialiased` 的字体平滑声明。

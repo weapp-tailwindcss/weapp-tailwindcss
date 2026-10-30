@@ -6,6 +6,7 @@ import type { CreateJsHandlerOptions, IStyleHandlerOptions, ITemplateHandlerOpti
 import path from 'node:path'
 import { runCompilerOwnerActivity, runCompilerOwnerExternalActivity } from '@/compiler/compiler-owner-state'
 import { generateTailwindV4Css } from '@/context/generation'
+import { assertSkylineTypographyAsset } from '@/context/skyline-typography'
 import { shouldSkipJsTransform } from '@/js/precheck'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { finalizeMiniProgramGeneratorCss } from '../../../../generation/generation-helpers'
@@ -122,6 +123,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         : undefined
       const styleOutputExtension = resolveGulpStyleOutputExtension(file)
       const cssHandlerOptions = resolveWxssFileHandlerOptions(file, rawSource, options)
+      assertSkylineTypographyAsset(rawSource, opts, runtimeState.tailwindRuntime.majorVersion)
       const outputFile = (file.relative || path.basename(file.path)).replaceAll(path.sep, '/')
       const compilationScope = {
         id: outputFile,
@@ -138,6 +140,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         cacheKey: file.path,
         hash: createRuntimeSetHash(rawSource, nextRuntimeSet, sourceTraceSignature, sourceCandidateSignature, outputSignature),
         applyResult(source) {
+          assertSkylineTypographyAsset(source, opts, runtimeState.tailwindRuntime.majorVersion)
           writeGulpFileAsset(file, source)
           if (stage === 'transform') {
             warnFinalRpxThemeRisk(runtimeState, [source], opts)
@@ -218,6 +221,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
       const source = generatedCss ? stripBundlerGeneratedCssMarkers(rawSource) : rawSource
       const styleOutputExtension = resolveGulpStyleOutputExtension(file)
       const cssHandlerOptions = resolveWxssFileHandlerOptions(file, source, options)
+      assertSkylineTypographyAsset(source, opts, runtimeState.tailwindRuntime.majorVersion)
       const handled = await styleHandler(source, cssHandlerOptions)
       const preflightMode = generatedCssPreflightModeByFile.get(file.path)
       const finalized = generatedCss
@@ -237,6 +241,7 @@ export function createGulpFileTransforms(context: GulpFileTransformContext) {
         styleOutputExtension,
       })
       const finalCss = finalizeMiniProgramCssStructure(outputCss)
+      assertSkylineTypographyAsset(finalCss, opts, runtimeState.tailwindRuntime.majorVersion)
       writeGulpFileAsset(file, finalCss)
       warnFinalRpxThemeRisk(runtimeState, [finalCss], opts)
       debug('css adapt: %s', file.path)

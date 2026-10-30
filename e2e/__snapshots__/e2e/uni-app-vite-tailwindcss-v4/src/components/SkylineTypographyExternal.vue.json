@@ -1,0 +1,13 @@
+{
+  "file": "src/components/SkylineTypographyExternal.vue",
+  "count": 7,
+  "tokens": [
+    "block",
+    "font-normal",
+    "leading-[36px]",
+    "text-header-md",
+    "text-probe-small",
+    "w-[280px]",
+    "whitespace-pre-wrap"
+  ]
+}

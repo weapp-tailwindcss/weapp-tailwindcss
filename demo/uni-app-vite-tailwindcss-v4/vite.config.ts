@@ -45,6 +45,9 @@ export default defineConfig(async () => {
       ...(uniPlatform.isMp && issue1005FinalCssFixtureEnabled ? [issue1005FinalCssFixture] : []),
       WeappTailwindcss({
         appType: 'uni-app-vite',
+        cssOptions: {
+          skyline: uniPlatform.normalized === 'mp-weixin',
+        },
         tailwindcssBasedir: projectRoot,
         cssEntries: [
           resolve(projectRoot, 'src/main.css'),

@@ -135,6 +135,7 @@
   "text-header-md",
   "text-lg",
   "text-neutral-66",
+  "text-probe-small",
   "text-slate-500",
   "text-slate-700",
   "text-slate-800",
@@ -150,6 +151,8 @@
   "w-12",
   "w-20",
   "w-32",
+  "w-[280px]",
   "w-[323px]",
+  "whitespace-pre-wrap",
   "wx:bg-blue-500"
 ]

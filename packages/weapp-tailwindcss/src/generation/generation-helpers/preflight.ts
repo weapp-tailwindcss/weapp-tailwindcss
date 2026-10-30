@@ -30,6 +30,10 @@ export function finalizeMiniProgramGeneratorCss(
   }
   if (options.styleOptions && isVueScopedStyleRequest(resolvePostcssRequestOption(options.styleOptions))) {
     return finalizeMiniProgramCss(css, {
+      cssOptions: options.styleOptions?.cssOptions,
+      cssRemoveProperty: options.styleOptions?.cssRemoveProperty,
+      platform: options.styleOptions?.platform,
+      atRules: options.styleOptions?.atRules,
       cssPreflight: false,
       cssSelectorReplacement: options.styleOptions?.cssOptions?.cssSelectorReplacement
         ?? options.styleOptions?.cssSelectorReplacement,
@@ -45,6 +49,10 @@ export function finalizeMiniProgramGeneratorCss(
     && !hasPreflightReset
   const preservePreflight = options.preservePreflight !== false
   return finalizeMiniProgramCss(css, {
+    cssOptions: options.styleOptions?.cssOptions,
+    cssRemoveProperty: options.styleOptions?.cssRemoveProperty,
+    platform: options.styleOptions?.platform,
+    atRules: options.styleOptions?.atRules,
     cssPreflight: cssPreflight === false || (options.injectPreflight === false && (!hasPreflightReset || !preservePreflight))
       ? false
       : injectPreflight

@@ -2,7 +2,8 @@ import type { createEscapeFragments } from '../../../../shared/runtime-class-set
 import type { SetupWebpackV5ProcessAssetsHookOptions, WebpackSourceLike } from '../helpers'
 import type { WebpackCssHandlerOptions, WebpackSourceCandidateCache } from './preflight-runtime'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
-import { dedupeCoveredCssRules } from '@weapp-tailwindcss/postcss/transform'
+import { dedupeCoveredCssRules, isSkylineTypographyError } from '@weapp-tailwindcss/postcss/transform'
+import { assertSkylineTypographyAsset, isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
 import { removeTailwindSourceDirectives } from '../../../../../generation/directives'
 import { hasMiniProgramTailwindV4PreflightReset } from '../../../../../generation/generation-helpers'
@@ -48,7 +49,12 @@ export function finalizeWebpackCssAssetSource(
   isWebGeneratorTarget: boolean,
   options: { cssPreflight?: boolean | undefined, generatedCss?: boolean, preserveExistingPreflight?: boolean | undefined } = {},
 ) {
-  const styleOptions = resolveStyleOptionsFromContext(compilerOptions)
+  const resolvedStyleOptions = resolveStyleOptionsFromContext(compilerOptions)
+  const styleOptions = { ...resolvedStyleOptions, cssOptions: { ...resolvedStyleOptions.cssOptions, skyline: isSkylineTypographyEnabledForContext(compilerOptions) } }
+  const resetPreservation = { preserveSkylineTypography: !isWebGeneratorTarget && isSkylineTypographyEnabledForContext(compilerOptions) }
+  if (!isWebGeneratorTarget) {
+    assertSkylineTypographyAsset(source, compilerOptions)
+  }
   if (isWebGeneratorTarget) {
     if (options.generatedCss === true) {
       return stripTrailingLineWhitespace(
@@ -79,10 +85,14 @@ export function finalizeWebpackCssAssetSource(
     finalized = finalizeMiniProgramCss(finalized, {
       cssPreflight: false,
       isTailwindcssV4: true,
+      cssOptions: styleOptions.cssOptions,
+      cssRemoveProperty: styleOptions.cssRemoveProperty,
+      platform: styleOptions.platform,
+      atRules: styleOptions.atRules,
       tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
       preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
     })
-    finalized = dedupeMiniProgramPreflightSelectorRules(finalized)
+    finalized = dedupeMiniProgramPreflightSelectorRules(finalized, resetPreservation)
     return stripMiniProgramCssSpecificityPlaceholders(removeMiniProgramInteractiveSelectors(finalized, {
       active: styleOptions.cssRemoveActivePseudoClass ?? true,
       hover: styleOptions.cssRemoveHoverPseudoClass ?? true,
@@ -94,11 +104,14 @@ export function finalizeWebpackCssAssetSource(
       cssOptions: styleOptions.cssOptions,
     })
   }
-  catch {
+  catch (error) {
+    if (isSkylineTypographyError(error)) {
+      throw error
+    }
   }
   const shouldRemoveExistingPreflight = options.cssPreflight === false && options.preserveExistingPreflight === false
   if (shouldRemoveExistingPreflight) {
-    finalized = removeMiniProgramPreflightSelectorRule(finalized)
+    finalized = removeMiniProgramPreflightSelectorRule(finalized, resetPreservation)
   }
   const hasExistingMiniProgramPreflight = options.preserveExistingPreflight !== false
     && hasMiniProgramPreflightSelector(source)
@@ -109,15 +122,19 @@ export function finalizeWebpackCssAssetSource(
           ? resolveExistingWebpackCssPreflight(compilerOptions, styleOptions, source)
           : undefined,
     isTailwindcssV4: true,
+    cssOptions: styleOptions.cssOptions,
+    cssRemoveProperty: styleOptions.cssRemoveProperty,
+    platform: styleOptions.platform,
+    atRules: styleOptions.atRules,
     tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
     preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
   })
   finalized = ensureWebpackMiniProgramTwContentInit(finalized)
   if (shouldRemoveExistingPreflight) {
-    finalized = removeMiniProgramPreflightSelectorRule(finalized)
+    finalized = removeMiniProgramPreflightSelectorRule(finalized, resetPreservation)
   }
   else {
-    finalized = dedupeMiniProgramPreflightSelectorRules(finalized)
+    finalized = dedupeMiniProgramPreflightSelectorRules(finalized, resetPreservation)
   }
   return stripMiniProgramCssSpecificityPlaceholders(removeMiniProgramInteractiveSelectors(finalized, {
     active: styleOptions.cssRemoveActivePseudoClass ?? true,
@@ -133,10 +150,13 @@ export function finalizeWebpackCssAssetOutputSource(
   if (isWebGeneratorTarget) {
     return source
   }
-  const styleOptions = resolveStyleOptionsFromContext(compilerOptions)
+  const resolvedStyleOptions = resolveStyleOptionsFromContext(compilerOptions)
+  const styleOptions = { ...resolvedStyleOptions, cssOptions: { ...resolvedStyleOptions.cssOptions, skyline: isSkylineTypographyEnabledForContext(compilerOptions) } }
+  const resetPreservation = { preserveSkylineTypography: !isWebGeneratorTarget && isSkylineTypographyEnabledForContext(compilerOptions) }
+  assertSkylineTypographyAsset(source, compilerOptions)
   const finalized = stripMiniProgramCssSpecificityPlaceholders(
     removeMiniProgramInteractiveSelectors(
-      dedupeCoveredCssRules(dedupeMiniProgramPreflightSelectorRules(source)),
+      dedupeCoveredCssRules(dedupeMiniProgramPreflightSelectorRules(source, resetPreservation)),
       {
         active: styleOptions.cssRemoveActivePseudoClass ?? true,
         hover: styleOptions.cssRemoveHoverPseudoClass ?? true,

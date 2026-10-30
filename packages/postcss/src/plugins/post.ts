@@ -6,6 +6,7 @@ import { getRuleSelectors, isMiniProgramThemeScopeSelector, MINI_PROGRAM_ELEMENT
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../compat/mini-program-prefixes'
 import { normalizeTailwindcssRpxDeclaration } from '../compat/tailwindcss-rpx'
 import { appendTailwindcssV4MiniProgramGradientRules, collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4Declaration, usesTailwindcssV4ContentVariable } from '../compat/tailwindcss-v4'
+import { assertSkylineTypographyInput, normalizeSkylineTypographyReset, removeSkylineTypographyRegistrations, resolveSkylineTypographyCompatibility } from '../compat/tailwindcss-v4/skyline-typography'
 import { shouldRemoveEmptyRuleForUniAppX } from '../compat/uni-app-x'
 import { postcssPlugin } from '../constants'
 import { resolvePostcssStyleTarget } from '../frameworks'
@@ -95,8 +96,8 @@ function removeThemeScopeTailwindcssV4Defaults(root: Root, injectedProps: Readon
   })
 }
 
-function injectMissingTailwindcssV4Defaults(root: Root) {
-  const nodes = createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root))
+function injectMissingTailwindcssV4Defaults(root: Root, skyline = false) {
+  const nodes = createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root), skyline)
   if (nodes.length === 0) {
     return
   }
@@ -155,6 +156,10 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
   const cleanFallbackPlaceholder = createFallbackPlaceholderCleaner()
   const shouldAppendHostSelector = createHostSelectorAppender(opts)
   const target = resolvePostcssStyleTarget(opts)
+  const skyline = resolveSkylineTypographyCompatibility(opts, opts.majorVersion === 4 && (target === 'generic' || target === 'mini-program') && opts.uniAppX !== true)
+  if (skyline) {
+    p.Once = root => assertSkylineTypographyInput(root)
+  }
   const miniProgramPrefixPolicy = resolveMiniProgramPrefixPolicy(target, opts.cssOptions?.preserveWebkitProperties)
   let shouldInjectTailwindcssV4Defaults = false
 
@@ -192,6 +197,9 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
   }
 
   p.DeclarationExit = (decl) => {
+    if (skyline) {
+      normalizeSkylineTypographyReset(decl)
+    }
     if (opts.majorVersion === undefined) {
       normalizeTailwindcssRpxDeclaration(decl)
     }
@@ -229,8 +237,15 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
       })
     }
 
-    if (shouldInjectTailwindcssV4Defaults || (opts.majorVersion === 4 && usesTailwindcssV4ContentVariable(root))) {
-      injectMissingTailwindcssV4Defaults(root)
+    // 局部资产仍可能保留注册，先收集默认值需求，再移除注册。
+    if (skyline || shouldInjectTailwindcssV4Defaults || (opts.majorVersion === 4 && usesTailwindcssV4ContentVariable(root))) {
+      injectMissingTailwindcssV4Defaults(root, skyline)
+    }
+    if (skyline) {
+      removeSkylineTypographyRegistrations(root)
+      root.walkDecls((decl) => {
+        normalizeSkylineTypographyReset(decl)
+      })
     }
   }
 

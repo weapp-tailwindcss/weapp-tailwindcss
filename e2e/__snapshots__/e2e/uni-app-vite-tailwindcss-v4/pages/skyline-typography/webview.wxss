@@ -1,3 +1,8 @@
+view,
+text {
+  --tw-leading: var(--weapp-tw-invalid-reset);
+  --tw-font-weight: var(--weapp-tw-invalid-reset);
+}
 /*! tokens: typography-page <= src/pages/skyline-typography/skyline.vue, src/pages/skyline-typography/webview.vue */
 .typography-page {
   min-height: 100vh;

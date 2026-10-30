@@ -1,5 +1,6 @@
 import type { ViteFrameworkCssPipelineContext } from '../../shared/framework-strategy'
 import type { FinalizeGenerateBundleOptions } from './root-import-shell'
+import { assertSkylineTypographyAsset } from '@/context/skyline-typography'
 import { runWithConcurrency } from '../../../../utils/run-tasks'
 import { updateBundleBuildState } from '../../bundle-state'
 import { removeCssCoveredByRootStyleAssets, removeDuplicateUnlinkedRootCssAssetsReferencedByHtml } from '../../processed-css-assets'
@@ -112,6 +113,13 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   const createFinalizeCssPipelineContext = (file = ''): ViteFrameworkCssPipelineContext | undefined => createCssPipelineContext?.(file)
   const finalizeCssPipelineContext = createFinalizeCssPipelineContext()
   const rootCssStartedAt = performance.now()
+  if (!isWebGeneratorTarget) {
+    for (const [key, output] of Object.entries(bundle)) {
+      if (output.type === 'asset' && opts.cssMatcher(output.fileName || key) && !opts.htmlMatcher(output.fileName || key)) {
+        assertSkylineTypographyAsset(typeof output.source === 'string' ? output.source : new TextDecoder().decode(output.source), opts, runtimeState.tailwindRuntime.majorVersion)
+      }
+    }
+  }
   normalizeRootMiniProgramImportShellAssets(bundle, {
     cssMatcher: opts.cssMatcher,
     debug,
@@ -122,6 +130,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
   })
   normalizeBundleFileNameKeysForTest(bundle)
   removeCssCoveredByRootStyleAssets(bundle, {
+    preserveSkylineTypography: Boolean(finalizeCssPipelineContext?.getSkylineTypographyResetCss?.()),
     cssMatcher: opts.cssMatcher,
     debug,
     includeTailwindGeneratedCssAssets: finalizeCssPipelineContext !== undefined

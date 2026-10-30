@@ -3,6 +3,7 @@ import type { IStyleHandlerOptions } from '../types'
 import type { WeappTailwindcssPostcssPluginAdapters, WeappTailwindcssPostcssPluginOptions } from './types'
 import { transformLynxCssCompat } from '../compat/lynx-css'
 import { finalizeMiniProgramCss } from '../compat/mini-program-css'
+import { assertSkylineTypographyInput, resolveSkylineTypographyCompatibility } from '../compat/tailwindcss-v4/skyline-typography'
 import { transformWebCssCompat } from '../compat/web-css'
 import { createSourceScanPattern, DEFAULT_SOURCE_SCAN_EXTENSIONS, resolveCssSourceEntries } from '../source-scan'
 import { collectApplyOnlyCssSelectorsRoot, filterApplyOnlyGeneratedCss } from './apply-only'
@@ -45,6 +46,10 @@ function finalizeGeneratedCss(
     return css
   }
   return finalizeMiniProgramCss(css, {
+    cssOptions: styleOptions?.cssOptions,
+    cssRemoveProperty: styleOptions?.cssRemoveProperty,
+    platform: styleOptions?.platform,
+    atRules: styleOptions?.atRules,
     preserveWebkitProperties: styleOptions?.cssOptions?.preserveWebkitProperties,
     cssSelectorReplacement: styleOptions?.cssOptions?.cssSelectorReplacement
       ?? styleOptions?.cssSelectorReplacement,
@@ -100,6 +105,9 @@ export function createWeappTailwindcssPostcssPlugin(
           ...styleOptions,
         }
         try {
+          if (resolveSkylineTypographyCompatibility(generatorStyleOptions, generatorOptions.target !== 'web')) {
+            assertSkylineTypographyInput(root)
+          }
           const generated = await generator.generate({
             candidates: new Set([
               ...autoCandidates,

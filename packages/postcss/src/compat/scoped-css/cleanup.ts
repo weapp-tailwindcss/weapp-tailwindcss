@@ -3,11 +3,12 @@ import postcss from 'postcss'
 import { isCssSourceTraceComment, removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { removeUnusedMiniProgramContentInit } from '../mini-program-css'
 import { hasNonCommentCss } from '../processed-css/cleanup'
+import { containsSkylineTypographyReset, isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import { isTailwindRuntimePropertyRule } from '../uni-app-x-author-apply'
 import { collectRootScopedComparableCssCoverage, createAtRuleCoverageKey, isRuleCoveredByRootCss } from './coverage'
 import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule, normalizeCssSignatureValue } from './predicates'
 
-function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[], preserveRuntimeProperties = false) {
+function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[], preserveRuntimeProperties = false, preserveSkylineTypography = false) {
   if (!hasVueScopedAttr(css)) {
     return css
   }
@@ -23,6 +24,9 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
       }
     })
     root.walkRules((rule) => {
+      if (preserveSkylineTypography && isSkylineTypographyResetRule(rule)) {
+        return
+      }
       if (preserveRuntimeProperties && isTailwindRuntimePropertyRule(rule)) {
         return
       }
@@ -37,11 +41,18 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
         || isScopedUniAppWebTailwindPreflightRule(rule)
         || isScopedUniversalTailwindPreflightRule(rule)
       ) {
+        if (preserveSkylineTypography && retainSkylineTypographyResets(rule)) {
+          changed = true
+          return
+        }
         removeCssRuleWithSourceTrace(rule)
         changed = true
       }
     })
     root.walkAtRules((atRule) => {
+      if (preserveSkylineTypography && containsSkylineTypographyReset(atRule)) {
+        return
+      }
       if (
         coverage.atRules.has(createAtRuleCoverageKey(atRule))
         || (!preserveRuntimeProperties && isLikelyTailwindPropertyAtRule(atRule))
@@ -63,12 +74,12 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
   }
 }
 
-export function removeScopedTailwindPreflightCss(css: string, options?: { preserveRuntimeProperties?: boolean }) {
-  return removeScopedCssCoveredByRootStyleSources(css, [], options?.preserveRuntimeProperties)
+export function removeScopedTailwindPreflightCss(css: string, options?: { preserveRuntimeProperties?: boolean, preserveSkylineTypography?: boolean }) {
+  return removeScopedCssCoveredByRootStyleSources(css, [], options?.preserveRuntimeProperties, options?.preserveSkylineTypography)
 }
 
 /** 预计算索引必须对应当前 rootSources；该函数只读取索引，不保留调用方状态。 */
-export function removeCssCoveredByRootStyleSources(css: string, rootSources: string[], preparedCoverage?: ComparableCssCoverage) {
+export function removeCssCoveredByRootStyleSources(css: string, rootSources: string[], preparedCoverage?: ComparableCssCoverage, options?: { preserveSkylineTypography?: boolean }) {
   if (css.trim().length === 0) {
     return css
   }
@@ -86,6 +97,9 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
     const root = postcss.parse(css)
     let changed = false
     root.walkRules((rule) => {
+      if (options?.preserveSkylineTypography && isSkylineTypographyResetRule(rule)) {
+        return
+      }
       if (
         coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
         || (
@@ -100,12 +114,19 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
           )
         )
       ) {
+        if (options?.preserveSkylineTypography && retainSkylineTypographyResets(rule)) {
+          changed = true
+          return
+        }
         removeCssRuleWithSourceTrace(rule)
         changed = true
       }
     })
     if (hasScopedCss) {
       root.walkAtRules((atRule) => {
+        if (options?.preserveSkylineTypography && containsSkylineTypographyReset(atRule)) {
+          return
+        }
         if (
           coverage.atRules.has(createAtRuleCoverageKey(atRule))
           || isLikelyTailwindPropertyAtRule(atRule)
