@@ -59,6 +59,7 @@ export interface ViteCssCompositionPlan<HandlerOptions extends CssCompositionHan
   generatorSourceKind: RememberedCssSource['kind']
   generatorUserLayerRawSource: string | undefined
   hasCurrentTailwindGenerationDirective: boolean
+  hasCompiledGeneratorSource: boolean
   hasRememberedApplySource: boolean
   hasSameOutputRememberedTailwindGenerationSource: boolean
   hasStaleViteProcessedCssSource: boolean
@@ -163,6 +164,9 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
       || hasMatchingGeneratedSource
     )
   const generatorSourceFile = restoredGenerationSource?.sourceFile ?? options.assetSourceFile
+  const hasCompiledGeneratorSource = generatedSourceFiles.some(file =>
+    normalizeSfcSourceFileForCompare(file) === normalizeSfcSourceFileForCompare(generatorSourceFile),
+  )
   const generatorSourceKind = restoreRememberedGenerationSource
     ? hasOwnedImportShell ? 'output-import-shell' : 'generation'
     : hasTailwindGenerationSource(generatorRawSource) ? 'generation' : undefined
@@ -233,6 +237,7 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
     generatorSourceKind,
     generatorUserLayerRawSource,
     hasCurrentTailwindGenerationDirective,
+    hasCompiledGeneratorSource,
     hasRememberedApplySource,
     hasSameOutputRememberedTailwindGenerationSource,
     hasStaleViteProcessedCssSource,

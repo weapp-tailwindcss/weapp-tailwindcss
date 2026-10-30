@@ -1,5 +1,5 @@
 {
-  "file": "src/components/SkylineTypographyProbe.vue",
+  "file": "fixtures/skyline-typography/components/SkylineTypographyProbe.vue",
   "count": 4,
   "tokens": [
     "font-normal",

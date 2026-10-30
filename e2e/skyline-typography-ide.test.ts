@@ -15,13 +15,13 @@ import { typographyIds, typographyPhases, typographySelector } from './skyline-t
 
 const repository = fileURLToPath(new URL('..', import.meta.url))
 const demo = path.join(repository, 'demo', 'uni-app-vite-tailwindcss-v4')
-const project = path.join(demo, 'dist', 'build', 'mp-weixin')
+const project = path.join(demo, 'dist', 'skyline-typography', 'build', 'mp-weixin')
 it.runIf(process.env.E2E_IDE === '1')('真实插件构建在 Skyline / WebView 的组件边界内保留字体覆盖与 fallback', async () => {
   const artifacts = path.join(repository, 'e2e', '.artifacts', 'skyline-typography', randomUUID())
   await mkdir(artifacts, { recursive: true })
   const save = (name: string, data: unknown) => writeFile(path.join(artifacts, name), `${JSON.stringify(data, null, 2)}\n`)
   const buildMarker = randomUUID()
-  const build = await execa('pnpm', ['run', 'build:mp-weixin'], { cwd: demo, env: { ...process.env, UNI_BUILD_STRICT: '1', NODE_ENV: 'production', SKYLINE_PROBE_BUILD: buildMarker } })
+  const build = await execa('pnpm', ['run', 'build:skyline-typography'], { cwd: demo, env: { ...process.env, UNI_BUILD_STRICT: '1', NODE_ENV: 'production', SKYLINE_PROBE_BUILD: buildMarker } })
   await writeFile(path.join(artifacts, 'build.log'), build.all ?? `${build.stdout}\n${build.stderr}`)
   const cssFiles = (await readdir(project, { recursive: true })).filter(name => name.endsWith('.wxss')).sort()
   const cssHashes = await Promise.all(cssFiles.map(async asset => ({ asset, sha256: createHash('sha256').update(await readFile(path.join(project, asset))).digest('hex') })))

@@ -2,16 +2,15 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { postcss } from '@weapp-tailwindcss/postcss'
+import { execa } from 'execa'
 import { expect, it } from 'vitest'
-import { ensureProjectBuilt } from './projectBuild'
-import { getE2EProject } from './projectEntries'
 import { typographyComponents } from './skyline-typography/contract'
 
 it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初始化', async () => {
   const root = fileURLToPath(new URL('../demo/uni-app-vite-tailwindcss-v4', import.meta.url))
-  const entry = getE2EProject('uni-app-vite-tailwindcss-v4')
-  await ensureProjectBuilt(root, { env: entry.buildEnv })
-  const output = path.join(root, 'dist', 'build', 'mp-weixin')
+  const input = path.join(root, 'fixtures', 'skyline-typography')
+  const output = path.join(root, 'dist', 'skyline-typography', 'build', 'mp-weixin')
+  await execa('pnpm', ['run', 'build:skyline-typography'], { cwd: root, env: { NODE_ENV: 'production' } })
   const read = (name: string) => readFile(path.join(output, name), 'utf8')
   const app = JSON.parse(await read('app.json'))
   const project = JSON.parse(await read('project.config.json'))
@@ -37,9 +36,21 @@ it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初
   }
   expect(await read('components/SkylineTypographyProbe.wxss')).toContain('.probe-weight')
   expect(componentWxml).toMatch(/--tw-leading:\s*;/)
+  const helloWorldCss = postcss.parse(await read('components/HelloWorld.wxss'))
+  const localReset = helloWorldCss.nodes.find(node => node.type === 'rule' && node.selector === 'view,text')
+  expect(localReset?.toString()).toContain('--tw-leading: var(--weapp-tw-invalid-reset)')
+  expect(localReset?.toString()).toContain('--tw-font-weight: var(--weapp-tw-invalid-reset)')
+  const helloWorldRules: string[] = []
+  helloWorldCss.walkRules((rule) => {
+    helloWorldRules.push(rule.selector)
+  })
+  expect(helloWorldRules.some(selector => /^\.hello-world-shell\.data-v-/.test(selector))).toBe(true)
+  expect(helloWorldRules).not.toContain('.text-header-md')
+  expect(helloWorldRules).not.toContain('.flex')
+  expect(helloWorldCss.toString()).not.toContain('vite-generated-css:')
   const components = []
   for (const name of typographyComponents) {
-    const source = await readFile(path.join(root, 'src', 'components', `${name}.vue`), 'utf8')
+    const source = await readFile(path.join(input, 'components', `${name}.vue`), 'utf8')
     const wxml = await read(path.join('components', `${name}.wxml`))
     const config = JSON.parse(await read(path.join('components', `${name}.json`)))
     expect(config.component).toBe(true)

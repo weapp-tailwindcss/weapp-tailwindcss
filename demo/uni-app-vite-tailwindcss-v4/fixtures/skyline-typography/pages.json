@@ -1,0 +1,29 @@
+{
+  "pages": [
+    {
+      "path": "pages/skyline-typography/webview",
+      "style": {
+        "navigationBarTitleText": "字体变量 webview 对照",
+        "mp-weixin": {
+          "renderer": "webview",
+          "navigationStyle": "custom"
+        }
+      }
+    },
+    {
+      "path": "pages/skyline-typography/skyline",
+      "style": {
+        "navigationBarTitleText": "字体变量 skyline 对照",
+        "mp-weixin": {
+          "renderer": "skyline",
+          "navigationStyle": "custom"
+        }
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "字体变量对照",
+    "backgroundColor": "#FFFFFF"
+  }
+}

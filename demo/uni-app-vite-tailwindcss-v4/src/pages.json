@@ -5,20 +5,6 @@
       "style": {
         "navigationBarTitleText": "uni-app"
       }
-    },
-    {
-      "path": "pages/skyline-typography/webview",
-      "style": {
-        "navigationBarTitleText": "字体变量 WebView 对照",
-        "mp-weixin": { "renderer": "webview", "navigationStyle": "custom" }
-      }
-    },
-    {
-      "path": "pages/skyline-typography/skyline",
-      "style": {
-        "navigationBarTitleText": "字体变量 Skyline 对照",
-        "mp-weixin": { "renderer": "skyline", "navigationStyle": "custom" }
-      }
     }
   ],
   "subPackages": [

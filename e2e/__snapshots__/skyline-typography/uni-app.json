@@ -3,39 +3,40 @@
     {
       "route": "pages/skyline-typography/webview",
       "config": {
-        "navigationBarTitleText": "字体变量 WebView 对照",
+        "navigationBarTitleText": "字体变量 webview 对照",
         "renderer": "webview",
         "navigationStyle": "custom",
         "usingComponents": {
           "skyline-typography-probe": "../../components/SkylineTypographyProbe"
         }
       },
-      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"1e681546-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
+      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"d9e901c4-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
     },
     {
       "route": "pages/skyline-typography/skyline",
       "config": {
-        "navigationBarTitleText": "字体变量 Skyline 对照",
+        "navigationBarTitleText": "字体变量 skyline 对照",
         "renderer": "skyline",
         "navigationStyle": "custom",
         "usingComponents": {
           "skyline-typography-probe": "../../components/SkylineTypographyProbe"
         }
       },
-      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"5373c03c-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
+      "wxml": "<view class=\"typography-page\"><skyline-typography-probe wx:if=\"{{a}}\" class=\"skyline-probe\" u-i=\"4ae989ba-0\" bind:__l=\"__l\" u-p=\"{{a}}\"/></view>"
     }
   ],
-  "componentWxml": "<view class=\"typography-probe\" style=\"{{O}}\"><text id=\"probe-marker\" class=\"probe-label\">Skyline typography · {{a}}</text><text id=\"probe-build\" data-build=\"{{c}}\" class=\"probe-label\">{{b}}</text><text id=\"probe-phase\" data-phase=\"{{e}}\" class=\"probe-label\">{{d}}</text><view class=\"probe-controls\"><button id=\"probe-inline\" bindtap=\"{{f}}\">变量覆盖</button><button id=\"probe-utility-toggle\" bindtap=\"{{g}}\">工具类覆盖</button><button id=\"probe-theme\" bindtap=\"{{h}}\">主题切换</button><button id=\"probe-reset\" bindtap=\"{{i}}\">恢复</button></view><text class=\"probe-label\">原始 initial（Skyline 失败对照）</text><text id=\"probe-original\" class=\"probe-sample text-header-md\" style=\"--tw-leading:initial;--tw-font-weight:initial\">{{j}}</text><text class=\"probe-label\">插件输出 / 原生基准</text><text id=\"probe-utility\" class=\"{{['probe-sample', 'text-header-md', l && 'leading-_b36px_B font-normal']}}\" style=\"{{m}}\">{{k}}</text><text id=\"probe-reference\" class=\"probe-sample\" style=\"{{o}}\">{{n}}</text><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text class=\"probe-label\">祖先变量不能穿过子节点 reset</text><text id=\"probe-child\" class=\"{{['probe-sample', 'text-header-md', q && 'leading-_b36px_B font-normal']}}\" style=\"{{r}}\">{{p}}</text><text id=\"probe-child-small\" class=\"{{['probe-sample', 'text-probe-small', t && 'leading-_b36px_B font-normal']}}\" style=\"{{v}}\">{{s}}</text><text id=\"probe-child-weight\" class=\"{{['probe-weight', 'text-header-md', x && 'font-normal']}}\" style=\"{{y}}\">{{w}}</text></view><text class=\"probe-label\">独立字重：原始 / 插件 / 原生主题 / 原生常规</text><text id=\"probe-weight-original\" class=\"probe-weight text-header-md\" style=\"font-size:32px;line-height:48px;--tw-font-weight:initial\">{{z}}</text><text id=\"probe-weight\" class=\"{{['probe-weight', 'text-header-md', B && 'font-normal']}}\" style=\"{{C}}\">{{A}}</text><text id=\"probe-weight-reference\" class=\"probe-weight\" style=\"{{E}}\">{{D}}</text><text id=\"probe-weight-regular\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:400\">{{F}}</text><text class=\"probe-label\">独立负控：直接主题变量的 style 清空</text><text id=\"probe-theme-variable\" class=\"probe-sample\" style=\"line-height:var(--text-header-md--line-height);font-weight:var(--text-header-md--font-weight)\">{{G}}</text><text id=\"probe-theme-small-variable\" class=\"probe-sample\" style=\"line-height:var(--text-probe-small--line-height);font-weight:400\">{{H}}</text><text id=\"probe-theme-weight\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)\">{{I}}</text><text id=\"probe-author-empty\" class=\"probe-sample text-header-md\" style=\"--tw-leading:;--tw-font-weight:\">{{J}}</text><skyline-typography-no-style wx:if=\"{{K}}\" class=\"probe-no-style\" u-i=\"347377cb-0\" bind:__l=\"__l\" u-p=\"{{K}}\"/><text class=\"probe-label\">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text><text id=\"probe-normal\" class=\"probe-sample\" style=\"line-height:normal\">{{L}}</text><text wx:for=\"{{M}}\" wx:for-item=\"item\" wx:key=\"b\" id=\"{{item.a}}\" class=\"{{['probe-sample', item.c]}}\">{{N}}</text></view>",
+  "componentWxml": "<view class=\"typography-probe\" style=\"{{O}}\"><text id=\"probe-marker\" class=\"probe-label\">Skyline typography · {{a}}</text><text id=\"probe-build\" data-build=\"{{c}}\" class=\"probe-label\">{{b}}</text><text id=\"probe-phase\" data-phase=\"{{e}}\" class=\"probe-label\">{{d}}</text><view class=\"probe-controls\"><button id=\"probe-inline\" bindtap=\"{{f}}\">变量覆盖</button><button id=\"probe-utility-toggle\" bindtap=\"{{g}}\">工具类覆盖</button><button id=\"probe-theme\" bindtap=\"{{h}}\">主题切换</button><button id=\"probe-reset\" bindtap=\"{{i}}\">恢复</button></view><text class=\"probe-label\">原始 initial（Skyline 失败对照）</text><text id=\"probe-original\" class=\"probe-sample text-header-md\" style=\"--tw-leading:initial;--tw-font-weight:initial\">{{j}}</text><text class=\"probe-label\">插件输出 / 原生基准</text><text id=\"probe-utility\" class=\"{{['probe-sample', 'text-header-md', l && 'leading-_b36px_B font-normal']}}\" style=\"{{m}}\">{{k}}</text><text id=\"probe-reference\" class=\"probe-sample\" style=\"{{o}}\">{{n}}</text><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text class=\"probe-label\">祖先变量不能穿过子节点 reset</text><text id=\"probe-child\" class=\"{{['probe-sample', 'text-header-md', q && 'leading-_b36px_B font-normal']}}\" style=\"{{r}}\">{{p}}</text><text id=\"probe-child-small\" class=\"{{['probe-sample', 'text-probe-small', t && 'leading-_b36px_B font-normal']}}\" style=\"{{v}}\">{{s}}</text><text id=\"probe-child-weight\" class=\"{{['probe-weight', 'text-header-md', x && 'font-normal']}}\" style=\"{{y}}\">{{w}}</text></view><text class=\"probe-label\">独立字重：原始 / 插件 / 原生主题 / 原生常规</text><text id=\"probe-weight-original\" class=\"probe-weight text-header-md\" style=\"font-size:32px;line-height:48px;--tw-font-weight:initial\">{{z}}</text><text id=\"probe-weight\" class=\"{{['probe-weight', 'text-header-md', B && 'font-normal']}}\" style=\"{{C}}\">{{A}}</text><text id=\"probe-weight-reference\" class=\"probe-weight\" style=\"{{E}}\">{{D}}</text><text id=\"probe-weight-regular\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:400\">{{F}}</text><text class=\"probe-label\">独立负控：直接主题变量的 style 清空</text><text id=\"probe-theme-variable\" class=\"probe-sample\" style=\"line-height:var(--text-header-md--line-height);font-weight:var(--text-header-md--font-weight)\">{{G}}</text><text id=\"probe-theme-small-variable\" class=\"probe-sample\" style=\"line-height:var(--text-probe-small--line-height);font-weight:400\">{{H}}</text><text id=\"probe-theme-weight\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)\">{{I}}</text><text id=\"probe-author-empty\" class=\"probe-sample text-header-md\" style=\"--tw-leading:;--tw-font-weight:\">{{J}}</text><skyline-typography-no-style wx:if=\"{{K}}\" class=\"probe-no-style\" u-i=\"543d48f3-0\" bind:__l=\"__l\" u-p=\"{{K}}\"/><hello-world u-i=\"543d48f3-1\" bind:__l=\"__l\"/><text class=\"probe-label\">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text><text id=\"probe-normal\" class=\"probe-sample\" style=\"line-height:normal\">{{L}}</text><text wx:for=\"{{M}}\" wx:for-item=\"item\" wx:key=\"b\" id=\"{{item.a}}\" class=\"{{['probe-sample', item.c]}}\">{{N}}</text></view>",
   "components": [
     {
       "name": "SkylineTypographyProbe",
       "config": {
         "component": true,
         "usingComponents": {
+          "hello-world": "./HelloWorld",
           "skyline-typography-no-style": "./SkylineTypographyNoStyle"
         }
       },
-      "wxml": "<view class=\"typography-probe\" style=\"{{O}}\"><text id=\"probe-marker\" class=\"probe-label\">Skyline typography · {{a}}</text><text id=\"probe-build\" data-build=\"{{c}}\" class=\"probe-label\">{{b}}</text><text id=\"probe-phase\" data-phase=\"{{e}}\" class=\"probe-label\">{{d}}</text><view class=\"probe-controls\"><button id=\"probe-inline\" bindtap=\"{{f}}\">变量覆盖</button><button id=\"probe-utility-toggle\" bindtap=\"{{g}}\">工具类覆盖</button><button id=\"probe-theme\" bindtap=\"{{h}}\">主题切换</button><button id=\"probe-reset\" bindtap=\"{{i}}\">恢复</button></view><text class=\"probe-label\">原始 initial（Skyline 失败对照）</text><text id=\"probe-original\" class=\"probe-sample text-header-md\" style=\"--tw-leading:initial;--tw-font-weight:initial\">{{j}}</text><text class=\"probe-label\">插件输出 / 原生基准</text><text id=\"probe-utility\" class=\"{{['probe-sample', 'text-header-md', l && 'leading-_b36px_B font-normal']}}\" style=\"{{m}}\">{{k}}</text><text id=\"probe-reference\" class=\"probe-sample\" style=\"{{o}}\">{{n}}</text><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text class=\"probe-label\">祖先变量不能穿过子节点 reset</text><text id=\"probe-child\" class=\"{{['probe-sample', 'text-header-md', q && 'leading-_b36px_B font-normal']}}\" style=\"{{r}}\">{{p}}</text><text id=\"probe-child-small\" class=\"{{['probe-sample', 'text-probe-small', t && 'leading-_b36px_B font-normal']}}\" style=\"{{v}}\">{{s}}</text><text id=\"probe-child-weight\" class=\"{{['probe-weight', 'text-header-md', x && 'font-normal']}}\" style=\"{{y}}\">{{w}}</text></view><text class=\"probe-label\">独立字重：原始 / 插件 / 原生主题 / 原生常规</text><text id=\"probe-weight-original\" class=\"probe-weight text-header-md\" style=\"font-size:32px;line-height:48px;--tw-font-weight:initial\">{{z}}</text><text id=\"probe-weight\" class=\"{{['probe-weight', 'text-header-md', B && 'font-normal']}}\" style=\"{{C}}\">{{A}}</text><text id=\"probe-weight-reference\" class=\"probe-weight\" style=\"{{E}}\">{{D}}</text><text id=\"probe-weight-regular\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:400\">{{F}}</text><text class=\"probe-label\">独立负控：直接主题变量的 style 清空</text><text id=\"probe-theme-variable\" class=\"probe-sample\" style=\"line-height:var(--text-header-md--line-height);font-weight:var(--text-header-md--font-weight)\">{{G}}</text><text id=\"probe-theme-small-variable\" class=\"probe-sample\" style=\"line-height:var(--text-probe-small--line-height);font-weight:400\">{{H}}</text><text id=\"probe-theme-weight\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)\">{{I}}</text><text id=\"probe-author-empty\" class=\"probe-sample text-header-md\" style=\"--tw-leading:;--tw-font-weight:\">{{J}}</text><skyline-typography-no-style wx:if=\"{{K}}\" class=\"probe-no-style\" u-i=\"347377cb-0\" bind:__l=\"__l\" u-p=\"{{K}}\"/><text class=\"probe-label\">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text><text id=\"probe-normal\" class=\"probe-sample\" style=\"line-height:normal\">{{L}}</text><text wx:for=\"{{M}}\" wx:for-item=\"item\" wx:key=\"b\" id=\"{{item.a}}\" class=\"{{['probe-sample', item.c]}}\">{{N}}</text></view>",
+      "wxml": "<view class=\"typography-probe\" style=\"{{O}}\"><text id=\"probe-marker\" class=\"probe-label\">Skyline typography · {{a}}</text><text id=\"probe-build\" data-build=\"{{c}}\" class=\"probe-label\">{{b}}</text><text id=\"probe-phase\" data-phase=\"{{e}}\" class=\"probe-label\">{{d}}</text><view class=\"probe-controls\"><button id=\"probe-inline\" bindtap=\"{{f}}\">变量覆盖</button><button id=\"probe-utility-toggle\" bindtap=\"{{g}}\">工具类覆盖</button><button id=\"probe-theme\" bindtap=\"{{h}}\">主题切换</button><button id=\"probe-reset\" bindtap=\"{{i}}\">恢复</button></view><text class=\"probe-label\">原始 initial（Skyline 失败对照）</text><text id=\"probe-original\" class=\"probe-sample text-header-md\" style=\"--tw-leading:initial;--tw-font-weight:initial\">{{j}}</text><text class=\"probe-label\">插件输出 / 原生基准</text><text id=\"probe-utility\" class=\"{{['probe-sample', 'text-header-md', l && 'leading-_b36px_B font-normal']}}\" style=\"{{m}}\">{{k}}</text><text id=\"probe-reference\" class=\"probe-sample\" style=\"{{o}}\">{{n}}</text><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text class=\"probe-label\">祖先变量不能穿过子节点 reset</text><text id=\"probe-child\" class=\"{{['probe-sample', 'text-header-md', q && 'leading-_b36px_B font-normal']}}\" style=\"{{r}}\">{{p}}</text><text id=\"probe-child-small\" class=\"{{['probe-sample', 'text-probe-small', t && 'leading-_b36px_B font-normal']}}\" style=\"{{v}}\">{{s}}</text><text id=\"probe-child-weight\" class=\"{{['probe-weight', 'text-header-md', x && 'font-normal']}}\" style=\"{{y}}\">{{w}}</text></view><text class=\"probe-label\">独立字重：原始 / 插件 / 原生主题 / 原生常规</text><text id=\"probe-weight-original\" class=\"probe-weight text-header-md\" style=\"font-size:32px;line-height:48px;--tw-font-weight:initial\">{{z}}</text><text id=\"probe-weight\" class=\"{{['probe-weight', 'text-header-md', B && 'font-normal']}}\" style=\"{{C}}\">{{A}}</text><text id=\"probe-weight-reference\" class=\"probe-weight\" style=\"{{E}}\">{{D}}</text><text id=\"probe-weight-regular\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:400\">{{F}}</text><text class=\"probe-label\">独立负控：直接主题变量的 style 清空</text><text id=\"probe-theme-variable\" class=\"probe-sample\" style=\"line-height:var(--text-header-md--line-height);font-weight:var(--text-header-md--font-weight)\">{{G}}</text><text id=\"probe-theme-small-variable\" class=\"probe-sample\" style=\"line-height:var(--text-probe-small--line-height);font-weight:400\">{{H}}</text><text id=\"probe-theme-weight\" class=\"probe-weight\" style=\"font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)\">{{I}}</text><text id=\"probe-author-empty\" class=\"probe-sample text-header-md\" style=\"--tw-leading:;--tw-font-weight:\">{{J}}</text><skyline-typography-no-style wx:if=\"{{K}}\" class=\"probe-no-style\" u-i=\"543d48f3-0\" bind:__l=\"__l\" u-p=\"{{K}}\"/><hello-world u-i=\"543d48f3-1\" bind:__l=\"__l\"/><text class=\"probe-label\">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text><text id=\"probe-normal\" class=\"probe-sample\" style=\"line-height:normal\">{{L}}</text><text wx:for=\"{{M}}\" wx:for-item=\"item\" wx:key=\"b\" id=\"{{item.a}}\" class=\"{{['probe-sample', item.c]}}\">{{N}}</text></view>",
       "localResets": [
         {
           "selector": "view,text",
@@ -54,7 +55,7 @@
           "skyline-typography-scoped": "./SkylineTypographyScoped"
         }
       },
-      "wxml": "<view><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text id=\"probe-no-style-header\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-header-md', b && 'leading-_b36px_B font-normal']}}\" style=\"{{c}}\">{{a}}</text><text id=\"probe-no-style-small\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-probe-small', e && 'leading-_b36px_B font-normal']}}\" style=\"{{f}}\">{{d}}</text><text id=\"probe-no-style-weight\" class=\"{{['text-header-md', h && 'font-normal']}}\" style=\"{{i}}\">{{g}}</text></view><skyline-typography-scoped wx:if=\"{{j}}\" class=\"probe-scoped\" u-i=\"7fe18bcb-0\" bind:__l=\"__l\" u-p=\"{{j}}\"/></view>",
+      "wxml": "<view><view style=\"--tw-leading:48px;--tw-font-weight:400\"><text id=\"probe-no-style-header\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-header-md', b && 'leading-_b36px_B font-normal']}}\" style=\"{{c}}\">{{a}}</text><text id=\"probe-no-style-small\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-probe-small', e && 'leading-_b36px_B font-normal']}}\" style=\"{{f}}\">{{d}}</text><text id=\"probe-no-style-weight\" class=\"{{['text-header-md', h && 'font-normal']}}\" style=\"{{i}}\">{{g}}</text></view><skyline-typography-scoped wx:if=\"{{j}}\" class=\"probe-scoped\" u-i=\"57089a1a-0\" bind:__l=\"__l\" u-p=\"{{j}}\"/></view>",
       "localResets": [
         {
           "selector": "view,text",
@@ -73,7 +74,7 @@
           "skyline-typography-external": "./SkylineTypographyExternal"
         }
       },
-      "wxml": "<view class=\"scoped-fixture data-v-64e0dede\"><view class=\"data-v-64e0dede\" style=\"--tw-leading:48px;--tw-font-weight:400\"><text id=\"probe-scoped-header\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-header-md', 'data-v-64e0dede', b && 'leading-_b36px_B font-normal']}}\" style=\"{{c}}\">{{a}}</text><text id=\"probe-scoped-small\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-probe-small', 'data-v-64e0dede', e && 'leading-_b36px_B font-normal']}}\" style=\"{{f}}\">{{d}}</text><text id=\"probe-scoped-weight\" class=\"{{['text-header-md', 'data-v-64e0dede', h && 'font-normal']}}\" style=\"{{i}}\">{{g}}</text></view><skyline-typography-external wx:if=\"{{j}}\" class=\"probe-external data-v-64e0dede\" u-i=\"64e0dede-0\" bind:__l=\"__l\" u-p=\"{{j}}\"/></view>",
+      "wxml": "<view class=\"scoped-fixture data-v-9a7af4b0\"><view class=\"data-v-9a7af4b0\" style=\"--tw-leading:48px;--tw-font-weight:400\"><text id=\"probe-scoped-header\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-header-md', 'data-v-9a7af4b0', b && 'leading-_b36px_B font-normal']}}\" style=\"{{c}}\">{{a}}</text><text id=\"probe-scoped-small\" class=\"{{['block', 'w-_b280px_B', 'whitespace-pre-wrap', 'text-probe-small', 'data-v-9a7af4b0', e && 'leading-_b36px_B font-normal']}}\" style=\"{{f}}\">{{d}}</text><text id=\"probe-scoped-weight\" class=\"{{['text-header-md', 'data-v-9a7af4b0', h && 'font-normal']}}\" style=\"{{i}}\">{{g}}</text></view><skyline-typography-external wx:if=\"{{j}}\" class=\"probe-external data-v-9a7af4b0\" u-i=\"9a7af4b0-0\" bind:__l=\"__l\" u-p=\"{{j}}\"/></view>",
       "localResets": [
         {
           "selector": "view,text",
@@ -116,8 +117,6 @@
   },
   "resets": {
     "--tw-leading": [
-      "calc(var(--spacing, 0.25rem) * 5)",
-      "calc(var(--spacing, 0.25rem) * 6)",
       "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)",
@@ -125,49 +124,19 @@
       "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)",
-      "calc(var(--spacing) * 5)",
       "36px",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--weapp-tw-invalid-reset)",
-      "calc(var(--spacing) * 6)",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--weapp-tw-invalid-reset)",
-      "calc(var(--spacing) * 6)",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)",
       "var(--weapp-tw-invalid-reset)"
     ],
     "--tw-font-weight": [
-      "var(--font-weight-bold, 700)",
-      "var(--font-weight-medium, 500)",
-      "var(--font-weight-normal, 400)",
-      "var(--font-weight-semibold, 600)",
-      "var(--weapp-tw-invalid-reset)",
+      "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset)",
-      "var(--font-weight-semibold)",
-      "var(--font-weight-bold)",
       "var(--font-weight-normal)",
-      "var(--font-weight-semibold)",
-      "var(--weapp-tw-invalid-reset) ",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--font-weight-bold)",
-      "var(--font-weight-medium)",
-      "var(--font-weight-semibold)",
-      "var(--weapp-tw-invalid-reset) ",
-      "var(--weapp-tw-invalid-reset)",
-      "var(--font-weight-bold)",
-      "var(--font-weight-medium)",
-      "var(--font-weight-semibold)",
-      "var(--weapp-tw-invalid-reset) ",
-      "var(--weapp-tw-invalid-reset) ",
-      "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) ",
       "var(--weapp-tw-invalid-reset) "
     ]

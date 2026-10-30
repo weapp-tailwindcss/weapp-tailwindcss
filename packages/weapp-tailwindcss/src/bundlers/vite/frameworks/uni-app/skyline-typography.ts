@@ -33,17 +33,22 @@ function resolveLocalVueSource(id: string, root: string | undefined) {
 export function createUniAppSkylineTypography(context: Pick<ViteFrameworkExtraPluginContext, 'getResolvedConfig' | 'getSkylineTypographyResetCss' | 'isEnabled'>) {
   const sources = new Map<string, SourceRecord>()
   const normalizeSfcSource = (source: string, id: string) => {
+    if (!/\.vue$/i.test(id)) {
+      return source
+    }
+    const resetCss = context.isEnabled() ? context.getSkylineTypographyResetCss() : undefined
+    if (!resetCss && sources.size === 0) {
+      return source
+    }
     const file = resolveLocalVueSource(id, context.getResolvedConfig()?.root)
     if (!file) {
       return source
     }
     const previous = sources.get(file)
-    const sourceRevision = createHash('sha256').update(source).digest('hex')
     // 轻量归属记录跟随模块生命周期，不随源码缓存淘汰；只撤销已登记的首块与精确 payload。
-    const original = previous && sourceRevision !== previous.originalRevision && source.startsWith(previous.prefix)
+    const original = previous && source.startsWith(previous.prefix) && createHash('sha256').update(source).digest('hex') !== previous.originalRevision
       ? source.slice(previous.prefix.length)
       : source
-    const resetCss = context.isEnabled() ? context.getSkylineTypographyResetCss() : undefined
     if (!resetCss) {
       sources.delete(file)
       return original
@@ -67,6 +72,9 @@ export function createUniAppSkylineTypography(context: Pick<ViteFrameworkExtraPl
     handleHotUpdate: {
       order: 'pre',
       async handler(ctx) {
+        if (sources.size === 0 && (!context.isEnabled() || !context.getSkylineTypographyResetCss())) {
+          return
+        }
         if (!resolveLocalVueSource(ctx.file, context.getResolvedConfig()?.root)) {
           return
         }

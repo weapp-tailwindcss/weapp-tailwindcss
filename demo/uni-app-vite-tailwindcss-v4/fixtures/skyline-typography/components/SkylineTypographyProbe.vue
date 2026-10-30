@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import HelloWorld from './HelloWorld.vue'
 import SkylineTypographyNoStyle from './SkylineTypographyNoStyle.vue'
 
 defineProps<{ renderer: string }>()
@@ -67,6 +68,7 @@ defineExpose({ toggleInline, toggleUtility, toggleTheme, reset })
     <text id="probe-theme-weight" class="probe-weight" style="font-size:32px;line-height:48px;font-weight:var(--text-header-md--font-weight)">{{ weightSample }}</text>
     <text id="probe-author-empty" class="probe-sample text-header-md" style="--tw-leading: ;--tw-font-weight: ">{{ sample }}</text>
     <SkylineTypographyNoStyle class="probe-no-style" :inline-style="inlineStyle" :utility-override="utilityOverride" :sample="sample" :weight-sample="weightSample" />
+    <HelloWorld />
     <text class="probe-label">原生 reset / fallback 矩阵（缺失、initial、空值、有效值、自引用）</text>
     <text id="probe-normal" class="probe-sample" style="line-height:normal">{{ sample }}</text>
     <text v-for="item in fallbackCases" :id="item.id" :key="item.id" class="probe-sample" :class="item.className">{{ sample }}</text>

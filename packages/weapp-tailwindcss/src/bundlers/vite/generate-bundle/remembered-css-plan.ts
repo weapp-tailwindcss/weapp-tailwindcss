@@ -97,6 +97,7 @@ export async function resolveRememberedCssSourcePlan(
       )
     if (!hasUsableTailwindSource || sourcesBelongToInferredSfc) {
       sources = [inferredSfcStyleSource]
+      hasUsableTailwindSource = true
     }
   }
 

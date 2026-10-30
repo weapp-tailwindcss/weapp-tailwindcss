@@ -15,8 +15,11 @@ export function resolveViteSkylineTypographyResetCss(
   isWebGeneratorTarget: boolean,
   majorVersion = options.tailwindRuntime?.majorVersion,
 ) {
+  if (options.cssOptions?.skyline !== true || majorVersion !== 4 || isWebGeneratorTarget) {
+    return undefined
+  }
   const platform = resolvePlatformIdentity(resolveFrameworkEnvironment(options).uniPlatform || stylePlatform).canonical
-  if (isWebGeneratorTarget || platform !== 'mp-weixin') {
+  if (platform !== 'mp-weixin') {
     return undefined
   }
   if (!resolveSkylineTypographyCompatibility({ ...options, platform }, majorVersion === 4)) {

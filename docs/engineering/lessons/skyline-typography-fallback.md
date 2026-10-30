@@ -216,7 +216,7 @@ pnpm agents:check
 ## 适用边界
 
 本次只验证上述 DevTools 模拟器与基础库组合。未验证物理设备、其他基础库或其他平台运行时。
-H5、支付宝仅做构建产物验证，不推定其运行时语义。没有开展全仓全面验收，也不等待远端 CI。
+H5、支付宝仅做构建产物验证，不推定其运行时语义。实现阶段没有开展全仓全面验收。用户随后要求全部检查通过后合并，因此交付后继续跟进 PR CI，合并状态以最新提交为准。
 动态覆盖、主题切换及工具类按钮继续保留，验收结论来自本轮真实产物和布局观测。
 第一阶段提交 `4c94ab4b4d14464dca9cc8cd67fbdeed816e688b` 只交付复现，没有公开包行为变化。第二阶段交付缺失引用 reset 及组件本地初始化，对 `@weapp-tailwindcss/postcss`、`weapp-tailwindcss` 各记录中文 patch change intent。
 
@@ -224,3 +224,35 @@ H5、支付宝仅做构建产物验证，不推定其运行时语义。没有开
 
 现有“先固化真实失败、再同用例复验”规则有效；需要核验初始化范围和组件边界，不能把局部 CSS 的成功外推到全局样式。
 不新增全仓规则，不删除动态能力，不使用扩大选择器范围或硬编码产物路径来掩盖问题。
+
+## 合并前检查跟进（2026-10-30）
+
+提交 `7b787355006f071877a66287283efeef59427080` 的首轮检查暴露了两项代码问题：Compiler 转换闭包捕获整个 services 容器，导致关闭后仍保留缓存 AST；Webpack 资产编排文件超过既有 500 行门禁。分别改为仅捕获并释放所需平台字段，以及提取 CSS 收尾操作，保持原有检查和阈值。
+
+性能日志确认存在重复解析：输入结果缓存命中前仍进行完整校验，多个资产收尾边界反复校验相同文本。命中缓存后直接返回已验证结果，未命中时复用默认解析器的 AST；保留 `from`、上游 source map、自定义 parser/syntax 与 Root 输入契约。资产校验仅缓存通过的完整文本，按上下文弱引用管理，限制 64 项和共 200 万字符，不保留 AST。每次仍先检查实际目标和配置，新增冲突仍报错。未启用且没有已登记初始化块时，不读取 HMR 源码；已有初始化块仍可撤销。
+
+定向验证：PostCSS 缓存、Root、Skyline 共 6 文件 81 项通过；主包 Skyline、组件初始化、目标、真实 GC 和行数门禁共 5 文件 64 项通过；Webpack 与架构共 3 文件 182 项通过。两个公开包构建（含类型）及主包 tsd 通过。demo 两个 static 入口共 3 项在 `--update=none` 下通过，未刷新基线。
+
+首轮 Expo iOS 在 dark 场景第二帧期间耗尽整个 case 的 10 秒采集预算，未出现样式断言失败，完整 artifact 下载失败，因此不能确定进一步原因。Lynx iOS 在 `simctl launch` 阶段超时，artifact 记录宿主为 3 核、load average 350.6、剩余可用内存约 104 MiB；boot/install 已成功，尚未进入应用场景。保留失败门禁，不增大超时，也不将未完成测量记为通过。
+
+原始 IDE 运行证据和源文件清单继续绑定 `7b787355006f071877a66287283efeef59427080` 的实现，不能作为后续提交重新执行 IDE 的证明。后续单测、构建、static 和 CI 分别记录，不替换历史失败记录。
+
+### 局部生成与复现入口收尾
+
+额外初始化块暴露了既有 SFC 合并边界问题：`HelloWorld.vue` 的 scoped `@reference` / `@apply` 与独立 reset 被拼成生成输入，导致约 479B 的局部 CSS 混入约 30KB 全局工具类。现在由本轮模块生成归属证明 apply 已完成，直接后处理真实编译资产，保留 reset、scope、媒体条件、作者声明及顺序；含普通导入或根生成指令的来源仍走生成链路。归属证据参与转换及共享缓存，真实 Vite/Vue watch 回归验证仅修改引用主题时也立即失效。该回归使用真实 Vue 插件，不冒充 uni-app 编译器运行证据。
+
+性能对照还发现输入负载混杂：新增两页及组件后，主模块处理数由 34 增至 41。对照页现位于同一 demo 包的 `fixtures/skyline-typography`，通过独立 `UNI_INPUT_DIR`、输出目录和显式开关运行，默认 `src` 与日常生成输入恢复。H5 HTML 主模块通过 Vite `transformIndexHtml` 切换到同一 fixture，避免只更换 manifest 而仍编译默认页面。入口与操作见 [fixture README](../../../demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/README.md)。未改变版本对照采用各 ref 实际项目的规则。
+
+默认 demo 与独立 fixture 的 static 基线已单独更新并审查，两个入口共 3 项以 `--update=none` 通过；另在 `E2E_IDE=1` 下单独复验 fixture static，确认不误走通用 helper 的默认 dev 项目。根目录 `twExtract` 仍扫描 fixture 并保存 token 来源报告，这与默认 CSS 的显式 `@source` 生成输入不同；默认生成 CSS 已无探针字体与 reset。
+
+最终生产 IDE 运行 `3ac91a9d-72ca-4a84-875e-dd2b43085393` 在上述独立入口完成两端 22 阶段，9 个 WXSS 摘要及 71 个生产源文件指纹保存在 [followup-evidence.json](./assets/skyline-typography/followup-evidence.json)。运行前后逐文件摘要一致，源码指纹为 `90842621068205f2738bf665cad78edf215a0192d6c5f9d0dd70e0e952aff689`；项目已关闭，登录态保留。H5 / 支付宝严格构建分别核对 5 个 CSS / 8 个 ACSS，存在探针主题嵌套 fallback，且无内部 reset 引用；仍仅属于产物验证。
+
+该轮截图：[Skyline](./assets/skyline-typography/followup-skyline.png)、[WebView](./assets/skyline-typography/followup-webview.png)。
+
+本轮补充回归包括主包转换与真实 Vue watch 6 文件 59 项、GC / 开关 / 行数契约 4 文件 53 项、PostCSS 4 文件 63 项。指令分析的重复解析仅缓存完整文本、有效配置及布尔结果，限制 64 项 / 200 万字符，不保留 AST。尝试过的规划阶段 root coverage 缓存没有获得实测收益，已撤回。
+
+版本对照重复出现两侧共同的首轮修改或回滚丢失，不能将其 CLI 成功退出视为性能通过。runner 现在等待 uni 明确就绪，并复用仓库 watch 验收的 600ms 编译稳定窗口后再发送下一次保存；该等待位于测量区间外，插件耗时、成功条件和预算均保持原口径。保留此前真实性能失败与无有效样本的报告，最终性能结论单独记录。
+
+最终本地对照命令为 `pnpm perf:guard -- --baseline-ref 35762afa58b7bdd665324e46e23011106d2727fb --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30 --only demo-uni-app-vite-tailwindcss-v4__mp-weixin --result-dir e2e/.artifacts/skyline-implementation/local-benchmark-final-settled`。当前实现完成三次构建（插件 1503 / 877 / 901ms）及三次真实 HMR（插件 195 / 75 / 73ms），基线在首轮修改超时，故没有有效的两侧对照，性能结论仍待验证。报告将基线失败排除后显示通过，不能据此宣称性能门禁已经通过，也不将当前实现的单侧数据与此前不同负载的基线拼接。最新提交推送后继续核对远端的有效对照及全部检查；未满足前不合并。
+
+收尾时主包构建、tsd、ESLint、`pnpm architecture:check`、`pnpm agents:check` 和 `git diff --check` 均通过，benchmark runner 定向回归为 2 文件 11 项通过。本地性能子进程已正常退出，没有遗留本轮 IDE 项目或临时浏览器资源。

@@ -1,5 +1,0 @@
-view,
-text {
-  --tw-leading: var(--weapp-tw-invalid-reset);
-  --tw-font-weight: var(--weapp-tw-invalid-reset);
-}

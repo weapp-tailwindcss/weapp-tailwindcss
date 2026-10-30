@@ -166,7 +166,7 @@ async function processViteCssEntryTransformNow(options: any) {
     return
   }
   // 同一生成入口的产物还可合并普通作者样式，必须按本轮完整内容校验缓存。
-  const cssTransformCachePlan = resolveViteCssTransformCachePlan({ cssBundleSourceHash: cache.computeHash(rawSource), cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, cssRuntimeAffectingHash, cssShareScope, outputFile, runtimeSignature, scopedGeneratorCandidateSignature, sourceTraceSignature, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion })
+  const cssTransformCachePlan = resolveViteCssTransformCachePlan({ hasCompiledGeneratorSource: cssCompositionPlan.hasCompiledGeneratorSource, cssBundleSourceHash: cache.computeHash(rawSource), cssIsMainChunk: cssHandlerOptions2.isMainChunk === true, cssRuntimeAffectingHash, cssShareScope, outputFile, runtimeSignature, scopedGeneratorCandidateSignature, sourceTraceSignature, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion })
   const { cssCacheKey, cssHashKey, cssSharedCacheKey, cssTaskHash, rememberedCssRuntimeSignature } = cssTransformCachePlan
   if (shouldReplayLastCss) {
     const lastCss = getLastCssResult(lastCssResultByFile, outputFile, file)
@@ -207,6 +207,7 @@ async function processViteCssEntryTransformNow(options: any) {
     generatorSourceFile,
     generatorSourceKind,
     generatorUserLayerRawSource,
+    hasCompiledGeneratorSource: cssCompositionPlan.hasCompiledGeneratorSource,
     getLastCssResult,
     hasRuntimeAffectingChanges,
     isWebGeneratorTarget,

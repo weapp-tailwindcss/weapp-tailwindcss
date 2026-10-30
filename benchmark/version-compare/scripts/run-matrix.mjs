@@ -4,6 +4,7 @@ import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { createSavePacer } from '../../performance/demo/save-pacing.mjs'
 import { validateAllocationRequest } from './diagnostics/constants.mjs'
 import { createCaseDiagnostics } from './diagnostics/controller.mjs'
 import { runWithCleanup } from './diagnostics/failures.mjs'
@@ -433,6 +434,7 @@ async function runHmrRounds({
   injectType,
   devEnv,
   watchReadyLog,
+  watchSettleMs,
   rounds,
   timeoutMs,
   pollIntervalMs,
@@ -481,10 +483,12 @@ async function runHmrRounds({
     diagnostics?.mark('watch-ready')
 
     const times = []
+    const savePacer = createSavePacer(watchSettleMs)
 
     for (let i = 0; i < rounds; i += 1) {
       const marker = diagnostics?.mutationMarker?.(i + 1, original) ?? `twbench${Date.now()}${i}`
       const next = injectContent(original, marker, injectType)
+      await savePacer.beforeSave()
       const roundLogs = logBuffer.beginRound()
       const start = now()
       diagnostics?.mark('mutation-write', i + 1)
@@ -519,6 +523,8 @@ async function runHmrRounds({
         pluginTiming,
       })
 
+      savePacer.settled()
+      await savePacer.beforeSave()
       diagnostics?.mark('rollback-write', i + 1)
       await fs.writeFile(sourcePath, original, 'utf8')
       sourceDirty = false
@@ -540,6 +546,7 @@ async function runHmrRounds({
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('rollback-observed', i + 1)
+      savePacer.settled()
       if (diagnostics?.source) {
         await diagnostics.source('rollback-observed', sourcePath, original, marker)
       }
@@ -758,6 +765,7 @@ export async function runCase(versionMeta, projectMeta, options) {
           injectType: projectMeta.injectType,
           devEnv: projectMeta.devEnv,
           watchReadyLog: projectMeta.watchReadyLog,
+          watchSettleMs: projectMeta.watchSettleMs,
           rounds: options.hmrRuns,
           timeoutMs: options.timeoutMs,
           pollIntervalMs: options.pollIntervalMs,

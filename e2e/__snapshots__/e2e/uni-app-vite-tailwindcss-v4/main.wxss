@@ -19,8 +19,8 @@ text,
   --tw-gradient-from-position: 0%;
   --tw-gradient-via-position: 50%;
   --tw-gradient-to-position: 100%;
-  --tw-font-weight: var(--weapp-tw-invalid-reset);
-  --tw-leading: var(--weapp-tw-invalid-reset);
+  --tw-font-weight: ;
+  --tw-leading: ;
   --tw-shadow: 0 0 #0000;
   --tw-shadow-color: initial;
   --tw-shadow-alpha: 100%;
@@ -71,17 +71,10 @@ wx-root-portal-content {
   --text-sm--line-height: calc(1.25 / 0.875);
   --text-base: 32rpx;
   --text-base--line-height: calc(1.5 / 1);
-  --font-weight-normal: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
-  --text-header-md: 20px;
-  --text-header-md--line-height: 32px;
-  --text-header-md--font-weight: 700;
-  --text-probe-small: 20px;
-  --text-probe-small--line-height: 20px;
-  --text-probe-small--font-weight: 400;
   --color-neutral-1B: #1b1b1b;
   --color-neutral-66: #666;
   --color-midnight: #121063;
@@ -209,7 +202,7 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='black' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
-/*! tokens: block <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyScoped.vue, src/pages/index/index.vue */
+/*! tokens: block <= src/pages/index/index.vue */
 .block {
   display: block;
 }
@@ -255,10 +248,6 @@ wx-button {
 /*! tokens: w-32 <= src/pages/index/index.vue */
 .w-32 {
   width: calc(var(--spacing) * 32);
-}
-/*! tokens: w-[280px] <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyScoped.vue */
-.w-_b280px_B {
-  width: 280px;
 }
 /*! tokens: w-[323px] <= src/pages/index/index.vue */
 .w-_b323px_B {
@@ -615,18 +604,6 @@ wx-button {
 .text-center {
   text-align: center;
 }
-/*! tokens: text-header-md <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyProbe.vue, src/components/SkylineTypographyScoped.vue */
-.text-header-md {
-  font-size: var(--text-header-md);
-  line-height: var(--tw-leading, var(--text-header-md--line-height));
-  font-weight: var(--tw-font-weight, var(--text-header-md--font-weight));
-}
-/*! tokens: text-probe-small <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyProbe.vue, src/components/SkylineTypographyScoped.vue */
-.text-probe-small {
-  font-size: var(--text-probe-small);
-  line-height: var(--tw-leading, var(--text-probe-small--line-height));
-  font-weight: var(--tw-font-weight, var(--text-probe-small--font-weight));
-}
 /*! tokens: text-base <= src/pages/index/index.vue */
 .text-base {
   font-size: var(--text-base);
@@ -671,20 +648,10 @@ wx-button {
   --tw-leading: calc(var(--spacing) * 5);
   line-height: calc(var(--spacing) * 5);
 }
-/*! tokens: leading-[36px] <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyProbe.vue, src/components/SkylineTypographyScoped.vue */
-.leading-_b36px_B {
-  --tw-leading: 36px;
-  line-height: 36px;
-}
 /*! tokens: font-bold <= src/pages/index/index.vue */
 .font-bold {
   --tw-font-weight: var(--font-weight-bold);
   font-weight: var(--font-weight-bold);
-}
-/*! tokens: font-normal <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyProbe.vue, src/components/SkylineTypographyScoped.vue */
-.font-normal {
-  --tw-font-weight: var(--font-weight-normal);
-  font-weight: var(--font-weight-normal);
 }
 /*! tokens: font-semibold <= src/pages/index/index.vue */
 .font-semibold {
@@ -694,10 +661,6 @@ wx-button {
 /*! tokens: break-all <= src/pages/index/index.vue */
 .break-all {
   word-break: break-all;
-}
-/*! tokens: whitespace-pre-wrap <= src/components/SkylineTypographyExternal.vue, src/components/SkylineTypographyNoStyle.vue, src/components/SkylineTypographyScoped.vue */
-.whitespace-pre-wrap {
-  white-space: pre-wrap;
 }
 /*! tokens: text-[#00f285] <= src/pages/index/index.vue */
 .text-_b_h00f285_B {
@@ -851,11 +814,6 @@ abc {
     opacity: 0.65;
     transform: scale(0.96);
   }
-}
-view,
-text {
-  --tw-leading: var(--weapp-tw-invalid-reset);
-  --tw-font-weight: var(--weapp-tw-invalid-reset);
 }
 .reset-button {
   display: block;

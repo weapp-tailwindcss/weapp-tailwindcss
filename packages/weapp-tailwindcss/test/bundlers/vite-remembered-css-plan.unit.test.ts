@@ -76,7 +76,7 @@ describe('vite remembered css source plan', () => {
     expect(plan.hasUsableTailwindSource).toBe(true)
   })
 
-  it('prefers the latest inferred sfc snapshot for the same source owner', async () => {
+  it.each([false, true])('prefers the latest inferred sfc snapshot, with previous source=%s', async (hasPreviousSource) => {
     const sourceFile = '/repo/src/pages/index/index.vue'
     const sources = new Map([
       ['page', {
@@ -86,7 +86,7 @@ describe('vite remembered css source plan', () => {
       }],
     ])
     const plan = await resolveRememberedCssSourcePlan(createOptions({
-      getRememberedCssSources: () => sources,
+      getRememberedCssSources: () => hasPreviousSource ? sources : new Map(),
       getSfcSource: () => '<template></template><style>.latest { @apply flex; }</style>',
       snapshot: {
         entries: [{
@@ -109,6 +109,7 @@ describe('vite remembered css source plan', () => {
       rawSource: '.latest { @apply flex; }',
       sourceFile,
     }])
+    expect(plan.hasUsableTailwindSource).toBe(true)
   })
 
   it('replaces configured temporary sources with the explicit root source', async () => {

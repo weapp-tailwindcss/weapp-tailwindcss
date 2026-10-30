@@ -86,9 +86,6 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const resolvedOptions = resolver.resolve(opt)
     const target = resolvePostcssStyleTarget(resolvedOptions)
     const skyline = resolveSkylineTypographyCompatibility(resolvedOptions, resolvedOptions.majorVersion === 4 && !resolvedOptions.uniAppX && (target === 'generic' || target === 'mini-program'))
-    if (skyline) {
-      assertSkylineTypographyInput(root ?? postcss.parse(normalizeCssLineComments(rawSource)))
-    }
     const plugins = resolvedOptions.postcssOptions?.plugins
     const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
@@ -115,6 +112,11 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     }
 
     const normalizedRawSource = sourcePrepared ? rawSource : normalizeCssLineComments(rawSource)
+    let validatedRoot: Root | undefined
+    if (skyline) {
+      validatedRoot = root ?? postcss.parse(normalizedRawSource, resolvedOptions.postcssOptions?.options)
+      assertSkylineTypographyInput(validatedRoot)
+    }
     // uni-app x 的 WebView/小程序目标也会复用 preserve:false 的 preset，
     // 需要先保护作者变量，否则主题 fallback 会在生成阶段被静态化。
     const isUniAppXFramework = resolvedOptions.appType === 'uni-app-x'
@@ -128,7 +130,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       ? protectDynamicColorMixAlpha(protectedVarFallbacks.css)
       : undefined
     const source = protectedColorMix?.css ?? protectedVarFallbacks.css
-    const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? source
+    const canReuseValidatedRoot = !resolvedOptions.postcssOptions?.options?.parser && !resolvedOptions.postcssOptions?.options?.syntax
+    const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? (canReuseValidatedRoot ? validatedRoot : undefined) ?? source
     const restoreProtectedResult = (result: PostcssResult) => {
       const restoredCss = protectedVarFallbacks.restore(protectedColorMix?.restore(result.css) ?? result.css)
       if (restoredCss !== result.css) {

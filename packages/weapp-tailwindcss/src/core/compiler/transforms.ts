@@ -82,6 +82,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   let templateHandler: CompilerTransformServices['templateHandler'] | undefined = services.templateHandler
   let preserveWebkitProperties = services.preserveWebkitProperties
   let skyline = services.skyline
+  let stylePlatform = services.stylePlatform
   let cachedTemplateClassSet: Set<string> | undefined
   let cachedTemplateOptions: Parameters<CompilerTransformServices['templateHandler']>[1]
 
@@ -98,6 +99,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
     templateHandler = undefined
     preserveWebkitProperties = undefined
     skyline = undefined
+    stylePlatform = undefined
   }
 
   function createTemplateOptions(
@@ -128,7 +130,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCss(css: string, snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCss']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, services.stylePlatform)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!(css, resolved.styleOptions).then((result) => {
       const cloned = clonePostcssResult(result)
@@ -140,7 +142,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCssRoot(root: Parameters<Compiler['transformCssRoot']>[0], snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCssRoot']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, services.stylePlatform)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!.transformRoot(root, resolved.styleOptions).then((result) => {
       finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline)

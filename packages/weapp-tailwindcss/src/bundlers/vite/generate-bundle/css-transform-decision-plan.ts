@@ -120,6 +120,7 @@ export function resolveViteCssTransformDecisionPlan(
 }
 
 export interface ResolveViteCssTransformCachePlanOptions {
+  hasCompiledGeneratorSource?: boolean | undefined
   cssBundleSourceHash?: string | undefined
   cssIsMainChunk: boolean
   cssRuntimeAffectingHash: string
@@ -152,6 +153,8 @@ export function resolveViteCssTransformCachePlan(
     options.cssRuntimeAffectingHash,
   )
   const tailwindcssMajorVersion = options.tailwindcssMajorVersion ?? 'unknown'
+  // 收集器会清除标记；相同 CSS 文本不能让不同来源证据共享转换结果。
+  const sourceMode = options.hasCompiledGeneratorSource ? ['compiled-source'] : []
   const cssCacheKey = `${options.outputFile}:css:${cssRuntimeSignature}:${tailwindcssMajorVersion}`
 
   return {
@@ -167,6 +170,7 @@ export function resolveViteCssTransformCachePlan(
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
+      ...sourceMode,
     ].join(':'),
     // 来源文本仅通过候选与来源标注影响样式；全局 HTML/JS 内容不能使无关 CSS 失效。
     cssTaskHash: [
@@ -174,6 +178,7 @@ export function resolveViteCssTransformCachePlan(
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
+      ...sourceMode,
     ].join(':'),
     rememberedCssRuntimeSignature,
   }

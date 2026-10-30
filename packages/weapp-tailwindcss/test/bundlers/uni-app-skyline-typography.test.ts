@@ -94,6 +94,14 @@ describe('uni-app Skyline 组件初始化', () => {
     expect(feature.normalizeSfcSource(author, '/project/Other.vue')).toBe(author)
   })
 
+  it('未启用且没有初始化归属时不读取 HMR 源码', async () => {
+    const feature = fixture()
+    feature.setReset(undefined)
+    const read = vi.fn(async () => '<template />')
+    await call(feature.plugin, 'handleHotUpdate', { file: '/project/Label.vue', read })
+    expect(read).not.toHaveBeenCalled()
+  })
+
   it('HMR 在 Vue 描述符比较前准备相同块和 style 索引', async () => {
     const feature = fixture()
     const source = '<template><text /></template><style scoped>text{--tw-leading:38px}</style>'

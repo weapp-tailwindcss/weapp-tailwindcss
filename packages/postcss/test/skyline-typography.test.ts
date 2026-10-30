@@ -1,4 +1,6 @@
+import type { Parser } from 'postcss'
 import type { IStyleHandlerOptions } from '../src/types'
+import { resolve } from 'node:path'
 import postcss from 'postcss'
 import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot } from '../src/compat/mini-program-css/finalize'
 import { transformTailwindV4GeneratedCss } from '../src/compat/tailwindcss-v4/generated-output'
@@ -109,6 +111,51 @@ describe('Skyline Tailwind v4 字体变量', () => {
     expect(values(disabled.css, '--tw-leading')).toEqual(['initial'])
     expect(restored.css).toBe(enabled.css)
     expect((await transform(enabled.css, options)).css).toBe(enabled.css)
+  })
+
+  it('已验证输入命中缓存时不重新解析，变化的输入仍拒绝保留变量', async () => {
+    const transform = handler({ cssOptions: { skyline: true } })
+    const parse = vi.spyOn(postcss, 'parse')
+    try {
+      const first = await transform(source)
+      const parses = parse.mock.calls.length
+      expect(parses).toBeGreaterThan(0)
+      expect((await transform(source)).css).toBe(first.css)
+      expect(parse.mock.calls).toHaveLength(parses)
+      await expect(async () => transform(`${source}.author{--weapp-tw-invalid-reset:1}`)).rejects.toThrow('保留变量')
+    }
+    finally {
+      parse.mockRestore()
+    }
+  })
+
+  it('复用验证 AST 保留来源文件和上游 source map，缓存命中仍保留映射', async () => {
+    const options = {
+      from: resolve('skyline-source.css'),
+      to: resolve('skyline-output.css'),
+      map: { inline: false, annotation: false, prev: JSON.stringify({ version: 3, sources: ['original.scss'], names: [], mappings: 'AAAA', sourcesContent: [source] }) },
+    }
+    const baseline = await handler({ postcssOptions: { options } })(source)
+    const transform = handler({ cssOptions: { skyline: true }, postcssOptions: { options } })
+    const enabled = await transform(source)
+    expect(enabled.root.first?.source?.input.file).toBe(options.from)
+    expect(enabled.map?.toJSON().sources).toEqual(baseline.map?.toJSON().sources)
+    expect(enabled.map?.toJSON().sources).toContain('original.scss')
+    expect((await transform(source)).map?.toJSON()).toEqual(enabled.map?.toJSON())
+  })
+
+  it.each(['parser', 'syntax'] as const)('保持作者 %s 的调用及输出语义', async (key) => {
+    const parser = vi.fn<Parser>((css, options) => {
+      const root = postcss.parse(css, options)
+      root.walkRules('.author', rule => { rule.selector = '.parser-applied' })
+      return root
+    })
+    const options = key === 'parser' ? { parser } : { syntax: { parse: parser, stringify: postcss.stringify } }
+    const transform = handler({ cssOptions: { skyline: true }, postcssOptions: { options } })
+    const result = await transform(`${source}.author{color:red}`)
+    expect(result.css).toContain('.parser-applied')
+    expect((await transform(`${source}.author{color:red}`)).css).toBe(result.css)
+    expect(parser).toHaveBeenCalledTimes(1)
   })
 
   it.each(['property', 'PROPERTY', String.raw`p\72 operty`])('局部注册按 CSS 身份清理并补齐自有默认值：%s', async (name) => {

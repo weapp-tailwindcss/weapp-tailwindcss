@@ -16,7 +16,7 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
 })
 
-async function fixture(rollback, mutation) {
+async function fixture(rollback, mutation, projectOptions = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-watch-output-'))
   roots.push(root)
   const { cwd } = await createServiceFixture(root)
@@ -33,6 +33,7 @@ async function fixture(rollback, mutation) {
   })
   mocks.sampler.mockReset().mockReturnValue({ stop: () => ({ count: 0 }) })
   let sourceWrites = 0
+  let mutationAt = 0
   vi.spyOn(fs, 'writeFile').mockImplementation(async (file, text, ...args) => {
     await writeFile(file, text, ...args)
     if (file !== source) {
@@ -40,6 +41,7 @@ async function fixture(rollback, mutation) {
     }
     sourceWrites++
     if (text !== original) {
+      mutationAt = performance.now()
       await writeFile(output, text)
       if (mutation) {
         child.exitCode = 0
@@ -48,7 +50,7 @@ async function fixture(rollback, mutation) {
       child.stdout.emit('data', Buffer.from('[weapp-tailwindcss:hmr] {"bundler":"webpack","phase":"processAssets","durationMs":23}\n'))
     }
     else {
-      await rollback({ output, original, writeFile })
+      await rollback({ output, original, writeFile, elapsedSinceMutation: performance.now() - mutationAt })
       child.exitCode = 0
     }
   })
@@ -57,11 +59,34 @@ async function fixture(rollback, mutation) {
     output,
     original,
     writes: () => sourceWrites,
-    run: () => runCase(versionFor(root), mpxProject, { buildRuns: 0, hmrRuns: 1, timeoutMs: 1000, pollIntervalMs: 1 }),
+    run: () => runCase(versionFor(root), { ...mpxProject, ...projectOptions }, { buildRuns: 0, hmrRuns: 1, timeoutMs: 1000, pollIntervalMs: 1 }),
   }
 }
 
 describe('watch 回滚的文件观察边界', () => {
+  it('框架需要更长的编译稳定窗口时，在计时外等待后再回滚', async () => {
+    const test = await fixture(async ({ output, original, writeFile, elapsedSinceMutation }) => {
+      if (elapsedSinceMutation >= 500) {
+        await writeFile(output, original)
+      }
+    }, undefined, { watchSettleMs: 600 })
+    const result = await test.run()
+    expect(result.hmrPluginMs).toEqual([23])
+    expect(result.hmrMs[0]).toBeLessThan(500)
+    expect(await fs.readFile(test.source, 'utf8')).toBe(test.original)
+  })
+
+  it('保存与回滚跨过 watcher 去重窗口，不丢失立即回滚事件', async () => {
+    const test = await fixture(async ({ output, original, writeFile, elapsedSinceMutation }) => {
+      if (elapsedSinceMutation >= 100) {
+        await writeFile(output, original)
+      }
+    })
+    const result = await test.run()
+    expect(result.hmrPluginMs).toEqual([23])
+    expect(await fs.readFile(test.output, 'utf8')).toBe(test.original)
+  })
+
   it.each(['missing', 'empty', 'whitespace'])('不把 %s 产物误判为 marker 已移除', async (kind) => {
     const test = await fixture(async ({ output, writeFile }) => {
       if (kind === 'missing') {

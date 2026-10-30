@@ -53,12 +53,6 @@ abc {
 }
 
 @theme {
-  --text-header-md: 20px;
-  --text-header-md--line-height: 32px;
-  --text-header-md--font-weight: 700;
-  --text-probe-small: 20px;
-  --text-probe-small--line-height: 20px;
-  --text-probe-small--font-weight: 400;
   --color-neutral-1B: #1b1b1b;
   --color-neutral-66: #666;
   --color-neutral-99: #999;

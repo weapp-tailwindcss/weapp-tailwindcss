@@ -1,5 +1,5 @@
 {
-  "file": "src/components/SkylineTypographyNoStyle.vue",
+  "file": "fixtures/skyline-typography/components/SkylineTypographyExternal.vue",
   "count": 7,
   "tokens": [
     "block",

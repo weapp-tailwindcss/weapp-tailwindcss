@@ -1,0 +1,11 @@
+@import "tailwindcss" source(none);
+@source "./**/*.vue";
+
+@theme {
+  --text-header-md: 20px;
+  --text-header-md--line-height: 32px;
+  --text-header-md--font-weight: 700;
+  --text-probe-small: 20px;
+  --text-probe-small--line-height: 20px;
+  --text-probe-small--font-weight: 400;
+}

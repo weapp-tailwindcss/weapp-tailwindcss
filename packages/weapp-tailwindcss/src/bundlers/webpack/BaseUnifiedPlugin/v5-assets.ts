@@ -13,11 +13,12 @@ import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { getGroupedEntries } from '@/utils'
 import { resolveTaskConcurrency } from '../../../utils/run-tasks'
-import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
+import { createCssSourceTraceCacheSignature, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { createRuntimeClassSetManager } from '../../shared/runtime-class-set'
 import { collectStrictEscapedRuntimeCandidates, createEscapeFragments } from '../../shared/runtime-class-set/escaped-candidates'
 import { createCandidateSignature } from '../../shared/runtime-signatures'
 import { createAssetHashByChunkMap, createWebpackCssAssetResourceMap, createWebpackDirectCssAssetResourceMap } from './shared'
+import { createWebpackCssAssetFinalizers } from './v5-assets/css-finalizers'
 import { createWebpackCssSourceResolvers } from './v5-assets/css-source-resolvers'
 import { finalizeProcessedWebpackCssAssets, setupWebpackMiniCssAssetFinalizer } from './v5-assets/final-css-assets'
 import { finalizeWebpackProcessAssets } from './v5-assets/finalize-assets'
@@ -32,8 +33,6 @@ import {
   collectWebpackJsRuntimeCandidatesFromAssets,
   collectWebpackJsRuntimeTokenSignature,
   createWebpackCssSourceTraceTokenSources,
-  finalizeTracedWebpackCssAsset,
-  finalizeWebpackCssAssetSource,
   getRuntimeClassSetSync,
   isRuntimeTransformCandidate,
   resolveWebpackCssAssetModuleResource,
@@ -222,8 +221,6 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           outputDir,
           runtimeState,
         })
-        const finalizeCssAssetSource = (source: string, options: { cssPreflight?: boolean | undefined, generatedCss?: boolean, preserveExistingPreflight?: boolean | undefined } = {}) =>
-          finalizeWebpackCssAssetSource(source, compilerOptions, isWebGeneratorTarget, options)
         const shouldRefreshWebpackSourceCandidates = (!isWebGeneratorTarget && groupedEntries.css.length > 0)
           || cssSources.size > 0
           || generatedCssSources.size > 0
@@ -248,21 +245,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
         const cssSourceTraceTokenSources = createWebpackCssSourceTraceTokenSources(compilerOptions, webpackSourceCandidates)
         const preserveProcessedWebCssAsset = (source: any) => annotateProcessedWebpackCssSource(preserveFrameworkCssSource(source), sources, cssSourceTraceTokenSources)
         const cssSourceTraceSignature = createCssSourceTraceCacheSignature(cssSourceTraceTokenSources, compilerOptions)
-        const annotateCss = (css: string) => annotateCssSourceTrace(css, {
-          opts: compilerOptions,
-          tokenSources: cssSourceTraceTokenSources,
-        })
-        const finalizeTracedCss = (
-          css: string,
-          cssHandlerOptions: WebpackCssHandlerOptions,
-          options: { finalized?: boolean | undefined } = {},
-        ) =>
-          finalizeTracedWebpackCssAsset(css, cssHandlerOptions, {
-            annotateCss,
-            compilerOptions,
-            ...options,
-            isWebGeneratorTarget,
-          })
+        const { finalizeCssAssetSource, finalizeTracedCss } = createWebpackCssAssetFinalizers(compilerOptions, isWebGeneratorTarget, cssSourceTraceTokenSources)
         const hasRuntimeTransformAssets = Boolean(
           !isWebGeneratorTarget
           && ((groupedEntries.html?.length ?? 0) > 0 || (groupedEntries.js?.length ?? 0) > 0),

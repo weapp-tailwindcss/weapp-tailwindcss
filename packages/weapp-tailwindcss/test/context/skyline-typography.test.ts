@@ -8,7 +8,7 @@ import { createReplayCssAsset } from '@/bundlers/vite/generate-bundle/rollup-ass
 import { finalizeWebpackCssAssetSource } from '@/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/finalize'
 import { createCompilerContext } from '@/context'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
-import { isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
+import { assertSkylineTypographyAsset, isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
 import { initializeFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { createCompiler } from '@/core/compiler'
 import { finalizeMiniProgramGeneratorCss } from '@/generation/generation-helpers/preflight'
@@ -48,6 +48,26 @@ describe('Skyline 配置全链路', () => {
     opts.tailwindRuntime.majorVersion = 4
     const bundle = { 'entry.wxss': createReplayCssAsset('entry.wxss', source), 'isolated.wxss': createReplayCssAsset('isolated.wxss', conflict) }
     expect(() => assertSkylineTypographyBundle(bundle, { opts, runtimeState: opts, getResolvedConfig: () => undefined } as any)).toThrow('保留变量')
+  })
+
+  it('重复资产边界复用已验证文本，配置变化和新增冲突仍然报错', () => {
+    const opts = createCompilerContext({ ...options, platform: 'mp-weixin' })
+    opts.tailwindRuntime.majorVersion = 4
+    const parse = vi.spyOn(postcss, 'parse')
+    try {
+      assertSkylineTypographyAsset(source, opts)
+      const parses = parse.mock.calls.length
+      expect(parses).toBeGreaterThan(0)
+      assertSkylineTypographyAsset(source, opts)
+      expect(parse.mock.calls).toHaveLength(parses)
+      opts.cssOptions = { ...opts.cssOptions, cssRemoveProperty: false }
+      expect(() => assertSkylineTypographyAsset(source, opts)).toThrow('cssRemoveProperty: false')
+      opts.cssOptions = { ...opts.cssOptions, cssRemoveProperty: true }
+      expect(() => assertSkylineTypographyAsset(`${source}.author{--weapp-tw-invalid-reset:1}`, opts)).toThrow('保留变量')
+    }
+    finally {
+      parse.mockRestore()
+    }
   })
 
   it.each([undefined, 'component.vue?vue&type=style&scoped=abc'])('生成 finalizer 保留旧版平台及 property 策略：%s', (from) => {

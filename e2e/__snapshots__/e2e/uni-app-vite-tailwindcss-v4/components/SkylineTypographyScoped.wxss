@@ -1,9 +1,0 @@
-view,
-text {
-  --tw-leading: var(--weapp-tw-invalid-reset);
-  --tw-font-weight: var(--weapp-tw-invalid-reset);
-}
-/*! tokens: scoped-fixture <= src/components/SkylineTypographyScoped.vue */
-.scoped-fixture.data-v-64e0dede {
-  display: block;
-}
