@@ -25,6 +25,7 @@ import { getPresetInsertionCacheState } from './preset-insertion-cache-policy'
 import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 import { StyleProcessorCache } from './processor-cache'
 import { captureRootCacheSnapshot, cloneRootWithCurrentSources, hasOnlyCapturedInputs, matchRootCacheSnapshot } from './root-cache'
+import { mayLoadExternalSourceMap } from './source-map-cache-policy'
 import { contentHash } from './utils/content-hash'
 
 /** CSS 结果缓存最大条目数 */
@@ -93,6 +94,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const hasOpaqueOptions = hasOpaqueProcessOptions(resolvedOptions.postcssOptions?.options)
     const presetInsertions = getPresetInsertionCacheState(resolvedOptions.cssPresetEnv)
     let cacheable = !hasExternalPlugins && !hasOpaqueOptions && !presetInsertions.present && !hasDynamicPxDesignWidth(resolvedOptions)
+      && !mayLoadExternalSourceMap(rawSource, resolvedOptions.postcssOptions?.options)
     // 确定性准备属于缓存未命中的处理；原始输入和配置已经完整标识其输出。
     const optsFp = cacheable ? fingerprintStyleOptions(resolvedOptions) : ''
     const cacheKey = `${optsFp}|${contentHash(rawSource)}|${root === undefined ? 'text' : 'root'}|${sourcePrepared ? 'prepared' : 'raw'}`
