@@ -1,5 +1,6 @@
-import type { Node, Selector } from 'postcss-selector-parser'
+import type { Container, Node, Selector } from 'postcss-selector-parser'
 import type { IStyleHandlerOptions } from '../../types'
+import { isSelector } from 'postcss-selector-parser'
 
 const UNSUPPORTED_MINI_PROGRAM_PSEUDO_CLASS_SET = new Set([
   ':autofill',
@@ -53,11 +54,11 @@ export function shouldRemoveUnsupportedPseudoClass(value: string, options: IStyl
 }
 
 function findRootSelector(node: Node): Selector | undefined {
-  let current: Node = node
+  let current: Node | Container = node
   while (current.parent && current.parent.type !== 'root') {
     current = current.parent
   }
-  return current.type === 'selector' ? current : undefined
+  return isSelector(current) ? current : undefined
 }
 
 export function removeUnsupportedPseudoSelector(

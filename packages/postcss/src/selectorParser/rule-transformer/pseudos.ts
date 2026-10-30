@@ -1,6 +1,7 @@
 import type { Container, Node, Pseudo, Selector } from 'postcss-selector-parser'
 import type { IStyleHandlerOptions } from '../../types'
 import type { TransformContext } from './types'
+import { isContainer, isSelector } from 'postcss-selector-parser'
 import { isUniAppXEnabled } from '../../compat/uni-app-x'
 import { internalCssSelectorReplacer } from '../../shared'
 import { transformSpacingSelector } from '../spacing'
@@ -56,15 +57,15 @@ function isRtlLanguageAnyPseudo(node: Node): boolean {
 }
 
 function getTopLevelSelector(node: Selector): Selector {
-  let current: Node = node
+  let current: Node | Container = node
   let topLevel: Selector = node
 
   while (current.parent) {
-    const parent = current.parent
+    const parent: Node['parent'] = current.parent
     if (parent.type === 'root') {
       break
     }
-    if (parent.type === 'selector') {
+    if (isSelector(parent)) {
       topLevel = parent
     }
     current = parent
@@ -75,7 +76,7 @@ function getTopLevelSelector(node: Selector): Selector {
 
 function stripUnsupportedRtlLanguagePseudo(node: Pseudo) {
   const selectorParent = node.parent
-  if (!selectorParent || selectorParent.type !== 'selector') {
+  if (!isSelector(selectorParent)) {
     return
   }
 
@@ -116,18 +117,19 @@ function getNodePath(root: Selector, target: Node) {
   let current: Node | undefined = target
 
   while (current && current !== root) {
-    const parent = current.parent
-    if (!parent || !('nodes' in parent) || !Array.isArray(parent.nodes)) {
+    const parent: Node['parent'] = current.parent
+    if (!isContainer(parent) || !Array.isArray(parent.nodes)) {
       return undefined
     }
 
-    const index = parent.nodes.indexOf(current)
+    const siblings: readonly Node[] = parent.nodes
+    const index = siblings.indexOf(current)
     if (index < 0) {
       return undefined
     }
 
     path.unshift(index)
-    current = parent as Node
+    current = parent
   }
 
   return current === root ? path : undefined
@@ -141,7 +143,7 @@ function getNodeByPath(root: Selector, path: number[]) {
       return undefined
     }
 
-    const next = current.nodes[index]
+    const next: Node | undefined = current.nodes[index]
     if (!next) {
       return undefined
     }
@@ -217,24 +219,25 @@ function transformExpandedSelectorNodes(selector: Selector, context: TransformCo
 }
 
 function transformExpandedUniversalNodes(selector: Selector, context: TransformContext) {
-  if (!context.universalReplacement) {
+  const replacement = context.universalReplacement
+  if (!replacement) {
     return
   }
   selector.walk((node) => {
     if (node.type === 'universal') {
-      node.value = context.universalReplacement
+      node.value = replacement
     }
   })
 }
 
-function appendExpandedWhereSelectors(parent: Selector, index: number, branches: Container<string, Node>[], context: TransformContext) {
+function appendExpandedWhereSelectors(parent: Selector, index: number, branches: Selector[], context: TransformContext) {
   const root = parent.parent
   if (!root) {
     return false
   }
 
   for (const branch of branches) {
-    const expanded = replaceSelectorNode(parent, index, branch as Selector)
+    const expanded = replaceSelectorNode(parent, index, branch)
     if (expanded) {
       transformExpandedSelectorNodes(expanded, context)
       root.insertBefore(parent, expanded)
@@ -242,6 +245,12 @@ function appendExpandedWhereSelectors(parent: Selector, index: number, branches:
   }
   parent.remove()
   return true
+}
+
+function collectExpandedWhereBranches(node: Pseudo) {
+  return node.nodes
+    .filter((item): item is Selector => item.type === 'selector')
+    .flatMap(expandNestedFunctionalPseudoBranches)
 }
 
 function flattenWherePseudo(node: Pseudo, context: TransformContext, index: number, parent: Selector | undefined) {
@@ -253,9 +262,7 @@ function flattenWherePseudo(node: Pseudo, context: TransformContext, index: numb
     return
   }
 
-  const branches = node.nodes
-    .filter((item): item is Selector => item.type === 'selector')
-    .flatMap(expandNestedFunctionalPseudoBranches)
+  const branches = collectExpandedWhereBranches(node)
   for (const branch of branches) {
     if (transformSpacingSelector(branch.nodes, context.options)) {
       context.requiresSpacingNormalization = true
@@ -287,9 +294,9 @@ export function shouldRemoveUnsupportedPseudoElementSelector(selector: Selector,
   return selector.nodes.some(node => node.type === 'pseudo' && UNSUPPORTED_PSEUDO_ELEMENT_SELECTOR_SET.has(node.value))
 }
 
-export function handlePseudoNode(node: Node, index: number, context: TransformContext, parent: Selector | undefined) {
+export function prunePseudoNode(node: Node, context: TransformContext) {
   if (node.type !== 'pseudo') {
-    return
+    return false
   }
 
   if (removeUnsupportedPseudoSelector(
@@ -297,11 +304,27 @@ export function handlePseudoNode(node: Node, index: number, context: TransformCo
     context.options,
     context.unsupportedPseudoClasses ?? getUnsupportedPseudoClassSet(context.options),
   )) {
-    return
+    return true
   }
 
   if (isRtlLanguageAnyPseudo(node)) {
     stripUnsupportedRtlLanguagePseudo(node)
+    return true
+  }
+
+  // 保留原 uni-app x 多分支拒绝资格，不能因后代裁剪而降为可接受的单分支。
+  if (node.value === ':where' && isUniAppXEnabled(context.options)) {
+    const parent = node.parent
+    if (isSelector(parent) && parent.parent && node.length > 0 && collectExpandedWhereBranches(node).length > 1) {
+      parent.remove()
+      return true
+    }
+  }
+  return false
+}
+
+export function rewritePseudoNode(node: Node, index: number, context: TransformContext, parent: Selector | undefined) {
+  if (node.type !== 'pseudo') {
     return
   }
 
@@ -318,5 +341,11 @@ export function handlePseudoNode(node: Node, index: number, context: TransformCo
 
   if (node.value === ':where') {
     flattenWherePseudo(node, context, index, parent)
+  }
+}
+
+export function handlePseudoNode(node: Node, index: number, context: TransformContext, parent: Selector | undefined) {
+  if (!prunePseudoNode(node, context)) {
+    rewritePseudoNode(node, index, context, parent)
   }
 }

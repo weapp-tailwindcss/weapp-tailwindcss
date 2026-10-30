@@ -79,20 +79,30 @@ export function handleTagOrAttribute(node: Node, context: TransformContext) {
   stripUnsupportedNodeForUniAppX(node, context.options)
 }
 
-export function handleSelectorNode(selector: Selector, context: TransformContext) {
+export function pruneSelectorNode(selector: Selector, context: TransformContext) {
   if (shouldRemoveUnsupportedPseudoElementSelector(selector, context.options)) {
     selector.remove()
-    return
+    return true
   }
 
   const unsupportedPseudoClasses = context.unsupportedPseudoClasses ?? getUnsupportedPseudoClassSet(context.options)
   const unsupportedPseudo = selector.nodes.find(node => node.type === 'pseudo' && unsupportedPseudoClasses.has(node.value))
   if (unsupportedPseudo) {
     removeUnsupportedPseudoSelector(unsupportedPseudo, context.options, unsupportedPseudoClasses)
-    return
+    return true
   }
 
+  return false
+}
+
+export function rewriteSelectorNode(selector: Selector, context: TransformContext) {
   if (transformSpacingSelector(selector.nodes, context.options)) {
     context.requiresSpacingNormalization = true
+  }
+}
+
+export function handleSelectorNode(selector: Selector, context: TransformContext) {
+  if (!pruneSelectorNode(selector, context)) {
+    rewriteSelectorNode(selector, context)
   }
 }
