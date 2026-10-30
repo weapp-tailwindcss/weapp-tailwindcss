@@ -1,4 +1,8 @@
 /*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fcomponents%2FHelloWorld.vue */
+@layer properties;
+@layer theme,base,components,utilities;
+@layer theme;
+@layer base;
  /*! tokens: hello-world-shell <= src/components/HelloWorld.vue */
 .hello-world-shell[data-v-04bcf89b] {
   display: flex;
@@ -9,7 +13,13 @@
   padding-inline: calc(var(--spacing, 0.25rem) * 4);
   padding-block: calc(var(--spacing, 0.25rem) * 3);
   color: var(--color-slate-700, oklch(37.2% 0.044 257.287deg));
-} /*! weapp-tailwindcss vite-generated-css-end:%3Cproject-root%3E%2Fsrc%2Fcomponents%2FHelloWorld.vue */
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
+@layer properties; /*! weapp-tailwindcss vite-generated-css-end:%3Cproject-root%3E%2Fsrc%2Fcomponents%2FHelloWorld.vue */
  /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue */
 .special-class-visual-probe.dark [class~='dark:bg-red-300'][data-v-51823732] {
   background-color: #fca5a5;
