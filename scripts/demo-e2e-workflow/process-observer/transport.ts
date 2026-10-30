@@ -2,7 +2,7 @@ import type { ObserverRequestDiagnostic } from './diagnostics'
 import type { ObserverLaunchOptions } from './launch-environment'
 import { spawn } from 'node:child_process'
 import { createObserverDiagnostics } from './diagnostics'
-import { observerInputRequest } from './input'
+import { readObserverInputEvent } from './input-event'
 import { resolveObserverLaunchEnvironment } from './launch-environment'
 import { createObserverReapWindow } from './reap-window'
 
@@ -135,12 +135,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
       try {
         const message = JSON.parse(line)
         if (message?.event !== undefined) {
-          if (message.event === 'request-line-received') {
-            const request = observerInputRequest(message, child.pid, pending)
-            if (Date.now() >= request.deadline) {
-              throw new Error(`身份采集器已读行超过本轮绝对截止：${command}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)
-            }
-            diagnostics.input(request.diagnostic)
+          if (readObserverInputEvent(message, child.pid, pending, diagnostics)) {
             boundary = buffer.indexOf('\n')
             continue
           }

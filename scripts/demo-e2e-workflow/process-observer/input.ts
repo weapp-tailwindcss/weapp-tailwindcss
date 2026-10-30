@@ -17,3 +17,28 @@ export function observerInputRequest<T extends { line: string }>(message: { pid?
   }
   return request
 }
+
+export const observerInputStages = [
+  'json-module-start',
+  'json-module-ready',
+  'json-parse-start',
+  'json-parsed',
+  'request-ack-serialize-start',
+  'request-ack-serialized',
+  'request-ack-write-start',
+  'request-ack-flushed',
+] as const
+
+export type ObserverInputStage = typeof observerInputStages[number]
+
+/** 输入失败以原生编码保留；JSON 模块不可用时也不得借用上轮请求或重复调用它。 */
+export function observerInputFailure(message: { stage?: unknown, error?: unknown }) {
+  if (!(observerInputStages as readonly unknown[]).includes(message.stage) || typeof message.error !== 'string') {
+    throw new Error('身份采集器输入失败缺少受管阶段或原始错误。')
+  }
+  const error = Buffer.from(message.error, 'base64')
+  if (!error.length || error.toString('base64') !== message.error) {
+    throw new Error('身份采集器输入失败不是完整的 Base64 原始错误。')
+  }
+  return error.toString('utf8')
+}

@@ -92,7 +92,9 @@ it.each(['target', 'observer', 'both', 'begin'] as const)('保留 %s 收尾失�
   }
   const source = (await prepareWatchIdentitySource(async () => observer))!
   if (kind === 'begin') {
-    observer.constrainShutdown.mockImplementation(() => { throw beginError })
+    observer.constrainShutdown.mockImplementation(() => {
+      throw beginError
+    })
   }
   const target = vi.fn(async () => {
     if (kind === 'target' || kind === 'both') {
@@ -110,7 +112,7 @@ it.each(['target', 'observer', 'both', 'begin'] as const)('保留 %s 收尾失�
   }
 })
 
-it('Windows Web 仅用热身份查询，在原 500ms 执行窗和 3 秒总窗内完成确认及宿主关闭', async () => {
+it('Windows Web 热身份查询只在总3秒停止窗末尾预留一次宿主回收', async () => {
   vi.useFakeTimers()
   Object.defineProperty(process, 'platform', { value: 'win32' })
   const observer = fixture()
@@ -142,12 +144,14 @@ it('Windows Web 仅用热身份查询，在原 500ms 执行窗和 3 秒总窗内
   })
   const start = Date.now()
   let completedAt = 0
-  const stopping = controller.stop().then(() => { completedAt = Date.now() })
+  const stopping = controller.stop().then(() => {
+    completedAt = Date.now()
+  })
   expect(controller.stop()).toBe(controller.stop())
   await vi.advanceTimersByTimeAsync(3000)
   await stopping
   expect(completedAt - start).toBe(1570)
-  expect(observer.subset.mock.calls.map(([, budget]) => budget)).toEqual([500, 500])
+  expect(observer.subset.mock.calls.map(([, budget]) => budget)).toEqual([1500, 500])
   expect(observer.close).toHaveBeenCalledExactlyOnceWith({ deadline: start + 3000 })
   expect(prepare).toHaveBeenCalledOnce()
   expect(kill).toHaveBeenCalledExactlyOnceWith(200, 'SIGTERM')
