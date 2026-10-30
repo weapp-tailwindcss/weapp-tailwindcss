@@ -1,0 +1,460 @@
+{
+  "description": "beb717a 的 PR Gate 四项首败在本地原样复现后修复；按职责拆分，不放宽行数、来源证明或缓存生命周期。",
+  "baseCommit": "beb717a4214d9fa932d40b283daf1b1e63c76c27",
+  "recordedAt": "2026-10-30T18:30:55.594159+00:00",
+  "source": {
+    "manifestSha256": "65d012535139e0370401ebb7cbc0f05b4edd76106d288b8eae64e356253b3a90",
+    "files": [
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/App.vue",
+        "sha256": "43b3473957ae9dbc7091f95af4c2e56df5bb585833693be748047ebf57bef25c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/HelloWorld.vue",
+        "sha256": "406d6b3f328949fe82593ab73d2ab9ad781810ebc512e7696fbb2ef0283018b9"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyExternal.vue",
+        "sha256": "4b60768ded78269df712309cbf127a3dd8cb99aa1412ba1ee9e12d53db536fbd"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyNoStyle.vue",
+        "sha256": "198f064898b8ce669145f19c66760b1ef47f6e331e68e61ef29b64509605a6c8"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyProbe.vue",
+        "sha256": "7431268287adc1c994a30d35582723000e44bf52d0c48e3693bc5017619a3880"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyScoped.vue",
+        "sha256": "7bc76764be6957d7e559dd76b31550ab7b01cdc515f59dd0dabede22dd8ad091"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/skyline-typography/external.css",
+        "sha256": "54d0107dcba445e683d5aa4cdead5ca1cef5c2fe0637e5825854ed677158427c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/main.css",
+        "sha256": "7355aaa99963e07d91a45457d9f561c45c84f92debd6229943d1fc24bd2bc5af"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/main.ts",
+        "sha256": "f061fc235dc666784f64c4d6a0f216f3f6f4a46f2ad15b8461ecc415ac556ec8"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/manifest.json",
+        "sha256": "eb6b69d76812e026588e7a49349d48c62a49b1f8164c8e37055785fbb04eaaec"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages.json",
+        "sha256": "cb85d981021114fab09253b1b5d9d9469095755046fb59d04d171ca1be93f3ed"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages/skyline-typography/skyline.vue",
+        "sha256": "533bba593fe897d8972fdb33a6843ee583329e31b354dd74a1dac83b28738c07"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages/skyline-typography/webview.vue",
+        "sha256": "ee7d8e51802a0150aa16643b3edac0592126f0f36d80dc0b08ce7b8663ad122a"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/run.mjs",
+        "sha256": "dfb4fffb7fa8dab5a374000ba931176609b3bec217363de7e084e6cb9bd88ab5"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/tailwind.config.cjs",
+        "sha256": "83c005347d5d0f2639b3ea6ddb549efb0b20103c7422988df2ac60660c76697c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/package.json",
+        "sha256": "4952dc8281074181fc0f08d2ee01c7590eb8e9b6da8d601d5d76b3704535d6f1"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/vite.config.ts",
+        "sha256": "0a7faac60219cdec4ab8545f92b7b149493f2c9cf93a8505a5cdae1918267447"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize-options.ts",
+        "sha256": "edcbe642c37b07ccb4181d1299cebe944c9bff15c11bbaed2eda2a442d7f0294"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize.ts",
+        "sha256": "4086c9da0026969cb8abbf306d9b49779dbace3fea460cf2b757e10b14184627"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/preflight.ts",
+        "sha256": "6d9c56add9ed53192efd05ac338530b95860323f2f8691824fcb4cdddd2a6917"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/prune-generated.ts",
+        "sha256": "b0979c66a5b6df4720c8232d32c572406d42d8d7237d14951d61ddc7db73a493"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/cleanup.ts",
+        "sha256": "a0635a90d314d2001e2dc5686f5ee7930e612ea54f5d71389ff097583fe4e05a"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/covered-rules.ts",
+        "sha256": "ee9ba73959f263d6b2cbe6554133d3af69a8d4cc5ae3ef4c87b1537c3993208b"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/generated-output.ts",
+        "sha256": "3b8646e5813dc441da03181863107f884d3af398288527dc2a3bcd7362fe68e4"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/skyline-typography.ts",
+        "sha256": "c585cf118fdd68b6b413d664015dec4e93d1ca8ac7f583d1c4f811ac251d03d8"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/directives/shared.ts",
+        "sha256": "ebff21de56771b51f288760172c6540cd7b1ade7ac0e40e05fa78547a1f57240"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/directives/source-analysis.ts",
+        "sha256": "05f329e8859995b1172695de30bd9d76fbf6c83d5865634b7e77a825a7f60efc"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/variables.ts",
+        "sha256": "1b56a048f4f40930c259a36e44043cbc72c4cc52856916fd8a6b95c78843754a"
+      },
+      {
+        "file": "packages/postcss/src/compat/webpack-css/preflight.ts",
+        "sha256": "14faa5d6787af4b7a1aaff838faa4ddf73534797dc8e4eed3e285f23df4c67e1"
+      },
+      {
+        "file": "packages/postcss/src/generator-plugin/index.ts",
+        "sha256": "f76a9647b45d3e0b1dbc9211a2d0b46228cb39872b24dd1456cfbb83fedf073a"
+      },
+      {
+        "file": "packages/postcss/src/handler.ts",
+        "sha256": "6893835eb149d9ffcb34d23f4c1886ec854600a9cf1d782862876e8cb74b48dd"
+      },
+      {
+        "file": "packages/postcss/src/mp.ts",
+        "sha256": "5e72ce2379014fdfeef6c764e3d9e4c2894b821ff8760a6521c2db1248158193"
+      },
+      {
+        "file": "packages/postcss/src/plugins/post.ts",
+        "sha256": "332deec67e9e8a9d9d48dc0d5fe4417d1ef4cf8298da00c1760fe62e73b02e4a"
+      },
+      {
+        "file": "packages/postcss/src/transform.ts",
+        "sha256": "ae2922aa1464b5984d2ab2479416024a1ecc4d36eda162e32b7efce207111f60"
+      },
+      {
+        "file": "packages/postcss/src/types.ts",
+        "sha256": "ae4db5d475253e721f571758b11fdd68f70d0c0db8f970658c7f6cadd5becc75"
+      },
+      {
+        "file": "packages/postcss/src/utils/generated-css-marker.ts",
+        "sha256": "0f6a2a53aa883356ca594e2182f4710831958e977ee628defcc7901e1f7ebbc5"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/gulp/shared/create-native-framework-plugins/file-transforms.ts",
+        "sha256": "6df900c0f031a8b13863d1cc23b35dbeaaa4764ec9bb6991e35e854f54e29516"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/final-assets.ts",
+        "sha256": "3e18ffc0e17eff771c17933e4ef47413e6d381f90c79f49c5c7663c97b092354"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/plugin.ts",
+        "sha256": "7c84b2f0e7d1852651bd16e39b2ca07adea2d83a49f04f372bd51768711b40c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-memory.ts",
+        "sha256": "36eaf669574bbd5e28748c38dd063fe08ea6fe9aedce843efd856936d1e658a0"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/index.ts",
+        "sha256": "1701f2f1804e1f6ed890c53a4e5eff0c8ee168f9066fddd7f511a99a0d26759e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/plugin-descriptors.ts",
+        "sha256": "e978c779d78e437e9dac98d1ca64b2c7f1a0f1876662d9dfb5b9e39980651e9d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/skyline-typography.ts",
+        "sha256": "c8daa0c7136cc4122c7479c9871ab8471467dc2592c021116c33ed52e986fd43"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/compiled-css-source.ts",
+        "sha256": "9520c1aec2a3e78c76375b771b8e6b66dd536bc762e01468363706053d8b6afb"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-cache-task.ts",
+        "sha256": "00ea568be24418a0a9e4eaef5b327186592ebbc3ca7a8600aaf182c8244ba92d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-composition-plan.ts",
+        "sha256": "45bb500d17216406c5529f796126261cdd0a624371fcb23ba34eabed47cc92d2"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-entry-processing.ts",
+        "sha256": "b148b5031c487e3f7eb08a8299e766e3ae7ed38ac37a14a1cfe2b7cf408d839f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-entry-transform.ts",
+        "sha256": "194d5cef86ab4b955003b88cd49db8a23cf10b7a71db64eec178a50bd38e3860"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-decision-plan.ts",
+        "sha256": "2ffbe0a00608c4198c2224016fb657edcc94b049a18223a3740d19a801521e72"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-result.ts",
+        "sha256": "8f4b1b4d469d58582207367d3c5a9d4db3d54be37d79f634fa16a06d6a831527"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-task.ts",
+        "sha256": "58e3782b78a0dcc488ff5e9f27b165ddb417a40e8ffcf5974a636af000828796"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/finalize/bundle.ts",
+        "sha256": "00501a1c3294c76fc66e43cf8f1788b738c04cd2afcda8d1deeb16d72f274443"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/generated-css-sources.ts",
+        "sha256": "808b4b127fd0ba7cabe1a2cdd8c08c1822b0de25cab962c8c346220ab056064f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/remembered-css-plan.ts",
+        "sha256": "cfda300fd11f5458bb29ba150dcf5a25867f639dbb3ba002d9c92c252291c6bc"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/remembered-css-replay.ts",
+        "sha256": "c222d89340009512741fa57c6c9b30a5de0e80ac2f4627d2c0ea5c772cd4dce3"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/remembered-css-replay/source-plan.ts",
+        "sha256": "2076b535b50db891c5da02b8573100b2933031d0684d1cc642ce74b7e22584cb"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/remembered-css-replay/types.ts",
+        "sha256": "172b73aaac9011526a57e9242b36a01a4bfc50c5ffb3fc445236b22b618b7c49"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/runtime-css-context.ts",
+        "sha256": "b7671f203ed425d46c086df3fde43c8a03f25f8716cca3232cc605f6b4e2fb16"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/runtime.ts",
+        "sha256": "1be3633587bdeef749af3066aa143d585ecbddf9751c1a9e7ed93c00c1c0239b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/sfc-style-source.ts",
+        "sha256": "07a0765c283187f0ca2852466ab1c925097b4e455c8b6e8e6c408f44a53821ed"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/transform-scheduling.ts",
+        "sha256": "55d76d389463f18afe58044105958621e2253612d7e930ed5f02e728e70da71d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/types.ts",
+        "sha256": "e0ab6aaec012ac50f169a588d17363c0186590c30b5b224a0ec0c35822889f38"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/collector.ts",
+        "sha256": "32b210f3022f3f42793cfc5b541c9ecbc9f5ee1bfee788695bdbadf63b861a0b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/coverage.ts",
+        "sha256": "e35d9c1d2a90834e315fbb98bc7ed4ed8ae11031154f852e4aad235c9dc53e2d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/injection-plan.ts",
+        "sha256": "ba82ac488c0c3793db9f166ef94e9a7ed9c810e60b0a9a97515918c45c74f912"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins-runtime.ts",
+        "sha256": "3d2290b74d34757d28a33ea6d0d23effc17b4fa0b2e7bb179113669d8783061a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins.ts",
+        "sha256": "83058830b98e8388a1dd62b10047402a5bcde8d1e5d4f6590c1b7c9ba9d8c888"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-assets.ts",
+        "sha256": "15d52d0235df08989be83099723ba8077e544ab6e6d5adc4fe57231cb02261ab"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-context.ts",
+        "sha256": "82b5f26446098859bf19fce09f6c168caf4ad67619f85449f471ae9bb1d480e0"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-generator.ts",
+        "sha256": "bd2dfc27faee5dc8625c39213870959523c70e1e4262a91c1d495849c3ca255b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-services.ts",
+        "sha256": "4006f8b40b6df3974cfac4243e84e678316a7ace287fca991527d98dedec394a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-skyline-typography.ts",
+        "sha256": "c641161fabe5b959921ec7d6783706f7d1aa81a2d5ccbc8e950ea7df8cddf3ed"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-strategy.ts",
+        "sha256": "0425cc7b47f580ff26d0e85becdc66c9fada324c85cda933474abac4eb6873c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets.ts",
+        "sha256": "0d808425b31bbd9c0cab97de43515a6a9d136a729042527241924145f2753d77"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/css-finalizers.ts",
+        "sha256": "b54eb7be264b6f454cf66197b2dba492b20fac4b78a907fc6591a4bb525d4e2f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/finalize.ts",
+        "sha256": "36928842ad39ef7122def725e444531932eff1db44e4a6fed033e32b154c9334"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/memory-trace.ts",
+        "sha256": "c1b7e1655fefb81f0e05725ca7cdaa7b0066f9db4817f8dbe7af3af3fa12ea4d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/compiler/compilation-change-coordinator.ts",
+        "sha256": "62e78437fad70ace8aa8b79797dca52ce08445a7e1549d3a3cfdbed0ebab8941"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/compiler/compilation-session-pool.ts",
+        "sha256": "e2c5fe801b6730062497c2c699eff8e293f1ba06dba10e1218f921c4c8efbf13"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/compiler/transform-services.ts",
+        "sha256": "12dc078293dea0a3e175c8f50c847894555e2589d1aaac11cde9fbf9f9241a15"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/compiler.ts",
+        "sha256": "54caef4764faf4788952c677566bc76cd41176e19fe2ee6576cade4a83a4966b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/skyline-typography.ts",
+        "sha256": "d12db199384bf1575565cec747f02ebba867f9d059490f7c019accf71ae387f7"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/style-options.ts",
+        "sha256": "16a4ea851058be1b309e305be1e2e88591895589fabce0744b8d7211d3bcabae"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/transforms.ts",
+        "sha256": "86f658d22c26674bde6663c014dc6d896ec01253c42188b5f4130862da30736f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/generation/generation-helpers/preflight.ts",
+        "sha256": "83c699d00129145e1a73512ed1584162913e09c89cb4f63b3fdef2e93ec5ac08"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/types/user-defined-options/general.ts",
+        "sha256": "30a0a3d25670bbe58530dafdc9b55e6200566b371e769bb2e2db4981a8efefeb"
+      }
+    ]
+  },
+  "failures": [
+    {
+      "job": 124222457257,
+      "cause": "两个生产 TypeScript 文件均为504行，超过既有500行门禁"
+    },
+    {
+      "job": 124222457003,
+      "cause": "来源复用正例缺少新增 hasCompiledGeneratorSource=true 证明"
+    },
+    {
+      "job": 124222456948,
+      "cause": "两个 as any 短路夹具缺少必填 normalizeViteCssCacheKey"
+    }
+  ],
+  "changes": [
+    "框架 CSS 上下文和策略装配归 runtime-css-context，保留调用顺序、惰性资产与转换时动态策略读取",
+    "replay 来源计划与类型独立成目录，保留入口重导出、来源保活和异步任务提交顺序",
+    "夹具补齐真实证明及缓存规范化，并验证 false/undefined 拒绝复用、跨平台多来源保活"
+  ],
+  "validation": [
+    {
+      "scope": "原失败及 replay/cache/deletion/planned-output",
+      "files": 8,
+      "tests": 81,
+      "result": "passed",
+      "log": "ci-beb717a-gate-fixed.log"
+    },
+    {
+      "scope": "目标、真实框架、生命周期和产物访问",
+      "files": 11,
+      "tests": 76,
+      "result": "passed",
+      "log": "ci-beb717a-context-refactor-integration.log"
+    },
+    {
+      "scope": "动态策略读取修正后的最终上下文及行数复验，含前述重复项",
+      "files": 5,
+      "tests": 24,
+      "result": "passed",
+      "log": "ci-beb717a-context-final.log"
+    },
+    {
+      "scope": "主包 strict tsc/build/tsd、ESLint、architecture、agents、diff",
+      "result": "passed"
+    },
+    {
+      "scope": "默认 demo 与独立 fixture static，禁止更新基线",
+      "files": 2,
+      "tests": 3,
+      "result": "passed",
+      "log": "ci-beb717a-gate-static.log"
+    }
+  ],
+  "cssOutput": {
+    "priorIdeRun": "c00d624f-47a5-49e1-8995-00addff98c0f",
+    "currentBuildCommand": "pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/uni-app-vite-tailwindcss-v4.test.ts e2e/skyline-typography-static.test.ts --update=none --coverage.enabled=false --maxWorkers=1",
+    "assets": [
+      {
+        "asset": "app.wxss",
+        "sha256": "fe80a0894da47bad56a4c5acc42b4bd138718989a0e4fabbbc4431a79f65549b",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "components/HelloWorld.wxss",
+        "sha256": "442728f3d9d2db56f3f66ae84726908b55608b2101ee0015cd7fe26df6a10756",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "components/SkylineTypographyExternal.wxss",
+        "sha256": "2d1550051a9a539bc97381522de50939444f73e1df9e8a411ab9d73092b2ea6f",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "components/SkylineTypographyNoStyle.wxss",
+        "sha256": "f57836b2b94ec77f124ad3339299883b033bb4f384f85febdef90106ecd32f6f",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "components/SkylineTypographyProbe.wxss",
+        "sha256": "97419f26b0466ad380438a2557d9ec08deeb03a597fcffcd4609e51560e1503d",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "components/SkylineTypographyScoped.wxss",
+        "sha256": "c18a00ddcd620c314c8de38e8aed602ae58f4ee2d9613ac0be9456982ffe3607",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "main.wxss",
+        "sha256": "6a9a6d4a92b9c7d93446aeb4e975bd774ac16aa6833be884cbd6bffad446d59f",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "pages/skyline-typography/skyline.wxss",
+        "sha256": "bd5a7ffa0dc0922973f97391880041721430edbf988c3530b89b7a6b2a65ce01",
+        "matchesPriorIde": true
+      },
+      {
+        "asset": "pages/skyline-typography/webview.wxss",
+        "sha256": "bd5a7ffa0dc0922973f97391880041721430edbf988c3530b89b7a6b2a65ce01",
+        "matchesPriorIde": true
+      }
+    ]
+  },
+  "ideBoundary": "未重新执行 IDE；旧22阶段来自 c00d624f-47a5-49e1-8995-00addff98c0f。此次重新构建的9个WXSS逐一同哈希，但旧83源码清单不作为新源码绑定。",
+  "mergeAcceptance": "性能正式门禁与独立 review 仍未满足，此记录不宣称全部通过或可合并。"
+}

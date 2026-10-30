@@ -319,3 +319,15 @@ Taro Webpack 两侧各完成 3 次构建 / 3 次 HMR，没有错误或缺失样�
 Mpx baseline 首轮修改完成后，源码已回滚，但输出 WXML 仍保留测量 marker，最终以 `hmr rollback 1 timeout 180000ms marker=twbench17933804111440` 退出。current 完成 3 次构建 / 3 次 HMR，仍不足以形成有效双侧结论，不拼接其他轮次基线。CLI 排除失败 baseline 后退出 0 并报告通过，不能据此宣称整轮性能通过。
 
 本地 Node 24 / macOS 不替代远端 Node 22 / Linux。新提交仍须完成全部实际适用 CI、完整有效的真实框架性能对照及独立 approving review 后才合并；本轮没有修改性能预算、超时或 runner。没有扩大为全仓本地全面验收。
+
+### beb717a 的质量门禁与诊断跟进
+
+[PR Gate run 41099032782](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41099032782) 的三个分片共有四项真实失败，均先用原测试在本地复现。两个生产文件达到 504 行，超过既有 500 行限制；来源复用正例未提供新增的完整编译证明，另两个短路夹具缺少必填缓存 key 规范化接口。此次按职责提取框架 CSS 上下文装配、replay 来源计划及类型，保留策略调用顺序、惰性资产访问和异步提交生命周期；夹具补齐真实接口，新增证明缺失时拒绝复用及跨平台多来源保活断言。未放宽行数、证明条件或缓存保活范围。
+
+本地首轮为 8 文件 81 项通过，框架与真实构建复验为 11 文件 76 项通过，最终上下文及行数复验为 5 文件 24 项通过（包含前述重复项）。主包 build、strict tsc、tsd、ESLint、architecture、agents 和 diff 检查通过；默认 demo 与独立 fixture 两入口共 3 项以 `--update=none` 通过。重新构建的 9 个 WXSS 与此前 IDE 运行逐一同哈希。新源码清单有 86 个文件，记录在 [ci-gate-followup-evidence.json](./assets/skyline-typography/ci-gate-followup-evidence.json)；没有重新执行 IDE，旧 83 文件清单不冒充新源码绑定。
+
+`beb717a` 的 [正式 Benchmark run 41099032762](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41099032762) 仍为有效失败。实际 PR merge `003e0d33638e8f56029ed7139275b92c72b7bb13` 与该 head 的树完全相同，两侧均完成 3 build / 3 HMR 且无执行错误。Mpx build peak / steady RSS 中位数分别为 1102.25 → 1212.82MiB（+10.03%）、1044.56 → 1149.64MiB（+10.06%）；Taro Vite HMR 插件中位数为 1309 → 1425ms（+8.86%），CSS task 为主要阶段增量。这些违例不能用 synthetic 的 78 case 成功替代。
+
+以 `beb717a` 为基线的本地单变量实验只移除指令字符串 LRU，保留无 `@` 快路。Mpx / Taro Vite 两侧各 3 build / 3 HMR 完整，但 Mpx build peak 仅降低 0.42%、Taro Vite HMR 插件中位数仅降低 1.41%，不足以支持该缓存为根因。实验源码已全部撤回，不提交猜测性性能修复。
+
+两个独立 `workflow_dispatch` 诊断均固定 `beb717a`、原基线 `35762afa58b7bdd665324e46e23011106d2727fb` 和 Node 22.23.4 / Linux，不作为正式预算验收。Taro [input run 41105184687](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41105184687) 取得完整的 3 次冷构建及 watch 8 阶段输入；Mpx [allocation run 41105163602](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41105163602) 未完成完整诊断：基线第 7 份栈映射的解码文档为 67,898,105 字节，超过原 64MiB 上限；当前侧 watch-stop 缺少活动候选 store。保留原始错误与已生成的证据，不扩大诊断预算、不为取样延长生产 store 生命周期，也不据诊断失败判定生产泄漏。正式性能阻断和独立 review 要求仍未解除。
