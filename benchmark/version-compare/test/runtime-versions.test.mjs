@@ -16,7 +16,7 @@ vi.mock('../scripts/source-diagnostics/verify.mjs', () => ({
 }))
 const temporary = []
 const sourcePrefix = 'benchmark/version-compare/scripts/source-diagnostics'
-const sourceHelpers = ['run', 'verify', 'prepare', 'inputs', 'files', 'command', 'git-source', 'runtime-versions', 'join-runtime'].map(name => `${sourcePrefix}/${name}.mjs`)
+const sourceHelpers = ['run', 'verify', 'prepare', 'inputs', 'package-inputs', 'files', 'command', 'git-source', 'runtime-versions', 'join-runtime'].map(name => `${sourcePrefix}/${name}.mjs`)
 const hmrPath = 'demo/weapp-vite-tailwindcss-v4/pages/index/index.wxml'
 const projectPath = 'demo/weapp-vite-tailwindcss-v4'
 const sha = value => value.repeat(40)

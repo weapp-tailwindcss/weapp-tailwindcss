@@ -47,7 +47,10 @@ it('固定 driver 与 Node，两侧版本通过数据输入，准备失败也保
   expect(initialization).toBeGreaterThan(0)
   expect(initialization).toBeLessThan(install)
   expect(job.steps.find(step => step.uses === 'actions/setup-node@v6').with).toMatchObject({ 'node-version': '22.23.4', 'check-latest': false })
-  expect(job.steps.find(step => step.name === 'Validate source diagnostic fixtures').run).toContain('benchmark/version-compare/test/source-diagnostics-attributes.test.mjs')
+  const fixtures = job.steps.find(step => step.name === 'Validate source diagnostic fixtures').run
+  for (const name of ['source-diagnostics-attributes', 'source-diagnostics-cli-inputs', 'taro-cpu-profile']) {
+    expect(fixtures).toContain(`benchmark/version-compare/test/${name}.test.mjs`)
+  }
   expect(job.env).toMatchObject({
     SOURCE_DIAGNOSTIC_BASE: `\${{ inputs.baseline_ref }}`,
     SOURCE_DIAGNOSTIC_CURRENT: `\${{ inputs.current_ref }}`,

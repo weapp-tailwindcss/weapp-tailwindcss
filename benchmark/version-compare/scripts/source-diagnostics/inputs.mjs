@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { assertDirectoryOwned, fileReceipt, fromLogical, inside, readBounded, walkFiles } from './files.mjs'
+import { assertDirectoryOwned, fileReceipt, fromLogical, inside, walkFiles } from './files.mjs'
+import { resolvePackageInput } from './package-inputs.mjs'
 
 export const kinds = Object.freeze({
   watch: {
@@ -14,6 +15,7 @@ export const kinds = Object.freeze({
     packages: ['weapp-tailwindcss', '@weapp-tailwindcss/postcss', '@tarojs/cli', '@tarojs/webpack5-runner', 'webpack'],
     sources: ['scripts/taro-build-runner.mjs'],
     binary: ['@tarojs/cli', 'taro'],
+    binarySpecifier: '@tarojs/cli/bin/taro',
   },
   runtime: {
     project: 'demo/weapp-vite-tailwindcss-v4',
@@ -22,60 +24,6 @@ export const kinds = Object.freeze({
     binary: ['weapp-vite', 'weapp-vite'],
   },
 })
-async function jsonFile(file) {
-  return JSON.parse((await readBounded(file)).toString('utf8'))
-}
-async function locatePackage(root, project, name, allowMissingEntry = false) {
-  const require = createRequire(path.join(project, 'package.json'))
-  let packageJson
-  try {
-    packageJson = require.resolve(`${name}/package.json`)
-  }
-  catch {
-    // 包导出可隐藏 package.json；仅在当前项目和本 role 根的真实 node_modules 入口定位。
-    for (const owner of [project, root]) {
-      const candidate = path.join(owner, 'node_modules', ...name.split('/'), 'package.json')
-      try {
-        await fs.access(candidate)
-        packageJson = candidate
-        break
-      }
-      catch (error) {
-        if (error.code !== 'ENOENT') {
-          throw error
-        }
-      }
-    }
-  }
-  if (!packageJson) {
-    throw new Error(`无法在当前 role 解析包：${name}`)
-  }
-  packageJson = await fs.realpath(packageJson)
-  if (!inside(root, packageJson)) {
-    throw new Error(`解析包借用了外部依赖：${name}`)
-  }
-  const data = await jsonFile(packageJson)
-  if (data.name !== name || typeof data.version !== 'string') {
-    throw new Error(`package 身份不符：${name}`)
-  }
-  let entry
-  try {
-    entry = require.resolve(name)
-  }
-  catch (error) {
-    if (name !== '@tarojs/cli' && !allowMissingEntry) {
-      throw error
-    }
-  }
-  return {
-    name,
-    version: data.version,
-    root: path.dirname(packageJson),
-    data,
-    packageJson,
-    entry,
-  }
-}
 export async function collectInputs(root, kind, sourceFiles) {
   const definition = kinds[kind]
   if (!definition) {
@@ -90,7 +38,7 @@ export async function collectInputs(root, kind, sourceFiles) {
       kind: category,
     })
     const previous = files.get(receipt.physical)
-    if (previous?.kind === 'dist' && category === 'package-entry') {
+    if (previous?.kind === 'dist' && ['package-entry', 'bin'].includes(category)) {
       return previous
     }
     files.set(receipt.physical, receipt)
@@ -134,16 +82,17 @@ export async function collectInputs(root, kind, sourceFiles) {
   const packages = []
   const located = new Map()
   for (const name of definition.packages) {
-    const item = await locatePackage(root, projectDirectory, name)
+    const item = await resolvePackageInput(root, projectDirectory, name, definition)
     located.set(name, item)
     const packageJson = await add(item.packageJson, 'package-json')
-    const entry = item.entry ? await add(item.entry, 'package-entry') : null
+    const entry = await add(item.entry, item.consumption.kind === 'cli-bin' ? 'bin' : 'package-entry')
     packages.push({
       name,
       version: item.version,
       packageJson,
       entry,
-      resolution: 'require-from-project',
+      resolution: item.resolution,
+      consumption: item.consumption,
     })
     const dist = path.join(item.root, 'dist')
     let distExists = true
@@ -174,19 +123,14 @@ export async function collectInputs(root, kind, sourceFiles) {
   if (definition.binary) {
     const [packageName, name] = definition.binary
     const item = located.get(packageName)
-    const relative = typeof item.data.bin === 'string' ? item.data.bin : item.data.bin?.[name]
-    if (typeof relative !== 'string') {
-      throw new TypeError(`包缺少真实业务 bin：${packageName}/${name}`)
-    }
-    const file = path.resolve(item.root, relative)
-    if (!inside(item.root, file) || !inside(item.root, await fs.realpath(file))) {
-      throw new Error('业务 bin 越过实际 package 根')
+    if (item.consumption.kind !== 'cli-bin' || item.consumption.name !== name) {
+      throw new Error('业务 bin 消费身份与固定 workload 不符')
     }
     binaries.push({
       name,
       packageName,
       packageJson: await add(item.packageJson, 'package-json'),
-      entry: await add(file, 'bin'),
+      entry: await add(item.entry, 'bin'),
     })
   }
   return {
@@ -199,7 +143,7 @@ export async function collectInputs(root, kind, sourceFiles) {
 }
 
 /** 安装完成后、执行构建前，先拒绝借用的依赖目录和实际 package/bin。 */
-export async function verifyInstalledOwnership(root, kind) {
+export async function verifyInstalledOwnership(root, kind, { allowBuildPending = false } = {}) {
   const definition = kinds[kind]
   const project = definition.project === '.' ? root : fromLogical(root, definition.project)
   const directories = new Set([path.join(root, 'node_modules'), path.join(root, 'node_modules', '.pnpm'), path.join(root, 'node_modules', '.bin'), path.join(project, 'node_modules'), path.join(project, 'node_modules', '.bin')])
@@ -213,16 +157,17 @@ export async function verifyInstalledOwnership(root, kind) {
       }
     }
   }
+  const packages = []
   for (const name of definition.packages) {
-    const item = await locatePackage(root, project, name, true)
-    if (item.entry && !inside(root, await fs.realpath(item.entry))) {
-      throw new Error('实际 package entry 借用外部文件')
-    }
-    if (definition.binary?.[0] === name) {
-      const binary = typeof item.data.bin === 'string' ? item.data.bin : item.data.bin?.[definition.binary[1]]
-      if (typeof binary !== 'string' || !inside(item.root, await fs.realpath(path.resolve(item.root, binary)))) {
-        throw new Error('实际业务 bin 缺失或越过 package 根')
-      }
-    }
+    const item = await resolvePackageInput(root, project, name, definition, { allowBuildPending })
+    packages.push({
+      name,
+      packageJson: item.packageJson,
+      consumption: item.consumption,
+      resolution: item.resolution,
+      entryStatus: item.entryStatus,
+      ...(item.entry ? { entry: item.entry } : { expectedEntry: item.expectedEntry }),
+    })
   }
+  return { project, packages }
 }

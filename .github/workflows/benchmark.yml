@@ -337,6 +337,7 @@ jobs:
         run: >
           pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs
           benchmark/version-compare/test/source-diagnostics.test.mjs
+          benchmark/version-compare/test/source-diagnostics-cli-inputs.test.mjs
           benchmark/version-compare/test/source-diagnostics-gitlinks.test.mjs
           benchmark/version-compare/test/source-diagnostics-attributes.test.mjs
           benchmark/version-compare/test/source-diagnostics-entry.test.mjs
@@ -345,6 +346,7 @@ jobs:
           benchmark/version-compare/test/source-diagnostics-workflow.test.mjs
           benchmark/version-compare/test/runtime-diagnostics.test.mjs
           benchmark/version-compare/test/taro-cpu-diagnostics.test.mjs
+          benchmark/version-compare/test/taro-cpu-profile.test.mjs
           benchmark/version-compare/test/watch-consumer.test.mjs
           --update=none --maxWorkers=1
       - name: Collect exact product source evidence

@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { describeCpuProfileTiming } from './cpu-profile.mjs'
 import { isInside, limits, prepareRequest, readBounded, sha256, taroProject } from './identity.mjs'
 import { runOwnedTaroProcess } from './process.mjs'
 
@@ -69,9 +70,7 @@ async function collectProfiles(output, pid) {
     throw new Error('缺少唯一、PID 与 thread=0 绑定的主进程 CPU profile')
   }
   const profile = JSON.parse(mainBytes.toString('utf8'))
-  if (!Array.isArray(profile.nodes) || !Array.isArray(profile.samples) || !Array.isArray(profile.timeDeltas) || !Number.isFinite(profile.startTime) || !Number.isFinite(profile.endTime) || profile.endTime < profile.startTime || profile.samples.length !== profile.timeDeltas.length || profile.timeDeltas.some(value => !Number.isFinite(value) || value < 0)) {
-    throw new Error('主进程 CPU profile 协议不完整')
-  }
+  const sampleTiming = describeCpuProfileTiming(profile)
   return {
     profiles,
     main: {
@@ -80,6 +79,7 @@ async function collectProfiles(output, pid) {
       endTimeUs: profile.endTime,
       samples: profile.samples.length,
       nodes: profile.nodes.length,
+      sampleTiming,
       scope: 'whole-main-process',
       includesExitObserver: true,
       processAssets: {

@@ -70,7 +70,7 @@ async function toolsFor(sourceRepository, injected) {
     })
   }
   const controllerSources = []
-  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'gitlinks.mjs', 'archive-attributes.mjs', 'source-bytes.mjs', 'inputs.mjs', 'verify.mjs']) {
+  for (const name of ['prepare.mjs', 'command.mjs', 'files.mjs', 'git-source.mjs', 'gitlinks.mjs', 'archive-attributes.mjs', 'source-bytes.mjs', 'inputs.mjs', 'package-inputs.mjs', 'verify.mjs']) {
     controllerSources.push(await fileReceipt(fileURLToPath(new URL(name, import.meta.url))))
   }
   return {
@@ -291,7 +291,7 @@ export async function prepareSourceDiagnostics(options) {
         roleStage = 'install'
         await run('install', managerExecutable, [...managerPrefix, 'install', '--frozen-lockfile'], root)
         await snapshotTracked(root, source, extracted.snapshot)
-        await verifyInstalledOwnership(root, options.kind)
+        role.installOwnership = await verifyInstalledOwnership(root, options.kind, { allowBuildPending: true })
         roleStage = 'build'
         await run('build-pkgs', managerExecutable, [...managerPrefix, 'run', 'build:pkgs'], root)
         await snapshotTracked(root, source, extracted.snapshot)

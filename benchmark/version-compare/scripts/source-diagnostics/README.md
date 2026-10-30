@@ -40,3 +40,7 @@ fixture 可注入 execute 模拟 pnpm，但仍使用真实 Git/tar。任何注�
 source 与 archive manifest 的 exportPolicy 必须完全一致，并绑定准确产品 commit/tree。text=auto 或未指定 text 的 CRLF 策略不模拟 Git 启发式，当前明确失败；-text 保留原始字节。符号链接目标始终使用原始 Git blob，不参与换行转换。
 
 属性查询使用 --all 的仅已定义清单；任何 filter、working-tree-encoding、export-subst、export-ignore、ident 或 legacy crlf 定义（包括显式 unset）都失败，避免 Git porcelain 把字面值 unspecified/unset 与状态哨兵混淆。
+
+package 消费身份按固定 kind 记录：weapp-vite 与 @tarojs/cli 使用 manifest bin，不解析或伪造 CJS 主入口；其它包使用实际项目 require.resolve。隐藏 package.json 只对 ERR_PACKAGE_PATH_NOT_EXPORTED 从本 role 依赖入口定位，模块配置错误不降级。安装阶段继续验证所有已安装入口，仅两个准确 workspace 源包声明的 ./dist/index.cjs 未生成时明确登记 installOwnership.build-pending；构建后与 before/checkpoint/after 均严格验证真实入口、完整 dist、bin 和 immutable 回执，不能沿用 build-pending。
+
+CLI 身份以固定 workload 的真实消费入口为准：runtime 记录 manifest 的 `weapp-vite` bin；Taro runner 固定解析并 require `@tarojs/cli/bin/taro`，必须与 manifest 的 `taro` bin 为同一所属实体，不能用另一个 bin 或 import-only 根导出代替。

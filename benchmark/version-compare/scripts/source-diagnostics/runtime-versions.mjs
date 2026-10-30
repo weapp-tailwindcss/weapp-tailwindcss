@@ -9,7 +9,7 @@ import { kinds } from './inputs.mjs'
 import { verifyDriverReceipt, verifyPreparedRole } from './verify.mjs'
 
 const sourcePrefix = 'benchmark/version-compare/scripts/source-diagnostics'
-const sourceDriverPaths = ['run', 'verify', 'prepare', 'inputs', 'files', 'command', 'git-source', 'runtime-versions', 'join-runtime'].map(name => `${sourcePrefix}/${name}.mjs`)
+const sourceDriverPaths = ['run', 'verify', 'prepare', 'inputs', 'package-inputs', 'files', 'command', 'git-source', 'runtime-versions', 'join-runtime'].map(name => `${sourcePrefix}/${name}.mjs`)
 const fullDriverPaths = [...new Set([...driverModulePaths, ...sourceDriverPaths])]
 const hmrSource = 'demo/weapp-vite-tailwindcss-v4/pages/index/index.wxml'
 const fileLimit = 16 * 1024 * 1024

@@ -24,6 +24,8 @@ const report = await runTaroCpuDiagnostics({
 
 每侧输出原始 stdout/stderr、CPU profiles、`loaded-cjs.json`；根输出 `taro-cpu-diagnostic.json`，包含原始文件 hash、同一 PID 的 identity、已完成/未启动 role 和首败。日志固定每流 8MiB，所有 profiles 合计 64MiB、最多64个；CJS manifest 8MiB，单侧证据96MiB，controller2MiB。超过上限即 incomplete；保存的日志前缀明确记录 discardedBytes 与 complete=false。超时仅清理该次子进程组（Windows 精确 PID tree），不会按进程名清理其它任务。POSIX 主进程 close 后仍检查自建进程组；同组后代未退出时保留 SIGTERM 宽限期后升级 SIGKILL，并有界确认组已消失，无法确认即 incomplete。正常主进程退出却留下同组后代也作为生命周期失败清理。
 
+原始 Node CPU profile 的 `timeDeltas` 可能含负值。采集结构完整与采样时间单调性分别记录：保留原始文件和 SHA，不排序、不钳位、不改写；主进程 `sampleTiming` 报告负值数量、最小时间差和 `monotonic`，不因负值单独判定证据截断。非整数或超出有符号 32 位范围的时间差、逐样本累计时间越出 profile 起止范围、长度不一致、缺少数组或非法起止时间仍是证据失败。采样时间或业务窗口未对齐的归因保持 `unknown`，不会用于正式性能放行。
+
 所有报告都必须含 `diagnosticOnly: true`、`budgetAcceptance: false`。CPU profile 覆盖整个主进程，包括启动、preload 和退出 observer 的文件哈希、序列化、写入开销。它不能称为 processAssets 热点；没有同次对齐窗口时，相关归因一律 `unknown`。退出时磁盘 hash 也不能证明字节正是最初加载时的源码。缺失 map 为 unavailable/unknown；现存越界、损坏或超限是证据失败。
 
 维护者应执行真实 Node fixture 后再接入独立诊断工作流；该入口本身不改变 run-ci 或正式预算。
