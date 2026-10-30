@@ -1,0 +1,13 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 49096e1336b1645db008316adf832bba6a9e9689..4cb5fa5dae6a2ad7794b0dd5f4956ca4bf2fcc69 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -128,7 +128,7 @@ export declare type pluginOptions = {
+     /**
+      * [Configure autoprefixer](https://github.com/postcss/autoprefixer#options)
+      */
+-    autoprefixer?: autoprefixer.Options;
++    autoprefixer?: autoprefixer.Options | false;
+     /**
+      * Enable or disable specific polyfills by ID.
+      * Passing `true` to a specific [feature ID](https://github.com/csstools/postcss-plugins/blob/main/plugin-packs/postcss-preset-env/FEATURES.md) will enable its polyfill,

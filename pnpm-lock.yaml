@@ -826,6 +826,7 @@ patchedDependencies:
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1': ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b
   '@tarojs/vite-runner@4.3.1': 12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2
   nitropack@2.13.5: 8c9b17900b85d8273758251dff670c1a9094879e7702cd42419e1ac1494a4dcf
+  postcss-preset-env@11.6.1: 3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3
   rollup@3.30.0: 02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9
   rollup@4.65.1: 3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf
   watchpack@2.6.3: fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77
@@ -1197,7 +1198,7 @@ importers:
         version: 8.2.1(@rspack/core@2.2.9(@swc/helpers@0.5.23))(postcss@8.5.32)(typescript@6.0.3)(webpack@5.112.2)
       postcss-preset-env:
         specifier: catalog:postcssUtilities
-        version: 11.6.1(postcss@8.5.32)
+        version: 11.6.1(patch_hash=3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3)(postcss@8.5.32)
       postcss-scss:
         specifier: ^4.0.9
         version: 4.0.9(postcss@8.5.32)
@@ -5148,7 +5149,7 @@ importers:
         version: 6.0.1(jiti@2.7.0)(postcss@8.5.32)(tsx@4.23.15)(yaml@2.9.1)
       postcss-preset-env:
         specifier: catalog:postcssUtilities
-        version: 11.6.1(postcss@8.5.32)
+        version: 11.6.1(patch_hash=3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3)(postcss@8.5.32)
       postcss-pxtrans:
         specifier: catalog:postcssCompat
         version: 1.1.0(postcss@8.5.32)
@@ -49794,7 +49795,7 @@ snapshots:
       lru-cache: 11.5.3
       postcss: 8.5.32
       postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.32)(tsx@4.23.15)(yaml@2.9.1)
-      postcss-preset-env: 11.6.1(postcss@8.5.32)
+      postcss-preset-env: 11.6.1(patch_hash=3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3)(postcss@8.5.32)
       postcss-pxtrans: 1.1.0(postcss@8.5.32)
       postcss-rem-to-responsive-pixel: 7.0.9(postcss@8.5.32)
       postcss-rule-unit-converter: 0.2.6(postcss@8.5.32)
@@ -63903,7 +63904,7 @@ snapshots:
       postcss-replace-overflow-wrap: 4.0.0(postcss@8.5.32)
       postcss-selector-not: 8.0.1(postcss@8.5.32)
 
-  postcss-preset-env@11.6.1(postcss@8.5.32):
+  postcss-preset-env@11.6.1(patch_hash=3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3)(postcss@8.5.32):
     dependencies:
       '@csstools/postcss-alpha-function': 2.0.16(postcss@8.5.32)
       '@csstools/postcss-cascade-layers': 6.0.2(postcss@8.5.32)
