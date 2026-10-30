@@ -5,8 +5,8 @@
 从仓库根目录运行：
 
 ```sh
-pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 build:skyline-typography
-pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 dev:skyline-typography
+pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 skyline-typography:build
+pnpm --filter @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4 skyline-typography:dev
 ```
 
 产物分别位于 demo 的 `dist/skyline-typography/build/mp-weixin` 和 `dist/skyline-typography/dev/mp-weixin`。在已登录的微信 IDE 中导入对应项目，分别打开 `pages/skyline-typography/webview`、`pages/skyline-typography/skyline`；按钮用于覆盖、清除字体变量及切换工具类和主题。

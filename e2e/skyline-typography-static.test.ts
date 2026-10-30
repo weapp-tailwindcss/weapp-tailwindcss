@@ -10,7 +10,7 @@ it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初
   const root = fileURLToPath(new URL('../demo/uni-app-vite-tailwindcss-v4', import.meta.url))
   const input = path.join(root, 'fixtures', 'skyline-typography')
   const output = path.join(root, 'dist', 'skyline-typography', 'build', 'mp-weixin')
-  await execa('pnpm', ['run', 'build:skyline-typography'], { cwd: root, env: { NODE_ENV: 'production' } })
+  await execa('pnpm', ['run', 'skyline-typography:build'], { cwd: root, env: { NODE_ENV: 'production' } })
   const read = (name: string) => readFile(path.join(output, name), 'utf8')
   const app = JSON.parse(await read('app.json'))
   const project = JSON.parse(await read('project.config.json'))

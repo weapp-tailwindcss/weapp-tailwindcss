@@ -256,3 +256,11 @@ H5、支付宝仅做构建产物验证，不推定其运行时语义。实现阶
 最终本地对照命令为 `pnpm perf:guard -- --baseline-ref 35762afa58b7bdd665324e46e23011106d2727fb --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30 --only demo-uni-app-vite-tailwindcss-v4__mp-weixin --result-dir e2e/.artifacts/skyline-implementation/local-benchmark-final-settled`。当前实现完成三次构建（插件 1503 / 877 / 901ms）及三次真实 HMR（插件 195 / 75 / 73ms），基线在首轮修改超时，故没有有效的两侧对照，性能结论仍待验证。报告将基线失败排除后显示通过，不能据此宣称性能门禁已经通过，也不将当前实现的单侧数据与此前不同负载的基线拼接。最新提交推送后继续核对远端的有效对照及全部检查；未满足前不合并。
 
 收尾时主包构建、tsd、ESLint、`pnpm architecture:check`、`pnpm agents:check` 和 `git diff --check` 均通过，benchmark runner 定向回归为 2 文件 11 项通过。本地性能子进程已正常退出，没有遗留本轮 IDE 项目或临时浏览器资源。
+
+### 独立入口命名复验
+
+提交 `ac4755e6babaa1112184600c6022e66c02d880fc` 的 Demo Watch Diagnostic 在执行真实矩阵前失败，原因是目录检查将 `build:skyline-typography` 当成未注册的平台。专属入口现使用 `skyline-typography:build` / `skyline-typography:dev` 命名空间，同步对应 prehook、IDE/static 调用及 README，保持既有平台目录的完整性检查。现有 `matrix.test.mjs` 9 项通过，新的构建命令在 `--update=none` 下通过 fixture static，产物基线无变化。
+
+同一提交的 Agent Workflow Contract 两个已创建任务均成功，最终 gate 未创建；工作流页面报告 `Internal server error. Correlation ID: de1fb85f-03c7-4564-8bfd-8a4c971d60a2`。这是 Actions 基础设施失败，不修改代码或门禁规避。入口更名后会由新提交自动触发该工作流，不额外重跑过时 head。
+
+此次更名不修改编译器、插件、Vite 配置或复现组件。`followup-evidence.json` 仍保存原运行的准确源码清单；其中仅 demo 的 `package.json` 因四个脚本名称变化而与后续提交不同，其余 70 个文件摘要一致，不能将历史记录改写成再次执行了 IDE。
