@@ -7,6 +7,7 @@ import postcss from 'postcss'
 import { signalToCacheKey } from './content-probe'
 import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
 import { createStylePipeline } from './pipeline'
+import { getPresetInsertionCacheState } from './preset-insertion-cache-policy'
 import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 
 function createProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
@@ -82,8 +83,12 @@ export class StyleProcessorCache {
   }
 
   getPipeline(options: IStyleHandlerOptions, signal?: FeatureSignal) {
+    const insertions = getPresetInsertionCacheState(options.cssPresetEnv)
+    if (insertions.key === undefined) {
+      return createStylePipeline(options, signal)
+    }
     const optionsKey = this.createProcessorCacheKey(options)
-    const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
+    const compositeKey = this.createCompositeCacheKey(`${optionsKey}|${insertions.key}`, signal)
     return this.getPipelineByKey(compositeKey, options, signal)
   }
 
@@ -116,8 +121,12 @@ export class StyleProcessorCache {
   }
 
   getProcessor(options: IStyleHandlerOptions, signal?: FeatureSignal) {
+    const insertions = getPresetInsertionCacheState(options.cssPresetEnv)
+    if (insertions.key === undefined) {
+      return postcss(createStylePipeline(options, signal).plugins)
+    }
     const optionsKey = this.createProcessorCacheKey(options)
-    const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
+    const compositeKey = this.createCompositeCacheKey(`${optionsKey}|${insertions.key}`, signal)
 
     let processor = this.processorCacheByKey.get(compositeKey)
     if (!processor) {
