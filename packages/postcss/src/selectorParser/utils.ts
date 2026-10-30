@@ -37,6 +37,10 @@ export function composeIsPseudoAst(strs: string | string[]): Node[] {
       value: strs,
     }))
   }
+  const first = strs[0]
+  if (first === undefined) {
+    throw new RangeError('Selector replacement must contain at least one selector')
+  }
   if (strs.length > 1) {
     return mklist(psp.pseudo({
       value: ':is',
@@ -48,7 +52,7 @@ export function composeIsPseudoAst(strs: string | string[]): Node[] {
     }))
   }
   return mklist(psp.tag({
-    value: strs[0],
+    value: first,
   }))
 }
 
