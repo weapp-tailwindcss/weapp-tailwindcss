@@ -590,11 +590,11 @@ wx-button {
 }
  /*! tokens: rounded-[20rpx] <= src/pages/index/index.tsx */
 .rounded-\[20rpx\] {
-  border-radius: 0.625rem;
+  border-radius: 0.5rem;
 }
  /*! tokens: rounded-[28rpx] <= src/pages/index/index.tsx */
 .rounded-\[28rpx\] {
-  border-radius: 0.875rem;
+  border-radius: 0.7rem;
 }
  /*! tokens: rounded-full <= src/pages/index/index.tsx */
 .rounded-full {
@@ -756,7 +756,7 @@ wx-button {
 }
  /*! tokens: px-[29rpx] <= src/pages/index/index.tsx */
 .px-\[29rpx\] {
-  padding-inline: 0.90625rem;
+  padding-inline: 0.725rem;
 }
  /*! tokens: px-[48px] <= src/pages/index/index.tsx */
 .px-\[48px\] {
@@ -776,23 +776,23 @@ wx-button {
 }
  /*! tokens: py-[24rpx] <= src/pages/index/index.tsx */
 .py-\[24rpx\] {
-  padding-block: 0.75rem;
+  padding-block: 0.6rem;
 }
  /*! tokens: text-[26rpx] <= src/pages/index/index.tsx */
 .text-\[26rpx\] {
-  font-size: 0.8125rem;
+  font-size: 0.65rem;
 }
  /*! tokens: text-[31rpx] <= src/pages/index/index.tsx */
 .text-\[31rpx\] {
-  font-size: 0.96875rem;
+  font-size: 0.775rem;
 }
  /*! tokens: text-[55rpx] <= src/pages/index/index.tsx */
 .text-\[55rpx\] {
-  font-size: 1.71875rem;
+  font-size: 1.375rem;
 }
  /*! tokens: text-[100rpx] <= src/pages/index/index.tsx */
 .text-\[100rpx\] {
-  font-size: 3.125rem;
+  font-size: 2.5rem;
 }
  /*! tokens: text-[#123456] <= src/pages/index/index.tsx */
 .text-\[\#123456\] {
@@ -3432,9 +3432,6 @@ page {
 }
 .nut-switch-disabled-close {
   background-color: var(--nutui-switch-inactive-disabled-background-color, var(--nutui-color-background, #f2f3f5));
-}
-.nut-swiper-item {
-  height: 100%;
 }
 .nut-swiper {
   width: 100%;
@@ -13089,7 +13086,7 @@ abc {
   -ms-flex-align: center;
   align-items: center;
   gap: calc(var(--spacing) * 2);
-  border-radius: 0.625rem;
+  border-radius: 0.5rem;
   --tw-gradient-position: to right;
   background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
@@ -13101,11 +13098,11 @@ abc {
     var(--tw-gradient-from) var(--tw-gradient-from-position),
     var(--tw-gradient-to) var(--tw-gradient-to-position)
   );
-  padding-inline: 0.5625rem;
-  padding-block: 0.3125rem;
+  padding-inline: 0.45rem;
+  padding-block: 0.25rem;
   --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
-  font-size: 0.8125rem;
+  font-size: 0.65rem;
   color: var(--color-white);
 }
 page {

@@ -44,6 +44,14 @@ Webpack 样例还纠正了作者 CSS 的源顺序：统一单位后，card/loadi
 
 四个 Taro Web 项目使用 `CI=1 E2E_PROJECT_FILTER='^taro-(vite|webpack)-(react|vue3)-tailwindcss-v4$' E2E_GENERATOR_PLATFORM_FILTER='^web$' E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/apps-generator-mode-compare.test.ts -u` 定向重生成；审查后将 `-u` 改为 `--update=none` 复验，11 项通过。小程序和其他项目基线未更新。
 
+### 紧凑模式必须单独同步
+
+后续准确 head `e159fe9c497a3fd4c4b1e6ce1e1c72403738999f` 的普通 CI 在 Taro Webpack React `web-compact` 基线失败：实际产物已按框架除以 40 换算，紧凑模式基线仍保留除以 32 的旧值。此前仅筛选 `^web$`，遗漏了独立的 `web-compact` 目标。串行构建在首个断言处停止，其余三个紧凑模式不能因此视为已验通过。
+
+本地 Node 24.22.1 与 CI Node 22.23.4 的该目标五份正规化 CSS 全量字节及 SHA256 相同，稳定复现总字节数 443880 → 443764。四个 Taro 紧凑模式限定重生成后的差异与普通 Web 已审查的单位、作者顺序和重复规则去重一致；选择器、文件集合和兼容性指标保留。四个目标总字节分别减少 116、80、153、6，不把这些变化解释成无语义的大小漂移。
+
+定向命令沿用上述项目过滤，将平台过滤改为 `E2E_GENERATOR_PLATFORM_FILTER='^web-compact$'`；`-u` 生成后审查 CSS 与汇总报告，再使用 `--update=none` 复验，11 项通过。Web 单位流程变化必须同时盘点普通与紧凑模式，不能用一种模式的证据覆盖另一种模式。
+
 ## 适用边界
 
 这些定向证据不代表本地全面验收完成。宿主文件事件服务恢复后，仍须重新执行全端预检、当前会话 computer use、verify 和全面入口。远端 CI 与部署也须绑定更新后的准确 SHA。
