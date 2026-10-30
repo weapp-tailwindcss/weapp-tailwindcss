@@ -2628,6 +2628,7 @@ wx-root-portal-content {
 .nut-input--disabled {
   color: var(--nut-input-disabled-color, #c8c9cc) !important;
 }
+.nut-input--error,
 .nut-input--error::-webkit-input-placeholder {
   color: var(--nut-input-required-color, var(--nut-required-color, #fa2c19));
   -webkit-text-fill-color: var(--nut-input-required-color, var(--nut-required-color, #fa2c19));

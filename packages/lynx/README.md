@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 The current adapter version is `0.4.4`. The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
-The repository fixture pins `@lynx-js/rspeedy` `0.17.2`, `@lynx-js/react-rsbuild-plugin` `0.20.2`, `@lynx-js/react` `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
+The repository fixture pins `@lynx-js/rspeedy` `0.18.3`, `@lynx-js/react-rsbuild-plugin` `0.22.0`, `@lynx-js/react` `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
 ## Configure
 
@@ -113,6 +113,6 @@ pnpm e2e:lynx:update
 
 CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The committed native baseline records `verifiedAt: 2026-10-21T18:49:50.413Z` and `catalogHash: ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`. Its Android report is from `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a), and its iOS report is from `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-10-28T14:07:32.687Z` and `catalogHash: 0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.

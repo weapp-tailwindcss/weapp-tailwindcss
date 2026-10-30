@@ -43,3 +43,7 @@ PR #1316 的 [Windows Node 24 检查](https://github.com/weapp-tailwindcss/weapp
 ## 规则评估
 
 不新增规则，沿用构建图取证和回归先行要求。
+
+## 后续依赖边界修复
+
+PR #1320 的升级在 Watchpack 2.6.3 的默认 macOS rescan 再次复现伪删除；现代 Webpack 与 Taro 都受影响。后续改为在 webpack-virtual-modules 的实际输入文件系统边界识别仍存在的虚拟文件，polling 回归因此转为正向验收；历史失败结论不作为新补丁的测试预期。根因、真实物理删除/恢复及补丁移除条件见[虚拟文件监听存在性复盘](virtual-watch-fs-ownership.md)。

@@ -125,16 +125,30 @@ test('canonical origin 保留初始 config 与下一任务 SPA page_path、page_
   expect(requests.filter(url => new URL(url).pathname === '/hm.gif')).toHaveLength(1)
 })
 
-test('canonical 来源跟随 next 配置，SSR 导入不要求 DOM', async ({ page }) => {
+test('正式 canonical 配置包含路径时按 origin 启用统计，SSR 导入不要求 DOM', async ({ page }) => {
+  const configured = await createAnalyticsFixture('https://tw.weapp.dev/docs/configured-path')
+  expect(() => runInNewContext(configured.runtime)).not.toThrow()
+  const requests = await installFixture(page, configured.html)
+  await page.goto('https://tw.weapp.dev/another/path', { waitUntil: 'load' })
+  await expect.poll(() => requests.filter(url => new URL(url).pathname === '/g/collect').length).toBe(1)
+  expect(requests).toContain('https://www.googletagmanager.com/gtag/js?id=G-S81Q4GRTPM')
+})
+
+test('next canonical 配置在正式域与 next 域均不加载或上报统计，保留业务脚本与路由', async ({ page }) => {
   const next = await createAnalyticsFixture('https://next.tw.weapp.dev/docs/configured-path')
   expect(() => runInNewContext(next.runtime)).not.toThrow()
   const requests = await installFixture(page, next.html)
-  await page.goto('https://tw.weapp.dev/docs/analytics-fixture', { waitUntil: 'load' })
-  expect(requests.filter(url => analyticsHosts.has(new URL(url).hostname))).toEqual([])
-  requests.length = 0
-  await page.goto('https://next.tw.weapp.dev/another/path', { waitUntil: 'load' })
-  await expect.poll(() => requests.filter(url => new URL(url).pathname === '/g/collect').length).toBe(1)
-  expect(requests).toContain('https://www.googletagmanager.com/gtag/js?id=G-S81Q4GRTPM')
+  for (const origin of ['https://tw.weapp.dev', 'https://next.tw.weapp.dev']) {
+    requests.length = 0
+    await page.goto(`${origin}/docs/analytics-fixture`, { waitUntil: 'load' })
+    await updateRoute(page, '/another/path?preview=1#heading', '/docs/analytics-fixture')
+    expect(requests.filter(url => analyticsHosts.has(new URL(url).hostname)), origin).toEqual([])
+    expect(await page.locator('link[rel="preconnect"]').count()).toBe(0)
+    expect(await page.locator('script[src]').evaluateAll(scripts => scripts.map(script => new URL((script as HTMLScriptElement).src).hostname))).toEqual(['business.example.test'])
+    expect(await page.evaluate(() => (window as AnalyticsFixtureWindow).analyticsFixtureBusinessReady)).toBe(true)
+    expect(await page.evaluate(() => typeof (window as AnalyticsFixtureWindow).gtag)).toBe('function')
+    expect(await page.evaluate(() => (window as AnalyticsFixtureWindow).dataLayer)).toEqual([])
+  }
 })
 
 test('协议边界在无 HSTS 的保留域同样拒绝 HTTP 运行来源', async ({ page }) => {

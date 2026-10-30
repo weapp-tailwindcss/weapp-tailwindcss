@@ -1,0 +1,317 @@
+{
+  "version": 1,
+  "manifestSha256": "e3a2d4ef11b449a0f0874b124ca5be0f65a45e5b35d034ea98eb4727e159431b",
+  "reviewer": "Codex 主代理逐区域实审",
+  "notes": "本轮1204张三引擎截图采集通过，602项为合同登记的既有跳过，零失败和重试。与已验真历史基线比较1191张字节相同，13张不同；主代理逐一查看22个变化区域的44份前后PNG。8张为中英Lynx文档verifiedAt、catalogHash、双端设备元数据及伴随局部排版变化；其余5张仅边缘或图片的细微栅格差异，已使用生产Playwright comparator和既有maxDiffPixels=5全部通过，未修改threshold。来源验证不能代替安装后禁止更新的实际比较，该比较另行执行。",
+  "reviewedAt": "2026-10-21T19:56:33.347Z",
+  "evidence": [
+    {
+      "file": "review-1.png",
+      "bytes": 47082,
+      "sha256": "c85178ed58803fbb1c68455ecf0a34c7b52e60ae96abacabf45f40e965b80b89",
+      "width": 1280,
+      "height": 200
+    },
+    {
+      "file": "review-2.png",
+      "bytes": 48092,
+      "sha256": "67eb1ecf19c94bf8b81e74d71b75c7847454817149fe4c304121141ebc3afcd6",
+      "width": 1280,
+      "height": 200
+    },
+    {
+      "file": "review-3.png",
+      "bytes": 68709,
+      "sha256": "0cd20d1c0922273e9babaaa2e80237eac7b5ca02eadccd48442d641d6b997a18",
+      "width": 1280,
+      "height": 358
+    },
+    {
+      "file": "review-4.png",
+      "bytes": 69316,
+      "sha256": "cc54a913661fe99dd640fe77b54df53bad6857ed0bae58e158dedbe11cdb2c6d",
+      "width": 1280,
+      "height": 358
+    },
+    {
+      "file": "review-5.png",
+      "bytes": 15945,
+      "sha256": "29a6117de93664bcc6b22ea4b56fda1b01b0c93850e3d6b2b20f5bd33baf3914",
+      "width": 1280,
+      "height": 113
+    },
+    {
+      "file": "review-6.png",
+      "bytes": 15944,
+      "sha256": "6fa526c1cd2300d25e09e3d690b85c2f3b80aa53a9db5fb3f2f9bf957d5b91da",
+      "width": 1280,
+      "height": 113
+    },
+    {
+      "file": "review-7.png",
+      "bytes": 9621,
+      "sha256": "842be8880c9e9d55a5b53a10891caf831cc320743ba20530ef415b194e4d70d0",
+      "width": 1280,
+      "height": 109
+    },
+    {
+      "file": "review-8.png",
+      "bytes": 9615,
+      "sha256": "d23ec0a4bdb5df12014cc63e6ff0a96cd413c66d65ecf87ef0262082f94a62bc",
+      "width": 1280,
+      "height": 109
+    },
+    {
+      "file": "review-9.png",
+      "bytes": 12488,
+      "sha256": "cca7d5bf04c696ea2ed6f60ec9b9e8bb7b59d24fc7fe11f09ad31a54e83814d3",
+      "width": 1280,
+      "height": 174
+    },
+    {
+      "file": "review-10.png",
+      "bytes": 12538,
+      "sha256": "75ad0b96b4968bac46ead49a84016922f72b472ef9c68a041e0a85b431fa17de",
+      "width": 1280,
+      "height": 174
+    },
+    {
+      "file": "review-11.png",
+      "bytes": 73090,
+      "sha256": "3532ebfae0508e1f6f6223e45d2db51fb1880e174739c4fdec0915e8e44b37e7",
+      "width": 1280,
+      "height": 385
+    },
+    {
+      "file": "review-12.png",
+      "bytes": 74228,
+      "sha256": "8ea8e6abfae2a53546655a7e4de660720be345aaac600f2239f73521de0f9974",
+      "width": 1280,
+      "height": 385
+    },
+    {
+      "file": "review-13.png",
+      "bytes": 15654,
+      "sha256": "649ac671f351540a082219fc82f92512fba356d546103c7425288d20501b1e1f",
+      "width": 1280,
+      "height": 203
+    },
+    {
+      "file": "review-14.png",
+      "bytes": 15649,
+      "sha256": "51bd44dcb11ab58a0fec65e4463cc8be92e0851909ae7895a843c6688ff3fd81",
+      "width": 1280,
+      "height": 203
+    },
+    {
+      "file": "review-15.png",
+      "bytes": 11256,
+      "sha256": "96b142d9529567838759cd41ee8b633d96e762e1eb3094a70d5e9f4d4436dc14",
+      "width": 1280,
+      "height": 98
+    },
+    {
+      "file": "review-16.png",
+      "bytes": 11249,
+      "sha256": "264a8354e517ed848229c575833c2c91b5229b9b99d04aadae782c29fb37bd0c",
+      "width": 1280,
+      "height": 98
+    },
+    {
+      "file": "review-17.png",
+      "bytes": 12545,
+      "sha256": "33605553c0c9e2d4bcd4825fc6e7819867cbd156f058e54ef839e31fb35f82e1",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-18.png",
+      "bytes": 12561,
+      "sha256": "ccab892a96f67a2d21e4ba58affa46fa7b89eb8ff04b1bf38b3beef2fccd97ea",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-19.png",
+      "bytes": 9082,
+      "sha256": "ba5f7ff52445a197fe6d0a3656eff19308c880c78da485b69753a1f37cb79712",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-20.png",
+      "bytes": 9100,
+      "sha256": "3b5738003a127d9c2cb73f6787693219a7cc8fba84f86645fd063a588ea7dade",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-21.png",
+      "bytes": 11155,
+      "sha256": "c4245e0b4718080bc22228c7d2d2aad764fb47002b0cb861f04b639316b5dd43",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-22.png",
+      "bytes": 11173,
+      "sha256": "f6a712c196a0bb189eec11d736aa7f5cb882bd00d8adb8f3c6381e6c6ca7b7c7",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-23.png",
+      "bytes": 20968,
+      "sha256": "691e7a60c28716e02066cd1910f81fe1a49ae95b93facd81e48ac30b8d46e558",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-24.png",
+      "bytes": 20988,
+      "sha256": "508efb0bb4d3cf6c5a83dd15c70f040e9f0d9199737a771b1f167ad7811a36cb",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-25.png",
+      "bytes": 12859,
+      "sha256": "1d1cd7842a71367cfd9a70f450c48ad211e5962c5476e9e90af853a07c17502a",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-26.png",
+      "bytes": 12874,
+      "sha256": "527a0b7c83c7794c4e5c9dd6f5e0a3dd55440a2d0365c0e57bfbe6133e3931e0",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-27.png",
+      "bytes": 56719,
+      "sha256": "a6eae3f7108e1aeb9ff360491624e14b3fed65684a68ed9fb91f7dbff4f067d0",
+      "width": 1280,
+      "height": 199
+    },
+    {
+      "file": "review-28.png",
+      "bytes": 57083,
+      "sha256": "f53595f2286a32a9a6c39371c5348edcb03012c26d109bcb1c778727912011d5",
+      "width": 1280,
+      "height": 199
+    },
+    {
+      "file": "review-29.png",
+      "bytes": 56920,
+      "sha256": "26b9c3452e51952b4a649091f2ae9e621c6d84587f6895a088eb3c398c36be17",
+      "width": 1280,
+      "height": 202
+    },
+    {
+      "file": "review-30.png",
+      "bytes": 57138,
+      "sha256": "72b274805adedbe6cab4f8fdc217b8bbf6b49810804aaa54e7d620d770d3cdfb",
+      "width": 1280,
+      "height": 202
+    },
+    {
+      "file": "review-31.png",
+      "bytes": 56467,
+      "sha256": "95073921597829be7c078b50777566d7d1f487711130138456ecebd1f39e1d92",
+      "width": 1280,
+      "height": 201
+    },
+    {
+      "file": "review-32.png",
+      "bytes": 57245,
+      "sha256": "6153b276d77cf4254d189995725fc13c0cf4299223c15380de13a4d7a2c153db",
+      "width": 1280,
+      "height": 201
+    },
+    {
+      "file": "review-33.png",
+      "bytes": 111180,
+      "sha256": "544573c96703edd30029e5f297f39c50393732bda3a4c5c54cae0c556a817e25",
+      "width": 1280,
+      "height": 268
+    },
+    {
+      "file": "review-34.png",
+      "bytes": 111336,
+      "sha256": "d5c98687d2d737285d2b142442d37232256ee61d1f49b66e68d0aa384e48cd9a",
+      "width": 1280,
+      "height": 268
+    },
+    {
+      "file": "review-35.png",
+      "bytes": 8152,
+      "sha256": "7ca106b76e03b884803952c8896e77a65c45ca6554b57efdb2d713a260978f05",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-36.png",
+      "bytes": 8179,
+      "sha256": "39b01a245fe23f95b1972cdae4ee208a9e128bbeae86edfc6ee0116e17d81d65",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-37.png",
+      "bytes": 8985,
+      "sha256": "0f78bc612f14f8e9a272eab6fdd5b41fa54388895551a8c1681173483962368a",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-38.png",
+      "bytes": 9011,
+      "sha256": "465dee1de24056a9e8d9d76105afb4bdf82c017e3290febba22f9725df84bc0f",
+      "width": 1280,
+      "height": 97
+    },
+    {
+      "file": "review-39.png",
+      "bytes": 37902,
+      "sha256": "8d3bde90ee2129fea1772f4023f2b7e6f24e9aeed2c3a9172e7030c9d0c132b6",
+      "width": 390,
+      "height": 284
+    },
+    {
+      "file": "review-40.png",
+      "bytes": 37999,
+      "sha256": "d8f4dc7a0a283424f8a6a66723fb52d59f8c9ea99d5bc315c1592fe196eaf6bc",
+      "width": 390,
+      "height": 284
+    },
+    {
+      "file": "review-41.png",
+      "bytes": 50443,
+      "sha256": "e5e9484e734f4adf92110059e42254759ded757a1549a0796857470420eec828",
+      "width": 390,
+      "height": 296
+    },
+    {
+      "file": "review-42.png",
+      "bytes": 47451,
+      "sha256": "61648c1ff8de1c3c0b49b0963975866f385619bb693e0b8896273156acfff69a",
+      "width": 390,
+      "height": 296
+    },
+    {
+      "file": "review-43.png",
+      "bytes": 42610,
+      "sha256": "4164eed79e4c243aa8b08308873d0a359e9f733aeccf13c575c7f9ce9b41d49f",
+      "width": 390,
+      "height": 316
+    },
+    {
+      "file": "review-44.png",
+      "bytes": 42737,
+      "sha256": "2d17d7ea8a29b81077706c9c5a20d0ddf7a358b765fea6b73cc29aa4f9de0bd4",
+      "width": 390,
+      "height": 316
+    }
+  ]
+}

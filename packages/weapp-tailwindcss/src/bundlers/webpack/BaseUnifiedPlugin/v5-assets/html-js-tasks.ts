@@ -10,6 +10,7 @@ export * from './pipeline-helpers'
 
 export async function enqueueWebpackHtmlAndJsTasks(context: any) {
   const { ConcatSource, applyWebpackLinkedJsResults, assetHashByChunk, compilation, compilerOptions, debug, defaultTemplateHandlerOptions, enqueueTask, groupedEntries, isWebGeneratorTarget, jsAssets, moduleGraphOptions, outputDir, rememberProcessCacheKey, rememberTransformedRuntimeCandidates, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode } = context
+  const transformRuntimeSetHash = isWebGeneratorTarget ? '' : compilerOptions.cache.computeHash(JSON.stringify([...transformRuntimeSet].sort()))
   const htmlTaskFactories: Array<() => Promise<void>> = []
   if (!isWebGeneratorTarget && Array.isArray(groupedEntries.html)) {
     for (const element of groupedEntries.html) {
@@ -30,7 +31,7 @@ export async function enqueueWebpackHtmlAndJsTasks(context: any) {
           cacheKey,
           hashKey,
           rawSource: chunkHash === undefined ? readRawSource() : undefined,
-          hash: chunkHash,
+          hash: `${chunkHash ?? compilerOptions.cache.computeHash(readRawSource())}:${transformRuntimeSetHash}`,
           applyResult(source, { cacheHit }) {
             updateAssetIfChanged(file, source, {
               compare: !cacheHit,
@@ -81,7 +82,7 @@ export async function enqueueWebpackHtmlAndJsTasks(context: any) {
           cacheKey,
           hashKey,
           rawSource: chunkHash === undefined ? initialRawSource : undefined,
-          hash: chunkHash,
+          hash: `${chunkHash ?? compilerOptions.cache.computeHash(initialRawSource)}:${transformRuntimeSetHash}`,
           applyResult(source, { cacheHit }) {
             const updated = updateAssetIfChanged(file, source, {
               compare: !cacheHit,

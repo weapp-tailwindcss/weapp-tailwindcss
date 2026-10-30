@@ -18,9 +18,9 @@ pnpm e2e:preflight prepare
 
 目标必须唯一：优先使用已有设备变量；多个目标时指定 `E2E_HBUILDERX_ANDROID_DEVICE_ID`、`E2E_HBUILDERX_IOS_DEVICE_ID`、`E2E_HBUILDERX_HARMONY_DEVICE_ID`。微信探针默认使用仓库微信项目的授权 AppID；使用其他有权限的项目时通过 `E2E_PREFLIGHT_WECHAT_APPID` 或 `E2E_TEMPLATE_IDE_APP_ID` 覆盖，两个别名同时设置时必须相同。预检保存实际验证的 AppID，门禁将同一绑定传给模板 IDE 阶段；缺少绑定、绑定不符或配置改变时必须重新 prepare，不以默认值补齐旧报告。微信非默认安装位置通过 `E2E_PREFLIGHT_WECHAT_CLI` 配置；Windows 指向官方 `cli.bat`。HBuilderX 使用 `HBUILDERX_CLI_PATH`、`HBUILDERX_CHANNEL` 和 `HBUILDERX_HOST`。
 
-预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 必须由用户预先打开、确认登录并开启服务端口；E2E 不自动启动或重启 IDE。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
+预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 优先复用现有实例，核对所选安装、服务端口与实际登录状态；单次连接拒绝或超时不证明 IDE 未打开。必要时允许通过当前会话的原生应用控制受控启动或重启明确的 IDE 实例，先确认任务归属和其他项目状态，不关闭无关窗口，不重置登录或账号配置。恢复或实例变化后重新 prepare，不能把旧失败报告改成通过。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
 
-微信入口统一使用 `scripts/wechat/`：只读官方安装元数据和 `.ide` / `.ide-status` 服务标记，通过已有 HTTP 服务的 `/v2/isLogin`、`/v2/auto`、`/v2/close` 操作本轮项目。`E2E_PREFLIGHT_WECHAT_CLI` 仅用于识别安装，绝不执行；Linux、旧版或非标准安装可显式设置 `E2E_PREFLIGHT_WECHAT_HTTP_PORT`。IDE 配置 CLI token 时通过 `WECHAT_DEVTOOLS_CLI_TOKEN` 传入，不写入报告。服务不可用时直接阻断，无 CLI 回退。
+微信项目入口统一使用 `scripts/wechat/`：只读官方安装元数据和 `.ide` / `.ide-status` 服务标记，通过 HTTP 服务的 `/v2/isLogin`、`/v2/auto`、`/v2/close` 操作本轮项目。`E2E_PREFLIGHT_WECHAT_CLI` 仅用于识别安装，不通过 `islogin` 等 CLI 命令隐式启动或恢复；Linux、旧版或非标准安装可显式设置 `E2E_PREFLIGHT_WECHAT_HTTP_PORT`。IDE 配置 CLI token 时通过 `WECHAT_DEVTOOLS_CLI_TOKEN` 传入，不写入报告。服务失败时报告请求阶段、目标端口及标准错误代码，停止本轮项目请求；先核对现有实例，再按上述受控恢复流程处理，无 CLI 回退。
 
 所有 E2E 禁止退出登录、切换账号、读取/替换/刷新登录票据、清 session/all 缓存、删除用户配置或终止共享 IDE。允许编译缓存操作但不降级为全量清理。打开项目时记录原 HTTP 端口，清理只断开自己的连接并关闭原服务上的本轮项目；认证或服务失败后不再发项目请求，保留未清理现场并报告。服务端自然过期或撤销票据仍可能令 IDE 自行退出，测试不得伪造/恢复这些凭据；用户恢复后重新 prepare。根因与证据见[微信登录态保护复盘](../docs/engineering/lessons/wechat-login-preservation.md)。
 
@@ -238,7 +238,7 @@ pnpm e2e:hbuilderx:mp
 
 稳定版 DevTools 的截图会受模拟器「自适应」缩放与宿主窗口空间影响，接口没有返回完整截图几何。需要像素对照时，在确认属于本轮测试的项目窗口中，用模拟器机型菜单选择「显示比例 → 100%」，并保持窗口足以完整容纳模拟器。375×667 CSS 像素的模拟器在本次稳定版实现中至少需要 391×683 的内容窗口；最终仍以原图尺寸和运行时几何检查为准，不把菜单值当作通过证据。
 
-设置按完整项目路径保存，换 worktree 或临时目录后不自动继承。E2E 不直接修改 IDE 内部存储、不增加 Tool 协议白名单、不为恢复截图重启或重置登录。截图比例失败会打印原图和运行时尺寸；#928 的像素基线还拒绝非整数采样比例。模板 smoke 可独立保存原图证据，但像素测试不能切到原图绕过裁剪。详见[截图缩放与渐变基线复盘](../docs/engineering/lessons/wechat-screenshot-pixel-alignment.md)。
+设置按完整项目路径保存，换 worktree 或临时目录后不自动继承。E2E 不直接修改 IDE 内部存储、不增加 Tool 协议白名单、不为恢复截图重置登录；确需重启时遵循前述实例归属核对和重新预检流程，不能以重启放宽截图门槛。截图比例失败会打印原图和运行时尺寸；#928 的像素基线还拒绝非整数采样比例。模板 smoke 可独立保存原图证据，但像素测试不能切到原图绕过裁剪。详见[截图缩放与渐变基线复盘](../docs/engineering/lessons/wechat-screenshot-pixel-alignment.md)。
 
 #928 支持 1920×1080 和 3840×2160 宿主；根据本轮截图宽度除以运行时 CSS 视口宽度，唯一选择已登记的 1x 或 2x 基线。显示器分辨率、HiDPI 设置和设备 `pixelRatio` 不直接决定选择。两种密度的圆角栅格不同，不能交叉比较、按最小差异回退、缩放当前截图或放宽原门槛。非整数、未登记密度、缺失或损坏基线继续阻断。限定更新只写当前密度，保留另一份；更新和禁更新复验分开执行。采集条件和离线原图见[基线说明](fixtures/issue-928-baselines/README.md)，原因及验证边界见[密度基线复盘](../docs/engineering/lessons/wechat-screenshot-density-baselines.md)。
 

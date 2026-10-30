@@ -23,6 +23,7 @@ export async function prepareLocalCommandGate(options: HBuilderXCommandOptions) 
   const nodeOptions = options.env?.NODE_OPTIONS ?? process.env.NODE_OPTIONS ?? '--max-old-space-size=8192'
   const deadline = Date.now() + 5000
   return {
+    deadline,
     options: {
       ...options,
       env: {

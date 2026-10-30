@@ -11,6 +11,10 @@ const MPX_TO_UNI_PLATFORM = new Map<string, CanonicalPlatform>([
   ['wx', 'mp-weixin'],
 ])
 
+const TARO_TO_CANONICAL_PLATFORM = new Map<string, CanonicalPlatform>([
+  ['harmony-hybrid', 'web'],
+])
+
 const MINI_PROGRAM_PLATFORMS = new Map<string, CanonicalPlatform>([
   ...[...MPX_TO_UNI_PLATFORM].filter(([alias]) => alias !== 'ali' && alias !== 'dd'),
   ['alipay', 'mp-alipay'],
@@ -43,6 +47,7 @@ function resolvePlatformInfo(value: string | undefined, appType?: string): UniPl
     ? MINI_PROGRAM_PLATFORMS.has(normalized) || (appType === 'mpx' && MPX_TO_UNI_PLATFORM.has(normalized))
     : false)
   const isWeb = normalized?.startsWith('web') === true || normalized === 'h5'
+    || (appType === 'taro' && normalized !== undefined && TARO_TO_CANONICAL_PLATFORM.get(normalized) === 'web')
 
   return {
     raw: value,
@@ -61,12 +66,12 @@ export function resolvePlatform(value: string | undefined) {
 }
 
 export function resolveTaroPlatform(value: string | undefined = getProcessEnv().TARO_ENV) {
-  return resolvePlatform(value)
+  return resolvePlatformInfo(value, 'taro')
 }
 
 /** 读取 Taro 环境快照；省略快照时才使用调用时的进程环境。 */
 export function resolveTaroPlatformFromEnv(env: FrameworkEnv = getProcessEnv()) {
-  return resolvePlatform(env.TARO_ENV)
+  return resolvePlatformInfo(env.TARO_ENV, 'taro')
 }
 
 function resolveMpxPlatformValue(env: FrameworkEnv = getProcessEnv()) {
@@ -123,6 +128,7 @@ export function resolvePlatformIdentity(
   const normalized = normalizePlatform(platform)
   const canonical = normalized
     ? (appType === 'mpx' ? MPX_TO_UNI_PLATFORM.get(normalized) : undefined)
+    ?? (appType === 'taro' ? TARO_TO_CANONICAL_PLATFORM.get(normalized) : undefined)
     ?? MINI_PROGRAM_PLATFORMS.get(normalized)
     ?? CANONICAL_PLATFORMS.get(normalized)
     : undefined

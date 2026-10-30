@@ -1,0 +1,65 @@
+diff --git a/commands/serve/mp.js b/commands/serve/mp.js
+index 59faf720a1c94ffd678980b78f386d1222cb9811..c78e109f94910093032f8f74b800e5ce73939c64 100644
+--- a/commands/serve/mp.js
++++ b/commands/serve/mp.js
+@@ -1,4 +1,5 @@
+ const webpack = require('webpack')
++const { error } = require('@vue/cli-shared-utils')
+ const { getCurrentTarget } = require('@mpxjs/cli-shared-utils')
+ const { symlinkTargetConfig } = require('../../utils/symlink')
+ const { handleWebpackDone } = require('../../utils/webpack')
+@@ -13,15 +14,22 @@
+   await api.runAfterResolveWebpackCallBack(webpackConfigs)
+   // 运行webpack
+   return new Promise((resolve, reject) => {
++    let ready = false
+     webpack(webpackConfigs).watch({}, (err, stats) => {
+       handleWebpackDone(err, stats, true, options, webpackConfigs[0])
+         .then((...res) => {
+           if (!options.disabledDefaultLinkFile) {
+             symlinkTargetConfig(api, target, webpackConfigs[0], options)
+           }
++          ready = true
+           resolve(...res)
+         })
+-        .catch(reject)
++        .catch((err) => {
++          if (!ready) return reject(err)
++          // 首轮就绪后 Promise 已兑现；后续致命错误必须独立报告，不能再次 reject 后静默退出。
++          error(err)
++          process.exitCode = 1
++        })
+     })
+   })
+ }
+diff --git a/utils/symlink.js b/utils/symlink.js
+index ced2e17a64edb0e818d21c1025162d6fd3c2f223..91084f6c9f7bce4d0108a91e5ec04606becfe546 100644
+--- a/utils/symlink.js
++++ b/utils/symlink.js
+@@ -35,9 +35,24 @@
+       outputPath = path.resolve(outputPath, '../')
+     }
+     try {
++      const sourceConfigFile = api.resolve(path.join('static', target.mode, v))
+       const targetConfigFile = path.resolve(outputPath, v)
+-      if (fs.existsSync(targetConfigFile)) fs.unlinkSync(targetConfigFile)
+-      fs.linkSync(api.resolve(`static/${target.mode}/${v}`), targetConfigFile)
++      if (fs.existsSync(targetConfigFile)) {
++        const sourceStat = fs.lstatSync(sourceConfigFile, { bigint: true })
++        const targetStat = fs.lstatSync(targetConfigFile, { bigint: true })
++        // 已经共享同一正规文件时保留硬链接，避免重建引发 static 的 ctime 变化和空 watch 轮次。
++        if (
++          sourceStat.isFile() &&
++          targetStat.isFile() &&
++          sourceStat.ino !== 0n &&
++          sourceStat.ino === targetStat.ino &&
++          sourceStat.dev === targetStat.dev
++        ) {
++          return
++        }
++        fs.unlinkSync(targetConfigFile)
++      }
++      fs.linkSync(sourceConfigFile, targetConfigFile)
+     } catch (error) {
+       fs.copyFileSync(
+         api.resolve(`static/${target.mode}/${v}`),

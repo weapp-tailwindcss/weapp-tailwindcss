@@ -3,20 +3,20 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { expect, it } from 'vitest'
-import { repo } from './catalog.mjs'
+import { evaluatePublishedDefinitions, frameworkImport, frameworkRequire } from './weapp-vite-package.fixture.mjs'
 
-const demoRequire = createRequire(path.join(repo, 'demo/weapp-vite-tailwindcss-v4/package.json'))
-const frameworkRequire = createRequire(demoRequire.resolve('weapp-vite/package.json'))
 const viteRequire = createRequire(frameworkRequire.resolve('vite/package.json'))
-const { createStatefulHmrCommonjsPlugin } = await import(pathToFileURL(frameworkRequire.resolve('weapp-vite/dist/statefulHmrCommonjs.mjs')).href)
+const { createBabelBackendLoader } = await frameworkImport('@weapp-vite/ast/babelLoader')
+const { createStatefulHmrHostFormatPlugin } = evaluatePublishedDefinitions(['loadBabelBackends', 'createStatefulHmrHostFormatPlugin'], { createBabelBackendLoader })
 const { rolldown } = await import(pathToFileURL(viteRequire.resolve('rolldown')).href)
 const { dev } = await import(pathToFileURL(viteRequire.resolve('rolldown/experimental')).href)
 const mappingRequire = createRequire(createRequire(import.meta.url).resolve('@ampproject/remapping'))
 const { originalPositionFor, TraceMap } = mappingRequire('@jridgewell/trace-mapping')
 
 it('uses the same fixed native engine for Vite and its framework', () => {
-  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.4.0')
-  expect(viteRequire('rolldown/package.json').version).toBe('1.2.12')
+  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.6.0')
+  expect(frameworkRequire('rolldown/package.json').version).toBe('1.2.14')
+  expect(viteRequire('rolldown/package.json').version).toBe('1.2.14')
   expect(frameworkRequire.resolve('rolldown/experimental')).toBe(viteRequire.resolve('rolldown/experimental'))
 })
 
@@ -28,7 +28,7 @@ it('composes host conversion sourcemaps back to the original module', async () =
       name: 'mapped-fixture',
       resolveId: id => id === 'virtual:entry' ? id : null,
       load: () => source,
-    }, createStatefulHmrCommonjsPlugin()],
+    }, createStatefulHmrHostFormatPlugin()],
   })
   try {
     const { output } = await build.generate({ format: 'esm', sourcemap: true })
@@ -42,7 +42,7 @@ it('composes host conversion sourcemaps back to the original module', async () =
     })
     expect(position.source).toContain('virtual:entry')
     expect(position.line).toBe(3)
-    expect(createStatefulHmrCommonjsPlugin().renderChunk.handler(source, { fileName: 'entry.js' }, { sourcemap: false }).map).toBeNull()
+    expect((await createStatefulHmrHostFormatPlugin().renderChunk.handler(source, { fileName: 'entry.js' }, { sourcemap: false })).map).toBeNull()
   }
   finally { await build.close() }
 })
@@ -51,7 +51,7 @@ it('keeps the upstream rejection of unsupported CJS dev mode', async () => {
   await expect(dev({ input: 'virtual:entry', experimental: { devMode: {} } }, { format: 'cjs' }, { watch: { enabled: false } })).rejects.toThrow(/only supports.*esm/)
 })
 
-it.each(['chunks/module.js', 'C:\\project\\chunks\\module.js', './module.js'])('preserves live exports, host requires and native graph registration (%s)', (fileName) => {
+it.each(['chunks/module.js', 'C:\\project\\chunks\\module.js', './module.js'])('preserves live exports, host requires and native graph registration (%s)', async (fileName) => {
   const code = `
 import value, { increment, read } from 'external';
 export { read } from 'external';
@@ -63,7 +63,7 @@ __rolldown_runtime__.registerGraph({ ids: ['entry'], localCount: 1, edges: [[]],
   const external = { __esModule: true, default: 'value', increment: () => externalCount++, read: () => externalCount }
   const graphs = []
   const module = { exports: {} }
-  const output = createStatefulHmrCommonjsPlugin().renderChunk.handler(code, { fileName })
+  const output = await createStatefulHmrHostFormatPlugin().renderChunk.handler(code, { fileName }, {})
   runInNewContext(output.code, {
     module,
     exports: module.exports,
@@ -92,7 +92,7 @@ it('converts real split ESM chunks to executable CommonJS without changing their
       name: 'fixture',
       resolveId(id) { return Object.hasOwn(sources, id) ? id : null },
       load(id) { return sources[id] },
-    }, createStatefulHmrCommonjsPlugin()],
+    }, createStatefulHmrHostFormatPlugin()],
   })
   try {
     const { output } = await build.generate({ format: 'esm', entryFileNames: '[name].js', chunkFileNames: 'chunks/[name].js' })

@@ -1,0 +1,13 @@
+diff --git a/dist/rollup/index.mjs b/dist/rollup/index.mjs
+index abe4dd820151dc163c0305a3e7ca739c38aa9e26..d255b68756728c64a502048ceba0b5ada3973f3e 100644
+--- a/dist/rollup/index.mjs
++++ b/dist/rollup/index.mjs
+@@ -380,7 +380,7 @@
+       const resolved = await this.resolve(originalId, importer, options) || {
+         id
+       };
+-      if (isExplicitInline(resolved.id, importer)) {
++      if (isExplicitInline(normalize(resolved.id), importer)) {
+         return null;
+       }
+       if (!isAbsolute(resolved.id) || !existsSync(resolved.id) || await isDirectory(resolved.id)) {

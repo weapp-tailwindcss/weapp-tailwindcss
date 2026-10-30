@@ -1,10 +1,10 @@
 # taro-webpack-react-tailwindcss-v4 with-plugin-html
 Status: passed
 Command: `pnpm run build:weapp`
-Duration: 9956ms
+Duration: 8645ms
 | File | Artifact | Bytes | Lines | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Taro selector | Weapp escaped arbitrary selector | Hash |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 293621 | 9947 | 1894 | 68 | 0 | 0 | true | true | `b292fea245b45936d0bfef5840b5b8a4b031f3d2a4dbec6e91c2c55e20f26bfc` |
-| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1037 | 30 | 4 | 0 | 0 | 0 | true | true | `ea01beae5d1ba00b0d64b01b8c4083d96384c2bcdc6a0f50ed0806dc9bc8a7c8` |
-| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 2348 | 55 | 9 | 0 | 0 | 0 | true | true | `0b9f9e4862f2d400dc6427432997fc850c2e5221cad0d1fce2b96b1bb935464c` |
-| `pages/issue-998/index.wxss` | [artifacts/pages__issue-998__index.wxss](artifacts/pages__issue-998__index.wxss) | 17200 | 447 | 86 | 0 | 0 | 0 | false | true | `74860b4a48454928129c650e4bbcfa07358b284e6bd51c542cc1351b2ac98934` |
+| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 294060 | 9958 | 1894 | 68 | 0 | 0 | true | true | `f67a2f5220130f8aa9fb98f2f549d0478e3738e9e605f7b78036a0b6c22559a6` |
+| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1039 | 30 | 4 | 0 | 0 | 0 | true | true | `270da826bbc174198f11f02ae8dbd8a56eae3790d70ec5512b0420db2a3c6474` |
+| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 2355 | 55 | 9 | 0 | 0 | 0 | true | true | `9e0f1626f256d413bd40450445f201292c552c2c2a101341d45c8218327d9fd9` |
+| `pages/issue-998/index.wxss` | [artifacts/pages__issue-998__index.wxss](artifacts/pages__issue-998__index.wxss) | 17397 | 450 | 86 | 0 | 0 | 0 | false | true | `1be2e80da6724ba67550064a06180e64d885f9250b0bd3b33b22a12914682d51` |

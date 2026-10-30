@@ -1,7 +1,9 @@
 import Vue from 'vue'
 import App from './App.vue'
 import './uni.promisify.adaptor'
+// #ifndef APP-PLUS
 import './main.css'
+// #endif
 
 Vue.config.productionTip = false
 

@@ -1,15 +1,20 @@
 import { performance } from 'node:perf_hooks'
 import { limits } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { describeFailure } from './failures.mjs'
+import { operationTerminalReceipt } from './operation-terminal.mjs'
 
 /** 仅诊断副本使用；对象身份由弱映射保存，全文按内容寻址落盘。 */
-export function createOperationRecorder({ writer, root, phase }) {
+export function createOperationRecorder({ writer, root, phase, onFailure }) {
   const identities = new WeakMap()
   const blobs = new Map()
   const totals = new Map()
   let nextIdentity = 0
   let sequence = 0
   let recordingError
+  let terminalReceipt
+  let terminalWriteError
+  let failureStatusError
 
   function identity(value) {
     if (!value || !['object', 'function'].includes(typeof value)) {
@@ -74,15 +79,16 @@ export function createOperationRecorder({ writer, root, phase }) {
   }
 
   function emit(name, details = {}, timing, startedPhase, recordedPhase) {
+    let currentPhase = recordedPhase
     try {
       if (recordingError) {
         throw new Error(recordingError)
       }
+      currentPhase ??= phase()
       if (++sequence > limits.maxOperationEvents) {
         throw new Error('诊断操作事件超过上限')
       }
       const started = performance.now()
-      const currentPhase = recordedPhase ?? phase()
       const data = serialize(details)
       const totalKey = `${currentPhase.type}:${currentPhase.round ?? ''}:${name}`
       const total = totals.get(totalKey) ?? { phase: currentPhase, name, count: 0, durationMs: 0, maxDurationMs: 0 }
@@ -103,7 +109,14 @@ export function createOperationRecorder({ writer, root, phase }) {
       return sequence
     }
     catch (error) {
-      recordingError = String(error)
+      if (!recordingError) {
+        recordingError = String(error)
+        terminalReceipt = operationTerminalReceipt({ sequence, name, phase: currentPhase, details, error })
+        try { writer.terminal(terminalReceipt) }
+        catch (cause) { terminalWriteError = String(cause) }
+        try { onFailure?.() }
+        catch (cause) { failureStatusError = String(cause) }
+      }
       throw error
     }
   }
@@ -118,16 +131,14 @@ export function createOperationRecorder({ writer, root, phase }) {
       return result
     }
     const fail = (error) => {
-      emit(`${name}.failure`, { operationId, error: String(error) }, performance.now() - start, startedPhase)
+      try { emit(`${name}.failure`, { ...details, operationId, error: String(error), failure: describeFailure(error) }, performance.now() - start, startedPhase) }
+      catch { /* 录制首败已单独落盘，保留原操作的抛出值。 */ }
       throw error
     }
-    try {
-      const result = run()
-      return asynchronous ? Promise.resolve(result).then(finish, fail) : finish(result)
-    }
-    catch (error) {
-      return fail(error)
-    }
+    let result
+    try { result = run() }
+    catch (error) { return fail(error) }
+    return asynchronous ? Promise.resolve(result).then(finish, fail) : finish(result)
   }
 
   return {
@@ -144,8 +155,8 @@ export function createOperationRecorder({ writer, root, phase }) {
         const result = run()
         if (result && typeof result.then === 'function') {
           // 只旁观既有 Promise，不改变生产返回身份、排空与异常传播。
-          void result.then(finish, error => emit(`${name}.failure`, { operationId, error: String(error) }, performance.now() - start, startedPhase)).catch((error) => {
-            recordingError = String(error)
+          void result.then(finish, error => emit(`${name}.failure`, { ...details, operationId, error: String(error), failure: describeFailure(error) }, performance.now() - start, startedPhase)).catch((error) => {
+            recordingError ??= String(error)
           })
         }
         else {
@@ -154,7 +165,8 @@ export function createOperationRecorder({ writer, root, phase }) {
         return result
       }
       catch (error) {
-        emit(`${name}.failure`, { operationId, error: String(error) }, performance.now() - start, startedPhase)
+        try { emit(`${name}.failure`, { ...details, operationId, error: String(error), failure: describeFailure(error) }, performance.now() - start, startedPhase) }
+        catch { /* 录制失败不能覆盖原操作异常。 */ }
         throw error
       }
     },
@@ -162,7 +174,7 @@ export function createOperationRecorder({ writer, root, phase }) {
       emit('scan.source', { file, comparableFile: rootRelativeKey(file, root), source })
     },
     summary() {
-      return { events: sequence, identities: nextIdentity, textFiles: [...blobs.values()], recordingError, totals: [...totals.values()], releaseInterpretation: '仅记录实际调用及返回；不证明 V8 或 Rust 内存已归还。未观测到的关闭事件不推断为成功。' }
+      return { events: sequence, identities: nextIdentity, textFiles: [...blobs.values()], recordingError, terminalReceipt, terminalWriteError, failureStatusError, totals: [...totals.values()], releaseInterpretation: '仅记录实际调用及返回；不证明 V8 或 Rust 内存已归还。未观测到的关闭事件不推断为成功。' }
     },
   }
 }

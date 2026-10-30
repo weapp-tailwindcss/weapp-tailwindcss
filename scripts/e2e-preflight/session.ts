@@ -65,20 +65,30 @@ export class PreflightSession {
       }
       await this.save()
       process.stdout.write(`[preflight] ${id}: ${result.status} ${result.detail}\n`)
-      // 存活检查在首个失败处停止；prepare 的剩余探针仅用于一次性有界诊断。
-      if (phase === 'live' && result.status !== 'passed') {
+      // verify/live 在首个失败处停止；prepare 的剩余探针仅用于一次性有界诊断。
+      if (phase !== 'prepare' && result.status !== 'passed') {
         throw new Error(`${id} 已阻断：${result.detail}\n${result.remedy}`)
       }
     }
   }
 
   assertReady(now = Date.now()) {
-    const time = Date.parse(this.report.verifiedAt ?? '')
-    if (this.report.status !== 'ready' || !Number.isFinite(time) || time > now || now - time > maxAgeMs
-      || requiredCheckIds(this.report.extended).some(id => !this.report.checks.some(check => check.id === id && check.status === 'passed'
-        && Number.isFinite(Date.parse(check.checkedAt)) && Date.parse(check.checkedAt) <= now
-        && now - Date.parse(check.checkedAt) <= maxAgeMs))) {
-      throw new Error('预检未全部通过或超过 15 分钟；全面测试禁止启动。')
+    const checks = requiredCheckIds(this.report.extended).map(id => ({ id, check: this.report.checks.find(check => check.id === id) }))
+    for (const { id, check } of checks) {
+      if (!check || check.status !== 'passed') {
+        throw new Error(`预检 ${id}: ${check ? `${check.status}；${check.detail}\n${check.remedy}` : '缺少检查'}；全面测试禁止启动。`)
+      }
+    }
+    if (this.report.status !== 'ready') {
+      throw new Error(`预检当前状态 ${this.report.status}；全面测试禁止启动。`)
+    }
+    const timestamps = [{ id: 'verifiedAt', value: this.report.verifiedAt }, ...checks.map(({ id, check }) => ({ id, value: check!.checkedAt }))]
+    for (const { id, value } of timestamps) {
+      const time = Date.parse(value ?? '')
+      const reason = !Number.isFinite(time) ? '时间无效' : time > now ? '时间在未来' : now - time > maxAgeMs ? '超过 15 分钟' : undefined
+      if (reason) {
+        throw new Error(`预检 ${id} ${reason}；全面测试禁止启动。`)
+      }
     }
   }
 
@@ -105,6 +115,7 @@ export class PreflightSession {
       }
       catch (error) {
         this.report.status = 'blocked'
+        delete this.report.verifiedAt
         if (!computerVerified) {
           Object.assign(check, { status: 'blocked', checkedAt: new Date().toISOString(), detail: String(error) })
         }

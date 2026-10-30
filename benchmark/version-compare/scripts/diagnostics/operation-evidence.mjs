@@ -1,16 +1,19 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { limits, mpxProject } from './constants.mjs'
-import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { isOperationEvidenceFilename, rootRelativeKey, sha256 } from './evidence.mjs'
 import { verifyViteCompletions, verifyWebpackCompletions } from './operation-completions.mjs'
 import { verifyServiceEvidence } from './service-evidence.mjs'
+import { verifyUniInputEvidence } from './uni-evidence.mjs'
+import { uniInputProject } from './uni-observer.mjs'
 
 // 只排除事件 details 顶层的进程内身份；同名用户输入和不透明引用仍完整比较。
-const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey', 'storeId', 'finalizationId'])
+const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGeneratorId', 'generatorId', 'leaseId', 'ownerId', 'sessionId', 'compilationId', 'poolId', 'startedPhase', 'sourceKey', 'storeId', 'finalizationId', 'bundleId'])
 
 /** 控制器逐份复核全文引用；不以缺失或截断记录证明没有操作。 */
 export async function verifyOperationEvidence(directory, status, identity = {}) {
-  const files = (await fs.readdir(directory)).filter(name => /^(?:process-start|inputs-\d+|allocation-(?:frames-)?\d+|operation-\d+|text-[a-f\d]{64})\.json$/.test(name))
+  const files = (await fs.readdir(directory)).filter(isOperationEvidenceFilename)
+  if (files.includes('operation-terminal.json')) throw new Error('操作录制存在首败回执，证据未完成')
   let bytes = 0
   for (const file of files) {
     const size = (await fs.stat(path.join(directory, file))).size
@@ -106,6 +109,7 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
   }
   const completions = (webpack ? verifyWebpackCompletions : verifyViteCompletions)(events, snapshots, status)
   const serviceEvidence = verifyServiceEvidence(events)
+  const uniInput = identity.project === uniInputProject && identity.mode === 'inputs' ? await verifyUniInputEvidence(directory, status.uniInput, events) : undefined
   const phaseCounts = new Map()
   for (const event of events) {
     const key = `${event.phase.type}:${event.phase.round ?? ''}`
@@ -121,15 +125,16 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     phaseCounts: [...phaseCounts.values()],
     snapshotCount: status.snapshotCount,
     serviceEvidence,
+    ...(uniInput ? { uniInput } : {}),
     capabilities: identity.capabilities,
     lifecycleBoundary: '按实际调用记录；watch-stop 仅停止采样。关闭尾部可能缺失，不以创建减释放推断泄漏或原生内存释放。',
-    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature', 'source.snapshot', 'vite.completed'].includes(event.name)).map(event => `operation-${event.sequence}.json`),
+    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature', 'source.snapshot', 'vite.completed'].includes(event.name) || (uniInput && ['uni.bundle.input', 'uni.snapshot', 'uni.plan', 'uni.cache', 'uni.selection'].includes(event.name))).map(event => `operation-${event.sequence}.json`),
   }
 }
 
 function normalizeInput(value, root, platform, key = '') {
   if (typeof value === 'string') {
-    return ['file', 'base', 'root', 'outDir', 'projectRoot', 'baseFallbacks', 'dependencies', 'excludeFiles', 'config', 'filePath'].includes(key)
+    return ['file', 'base', 'root', 'outDir', 'projectRoot', 'baseFallbacks', 'dependencies', 'excludeFiles', 'config', 'filePath', 'sourceFile', 'outputFile', 'generatorSourceFile', 'assetSourceFile', 'rootImportShellTarget', 'usedConfiguredSourceFiles', 'usedConfiguredSourceFile'].includes(key)
       ? rootRelativeKey(value, root, platform)
       : value
   }

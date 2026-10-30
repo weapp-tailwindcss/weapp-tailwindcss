@@ -16,6 +16,7 @@ vi.mock('node:fs/promises', () => ({
 
 beforeEach(() => {
   vi.resetAllMocks()
+  mocks.write.mockResolvedValue(undefined)
   mocks.load.mockImplementation(() => {
     throw new Error('不应启动真实 compiler')
   })

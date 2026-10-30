@@ -302,7 +302,7 @@ exports[`vite test > vite common build with rem2rpx 2`] = `
   height: 100px;
 }
 .w-\\[1\\.5rem\\] {
-  width: 1.5rem;
+  width: 48rpx;
 }
 .w-\\[55px\\] {
   width: 55px;

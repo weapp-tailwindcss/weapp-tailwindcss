@@ -7,12 +7,14 @@ import { createGcDiagnostics } from '../gc-diagnostics.mjs'
 import { appendNodeImport } from '../gc-paths.mjs'
 import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
+import { describeFailure, runWithCleanup } from './failures.mjs'
 import { verifyOperationEvidence } from './operation-evidence.mjs'
 import { readAllocationEvidenceFile } from './profile-files.mjs'
 import { verifyViteTailEvidence } from './vite-tail-evidence.mjs'
 import { viteTailProject } from './vite-tail-observer.mjs'
+import { createWorkerEvidence } from './worker-evidence.mjs'
 
-const modules = ['constants.mjs', 'profile-codec.mjs', 'profile-compression.mjs', 'profile-json.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs', 'vite-tail-observer.mjs']
+const modules = ['constants.mjs', 'profile-codec.mjs', 'profile-compression.mjs', 'profile-json.mjs', 'evidence.mjs', 'frames.mjs', 'sampling.mjs', 'capture.mjs', 'preload.mjs', 'operations.mjs', 'operation-terminal.mjs', 'vite-tail-observer.mjs', 'uni-observer.mjs', 'uni-spans.mjs', 'uni-dependencies.mjs', 'failures.mjs']
 const diagnosticEnvironment = /^(?:UNI_|TARO_|MPX_|TAILWIND|WEAPP_TW_|NODE_ENV$|NODE_OPTIONS$|CI$|HUSKY$|LEFTHOOK$)/
 
 export async function createCaseDiagnostics(options) {
@@ -35,6 +37,7 @@ export async function createCaseDiagnostics(options) {
     identity.capabilities = { compilerServicePool: { available, interpretation: available ? '仅统计真实执行的操作' : '此版本没有服务池，不以零次调用参与比较' } }
   }
   const directory = identity.sessionDirectory
+  const worker = createWorkerEvidence(directory)
   const moduleHashes = {}
   for (const name of modules) {
     const source = await fs.readFile(new URL(name, import.meta.url))
@@ -65,8 +68,9 @@ export async function createCaseDiagnostics(options) {
   const controller = {
     env,
     mutationMarker: diagnosticMutationMarker,
-    spawned(pid) {
+    spawned(pid, child) {
       gc.spawned(pid)
+      if (child) worker.attach(child)
     },
     mark,
     async source(type, sourcePath, expected, marker) {
@@ -119,69 +123,72 @@ export async function createCaseDiagnostics(options) {
       })()
       return closing
     },
-    async finish() {
-      await gc.finish()
-      let error
-      let operationEvidence
-      try {
-        status = JSON.parse(await fs.readFile(path.join(directory, 'status.json'), 'utf8'))
-        const startup = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
-        const expectedCount = options.kind === 'build' ? 1 : 8
-        if (Object.entries(moduleHashes).some(([name, hash]) => startup.moduleHashes?.[name] !== hash)
-          || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (status.snapshotCount ?? status.compilationCount) !== expectedCount) {
-          throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
-        }
-        operationEvidence = await verifyOperationEvidence(directory, status, identity)
-        if (identity.project === viteTailProject && identity.kind === 'build') {
-          operationEvidence.viteTail = await verifyViteTailEvidence(directory, status.viteTail)
-        }
-        const expectedPhases = options.kind === 'build'
-          ? [['build-start', undefined]]
-          : [['watch-start', undefined], ...[1, 2, 3].flatMap(round => [['mutation-write', round], ['rollback-write', round]]), ['watch-stop', undefined]]
-        for (const [index, [type, round]] of expectedPhases.entries()) {
-          const inputs = JSON.parse(await fs.readFile(path.join(directory, `inputs-${index + 1}.json`), 'utf8'))
-          if (inputs.phase.type !== type || inputs.phase.round !== round || inputs.sources.length === 0) {
-            throw new Error(`诊断阶段未对齐：${index + 1}`)
+    async finish(execution = { failed: false }) {
+      return runWithCleanup(async () => {
+        let failure
+        let operationEvidence
+        try {
+          status = JSON.parse(await fs.readFile(path.join(directory, 'status.json'), 'utf8'))
+          const startup = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
+          const expectedCount = options.kind === 'build' ? 1 : 8
+          if (Object.entries(moduleHashes).some(([name, hash]) => startup.moduleHashes?.[name] !== hash)
+            || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (status.snapshotCount ?? status.compilationCount) !== expectedCount) {
+            throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
           }
-          if (identity.mode === 'allocation') {
-            await readAllocationEvidenceFile(path.join(directory, inputs.profileFile), inputs.profileReceipt, 'profile')
-            const receipt = status.frameReceipts?.[index]
-            if (receipt?.file !== inputs.framesFile) {
-              throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
+          operationEvidence = await verifyOperationEvidence(directory, status, identity)
+          if (identity.project === viteTailProject && identity.kind === 'build') {
+            operationEvidence.viteTail = await verifyViteTailEvidence(directory, status.viteTail)
+          }
+          const expectedPhases = options.kind === 'build'
+            ? [['build-start', undefined]]
+            : [['watch-start', undefined], ...[1, 2, 3].flatMap(round => [['mutation-write', round], ['rollback-write', round]]), ['watch-stop', undefined]]
+          for (const [index, [type, round]] of expectedPhases.entries()) {
+            const inputs = JSON.parse(await fs.readFile(path.join(directory, `inputs-${index + 1}.json`), 'utf8'))
+            if (inputs.phase.type !== type || inputs.phase.round !== round || inputs.sources.length === 0) {
+              throw new Error(`诊断阶段未对齐：${index + 1}`)
             }
-            let mapping
-            try {
-              mapping = await readAllocationEvidenceFile(path.join(directory, inputs.framesFile), receipt.receipt, 'frames')
-            }
-            catch (cause) {
-              throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}；${cause.message}`, { cause })
-            }
-            if (mapping.profileFile !== inputs.profileFile || mapping.profileReceipt.sha256 !== inputs.profileReceipt.sha256 || mapping.profileReceipt.bytes !== inputs.profileReceipt.bytes) {
-              throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
+            if (identity.mode === 'allocation') {
+              await readAllocationEvidenceFile(path.join(directory, inputs.profileFile), inputs.profileReceipt, 'profile')
+              const receipt = status.frameReceipts?.[index]
+              if (receipt?.file !== inputs.framesFile) {
+                throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
+              }
+              let mapping
+              try {
+                mapping = await readAllocationEvidenceFile(path.join(directory, inputs.framesFile), receipt.receipt, 'frames')
+              }
+              catch (cause) {
+                throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}；${cause.message}`, { cause })
+              }
+              if (mapping.profileFile !== inputs.profileFile || mapping.profileReceipt.sha256 !== inputs.profileReceipt.sha256 || mapping.profileReceipt.bytes !== inputs.profileReceipt.bytes) {
+                throw new Error(`分配栈映射缺失或哈希不匹配：${index + 1}`)
+              }
             }
           }
         }
-      }
-      catch (cause) {
-        error = cause instanceof Error ? cause.message : String(cause)
-      }
-      await fs.writeFile(path.join(directory, 'allocation-controller.json'), JSON.stringify({
-        identity,
-        moduleHashes,
-        command: ['pnpm', 'run', options.kind === 'build' ? options.projectMeta.buildScript : options.projectMeta.devScript],
-        environment,
-        environmentScope: '构建相关白名单，不宣称进程完整环境相等',
-        sources,
-        events,
-        status,
-        operationEvidence,
-        error,
-        diagnosticOnly: true,
-        mutationMarkerRule,
-      }, null, 2))
-      if (error) {
-        throw new Error(error)
-      }
+        catch (cause) {
+          failure = { error: cause }
+        }
+        const manifest = {
+          identity,
+          moduleHashes,
+          command: ['pnpm', 'run', options.kind === 'build' ? options.projectMeta.buildScript : options.projectMeta.devScript],
+          environment,
+          environmentScope: '构建相关白名单，不宣称进程完整环境相等',
+          sources,
+          events,
+          status,
+          operationEvidence,
+          error: failure && (failure.error instanceof Error ? failure.error.message : String(failure.error)),
+          failure: failure && describeFailure(failure.error),
+          firstFailure: execution.failed ? describeFailure(execution.error) : undefined,
+          diagnosticOnly: true,
+          mutationMarkerRule,
+        }
+        await runWithCleanup(async () => { if (failure) throw failure.error }, [
+          () => fs.writeFile(path.join(directory, 'allocation-controller.json'), JSON.stringify(manifest, null, 2)),
+        ])
+      }, [() => gc.finish(), outcome => worker.finish(execution, outcome, status)])
     },
   }
   await controller.source('initial', path.resolve(options.cwd, options.projectMeta.sourceFile))

@@ -18,10 +18,11 @@ it.each([
   const requireDemo = createRequire(path.join(repo, 'demo/uni-app-vite-tailwindcss-v4/package.json'))
   await writeFile(path.join(root, 'entry.js'), `
     import { createSSRApp, h, onMounted } from 'vue'
-    createSSRApp({ setup() {
+    const app = createSSRApp({ setup() {
       onMounted(() => console.log('hydration-complete'))
       return () => h('div', { id: 'tw-matrix-height' }, 'ready')
-    } }).mount('#app')
+    } })
+    globalThis.releaseHydration = () => { app.mount('#app') }
   `)
   const server = await createServer({
     root,
@@ -44,7 +45,7 @@ it.each([
           }
           res.setHeader('Content-Type', 'text/html')
           res.end(`<script type="module" src="/@vite/client"></script>
-            <script type="module">globalThis.releaseHydration = () => import('/entry.js')</script>
+            <script type="module" src="/entry.js"></script>
             <div id="app"><div id="tw-matrix-height">ready</div></div>`)
         })
       },

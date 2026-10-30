@@ -5,13 +5,13 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { wechatVersion } from '../e2e-preflight/probes/wechat-version'
-import { WechatEnvironmentError } from './errors'
+import { WechatEnvironmentError, wechatTransportDetail } from './errors'
 
 export function wechatCliPath() {
   const cli = process.env.E2E_PREFLIGHT_WECHAT_CLI
     ?? (process.platform === 'darwin' ? path.join(path.parse(os.homedir()).root, 'Applications', 'wechatwebdevtools.app', 'Contents', 'MacOS', 'cli') : undefined)
   if (!cli) {
-    throw new WechatEnvironmentError('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方安装；E2E 不会执行 CLI 或启动 IDE。')
+    throw new WechatEnvironmentError('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方安装；项目请求不执行 CLI，必要时核对实例后通过原生应用控制受控恢复。')
   }
   return cli
 }
@@ -50,7 +50,7 @@ export async function existingWechatService(cli = wechatCliPath()) {
       port = (await readFile(path.join(dir, '.ide'), 'utf8')).trim()
     }
     catch {
-      throw new WechatEnvironmentError('微信 IDE 未提供已开启的 HTTP 服务。请手动打开 IDE、确认登录并开启服务端口；E2E 不会自动启动、登录或重置 IDE。')
+      throw new WechatEnvironmentError('微信 IDE 安装对应的 HTTP 服务标记不可用；先核对现有实例与服务端口，必要时受控启动或重启后重新预检，不重置登录态。')
     }
   }
   return { command: cli, version, metadata, httpPort: String(servicePort(port)) }
@@ -247,9 +247,9 @@ export async function wechatRequest(port: string | number, operation: Operation,
       try {
         response = await fetch(endpoint, { redirect: 'manual', signal, headers: token ? { Authorization: `Bearer ${token}` } : {} })
       }
-      catch {
+      catch (error) {
         blocked.add(actualPort)
-        throw new WechatEnvironmentError(`微信 IDE 已有服务不可用或超时（${operation.kind}）；保留登录态，不启动或重启 IDE。`)
+        throw new WechatEnvironmentError(`微信 IDE 服务请求失败（${operation.kind}，127.0.0.1:${actualPort}，${wechatTransportDetail(error)}）；这不能证明 IDE 未打开。核对实例与端口，必要时受控恢复后重新预检，保留登录态。`)
       }
       if (response.status === 303) {
         try {

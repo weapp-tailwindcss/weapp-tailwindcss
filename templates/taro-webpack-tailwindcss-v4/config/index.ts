@@ -1,9 +1,27 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
+import {WeappTailwindcss,type UserDefinedOptions} from 'weapp-tailwindcss/webpack'
+import path from 'node:path'
 import devConfig from './dev'
 import prodConfig from './prod'
-import {WeappTailwindcss,type UserDefinedOptions} from 'weapp-tailwindcss/webpack'
-import path from 'path'
+import { WebRpxToRemPlugin } from './webpack-web-units'
+
+const isWebTarget = process.env.TARO_ENV === 'h5' || process.env.TARO_ENV === 'harmony-hybrid'
+const isNativeTarget = process.env.TARO_ENV === 'rn' || process.env.TARO_ENV === 'jdrn'
+const webBaseFontSize = 16
+const tailwindcssOptions: UserDefinedOptions = {
+  disabled: isNativeTarget,
+  rem2rpx: !isWebTarget,
+  generator: {
+    target: isWebTarget ? 'web' : 'weapp',
+    webCompat: isWebTarget ? true : undefined,
+  },
+  cssOptions: isWebTarget ? {
+    rem2rpx: false,
+    px2rpx: false,
+    cssSelectorReplacement: { root: false, universal: false },
+  } : undefined,
+}
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
@@ -57,7 +75,7 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
               plugin: WeappTailwindcss,
               args: [
                 {
-                  rem2rpx: true,
+                  ...tailwindcssOptions,
                   cssEntries:[
                     path.resolve(__dirname,'../src/app.css')
                   ]
@@ -81,6 +99,9 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
         chunkFilename: 'css/[name].[chunkhash].css'
       },
       postcss: {
+        pxtransform: {
+          config: { baseFontSize: webBaseFontSize, minRootSize: webBaseFontSize, maxRootSize: webBaseFontSize * 2 },
+        },
         autoprefixer: {
           enable: true,
           config: {}
@@ -97,12 +118,15 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
         chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin)
         chain.plugin('weapp-tailwindcss').use(WeappTailwindcss, [
           {
-            rem2rpx: true,
+            ...tailwindcssOptions,
             cssEntries:[
               path.resolve(__dirname,'../src/app.css')
             ]
           } satisfies UserDefinedOptions
         ])
+        if (isWebTarget) {
+          chain.plugin('web-rpx-to-rem').use(WebRpxToRemPlugin, [webBaseFontSize])
+        }
       }
     },
     rn: {

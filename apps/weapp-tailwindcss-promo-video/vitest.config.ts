@@ -1,3 +1,4 @@
 import { defineConfig } from 'vitest/config'
+import { workspaceMaxWorkers } from '../../scripts/testing/vitest-workers.mjs'
 
-export default defineConfig({ test: { environment: 'node', include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'] } })
+export default defineConfig({ test: { maxWorkers: workspaceMaxWorkers, environment: 'node', include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'] } })

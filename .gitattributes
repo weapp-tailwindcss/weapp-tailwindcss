@@ -123,6 +123,7 @@ yarn.lock         text -diff
 *.yml             text
 # diff 上下文行的空格前缀可紧接上游 tab 或表示空行，属于合法补丁语法。
 patches/*.patch   whitespace=-space-before-tab,-blank-at-eol
+templates/*/patches/*.patch whitespace=-space-before-tab,-blank-at-eol
 browserslist      text
 Makefile          text
 makefile          text

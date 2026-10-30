@@ -13,3 +13,9 @@ export default Vue.extend({
     }
 });
 </script>
+
+<style>
+/* #ifdef APP-PLUS */
+@import './main.css';
+/* #endif */
+</style>

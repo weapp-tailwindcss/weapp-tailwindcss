@@ -12,6 +12,12 @@ import { readNativeReport } from './lynx/reports'
 import androidJson from './lynx/reports/android.json'
 import iosJson from './lynx/reports/ios.json'
 
+// 归档协议使用合成静态输入，不依赖已提交历史报告，也不冒充本轮真实构建。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async () => {
+  const { protocolStaticEvidence } = await import('./lynx/fixtures/protocol-report')
+  return { default: protocolStaticEvidence() }
+})
+
 // 此套隔离归档搬迁与发布顺序；真实 APK、bundle、PNG 语义门禁由各 evidence 回归验证。
 // 模拟读取器每次都从所给报告的同目录重读原始文件，不能回退到首次输入目录。
 vi.mock('./lynx/reports', () => ({

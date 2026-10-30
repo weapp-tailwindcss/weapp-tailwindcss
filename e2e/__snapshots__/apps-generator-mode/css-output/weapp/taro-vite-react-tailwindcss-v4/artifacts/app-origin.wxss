@@ -3456,15 +3456,18 @@ wx-root-portal-content {
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
   box-sizing: border-box;
 }
-.nut-input .nut-input-native .weui-input::-moz-placeholder {
+.nut-input .nut-input-native .weui-input::-moz-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
 }
-.nut-input .nut-input-native .weui-input:-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input:-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
 }
-.nut-input .nut-input-native .weui-input::-ms-input-placeholder {
+.nut-input .nut-input-native .weui-input::-ms-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
 }
@@ -10314,7 +10317,8 @@ wx-root-portal-content {
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
   box-sizing: border-box;
 }
-.nut-input .nut-input-native .weui-input::-webkit-input-placeholder {
+.nut-input .nut-input-native .weui-input::-webkit-input-placeholder,
+.nut-input-placeholder {
   color: #757575;
   font-size: var(--nutui-input-font-size, var(--nutui-font-size-base, 14rpx));
 }

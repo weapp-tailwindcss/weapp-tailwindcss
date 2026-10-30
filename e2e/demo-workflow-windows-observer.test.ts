@@ -3,11 +3,10 @@ import { spawn } from 'node:child_process'
 import process from 'node:process'
 import { createInterface } from 'node:readline'
 import { expect, it } from 'vitest'
-import { parseWindowsMemorySample } from '../scripts/demo-e2e-memory/windows'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
+import { parseObserverPreparation } from '../scripts/demo-e2e-workflow/process-observer/preparation'
 import { windowsObserverArgs } from '../scripts/demo-e2e-workflow/process-observer/script'
 import { createProcessObserverTransport, PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../scripts/demo-e2e-workflow/process-observer/transport'
-import { parseWindowsProcesses } from '../scripts/demo-e2e-workflow/process-table'
 
 async function bounded<T>(operation: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -54,13 +53,11 @@ it.runIf(process.platform === 'win32')('真实 PowerShell 身份握手与中文�
     const readyAt = await transport.waitUntilReady(startupDeadline - Date.now())
     transport.assertHealthy()
     const prepareDeadline = readyAt + PROCESS_OBSERVER_PREPARE_MS
-    const ready = parseWindowsProcesses(JSON.stringify(await transport.request({ kind: 'identity', pids: [child!.pid!] }, prepareDeadline - Date.now())))
-    expect(ready.some(row => row.pid === child!.pid)).toBe(true)
+    const prepared = await transport.request({ kind: 'prepare', rootPid: child!.pid!, cwd: process.cwd() }, prepareDeadline - Date.now())
+    parseObserverPreparation(prepared, child!.pid!)
     expect(transport.diagnostics().runtimeVersion).toMatch(/^5\.1\.\d+\.\d+$/)
     expect(transport.diagnostics().launch?.modulePathPolicy).toBe('windows-powershell-native')
-    const memory = parseWindowsMemorySample(await transport.request({ kind: 'memory', rootPid: child!.pid!, cwd: process.cwd() }, prepareDeadline - Date.now()))
-    expect(memory.processCount).toBeGreaterThanOrEqual(1)
-    expect(memory.topProcesses!.some(row => row.pid === child!.pid)).toBe(true)
+    expect(transport.diagnostics().requests.map(request => request.kind)).toEqual(['prepare'])
     // eslint-disable-next-line no-console -- 记录真实 PowerShell 启动、身份与内存查询阶段，保留 hosted 冷准备诊断依据。
     console.log(`真实 PowerShell 准备：${JSON.stringify(transport.diagnostics())}`)
     // 故意输入带中文的未知操作，验证真实异常文本未被本机代码页损坏。

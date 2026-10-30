@@ -57,41 +57,21 @@ exports[`terser-webpack keep_fnames > shows the effect of keep_fnames on bundled
 "defaults:
 !(function () {
   "use strict";
-  var e = {};
-  ((e.d = function (n, o) {
-    for (var t in o)
-      e.o(o, t) &&
-        !e.o(n, t) &&
-        Object.defineProperty(n, t, { enumerable: !0, get: o[t] });
-  }),
-    (e.o = function (e, n) {
-      return Object.prototype.hasOwnProperty.call(e, n);
-    }),
-    console.log(
-      (function e() {
-        return e.name;
-      })(),
-    ));
+  console.log(
+    (function n() {
+      return n.name;
+    })(),
+  );
 })();
 
 keep:
 !(function () {
   "use strict";
-  var e = {};
-  ((e.d = function (n, o) {
-    for (var r in o)
-      e.o(o, r) &&
-        !e.o(n, r) &&
-        Object.defineProperty(n, r, { enumerable: !0, get: o[r] });
-  }),
-    (e.o = function (e, n) {
-      return Object.prototype.hasOwnProperty.call(e, n);
-    }),
-    console.log(
-      (function weappTwIgnore() {
-        return weappTwIgnore.name;
-      })(),
-    ));
+  console.log(
+    (function weappTwIgnore() {
+      return weappTwIgnore.name;
+    })(),
+  );
 })();
 "
 `;

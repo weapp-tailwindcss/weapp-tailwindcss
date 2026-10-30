@@ -1,15 +1,8 @@
-import { getCompilerContext } from '@/context'
 import fs from 'fs-extra'
 import path from 'pathe'
 import prettier from 'prettier'
+import { getCompilerContext } from '@/context'
 import { getCss } from './helpers/getTwCss'
-// import { getClassCacheSet } from '@weapp-tailwindcss/engine'
-// import fs from 'fs'
-
-async function getClassCacheSet() {
-  const ctx = getCompilerContext()
-  return ctx.tailwindRuntime.getClassSet()
-}
 
 describe('postcss plugin', () => {
   it('base tw output', async () => {
@@ -72,15 +65,12 @@ describe('postcss plugin', () => {
   it('double quote after class', async () => {
     // after:content-[\"*\"]
     const res = await getCss('<view class="after:content-["对酒当歌，人生几何"]"></view>')
-    await getClassCacheSet()
-    // const y =
     expect(res.css.toString()).toMatchSnapshot()
   }, 120_000)
 
   it('single quote after class', async () => {
     // after:content-[\"*\"]
     const res = await getCss('<view class="after:content-[\'对酒当歌，人生几何\']"></view>')
-    await getClassCacheSet()
 
     expect(res.css.toString()).toMatchSnapshot()
   })

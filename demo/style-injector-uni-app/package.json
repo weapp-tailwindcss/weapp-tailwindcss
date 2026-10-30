@@ -11,29 +11,29 @@
     "dev:h5": "cross-env WEAPP_TW_HMR_TIMING=1 uni"
   },
   "dependencies": {
-    "@dcloudio/uni-app": "3.0.0-5000720260410001",
-    "@dcloudio/uni-components": "3.0.0-5000720260410001",
-    "@dcloudio/uni-h5": "3.0.0-5000720260410001",
-    "@dcloudio/uni-mp-vue": "3.0.0-5000320260312001",
-    "@dcloudio/uni-mp-weixin": "3.0.0-5000720260410001",
-    "vue": "^3.5.41"
+    "@dcloudio/uni-app": "3.0.0-5030320261023001",
+    "@dcloudio/uni-components": "3.0.0-5030320261023001",
+    "@dcloudio/uni-h5": "3.0.0-5030320261023001",
+    "@dcloudio/uni-mp-vue": "3.0.0-5030320261023001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5030320261023001",
+    "vue": "^3.5.44"
   },
   "devDependencies": {
-    "@dcloudio/types": "^3.4.8",
-    "@dcloudio/uni-cli-shared": "3.0.0-5000720260410001",
-    "@dcloudio/vite-plugin-uni": "3.0.0-5000720260410001",
+    "@dcloudio/types": "3.4.31",
+    "@dcloudio/uni-cli-shared": "3.0.0-5030320261023001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5030320261023001",
     "@iconify-json/mdi": "catalog:iconifyJson",
     "@iconify-json/svg-spinners": "catalog:iconifyJson",
     "@iconify/tailwind4": "^1.2.3",
     "tailwindcss": "catalog:tailwindcss4",
-    "@vue/runtime-core": "^3.5.41",
+    "@vue/runtime-core": "^3.5.44",
     "@vue/tsconfig": "^0.9.1",
     "cross-env": "catalog:crossEnv",
     "less": "^4.9.1",
     "sass": "catalog:sass195",
     "sass-embedded": "catalog:sass195",
     "typescript": "catalog:typescript59",
-    "vite": "^5.4.21",
+    "vite": "5.2.8",
     "vue-tsc": "catalog:vueTsc318",
     "weapp-style-injector": "workspace:*"
   }

@@ -11,6 +11,7 @@ import { sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { decodeAllocationEvidence } from '../scripts/diagnostics/profile-codec.mjs'
 import { createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
 import { viteOperationFixture } from './helpers/vite-operations.mjs'
+import { uniWorkerFixture } from './helpers/uni-worker.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -64,13 +65,17 @@ const identity = JSON.parse(process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION);
 if (identity.mode === 'inputs' && process.moduleLoadList.includes('NativeModule inspector')) throw new Error('input mode loaded inspector');
 const key = path.join(identity.root, 'input.vue');
 const store = { snapshot: () => ({ candidatesById: [[key, ['flex', 'extra']]], sourceById: [[key, '中文 flex extra']], inlineIncludedCandidates: [], inlineExcludedCandidates: [] }), values: () => new Set(['extra', 'flex']), getRevision: () => 2 };
-globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})].registerStore(store);
+const observer = globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})];
+observer.registerStore(store);
+${uniWorkerFixture(true)}
 ${viteOperationFixture(`globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})]`)}
+await diagnosticBundle('中文 flex extra', async () => {
 await diagnosticGenerate();
 function allocateFixture() { return Array.from({ length: 20000 }, (_, i) => ({ text: 'fixture-' + i, values: new Array(32).fill(i) })); }
 const allocation = allocateFixture();
-await globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})].compilation({ sourceCandidates: store.values(), runtime: new Set(['flex']), transformRuntime: new Set(['flex']), generatorRuntime: store.values() });
+await diagnosticCompilation({ sourceCandidates: store.values(), runtime: new Set(['flex']), transformRuntime: new Set(['flex']), generatorRuntime: store.values() });
 if (allocation.length !== 20000) throw new Error('fixture');
+});
 `
       const { cwd, entry } = await createUniServiceFixture(versionRoot, source)
       await fs.writeFile(path.join(cwd, uniProject.sourceFile), '中文 flex extra')

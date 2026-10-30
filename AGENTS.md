@@ -13,7 +13,7 @@
 - 代码默认 TypeScript + ESM，缩进 2 空格。
 - 文件超过约 300 行优先按目录拆分（如 `feature/a.ts`），避免 `feature.a.ts`。
 - 测试默认 Vitest；修复缺陷或改行为必须补回归测试。
-- 所有 E2E 必须保留微信 IDE 登录态：禁止自动启动/重启 IDE、登录/注销、切换账号、刷新/替换票据、清会话缓存或删除用户配置。仅通过 `scripts/wechat/` 连接用户已开启的 IDE；认证异常立即阻断，不以重置登录恢复测试。项目清理由原绑定服务处理。验证入口为 `e2e/wechat-session-boundary.test.ts` 和会话回归；升级 IDE/automator 后复查协议边界。
+- 所有 E2E 必须保留微信 IDE 登录态：禁止登录/注销、切换账号、刷新/替换票据、清会话缓存或删除用户配置。优先通过 `scripts/wechat/` 复用现有 IDE；必要时允许核对安装、实例和任务归属后受控自动启动或重启，不以单次连接失败推断 IDE 未打开。认证异常立即阻断，不以重置登录恢复测试；恢复后重新预检。项目清理由原绑定服务处理，不关闭其他任务或用户项目。验证入口为 `e2e/wechat-session-boundary.test.ts` 和会话回归；升级 IDE/automator 后复查协议边界。
 - AI 启动本地全面测试（包括手动编排全仓验收）前，必须完成本轮环境预检：微信 IDE、HBuilderX、iOS/Android/Harmony 模拟器、Web 和当前会话 computer use 全部通过。失败、超时、缺证或状态不明立即阻断并在当前对话通知用户；不得用 skip、optional、旧报告或降级替代放行。入口为 `pnpm e2e:preflight prepare`，操作与恢复统一见 [多端手册](e2e/LOCAL-MULTI-PLATFORM-E2E.md)。定向单测、预检回归及普通 CI 不要求全端环境。
 - 验证默认优先本地完成：凡是能通过本地 `pnpm`/Vitest/e2e/构建命令确认的问题，必须先在本地验证并记录命令；只有用户明确要求“PR CI/CD 验证”“盯 CI/CD”或远端环境是唯一可验证来源时，才长时间等待远端 CI/CD。
 - 新增或调整 demo、issue 复现页、样式输出回归用例时，必须重新生成对应项目的 e2e static 快照/产物基线，并在验证记录中说明对应项目与命令；禁止只改源码或 IDE 用例而遗漏 static 基线。
@@ -33,6 +33,7 @@
 
 ## 多 Codex / 多代理协作
 - 同一个物理 checkout 只允许一个 Codex/代理执行写入型任务；多个 Codex 并发处理不同任务时，必须先为每个任务创建独立 `git worktree`。
+- 各 worktree 的 `node_modules`、`.bin`、虚拟 store 和 workspace 包级依赖目录必须独立安装，禁止通过软链或目录借用共享可写依赖；pnpm 的内容寻址 store 可由正常安装机制复用。`pnpm exec` / `run` 可能触发依赖校验和隐式安装，不能视为只读命令；执行前确认依赖目录与生成的命令入口均归属本 worktree。缺少依赖时在自有 worktree 完成 frozen install，不把关闭自动校验当作共享依赖的隔离保证。根因与恢复见[依赖目录隔离复盘](docs/engineering/lessons/worktree-node-modules-isolation.md)。
 - 推荐目录形态：在仓库同级目录创建工作树，例如 `../weapp-tailwindcss-codex/<task-slug>`；不要把并发工作树放进当前仓库目录内部。
 - 每个并发任务使用独立分支名，例如 `codex/<task-slug>`；开始前先执行 `git status --short --branch`，确认当前工作树没有其他代理遗留改动。
 - 在任何编辑、格式化、测试自动修复、`git add`、`git commit`、`git rebase` 或 `git push` 前，都要重新检查 `git status --short`；如果出现自己没有产生的改动，必须停止并说明冲突来源，不得覆盖、删除或顺手纳入提交。

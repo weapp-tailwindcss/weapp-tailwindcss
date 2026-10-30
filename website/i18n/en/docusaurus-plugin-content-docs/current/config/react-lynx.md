@@ -28,7 +28,7 @@ All `@property` registrations, descriptors, and variable dependencies are preser
 - Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- The repository fixture pins Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
+- The repository fixture pins Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
 - ReactLynx + Rspeedy native builds only; Rspeedy Web, non-React Lynx, and React Native are out of scope
 
 ## Minimal configuration
@@ -214,7 +214,7 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 
 ## Devices and evidence
 
-CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64), with baseline `verifiedAt` `2026-10-21T18:49:50.413Z` and `catalogHash` `ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`. The current baseline comes from local dual-platform run `8c29cdaa-b86c-4fc1-a7e8-28b254463458` on source `8db895c54373e20737dcc8254861f73872579aa1`, after a fresh complete preflight and original-artifact replay; later CI runs on different device configurations still require independent evidence.
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-10-28T14:07:32.687Z` and `catalogHash` `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`. The current baseline comes from CI run `40696344394`, attempt 1, on source `eb486aabb6655aa5377b61af1e4e19014bda2f6e`: iOS run `5b228ab0-969a-469e-9537-805701a8f22d` and Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`. The original ZIPs, artifacts, and reports passed strict validation, archiving, and replay; this CI evidence does not replace complete local dual-platform acceptance.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 

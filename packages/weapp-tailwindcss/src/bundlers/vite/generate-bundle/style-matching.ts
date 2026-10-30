@@ -47,12 +47,15 @@ export function collectStyleFileMatchBases(file: string, roots: Array<string | u
   }
   addBase(normalizedFile)
 
-  const resolvedRoots = roots
+  const resolvedRoots = new Set(roots
     .filter((root): root is string => typeof root === 'string' && root.length > 0)
-    .map(root => path.resolve(root))
-  if (path.isAbsolute(normalizedFile)) {
+    .map(root => path.resolve(root)))
+  if (path.isAbsolute(normalizedFile) && resolvedRoots.size > 0) {
+    const resolvedFile = path.resolve(normalizedFile)
+    const realFile = resolveStyleMatchingRealPath(resolvedFile)
     for (const root of resolvedRoots) {
-      const relative = path.relative(resolveStyleMatchingRealPath(root), resolveStyleMatchingRealPath(normalizedFile))
+      const realRoot = root === resolvedFile ? realFile : resolveStyleMatchingRealPath(root)
+      const relative = path.relative(realRoot, realFile)
       if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
         addBase(relative)
       }

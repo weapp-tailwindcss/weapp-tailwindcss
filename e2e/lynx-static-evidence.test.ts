@@ -238,6 +238,19 @@ describe('Lynx 历史与本轮静态证据边界', () => {
     expect(() => assertCurrentStaticEvidence(report)).toThrow(/历史 catalog 或依赖版本/)
   })
 
+  it.each(['reactLynx', 'reactRsbuildPlugin', 'rspeedy', 'lynxTypes', 'templateWebpackPlugin'] as const)('encoder 相同但 %s 改变或缺失的旧证据仍被拒绝', (field) => {
+    for (const mode of ['changed', 'missing'] as const) {
+      const report = currentProtocolFixture()
+      if (mode === 'changed') {
+        report.versions[field] = '0.0.0-legacy'
+      }
+      else {
+        delete (report.versions as Partial<StaticEvidenceReport['versions']>)[field]
+      }
+      expect(() => assertCurrentStaticEvidence(report)).toThrow(/历史 catalog 或依赖版本/)
+    }
+  })
+
   it('重复 case 和混合交互缺少独立候选不能通过本轮门禁', () => {
     const duplicate = currentProtocolFixture()
     duplicate.results[1] = duplicate.results[0]!

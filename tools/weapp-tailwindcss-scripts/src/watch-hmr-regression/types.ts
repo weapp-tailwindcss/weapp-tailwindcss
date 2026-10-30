@@ -83,6 +83,14 @@ export interface MemoryUsageSample {
   maxProcessRssMb: number
   processCount: number
   topProcesses?: MemoryProcessSample[]
+  /** 记录采集器和实际查询窗口，避免将不同计数边界的历史峰值直接比较。 */
+  collection?: {
+    method: 'posix-tree-two-pass-v1'
+    topologyStartedAt: number
+    topologyCompletedAt: number
+    memoryStartedAt: number
+    memoryCompletedAt: number
+  }
 }
 
 export interface MemoryPeakSample {

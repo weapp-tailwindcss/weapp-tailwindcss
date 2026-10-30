@@ -174,6 +174,9 @@ export async function complete(session, timeout = 600_000) {
       session.done,
       new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`Build timed out\n${session.log()}`)), timeout) }),
     ])
+    if (result.failed) {
+      throw result
+    }
     assert.equal(result.exitCode, 0, session.log())
   }
   finally {

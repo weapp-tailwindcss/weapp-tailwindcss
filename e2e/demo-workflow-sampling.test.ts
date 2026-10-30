@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
 import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
+import { WorkflowCancellationError } from '../scripts/demo-e2e-workflow/cancellation'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), capture: vi.fn(), sample: vi.fn(), stop: vi.fn() }))
@@ -48,7 +49,7 @@ it('慢内存采样单飞，exit 后等待末轮错误且不启动下一轮', as
   expect(mocks.stop).toHaveBeenCalledOnce()
 })
 
-it('正常退出等待末轮采样时仍即时响应取消，收尾保留取消与迟到拒绝', async () => {
+it.each(['request', 'SIGINT', 'SIGTERM'] as const)('%s 在正常退出等待末轮采样时先于迟到拒绝，保留首因和退出码', async (mode) => {
   vi.useFakeTimers()
   vi.spyOn(process.stdout, 'write').mockReturnValue(true)
   const child = Object.assign(new EventEmitter(), { exitCode: null as number | null, signalCode: null })
@@ -60,6 +61,8 @@ it('正常退出等待末轮采样时仍即时响应取消，收尾保留取消�
     reject = no
   }))
   const cancellation = new AbortController()
+  const reason = mode === 'request' ? new Error('cancel requested') : new WorkflowCancellationError(mode)
+  const late = new Error('late memory probe failed')
   const running = runStep({ name: 'cancel pending sample', command: 'test', args: [] }, 1, 1, {}, {}, cancellation.signal).catch(error => error)
   await vi.advanceTimersByTimeAsync(1000)
   child.exitCode = 0
@@ -67,12 +70,15 @@ it('正常退出等待末轮采样时仍即时响应取消，收尾保留取消�
   child.emit('close', 0)
   await vi.advanceTimersByTimeAsync(0)
   expect(mocks.stop).not.toHaveBeenCalled()
-  cancellation.abort(new Error('cancel requested'))
+  cancellation.abort(reason)
   expect(mocks.stop).toHaveBeenCalledExactlyOnceWith(true)
-  reject(new Error('late memory probe failed'))
+  reject(late)
   const error = await running
-  expect(error.stepReport.exitCode).toBe(1)
-  expect(error.stepReport.error).toContain('cancel requested')
+  expect(error.cause).toBe(reason)
+  expect(error.errors).toEqual([reason, late])
+  expect(error.stepReport.exitCode).toBe(reason instanceof WorkflowCancellationError ? reason.exitCode : 1)
+  expect(error.stepReport.cancelled).toBe(mode === 'request' ? undefined : mode)
+  expect(error.stepReport.error).toContain(reason.message)
   expect(error.stepReport.error).toContain('late memory probe failed')
   expect(mocks.capture).toHaveBeenCalledTimes(2)
   expect(mocks.sample).toHaveBeenCalledTimes(2)
@@ -86,6 +92,6 @@ it('身份采集失败时不等父 close，立即停止阶段并保留原始原�
   const error = await runStep({ name: 'failed identity', command: 'test', args: [] }, 1, 1).catch(error => error)
   expect(error.stepReport.exitCode).toBe(1)
   expect(error.stepReport.error).toContain('identity probe failed')
-  expect(mocks.stop).toHaveBeenCalledExactlyOnceWith(false)
+  expect(mocks.stop).toHaveBeenCalledExactlyOnceWith(true)
   expect(mocks.sample).not.toHaveBeenCalled()
 })

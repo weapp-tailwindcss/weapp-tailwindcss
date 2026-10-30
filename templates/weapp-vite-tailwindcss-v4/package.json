@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Native WeChat Mini Program + weapp-vite + Tailwind CSS v4 canonical template",
   "engines": {
-    "node": "^22.18.0 || >=24.11.0"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "scripts": {
     "build": "weapp-vite build",
@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "@weapp-tailwindcss/merge": "^2.2.7",
-    "weapp-vite": "7.1.0"
+    "weapp-vite": "7.6.0"
   },
   "devDependencies": {
     "tailwindcss": "^4.3.3",
-    "weapp-tailwindcss": "^5.6.2"
+    "weapp-tailwindcss": "^5.6.3"
   },
-  "packageManager": "pnpm@12.14.0"
+  "packageManager": "pnpm@12.15.0"
 }

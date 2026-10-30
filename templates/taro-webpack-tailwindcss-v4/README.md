@@ -35,6 +35,7 @@ pnpm dev:weapp
 pnpm dev:weapp
 pnpm build:weapp
 pnpm build:h5
+pnpm build:harmony-hybrid
 pnpm open
 ```
 
@@ -43,6 +44,10 @@ pnpm open
 - 生成模式不需要配置 `postinstall: "weapp-tw patch"`
 - 这是 webpack 方案，不同于 `taro-vite-tailwindcss-v4`
 - 适合存量项目对照或 CI 兼容回归
+- H5 与 `harmony-hybrid` 显式使用 Web 生成目标、浏览器主题根和兼容降级；RN/`jdrn` 维持独立构建链路，其他小程序目标保留原有单位转换。
+- Web 单位与 Taro 的 `designWidth: 750`、`deviceRatio[750]: 1`、`baseFontSize: 16` 配套，`32rpx` 转为 `1rem`，与小程序原有的 rem 基准一致。H5 根字号范围为 16–32px；Hybrid 保留 Taro 的分段缩放。375px 视口下，`40px`/`40rpx` 均对应 `1.25rem`/20px，Tailwind 的 `1rem` 对应 16px。调整设计宽或比例时，须同步修改 `config/index.ts` 的单位换算规则与 H5 `pxtransform` 配置。
+- 当前发布版 `weapp-tailwindcss@5.6.3` 的 Web 生成阶段尚未执行通用单位选项，且其 Webpack `SUMMARIZE` 生成阶段晚于 Taro 的 PostCSS loader。模板仅在 H5/Hybrid 注册 `config/webpack-web-units.ts`：生成完成后、内容哈希计算前，通过公开 PostCSS 转换器处理 CSS 资产，并使用 Webpack `updateAsset` 保留资产信息与合成后的 source map。该转换只处理 `rpx`，不会再次缩放已有 `rem`，不承担 Tailwind 生成，也不读写输出目录。待升级至包含 Web 生成单位修复的正式版，并通过 H5/Hybrid 独立构建与单位回归后，可将规则迁回 `cssOptions.unitConversion`，再移除此兼容插件及单位转换器直接依赖。
+- Hybrid 的浏览器样式验证覆盖 Web 资源；鸿蒙宿主 API 和原生 bridge 仍需在真实容器验收。
 
 ## 相关文档
 

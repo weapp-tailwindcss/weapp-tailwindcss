@@ -1,0 +1,149 @@
+diff --git a/lib/dependencies/CommonJsAsyncDependency.js b/lib/dependencies/CommonJsAsyncDependency.js
+index 5e17bd2ec16bc92ac5c2a09bd2e503174e5a863e..88bed9b8bfde5a72e05019b7089323546fb85443 100644
+--- a/lib/dependencies/CommonJsAsyncDependency.js
++++ b/lib/dependencies/CommonJsAsyncDependency.js
+@@ -1,4 +1,4 @@
+-const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
++const ModuleDependency = require('webpack').dependencies.ModuleDependency
+ const makeSerializable = require('webpack/lib/util/makeSerializable')
+ 
+ class CommonJsAsyncDependency extends ModuleDependency {
+diff --git a/lib/dependencies/CommonJsExtractDependency.js b/lib/dependencies/CommonJsExtractDependency.js
+index 2622a9f5f1d372d9ad4db79eda1baeb8d476153f..d37ec772850d1045daf0a311864adf9c7a6725a8 100644
+--- a/lib/dependencies/CommonJsExtractDependency.js
++++ b/lib/dependencies/CommonJsExtractDependency.js
+@@ -1,4 +1,4 @@
+-const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
++const ModuleDependency = require('webpack').dependencies.ModuleDependency
+ const makeSerializable = require('webpack/lib/util/makeSerializable')
+ 
+ class CommonJsExtractDependency extends ModuleDependency {
+diff --git a/lib/dependencies/CommonJsVariableDependency.js b/lib/dependencies/CommonJsVariableDependency.js
+index 6d4a87fa704e6d548d52b76c5cd6aa03ff0795d2..f25fc6006fec1d0b5d6a272d7ee8d4fa54ff6781 100644
+--- a/lib/dependencies/CommonJsVariableDependency.js
++++ b/lib/dependencies/CommonJsVariableDependency.js
+@@ -1,4 +1,4 @@
+-const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
++const ModuleDependency = require('webpack').dependencies.ModuleDependency
+ const makeSerializable = require('webpack/lib/util/makeSerializable')
+ const InitFragment = require('webpack/lib//InitFragment')
+ 
+diff --git a/lib/dependencies/ImportDependency.js b/lib/dependencies/ImportDependency.js
+index 388f308557fd96dda68d8f220470db50eea342ad..a53c666de692d3f7cee5480415bf93ad670b8d6c 100644
+--- a/lib/dependencies/ImportDependency.js
++++ b/lib/dependencies/ImportDependency.js
+@@ -1,6 +1,6 @@
+ const Dependency = require('webpack/lib/Dependency')
+ const makeSerializable = require('webpack/lib/util/makeSerializable')
+-const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
++const ModuleDependency = require('webpack').dependencies.ModuleDependency
+ const { RetryRuntimeGlobal } = require('./RetryRuntimeModule')
+ 
+ class ImportDependency extends ModuleDependency {
+diff --git a/lib/dependencies/RetryRuntimeModule.js b/lib/dependencies/RetryRuntimeModule.js
+index 8f6a95026b83f0ca52a5d1ea1eb625fc4df85cbc..bdcb66362b2bcf9e480e4b7c92f8c2458500ce57 100644
+--- a/lib/dependencies/RetryRuntimeModule.js
++++ b/lib/dependencies/RetryRuntimeModule.js
+@@ -1,5 +1,5 @@
+-const Template = require('webpack/lib/Template')
+-const RuntimeModule = require('webpack/lib/RuntimeModule')
++const Template = require('webpack').Template
++const RuntimeModule = require('webpack').RuntimeModule
+ 
+ const RetryRuntimeGlobal = '__webpack_require__.mpxR'
+ 
+diff --git a/lib/index.js b/lib/index.js
+index 22abd6d118597aee2f7f62c357442eb43191c905..dc385f4418c6a47992b2112086edd291d31e7110 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -13,17 +13,17 @@ const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDepende
+ const NormalModule = require('webpack/lib/NormalModule')
+ const EntryPlugin = require('webpack/lib/EntryPlugin')
+ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+-const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
++const FlagEntryExportAsUsedPlugin = require('./utils/flag-entry-export-as-used-plugin')
+ const FileSystemInfo = require('webpack/lib/FileSystemInfo')
+ const ImportDependency = require('./dependencies/ImportDependency')
+-const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
+-const ProvidePlugin = require('webpack/lib/ProvidePlugin')
++const AsyncDependenciesBlock = require('webpack').AsyncDependenciesBlock
++const ProvidePlugin = require('webpack').ProvidePlugin
+ const normalize = require('./utils/normalize')
+ const toPosix = require('./utils/to-posix')
+ const addQuery = require('./utils/add-query')
+ const hasOwn = require('./utils/has-own')
+ const { every } = require('./utils/set')
+-const DefinePlugin = require('webpack/lib/DefinePlugin')
++const DefinePlugin = require('webpack').DefinePlugin
+ const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
+ const AddModePlugin = require('./resolver/AddModePlugin')
+ const AddEnvPlugin = require('./resolver/AddEnvPlugin')
+@@ -77,9 +77,9 @@ const isEmptyObject = require('./utils/is-empty-object')
+ const DynamicPlugin = require('./resolver/DynamicPlugin')
+ const { isReact, isWeb } = require('./utils/env')
+ const VirtualModulesPlugin = require('webpack-virtual-modules')
+-const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
++const RuntimeGlobals = require('webpack').RuntimeGlobals
+ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
+-const ExternalModule = require('webpack/lib/ExternalModule')
++const ExternalModule = require('webpack').ExternalModule
+ const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
+ const checkVersionCompatibility = require('./utils/check-core-version-match')
+ const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
+diff --git a/lib/react/LoadAsyncChunkModule.js b/lib/react/LoadAsyncChunkModule.js
+index af70b461a26713f5641168ae3ee765eda9e24b35..3b3a21a9494bd9f02a28dfa6123300323af5ffbb 100644
+--- a/lib/react/LoadAsyncChunkModule.js
++++ b/lib/react/LoadAsyncChunkModule.js
+@@ -1,5 +1,5 @@
+-const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
+-const Template = require('webpack/lib/Template')
++const RuntimeGlobals = require('webpack').RuntimeGlobals
++const Template = require('webpack').Template
+ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
+ 
+ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
+diff --git a/lib/utils/flag-entry-export-as-used-plugin.js b/lib/utils/flag-entry-export-as-used-plugin.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..37c770599c59f6a5aa2f9c48d622c26a3e559ea4
+--- /dev/null
++++ b/lib/utils/flag-entry-export-as-used-plugin.js
+@@ -0,0 +1,10 @@
++let pluginPath
++try {
++  // Webpack 5.112 将该内部插件移至 optimize；其余模块使用公开导出。
++  pluginPath = require.resolve('webpack/lib/optimize/FlagEntryExportAsUsedPlugin')
++} catch (error) {
++  if (error.code !== 'MODULE_NOT_FOUND') throw error
++  pluginPath = require.resolve('webpack/lib/FlagEntryExportAsUsedPlugin')
++}
++// 加载错误必须原样传播，不能误判为旧版本路径。
++module.exports = require(pluginPath)
+diff --git a/lib/wxs/WxsTemplatePlugin.js b/lib/wxs/WxsTemplatePlugin.js
+index 1af054ebe65029e4a32c3d8cf80ccac8bdcc0a14..fcaccb12bc67aa51a3475ed72f56f9a19d94a797 100644
+--- a/lib/wxs/WxsTemplatePlugin.js
++++ b/lib/wxs/WxsTemplatePlugin.js
+@@ -1,9 +1,9 @@
+ const config = require('../config')
+ const { ConcatSource } = require('webpack').sources
+ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+-const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
++const RuntimeGlobals = require('webpack').RuntimeGlobals
+ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
+-const Template = require('webpack/lib/Template')
++const Template = require('webpack').Template
+ 
+ class MakeNamespaceObjectRuntimeModule extends HelperRuntimeModule {
+   constructor () {
+diff --git a/lib/wxs/loader.js b/lib/wxs/loader.js
+index a19df2a3b5054cc151ad89732828c0cfba6a81d3..afd5c334b819cafaf520fb2952e91c5700f86cfe 100644
+--- a/lib/wxs/loader.js
++++ b/lib/wxs/loader.js
+@@ -2,7 +2,7 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
+ const EntryPlugin = require('webpack/lib/EntryPlugin')
+ const LazySet = require('webpack/lib/util/LazySet')
+ const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
+-const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
++const FlagEntryExportAsUsedPlugin = require('../utils/flag-entry-export-as-used-plugin')
+ const path = require('path')
+ const WxsPlugin = require('./WxsPlugin')
+ const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-28T04:45:12.943582+00:00",
+  "policy": "Taro RN4.3.1局部精确Stylelint16.10.0；根Stylelint17保持；不把声明peer^16误认为所有16.x均可运行",
+  "records": [
+    {
+      "name": "stylelint",
+      "version": "16.10.0",
+      "metadataUrl": "https://registry.npmjs.org/stylelint/16.10.0",
+      "metadataSha256": "0229b97fb4759b4474f17c7b46570205b1bff4ae19ecc34279a0bfdfe7f1fc59",
+      "tarballUrl": "https://registry.npmjs.org/stylelint/-/stylelint-16.10.0.tgz",
+      "tarballIntegrity": "sha512-z/8X2rZ52dt2c0stVwI9QL2AFJhLhbPkyfpDFcizs200V/g7v+UYY6SNcB9hKOLcDDX/yGLDsY/pX08sLkz9xQ==",
+      "integrityVerified": true,
+      "manifestVersion": "16.10.0",
+      "privateHelper": "package/lib/utils/declarationValueIndex.cjs",
+      "privateHelperExists": true,
+      "privateHelperSha256": "6ea4b162e33f493f44fa3918827aa12663b0803e8383385c95db71d6c4ab31a7"
+    },
+    {
+      "name": "stylelint",
+      "version": "16.11.0",
+      "metadataUrl": "https://registry.npmjs.org/stylelint/16.11.0",
+      "metadataSha256": "23b7e1036286053fa59d9018d9c25ec783220e7faadf404847ac201b448ca319",
+      "tarballUrl": "https://registry.npmjs.org/stylelint/-/stylelint-16.11.0.tgz",
+      "tarballIntegrity": "sha512-zrl4IrKmjJQ+h9FoMp69UMCq5SxeHk0URhxUBj4d3ISzo/DplOFBJZc7t7Dr6otB+1bfbbKNLOmCDpzKSlW+Nw==",
+      "integrityVerified": true,
+      "manifestVersion": "16.11.0",
+      "privateHelper": "package/lib/utils/declarationValueIndex.cjs",
+      "privateHelperExists": false
+    },
+    {
+      "name": "stylelint-taro-rn",
+      "version": "4.3.1",
+      "metadataUrl": "https://registry.npmjs.org/stylelint-taro-rn/4.3.1",
+      "metadataSha256": "a2a0396477e057852356e5015a8dd62706e6f704d773f557b3746d58dd84236d",
+      "tarballUrl": "https://registry.npmjs.org/stylelint-taro-rn/-/stylelint-taro-rn-4.3.1.tgz",
+      "tarballIntegrity": "sha512-AeyesC2mH99O0RDeOF6718dNwonUPkjeWB2x8lvfqIGFSUXziHjerQdh0k8g6Npk32QNVCCX9zRUOKd7Pu7s0w==",
+      "integrityVerified": true,
+      "manifestVersion": "4.3.1",
+      "devStylelint": ">=16.4.0 <=16.10.0",
+      "peerStylelint": "^16",
+      "privateImports": [
+        "var declarationValueIndex = require('stylelint/lib/utils/declarationValueIndex.cjs');"
+      ],
+      "compiledSourceSha256": "c8078a31f9a94dbcdc879511c97cfa254288e082f68cb452903ab629b21b316d"
+    }
+  ],
+  "patchLine": {
+    "registryUrl": "https://registry.npmjs.org/stylelint",
+    "metadataSha256": "49973fdde0bb88823b905b664c12c13375cfb4c2624a8a179075327706af0053",
+    "versions16_10": [
+      "16.10.0"
+    ]
+  },
+  "consumerStatus": "真实consumer回归由独立定向验证记录确认，本文件仅证明官方源码边界"
+}

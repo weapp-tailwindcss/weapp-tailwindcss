@@ -82,6 +82,7 @@
   "author": "",
   "dependencies": {
     "@babel/runtime": "catalog:babelRuntime7284",
+    "@nutui/icons-vue-taro": "^0.0.9",
     "@nutui/nutui-taro": "^4.3.14",
     "@react-native-community/slider": "catalog:reactNativeSlider442",
     "@react-native-picker/picker": "catalog:reactNativePicker261",
@@ -105,8 +106,8 @@
     "@tarojs/taro": "catalog:taro4",
     "@tarojs/taro-rn": "catalog:taro4rn",
     "expo": "catalog:expo50",
-    "react": "catalog:react18",
-    "react-dom": "catalog:react18",
+    "react": "catalog:taroRnReact18",
+    "react-dom": "catalog:taroRnReact18",
     "react-native": "catalog:reactNative073",
     "react-native-device-info": "catalog:reactNativeDeviceInfo14",
     "react-native-gesture-handler": "catalog:reactNativeGestureHandler214",
@@ -141,9 +142,9 @@
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/variants": "workspace:*",
     "babel-preset-taro": "catalog:taro4",
-    "eslint": "catalog:eslint10",
+    "eslint": "catalog:taroLint",
     "eslint-config-taro": "catalog:taro4",
-    "eslint-plugin-vue": "^10.11.1",
+    "eslint-plugin-vue": "8.7.1",
     "metro-react-native-babel-preset": "catalog:metroReactNativeBabelPreset077",
     "postcss": "catalog:postcss85",
     "stylelint": "catalog:stylelint1625",
@@ -155,6 +156,6 @@
     "vue-loader": "^17.4.2",
     "weapp-ide-cli": "catalog:weappIdeCli",
     "weapp-tailwindcss": "workspace:*",
-    "webpack": "5.105.4"
+    "webpack": "5.91.0"
   }
 }

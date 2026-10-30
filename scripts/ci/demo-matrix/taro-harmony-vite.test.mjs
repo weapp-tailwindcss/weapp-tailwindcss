@@ -93,7 +93,7 @@ it.each([path.resolve('fixture-source'), String.raw`C:\fixture\source`, 'fixture
 
 it('补丁不依赖项目根目录偶然提升的 Babel 依赖', () => {
   const workspace = parse(readFileSync(path.join(repo, 'pnpm-workspace.yaml'), 'utf8'))
-  expect(workspace.packageExtensions?.['@tarojs/plugin-platform-harmony-hybrid@4.2.1']?.dependencies?.['@babel/core']).toBeTruthy()
+  expect(workspace.packageExtensions?.['@tarojs/plugin-platform-harmony-hybrid@4.3.1']?.dependencies?.['@babel/core']).toBeTruthy()
   const platformRequire = taroRequire('node:module').createRequire(packageFile('plugin-platform-harmony-hybrid', 'package.json'))
   expect(platformRequire('@babel/core').transformAsync).toBeTypeOf('function')
 })

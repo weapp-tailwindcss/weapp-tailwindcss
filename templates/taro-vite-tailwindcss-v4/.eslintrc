@@ -1,7 +1,39 @@
 {
-  "extends": ["taro/react"],
+  "extends": [
+    "taro/react"
+  ],
   "rules": {
     "react/jsx-uses-react": "off",
     "react/react-in-jsx-scope": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.ts?(x)"
+      ],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          {
+            "vars": "all",
+            "args": "none",
+            "ignoreRestSiblings": true,
+            "caughtErrors": "none",
+            "varsIgnorePattern": "^Nerv|^React"
+          }
+        ],
+        "@typescript-eslint/no-shadow": [
+          "error",
+          {
+            "allow": [],
+            "builtinGlobals": false,
+            "hoist": "functions",
+            "ignoreOnInitialization": false,
+            "ignoreTypeValueShadow": true,
+            "ignoreFunctionTypeParameterNameValueShadow": true
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -13,6 +13,12 @@ afterEach(async () => {
 })
 
 export async function fixture() {
+  const { packageManager } = JSON.parse(await readFile(new URL('../../../../package.json', import.meta.url), 'utf8'))
+  const toolVersion = /^pnpm@([^+]+)/.exec(packageManager)?.[1]
+  if (!toolVersion) {
+    throw new Error('测试 fixture 需要根项目声明 pnpm 版本')
+  }
+  const toolLock = YAML.parseAllDocuments(await readFile(new URL('../../../../pnpm-lock.yaml', import.meta.url), 'utf8'))[0]!.toJS()
   const root = await mkdtemp(path.join(os.tmpdir(), 'dependency intents '))
   roots.push(root)
   const write = async (file: string, value: string) => {
@@ -27,12 +33,11 @@ export async function fixture() {
     packages: ['packages/*', 'packages-runtime/*', 'demo/*'],
     ...extra,
   }))
-  const lock = async (importers: Record<string, unknown>, toolVersion = '12.5.1') => write('pnpm-lock.yaml', [
-    YAML.stringify({ lockfileVersion: '9.0', importers: { '.': { packageManagerDependencies: { pnpm: { specifier: toolVersion, version: toolVersion } } } } }),
+  const lock = async (importers: Record<string, unknown>, version = toolVersion) => write('pnpm-lock.yaml', [
+    YAML.stringify({ ...toolLock, importers: { '.': { ...toolLock.importers['.'], packageManagerDependencies: { pnpm: { specifier: version, version } } } } }),
     YAML.stringify({ lockfileVersion: '9.0', settings: {}, importers }),
   ].map(doc => `---\n${doc}`).join('\n'))
   const read = (file: string) => readFile(path.resolve(root, file), 'utf8')
-  const { packageManager } = JSON.parse(await readFile(new URL('../../../../package.json', import.meta.url), 'utf8'))
   await pkg('.', { name: 'fixture-workspace', private: true, packageManager })
   await workspace()
   await lock({})
@@ -40,8 +45,13 @@ export async function fixture() {
 }
 
 export async function releaseStatus(root: string) {
-  const server = createServer((_request, response) => {
+  const server = createServer((request, response) => {
     response.setHeader('content-type', 'application/json')
+    if (decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname) !== '/@fixture/a') {
+      response.writeHead(404)
+      response.end(JSON.stringify({ error: `测试 registry 未提供 ${request.url}` }))
+      return
+    }
     response.end(JSON.stringify({
       'name': '@fixture/a',
       'dist-tags': { latest: '1.0.0' },

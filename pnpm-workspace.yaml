@@ -40,7 +40,7 @@ minimumReleaseAgeExclude:
 
 update:
   ignoreDeps:
-    # Taro 4.2.1 仍依赖 Babel 7，需与 Taro 成组迁移。
+    # Taro 4.3.1 仍依赖 Babel 7，需与 Taro 成组迁移。
     - '@babel/*'
     - 'babel-*'
     - '@tarojs/*'
@@ -106,18 +106,24 @@ versioning:
     storage: repository
 
 overrides:
-  rolldown@1.2.10: 1.2.12
-  tsdown@0.23.0>rolldown: 1.2.11
-  weapp-vite>rolldown: 1.2.12
   jiti: 2.7.0
-  '@docusaurus/bundler>postcss': 8.5.30
-  '@docusaurus/cssnano-preset>postcss': 8.5.30
-  '@docusaurus/theme-classic>postcss': 8.5.30
+  '@docusaurus/bundler>postcss': 8.5.32
+  '@docusaurus/cssnano-preset>postcss': 8.5.32
+  '@docusaurus/theme-classic>postcss': 8.5.32
   weapp-vite>weapp-tailwindcss: workspace:*
+  eslint-config-taro@4.3.1>@typescript-eslint/parser: 8.72.1
+  eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin: 8.72.1
+  # Taro RN 规则使用在新版本中已删除的 Stylelint 私有接口，保持上游实测配套。
+  '@tarojs/rn-style-transformer@4.3.1>stylelint': 16.10.0
+  # devframe 与 agentic 使用双向精确 peer，各工具链保留自己的配套版本。
+  '@eslint/config-inspector@3.5.0>devframe': 1.2.6
+  '@eslint/config-inspector@3.5.0>@devframes/agentic': 1.2.6
+  weapp-vite@7.6.0>@modelcontextprotocol/server: 2.4.0
+  '@weapp-vite/mcp@2.1.0>@modelcontextprotocol/server': 2.4.0
 
 catalogs:
   autoprefixer10:
-    autoprefixer: ^10.6.1
+    autoprefixer: ^10.6.2
   buildUtilities:
     '@parcel/watcher': ^2.6.0
     debug: ~4.4.3
@@ -128,17 +134,17 @@ catalogs:
     local-pkg: ^1.2.1
     lightningcss: ^1.33.0
     lru-cache: 11.5.3
-    magic-string: ^1.4.3
+    magic-string: ^1.4.5
     micromatch: ^4.0.8
     pathe: ^2.0.3
     picocolors: ^1.1.1
     postcss-load-config: ^6.0.1
-    postcss-selector-parser: ^7.1.6
+    postcss-selector-parser: ^7.1.7
     vite-plugin-dts: ^4.5.4
     yaml: ^2.9.1
   compilerUtilities:
     comment-json: ^5.0.0
-    oxc-parser: ^0.154.0
+    oxc-parser: ^0.156.0
     oxc-walker: ^1.1.1
     semver: ~7.8.5
   postcssCompat:
@@ -159,19 +165,19 @@ catalogs:
   babelCore7285:
     '@babel/core': ^7.29.7
   babel8:
-    '@babel/core': ^8.0.7
+    '@babel/core': ^8.0.9
     '@babel/generator': ^8.0.6
-    '@babel/parser': ^8.0.7
+    '@babel/parser': ^8.0.8
     '@babel/traverse': ^8.0.7
-    '@babel/types': ^8.0.6
+    '@babel/types': ^8.0.8
   babelPresetReact7285:
     '@babel/preset-react': ^7.29.7
   babelRuntime7284:
-    '@babel/runtime': ^7.29.7
+    '@babel/runtime': ^7.29.10
   babelRuntime7284tilde:
-    '@babel/runtime': ^7.29.2
+    '@babel/runtime': ^7.29.10
   baselineBrowserMapping:
-    baseline-browser-mapping: ^2.11.28
+    baseline-browser-mapping: ^2.11.34
   classVarianceAuthority:
     class-variance-authority: ^0.7.1
   clsx:
@@ -190,7 +196,7 @@ catalogs:
     gulp-if: ^3.0.0
     gulp-postcss: ^10.0.0
     gulp-rename: ^2.1.0
-    gulp-typescript: ^6.0.0-alpha.1
+    gulp-typescript: 6.0.0-alpha.1
   csstools:
     '@csstools/css-color-parser': ^4.2.6
     '@csstools/css-parser-algorithms': ^4.0.2
@@ -198,7 +204,7 @@ catalogs:
   egoistTailwindcssIcons:
     '@egoist/tailwindcss-icons': ^1.9.2
   eslint10:
-    eslint: ^10.12.0
+    eslint: ^10.13.0
   eslintPluginReact:
     eslint-plugin-react: ^7.37.5
   eslintPluginReactHooks:
@@ -206,23 +212,23 @@ catalogs:
   iconifyJson:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
-    '@iconify-json/logos': ^1.2.16
-    '@iconify-json/lucide': ^1.2.144
+    '@iconify-json/logos': ^1.2.18
+    '@iconify-json/lucide': ^1.2.147
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
   inquirerPrompts:
-    '@inquirer/prompts': ^8.7.3
+    '@inquirer/prompts': ^8.7.5
   lucideReact0555:
-    lucide-react: ^1.14.0
+    lucide-react: ^1.62.0
   lucideVueNext0555:
     lucide-vue-next: ^1.0.0
   miniApiTypings:
     miniprogram-api-typings: ^5.2.3
   postcss85:
-    postcss: ^8.5.30
+    postcss: ^8.5.32
   postcss85tilde:
-    postcss: ^8.5.30
+    postcss: ^8.5.32
   postcssComment2:
     postcss-comment: ^2.0.0
   postcssRem:
@@ -230,38 +236,38 @@ catalogs:
   postcssRpx:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:
-    es-toolkit: ^1.52.0
+    es-toolkit: ^1.53.0
     postcss-preset-env: ^11.6.1
   prettier371:
     prettier: ^3.9.10
   react18:
-    '@types/react': ^19.2.18
-    '@types/react-dom': 18.2.7
+    '@types/react': ^18.3.31
+    '@types/react-dom': ^18.3.7
     react: ^18.3.1
     react-dom: ^18.3.1
   react19:
-    '@types/react': ^19.2.18
-    '@types/react-dom': 19.2.5
-    react: ^19.2.8
-    react-dom: ^19.2.8
+    '@types/react': ^19.3.0
+    '@types/react-dom': ^19.3.0
+    react: ^19.3.1
+    react-dom: ^19.3.1
   reactRefresh018:
     react-refresh: ^0.18.0
   rsbuild2:
-    '@rsbuild/core': ^2.2.13
+    '@rsbuild/core': ^2.2.14
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
-    sass: ^1.105.1
-    sass-embedded: ^1.105.1
+    sass: ^1.106.1
+    sass-embedded: ^1.106.1
   storybook:
-    '@storybook/addon-a11y': ^10.6.2
-    '@storybook/react': ^10.6.2
-    '@storybook/react-vite': ^10.6.2
-    storybook: ^10.6.2
+    '@storybook/addon-a11y': ^10.6.5
+    '@storybook/react': ^10.6.5
+    '@storybook/react-vite': ^10.6.5
+    storybook: ^10.6.5
   stylelint1625:
     stylelint: ^17.16.0
   swc:
-    '@swc/core': ^1.16.18
+    '@swc/core': ^1.16.20
   tailwindMerge:
     tailwind-merge: ^3.7.0
   tailwindMerge2:
@@ -277,36 +283,36 @@ catalogs:
   tailwindcssRem:
     tailwindcss-rem2px-preset: ^1.0.3
   taro4:
-    '@tarojs/cli': ^4.2.1
-    '@tarojs/components': ^4.2.1
-    '@tarojs/helper': ^4.2.1
-    '@tarojs/plugin-framework-react': ^4.2.1
-    '@tarojs/plugin-framework-vue3': ^4.2.1
-    '@tarojs/plugin-html': ^4.2.1
-    '@tarojs/plugin-platform-alipay': ^4.2.1
-    '@tarojs/plugin-platform-h5': ^4.2.1
-    '@tarojs/plugin-platform-harmony-hybrid': ^4.2.1
-    '@tarojs/plugin-platform-jd': ^4.2.1
-    '@tarojs/plugin-platform-qq': ^4.2.1
-    '@tarojs/plugin-platform-swan': ^4.2.1
-    '@tarojs/plugin-platform-tt': ^4.2.1
-    '@tarojs/plugin-platform-weapp': ^4.2.1
-    '@tarojs/react': ^4.2.1
-    '@tarojs/runtime': ^4.2.1
-    '@tarojs/router': ^4.2.1
-    '@tarojs/shared': ^4.2.1
-    '@tarojs/taro': ^4.2.1
-    '@tarojs/taro-loader': ^4.2.1
-    '@tarojs/vite-runner': ^4.2.1
-    '@tarojs/webpack5-runner': ^4.2.1
-    babel-preset-taro: ^4.2.1
-    eslint-config-taro: ^4.2.1
+    '@tarojs/cli': ^4.3.1
+    '@tarojs/components': ^4.3.1
+    '@tarojs/helper': ^4.3.1
+    '@tarojs/plugin-framework-react': ^4.3.1
+    '@tarojs/plugin-framework-vue3': ^4.3.1
+    '@tarojs/plugin-html': ^4.3.1
+    '@tarojs/plugin-platform-alipay': ^4.3.1
+    '@tarojs/plugin-platform-h5': ^4.3.1
+    '@tarojs/plugin-platform-harmony-hybrid': ^4.3.1
+    '@tarojs/plugin-platform-jd': ^4.3.1
+    '@tarojs/plugin-platform-qq': ^4.3.1
+    '@tarojs/plugin-platform-swan': ^4.3.1
+    '@tarojs/plugin-platform-tt': ^4.3.1
+    '@tarojs/plugin-platform-weapp': ^4.3.1
+    '@tarojs/react': ^4.3.1
+    '@tarojs/runtime': ^4.3.1
+    '@tarojs/router': ^4.3.1
+    '@tarojs/shared': ^4.3.1
+    '@tarojs/taro': ^4.3.1
+    '@tarojs/taro-loader': ^4.3.1
+    '@tarojs/vite-runner': ^4.3.1
+    '@tarojs/webpack5-runner': ^4.3.1
+    babel-preset-taro: ^4.3.1
+    eslint-config-taro: ^4.3.1
   taro4rn:
-    '@tarojs/components-rn': ^4.2.1
-    '@tarojs/rn-runner': ^4.2.1
-    '@tarojs/rn-supporter': ^4.2.1
-    '@tarojs/runtime-rn': ^4.2.1
-    '@tarojs/taro-rn': ^4.2.1
+    '@tarojs/components-rn': ^4.3.1
+    '@tarojs/rn-runner': ^4.3.1
+    '@tarojs/rn-supporter': ^4.3.1
+    '@tarojs/runtime-rn': ^4.3.1
+    '@tarojs/taro-rn': ^4.3.1
   expo50:
     expo: 50.0.21
   reactNative073:
@@ -344,29 +350,29 @@ catalogs:
   typescript59tilde:
     typescript: ^6.0.3
   typescriptEslint:
-    '@typescript-eslint/eslint-plugin': ^8.61.1
-    '@typescript-eslint/parser': ^8.61.1
-    typescript-eslint: ^8.59.3
+    '@typescript-eslint/eslint-plugin': ^8.72.1
+    '@typescript-eslint/parser': ^8.72.1
+    typescript-eslint: ^8.72.1
   uviewPlus:
-    uview-plus: ^3.8.130
+    uview-plus: ^3.8.136
   vite4:
     vite: ^4.5.14
   vite52:
     vite: ^5.4.21
   vite5421:
-    vite: ^5.4.21
+    vite: ^4.5.14
   vite724:
-    vite: ^7.3.6
+    vite: ^7.3.7
   vite8:
-    vite: ^8.3.4
+    vite: ^8.3.5
   vitePluginInspect:
     vite-plugin-inspect: ^11.4.1
   vitePluginReact4:
     '@vitejs/plugin-react': ^4.7.0
   vitePluginReact6:
-    '@vitejs/plugin-react': ^6.1.0
+    '@vitejs/plugin-react': ^6.1.2
   vitePluginVue6:
-    '@vitejs/plugin-vue': ^6.0.8
+    '@vitejs/plugin-vue': ^6.0.10
   vitest:
     '@vitest/coverage-v8': ~5.0.5
     '@vitest/ui': ~5.0.5
@@ -374,45 +380,66 @@ catalogs:
   vue2:
     vue: ^2.7.16
   vue3:
-    '@vue/compiler-dom': ^3.5.41
-    '@vue/compiler-sfc': ^3.5.41
-    vue: ^3.5.41
+    '@vue/compiler-dom': ^3.5.44
+    '@vue/compiler-sfc': ^3.5.44
+    vue: ^3.5.44
   vueRuntimeCore:
-    '@vue/runtime-core': ^3.5.34
+    '@vue/runtime-core': ^3.5.44
   vueTsc318:
-    vue-tsc: ^3.3.11
+    vue-tsc: ^3.3.13
   weappChildren:
     weapp-tailwindcss-children: ^0.1.0
   weappIdeCli:
-    weapp-ide-cli: ^6.1.9
+    weapp-ide-cli: ^6.3.0
   weappVite:
-    weapp-vite: ^7.4.0
+    weapp-vite: ^7.6.0
   webpackTools:
     '@pmmmwh/react-refresh-webpack-plugin': ^0.6.3
     '@types/webpack-env': ^1.18.8
     css-loader: ^7.1.5
     tsconfig-paths-webpack-plugin: ^4.2.0
     webpack-cli: ^7.2.3
-    webpack-dev-server: ^5.2.6
+    webpack-dev-server: ^5.2.7
   wrangler:
-    wrangler: ^4.151.0
+    wrangler: ^4.154.0
+  uniVite:
+    vite: 5.2.8
+  taroRnReact18:
+    react: 18.2.0
+    react-dom: 18.2.0
+  taroLint:
+    '@typescript-eslint/eslint-plugin': 8.72.1
+    '@typescript-eslint/parser': 8.72.1
+    eslint: 8.57.1
+    eslint-plugin-import: 2.32.0
+    eslint-plugin-react-hooks: 4.6.2
 
 packageExtensions:
-  '@tarojs/plugin-platform-harmony-hybrid@4.2.1':
+  '@tarojs/rn-runner@4.3.1':
+    dependencies:
+      stylelint: 16.10.0
+      stylelint-taro-rn: 4.3.1
+  weapp-vite@7.6.0:
+    dependencies:
+      '@babel/plugin-transform-dynamic-import': 8.0.1
+      '@devframes/agentic': 1.2.5
+  '@tarojs/plugin-platform-harmony-hybrid@4.3.1':
     dependencies:
       '@babel/core': ^7.26.10
 
 patchedDependencies:
+  watchpack@2.6.3: patches/watchpack@2.6.3.patch
+  weapp-vite@7.6.0: patches/weapp-vite@7.6.0.patch
   '@lynx-js/tasm@0.0.49': patches/@lynx-js__tasm@0.0.49.patch
-  '@mpxjs/vue-cli-plugin-mpx@2.2.30': patches/@mpxjs__vue-cli-plugin-mpx@2.2.30.patch
-  '@tarojs/plugin-framework-react@4.2.1': patches/@tarojs__plugin-framework-react@4.2.1.patch
-  '@tarojs/plugin-framework-vue3@4.2.1': patches/@tarojs__plugin-framework-vue3@4.2.1.patch
-  '@tarojs/plugin-platform-harmony-hybrid@4.2.1': patches/@tarojs__plugin-platform-harmony-hybrid@4.2.1.patch
-  '@tarojs/vite-runner@4.2.1': patches/@tarojs__vite-runner@4.2.1.patch
-  nitropack@2.13.4: patches/nitropack@2.13.4.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
-  rollup@4.63.0: patches/rollup@4.63.0.patch
-  rollup@4.63.1: patches/rollup@4.63.1.patch
-  rollup@4.63.5: patches/rollup@4.63.5.patch
-  weapp-vite@7.4.0: patches/weapp-vite@7.4.0.patch
-  webpack@5.105.4: patches/webpack@5.105.4.patch
+  '@mpxjs/vue-cli-plugin-mpx@2.2.32': patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch
+  '@tarojs/plugin-framework-react@4.3.1': patches/@tarojs__plugin-framework-react@4.3.1.patch
+  '@tarojs/plugin-framework-vue3@4.3.1': patches/@tarojs__plugin-framework-vue3@4.3.1.patch
+  '@tarojs/plugin-platform-harmony-hybrid@4.3.1': patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch
+  '@tarojs/vite-runner@4.3.1': patches/@tarojs__vite-runner@4.3.1.patch
+  nitropack@2.13.5: patches/nitropack@2.13.5.patch
+  webpack@5.91.0: patches/webpack@5.91.0.patch
+  webpack@5.112.2: patches/webpack@5.112.2.patch
+  rollup@4.65.1: patches/rollup@4.65.1.patch
+  '@mpxjs/webpack-plugin@2.11.1': patches/@mpxjs__webpack-plugin@2.11.1.patch
+  webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch

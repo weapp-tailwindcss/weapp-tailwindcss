@@ -59,9 +59,22 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
             await expect(page).toHaveScreenshot({ fullPage: true })
           return
         }
-        if (browserName !== 'firefox')
-          page.screenshot = async () => { throw new Error('普通浏览器不得分片') }
+        const screenshot = page.screenshot.bind(page)
+        let captures = 0
+        page.screenshot = options => {
+          expect(options?.fullPage).toBe(true)
+          if (browserName === 'chromium') {
+            expect(options?.clip).toBeUndefined()
+          } else {
+            expect(options?.clip).toBeDefined()
+            expect(options.clip.width).toBeLessThanOrEqual(16000)
+            expect(options.clip.height).toBeLessThanOrEqual(16000)
+          }
+          captures += 1
+          return screenshot(options)
+        }
         await expectFullPageScreenshot(page)
+        expect(captures).toBeGreaterThanOrEqual(browserName === 'chromium' ? 2 : 6)
         await page.evaluate(() => {
           for (const y of [20, 16020, 16030, 32020, 32030]) {
             const pixel = document.createElement('div')
@@ -89,7 +102,12 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
         expect(tiled).toMatchSnapshot('gradient.png', { maxDiffPixels:5 })
         const screenshotBaseline = info.snapshotPath('native-branches-and-gradient-rasterization-1.png', { kind:'screenshot' })
         await writeFile(screenshotBaseline, native)
-        page.screenshot = async () => { throw new Error('尺寸未超限不得分片') }
+        const screenshot = page.screenshot.bind(page)
+        page.screenshot = options => {
+          expect(options?.fullPage).toBe(true)
+          expect(options?.clip).toBeUndefined()
+          return screenshot(options)
+        }
         await expectFullPageScreenshot(page)
       })
       test('native lazy images reject missing baselines without writing them', async ({ page }) => {
@@ -100,6 +118,12 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
           body: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="20"><rect width="32" height="20" fill="lime"/></svg>',
         }))
         await page.setContent('<style>body{margin:0}div{height:6000px}img{width:32px;height:20px}</style><div></div><img loading="lazy" src="http://capture.fixture/green.svg">')
+        const screenshot = page.screenshot.bind(page)
+        page.screenshot = options => {
+          expect(options?.fullPage).toBe(true)
+          expect(options?.clip).toBeUndefined()
+          return screenshot(options)
+        }
         await expect(expectFullPageScreenshot(page)).rejects.toThrow('snapshot')
         expect(await page.locator('img').evaluate(image => image.naturalWidth)).toBe(32)
         expect(await page.evaluate(() => scrollY)).toBe(0)

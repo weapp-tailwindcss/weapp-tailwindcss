@@ -1,0 +1,101 @@
+diff --git a/dist/index.js b/dist/index.js
+index 941ed5309a3bd4fefb52a321677b9c2468b743dd..63afc07f9e21cf3679c2172e5ccf2f7e3662a22e 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -445,7 +445,7 @@
+         this.runtimePath = `${PACKAGE_NAME}/dist/runtime`;
+         this.setupTransaction.addWrapper({
+             close() {
+-                this.modifyWebpackConfig();
++                this.compiler === 'webpack5' ? this.modifyWebpackConfig() : this.modifyViteConfig();
+             },
+         });
+     }
+@@ -489,6 +489,9 @@
+     /**
+      * 修改 Webpack 配置
+      */
++    modifyViteConfig() {
++        require('./vite').register(this);
++    }
+     modifyWebpackConfig() {
+         this.ctx.modifyWebpackChain(({ chain }) => {
+             const rules = chain.module.rules;
+diff --git a/dist/vite.js b/dist/vite.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..489abf49e99157677ca94f9d3a8ae1a2921d0270
+--- /dev/null
++++ b/dist/vite.js
+@@ -0,0 +1,72 @@
++'use strict';
++const path = require('node:path');
++const { transformAsync } = require('@babel/core');
++const { SCRIPT_EXT } = require('@tarojs/helper');
++
++function register(program) {
++    const initialized = new WeakSet();
++    const { getViteH5CompilerContext } = program.ctx.runnerUtils;
++    program.ctx.modifyViteConfig(({ viteConfig }) => {
++        viteConfig.plugins.push({
++            name: 'taro:vite-harmony-hybrid-alias',
++            config: () => ({ resolve: { alias: [
++                { find: /^@tarojs\/components$/, replacement: program.componentLibrary },
++                { find: '@tarojs/components/lib', replacement: program.componentAdapter },
++                { find: /^@tarojs\/router$/, replacement: program.routerLibrary },
++                { find: '@tarojs/taro', replacement: program.apiLibrary },
++            ] } }),
++        }, {
++            name: 'taro:vite-harmony-hybrid-loader-meta',
++            async buildStart() {
++                const context = await getViteH5CompilerContext(this);
++                if (!context || initialized.has(context)) return;
++                const metadata = context.loaderMeta || (context.loaderMeta = { extraImportForWeb: '', execBeforeCreateWebApp: '' });
++                metadata.extraImportForWeb ??= '';
++                metadata.execBeforeCreateWebApp ??= '';
++                if (program.useDeprecatedAdapterComponent) {
++                    metadata.extraImportForWeb += `import { applyPolyfills, defineCustomElements } from '@tarojs/components/loader'\n`;
++                    metadata.execBeforeCreateWebApp += `applyPolyfills().then(() => defineCustomElements(window))\n`;
++                }
++                if (!program.useHtmlComponents) {
++                    metadata.extraImportForWeb += `import { defineCustomElementTaroPullToRefreshCore } from '@tarojs/components/dist/components'\n`;
++                    metadata.execBeforeCreateWebApp += `defineCustomElementTaroPullToRefreshCore()\n`;
++                }
++                if (program.framework === 'vue3') {
++                    metadata.extraImportForWeb += `import { initVue3Components } from '@tarojs/components/lib/vue3/components-loader'\nimport * as list from '@tarojs/components'\n`;
++                    metadata.execBeforeCreateWebApp += `initVue3Components(component, list)\n`;
++                }
++                else if (program.useHtmlComponents) {
++                    const cssModuleId = require.resolve('@tarojs/components-react/dist/index.css').replace(/\\/g, '/');
++                    metadata.extraImportForWeb += `import ${JSON.stringify(cssModuleId)}\nimport { PullDownRefresh } from '@tarojs/components'\n`;
++                    metadata.execBeforeCreateWebApp += `config.PullDownRefresh = PullDownRefresh\n`;
++                }
++                initialized.add(context);
++            },
++        }, {
++            name: 'taro:vite-harmony-hybrid-api',
++            enforce: 'post',
++            async transform(code, id) {
++                const context = await getViteH5CompilerContext(this);
++                if (!context) return;
++                // module id 的前缀和查询只在此边界移除，文件归属仍用对应平台的 path API。
++                const filename = id.replace(/^\0/, '').split('?')[0];
++                const paths = /^[a-z]:[\\/]/i.test(context.sourceDir) || context.sourceDir.includes('\\') ? path.win32 : path;
++                const relative = paths.relative(context.sourceDir, filename);
++                if (paths.isAbsolute(relative) || relative === '..' || relative.startsWith(`..${paths.sep}`)) return;
++                if (![...SCRIPT_EXT, ...context.frameworkExts].includes(paths.extname(filename))) return;
++                const routerApis = new Set(['navigateTo', 'navigateBack', 'redirectTo', 'reLaunch', 'switchTab']);
++                const apis = new Set([...require('./taroApis')].filter(name => !routerApis.has(name)));
++                const result = await transformAsync(code, {
++                    filename,
++                    babelrc: false,
++                    configFile: false,
++                    sourceMaps: true,
++                    sourceFileName: id,
++                    plugins: [[require('babel-plugin-transform-taroapi'), { packageName: '@tarojs/taro', apis, definition: require(program.libraryDefinition) }]],
++                });
++                return result && { code: result.code, map: result.map };
++            },
++        });
++    });
++}
++exports.register = register;

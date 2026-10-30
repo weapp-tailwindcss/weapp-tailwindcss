@@ -50,6 +50,9 @@
   --tw-content: '';
 }
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+  *,
+  ::before,
+  ::after,
   ::-webkit-backdrop {
     --tw-translate-x: 0;
     --tw-translate-y: 0;
@@ -80,6 +83,9 @@
     --tw-backdrop-saturate: initial;
     --tw-backdrop-sepia: initial;
   }
+  *,
+  ::before,
+  ::after,
   ::-ms-backdrop {
     --tw-translate-x: 0;
     --tw-translate-y: 0;
@@ -155,6 +161,9 @@
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
+*,
+::after,
+::before,
 ::-webkit-backdrop {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
@@ -162,12 +171,18 @@
   padding: 0;
   border: 0 solid;
 }
+*,
+::after,
+::before,
 ::-ms-backdrop {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   border: 0 solid;
 }
+*,
+::after,
+::before,
 ::-webkit-file-upload-button {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
@@ -301,6 +316,11 @@ taro-video-core {
   max-width: 100%;
   height: auto;
 }
+taro-button-core,
+taro-input-core,
+select,
+optgroup,
+taro-textarea-core,
 ::-webkit-file-upload-button {
   font: inherit;
   -webkit-font-feature-settings: inherit;
@@ -414,6 +434,7 @@ taro-textarea-core {
 :-moz-ui-invalid {
   box-shadow: none;
 }
+taro-button-core,
 ::-webkit-file-upload-button {
   -webkit-appearance: button;
   appearance: button;

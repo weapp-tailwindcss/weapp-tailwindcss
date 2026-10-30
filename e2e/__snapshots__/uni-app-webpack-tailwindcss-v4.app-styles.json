@@ -1,0 +1,41 @@
+{
+  "target": "app-plus",
+  "carrier": "app-view.js",
+  "viewportWidth": 375,
+  "routes": [
+    "pages/index/index"
+  ],
+  "styles": 1,
+  "classes": [
+    {
+      "className": "min-h-screen",
+      "declarations": [
+        {
+          "property": "min-height",
+          "value": "100vh",
+          "important": false
+        }
+      ]
+    },
+    {
+      "className": "p-[40rpx]",
+      "declarations": [
+        {
+          "property": "padding",
+          "value": "20px",
+          "important": false
+        }
+      ]
+    },
+    {
+      "className": "bg-[#877878]",
+      "declarations": [
+        {
+          "property": "background-color",
+          "value": "#877878",
+          "important": false
+        }
+      ]
+    }
+  ]
+}

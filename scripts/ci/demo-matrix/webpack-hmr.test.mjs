@@ -1,13 +1,19 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
-import webpack from 'webpack'
+import { repo } from './catalog.mjs'
 
-it('Webpack only 客户端在检查更新后遇到异步 chunk 时仍完成应用', async () => {
+const runtimes = [
+  { runtime: 'root', require: createRequire(path.join(repo, 'package.json')) },
+  { runtime: 'taro-webpack', require: createRequire(path.join(repo, 'demo', 'taro-webpack-react-tailwindcss-v4', 'package.json')) },
+]
+
+it.each(runtimes)('$runtime：Webpack only 客户端在检查更新后遇到异步 chunk 时仍完成应用', async ({ require }) => {
+  const webpack = require('webpack')
   const root = await mkdtemp(path.join(tmpdir(), 'webpack-hot-apply-'))
   const output = path.join(root, 'dist')
   const value = path.join(root, 'value.cjs')
@@ -30,12 +36,12 @@ it('Webpack only 客户端在检查更新后遇到异步 chunk 时仍完成应�
         }
       })
       globalThis.matrixStatus = () => module.hot.status()
-      globalThis.matrixUpdate = hash => require(${JSON.stringify(fileURLToPath(import.meta.resolve('webpack/hot/emitter.js')))}).emit('webpackHotUpdate', hash)
+      globalThis.matrixUpdate = hash => require(${JSON.stringify(require.resolve('webpack/hot/emitter.js'))}).emit('webpackHotUpdate', hash)
     `)
     compiler = webpack({
       mode: 'development',
       context: root,
-      entry: [fileURLToPath(import.meta.resolve('webpack/hot/only-dev-server.js')), './entry.cjs'],
+      entry: [require.resolve('webpack/hot/only-dev-server.js'), './entry.cjs'],
       output: { path: output, filename: 'main.js', publicPath: '/' },
       plugins: [new webpack.HotModuleReplacementPlugin()],
     })

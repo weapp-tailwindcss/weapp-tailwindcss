@@ -90,7 +90,7 @@ it('按 CSS 表示读取真实 Vite 当前外链样式，并验证连续替换�
     expect(cssResponse.headers.get('content-type')).toContain('text/css')
     expect(await cssResponse.text()).toContain('#123456')
 
-    browser = await openBrowser(url, undefined, root)
+    browser = await openBrowser(url, undefined, root, { startupTimeout: 20_000 })
     for (round of ['initial', 'replace', 'add', 'restore']) {
       if (round !== 'initial') {
         await browser.waitForUpdateIdle()
@@ -166,7 +166,7 @@ it.each([
       }],
     })
     await server.listen()
-    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root)
+    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root, { startupTimeout: 20_000 })
     await browser.inspect(item, 'initial')
     failing = true
     await expect(browser.inspect(item, 'initial')).rejects.toThrow(error)
@@ -212,7 +212,7 @@ it('明确外源的第三方链接不参与本地样式采集', async () => {
       }],
     })
     await server.listen()
-    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root)
+    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root, { startupTimeout: 20_000 })
     await browser.inspect(item, 'initial')
     expect(requests).toEqual(['style'])
   }

@@ -207,6 +207,11 @@ export interface CompatibilityBaseline {
   verifiedAt: string | null
   versions: {
     tailwindcss: string
+    reactLynx: string
+    reactRsbuildPlugin: string
+    rspeedy: string
+    lynxTypes: string
+    templateWebpackPlugin: string
     lynxEngine: string
     engineVersion: string
     cssDefines: string

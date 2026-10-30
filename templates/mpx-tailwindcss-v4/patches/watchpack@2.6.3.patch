@@ -1,0 +1,75 @@
+diff --git a/lib/DirectoryWatcher.js b/lib/DirectoryWatcher.js
+index 53d8c41531192ef9b3b96fec5f81b36024677f91..4451687289475b5ae9ea817af243a39f4923102c 100644
+--- a/lib/DirectoryWatcher.js
++++ b/lib/DirectoryWatcher.js
+@@ -98,8 +98,24 @@ function needCalls(times, callback) {
+ 	};
+ }
+ 
++/** @type {WeakMap<DirectoryWatcher, Map<string, number>>} */
++const directorySafeTimeAccuracies = new WeakMap();
++
+ /**
+- * @param {Entry} entry entry
++ * @param {DirectoryWatcher} watcher 目录监听器
++ * @returns {Map<string, number>} 仅内部使用的目录精度记录
++ */
++function getDirectorySafeTimeAccuracies(watcher) {
++	let accuracies = directorySafeTimeAccuracies.get(watcher);
++	if (!accuracies) {
++		accuracies = new Map();
++		directorySafeTimeAccuracies.set(watcher, accuracies);
++	}
++	return accuracies;
++}
++
++/**
++ * @param {Pick<Entry, "safeTime" | "accuracy">} entry 时间精度记录
+  */
+ function fixupEntryAccuracy(entry) {
+ 	if (entry.accuracy > FS_ACCURACY) {
+@@ -354,6 +370,7 @@ class DirectoryWatcher extends EventEmitter {
+ 			}
+ 			this.directories.delete(itemPath);
+ 			this.directorySafeTimes.delete(itemPath);
++			getDirectorySafeTimeAccuracies(this).delete(itemPath);
+ 			this.forEachWatcher(itemPath, (w) => w.emit("remove", type));
+ 			if (!initial) {
+ 				this.forEachWatcher(this.path, (w) =>
+@@ -481,6 +498,10 @@ class DirectoryWatcher extends EventEmitter {
+ 				// when it was noticed, not created: a poll can notice it after the
+ 				// next build started, which then did not see it either
+ 				this.directorySafeTimes.set(directoryPath, safeTime);
++				getDirectorySafeTimeAccuracies(this).set(
++					directoryPath,
++					initial ? FS_ACCURACY : 0,
++				);
+ 
+ 				this.forEachWatcher(directoryPath, (w) => {
+ 					if (!initial || w.checkStartTime(safeTime, false)) {
+@@ -581,9 +602,22 @@ class DirectoryWatcher extends EventEmitter {
+ 				// a build whose paused watcher is replaced by this one; internal
+ 				// watchers attach with start time 1 to wait for a directory to
+ 				// appear, which one already known is not
+-				safeTime =
+-					(startTime && startTime > 1 && this.directorySafeTimes.get(target)) ||
+-					0;
++				const directorySafeTime =
++					startTime && startTime > 1 && this.directorySafeTimes.get(target);
++				if (directorySafeTime) {
++					// 独立保存精度，不改变既有 directorySafeTimes 的数字字段契约。
++					const accuracies = getDirectorySafeTimeAccuracies(this);
++					const directoryEntry = {
++						safeTime: directorySafeTime,
++						accuracy: accuracies.get(target) || 0,
++					};
++					fixupEntryAccuracy(directoryEntry);
++					safeTime = directoryEntry.safeTime;
++					this.directorySafeTimes.set(target, safeTime);
++					accuracies.set(target, directoryEntry.accuracy);
++				} else {
++					safeTime = 0;
++				}
+ 			}
+ 		}
+ 		if (safeTime) {

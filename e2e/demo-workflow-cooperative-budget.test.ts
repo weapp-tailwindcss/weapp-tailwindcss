@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
+import { observerPreparation } from './helpers/observer-preparation'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), command: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({ ...await importOriginal<object>(), spawn: mocks.spawn }))
@@ -32,7 +33,11 @@ beforeEach(() => {
   held.stdin.on('data', (data) => {
     const request = JSON.parse(String(data))
     const reply = (value: unknown) => held.stdout.write(`${JSON.stringify({ id: request.id, rows: value })}\n`)
-    if (request.kind === 'memory') {
+    if (request.kind === 'prepare') {
+      queryStartedAt.push(Date.now())
+      setTimeout(() => reply(observerPreparation(own)), queryDelayMs)
+    }
+    else if (request.kind === 'memory') {
       reply({ rssMb: 1, maxProcessRssMb: 1, processCount: 1, topProcesses: [] })
     }
     else {

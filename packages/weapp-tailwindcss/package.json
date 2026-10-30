@@ -279,6 +279,6 @@
     "@mpxjs/webpack-plugin": "^2.11.1",
     "tsx": "catalog:tsx",
     "vite": "catalog:vite724",
-    "webpack": "5.105.4"
+    "webpack": "5.112.2"
   }
 }

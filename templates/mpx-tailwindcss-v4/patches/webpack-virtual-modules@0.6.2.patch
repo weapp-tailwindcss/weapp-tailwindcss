@@ -1,0 +1,65 @@
+diff --git a/lib/index.js b/lib/index.js
+index 06fa523ee5382295b2e96c6550a0d6563c67f08f..c3c77f7b33245b22bc57ddc8d308453a13dde189 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -96,6 +96,44 @@ function getRealpathBackend(fileSystem) {
+         return fileSystem._realpathBackend;
+     }
+ }
++const guardedWatchFileSystems = new WeakSet();
++const guardedWatchpacks = new WeakSet();
++function unwrapInputFileSystem(fileSystem) {
++    while (fileSystem && fileSystem._inputFileSystem) {
++        fileSystem = fileSystem._inputFileSystem;
++    }
++    return fileSystem;
++}
++function guardVirtualFileRemovals(compiler) {
++    let watchFileSystem = compiler.watchFileSystem;
++    while (watchFileSystem && watchFileSystem.wfs) {
++        watchFileSystem = watchFileSystem.wfs;
++    }
++    if (!watchFileSystem || typeof watchFileSystem.watch !== 'function' || guardedWatchFileSystems.has(watchFileSystem)) {
++        return;
++    }
++    const originalWatch = watchFileSystem.watch;
++    watchFileSystem.watch = function (...args) {
++        const result = originalWatch.apply(this, args);
++        const watcher = this.watcher;
++        if (watcher && typeof watcher._onRemove === 'function' && !guardedWatchpacks.has(watcher)) {
++            const originalOnRemove = watcher._onRemove;
++            // Watchpack 只能看到物理文件，虚拟文件的存在性由实际输入文件系统决定。
++            const ownerWatchFileSystem = this;
++            watcher._onRemove = function (item, ...removeArgs) {
++                const finalInputFileSystem = unwrapInputFileSystem(ownerWatchFileSystem.inputFileSystem || compiler.inputFileSystem);
++                const virtualFiles = finalInputFileSystem && finalInputFileSystem._virtualFiles;
++                if (virtualFiles && Object.prototype.hasOwnProperty.call(virtualFiles, item)) {
++                    return;
++                }
++                return originalOnRemove.call(this, item, ...removeArgs);
++            };
++            guardedWatchpacks.add(watcher);
++        }
++        return result;
++    };
++    guardedWatchFileSystems.add(watchFileSystem);
++}
+ class VirtualModulesPlugin {
+     constructor(modules) {
+         this._compiler = null;
+@@ -179,6 +217,7 @@ class VirtualModulesPlugin {
+     apply(compiler) {
+         this._compiler = compiler;
+         const afterEnvironmentHook = () => {
++            guardVirtualFileRemovals(compiler);
+             let finalInputFileSystem = compiler.inputFileSystem;
+             while (finalInputFileSystem && finalInputFileSystem._inputFileSystem) {
+                 finalInputFileSystem = finalInputFileSystem._inputFileSystem;
+@@ -260,6 +299,7 @@ class VirtualModulesPlugin {
+         };
+         const version = typeof compiler.webpack === 'undefined' ? 4 : 5;
+         const watchRunHook = (watcher, callback) => {
++            guardVirtualFileRemovals(compiler);
+             this._watcher = watcher.compiler || watcher;
+             const virtualFiles = compiler.inputFileSystem._virtualFiles;
+             const fts = compiler.fileTimestamps;

@@ -7,6 +7,7 @@ regressions:
   - e2e/preflight-evidence.test.ts
   - e2e/preflight-probes.test.ts
   - e2e/preflight-lifecycle.test.ts
+  - e2e/preflight-verification.test.ts
   - e2e/e2e-matrix.test.ts
 ---
 
@@ -47,6 +48,14 @@ pnpm e2e:preflight prepare
 ## 适用边界
 
 这是本地全面测试门禁。普通 hosted CI、定向单测和预检自身回归保持独立。合成测试证据不能替代真实设备验收；Windows/Linux 路径回归不能证明这些系统的原生 IDE 已验收。iOS Simulator 在不支持的主机上明确阻断。工具环境恢复后必须重新 prepare，旧截图、旧成功记录不能放行。
+
+## 2026-10-29：验证失败的原始诊断与成功时间戳
+
+依赖升级 PR #1320 的预检 `7b677782-33c3-4f9c-ad2a-58c1174c3ad9` 在 verify 的微信 `isLogin` 阶段收到 `127.0.0.1:19355 ECONNREFUSED`。这只能证明当时服务端口不可连接，不能证明 IDE 没有打开。原始探针已记录具体错误，但 verify 继续其他探针、临时写入 `verifiedAt`，随后由就绪校验阻断并返回“未全部通过或超过 15 分钟”。catch 未清除成功时间戳，导致失败报告语义不准确；没有发生测试放行。
+
+verify 与 live 现均在首个探针失败时停止，直接保留检查名、原错误和恢复建议；prepare 仍允许一次性有界诊断。失败路径清除 `verifiedAt`，保留已通过的 computer use 证据。就绪校验分别报告失败/缺项、会话状态、无效或未来时间和真正过期，不增加重试、不放宽时效，也不以重置登录恢复服务。用户已授权核对安装、实例和任务归属后的受控 IDE 启动或重启；共享项目仍须保护。
+
+新增 `preflight-verification.test.ts` 的三项回归在修复前全部失败，修复后与 gate/evidence/probes 共 93 项通过。合成 HTTP verify 回归覆盖原错误透传、后续平台未调度、内存与磁盘报告无成功时间戳，以及严格时效分类；这些结果不替代真实平台验收。
 
 ## 规则评估
 

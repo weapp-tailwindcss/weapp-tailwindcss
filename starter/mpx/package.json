@@ -18,14 +18,14 @@
     "vue": "^2.7.16"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.3",
-    "@babel/plugin-transform-runtime": "^7.28.3",
-    "@babel/preset-env": "^7.28.3",
-    "@babel/runtime-corejs3": "^7.28.3",
-    "@mpxjs/babel-plugin-inject-page-events": "^2.9.0",
-    "@mpxjs/mpx-cli-service": "^2.2.2",
-    "@mpxjs/vue-cli-plugin-mpx": "^2.2.2",
-    "@mpxjs/vue-cli-plugin-mpx-typescript": "^2.2.2",
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/runtime-corejs3": "^7.29.10",
+    "@mpxjs/babel-plugin-inject-page-events": "^2.10.21",
+    "@mpxjs/mpx-cli-service": "^2.2.32",
+    "@mpxjs/vue-cli-plugin-mpx": "^2.2.32",
+    "@mpxjs/vue-cli-plugin-mpx-typescript": "^2.2.32",
     "@mpxjs/webpack-plugin": "^2.11.1",
     "@vue/cli-service": "~5.0.9",
     "postcss": "catalog:postcss85",
@@ -33,7 +33,7 @@
     "tailwindcss": "catalog:tailwindcss4",
     "typescript": "catalog:typescript59",
     "weapp-tailwindcss": "workspace:*",
-    "webpack": "^5.109.2"
+    "webpack": "^5.112.2"
   },
   "browserslist": [
     "ios >= 8",

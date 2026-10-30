@@ -3,7 +3,7 @@ import { windowsProcessTreeMemoryFunction } from '../../demo-e2e-memory/windows'
 import { windowsObserverInputScript } from './input-script'
 import { windowsObserverShutdownScript } from './shutdown-script'
 
-// 身份与内存指标分开查询；每个请求重新查询，准备阶段结果不领取业务进程也不计入指标。
+// 准备共用一次本体快照；运行身份与内存每个请求重新查询，准备结果不领取业务归属或计入指标。
 const script = `
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
@@ -17,7 +17,16 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     $request = Microsoft.PowerShell.Utility\\ConvertFrom-Json -InputObject $line
     [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
     [Console]::Out.Flush()
-    if ($request.kind -eq 'identity') {
+    if ($request.kind -eq 'prepare') {
+      if ([int]$request.rootPid -ne [int]$PID) { throw '准备请求必须绑定采集器本体。' }
+      $snapshot = @(Get-CimInstance -Query ('SELECT ProcessId, ParentProcessId, CreationDate, WorkingSetSize, CommandLine FROM Win32_Process WHERE ProcessId = ' + [int]$PID))
+      if ($snapshot.Count -ne 1 -or [int]$snapshot[0].ProcessId -ne [int]$PID -or $null -eq $snapshot[0].CreationDate -or $null -eq $snapshot[0].WorkingSetSize) { throw '准备查询缺少完整的唯一本体快照。' }
+      $identities = @($snapshot | Where-Object { $null -ne $_.CreationDate } | ForEach-Object {
+        @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString('o') }
+      })
+      $rows = @{ identities = $identities; memory = (Get-WorkflowMemory -root ([int]$PID) -repositoryRoot ([string]$request.cwd) -processes $snapshot) }
+      $snapshot = $null
+    } elseif ($request.kind -eq 'identity') {
       $query = 'SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process'
       if ($null -ne $request.pids) {
         $filters = @($request.pids | ForEach-Object { 'ProcessId = ' + [int]$_ })

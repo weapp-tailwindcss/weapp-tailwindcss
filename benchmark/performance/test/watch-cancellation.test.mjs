@@ -6,6 +6,22 @@ import { joinWatchMeasurement } from './helpers/watch-measurement.mjs'
 afterEach(() => vi.useRealTimers())
 
 describe('watcher 取消与清理契约', () => {
+  it('失败冻结有界生命周期证据，迟到事件不能覆盖首错时的记录', () => {
+    const control = createWatchControl('webpack')
+    for (let index = 0; index < 140; index++) {
+      control.record('native-event', { index })
+    }
+    const cause = new Error('first failure')
+    const error = control.contextualize('failed', cause)
+    control.record('late-close')
+    expect(error.cause).toBe(cause)
+    expect(error.watchEvents).toHaveLength(128)
+    expect(error.watchEvents[0]).toMatchObject({ event: 'native-event', index: 12 })
+    expect(error.watchEvents.at(-1)).toMatchObject({ event: 'native-event', index: 139 })
+    expect(error.message).toContain('native-event')
+    expect(error.message).not.toContain('late-close')
+  })
+
   it('取消待完成构建后保留阶段、构建数和原因，等待关闭才拒绝', async () => {
     const controller = new AbortController()
     const control = createWatchControl('webpack', controller.signal)

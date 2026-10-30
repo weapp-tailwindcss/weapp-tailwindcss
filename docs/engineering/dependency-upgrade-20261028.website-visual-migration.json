@@ -1,0 +1,1940 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-30T00:19:01.415120+00:00",
+  "status": "已正式审查、归档、安装与来源验证；最终完整禁止更新验收待执行",
+  "oldSource": {
+    "head": "2dd3baec854c50f53b62c24d0aae6fe4259272fb",
+    "lock": "0473c1a7ac031c77f2b8225140832a0c0b324ace083f3092c84426f49b79eeac",
+    "contract": "d1179d23bae88bb73c36d8ed268cd041f7bf0a4c38d43df2583b322661489d46",
+    "node": "v24.22.1",
+    "build": "63e964e468e45399b6ab0454a896a041730f5e1c1063cf7a9bc8eaebe8479051"
+  },
+  "newSource": {
+    "head": "30dc30581f8f55a8ba28c121e517b2d64c2cde0f",
+    "lock": "0473c1a7ac031c77f2b8225140832a0c0b324ace083f3092c84426f49b79eeac",
+    "contract": "947a48eaafddafbb59eacd6b3b1e201ec3ba8c0382596a038c24e7cb28d13227",
+    "node": "v24.22.1",
+    "build": "63e964e468e45399b6ab0454a896a041730f5e1c1063cf7a9bc8eaebe8479051"
+  },
+  "capture": {
+    "controller": "website-capture-controller-1793314294714.json",
+    "candidate": "website-visual-candidate-1793314294714",
+    "declared": 1806,
+    "passed": 1204,
+    "existingSkipped": 602,
+    "failed": 0,
+    "retries": 0,
+    "preflightRunId": "13c3da58-0fcd-4367-98cc-cbed5e7b4a38",
+    "manifestSha256": "c643d93d6307fd5d28abca021d54ffd5007ba04391dc481b7942960d7ac31179"
+  },
+  "comparison": {
+    "sha256": "4468a4881b60e659cafe1994a948e66daab2295c5441df8d6266ab9a812e444f",
+    "artifactReceiptSha256": "1198ae89a2826693d76c77f71e241215d91e3c6f8110ac6745b15473e5d7e62d",
+    "images": 1204,
+    "byteIdentical": 1178,
+    "byteChanged": 26,
+    "requiredVisualReviews": 41,
+    "officialFivePixelFailed": [
+      {
+        "project": "webkit",
+        "viewport": "desktop",
+        "route": "/zh-cn/docs/community/group",
+        "differentPixels": 9,
+        "maxDiffPixels": 5
+      }
+    ]
+  },
+  "review": {
+    "actualContactSheetsViewed": 121,
+    "formalEvidencePngs": 122,
+    "actualReviewSha256": "f0fdc76c5a2c1f8a23f26515f6b118fa06b2c8d56bce76e9491dbeb254f582de",
+    "reviewers": [
+      {
+        "reviewer": "Codex / visual_review_en",
+        "receiptSha256": "c6008b224b772809cdbb8d49627b4f98ceeee7eb6e99493a5833c1ce7bc92435"
+      },
+      {
+        "reviewer": "Codex /root/visual_review_cn",
+        "receiptSha256": "a18b882f16bdf2227cd6c8d19e0e128a2f79607816495fe61b65a280165a4f49"
+      },
+      {
+        "reviewer": "Codex /root/visual_review_crossviewport",
+        "receiptSha256": "6997374e14d09add2dbb55917df33c0af6764d2153b6fc3d788200b706721c73"
+      }
+    ],
+    "rootRechecked": [
+      {
+        "file": "image-0606/region-001.png",
+        "sha256": "5addb642efbd499bb025853faa79b721bb2bb77e76de7298690f00876180277e"
+      },
+      {
+        "file": "image-0606/region-002.png",
+        "sha256": "9b21535fa0e5967cb3269cb618cf2d1d87a7c6cf8a61019c467c56c8a2543cac"
+      },
+      {
+        "file": "image-0606/official-diff-5.png",
+        "sha256": "a931982ba9cf4c89ec4b92186356af05d2f9545a4e8e2c6a83179a4f912645b2"
+      },
+      {
+        "file": "image-0813/region-001.png",
+        "sha256": "1b1978f907e697b2711b69c4ac3f782455af6d8696e0b1e0af0f522de1f621e3"
+      },
+      {
+        "file": "image-0813/region-002.png",
+        "sha256": "114b40fef6f5daf1939944f5f72d4625e1250a9cc663e911a3b229fdf3d50cf6"
+      },
+      {
+        "file": "image-0015/region-001.png",
+        "sha256": "3a9de90d7713f37fb61463b5ffca23da607380f81aaadd87b85fadf663881e37"
+      },
+      {
+        "file": "image-0015/region-002.png",
+        "sha256": "7186023133977d77555a14285901883f434837f65f83aa155bd8f8c71b6fcb01"
+      },
+      {
+        "file": "image-0189/region-002.png",
+        "sha256": "0ae481bee97c4d61f106a4e5884782531385f4b140d4a2af3b33d91bbb8a2f8b"
+      },
+      {
+        "file": "image-0210/region-001.png",
+        "sha256": "67b2f28b6a86ed1701e6d2e6bfd51c92a7b21a9b3e2b0a96c9371d78f838f8ee"
+      },
+      {
+        "file": "image-0811/region-001.png",
+        "sha256": "a9414e1480c20c93ad99cb1ec627ad7bcc98db30f7fc8894149f3b63771d1993"
+      },
+      {
+        "file": "image-1174/region-001.png",
+        "sha256": "cdcab0a7f5f5f61b8fb9585e88968be3f4ab02a6c63b0364d709247de6bda2d5"
+      },
+      {
+        "file": "image-0349/region-001.png",
+        "sha256": "e3491e8db99dc91da63be5f19e5b3a9122e1ecff4b620344057c3fd94dc3cb32"
+      },
+      {
+        "file": "image-0003/region-001.png",
+        "sha256": "ec8d4874028431afbe239ae4b5a402f7bc257a4fe0630103be9b97054388320e"
+      }
+    ]
+  },
+  "formal": {
+    "reviewExitCode": 0,
+    "installExitCode": 0,
+    "verifyExitCode": 0,
+    "reviewSha256": "ce90c4a6a381c420dd356b290d73404857e0f5ae629fd55c78a05c01dd54008f",
+    "reviewLogSha256": "e902c23ac60da99d487bb1e4531804365dcbf7b11111c4a4999f2c5a80e5ef90",
+    "installLogSha256": "86ab9d1e5106f1af4d0da2d6138a8c272b72206848a2aed349bc382d03c6a3cd",
+    "verifyLogSha256": "88641c2dc1a3154bb60e558888571b5d01e8f1c7c155a7f1e57fb1e33031d765",
+    "stagingDirectoriesRemaining": 0
+  },
+  "archive": {
+    "filesBeforeAndAfter": 1238,
+    "allBytesPreserved": true,
+    "registryHistory": "website/tests/visual-baselines/history/2dd3baec854c50f53b62c24d0aae6fe4259272fb/",
+    "registrySha256": {
+      "darwin.json": "8cf26b393c9f609f7964659299b73cab3f0fd629c9bddeb7f45d97efbe2f72d5",
+      "darwin.review.json": "e228b8ed622804447053da8c82ebb037a9dd2b5406614030296da5e0a5dc162c"
+    },
+    "receiptSha256": "456a81448d69762274d85c98a3a3134516194f18e24a4fbacbf355bedd27eeaa"
+  },
+  "limitations": [
+    "本次是显式图片准备合同迁移，中文交流群旧图的官方9像素比较未通过原5像素门槛；不降低最终禁止更新门槛。",
+    "所查图像清晰度、颜色和边缘像素存在变化，证书图影响范围较大；没有证明历史浏览器内部因果。",
+    "实际审图未见新增布局位移、正文缺失或裁切；未执行二维码扫码功能测试。",
+    "来源验证不代表完整网站禁止更新、最终57阶段、多端补充或新提交CI已通过。"
+  ],
+  "reviews": [
+    {
+      "index": 0,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/blog/2025/9/v4.3-release",
+      "decision": "accept",
+      "notes": "实际查看头像区域旧、新、RGBA差异：面部、发丝和圆形边缘清晰度细节变化，构图、圆框位置、背景保持；未见内容缺失。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1371,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 197,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "c605d48dfc3323aef4cc13b359d5668b43832aed0f15fe3ccc86edd63facd66f"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0003/region-001.png",
+          "sha256": "ec8d4874028431afbe239ae4b5a402f7bc257a4fe0630103be9b97054388320e"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/blog/authors",
+      "decision": "accept",
+      "notes": "实际查看头像与页底两个区域：头像细节清晰度变化，圆框位置保持；页底背景主要保持，仅最右边界处极细像素线差异，未见页面整体布局位移或文本缺失。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 2554,
+        "maximumChannelDelta": 13,
+        "changedRows": 88,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 358,
+            "top": 152,
+            "width": 112,
+            "height": 119
+          },
+          {
+            "left": 0,
+            "top": 600,
+            "width": 1280,
+            "height": 33
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "395d187af8ef23f6d7db6a6941a1f75f2d192b2af5147ced6504c4dfb249a4a8"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0009/region-001.png",
+          "sha256": "5fc63c50d9eb613fefb41519da1327385bb6c95a70df74ef360df0b436d45488"
+        },
+        {
+          "file": "image-0009/region-002.png",
+          "sha256": "6255a6b525d6fb7a55fdd71fceb1076658a4be5418105d9b130ca67096028130"
+        },
+        {
+          "file": "image-0009/region-003.png",
+          "sha256": "07a0067ad30e53a1b1a4c66e5f8b24dfcbc16a27f415f6770e56fdb60610c9dd"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/blog",
+      "decision": "accept",
+      "notes": "实际查看博客头像区域：与发布页相同头像的边缘及面部清晰度差异，构图和圆框位置保持。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1371,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 197,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "3e98369127a0a3d48da1114baa05294cbfb25bc2115b5da8a4c60ba5a83879e4"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0012/region-001.png",
+          "sha256": "ec8d4874028431afbe239ae4b5a402f7bc257a4fe0630103be9b97054388320e"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/copyright",
+      "decision": "accept",
+      "notes": "实际查看版权证书两块完整变化区：证书整张图有大范围清晰度、色彩及细线像素差异；证书标题、正文、登记号、二维码、印章与边框位置和尺寸保持，未见裁切或内容缺失。不可描述为仅少量像素。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 337010,
+        "maximumChannelDelta": 33,
+        "changedRows": 758,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 106,
+            "top": 813,
+            "width": 593,
+            "height": 790
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "fcb15485b20d2af65376ea44b1835f195f06bb47636a3a08008e991745de3e78"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0015/region-001.png",
+          "sha256": "3a9de90d7713f37fb61463b5ffca23da607380f81aaadd87b85fadf663881e37"
+        },
+        {
+          "file": "image-0015/region-002.png",
+          "sha256": "7186023133977d77555a14285901883f434837f65f83aa155bd8f8c71b6fcb01"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "project": "chromium",
+      "viewport": "desktop",
+      "route": "/docs/ai/qoder-vs-glm47-cursor-claude-comparison",
+      "decision": "accept",
+      "notes": "实际查看Chromium长页顶部、中部、底部的六块左右区域：标题、侧栏、目录、正文段落、表格边缘、编辑链接、前页卡片与页脚保持；未见新增裁切、缺文或布局变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "b76e9d8bab8b030f3af584ee2009d95a0832bacc01245590b30af9376042f721"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0073/region-001.png",
+          "sha256": "7582c5ff82022d8453453c77c632867e9e1b06c8a9e6e7cd892d31ebfece36ff"
+        },
+        {
+          "file": "image-0073/region-002.png",
+          "sha256": "e79e74a7e59da6f758ecc5a68e9efdc830e12e22ad80543be520493bfdc7378e"
+        },
+        {
+          "file": "image-0073/region-003.png",
+          "sha256": "41f81de8211f8a6a16944bdbc68cad7aab42bd1edefd60fcd9e760b99f0c7e05"
+        },
+        {
+          "file": "image-0073/region-004.png",
+          "sha256": "84a757c0ace7c40a975112e6c5c88fb463abab15177dcfc60025b0a93e8192b8"
+        },
+        {
+          "file": "image-0073/region-005.png",
+          "sha256": "35e5dc1cf00cadf149177b24a6b7c0cd34f6ffd3d1f2ee4fc619899a0b8258c4"
+        },
+        {
+          "file": "image-0073/region-006.png",
+          "sha256": "dd3f2a35f70e7a3e9890ec0b154fd2c3c69cb89cdaad86d97486348e56f6916c"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "project": "firefox",
+      "viewport": "desktop",
+      "route": "/docs/ai/qoder-vs-glm47-cursor-claude-comparison",
+      "decision": "accept",
+      "notes": "实际查看Firefox长页顶部、中部、底部六块左右区域：标题、侧栏、目录、正文、表格顶部、前页卡片和页脚保持；未见新旧布局或文本变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "9f3b8aff2d9410246ea1a89b22ba4e8bea32a9b6c85f982613110809d68913f7"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0074/region-001.png",
+          "sha256": "13504cde971f3e712eb63cc199e6c97a450bd65f6617de0c4849230a9b419502"
+        },
+        {
+          "file": "image-0074/region-002.png",
+          "sha256": "07e53b15ac42cfdd3a8c0936d41e960b4632a7d76343d915a9c8d113147f65c6"
+        },
+        {
+          "file": "image-0074/region-003.png",
+          "sha256": "e126a63fe19f54a789f723009b5480513e1f4aae56c89d4a8f609f35474d9759"
+        },
+        {
+          "file": "image-0074/region-004.png",
+          "sha256": "602579f4138b4b3806d4f15ebc380e2f0fccb44c1afbefdf33ebf95527844b51"
+        },
+        {
+          "file": "image-0074/region-005.png",
+          "sha256": "a77ab8a20772a004e271c73fe6f7050e8166e06bcda2fc8a2a138b7bcbbdac37"
+        },
+        {
+          "file": "image-0074/region-006.png",
+          "sha256": "01e36ad06dd4193af5117a793230806496a2406d82d598299c9af75c8af8e1c8"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/ai/qoder-vs-glm47-cursor-claude-comparison",
+      "decision": "accept",
+      "notes": "实际查看WebKit长页顶部、中部、底部六块左右区域：标题、侧栏、目录、正文、前页卡片和页脚保持；未见新旧布局或文本变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "13cff7b60c4d18b34c0ee3baa00751565630b210cdfab58b44f3fcab243e80ed"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0075/region-001.png",
+          "sha256": "b5cd77fac23fc95560cc5a9968237e6a0785cf57b2728e6ef65c6eae0ee6e0e8"
+        },
+        {
+          "file": "image-0075/region-002.png",
+          "sha256": "050bc397814f6fdfad301723189d7e3acbccf029be633136c2d3a7b01767d328"
+        },
+        {
+          "file": "image-0075/region-003.png",
+          "sha256": "0c820fbac8858c71250d2c2e03fdc4137919f4b0598865affcf5f9ee2f5dd447"
+        },
+        {
+          "file": "image-0075/region-004.png",
+          "sha256": "f0098872fc862df6e46e057c9a772fce86916172fc7c061aec750d781b222459"
+        },
+        {
+          "file": "image-0075/region-005.png",
+          "sha256": "48925a342a929b456ad2511c8f1c646fc60d80dee426930fccab462adc20c53b"
+        },
+        {
+          "file": "image-0075/region-006.png",
+          "sha256": "e33284590c0136744f287f3b94db3ca918393f19c46824055dd6358dbfe9e105"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/community/group",
+      "decision": "accept",
+      "notes": "实际查看社区群二维码图及底部说明两区：群卡片、点阵、图标和说明文字呈现清晰度细节变化，位置、尺寸、内容及留白保持，未见裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 22023,
+        "maximumChannelDelta": 39,
+        "changedRows": 301,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 347,
+            "top": 1370,
+            "width": 248,
+            "height": 300
+          },
+          {
+            "left": 407,
+            "top": 1698,
+            "width": 128,
+            "height": 77
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "a37546ac5c7993e415a803c7221d75063fad49f720eb39c269c5d2c6cb7cdf6a"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0144/region-001.png",
+          "sha256": "c0a3c1d7b7bc00650adf4698512d8c2cd7cadd607a358793ee49ab012d9ab455"
+        },
+        {
+          "file": "image-0144/region-002.png",
+          "sha256": "45ca2c8631548dcb0aada56c4c509d3b3a740e8c1574abcc067e35fb026d3aeb"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/copyright",
+      "decision": "accept",
+      "notes": "实际查看文档版权证书两区：整张证书图有大范围清晰度、色彩和细线像素差异，标题、登记号、正文、印章、二维码及装饰边框仍完整且位置一致。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 347988,
+        "maximumChannelDelta": 39,
+        "changedRows": 758,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 0,
+            "top": 961,
+            "width": 592,
+            "height": 790
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "e83d38f49e1c0de1462d7fc7de03170e3685d5c48c24a7d3a29779802320b43a"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0189/region-001.png",
+          "sha256": "cb33aa6541cc029b877ef66ada1304ae10768fb437efbe5cf841ffd4db5f9e26"
+        },
+        {
+          "file": "image-0189/region-002.png",
+          "sha256": "0ae481bee97c4d61f106a4e5884782531385f4b140d4a2af3b33d91bbb8a2f8b"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/issues/css-vars",
+      "decision": "accept",
+      "notes": "实际查看css-vars示例截图全变化区：小程序渐变色带、编辑器目录、代码与样式面板的细节清晰度变化，内嵌示例的几何位置与内容保持；未见示例元素消失或新裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 60292,
+        "maximumChannelDelta": 60,
+        "changedRows": 444,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 300,
+            "top": 1386,
+            "width": 735,
+            "height": 476
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "e53fe9122952d6f48e6ac37967a6da87ac18676eb052dbb9deecc1029f82f72f"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0210/region-001.png",
+          "sha256": "67b2f28b6a86ed1701e6d2e6bfd51c92a7b21a9b3e2b0a96c9371d78f838f8ee"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "project": "chromium",
+      "viewport": "desktop",
+      "route": "/docs/showcase",
+      "decision": "accept",
+      "notes": "实际查看Chromium showcase杭州数据交易所码变化区：中心细线与点阵边缘清晰度变化，文字、中心柱状标志、二维码主体和尺寸位置保持。旧新均有中心标志，不作标志缺失或恢复的结论。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 13895,
+        "maximumChannelDelta": 7,
+        "changedRows": 191,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 102,
+            "top": 2851,
+            "width": 223,
+            "height": 223
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "f6ad30d383f49a722d8656404800ff586dbc973bd7032829b253c9457db7af40"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0349/region-001.png",
+          "sha256": "e3491e8db99dc91da63be5f19e5b3a9122e1ecff4b620344057c3fd94dc3cb32"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "project": "firefox",
+      "viewport": "desktop",
+      "route": "/docs/showcase",
+      "decision": "accept",
+      "notes": "实际查看Firefox showcase顶部、中部、底部六区：标题、14案例/35截图统计、卡片文案、二维码与截图、编辑链接、页脚保持，未见布局、文本或图像缺失变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "75f1b973f894f0c548c431327f271c54353f11e29977a9d01d0def76222a8de3"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0350/region-001.png",
+          "sha256": "23bc5bbbf5f2a28ec539b1ca4f47f928b739b57ed18cb81766322c87b753d294"
+        },
+        {
+          "file": "image-0350/region-002.png",
+          "sha256": "a93714f776a79c140b6d1cdde19d8779d38774405eb461ba7f6c3be5cc01af00"
+        },
+        {
+          "file": "image-0350/region-003.png",
+          "sha256": "419ab89c7ed9e1ab26d696a91e36966e9839ef6f76b5473061a5dfc3a5f78842"
+        },
+        {
+          "file": "image-0350/region-004.png",
+          "sha256": "caebf82764a2bc496de17eebdb92fab85900a8c5b1022eb38c86814075077868"
+        },
+        {
+          "file": "image-0350/region-005.png",
+          "sha256": "06123cb87bbef669240eb5dc2d1a84b763663457f4b5713ac3c3aa7f45ec061e"
+        },
+        {
+          "file": "image-0350/region-006.png",
+          "sha256": "f8f901af16449778693eca0c7a8a2165482ae0c6f0f5886d0cb08d3482df2913"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/showcase",
+      "decision": "accept",
+      "notes": "实际查看WebKit showcase四块完整变化区：多个小程序截图缩略图、点阵码和图标的细节清晰度变化，图片边界、卡片、列结构和显示内容保持；底边窄条未见实质布局变化。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 53279,
+        "maximumChannelDelta": 47,
+        "changedRows": 661,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 195,
+            "top": 900,
+            "width": 953,
+            "height": 703
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "1be7c104ca0a5ddbab897834f8673826f8b6f893ee4f5799ee29ffb4967beefa"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0351/region-001.png",
+          "sha256": "73225c68798fd0ebb5bf0ace74e460e5b9fd9fe05fd474250e05efef44653d6d"
+        },
+        {
+          "file": "image-0351/region-002.png",
+          "sha256": "f71c73e5930d6c7f0282c6ddd3d3acd6a55874246e470aae7b4356bd3adb99f2"
+        },
+        {
+          "file": "image-0351/region-003.png",
+          "sha256": "c223d70e6a28468ed103ec38a409c27d8a74016a1f7141bc9f1160ddaef3a84f"
+        },
+        {
+          "file": "image-0351/region-004.png",
+          "sha256": "477d6a00a0ed76cc3ec20a6875c324fa57893229e0aa2f95bc4cccbc8cd364c4"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/docs/tailwindcss/unocss-compatibility",
+      "decision": "accept",
+      "notes": "实际查看UnoCSS兼容页变化窄条：文字基线及背景保持，仅水平边界两端有极细像素线差异，未见文字缺失或整体布局位移。静态图不证明其内部渲染原因。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 101,
+        "maximumChannelDelta": 2,
+        "changedRows": 1,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 325,
+            "top": 1741,
+            "width": 720,
+            "height": 33
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "6d826123db925c9610924e03af0efa400777d242cd03a7ea852199f5b009f520"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0420/region-001.png",
+          "sha256": "11001bcbdb3656d72d9097abc323598828009c80ddff76bc8393af2b80162692"
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "project": "chromium",
+      "viewport": "desktop",
+      "route": "/",
+      "decision": "accept",
+      "notes": "实际查看Chromium首页顶部、中部、底部六区：导航、渐变品牌标题、平台图标、按钮、流程面板、功能卡、入口卡及页脚保持；未见新旧布局或文本变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "b508a27679f5bfbe6e9b6abd2d41a8f975ad251b1bf120c0cb39e131e25f6e4a"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0433/region-001.png",
+          "sha256": "3cf138753cbf1f654a073c21cd173d6dba86ebbbd0ec060cdada12a1b812faf2"
+        },
+        {
+          "file": "image-0433/region-002.png",
+          "sha256": "9e8263137354fd414b906103476b4e9bfc7f53970c751c8716d19e1ffcc27700"
+        },
+        {
+          "file": "image-0433/region-003.png",
+          "sha256": "29b7b6221d7f32a045e2a4bf0f0d417664c8dc14b6e36e4989f5c495396c0eaf"
+        },
+        {
+          "file": "image-0433/region-004.png",
+          "sha256": "66f761853c3a08005c3e30cc210d286c4beaf873cd44623cdb879139f6041e2f"
+        },
+        {
+          "file": "image-0433/region-005.png",
+          "sha256": "b4843354698c0fd8324fc63707e1834633551b8e33be1410ca2146b1ca42997b"
+        },
+        {
+          "file": "image-0433/region-006.png",
+          "sha256": "5f615f37d8b3d00f7f0f0499d83fc510109f93595e3a9e7048f6a04a79bf52f8"
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "project": "firefox",
+      "viewport": "desktop",
+      "route": "/",
+      "decision": "accept",
+      "notes": "实际查看Firefox首页顶部、中部、底部六区：导航、品牌标题、平台图标、按钮、流程面板、功能卡、入口卡及页脚保持；未见新旧布局或文本变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "d1e249db8d7035b792426b51fd9be95efb29fea38c081ebf569101a37b994ac2"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0434/region-001.png",
+          "sha256": "18501b4f2ab7dbcf872f35723ac9e4d9a3f0a67ad5eb64d2208f5a9c94ca1ac4"
+        },
+        {
+          "file": "image-0434/region-002.png",
+          "sha256": "24a557f20d6b6491f55aad4d2305f5aa41dd75d7d3b4dd12cb48873cc3fa2010"
+        },
+        {
+          "file": "image-0434/region-003.png",
+          "sha256": "095dfe158d88608309de3cc5a0cc85893cb2605eabfa2b77590bd76e5036cef3"
+        },
+        {
+          "file": "image-0434/region-004.png",
+          "sha256": "ffb2fa06227d95e5ac5d27719a9fb48faa0a583d02ee6c7756cbaa34aedf217a"
+        },
+        {
+          "file": "image-0434/region-005.png",
+          "sha256": "643818203f5a95a0fad02d638d65ba9928d140185d84630c3066d4df7e363f6e"
+        },
+        {
+          "file": "image-0434/region-006.png",
+          "sha256": "91e2e57302a66cc8c005bdc98a00ae6d86b441b704032879db3a52e66a02c68d"
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/",
+      "decision": "accept",
+      "notes": "实际查看WebKit首页顶部、中部、底部六区：导航、品牌标题、平台图标、按钮、流程面板、功能卡、入口卡及页脚保持；未见新旧布局或文本变化。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "29cf841adfe7847087949bb56f82e430cba1652da11c7a38e3c0fd5c98ffe7af"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0435/region-001.png",
+          "sha256": "dacce3ba4dee92575c928d4140cc215a3e81c0af91b48a5b2f3e377055f339c7"
+        },
+        {
+          "file": "image-0435/region-002.png",
+          "sha256": "4198f90e924850479346087a828c28acf8a857e0799d7d61ea2896161c0e1e9c"
+        },
+        {
+          "file": "image-0435/region-003.png",
+          "sha256": "dd575fd0de1d3a463c4e840a853d390217a39eeef6f9b49c06ee5546c0dd14b6"
+        },
+        {
+          "file": "image-0435/region-004.png",
+          "sha256": "97d91a3f1329e13b93c35509bfc4d5ab83826d848987189e426bbe23d1b45451"
+        },
+        {
+          "file": "image-0435/region-005.png",
+          "sha256": "516b0b0212471ab4bbb9b665615419d816d3b759b4b6e55fb7fe1fc9781a4a61"
+        },
+        {
+          "file": "image-0435/region-006.png",
+          "sha256": "e257038c005b122779583fc1d1a3fc252725573cba7a4b4e150e9962fd7f099e"
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/2025/11/v4.7.0-merge-runtime",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "作者圆形头像的细小像素色差；人像内容、边缘、位置与背景一致，未见缺失或裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1371,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 257,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "5fef33c38a3a5042f31bb6fe3b2de210c6a7988805108aea60ab4f66fbe31f48"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0444/region-001.png",
+          "sha256": "46b6b733c4760067c05b8024db444f246957a9e4653f12a3f8cd246d86a73465"
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/2025/3/v4-release",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "作者圆形头像的细小像素色差；人像内容、边缘、位置与背景一致，未见缺失或裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1370,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 197,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "0cce2aa96cd46fa72b05c8cb908c6d6e637b336472a99929479f11d52806ace5"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0447/region-001.png",
+          "sha256": "e3a72d0bd01db40a2df8ce3044f7c7321968113e9ea8aefb61a9b680c85d502a"
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/2025/8/v4.2-release",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "作者圆形头像的细小像素色差；人像内容、边缘、位置与背景一致，未见缺失或裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1370,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 197,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "cdb9631625c1a3361f27a36fc849e2b4f786f53d18e1909a85cb70bf73202cb2"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0450/region-001.png",
+          "sha256": "e3a72d0bd01db40a2df8ce3044f7c7321968113e9ea8aefb61a9b680c85d502a"
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/2025/9/v4.3-release",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "作者圆形头像的细小像素色差；人像内容、边缘、位置与背景一致，未见缺失或裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1371,
+        "maximumChannelDelta": 23,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 197,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "567c46b8da74916d65411ce42684b6594c39d0521fa147504b7e88262f2ca64b"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0453/region-001.png",
+          "sha256": "ec8d4874028431afbe239ae4b5a402f7bc257a4fe0630103be9b97054388320e"
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/authors",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "作者页放大圆形头像的细小色差；相同人像和轮廓，无形变、裁切或内容缺失。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 2489,
+        "maximumChannelDelta": 13,
+        "changedRows": 87,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 358,
+            "top": 152,
+            "width": 112,
+            "height": 119
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "3f6519dd03949d06efc245bd1b080ac74c00607079f2969e5b4a01fa1257ca80"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0459/region-001.png",
+          "sha256": "5fc63c50d9eb613fefb41519da1327385bb6c95a70df74ef360df0b436d45488"
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "四个作者头像区域均逐张查看；变化均在头像内部/边缘的像素颜色，四处人像和位置一致，未见区域位移。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 5505,
+        "maximumChannelDelta": 23,
+        "changedRows": 233,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 257,
+            "width": 89,
+            "height": 90
+          },
+          {
+            "left": 320,
+            "top": 9373,
+            "width": 89,
+            "height": 90
+          },
+          {
+            "left": 320,
+            "top": 9774,
+            "width": 88,
+            "height": 91
+          },
+          {
+            "left": 320,
+            "top": 10176,
+            "width": 89,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "cd07fa5a02723c94bce068780f6744f787e52f6784077f8aaafcab142986fafe"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0462/region-001.png",
+          "sha256": "46b6b733c4760067c05b8024db444f246957a9e4653f12a3f8cd246d86a73465"
+        },
+        {
+          "file": "image-0462/region-002.png",
+          "sha256": "9f976b3572b590cca51270e2ed6820a138636d1b401d2c68aede481fa0dc2eaa"
+        },
+        {
+          "file": "image-0462/region-003.png",
+          "sha256": "163b0a16cf14d9f360461f1615cd0355c6d2effe3c734bdd9ef85321aa976203"
+        },
+        {
+          "file": "image-0462/region-004.png",
+          "sha256": "992ae31678378c483f4ce1c43626d478e86e7d29fe7fc9c83e7572fa92e5e0f2"
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/tags/merge",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "标签页作者头像颜色微差；人像、轮廓和位置一致。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1349,
+        "maximumChannelDelta": 16,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 420,
+            "width": 88,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "168b165a45c61d945708dbeba4082bf54c638f7756685df0c9d56fe297ad5375"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0465/region-001.png",
+          "sha256": "18450e2f1417fd92db7efbc129e892f31890615b6ea9eddaae3b4eeddc1cc1ed"
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/tags/runtime",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "标签页作者头像颜色微差；人像、轮廓和位置一致。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1349,
+        "maximumChannelDelta": 16,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 420,
+            "width": 88,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "5e51c315d01373079a5f665a7cc890f386b33be31520f37e4933397ebf484874"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0468/region-001.png",
+          "sha256": "18450e2f1417fd92db7efbc129e892f31890615b6ea9eddaae3b4eeddc1cc1ed"
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/blog/tags/tailwindcss",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "标签页作者头像颜色微差；人像、轮廓和位置一致。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 1349,
+        "maximumChannelDelta": 16,
+        "changedRows": 58,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 320,
+            "top": 420,
+            "width": 88,
+            "height": 90
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "71cf5e218acc264abb7716c79b0bbc60edb609ec32a784b879ab71930a940a04"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0474/region-001.png",
+          "sha256": "18450e2f1417fd92db7efbc129e892f31890615b6ea9eddaae3b4eeddc1cc1ed"
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/copyright",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "证书整张图像的颜色采样差异；完整查看上下两片，证书标题、作者、软件名、登记号、日期、红章、条码和下边框相同，无文字丢失或新增裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 337010,
+        "maximumChannelDelta": 33,
+        "changedRows": 758,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 106,
+            "top": 813,
+            "width": 593,
+            "height": 790
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "76bc8e2aa80a8028089c930b34438ed28a6ee7c89782a4d17b75d9e53e372b80"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0477/region-001.png",
+          "sha256": "3a9de90d7713f37fb61463b5ffca23da607380f81aaadd87b85fadf663881e37"
+        },
+        {
+          "file": "image-0477/region-002.png",
+          "sha256": "7186023133977d77555a14285901883f434837f65f83aa155bd8f8c71b6fcb01"
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/community/group",
+      "decision": "接受显式准备合同迁移；不代表旧5像素门槛通过",
+      "notes": "完整查看两片及整页旧/新/官方diff：QQ群图片的二维码结构、TailwindCSS名称、群号49262447、底部提示及QQ标志保持一致；未见页面文字或布局变化。RGBA21726个变化像素与官方9像素为不同指标。官方9红点全部位于嵌入QQ群图片底部QQ标志/文字，旧maxDiffPixels5明确失败；只能作为经过审查的显式准备合同迁移接受，不能称旧阈值通过。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 21726,
+        "maximumChannelDelta": 56,
+        "changedRows": 299,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 347,
+            "top": 1191,
+            "width": 248,
+            "height": 300
+          },
+          {
+            "left": 407,
+            "top": 1519,
+            "width": 128,
+            "height": 76
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "879fb204503b9b1aa3983becf5517c3d8716fdefa33a93af6737292dbe2c09ac"
+      },
+      "officialComparator": {
+        "fivePixelPass": false,
+        "fivePixelError": "9 pixels (ratio 0.01 of all image pixels) are different.",
+        "zeroPixelPass": false,
+        "zeroPixelError": "9 pixels (ratio 0.01 of all image pixels) are different.",
+        "official-diff-5.png": {
+          "bytes": 276088,
+          "sha256": "a931982ba9cf4c89ec4b92186356af05d2f9545a4e8e2c6a83179a4f912645b2"
+        },
+        "official-diff-0.png": {
+          "bytes": 276088,
+          "sha256": "a931982ba9cf4c89ec4b92186356af05d2f9545a4e8e2c6a83179a4f912645b2"
+        }
+      },
+      "evidence": [
+        {
+          "file": "image-0606/region-001.png",
+          "sha256": "5addb642efbd499bb025853faa79b721bb2bb77e76de7298690f00876180277e"
+        },
+        {
+          "file": "image-0606/region-002.png",
+          "sha256": "9b21535fa0e5967cb3269cb618cf2d1d87a7c6cf8a61019c467c56c8a2543cac"
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/copyright",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "文档版权页证书整张图像颜色采样差异；上下两片实际查看，标题、登记号、作者、日期、印章及底边框内容一致，无缺字、位移或新增裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 347988,
+        "maximumChannelDelta": 39,
+        "changedRows": 758,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 0,
+            "top": 961,
+            "width": 592,
+            "height": 790
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "dfb0d05df88c6fefcbf141a888f1b5bb27ec7ec4b83d55d1ebd7d101bb5e7f98"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0651/region-001.png",
+          "sha256": "cb33aa6541cc029b877ef66ada1304ae10768fb437efbe5cf841ffd4db5f9e26"
+        },
+        {
+          "file": "image-0651/region-002.png",
+          "sha256": "0ae481bee97c4d61f106a4e5884782531385f4b140d4a2af3b33d91bbb8a2f8b"
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/issues/css-vars",
+      "decision": "接受显式准备合同迁移中的嵌入图像采样微差",
+      "notes": "嵌入DevTools示例截图的颜色细差；渐变色条、红色u-count-down__text、文件树、代码行和Styles面板内容/位置一致，没有新文本缺失或裁切。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 58069,
+        "maximumChannelDelta": 16,
+        "changedRows": 443,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 300,
+            "top": 1157,
+            "width": 735,
+            "height": 475
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "f1b2dd18f04170bd123b456f61e0266c42f025212fcec48bd7a2fbdaa1369c89"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0672/region-001.png",
+          "sha256": "01acb622706a7d5ebedb99ef34af78e905ffcd41b9d3307e62c455a699d4f173"
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "project": "chromium",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/showcase",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看两张完整变化区域：杭州数据交易所与FamiHub小程序码。点阵边缘与细小文字有低幅像素/清晰度差异；中心logo、文案、码图边界和位置一致，未见缺图或裁切。原始RGBA最大通道差7，Playwright原5像素与zero比较均通过；不推断浏览器内部原因。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 17377,
+        "maximumChannelDelta": 7,
+        "changedRows": 303,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 102,
+            "top": 2741,
+            "width": 223,
+            "height": 224
+          },
+          {
+            "left": 31,
+            "top": 4474,
+            "width": 143,
+            "height": 143
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "095404a91534839eb6321797ee744fe0ceaa7feb02258800522f50afbc4b990b"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0811/region-001.png",
+          "sha256": "a9414e1480c20c93ad99cb1ec627ad7bcc98db30f7fc8894149f3b63771d1993"
+        },
+        {
+          "file": "image-0811/region-002.png",
+          "sha256": "fa83c0d4ae38b66d2d6c23a24dbecb0f4cda2b289c198e97682cdebef2aa21de"
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "project": "firefox",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/showcase",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看页首、页中、页尾及其右侧全部六张区域。标题、14案例/35截图统计、案例卡片、码图、截图、编辑入口与页脚一致，没有新布局、文本或裁切差异。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "64dd3b337dcf4b766b3f5b427676959a8d3e27cc95ff3e15cc0630cbd76d9806"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0812/region-001.png",
+          "sha256": "605c4a294cef2c55e602957365418816ce488cd51d311fe798222a00e58ab6ae"
+        },
+        {
+          "file": "image-0812/region-002.png",
+          "sha256": "401652496f3818def1fafd8ffaa9290942e9441b71ce820b9997bbf4a4f8f811"
+        },
+        {
+          "file": "image-0812/region-003.png",
+          "sha256": "d5399bdf9d2144d0760b858d8e5f7d109a45d41a1e749c6f242da3cd3f423204"
+        },
+        {
+          "file": "image-0812/region-004.png",
+          "sha256": "6c6b5d6bc91f90b4dee41a6fb9ecad5238dc72ea22bdb992e56371829d4b6809"
+        },
+        {
+          "file": "image-0812/region-005.png",
+          "sha256": "56a560c58b40cfd6e8deb905dc401d37f88c02df561749576d4635bc453b57f6"
+        },
+        {
+          "file": "image-0812/region-006.png",
+          "sha256": "741c5599570a4d223f038c140e8e92894abc5fe228e28922488873cc260f7723"
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn/docs/showcase",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看覆盖完整变化区域的两张图。差异位于案例截图和小程序码的内部像素/清晰度，卡片边框、图片外框、文字与间距一致，图片内容可识别，未见新增缺图或布局位移。原5像素比较通过，zero比较3像素；未将原始52672个变化像素等同于门槛计数，未归因未证明的内部机制。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 52672,
+        "maximumChannelDelta": 71,
+        "changedRows": 639,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 195,
+            "top": 855,
+            "width": 953,
+            "height": 680
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "b3a7673c3b1cb0a4b5eabf772c84402fbfabb8894e0e86840a46a7a3b5bf47a5"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": false,
+        "zeroPixelError": "3 pixels (ratio 0.01 of all image pixels) are different.",
+        "official-diff-0.png": {
+          "bytes": 916300,
+          "sha256": "71911843a00b1537ca070057b6acff740a9f3c94d0158dc12cc6bb771f451f0c"
+        }
+      },
+      "evidence": [
+        {
+          "file": "image-0813/region-001.png",
+          "sha256": "1b1978f907e697b2711b69c4ac3f782455af6d8696e0b1e0af0f522de1f621e3"
+        },
+        {
+          "file": "image-0813/region-002.png",
+          "sha256": "114b40fef6f5daf1939944f5f72d4625e1250a9cc663e911a3b229fdf3d50cf6"
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "project": "chromium",
+      "viewport": "desktop",
+      "route": "/zh-cn",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看中文桌面首页首中尾及右侧六张区域。导航、hero、平台图标、操作按钮、生成链路图、功能卡片和页脚一致，未见缺字、内容裁切或新布局差异。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "d4c1174b9c94d4e365e60bda44901d5e757bc5794880454ea68e662085565cdf"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0895/region-001.png",
+          "sha256": "1e24948b1da1399598d0a014c0515c686a753933c4fa3aff457fd6ea95710b45"
+        },
+        {
+          "file": "image-0895/region-002.png",
+          "sha256": "ee81ad8f9371a4d0e0c23639e40e2253437b935db9338b33e500219fb313fb83"
+        },
+        {
+          "file": "image-0895/region-003.png",
+          "sha256": "49245d27b48776e431c34334ef832f5f2106645a4de04876593ec69be597fdf3"
+        },
+        {
+          "file": "image-0895/region-004.png",
+          "sha256": "7a013a4cb3e59f04626ca30a36d5f93fb2d17c63a810e35211eecc804635a910"
+        },
+        {
+          "file": "image-0895/region-005.png",
+          "sha256": "6c559394c999d5b84d4d256d7120f8ee349ff4c9e4093f887a7075c6e41f9d1f"
+        },
+        {
+          "file": "image-0895/region-006.png",
+          "sha256": "dd33f860fd3aff554ae01a2f68ff23f7e793e17ab5a187978d1f3bf66139c28d"
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "project": "firefox",
+      "viewport": "desktop",
+      "route": "/zh-cn",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看Firefox中文桌面首页全部六张区域。hero、代码流程示意、特性卡片、入口与页脚一致，未见新布局、缺字、空图或裁切变化。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "b56464f4dd2dd5760bd888e1e45b9946049902398ea8549678842f0d88a655af"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0896/region-001.png",
+          "sha256": "32018b5ec2d8cf5a092bac4cd2419c722d5ed605432f41ef7a7e27bcc314f9d1"
+        },
+        {
+          "file": "image-0896/region-002.png",
+          "sha256": "d97ea93c1df37739236b2c323086c6cbf9140d0765ebcd18b34628082b14b4e6"
+        },
+        {
+          "file": "image-0896/region-003.png",
+          "sha256": "a91831a1110c19a16fdb02bdf3c1dc2450c81a3c6684c48239e21dbb8dec40bc"
+        },
+        {
+          "file": "image-0896/region-004.png",
+          "sha256": "4c713235a6df4ed4603218093146e4b0c1ab6f1f58073a7b3be29d4a32826226"
+        },
+        {
+          "file": "image-0896/region-005.png",
+          "sha256": "ec41538057b6010be8d20a2fbc0ef7596d5fd1df37f059fc1935aa2a97ae07f3"
+        },
+        {
+          "file": "image-0896/region-006.png",
+          "sha256": "f30c8f1cfa7d2d579a0dc0bec21a977f2a6de85f6e01e2b83b293d394dd5db0a"
+        }
+      ]
+    },
+    {
+      "index": 35,
+      "project": "webkit",
+      "viewport": "desktop",
+      "route": "/zh-cn",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看WebKit中文桌面首页全部六张区域。导航、hero、平台图标、生成图、工程边界卡片与页脚一致，未见新布局、缺字、空图或裁切变化。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "c7cc87c06543e771a0e1d916e9b95a0f0e02618a6285090779828f0018d0212a"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0897/region-001.png",
+          "sha256": "2ea4d897886a9b774a897c402c86c3b91acd4bb79bf0d4c0bec666ec81178a52"
+        },
+        {
+          "file": "image-0897/region-002.png",
+          "sha256": "5988ce81853daf6b611022f6044352b273716a04db4a1b03f7c8347c6a04ca81"
+        },
+        {
+          "file": "image-0897/region-003.png",
+          "sha256": "8cd1331163bb87ebb1d5f1d63d48649a3d10fa217c3bd1894498d8c6fae05876"
+        },
+        {
+          "file": "image-0897/region-004.png",
+          "sha256": "3fa5af1b0a2cea72053c221c5c13c2c575136d9fa05206078aca35474ec35680"
+        },
+        {
+          "file": "image-0897/region-005.png",
+          "sha256": "34246e17b0fa67160f224fd137f8051dd6bf370affa92981816c36a78f6e2812"
+        },
+        {
+          "file": "image-0897/region-006.png",
+          "sha256": "8d860ed0e895792cc75af0fecb768647183ac533e14f58a5d16e0d03644530eb"
+        }
+      ]
+    },
+    {
+      "index": 36,
+      "project": "chromium",
+      "viewport": "mobile",
+      "route": "/docs/ai/qoder-vs-glm47-cursor-claude-comparison",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看移动长页首部、中部表格、尾部导航与页脚三张区域。内容连续、表格与已有窄列换行保持原状，未见新增空白、缺字、截断或布局差异。全图逐字节一致；本次人工抽样不声称逐行审读10万像素全文。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "fec86cd8e2007b11533294a53e3728d5ddab25ea055439387017b9909d716e06"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-0928/region-001.png",
+          "sha256": "b56a95ae58124bd4d2d6f1a8d8e40b6061ce17b1f593e16bfdcef350aececa96"
+        },
+        {
+          "file": "image-0928/region-002.png",
+          "sha256": "6ed2cb78d2623433fdd3456416ee58e38aefa887e9625c5857dab6fb32ad5cf2"
+        },
+        {
+          "file": "image-0928/region-003.png",
+          "sha256": "ade76efa2d5f0b3fbdef9056a13c567bba06b72b1641d883e834a888015483a4"
+        }
+      ]
+    },
+    {
+      "index": 37,
+      "project": "chromium",
+      "viewport": "mobile",
+      "route": "/docs/showcase",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看英文移动showcase页首、页中码图及案例文字、页尾三张区域。标题与统计、案例内容、码图、页脚一致，未见新增缺图、裁切或布局差异。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "4afefc87a64846d752424b66d7916cb580efab5fc208c9b343eea09b76f1ffd4"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-1020/region-001.png",
+          "sha256": "967768537090b82c46b4867ffa55a7d3eec6215f6cc760d5088faeb5d773790a"
+        },
+        {
+          "file": "image-1020/region-002.png",
+          "sha256": "8030bb019c9fc96ba7ab89e2f64c51cc868b7582992a13066635f6b13608d954"
+        },
+        {
+          "file": "image-1020/region-003.png",
+          "sha256": "a1368817deaff6ba133bb21e889418d71761d58c68e466fcda529ba6f0ecf2b4"
+        }
+      ]
+    },
+    {
+      "index": 38,
+      "project": "chromium",
+      "viewport": "mobile",
+      "route": "/",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看英文移动首页首中尾三张区域。hero、按钮、生成链路、功能卡片和页脚与旧图一致。首屏AI/社区按钮间距较紧是两侧共有外观，不是本轮新增回归。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "67b20091748cb71a831b9f6b3ee85df22d29af400c74dc152f146d5d1973aab9"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-1048/region-001.png",
+          "sha256": "8a34a28b242035a353079300ae36fe1829dd8529ebf5c7499915a1d64420c8ce"
+        },
+        {
+          "file": "image-1048/region-002.png",
+          "sha256": "e5be65dfbaefb63f43d7611c0d8fd619d95c75aaf7baeacd7ac0b8a2f22f2d81"
+        },
+        {
+          "file": "image-1048/region-003.png",
+          "sha256": "f100ae68806e0c60a582a7579c1c48fcbcb55c17a8af560304121d27eaa310d7"
+        }
+      ]
+    },
+    {
+      "index": 39,
+      "project": "chromium",
+      "viewport": "mobile",
+      "route": "/zh-cn/docs/showcase",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看中文移动showcase的两张完整变化区域，分别是杭州数据交易所与FamiHub小程序码。低幅点阵边缘/清晰度差异，中心标识、文字和边界一致，未见新增缺图、内容替换或裁切。RGBA最大通道差7，原5像素和zero比较均通过；不推断浏览器内部原因。",
+      "byteIdentical": false,
+      "rgba": {
+        "changedPixels": 21114,
+        "maximumChannelDelta": 7,
+        "changedRows": 346,
+        "dimensionsEqual": true,
+        "regions": [
+          {
+            "left": 79,
+            "top": 6786,
+            "width": 232,
+            "height": 231
+          },
+          {
+            "left": 56,
+            "top": 11218,
+            "width": 178,
+            "height": 179
+          }
+        ],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "afbb54dd968cfe50033901de6030cc95cf94d721058bc11808487c4addb1fa7c"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-1174/region-001.png",
+          "sha256": "cdcab0a7f5f5f61b8fb9585e88968be3f4ab02a6c63b0364d709247de6bda2d5"
+        },
+        {
+          "file": "image-1174/region-002.png",
+          "sha256": "235e1713dc21f3f8358ff46f21557ce517c71794a797b6dc965605713d03ea00"
+        }
+      ]
+    },
+    {
+      "index": 40,
+      "project": "chromium",
+      "viewport": "mobile",
+      "route": "/zh-cn",
+      "decision": "approve-visual-migration",
+      "notes": "实际查看中文移动首页首中尾三张区域。标题、操作入口、生成链路、特性卡片、社区卡片和页脚与旧图一致，未见新增缺字、裁切或布局差异。全图逐字节一致。",
+      "byteIdentical": true,
+      "rgba": {
+        "changedPixels": 0,
+        "maximumChannelDelta": 0,
+        "changedRows": 0,
+        "dimensionsEqual": true,
+        "regions": [],
+        "definition": "Exact RGBA comparison, not the Playwright acceptance metric",
+        "diffSha256": "20847132f7ef081dc7e8f00e22a7a9465f73ae6896741f21aece8fbcf3b61d90"
+      },
+      "officialComparator": {
+        "fivePixelPass": true,
+        "fivePixelError": null,
+        "zeroPixelPass": true,
+        "zeroPixelError": null
+      },
+      "evidence": [
+        {
+          "file": "image-1202/region-001.png",
+          "sha256": "00c0abb391ceed59e1944195916166f329b826db6da9085143efad299b5a5dee"
+        },
+        {
+          "file": "image-1202/region-002.png",
+          "sha256": "9eacf05183c6b05e0245f8bb1b4d2f62c2ed9e98534fa75f9f4fae62c1e3e3cf"
+        },
+        {
+          "file": "image-1202/region-003.png",
+          "sha256": "8dcf11d49944503d18c3caf55b6de08440bc8a5a71e3f95fba2e91b97af22674"
+        }
+      ]
+    }
+  ]
+}

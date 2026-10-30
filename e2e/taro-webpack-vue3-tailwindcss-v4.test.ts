@@ -22,6 +22,39 @@ function compactCss(css: string) {
 }
 
 describe('e2e', () => {
+  it('keeps Tailwind utilities after NutUI icon defaults in the CSS module graph', async () => {
+    const root = path.resolve(__dirname, '../demo', project.name)
+    await ensureProjectBuilt(root)
+    const outputRoot = path.resolve(root, 'dist')
+    const files = await fg('**/*.wxss', { cwd: outputRoot, absolute: true, onlyFiles: true })
+    const cases = [
+      { defaults: '.nut-icon', utility: '.flex', property: 'display', value: 'flex' },
+      { defaults: '.nutui-iconfont', utility: '.text-_b100rpx_B', property: 'font-size', value: '100rpx' },
+    ]
+    for (const item of cases) {
+      let matched = 0
+      for (const file of files) {
+        const css = postcss.parse(await fs.readFile(file, 'utf8'), { from: file })
+        const declarations: { selector: string, value: string, important: boolean }[] = []
+        css.walkRules((rule) => {
+          if (!rule.selectors.includes(item.defaults) && !rule.selectors.includes(item.utility)) {
+            return
+          }
+          rule.walkDecls(item.property, (decl) => {
+            declarations.push({ selector: rule.selector, value: decl.value, important: Boolean(decl.important) })
+          })
+        })
+        if (!declarations.some(decl => decl.selector === item.defaults)) {
+          continue
+        }
+        matched++
+        expect(declarations.every(decl => !decl.important), file).toBe(true)
+        expect(declarations.at(-1), `${file}: ${item.defaults}${item.utility}`).toMatchObject({ selector: item.utility, value: item.value })
+      }
+      expect(matched, item.defaults).toBeGreaterThan(0)
+    }
+  })
+
   it('keeps both font-smoothing declarations in every NutUI font rule', async () => {
     const root = path.resolve(__dirname, '../demo', project.name)
     await ensureProjectBuilt(root)

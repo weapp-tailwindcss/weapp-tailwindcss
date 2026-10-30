@@ -1,12 +1,16 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { parseSync } from '@babel/core'
+import { collectCssRuleEvidence } from '@weapp-tailwindcss/postcss/syntax'
 import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
 import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
+import { inspectUniAppWebpackAppStyles } from './uni-app-webpack-app-styles'
 
 interface TemplateCase {
   name: string
@@ -30,6 +34,7 @@ interface TemplateBuildCase {
   styleFiles?: string[]
   textFiles?: string[]
   expectTransformedClassMarkers?: boolean
+  verifyOutput?: (root: string, styles: string, texts: string) => Promise<void>
 }
 
 interface OutputShape {
@@ -47,6 +52,21 @@ const canonicalTemplateNames = new Set(
     .filter(item => item.template === 'weapp-vite-tailwindcss-v4')
     .map(item => item.template),
 )
+
+function scriptStringProperties(source: string, property: string) {
+  const values = new Set<string>()
+  const visit = (value: any) => {
+    if (!value || typeof value !== 'object') {
+      return
+    }
+    if (value.type === 'ObjectProperty' && (value.key?.name ?? value.key?.value) === property && value.value?.type === 'StringLiteral') {
+      values.add(value.value.value)
+    }
+    Object.values(value).forEach(visit)
+  }
+  visit(parseSync(source, { configFile: false, babelrc: false, sourceType: 'script' }))
+  return values
+}
 
 const taroMiniOutputByPlatform: Record<string, OutputShape> = {
   alipay: {
@@ -169,6 +189,29 @@ function createUniMiniBuildCase(template: string, platform: keyof typeof uniMini
     ],
     styleFiles: [outputDir],
     textFiles: [`${outputDir}/${output.pageFile}`],
+    ...(template === 'uni-app-webpack-tailwindcss-v4' && platform === 'mp-weixin'
+      ? {
+          async verifyOutput(root: string, styles: string, texts: string) {
+            const classes = ['min-h-screen', 'p-_b40rpx_B', 'bg-_b_h877878_B']
+            const rules = collectCssRuleEvidence(styles)
+            expect(texts).toContain('p-_b40rpx_B')
+            const service = await fs.readFile(path.join(root, outputDir, 'pages', 'index', 'index.js'), 'utf8')
+            expect(scriptStringProperties(service, 'className')).toContain('bg-_b_h877878_B')
+            const baseline = {
+              target: 'mp-weixin',
+              classes: classes.map((className) => {
+                const identity = collectCssRuleEvidence(`.${className}{}`)[0]!.identity
+                return {
+                  className,
+                  declarations: rules.filter(rule => rule.identity === identity && rule.conditions.length === 0).flatMap(rule => rule.declarations),
+                }
+              }),
+            }
+            expect(baseline.classes.every(item => item.declarations.length > 0)).toBe(true)
+            await expect(`${JSON.stringify(baseline, null, 2)}\n`).toMatchFileSnapshot(path.join(repoRoot, 'e2e', '__snapshots__', 'uni-app-webpack-tailwindcss-v4.mp-styles.json'))
+          },
+        }
+      : {}),
   }
 }
 
@@ -182,6 +225,28 @@ function createUniH5BuildCase(template: string, script = 'build:h5', outputDir =
     styleFiles: [`${outputDir}/assets`, `${outputDir}/static`, `${outputDir}/static/css`],
     textFiles: [`${outputDir}/index.html`],
     expectTransformedClassMarkers: false,
+  }
+}
+
+function createUni360BuildCase(): TemplateBuildCase {
+  // 360 继承 H5 编译器，并在平台目录内追加 dist；不使用小程序模板协议。
+  const outputDir = 'dist/build/mp-360/dist'
+  return {
+    name: 'uni-app-webpack-tailwindcss-v4 mp-360',
+    template: 'uni-app-webpack-tailwindcss-v4',
+    command: ['pnpm', 'run', 'build:mp-360'],
+    outputDir,
+    requiredFiles: ['app.js', 'app.json', 'app.css'].map(file => `${outputDir}/${file}`),
+    styleFiles: [`${outputDir}/app.css`],
+    textFiles: [`${outputDir}/app.js`, `${outputDir}/static/js`],
+    expectTransformedClassMarkers: false,
+    async verifyOutput(root, styles, texts) {
+      const manifest = await readJson<{ sdkversion: string, pages: Array<{ route: string }> }>(path.resolve(root, outputDir, 'app.json'))
+      expect(manifest.sdkversion).toBe('1.0.0')
+      expect(manifest.pages).toContainEqual(expect.objectContaining({ route: 'pages/index/index' }))
+      expect(texts).toContain('bg-[#877878]')
+      expect(styles).toContain('#877878')
+    },
   }
 }
 
@@ -260,6 +325,35 @@ const templateBuildCases: TemplateBuildCase[] = [
       'quickapp-webview-union',
     ].map(platform => createUniQuickappWebviewBuildCase(template, platform)),
   ]),
+  createUni360BuildCase(),
+  {
+    name: 'uni-app-webpack-tailwindcss-v4 app-plus',
+    template: 'uni-app-webpack-tailwindcss-v4',
+    command: ['pnpm', 'run', 'build:app-plus'],
+    outputDir: 'dist/build/app-plus',
+    requiredFiles: ['manifest.json', '__uniappview.html', 'app-view.js', 'app-service.js', 'view.css']
+      .map(file => path.join('dist', 'build', 'app-plus', file)),
+    styleFiles: ['dist/build/app-plus/view.css'],
+    textFiles: ['dist/build/app-plus/app-service.js'],
+    expectTransformedClassMarkers: false,
+    async verifyOutput(root) {
+      const result = await inspectUniAppWebpackAppStyles(path.join(root, 'dist', 'build', 'app-plus'), {
+        parseScript: source => parseSync(source, { configFile: false, babelrc: false, sourceType: 'script' }),
+        cssRules: collectCssRuleEvidence,
+      })
+      expect(result.matches.find(item => item.className === 'p-[40rpx]')?.rules[0]?.declarations)
+        .toContainEqual(expect.objectContaining({ property: 'padding', value: '20px' }))
+      const baseline = {
+        target: 'app-plus',
+        carrier: 'app-view.js',
+        viewportWidth: 375,
+        routes: result.routes,
+        styles: result.styles,
+        classes: result.matches.map(item => ({ className: item.className, declarations: item.rules.flatMap(rule => rule.declarations) })),
+      }
+      await expect(`${JSON.stringify(baseline, null, 2)}\n`).toMatchFileSnapshot(path.join(repoRoot, 'e2e', '__snapshots__', 'uni-app-webpack-tailwindcss-v4.app-styles.json'))
+    },
+  },
   ...[
     'uni-app-webpack-tailwindcss-v4',
   ].flatMap<TemplateBuildCase>(template => [
@@ -308,10 +402,8 @@ const localOnlyBuildTargets: LocalOnlyBuildTarget[] = [
   ...[
     'uni-app-webpack-tailwindcss-v4',
   ].flatMap(template => [
-    { template, script: 'build:app-plus', reason: 'app-plus 端需要原生 App 构建环境，本轮只记录为本地环境验证项。' },
     { template, script: 'build:custom', reason: 'custom 构建脚本需要额外平台参数，本轮只记录为本地环境验证项。' },
     { template, script: 'build:quickapp-native', reason: 'quickapp-native 需要快应用 native 工具链，本轮只记录为本地环境验证项。' },
-    { template, script: 'build:mp-360', reason: 'mp-360 端依赖较旧平台工具链，本轮只记录为本地环境验证项。' },
   ]),
   { template: 'uni-app-hbuilderx-tailwindcss-v4', script: 'HBuilderX run', reason: '该模板未提交 CLI build 脚本，需要在 HBuilderX 中导入后运行。' },
 ]
@@ -526,10 +618,14 @@ describe('templates build smoke', () => {
   })
 
   it.each(templateCases.filter(item => shouldRunCase(item.name)))('$name installs with its own frozen lockfile', async (item) => {
-    if (process.env['E2E_TEMPLATE_SKIP_INSTALL'] === '1') {
-      return
+    const root = getTemplateRoot(item.name)
+    if (process.env['E2E_TEMPLATE_SKIP_INSTALL'] !== '1') {
+      await runPnpm(['install', '--frozen-lockfile'], root)
     }
-    await runPnpm(['install', '--frozen-lockfile'], getTemplateRoot(item.name))
+    const family = templateLintFamilies.get(item.name)
+    if (family) {
+      await verifyFrameworkEslint(root, family)
+    }
   }, 1_200_000)
 
   it.each(templateBuildCases.filter(item => shouldRunCase(item.name)))('$name build output', async (item) => {
@@ -558,6 +654,7 @@ describe('templates build smoke', () => {
     expect(styles, `${item.name} styles should not contain raw Tailwind directives`).not.toMatch(rawTailwindDirectiveRE)
 
     const texts = await readTextTargets(root, item.textFiles ?? [], textFileRE)
+    await item.verifyOutput?.(root, styles, texts)
     const combined = `${styles}\n${texts}`
     const transformedClassMarkerRE = /_b[\w-]+_B/
     if (item.expectTransformedClassMarkers === false) {

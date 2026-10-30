@@ -1,11 +1,12 @@
 import type { PluginObj, PluginPass } from '@babel/core'
-import { transformAsync } from '@babel/core'
 import type { Configuration, Stats } from 'webpack'
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { runInNewContext } from 'node:vm'
+import { transformAsync } from '@babel/core'
 import { build as esbuildBuild } from 'esbuild'
 import { describe, expect, it } from 'vitest'
 
@@ -303,6 +304,15 @@ describe('terser-webpack keep_fnames', () => {
       keep: await bundleWithWebpack(true),
     }
 
+    const execute = (code: string) => {
+      const logs: unknown[][] = []
+      runInNewContext(code, { console: { log: (...values: unknown[]) => logs.push(values) } })
+      return logs
+    }
+    const defaultLogs = execute(outputs.defaults)
+    expect(defaultLogs).toEqual([[expect.any(String)]])
+    expect(defaultLogs).not.toEqual([['weappTwIgnore']])
+    expect(execute(outputs.keep)).toEqual([['weappTwIgnore']])
     expect(outputs.defaults).not.toEqual(outputs.keep)
     const formatted = await formatOutputs(outputs)
 

@@ -38,7 +38,7 @@
     "vue-loader": "^17.4.2",
     "vue-tsc": "catalog:vueTsc318",
     "weapp-tailwindcss": "workspace:*",
-    "webpack": "5.105.4",
+    "webpack": "5.112.2",
     "webpack-cli": "catalog:webpackTools",
     "webpack-dev-server": "catalog:webpackTools"
   },

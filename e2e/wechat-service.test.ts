@@ -44,6 +44,22 @@ describe('微信已有服务边界', () => {
     })
     await expect(assertWechatLogin(port)).rejects.toMatchObject({ name: 'WechatEnvironmentError' })
   })
+  it.each([
+    { cause: Object.assign(new Error('sensitive-ticket'), { code: 'ECONNREFUSED' }), expected: 'ECONNREFUSED' },
+    { cause: new AggregateError([Object.assign(new Error('private-url'), { code: 'ECONNRESET' })], '连接失败'), expected: 'ECONNRESET' },
+    { cause: new DOMException('private-token', 'TimeoutError'), expected: 'TimeoutError' },
+    { cause: new Error('sensitive-ticket'), expected: '未分类连接错误' },
+  ])('连接诊断区分 $expected，保留目标端口且不泄露原始错误正文', async ({ cause, expected }) => {
+    const port = await server((_req, res) => res.end('{"login":true}'))
+    const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('private-token', { cause }))
+    const error = await assertWechatLogin(port).catch(error => error)
+    expect(error).toMatchObject({ name: 'WechatEnvironmentError' })
+    expect(error.message).toContain(`127.0.0.1:${port}`)
+    expect(error.message).toContain(expected)
+    expect(error.message).not.toMatch(/sensitive-ticket|private-url|private-token/)
+    await expect(assertWechatLogin(port)).rejects.toThrow('停止后续')
+    expect(fetch).toHaveBeenCalledOnce()
+  })
   it('临时 HMR 读取借用已绑定端口，不再次打开项目或释放外层租约', async () => {
     const requests: string[] = []
     const port = await server((req, res) => {

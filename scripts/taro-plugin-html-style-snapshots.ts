@@ -1,4 +1,5 @@
 import type { ProjectEntry } from '../e2e/shared.ts'
+import type { PluginHtmlArtifactArchive, PluginHtmlBuildExecution } from './taro-plugin-html-style-snapshots/artifacts.ts'
 import type { CssArtifact, ModeResult, PluginHtmlMode, ProjectReport } from './taro-plugin-html-style-snapshots/report.ts'
 import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
@@ -8,9 +9,12 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { execa } from 'execa'
 import { getProjectCssSnapshotFiles } from '../e2e/projectCssSnapshots.ts'
 import { E2E_PROJECTS } from '../e2e/projectEntries.ts'
 import { collectCssSnapshots, normalizeCssTextSnapshot } from '../e2e/snapshotUtils.ts'
+import { runWithCleanup } from './e2e-preflight/cleanup.ts'
+import { createPluginHtmlArtifactArchive, finishPluginHtmlRun } from './taro-plugin-html-style-snapshots/artifacts.ts'
 import { mergeScopedPluginHtmlReports, renderModeReadme, renderProjectReadme, renderRootReadme, verifyPluginHtmlReports } from './taro-plugin-html-style-snapshots/report.ts'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -74,7 +78,7 @@ async function runCommand(project: ProjectEntry, mode: PluginHtmlMode) {
     WEAPP_TW_TARO_PLUGIN_HTML: mode === 'with-plugin-html' ? '1' : '0',
   }
 
-  return await new Promise<ModeResult>((resolve) => {
+  return await new Promise<PluginHtmlBuildExecution>((resolve) => {
     const child = spawn('pnpm', ['run', 'build:weapp'], {
       cwd,
       env,
@@ -84,18 +88,18 @@ async function runCommand(project: ProjectEntry, mode: PluginHtmlMode) {
     child.stdout.on('data', chunk => chunks.push(Buffer.from(chunk)))
     child.stderr.on('data', chunk => chunks.push(Buffer.from(chunk)))
     child.on('error', (error) => {
-      resolve({
+      resolve({ result: {
         mode,
         status: 'failed',
         command: 'pnpm run build:weapp',
         durationMs: Date.now() - start,
         artifacts: [],
         error: error.message,
-      })
+      }, output: Buffer.concat(chunks), exitCode: null, signal: null })
     })
     child.on('close', (code, signal) => {
-      const output = Buffer.concat(chunks).toString('utf8')
-      resolve({
+      const output = Buffer.concat(chunks)
+      resolve({ result: {
         mode,
         status: code === 0 ? 'passed' : 'failed',
         command: 'pnpm run build:weapp',
@@ -103,8 +107,8 @@ async function runCommand(project: ProjectEntry, mode: PluginHtmlMode) {
         artifacts: [],
         error: code === 0
           ? undefined
-          : normalizeReportText(output).slice(-4000) || `exit ${signal ?? code}`,
-      })
+          : normalizeReportText(output.toString('utf8')).slice(-4000) || `exit ${signal ?? code}`,
+      }, output, exitCode: code, signal })
     })
   })
 }
@@ -186,19 +190,20 @@ async function writeProjectReport(report: ProjectReport, outputRoot: string) {
   await fs.writeFile(path.join(projectRoot, 'README.md'), renderProjectReadme(report), 'utf8')
 }
 
-async function processProject(project: ProjectEntry, outputRoot: string) {
+async function processProject(project: ProjectEntry, outputRoot: string, archive: PluginHtmlArtifactArchive) {
   const projectRoot = path.resolve(demoRoot, project.name)
-  await removeDir(path.join(projectRoot, 'dist'))
-  const withResult = await runCommand(project, 'with-plugin-html')
-  if (withResult.status === 'passed') {
-    withResult.artifacts = await collectProjectArtifacts(project, 'with-plugin-html', outputRoot)
+  async function processMode(mode: PluginHtmlMode) {
+    await removeDir(path.join(projectRoot, 'dist'))
+    const execution = await runCommand(project, mode)
+    return runWithCleanup(async () => {
+      if (execution.result.status === 'passed') {
+        execution.result.artifacts = await collectProjectArtifacts(project, mode, outputRoot)
+      }
+      return execution.result
+    }, () => archive?.capture(project.name, projectRoot, execution))
   }
-
-  await removeDir(path.join(projectRoot, 'dist'))
-  const withoutResult = await runCommand(project, 'without-plugin-html')
-  if (withoutResult.status === 'passed') {
-    withoutResult.artifacts = await collectProjectArtifacts(project, 'without-plugin-html', outputRoot)
-  }
+  const withResult = await processMode('with-plugin-html')
+  const withoutResult = await processMode('without-plugin-html')
 
   const report: ProjectReport = {
     project: project.name,
@@ -221,12 +226,19 @@ async function main() {
   const baseline: ProjectReport[] = verify || scoped
     ? JSON.parse(await fs.readFile(baselinePath, 'utf8'))
     : []
+  const archive = await createPluginHtmlArtifactArchive(process.env.WEAPP_TW_TARO_PLUGIN_HTML_ARTIFACT_DIR, async () => {
+    const [head, status] = await Promise.all([
+      execa('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }),
+      execa('git', ['status', '--porcelain'], { cwd: repoRoot }),
+    ])
+    return { head: head.stdout, worktreeStatus: status.stdout, node: process.version, repoRoot }
+  }, projects.map(project => path.resolve(demoRoot, project.name, 'dist')))
   const stagingRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-tw-plugin-html-'))
-  try {
+  await finishPluginHtmlRun(async () => {
     const reports: ProjectReport[] = []
     for (const project of projects) {
       process.stdout.write(`[taro-plugin-html] ${project.name}\n`)
-      reports.push(await processProject(project, stagingRoot))
+      reports.push(await processProject(project, stagingRoot, archive))
     }
     const failed = reports.flatMap(report => report.modes.filter(mode => mode.status === 'failed').map(mode => `${report.project}:${mode.mode}`))
     if (failed.length > 0) {
@@ -261,10 +273,7 @@ async function main() {
     const complete = scoped ? mergeScopedPluginHtmlReports(baseline, reports) : reports
     await fs.writeFile(baselinePath, `${JSON.stringify(complete, null, 2)}\n`, 'utf8')
     await fs.writeFile(path.join(snapshotRoot, 'README.md'), renderRootReadme(complete), 'utf8')
-  }
-  finally {
-    await removeDir(stagingRoot)
-  }
+  }, () => removeDir(stagingRoot), archive, verify)
 }
 
 main().catch((error) => {

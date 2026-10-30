@@ -36,6 +36,8 @@ const mpxPlatform = resolveMpxPlatformFromEnv({ MPX_CLI_MODE: 'wx' })
 
 `resolvePlatformIdentity(platform, appType?)` 保留原始输入，将去除首尾空格并转为小写的值放在 `normalized`，通过 `canonical` 提供已知平台的统一身份。Taro 的 `weapp`、MPX 的 `wx` 和 uni-app 的 `mp-weixin` 都得到 `mp-weixin`；`h5` 与 `web` 都得到 `web`。MPX 专用的 `ali`、`dd` 仅在 `appType` 为 `mpx` 时映射。
 
+Taro 的 `harmony-hybrid` 使用 WebView：Taro 平台函数将其 `isWeb` 标记为 `true`，`appType` 为 `taro` 时的统一身份为 `web`。该别名不适用于原生 `harmony` 或其他框架。
+
 统一身份包括 `mp-weixin`、`mp-alipay`、`mp-baidu`、`mp-qq`、`mp-toutiao`、`mp-jd`、`mp-dingtalk`、`web`、`app`、`app-plus`、`app-android`、`app-ios`、`app-harmony`。未知或空输入的 `canonical` 为 `undefined`，`app` 与 `app-plus` 保持区别。既有平台函数保持原有的 `raw`、`normalized` 和分类标记返回形状；统一身份不负责选择编译 target 或声明宿主支持范围。
 
 ## 检测报告

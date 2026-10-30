@@ -3,6 +3,7 @@ import postcss from 'postcss'
 import { hasCssMacroStyleOptions, transformCssMacroCss } from '../../css-macro/auto'
 import { createStyleHandler } from '../../handler'
 import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
+import { applyConfiguredCssUnits } from '../../plugins/applyConfiguredCssUnits'
 import { protectDynamicColorMixAlpha } from '../color-mix'
 import { pruneMiniProgramGeneratedCss } from '../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../mini-program-css/modern-colors'
@@ -92,7 +93,8 @@ export async function transformTailwindV4GeneratedCss(
     : css
   const resolvedWebCss = await webCss
   const calculatedWebCss = await applyConfiguredCssCalc(resolvedWebCss, options ?? {})
+  const convertedWebCss = await applyConfiguredCssUnits(calculatedWebCss, options ?? {})
   return webRpxCompatibility
-    ? transformTailwindV4WebRpxCss(calculatedWebCss)
-    : calculatedWebCss
+    ? transformTailwindV4WebRpxCss(convertedWebCss)
+    : convertedWebCss
 }
