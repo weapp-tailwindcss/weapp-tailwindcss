@@ -135,8 +135,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       return result
     }
     if (hasExternalPlugins) {
-      const userAutoprefixer = configured.some(plugin => isAutoprefixerPlugin(plugin as never))
-        || (!Array.isArray(plugins) && Boolean(plugins?.autoprefixer))
+      const userAutoprefixer = configured.some(isAutoprefixerPlugin)
+        || (!Array.isArray(plugins) && Boolean(plugins?.['autoprefixer']))
       // 用户阶段每次执行；只有它完成后的 AST 才能作为确定性平台阶段的缓存输入。
       const platformOptions = {
         ...resolvedOptions,

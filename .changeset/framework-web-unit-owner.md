@@ -18,3 +18,5 @@ Web 生成链在真实框架 PostCSS 处理后才执行通用 rpx 兜底，使 T
 内部子代选择器替换 helper 明确拒绝直接传入的空数组，避免生成含 undefined 的标签；配置层空数组仍保留原有默认 view 策略与缓存克隆隔离。
 
 UVUE 后处理按 Document 内各 Root 独立消费主题、求值和判定作者样式，避免同名变量或兄弟样式的 SFC/banner 证据互相污染；保留原 Document、Root、节点来源、消息次序和多个输入的 source map。
+
+补齐作者 PostCSS 配置已有的数组、值映射、模块默认导出、工厂 tuple 和已加载插件类型，保留原归一化与禁用语义；autoprefixer 身份探测在未归一化边界使用真实值守卫，不再用不成立的数组类型隐藏映射分支。

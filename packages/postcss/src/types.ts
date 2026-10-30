@@ -1,7 +1,6 @@
 // 核心类型定义，描述样式处理流程所需的选项与工具类型
 import type { PostCssCalcOptions } from '@weapp-tailwindcss/postcss-calc'
 import type { Result as PostcssResult, Root } from 'postcss'
-import type { Result } from 'postcss-load-config'
 import type pxtrans from 'postcss-pxtrans'
 import type { UserDefinedOptions as Rem2rpxOptions } from 'postcss-rem-to-responsive-pixel'
 import type { GlobalUnitTransform, UserDefinedOptions as UnitConverterOptions, UnitMap } from 'postcss-rule-unit-converter'
@@ -9,10 +8,11 @@ import type { WeappAutoprefixerOptions } from './autoprefixer'
 import type { PostcssAppType } from './branches'
 import type { StyleProcessingPipeline } from './pipeline'
 import type { IContext as PostcssContext } from './plugins/ctx'
+import type { LoadedPostcssOptions } from './postcss-plugin-options'
 import type { InjectPreflight } from './preflight'
 import type { PresetEnvOptions } from './preset-env-options'
 
-export type LoadedPostcssOptions = Partial<Omit<Result, 'file'>>
+export type { LoadedPostcssOptions } from './postcss-plugin-options'
 
 export interface IPropValue {
   prop: string
