@@ -19,7 +19,11 @@ describe('处理选项快照准入', () => {
 
   it('读取准入不触发访问器，回调也不能被视为静态数据', () => {
     const read = vi.fn(() => postcss.stringify)
-    const options: ProcessOptions = { get stringifier() { return read() } }
+    const options: ProcessOptions = {
+      get stringifier() {
+        return read()
+      },
+    }
     expect(hasOpaqueProcessOptions(options)).toBe(true)
     expect(read).not.toHaveBeenCalled()
     expect(hasOpaqueProcessOptions({ parser: postcss.parse })).toBe(true)
@@ -42,7 +46,8 @@ describe('处理选项快照准入', () => {
     expect(hasOpaqueProcessOptions(options)).toBe(false)
     Object.defineProperty(sources, 'state', { value: 'hidden' })
     expect(hasOpaqueProcessOptions(options)).toBe(true)
-    const sparse = Array<string>(2)
+    const sparse: string[] = []
+    sparse.length = 2
     expect(hasOpaqueProcessOptions({ map: { prev: { ...prev, sources: sparse } } })).toBe(true)
   })
 
