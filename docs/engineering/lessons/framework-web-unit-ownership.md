@@ -95,6 +95,22 @@ Generic Web finalizer 在结构条件允许后，先保留用户 matcher 选中�
 
 ## 适用边界
 
+### watch 基线必须先核对资产引用
+
+独立诊断 driver `197737444dd7703b4ef0da865577c7fa53e662dc` 在 Node 22.23.4/Linux 上分别准备准确的 `86c89a2a5` 和 `13520c530`，各自 frozen install、构建并验证完整来源，保留每侧 19 次真实 watch 的 bundle、磁盘产物和入口消费图。旧侧三轮哈希稳定且匹配原 golden，但 `secondary.js` 的 `viteMetadata.importedCss` 始终引用不存在的 `secondary.css`；唯一的 `main.css` 混入了 secondary 作者规则。旧 golden 的拼接文本相同不能证明这个入口能消费到样式。
+
+修复侧每次构建均实际输出两个被入口引用的 CSS 资产。AST 审查确认主入口生成部分未变，两个新资产的生成部分完全相同，作者规则的声明和顺序保留。原三轮恢复、哈希稳定与 count 断言全部通过，仅最终旧 golden 不匹配；这次诊断不提供性能放行或浏览器加载顺序结论。
+
+基准的 Vite `writeBundle` 现在直接校验所有 chunk 的 CSS 引用确实存在于同一 bundle，覆盖共享 chunk；缺少元数据也不能视为没有引用。真实旧 bundle 的 19 份记录均触发缺失资产回归，修复侧 19 份均通过。样本、报告、资源关闭、目录删除及最终取消检查另保留有界终态记录，首次失败的状态与事件保持不变；原有 await、GC、关闭顺序、30 秒总预算和 15 秒构建等待不变。
+
+本地准确 `4766903f8` 的已构建产品以现有入口限定生成：
+
+```sh
+pnpm --filter benchmark-performance run watch:baseline --bundlers vite --output <独立报告路径>
+```
+
+只改变 Vite golden，4,952 → 9,617 字节，SHA256 为 `3fd42724efb62d5fea4e4cc1f04b8c97451a1027068c9db9d969e1feb96c3ea0`，与准确修复侧三轮产物逐字相同。Webpack golden 不变。禁止更新的本地 Webpack 三轮回归通过；本地 Vite 三轮复验仍在原 30 秒预算内因文件事件延迟失败，不能将单轮基线生成或远端旧提交的成功记为本地三轮验收通过。更新后的准确 PR head 仍须完成正式 CI 与本地全面验收。
+
 这些定向证据不代表本地全面验收完成。宿主文件事件服务恢复后，仍须重新执行全端预检、当前会话 computer use、verify 和全面入口。远端 CI 与部署也须绑定更新后的准确 SHA。
 
 本轮旧 head 的 static 第二分片因累计构建超出 15 分钟而被平台取消，调整为六个完整分片，保留原时限、串行和测试集合。Expo iOS 另有双帧采集超过 10 秒的失败，原件证明进程和流已收尾，宿主存在强资源压力；不能把首次帧通过或清理完成算作双帧验收通过，也不据此放宽预算。

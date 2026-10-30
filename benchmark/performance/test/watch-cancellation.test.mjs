@@ -6,6 +6,31 @@ import { joinWatchMeasurement } from './helpers/watch-measurement.mjs'
 afterEach(() => vi.useRealTimers())
 
 describe('watcher 取消与清理契约', () => {
+  it('正常报告携带关闭完成后的独立终态记录，不受迟到事件覆盖', async () => {
+    const control = createWatchControl('webpack')
+    const report = { watchReceipt: control.receipt }
+    const result = await runWatchOperation(control, async () => report, async () => {
+      control.record('synthetic-close')
+    })
+    expect(result).toBe(report)
+    expect(result.watchReceipt.events.map(event => event.event)).toEqual([
+      'action-start',
+      'action-complete',
+      'result-created',
+      'cleanup-start',
+      'synthetic-close',
+      'cleanup-complete',
+      'final-assert-start',
+      'final-assert-complete',
+      'operation-complete',
+    ])
+    expect(Object.isFrozen(result.watchReceipt)).toBe(true)
+    expect(Object.isFrozen(result.watchReceipt.events)).toBe(true)
+    control.record('late-close')
+    expect(result.watchReceipt.events.some(event => event.event === 'late-close')).toBe(false)
+    expect(JSON.parse(JSON.stringify(result)).watchReceipt.events.at(-1).event).toBe('operation-complete')
+  })
+
   it('失败冻结有界生命周期证据，迟到事件不能覆盖首错时的记录', () => {
     const control = createWatchControl('webpack')
     for (let index = 0; index < 140; index++) {
@@ -48,6 +73,10 @@ describe('watcher 取消与清理契约', () => {
     expect(error.cause).toBe(timeout)
     expect(error.watchState).toEqual({ kind: 'webpack', phase: 'theme.cjs:blue', completed: 1, colors: ['#123456'] })
     expect(error.message).toContain('after build 1')
+    expect(error.watchEvents.some(event => event.event === 'cleanup-complete')).toBe(false)
+    expect(error.watchReceipt.events.map(event => event.event)).toContain('cleanup-complete')
+    expect(error.watchReceipt.events.at(-1).event).toBe('operation-failed')
+    expect(error.message).toContain('terminal=')
     expect(() => control.assertActive()).toThrow('cancelled')
   })
 
@@ -88,6 +117,11 @@ describe('watcher 取消与清理契约', () => {
     expect(error.errors[1].cause).toBe(cleanup)
     expect(error.cause).toBe(error.errors[0])
     expect(compilerClose).toHaveBeenCalledOnce()
+    expect(error.watchReceipt).toBe(error.errors[0].watchReceipt)
+    expect(error.watchReceipt).toBe(error.errors[1].watchReceipt)
+    expect(error.errors[0].watchEvents.some(event => event.event === 'cleanup-start')).toBe(false)
+    expect(error.watchReceipt.events.map(event => event.event)).toEqual(expect.arrayContaining(['cleanup-start', 'cleanup-failed', 'operation-failed']))
+    expect(error.message).toContain('terminal=')
   })
 
   it('只有关闭失败时也拒绝完成', async () => {
@@ -132,7 +166,20 @@ describe('watcher 取消与清理契约', () => {
     expect(close).toHaveBeenCalledOnce()
     controller.abort(new Error('cleanup timeout'))
     finishClose()
-    expect((await result).message).toContain('cancelled at startup after build 1')
+    const error = await result
+    expect(error.message).toContain('cancelled at startup after build 1')
+    expect(error.watchReceipt.events.map(event => event.event)).toEqual([
+      'build-completed',
+      'action-start',
+      'action-complete',
+      'result-created',
+      'cleanup-start',
+      'cleanup-complete',
+      'final-assert-start',
+      'operation-failed',
+    ])
+    expect(error.watchReceipt.events.map(event => event.at)).toEqual([...error.watchReceipt.events.map(event => event.at)].sort((a, b) => a - b))
+    expect(error.message).toContain('final-assert-start')
   })
 })
 
