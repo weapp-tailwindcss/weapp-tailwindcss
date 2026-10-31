@@ -206,10 +206,10 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const processOptions = processorCache.getProcessOptions(resolvedOptions)
 
     const startedAt = performance.now()
-    return processor.process(
-      getProcessInput(),
-      processOptions,
-    ).async().then(async (result) => {
+    const pending = 'kind' in processor
+      ? processor.process(getProcessInput(), processOptions)
+      : processor.process(getProcessInput(), processOptions).async()
+    return pending.then(async (result) => {
       const styleBranch = resolvePostcssFrameworkProfile(resolvedOptions)
       let finalResult = styleBranch.postprocess(result, resolvedOptions)
       if (resolvedOptions.isMainChunk !== false && finalResult.root) {

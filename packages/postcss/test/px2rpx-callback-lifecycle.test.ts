@@ -62,6 +62,9 @@ describe('动态 px2rpx 设计稿的处理会话', () => {
   it('公开 pipeline 被同一个 Processor 复用时也隔离派生倍率', async () => {
     const designWidth = vi.fn((input: Input) => input.document === 'compact' ? 375 : 750)
     const pipeline = createHandler({ designWidth }).handler.getPipeline()
+    if (pipeline.kind !== 'flat') {
+      throw new Error('Expected a flat native pipeline')
+    }
     const processor = postcss(pipeline.plugins)
     const root = postcss.parse(css, { from: 'same.css', document: 'wide' })
     const input = getInput(root)
@@ -79,7 +82,11 @@ describe('动态 px2rpx 设计稿的处理会话', () => {
 
   it('提前创建多个 LazyResult 不共享后续的每 Input 倍率', async () => {
     const designWidth = vi.fn((input: Input) => input.document === 'compact' ? 375 : 750)
-    const processor = postcss(createHandler({ designWidth }).handler.getPipeline().plugins)
+    const pipeline = createHandler({ designWidth }).handler.getPipeline()
+    if (pipeline.kind !== 'flat') {
+      throw new Error('Expected a flat native pipeline')
+    }
+    const processor = postcss(pipeline.plugins)
     const root = postcss.parse(css, { from: 'same.css', document: 'compact' })
     const input = getInput(root)
     const first = processor.process(root.clone(), { from: input.file })

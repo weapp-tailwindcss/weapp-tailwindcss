@@ -33,7 +33,7 @@ regressions:
 
 ## 适用边界
 
-本次修正已有输入域，不新增解析算法。同步 getPipeline/createStylePipeline 仍只展平已解析插件对象，字符串和 tuple 的异步归一化由 processUserCss 路径完成；此处没有把直接同步 pipeline 扩展成异步配置加载器。此前将 Loaded.plugins 无条件当作数组使用的 TypeScript 调用方，应按真实联合域收窄或显式归一化。
+本次修正已有输入域，不新增解析算法。同步 getPipeline/createStylePipeline 只接收已解析的原生插件引用；阶段迁移后返回 flat／phased 联合并通过 Promise 入口执行，字符串和 tuple 的异步归一化仍由 processUserCss 路径完成。同步组装没有变为异步配置加载器。此前将 Loaded.plugins 无条件当作数组使用的 TypeScript 调用方，应按真实联合域收窄或显式归一化。
 
 ## 规则评估
 

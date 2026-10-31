@@ -8,7 +8,11 @@ export { postcssWeappTailwindcssPostPlugin } from './post'
 export { postcssWeappTailwindcssPrePlugin } from './pre'
 export { default as postcssRem2rpx } from 'postcss-rem-to-responsive-pixel'
 
-// 兼容旧接口，直接返回流水线中的插件数组
+// 仅 flat 管线具有可组合的真实插件数组。
 export function getPlugins(options: IStyleHandlerOptions): AcceptedPlugin[] {
-  return createStylePipeline(options).plugins
+  const pipeline = createStylePipeline(options)
+  if (pipeline.kind === 'phased') {
+    throw new TypeError('Phased style pipelines require pipeline.process(input, options, after); use createStylePipeline().')
+  }
+  return pipeline.plugins
 }

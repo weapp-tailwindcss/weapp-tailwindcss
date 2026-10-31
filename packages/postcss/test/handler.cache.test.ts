@@ -85,7 +85,6 @@ describe('style handler caching', () => {
   })
 })
 
-
 describe('content-probe integration', () => {
   beforeEach(() => {
     postcssFactory.mockClear()
@@ -96,7 +95,7 @@ describe('content-probe integration', () => {
     const handler = createStyleHandler()
 
     // 内容探测前不提前创建无信号管线。
-    const initCallCount = postcssFactory.mock.calls.length
+    const _initCallCount = postcssFactory.mock.calls.length
 
     // 简单 CSS 不含现代颜色函数，probeFeatures 应返回 hasModernColorFunction: false
     // 但 hasPresetEnvFeatures 始终为 true（autoprefixer 需要）
@@ -108,7 +107,7 @@ describe('content-probe integration', () => {
     await handler(simpleCSS)
 
     // handler 调用后应创建新的 processor（因为信号不同于初始化时的无信号）
-    expect(postcssFactory.mock.calls.length).toBeGreaterThan(initCallCount)
+    expect(postcssFactory.mock.calls.length).toBeGreaterThan(_initCallCount)
 
     // 获取 handler 调用时创建的 processor 的插件列表
     const lastCall = postcssFactory.mock.calls[postcssFactory.mock.calls.length - 1]
@@ -116,6 +115,9 @@ describe('content-probe integration', () => {
 
     // 获取基线 pipeline（无信号，包含所有插件）
     const basePipeline = handler.getPipeline()
+    if (basePipeline.kind !== 'flat') {
+      throw new Error('Expected a flat cached pipeline')
+    }
     const basePluginCount = basePipeline.plugins.length
 
     // 裁剪后的插件数量应少于基线（跳过了 color-functional-fallback）
@@ -124,7 +126,7 @@ describe('content-probe integration', () => {
 
   it('includes all plugins when CSS has modern features', async () => {
     const handler = createStyleHandler()
-    const initCallCount = postcssFactory.mock.calls.length
+    const _initCallCount = postcssFactory.mock.calls.length
 
     // 包含现代颜色函数的 CSS
     const modernCSS = '.box { color: rgb(255 0 0 / 0.5); }'
@@ -138,6 +140,9 @@ describe('content-probe integration', () => {
 
     // 基线 pipeline 包含所有插件
     const basePipeline = handler.getPipeline()
+    if (basePipeline.kind !== 'flat') {
+      throw new Error('Expected a flat cached pipeline')
+    }
 
     // 现代 CSS 的插件数量应与基线一致（未裁剪 color-functional-fallback）
     // 注意：hasPresetEnvFeatures 可能为 false，所以只验证 color-functional-fallback 未被裁剪
@@ -146,7 +151,7 @@ describe('content-probe integration', () => {
 
   it('falls back to full pipeline when probeFeatures throws', async () => {
     const contentProbe = await import('@/content-probe')
-    const originalProbe = contentProbe.probeFeatures
+    const _originalProbe = contentProbe.probeFeatures
 
     // 临时替换 probeFeatures 使其抛出异常
     // 由于 handler 内部使用 try-catch，异常时 signal 为 undefined，回退到全量加载
@@ -156,7 +161,7 @@ describe('content-probe integration', () => {
 
     try {
       const handler = createStyleHandler()
-      const initCallCount = postcssFactory.mock.calls.length
+      const _initCallCount = postcssFactory.mock.calls.length
 
       await handler('.box { color: red; }')
 
@@ -165,6 +170,9 @@ describe('content-probe integration', () => {
       const pluginsOnError = lastCall[0] as unknown[]
 
       const basePipeline = handler.getPipeline()
+      if (basePipeline.kind !== 'flat') {
+        throw new Error('Expected a flat cached pipeline')
+      }
 
       // 回退时插件数量应与基线一致（全量加载）
       expect(pluginsOnError.length).toBe(basePipeline.plugins.length)
