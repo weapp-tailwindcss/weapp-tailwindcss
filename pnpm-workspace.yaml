@@ -118,7 +118,7 @@ overrides:
   # devframe 与 agentic 使用双向精确 peer，各工具链保留自己的配套版本。
   '@eslint/config-inspector@3.5.0>devframe': 1.2.6
   '@eslint/config-inspector@3.5.0>@devframes/agentic': 1.2.6
-  weapp-vite@7.6.0>@modelcontextprotocol/server: 2.4.0
+  weapp-vite@7.7.0>@modelcontextprotocol/server: 2.4.0
   '@weapp-vite/mcp@2.1.0>@modelcontextprotocol/server': 2.4.0
 
 catalogs:

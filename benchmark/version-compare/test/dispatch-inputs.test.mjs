@@ -6,18 +6,28 @@ import { runInNewContext } from 'node:vm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { validateBenchmarkDispatch } from '../scripts/dispatch-inputs.mjs'
+import { resolveDiagnosticCurrentRef } from '../scripts/run-matrix.mjs'
 
 const roots = []
 const uni = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
 const mpx = 'demo-mpx-tailwindcss-v4__mp-weixin'
 const taro = 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'
 const weappVite = 'demo-weapp-vite-tailwindcss-v4__mp-weixin'
+const currentSha = 'b'.repeat(40)
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
 })
 
 describe('手动诊断输入边界', () => {
+  it('只为 weapp-vite input-only 诊断传递 current_ref，其他诊断保留源码身份但不触发 current_ref 校验', () => {
+    const versions = [{ version: 'base', diagnosticIdentity: { role: 'base', sourceCommit: 'a'.repeat(40) } }, { version: 'current', diagnosticIdentity: { role: 'current', sourceCommit: currentSha, measuredCommit: currentSha } }]
+    expect(resolveDiagnosticCurrentRef({ inputDiagnostics: false, selectedProjects: [{ key: mpx }], versions })).toBe('')
+    expect(resolveDiagnosticCurrentRef({ inputDiagnostics: true, selectedProjects: [{ key: mpx }], versions })).toBe('')
+    expect(resolveDiagnosticCurrentRef({ inputDiagnostics: true, selectedProjects: [{ key: weappVite }], versions })).toBe(currentSha)
+    expect(resolveDiagnosticCurrentRef({ inputDiagnostics: true, selectedProjects: [{ key: weappVite }, { key: mpx }], versions })).toBe('')
+  })
+
   it('默认关闭诊断且空基线保持发布版语义，不访问 Git', () => {
     expect(() => validateBenchmarkDispatch({ cwd: path.join(os.tmpdir(), 'missing-benchmark-repo'), only: 'other' })).not.toThrow()
   })
@@ -152,6 +162,11 @@ describe('Benchmark 工作流诊断装配', () => {
     expect(evaluate(shard.env.BENCH_ALLOCATION_DIAGNOSTICS, 'workflow_dispatch', { allocation_diagnostics: true }, uni)).toBe('true')
     expect(evaluate(shard.env.BENCH_INPUT_DIAGNOSTICS, 'pull_request', { input_diagnostics: true }, uni)).toBe('false')
     expect(shard.steps.find(step => step.name === 'Run pull request performance guard').run).toContain('pnpm perf:guard')
-    expect(shard.steps.find(step => step.name === 'Run current vs published benchmark').run).not.toMatch(/allow-regressions|skip-memory-confirmation/)
+    const currentRun = shard.steps.find(step => step.name === 'Run current vs published benchmark').run
+    expect(currentRun).not.toMatch(/allow-regressions|skip-memory-confirmation/)
+    expect(currentRun).toContain('benchmark_current_ref_args=()')
+    expect(currentRun).toContain('if [ -n "$WEAPP_TW_BENCH_CURRENT_REF" ]')
+    const benchmarkCommand = currentRun.split('\n').find(line => line.trim().startsWith('pnpm bench:ci'))
+    expect(benchmarkCommand).not.toContain('--current-ref "$WEAPP_TW_BENCH_CURRENT_REF"')
   })
 })

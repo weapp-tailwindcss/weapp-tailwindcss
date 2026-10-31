@@ -810,7 +810,7 @@ overrides:
   '@tarojs/rn-style-transformer@4.3.1>stylelint': 16.10.0
   '@eslint/config-inspector@3.5.0>devframe': 1.2.6
   '@eslint/config-inspector@3.5.0>@devframes/agentic': 1.2.6
-  weapp-vite@7.6.0>@modelcontextprotocol/server: 2.4.0
+  weapp-vite@7.7.0>@modelcontextprotocol/server: 2.4.0
   '@weapp-vite/mcp@2.1.0>@modelcontextprotocol/server': 2.4.0
 
 packageExtensionsChecksum: sha256-JukGMu6nIk5fsSsW8dx7Alz6YmY0IifvItS6g9vYOYQ=

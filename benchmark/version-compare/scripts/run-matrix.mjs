@@ -5,7 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { createSavePacer } from '../../performance/demo/save-pacing.mjs'
-import { validateAllocationRequest } from './diagnostics/constants.mjs'
+import { validateAllocationRequest, weappViteInputProject } from './diagnostics/constants.mjs'
 import { createCaseDiagnostics } from './diagnostics/controller.mjs'
 import { runWithCleanup } from './diagnostics/failures.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
@@ -37,6 +37,14 @@ function parseString(flag, fallback) {
     return fallback
   }
   return process.argv[idx + 1] ?? fallback
+}
+
+export function resolveDiagnosticCurrentRef({ inputDiagnostics, selectedProjects, versions }) {
+  if (!inputDiagnostics || selectedProjects.length !== 1 || selectedProjects[0]?.key !== weappViteInputProject) {
+    return ''
+  }
+  const identity = versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity
+  return identity?.measuredCommit ?? identity?.sourceCommit ?? ''
 }
 
 async function parseVersions() {
@@ -808,14 +816,13 @@ async function main() {
   if (allocationDiagnostics && inputDiagnostics) {
     throw new Error('输入证据与分配采样必须分开运行')
   }
+  const currentRef = resolveDiagnosticCurrentRef({ inputDiagnostics, selectedProjects, versions })
   validateAllocationRequest({
     mode: inputDiagnostics ? 'inputs' : 'allocation',
     enabled: allocationDiagnostics || inputDiagnostics,
     guardMode: process.argv.includes('--guard'),
     baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',
-    currentRef: versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity?.measuredCommit
-      ?? versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity?.sourceCommit
-      ?? '',
+    currentRef,
     selectedProjects,
     buildRuns,
     hmrRuns,
