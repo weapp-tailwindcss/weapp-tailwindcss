@@ -172,5 +172,82 @@
     "limits": "单次插桩本机watch对照，没有cold build；两侧延迟不同、没有等价post-major或尾部边界。Rollup map分配约+14.07MiB仍非产品根因",
     "formalAcceptance": false,
     "rssRegressionResolved": false
+  },
+  "naturalGcTraceFollowup": {
+    "run": 41164422113,
+    "attempt": 1,
+    "head": "499ee899766dd6d45a595bf444c813fc55b2b1c3",
+    "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+    "productionTreeSameAs": "37af1f4f1cf75853755d9189510ab7cd4fca06bd",
+    "artifactId": 13028590971,
+    "zipSha256": "7296fd4a004846f7c95e9fe92ddd633ad885695d4bce7a6616c2a0f1c3a2db57",
+    "jobLogSha256": "f0c9933d4761c8db870743329f907955155832455ade3c501e6ab84a7accd220",
+    "environment": "Linux x64, Node22.23.4, V8 12.4.254.21-node.57；两侧各3build/3HMR，保留原预算和超时",
+    "collector": "独立分支显式gc_diagnostics启用V8 trace-gc-nvp；无allocation sampler或GC请求；major回调另记V8统计与smaps_rollup，父进程有界保留完整stdout/stderr原始字节",
+    "validation": {
+      "workers": 8,
+      "majorEvents": 26,
+      "outputMaxEncodedBytes": 592042,
+      "outputLimitBytes": 2097152,
+      "forcedFlagEvents": 0,
+      "truncations": 0,
+      "recordingErrors": 0,
+      "preloadSha256": "896356c9f59ba2760a96d53965c5e27af087bd04ec1e5699ec367b8c71304111",
+      "pathHelperSha256": "dcc30d4c6986d58824dd50e7f7f62de799ddccaab68ee03b7c9b7780821a93f8",
+      "independentReview": "身份、启动源码、NDJSON逐条记账、输出bytes/chunks/SHA、单PID/isolate、26份OS映射与原始数值/summary/原gate均独立核验"
+    },
+    "memoryMiB": {
+      "basePeak": 1179.87109375,
+      "currentPeak": 1249.9375,
+      "baseSteady": 1138.978515625,
+      "currentSteady": 1143.62890625
+    },
+    "hmrTrace": {
+      "base": {
+        "pid": 8869,
+        "minor": 357,
+        "major": 4,
+        "endTimeMinusTraceMs": [
+          2.107464999988224,
+          3.386987000008503
+        ],
+        "majorAfterBytes": [
+          17527104,
+          71916632,
+          205197992,
+          374648776
+        ],
+        "lastMajorPhase": "mutation3",
+        "lastMajorCallbackDelayMs": 370.702,
+        "lastDoneReceiptToLastRssMs": 0
+      },
+      "current": {
+        "pid": 9433,
+        "minor": 351,
+        "major": 4,
+        "endTimeMinusTraceMs": [
+          1.9359390000101513,
+          2.945430999987366
+        ],
+        "majorAfterBytes": [
+          17548360,
+          72664824,
+          205491704,
+          319517680
+        ],
+        "lastMajorPhase": "mutation1",
+        "lastMajorCallbackDelayMs": 514.241,
+        "lastDoneReceiptToLastRssMs": 38
+      },
+      "mapping": "各单一isolate的全部minor/major与observer同序逐项匹配；额外kind8不混配。endTime拟合支持近结束时间；整数trace与observer不是同一零点，pause/duration偏差不全归为舍入。"
+    },
+    "limits": "最后major分属第三轮与第一轮，回调前已有18/19个后续GC；双方最终rollback后无自然major，缺少同阶段空闲尾postmajor。没有同次输入全文及源码恢复SHA回执，不能借旧input证明本轮输入等价。",
+    "diagnosticRunSuccess": true,
+    "rawOriginalGatePassed": true,
+    "canExplainFormalRegression": false,
+    "equivalentFinalPostMajor": false,
+    "formalAcceptance": false,
+    "rssRegressionResolved": false,
+    "conclusion": "仅证明本轮GC时点和回调边界不同，steady仅增加4.650MiB，未重现正式约89MiB尾差。正式41109215069失败仍有效；不复跑碰绿、不据此猜改产品。"
   }
 }
