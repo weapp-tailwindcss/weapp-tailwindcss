@@ -11,6 +11,7 @@ const roots = []
 const uni = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
 const mpx = 'demo-mpx-tailwindcss-v4__mp-weixin'
 const taro = 'demo-taro-vite-react-tailwindcss-v4__mp-weixin'
+const weappVite = 'demo-weapp-vite-tailwindcss-v4__mp-weixin'
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
@@ -38,6 +39,21 @@ describe('手动诊断输入边界', () => {
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: commit, only: mpx, allocationDiagnostics: true })).toThrow('kSamplingForceGC')
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: tree })).toThrow('commit 对象')
     expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: '0'.repeat(40) })).toThrow('对象不存在')
+  })
+
+  it('weapp-vite input-only 必须绑定不同的当前源码提交，其他诊断不得接收 current_ref', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-dispatch-current-ref-'))
+    roots.push(root)
+    const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+    git('init', '-q')
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'core.hooksPath=', 'commit', '--allow-empty', '-qm', 'baseline')
+    const baseline = git('rev-parse', 'HEAD')
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'core.hooksPath=', 'commit', '--allow-empty', '-qm', 'current')
+    const current = git('rev-parse', 'HEAD')
+    expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: baseline, currentRef: current, only: weappVite, inputDiagnostics: true })).not.toThrow()
+    expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: baseline, currentRef: baseline, only: weappVite, inputDiagnostics: true })).toThrow('不同于 baseline_ref')
+    expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: baseline, only: weappVite, inputDiagnostics: true })).toThrow('不同于 baseline_ref')
+    expect(() => validateBenchmarkDispatch({ cwd: root, baselineRef: baseline, currentRef: current, only: mpx, inputDiagnostics: true })).toThrow('仅允许用于 weapp-vite')
   })
 
   it.each([uni, mpx, taro, `${uni},${mpx}`, `${uni},${taro}`])('诊断允许显式登记的项目 %s', (only) => {
@@ -91,12 +107,13 @@ describe('Benchmark 工作流诊断装配', () => {
     expect(render(workflow.concurrency.group, 'workflow_dispatch', { gc_diagnostics: true })).toBe('benchmark-diagnostic-123')
   })
 
-  it('只在显式诊断 dispatch 为 Uni/Taro 启用 preload 和固定 Node，正式 PR 保持原策略', async () => {
+  it('只在显式诊断 dispatch 为 Uni/Taro/Mpx/weapp-vite 启用 preload 和固定 Node，正式 PR 保持原策略', async () => {
     const workflow = parse(await fs.readFile(new URL('../../../.github/workflows/benchmark.yml', import.meta.url), 'utf8'))
     expect(workflow.on.workflow_dispatch.inputs.gc_diagnostics).toMatchObject({ type: 'boolean', default: false })
     expect(workflow.on.workflow_dispatch.inputs.input_diagnostics).toMatchObject({ type: 'boolean', default: false })
     expect(workflow.on.workflow_dispatch.inputs.allocation_diagnostics).toMatchObject({ type: 'boolean', default: false })
     expect(workflow.on.workflow_dispatch.inputs.baseline_ref.default).toBe('')
+    expect(workflow.on.workflow_dispatch.inputs.current_ref).toMatchObject({ type: 'string', default: '' })
     const matrixSteps = workflow.jobs['benchmark-matrix'].steps
     expect(matrixSteps[0].with['fetch-depth']).toBe(0)
     const validation = matrixSteps.find(step => step.name === 'Validate dispatch diagnostic inputs')
@@ -105,6 +122,7 @@ describe('Benchmark 工作流诊断装配', () => {
       env: { BENCH_DISPATCH_BASELINE_REF: `\${{ inputs.baseline_ref }}` },
       run: 'node benchmark/version-compare/scripts/dispatch-inputs.mjs',
     })
+    expect(validation.env.BENCH_DISPATCH_CURRENT_REF).toBe(`\${{ inputs.current_ref }}`)
     const shard = workflow.jobs['benchmark-shard']
     const node = shard.steps.find(step => step.uses === 'actions/setup-node@v6').with['node-version']
     // 仅求值仓库中的布尔表达式；外部输入始终作为变量传入，不拼接进代码。
@@ -121,6 +139,8 @@ describe('Benchmark 工作流诊断装配', () => {
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', inputs, taro)).toBe('1')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: false }, taro)).toBe('0')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', inputs, uni)).toBe(inputs.baseline_ref)
+    expect(evaluate(shard.env.WEAPP_TW_BENCH_CURRENT_REF, 'workflow_dispatch', { ...inputs, current_ref: 'b'.repeat(40) }, weappVite)).toBe('b'.repeat(40))
+    expect(evaluate(shard.env.WEAPP_TW_BENCH_CURRENT_REF, 'pull_request', { current_ref: 'b'.repeat(40) }, weappVite)).toBe('')
     expect(evaluate(node, 'workflow_dispatch', inputs, uni)).toBe('22.23.4')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_BASE_REF, 'workflow_dispatch', { baseline_ref: '' }, uni)).toBe('')
     expect(evaluate(shard.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS, 'workflow_dispatch', { gc_diagnostics: false }, uni)).toBe('0')

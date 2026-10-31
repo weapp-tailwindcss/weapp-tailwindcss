@@ -392,7 +392,7 @@ catalogs:
   weappIdeCli:
     weapp-ide-cli: ^6.3.0
   weappVite:
-    weapp-vite: ^7.6.0
+    weapp-vite: ^7.7.0
   webpackTools:
     '@pmmmwh/react-refresh-webpack-plugin': ^0.6.3
     '@types/webpack-env': ^1.18.8
@@ -419,17 +419,15 @@ packageExtensions:
     dependencies:
       stylelint: 16.10.0
       stylelint-taro-rn: 4.3.1
-  weapp-vite@7.6.0:
+  weapp-vite@7.7.0:
     dependencies:
-      '@babel/plugin-transform-dynamic-import': 8.0.1
-      '@devframes/agentic': 1.2.5
+      '@devframes/agentic': 1.2.6
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1':
     dependencies:
       '@babel/core': ^7.26.10
 
 patchedDependencies:
   watchpack@2.6.3: patches/watchpack@2.6.3.patch
-  weapp-vite@7.6.0: patches/weapp-vite@7.6.0.patch
   '@lynx-js/tasm@0.0.49': patches/@lynx-js__tasm@0.0.49.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch

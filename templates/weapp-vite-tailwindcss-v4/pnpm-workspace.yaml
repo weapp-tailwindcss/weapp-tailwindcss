@@ -1,11 +1,10 @@
 packages:
   - .
 packageExtensions:
-  'weapp-vite@7.6.0':
+  'weapp-vite@7.7.0':
     dependencies:
-      '@babel/plugin-transform-dynamic-import': 8.0.1
+      '@devframes/agentic': 1.2.6
 patchedDependencies:
-  weapp-vite@7.6.0: patches/weapp-vite@7.6.0.patch
 allowBuilds:
   '@swc/core': true
   esbuild: true

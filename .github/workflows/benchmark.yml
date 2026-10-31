@@ -33,6 +33,11 @@ on:
         type: string
         required: false
         default: ''
+      current_ref:
+        description: weapp-vite input-only 诊断的冻结 measured source 完整 40 位 commit SHA
+        type: string
+        required: false
+        default: ''
       gc_diagnostics:
         description: 为 only 指定的 Mpx、Uni 或 Taro Vite 小程序采集自然 GC，诊断 Node 固定为 22.23.4
         type: boolean
@@ -153,6 +158,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           BENCH_DISPATCH_BASELINE_REF: ${{ inputs.baseline_ref }}
+          BENCH_DISPATCH_CURRENT_REF: ${{ inputs.current_ref }}
           BENCH_DISPATCH_GC_DIAGNOSTICS: ${{ inputs.gc_diagnostics }}
           BENCH_DISPATCH_INPUT_DIAGNOSTICS: ${{ inputs.input_diagnostics }}
           BENCH_DISPATCH_ALLOCATION_DIAGNOSTICS: ${{ inputs.allocation_diagnostics }}
@@ -185,6 +191,7 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
       WEAPP_TW_BENCH_BASELINE: ${{ github.event.inputs.baseline || 'auto' }}
       WEAPP_TW_BENCH_BASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.baseline_ref || '' }}
+      WEAPP_TW_BENCH_CURRENT_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.current_ref || '' }}
       BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
       BENCH_HMR_RUNS: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && '3' || github.event.inputs.hmr_runs || '5' }}
       BENCH_ONLY: ${{ matrix.bench_only }}
@@ -245,7 +252,7 @@ jobs:
           if [ "$BENCH_ALLOCATION_DIAGNOSTICS" = true ]; then
             benchmark_diagnostic_args+=(--allocation-diagnostics)
           fi
-          pnpm bench:ci -- --build-runs "$BENCH_BUILD_RUNS" --hmr-runs "$BENCH_HMR_RUNS" --timeout 180000 --poll-interval 30 --only "$BENCH_ONLY" --result-dir .tmp/benchmark-ci/result "${benchmark_diagnostic_args[@]}"
+          pnpm bench:ci -- --build-runs "$BENCH_BUILD_RUNS" --hmr-runs "$BENCH_HMR_RUNS" --timeout 180000 --poll-interval 30 --only "$BENCH_ONLY" --result-dir .tmp/benchmark-ci/result --current-ref "$WEAPP_TW_BENCH_CURRENT_REF" "${benchmark_diagnostic_args[@]}"
 
       - name: Upload benchmark artifacts
         if: always()

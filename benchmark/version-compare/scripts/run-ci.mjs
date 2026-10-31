@@ -12,7 +12,7 @@ import {
   requiresHmrMemoryConfirmation,
   toMarkdown,
 } from './ci-report.mjs'
-import { validateAllocationRequest } from './diagnostics/constants.mjs'
+import { validateAllocationRequest, weappViteInputProject } from './diagnostics/constants.mjs'
 import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
 import { assertBenchmarkMatrixRows, selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
@@ -288,9 +288,12 @@ async function patchPublishedRootOverrides(root) {
   await fs.writeFile(file, `${JSON.stringify(json, null, 2)}\n`, 'utf8')
 }
 
-async function prepareRoot({ root, role, baseline, baselineRef, resolverDependencies, allocationDirectory, diagnosticProject, diagnosticMode }) {
+async function prepareRoot({ root, role, baseline, baselineRef, currentRef, resolverDependencies, allocationDirectory, diagnosticProject, diagnosticMode }) {
   if (role === 'base') {
     await copyRepoAtRef(root, baselineRef)
+  }
+  else if (role === 'current' && currentRef) {
+    await copyRepoAtRef(root, currentRef)
   }
   else {
     await copyRepo(root)
@@ -304,6 +307,10 @@ async function prepareRoot({ root, role, baseline, baselineRef, resolverDependen
     await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject, diagnosticMode)
   }
   await run(root, 'pnpm', ['install', role === 'published' ? '--no-frozen-lockfile' : '--frozen-lockfile'])
+  if (allocationDirectory && diagnosticProject === weappViteInputProject && diagnosticMode === 'inputs') {
+    const { prepareWeappViteInputDependencies } = await import('./diagnostics/prepare.mjs')
+    await prepareWeappViteInputDependencies(root, path.join(allocationDirectory, role), diagnosticProject)
+  }
   if (allocationDirectory) {
     const { prepareViteTailDependencies } = await import('./diagnostics/vite-tail-dependencies.mjs')
     await prepareViteTailDependencies(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject)
@@ -455,6 +462,7 @@ async function main() {
   const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'))
   const guardMode = process.argv.includes('--guard')
   const baselineRef = parseArg('--baseline-ref', process.env.WEAPP_TW_BENCH_BASE_REF ?? (guardMode ? 'origin/main' : ''))
+  const currentRef = parseArg('--current-ref', process.env.WEAPP_TW_BENCH_CURRENT_REF ?? '')
   const baseline = inferBaseline(pkg.version)
   const publishedDependencies = baselineRef
     ? pkg.dependencies ?? {}
@@ -482,11 +490,11 @@ async function main() {
     throw new Error('输入证据与分配采样必须分开运行')
   }
   const instrumentationEnabled = allocationDiagnostics || inputDiagnostics
-  validateAllocationRequest({ mode: inputDiagnostics ? 'inputs' : 'allocation', enabled: instrumentationEnabled, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns })
+  validateAllocationRequest({ mode: inputDiagnostics ? 'inputs' : 'allocation', enabled: instrumentationEnabled, guardMode, baselineRef, currentRef, selectedProjects, buildRuns, hmrRuns })
   const allocationDirectory = instrumentationEnabled ? path.join(resultDir, 'allocation-preparation') : undefined
 
   await fs.mkdir(resultDir, { recursive: true })
-  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, resolverDependencies, allocationDirectory, diagnosticProject: selectedProjects[0]?.key, diagnosticMode: inputDiagnostics ? 'inputs' : 'allocation' })
+  await prepareRoot({ root: currentRoot, role: 'current', baseline, baselineRef, currentRef: currentRef || undefined, resolverDependencies, allocationDirectory, diagnosticProject: selectedProjects[0]?.key, diagnosticMode: inputDiagnostics ? 'inputs' : 'allocation' })
   await prepareRoot({
     root: baselineRoot,
     role: baselineRef ? 'base' : 'published',
@@ -504,12 +512,17 @@ async function main() {
       diagnosticIdentity = {
         current: {
           role: 'current',
-          sourceCommit: (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          sourceCommit: currentRef || (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          measuredCommit: currentRef || (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          driverCommit: (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          sourceTree: (await runCapture(repoRoot, 'git', ['rev-parse', `${currentRef || 'HEAD'}^{tree}`])).trim(),
           sourceWorkingTreeStatus: (await runCapture(repoRoot, 'git', ['status', '--porcelain'])).trim(),
         },
         baseline: {
           role: baselineRef ? 'base' : 'published',
           sourceCommit: baselineRef ? (await runCapture(repoRoot, 'git', ['rev-parse', `${baselineRef}^{commit}`])).trim() : undefined,
+          measuredCommit: baselineRef ? (await runCapture(repoRoot, 'git', ['rev-parse', `${baselineRef}^{commit}`])).trim() : undefined,
+          sourceTree: baselineRef ? (await runCapture(repoRoot, 'git', ['rev-parse', `${baselineRef}^{tree}`])).trim() : undefined,
           packageSpec: baselineRef ? undefined : normalizePackageSpec(baseline),
         },
       }
@@ -554,6 +567,9 @@ async function main() {
     }
     if (inputDiagnostics) {
       matrixArgs.push('--input-diagnostics')
+    }
+    if (currentRef) {
+      matrixArgs.push('--current-ref', currentRef)
     }
     await run(repoRoot, process.execPath, matrixArgs)
   }

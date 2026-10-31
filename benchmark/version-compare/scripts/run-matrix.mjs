@@ -813,6 +813,9 @@ async function main() {
     enabled: allocationDiagnostics || inputDiagnostics,
     guardMode: process.argv.includes('--guard'),
     baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',
+    currentRef: versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity?.measuredCommit
+      ?? versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity?.sourceCommit
+      ?? '',
     selectedProjects,
     buildRuns,
     hmrRuns,

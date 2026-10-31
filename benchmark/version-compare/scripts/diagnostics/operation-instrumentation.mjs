@@ -7,6 +7,7 @@ const operations = `${observer}.operations`
 const prefix = 'packages/weapp-tailwindcss/src/'
 export const generationTargets = [
   ['generator', `${prefix}tailwindcss/v4-engine/generator/engine.ts`],
+  ['raw-generation', `${prefix}tailwindcss/v4-engine/generator/raw-generation.ts`],
   ['native', `${prefix}tailwindcss/v4-engine/generator/native-session.ts`],
   ['engine', 'packages/engine/src/v4/generation-session.ts'],
   ['compile', 'packages/engine/src/v4/node-adapter.ts'],
@@ -92,7 +93,20 @@ export function instrumentOperationSource(source, kind, relative) {
     surround(factory, 'generator.create', '{ source }')
     const identities = `engineId: ${operations}.identity(engine), poolId: ${operations}.identity(generationSessions)`
     surround(named('generate'), 'generator.generate', `{ ${identities}, source, options }`, true)
+    const cached = unique(ast, node => ts.isVariableDeclaration(node)
+      && node.name.getText(ast) === 'cached'
+      && node.initializer?.getText(ast) === 'incrementalGenerateCache.get(cacheKey)', 'incremental cache lookup')
+    insert(cached.parent.parent.end, `;${operations}.emit('generator.cache', { cacheHit: Boolean(cached), cacheKey });`)
     surround(named('dispose'), 'generator.dispose', `{ ${identities} }`)
+  }
+  else if (kind === 'raw-generation') {
+    const fn = named('generateRawArtifact')
+    const scan = call(fn, 'extractRawCandidates')
+    wrapCall(scan, 'raw-generation.scan', '{ sources: resolvedScanSources, options: patchOptions }', true)
+    const normalized = unique(fn, node => ts.isVariableDeclaration(node)
+      && node.name.getText(ast) === 'normalizedCandidates'
+      && node.initializer?.getText(ast).startsWith('normalizeTargetRpxLengthCandidates('), 'resolved candidates')
+    insert(normalized.parent.parent.end, `;\n${operations}.emit('raw-generation.candidates', { resolvedScanSources, filesystemCandidates, resolvedCandidates, normalizedCandidates: normalizedCandidates.candidates });`)
   }
   else if (kind === 'native') {
     const fn = named('getSession')

@@ -5,9 +5,10 @@ import path from 'node:path'
 import process from 'node:process'
 import { createGcDiagnostics } from '../gc-diagnostics.mjs'
 import { appendNodeImport } from '../gc-paths.mjs'
-import { diagnosticMutationMarker, limits, mutationMarkerRule, validateDiagnosticMode } from './constants.mjs'
+import { diagnosticMutationMarker, limits, mutationMarkerRule, validateDiagnosticMode, weappViteInputProject } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
 import { describeFailure, runWithCleanup } from './failures.mjs'
+import { createInputDiagnostics } from './input-diagnostics.mjs'
 import { verifyOperationEvidence } from './operation-evidence.mjs'
 import { readAllocationEvidenceFile } from './profile-files.mjs'
 import { verifyViteTailEvidence } from './vite-tail-evidence.mjs'
@@ -22,11 +23,13 @@ export async function createCaseDiagnostics(options) {
     return createGcDiagnostics(options)
   }
   validateDiagnosticMode(options.allocation)
-  const gc = await createGcDiagnostics(options)
-  if (!gc?.env.WEAPP_TW_BENCH_GC_SESSION) {
+  const inputOnly = options.allocation === 'inputs' && options.projectMeta?.key === weappViteInputProject
+  const service = inputOnly ? await createInputDiagnostics(options) : await createGcDiagnostics(options)
+  const sessionVariable = inputOnly ? 'WEAPP_TW_BENCH_INPUT_SESSION' : 'WEAPP_TW_BENCH_GC_SESSION'
+  if (!service?.env[sessionVariable]) {
     throw new Error('分配诊断无法取得实际 worker 身份')
   }
-  const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), platform: process.platform, mode: options.allocation }
+  const identity = { ...JSON.parse(service.env[sessionVariable]), platform: process.platform, mode: options.allocation }
   {
     const serviceFile = path.join(identity.root, 'packages/weapp-tailwindcss/src/core/compiler/generator-service-pool.ts')
     const available = await fs.access(serviceFile).then(() => true, (error) => {
@@ -46,9 +49,10 @@ export async function createCaseDiagnostics(options) {
     moduleHashes[name] = sha256(source)
   }
   const env = {
-    ...gc.env,
-    NODE_OPTIONS: appendNodeImport(gc.env.NODE_OPTIONS, path.join(directory, 'preload.mjs')),
+    ...service.env,
+    NODE_OPTIONS: appendNodeImport(service.env.NODE_OPTIONS, path.join(directory, 'preload.mjs')),
     WEAPP_TW_BENCH_ALLOCATION_SESSION: JSON.stringify({ ...identity, moduleHashes }),
+    ...(inputOnly ? { [sessionVariable]: JSON.stringify({ ...identity, moduleHashes }) } : {}),
   }
   const events = []
   const sources = []
@@ -60,7 +64,7 @@ export async function createCaseDiagnostics(options) {
     if (events.length >= 256) {
       throw new Error('诊断阶段数量超过上限')
     }
-    gc.mark(type, round)
+    service.mark(type, round)
     const phase = { type, round, atEpochMs: Date.now(), sequence: ++sequence }
     events.push(phase)
     writeFileSync(path.join(directory, 'stage.json'), JSON.stringify(phase))
@@ -70,7 +74,7 @@ export async function createCaseDiagnostics(options) {
     env,
     mutationMarker: diagnosticMutationMarker,
     spawned(pid, child) {
-      gc.spawned(pid)
+      service.spawned(pid, child)
       if (child) {
         worker.attach(child)
       }
@@ -100,6 +104,33 @@ export async function createCaseDiagnostics(options) {
       }
     },
     beforeStop() {
+      if (inputOnly) {
+        closing ??= (async () => {
+          mark('watch-stop')
+          const command = { type: 'stop', sequence }
+          await fs.writeFile(path.join(directory, 'command.json'), JSON.stringify(command))
+          const deadline = Date.now() + limits.commandTimeoutMs
+          while (Date.now() < deadline) {
+            try {
+              const reply = JSON.parse(await fs.readFile(path.join(directory, 'reply.json'), 'utf8'))
+              if (reply.sequence === command.sequence) {
+                if (!reply.complete || reply.error) {
+                  throw new Error(`weapp-vite 输入诊断关闭失败：${reply.error ?? 'incomplete'}`)
+                }
+                return
+              }
+            }
+            catch (error) {
+              if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) {
+                throw error
+              }
+            }
+            await new Promise(resolve => setTimeout(resolve, 20))
+          }
+          throw new Error('weapp-vite 输入诊断关闭超时；不将缺失的停止阶段当作成功')
+        })()
+        return closing
+      }
       closing ??= (async () => {
         mark('watch-stop')
         const command = { type: 'stop', sequence }
@@ -135,7 +166,7 @@ export async function createCaseDiagnostics(options) {
           const startup = JSON.parse(await fs.readFile(path.join(directory, 'process-start.json'), 'utf8'))
           const expectedCount = options.kind === 'build' ? 1 : 8
           if (Object.entries(moduleHashes).some(([name, hash]) => startup.moduleHashes?.[name] !== hash)
-            || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (status.snapshotCount ?? status.compilationCount) !== expectedCount) {
+            || startup.preloadSha256 !== moduleHashes['preload.mjs'] || !status.complete || status.recordingError || (!inputOnly && (status.snapshotCount ?? status.compilationCount) !== expectedCount)) {
             throw new Error(`分配诊断证据不完整：${JSON.stringify(status)}`)
           }
           operationEvidence = await verifyOperationEvidence(directory, status, identity)
@@ -145,7 +176,7 @@ export async function createCaseDiagnostics(options) {
           const expectedPhases = options.kind === 'build'
             ? [['build-start', undefined]]
             : [['watch-start', undefined], ...[1, 2, 3].flatMap(round => [['mutation-write', round], ['rollback-write', round]]), ['watch-stop', undefined]]
-          for (const [index, [type, round]] of expectedPhases.entries()) {
+          for (const [index, [type, round]] of (inputOnly ? [] : expectedPhases).entries()) {
             const inputs = JSON.parse(await fs.readFile(path.join(directory, `inputs-${index + 1}.json`), 'utf8'))
             if (inputs.phase.type !== type || inputs.phase.round !== round || inputs.sources.length === 0) {
               throw new Error(`诊断阶段未对齐：${index + 1}`)
@@ -195,7 +226,7 @@ export async function createCaseDiagnostics(options) {
         }, [
           () => fs.writeFile(path.join(directory, 'allocation-controller.json'), JSON.stringify(manifest, null, 2)),
         ])
-      }, [() => gc.finish(), outcome => worker.finish(execution, outcome, status)])
+      }, [() => service.finish(), outcome => worker.finish(execution, outcome, status)])
     },
   }
   await controller.source('initial', path.resolve(options.cwd, options.projectMeta.sourceFile))
