@@ -80,6 +80,7 @@ export async function createInputDiagnostics({ cwd, versionMeta, projectMeta, di
   let rootPid
   let processResult
   let closed = false
+  let closePromise = Promise.resolve()
   return {
     env: envOutput,
     sessionVariable,
@@ -93,18 +94,22 @@ export async function createInputDiagnostics({ cwd, versionMeta, projectMeta, di
       rootPid = pid
       if (child) {
         worker.attach(child)
-        child.once('close', (code, signal) => {
-          closed = true
-          processResult = { code, signal }
+        closePromise = new Promise((resolve) => {
+          child.once('close', (code, signal) => {
+            closed = true
+            processResult = { code, signal }
+            resolve()
+          })
         })
       }
     },
     async finish() {
+      await closePromise
       const startup = JSON.parse(await fs.readFile(path.join(sessionDirectory, 'process-start.json'), 'utf8'))
       const sessionIdentity = JSON.parse(envOutput[sessionVariable])
       const actualEntry = startup.actualEntry
       const actualEntrySha256 = typeof actualEntry === 'string' ? await readSha(actualEntry) : undefined
-      if (!startup.pid || !startup.ppid || !rootPid || startup.ppid !== rootPid || typeof actualEntry !== 'string' || !sameFilesystemPath(actualEntry, expectedEntry)
+      if (!Number.isInteger(startup.pid) || startup.pid <= 0 || !Number.isInteger(startup.ppid) || startup.ppid <= 0 || !Number.isInteger(rootPid) || rootPid <= 0 || typeof actualEntry !== 'string' || !sameFilesystemPath(actualEntry, expectedEntry)
         || startup.identity?.project !== weappViteInputProject
         || startup.identity?.mode !== 'inputs'
         || startup.identity?.run !== run
@@ -116,6 +121,11 @@ export async function createInputDiagnostics({ cwd, versionMeta, projectMeta, di
         schemaVersion: 1,
         identity: sessionIdentity,
         controller: { pid: process.pid, rootPid, nodeVersion: process.version },
+        worker: {
+          pid: startup.pid,
+          ppid: startup.ppid,
+          ppidRelation: startup.ppid === rootPid ? 'direct' : 'launcher-chain',
+        },
         expectedEntry,
         processResult,
         closed,
