@@ -45,6 +45,8 @@ export interface GenerateCssByGeneratorOptions {
   incrementalCache?: boolean | undefined
   deferEmptyScopedCssSource?: boolean | undefined
   deferCssAdaptation?: boolean | undefined
+  /** 通用 Web rpx 兜底等待框架单位转换完成，不延后显式单位规则。 */
+  deferWebRpxConversion?: boolean | undefined
   /** 构建片段只保留注册证据，默认值由完整资产边界统一合成。 */
   deferWebCssPropertyFallback?: boolean | undefined
   disableSourceScan?: boolean | undefined

@@ -26,6 +26,7 @@ export async function restoreFrameworkProcessedUserCss(
     cssUserHandlerOptions: options.cssUserHandlerOptions,
     styleHandler: options.styleHandler,
     importFallback: generatorOptions.importFallback,
+    processed: generated.target === 'web',
   }
   const transform = async (value: string) => {
     const parts = splitUserCssLayerBlocks(value)

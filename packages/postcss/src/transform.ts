@@ -84,10 +84,15 @@ export * from './handler'
 export { default as postcssHtmlTransform, type IOptions as PostcssHtmlTransformOptions } from './html-transform'
 export {
   createStylePipeline,
+  type FlatStyleProcessingPipeline,
+  type PhasedPipelineNode,
+  type PhasedStyleProcessingPipeline,
+  type PipelineControl,
   type PipelineNodeContext,
   type PipelineNodeCursor,
   type PipelineStage,
   type ResolvedPipelineNode,
+  type StylePipelineInput,
   type StyleProcessingPipeline,
 } from './pipeline'
 export {

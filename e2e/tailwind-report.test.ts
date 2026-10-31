@@ -2,12 +2,17 @@ import type { CapabilityIdentity, CapabilityReport, CaseContract } from './tailw
 import { mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { assertCapabilitySuccess, receipt, validateCapabilityReport, verifyReportArtifacts } from './tailwind-capabilities/report'
 
 const hash = 'a'.repeat(64)
 const identity: CapabilityIdentity = { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { tailwindcss: '4.3.3' } }
 const contracts: CaseContract[] = [{ id: 'width', features: ['functional/w'], candidate: 'w-[32px]', fixture: 'box', expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: ['width'], expectedValues: { width: 32 } }]
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 function validReport(): CapabilityReport {
   return { schemaVersion: 2, target: 'web-chromium', runId: 'current', observedAt: new Date().toISOString(), identity: structuredClone(identity), environment: { browser: '156' }, artifacts: [{ path: 'measurements.json', sha256: hash, byteLength: 20, kind: 'measurements', runId: 'current', caseIds: ['width'] }], results: [{ id: 'width', status: 'passed', support: 'supported', warnings: [], artifacts: ['measurements.json'], assertions: [{ name: 'width', stage: 'runtime', actual: 32, expected: 32 }] }] }
@@ -130,13 +135,16 @@ describe('Tailwind 四端语义证据合同', () => {
   })
 
   it('拒绝把旧截图重新签为本轮产物，以及截图被替换后的摘要', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.now() + 60_000)
     const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-report-regression-'))
     try {
+      const report = { ...validReport(), observedAt: filesystemObservedAt(directory) }
       const file = path.join(directory, 'screenshot.png')
       await writeFile(file, 'old screenshot bytes')
-      const report = validReport()
       report.artifacts = [await receipt(file, directory, 'current', ['width'], 'screenshot')]
-      const old = new Date(Date.now() - 60_000)
+      await expect(verifyReportArtifacts(report, directory)).resolves.toBeUndefined()
+      const old = new Date(Date.parse(report.observedAt) - 60_000)
       await utimes(file, old, old)
       await expect(verifyReportArtifacts(report, directory)).rejects.toThrow('早于本轮')
       await writeFile(file, 'different screenshot bytes')

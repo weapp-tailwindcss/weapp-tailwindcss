@@ -1,4 +1,4 @@
-import * as sharedModule from '../../../../packages/weapp-tailwindcss/src/wxml/shared.ts'
+import * as sharedModule from '../../../../packages/weapp-tailwindcss/src/wxml/shared'
 
 const shared = (sharedModule as typeof sharedModule & {
   'default'?: typeof sharedModule

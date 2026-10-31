@@ -10654,6 +10654,8 @@ const trace = "at App.vue:4"
     expect((bundle['assets/index.css'] as OutputAsset).source.toString()).toContain(generatedCss)
     expect(getCurrentContext().onStart).toHaveBeenCalledTimes(1)
     expect(getCurrentContext().onEnd).toHaveBeenCalledTimes(1)
+    expect(getCurrentContext().onUpdate).toHaveBeenCalledWith('assets/index.css', css, (bundle['assets/index.css'] as OutputAsset).source.toString())
+    expect((bundle['assets/index.css'] as OutputAsset).source.toString()).not.toContain('vite-generated-css:')
   }, TEST_TIMEOUT_MS)
 
   it('preserves Vite PostCSS output when finalizing Generic Web generated CSS', async () => {

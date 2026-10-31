@@ -23,7 +23,7 @@ function createDeploymentRequest({ siteUrl, target }: DeploymentVerificationOpti
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     })
     assert(response.status === status, `${pathname} expected ${status}, received ${response.status}`)
-    if (status !== 301) {
+    if (status < 300 || status >= 400) {
       verifyIndexingHeaders(response.headers, target, pathname)
     }
     return response
@@ -151,7 +151,16 @@ export async function verifyDeploymentAssets(options: DeploymentVerificationOpti
   await request(`/unknown-deployment-${Date.now()}`, 404)
   await request(`/zh-cn/unknown-deployment-${Date.now()}`, 404)
 
-  const robotsResponse = await request('/robots.txt', 200)
+  let robotsResponse: Response
+  if (target === 'next') {
+    const redirect = await request('/robots.txt', 302)
+    assert(redirect.headers.get('location') === '/robots-disallow.txt', 'next robots.txt 必须单跳到同源 /robots-disallow.txt')
+    robotsResponse = await request('/robots-disallow.txt', 200)
+  }
+  else {
+    robotsResponse = await request('/robots.txt', 200)
+  }
+  assert(robotsResponse.headers.get('content-type')?.split(';')[0].trim().toLowerCase() === 'text/plain', 'robots 文件必须使用 text/plain')
   verifyRobotsPolicy(await robotsResponse.text(), target, canonicalOrigin)
   if (target === 'production') {
     await verifySitemap(request, canonicalOrigin, '/sitemap.xml', 'en-US')

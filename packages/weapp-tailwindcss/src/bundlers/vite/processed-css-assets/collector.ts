@@ -47,7 +47,8 @@ export function collectViteProcessedCssAssetResults(
       options.resolveViteProcessedCssOutputFile,
     )
     if (
-      singleMarkerFile
+      options.createCssPipelineContext?.(file)?.currentGeneratorBranch?.isWeb !== true
+      && singleMarkerFile
       && (
         options.subpackageRoots == null
         || !isSubpackageOutputFile(file, options.subpackageRoots)

@@ -88,10 +88,11 @@ export function getFallbackRemove(_rule?: Rule, options?: IStyleHandlerOptions) 
           }
           else if (selector.value === ':not') {
             for (const x of selector.nodes) {
+              const first = x.nodes[0]
               if (
                 x.nodes.length === 1
-                && x.nodes[0].type === 'id'
-                && x.nodes[0].value === '#'
+                && first?.type === 'id'
+                && first.value === '#'
               ) {
                 x.nodes = [
                   psp.tag({
@@ -186,7 +187,7 @@ export function getFallbackRemove(_rule?: Rule, options?: IStyleHandlerOptions) 
 
       if (input && typeof input === 'object' && 'type' in (input as Record<string, unknown>)) {
         const maybeRule = input as Record<string, unknown>
-        if (maybeRule.type === 'rule') {
+        if (maybeRule['type'] === 'rule') {
           transformRule(input as Rule, transformOptions)
           return undefined
         }

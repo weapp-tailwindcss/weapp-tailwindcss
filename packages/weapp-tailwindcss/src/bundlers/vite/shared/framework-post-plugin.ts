@@ -2,7 +2,11 @@ import type { Plugin } from 'vite'
 import path from 'node:path'
 import { logger } from '@weapp-tailwindcss/logger'
 import { removeTailwindPostcssPlugins } from '@weapp-tailwindcss/postcss/transform'
+import { useWebRpxCompatibility } from '@/compiler/style-capabilities'
 import { vitePluginName } from '@/constants'
+import { resolveCompilationProfile } from '@/context/compilation-profile'
+import { resolveGeneratorStyleOptions } from '@/generation/generation-helpers'
+import { createWebRpxFinalizerPlugin, hasWebRpxFinalizerPlugin } from '@/generation/web-rpx-finalizer'
 import { captureFrameworkPostcssOptions } from '../../../generation/framework-postcss'
 import { removeTailwindVitePlugins } from '../official-tailwind-plugins'
 import { resolveImplicitAppTypeFromViteRoot } from '../resolve-app-type'
@@ -74,6 +78,14 @@ export function createFrameworkPostPlugin(options: any): Plugin {
               logger.warn('检测到 @tailwindcss/postcss，生成模式下已移除该插件以避免 Tailwind CSS 重复生成。')
               options.debug('remove official tailwind postcss plugins in generator mode: %d', removed)
             }
+          }
+        }
+        if (options.shouldOwnTailwindGeneration && config.css?.postcss && typeof config.css.postcss === 'object') {
+          const { profile } = resolveCompilationProfile(options.opts)
+          const styles = resolveGeneratorStyleOptions(profile, {}, profile.generator.styleOptions)
+          const plugins = config.css.postcss.plugins ??= []
+          if (profile.generator.target === 'web' && useWebRpxCompatibility(styles) && !hasWebRpxFinalizerPlugin(plugins)) {
+            plugins.push(createWebRpxFinalizerPlugin())
           }
         }
         captureFrameworkPostcssOptions(

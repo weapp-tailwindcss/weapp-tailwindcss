@@ -5,7 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { createSavePacer } from '../../performance/demo/save-pacing.mjs'
-import { validateAllocationRequest } from './diagnostics/constants.mjs'
+import { validateAllocationRequest, weappViteInputProject } from './diagnostics/constants.mjs'
 import { createCaseDiagnostics } from './diagnostics/controller.mjs'
 import { runWithCleanup } from './diagnostics/failures.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
@@ -13,6 +13,7 @@ import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
+import { assertWatchRunning, stopChild } from './watch-process.mjs'
 import { isWatchBuildComplete, isWatchReady } from './watch-readiness.mjs'
 
 const defaultVersions = [
@@ -36,6 +37,14 @@ function parseString(flag, fallback) {
     return fallback
   }
   return process.argv[idx + 1] ?? fallback
+}
+
+export function resolveDiagnosticCurrentRef({ inputDiagnostics, selectedProjects, versions }) {
+  if (!inputDiagnostics || selectedProjects.length !== 1 || selectedProjects[0]?.key !== weappViteInputProject) {
+    return ''
+  }
+  const identity = versions.find(version => version.diagnosticIdentity?.role === 'current')?.diagnosticIdentity
+  return identity?.measuredCommit ?? identity?.sourceCommit ?? ''
 }
 
 async function parseVersions() {
@@ -276,61 +285,6 @@ async function fetchProbeText(url) {
   return `${html}\n${assetTexts.join('\n')}`
 }
 
-function stopChild(child) {
-  return new Promise((resolve) => {
-    if (child.exitCode != null || child.signalCode != null) {
-      resolve()
-      return
-    }
-
-    let done = false
-    const finish = () => {
-      if (done) {
-        return
-      }
-      done = true
-      resolve()
-    }
-
-    child.once('close', finish)
-
-    try {
-      if (child.pid && process.platform !== 'win32') {
-        process.kill(-child.pid, 'SIGINT')
-      }
-      else {
-        child.kill('SIGINT')
-      }
-    }
-    catch {}
-
-    setTimeout(() => {
-      try {
-        if (child.pid && process.platform !== 'win32') {
-          process.kill(-child.pid, 'SIGTERM')
-        }
-        else {
-          child.kill('SIGTERM')
-        }
-      }
-      catch {}
-    }, 1200)
-
-    setTimeout(() => {
-      try {
-        if (child.pid && process.platform !== 'win32') {
-          process.kill(-child.pid, 'SIGKILL')
-        }
-        else {
-          child.kill('SIGKILL')
-        }
-      }
-      catch {}
-      finish()
-    }, 4000)
-  })
-}
-
 async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnostics) {
   const start = now()
   const child = spawnPnpmWithEnv(cwd, ['run', buildScript], {
@@ -466,9 +420,7 @@ async function runHmrRounds({
 
   return runWithCleanup(async () => {
     const ready = await waitFor(async () => {
-      if (child.exitCode != null || child.signalCode != null) {
-        throw new Error(`dev exited early code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-      }
+      assertWatchRunning(child, 'dev exited early', logs)
       const texts = await Promise.all(probePaths.map(readText))
       const outputHasContent = texts.every(text => typeof text === 'string' && text.trim().length > 0)
       return isWatchReady({
@@ -481,6 +433,7 @@ async function runHmrRounds({
       })
     }, timeoutMs, pollIntervalMs)
 
+    assertWatchRunning(child, 'dev exited early', logs)
     if (!ready) {
       throw new Error(`dev warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
@@ -493,6 +446,7 @@ async function runHmrRounds({
       const marker = diagnostics?.mutationMarker?.(i + 1, original) ?? `twbench${Date.now()}${i}`
       const next = injectContent(original, marker, injectType)
       await savePacer.beforeSave()
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       const roundLogs = logBuffer.beginRound()
       const start = now()
       diagnostics?.mark('mutation-write', i + 1)
@@ -503,9 +457,7 @@ async function runHmrRounds({
       }
 
       const ok = await waitFor(async () => {
-        if (child.exitCode != null || child.signalCode != null) {
-          throw new Error(`dev exited during hmr round=${i + 1} code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-        }
+        assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
         for (const probePath of probePaths) {
           const text = await readText(probePath)
           if (text?.includes(marker)) {
@@ -515,12 +467,14 @@ async function runHmrRounds({
         return false
       }, timeoutMs, pollIntervalMs)
 
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       if (!ok) {
         throw new Error(`hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('mutation-observed', i + 1)
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       times.push({
         durationMs: now() - start,
         pluginProcessMs: pluginTiming?.durationMs,
@@ -530,11 +484,10 @@ async function runHmrRounds({
       // 保留 marker/timing 的原计时边界，但下一次写入必须等本轮产物提交。
       if (watchBuildLogs) {
         const committed = await waitFor(() => {
-          if (child.exitCode != null || child.signalCode != null) {
-            throw new Error(`dev exited before hmr commit round=${i + 1} code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-          }
+          assertWatchRunning(child, `dev exited before hmr commit round=${i + 1}`, logs)
           return isWatchBuildComplete(roundLogs.stdoutLines, watchBuildLogs)
         }, Math.max(0, timeoutMs - (now() - start)), pollIntervalMs)
+        assertWatchRunning(child, `dev exited before hmr commit round=${i + 1}`, logs)
         if (!committed) {
           throw new Error(`hmr commit ${i + 1} timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
         }
@@ -542,6 +495,7 @@ async function runHmrRounds({
       roundLogs.close()
       savePacer.settled()
       await savePacer.beforeSave()
+      assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
       const rollbackLogs = logBuffer.beginRound()
       const rollbackStart = now()
       diagnostics?.mark('rollback-write', i + 1)
@@ -551,9 +505,7 @@ async function runHmrRounds({
         await diagnostics.source('rollback-written', sourcePath, original, marker)
       }
       const rolledBack = await waitFor(async () => {
-        if (watchBuildLogs && (child.exitCode != null || child.signalCode != null)) {
-          throw new Error(`dev exited before rollback commit round=${i + 1} code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-        }
+        assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
         for (const probePath of probePaths) {
           const text = await readText(probePath)
           // 文件观察和本轮生产者提交是独立条件，不能用任意一方替代另一方。
@@ -564,6 +516,7 @@ async function runHmrRounds({
         return isWatchBuildComplete(rollbackLogs.stdoutLines, watchBuildLogs)
       }, Math.max(0, timeoutMs - (now() - rollbackStart)), pollIntervalMs)
       rollbackLogs.close()
+      assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
       if (!rolledBack) {
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
@@ -577,6 +530,7 @@ async function runHmrRounds({
     if (diagnostics?.beforeStop) {
       await diagnostics.beforeStop()
     }
+    assertWatchRunning(child, 'dev exited during hmr shutdown', logs)
     return {
       samples: times,
       memory: memorySampler.stop(),
@@ -620,9 +574,7 @@ async function runDevServerHmrRounds({
   try {
     let baseUrl = `http://127.0.0.1:${port}/`
     const ready = await waitFor(async () => {
-      if (child.exitCode != null || child.signalCode != null) {
-        throw new Error(`dev server exited early code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-      }
+      assertWatchRunning(child, 'dev server exited early', logs)
       for (const candidate of resolveLoggedBaseUrls(logs, `http://127.0.0.1:${port}/`)) {
         try {
           const text = await fetchText(candidate)
@@ -637,6 +589,7 @@ async function runDevServerHmrRounds({
       return false
     }, timeoutMs, pollIntervalMs)
 
+    assertWatchRunning(child, 'dev server exited early', logs)
     if (!ready) {
       throw new Error(`dev server warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
@@ -652,9 +605,7 @@ async function runDevServerHmrRounds({
 
       let lastError = ''
       const ok = await waitFor(async () => {
-        if (child.exitCode != null || child.signalCode != null) {
-          throw new Error(`dev server exited during hmr round=${i + 1} code=${child.exitCode} signal=${child.signalCode}\n${logs.slice(-120).join('\n')}`)
-        }
+        assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
         for (const url of probeUrls) {
           try {
             const text = await fetchProbeText(url)
@@ -670,11 +621,13 @@ async function runDevServerHmrRounds({
         return false
       }, timeoutMs, pollIntervalMs)
 
+      assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
       if (!ok) {
         throw new Error(`dev server hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${lastError}\n${logs.slice(-120).join('\n')}`)
       }
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
+      assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
       times.push({
         durationMs: now() - start,
         pluginProcessMs: pluginTiming?.durationMs,
@@ -684,6 +637,7 @@ async function runDevServerHmrRounds({
       await fs.writeFile(sourcePath, original, 'utf8')
       let rollbackError = ''
       const rolledBack = await waitFor(async () => {
+        assertWatchRunning(child, `dev server exited during hmr rollback round=${i + 1}`, logs)
         let successfulProbe = false
         for (const url of probeUrls) {
           try {
@@ -700,12 +654,14 @@ async function runDevServerHmrRounds({
         return successfulProbe
       }, timeoutMs, pollIntervalMs)
       roundLogs.close()
+      assertWatchRunning(child, `dev server exited during hmr rollback round=${i + 1}`, logs)
       if (!rolledBack) {
         throw new Error(`dev server hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${rollbackError}\n${logs.slice(-120).join('\n')}`)
       }
     }
 
     await fs.writeFile(sourcePath, original, 'utf8')
+    assertWatchRunning(child, 'dev server exited during hmr shutdown', logs)
     return {
       samples: times,
       memory: memorySampler.stop(),
@@ -860,11 +816,13 @@ async function main() {
   if (allocationDiagnostics && inputDiagnostics) {
     throw new Error('输入证据与分配采样必须分开运行')
   }
+  const currentRef = resolveDiagnosticCurrentRef({ inputDiagnostics, selectedProjects, versions })
   validateAllocationRequest({
     mode: inputDiagnostics ? 'inputs' : 'allocation',
     enabled: allocationDiagnostics || inputDiagnostics,
     guardMode: process.argv.includes('--guard'),
     baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',
+    currentRef,
     selectedProjects,
     buildRuns,
     hmrRuns,

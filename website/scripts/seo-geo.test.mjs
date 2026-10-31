@@ -11,7 +11,7 @@ import {
   websiteId,
 } from '../config/siteMetadata.ts'
 import { createGeoIndexPayload } from './generate-geo-index.mjs'
-import { createRedirectRules, validateRedirectRules } from './redirects.mjs'
+import { createNextRedirectRules, createRedirectRules, validateRedirectRules } from './redirects.mjs'
 import { websiteRoot } from './seo-locales.mjs'
 import { buildFileIssues } from './seo-quality-lib.mjs'
 import { resolveKeywords } from './seo-shared.mjs'
@@ -119,6 +119,13 @@ describe('website SEO and GEO contracts', () => {
       expect(rules).toContainEqual([`/zh-cn${source}`, `/zh-cn${destination}`, 301])
     }
     expect(() => validateRedirectRules(rules)).not.toThrow()
+  })
+
+  it('next 单独重定向禁爬文件，并保留全部双语文档重定向', () => {
+    const next = createNextRedirectRules()
+    expect(next[0]).toEqual(['/robots.txt', '/robots-disallow.txt', 302])
+    expect(next.slice(1)).toEqual(createRedirectRules())
+    expect(createRedirectRules().some(([source]) => source === '/robots.txt')).toBe(false)
   })
 
   it('links the stable JSON-LD entity graph', () => {

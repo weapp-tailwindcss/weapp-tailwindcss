@@ -1,7 +1,7 @@
 import type { ParseError, ParserOptions } from '@babel/parser'
 import type { SourceMap } from 'magic-string'
+import type { TailwindContentTokenReport, TailwindcssExtractOptions, TailwindcssExtractResult, TailwindCssRuntimeOptions, TailwindPackageInfo } from '../tailwindcss/runtime-types'
 import type { IArbitraryValues, ICustomAttributesEntities } from './shared'
-import type { TailwindContentTokenReport, TailwindcssExtractOptions, TailwindcssExtractResult, TailwindCssRuntimeOptions, TailwindPackageInfo } from '@/tailwindcss/runtime-types'
 
 export interface LinkedJsModuleResult {
   code: string

@@ -7,6 +7,7 @@ export function createWatchControl(kind, signal, directory) {
   let waiting
   const started = performance.now()
   const events = []
+  const receipt = {}
   const record = (event, detail = {}) => {
     events.push({ at: performance.now() - started, event, phase, completed, ...detail })
     if (events.length > 128) {
@@ -17,7 +18,7 @@ export function createWatchControl(kind, signal, directory) {
   const contextualize = (message, cause) => {
     const state = snapshot()
     const watchEvents = [...events]
-    return Object.assign(new Error(`${kind} watch ${message} at ${phase} after build ${completed}; colors=${state.colors.join(',')}${directory ? `; workspace=${directory}` : ''}; events=${JSON.stringify(watchEvents)}`, { cause }), { watchState: state, watchEvents })
+    return Object.assign(new Error(`${kind} watch ${message} at ${phase} after build ${completed}; colors=${state.colors.join(',')}${directory ? `; workspace=${directory}` : ''}; events=${JSON.stringify(watchEvents)}`, { cause }), { watchState: state, watchEvents, watchReceipt: receipt })
   }
   const assertActive = () => {
     if (signal?.aborted) {
@@ -30,6 +31,16 @@ export function createWatchControl(kind, signal, directory) {
     contextualize,
     assertActive,
     record,
+    receipt,
+    completeReceipt(error) {
+      Object.assign(receipt, { state: snapshot(), events: events.map(event => ({ ...event })) })
+      Object.freeze(receipt.events)
+      Object.freeze(receipt)
+      if (error) {
+        error.watchReceipt = receipt
+        error.message += `; terminal=${JSON.stringify(receipt)}`
+      }
+    },
     get css() { return css },
     set css(value) { css = value },
     get completed() { return completed },
@@ -102,25 +113,45 @@ export async function closeWatchResources(actions) {
 export async function runWatchOperation(control, action, cleanup) {
   let result
   try {
-    control.assertActive()
-    result = { passed: true, value: await action() }
-  }
-  catch (error) {
-    result = { passed: false, error: error?.watchState ? error : control.contextualize('failed', error) }
-  }
-  try {
-    await cleanup()
-  }
-  catch (error) {
-    const cleanupError = control.contextualize('cleanup failed', error)
-    if (!result.passed) {
-      throw new AggregateError([result.error, cleanupError], `${result.error.message}; watcher 收尾也失败。`, { cause: result.error })
+    try {
+      control.assertActive()
+      control.record('action-start')
+      const value = await action()
+      control.record('action-complete')
+      result = { passed: true, value }
+      control.record('result-created', { passed: true })
     }
-    throw cleanupError
+    catch (error) {
+      control.record('action-failed')
+      result = { passed: false, error: error?.watchState ? error : control.contextualize('failed', error) }
+      control.record('result-created', { passed: false })
+    }
+    try {
+      control.record('cleanup-start')
+      await cleanup()
+      control.record('cleanup-complete')
+    }
+    catch (error) {
+      control.record('cleanup-failed', { error: error?.message })
+      const cleanupError = control.contextualize('cleanup failed', error)
+      if (!result.passed) {
+        throw new AggregateError([result.error, cleanupError], `${result.error.message}; watcher 收尾也失败。`, { cause: result.error })
+      }
+      throw cleanupError
+    }
+    if (!result.passed) {
+      throw result.error
+    }
+    control.record('final-assert-start')
+    control.assertActive()
+    control.record('final-assert-complete')
+    control.record('operation-complete')
+    control.completeReceipt()
+    return result.value
   }
-  if (!result.passed) {
-    throw result.error
+  catch (error) {
+    control.record('operation-failed')
+    control.completeReceipt(error)
+    throw error
   }
-  control.assertActive()
-  return result.value
 }

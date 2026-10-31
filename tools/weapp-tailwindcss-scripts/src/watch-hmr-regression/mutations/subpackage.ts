@@ -16,10 +16,12 @@ import { waitForOutputsReady } from './shared'
 import { runStyleMutation } from './style'
 
 export function createSubPackageWatchCase(watchCase: WatchCase, mutation: SubPackageMutationConfig): WatchCase {
+  const { contentMutation: _contentMutation, subPackageMutations: _subPackageMutations, minGlobalStyleEscapedClasses: inheritedMin, ...parentCase } = watchCase
+  const minGlobalStyleEscapedClasses = mutation.minGlobalStyleEscapedClasses ?? inheritedMin
   return {
-    ...watchCase,
+    ...parentCase,
     label: `${watchCase.label}/${mutation.root}${mutation.independent ? ':independent' : ''}`,
-    minGlobalStyleEscapedClasses: mutation.minGlobalStyleEscapedClasses ?? watchCase.minGlobalStyleEscapedClasses,
+    ...(minGlobalStyleEscapedClasses !== undefined ? { minGlobalStyleEscapedClasses } : {}),
     outputWxml: mutation.outputWxml,
     outputJs: mutation.outputJs,
     outputStyleCandidates: mutation.outputStyleCandidates,
@@ -27,8 +29,6 @@ export function createSubPackageWatchCase(watchCase: WatchCase, mutation: SubPac
     templateMutation: mutation.templateMutation,
     scriptMutation: mutation.templateMutation,
     styleMutation: mutation.styleMutation,
-    contentMutation: undefined,
-    subPackageMutations: undefined,
   }
 }
 
@@ -175,6 +175,6 @@ export async function runSubPackageMutation(
     globalStyleOutputs,
     ...(mainStyleHotUpdate ? { mainStyleHotUpdate } : {}),
     template,
-    style,
+    ...(style ? { style } : {}),
   }
 }

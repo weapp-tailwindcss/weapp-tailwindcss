@@ -88,7 +88,7 @@ export function getAssetFile(bundleFile: string, asset: OutputAsset) {
 export function readAssetSource(asset: OutputAsset) {
   return typeof asset.source === 'string'
     ? asset.source
-    : asset.source.toString()
+    : new TextDecoder().decode(asset.source)
 }
 
 export function clearAssetSource(asset: OutputAsset) {

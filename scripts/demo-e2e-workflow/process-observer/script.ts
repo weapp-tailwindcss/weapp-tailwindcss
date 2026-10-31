@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { windowsProcessTreeMemoryFunction } from '../../demo-e2e-memory/windows'
-import { windowsObserverInputScript } from './input-script'
+import { windowsObserverInputFailureScript, windowsObserverInputProgress, windowsObserverInputScript } from './input-script'
 import { windowsObserverShutdownScript } from './shutdown-script'
 
 // 准备共用一次本体快照；运行身份与内存每个请求重新查询，准备结果不领取业务归属或计入指标。
@@ -12,11 +12,21 @@ $ErrorActionPreference = 'Stop'
 [Console]::Out.Flush()
 ${windowsProcessTreeMemoryFunction}
 while ($null -ne ($line = [Console]::In.ReadLine())) {
+  $request = $null
+  $observerInputLine = $null
+  $observerInputStage = $null
+  $observerInputComplete = $false
+  $observerInputTrace = -not $observerJsonLoaded
   try {
     ${windowsObserverInputScript}
-    $request = Microsoft.PowerShell.Utility\\ConvertFrom-Json -InputObject $line
-    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    ${windowsObserverInputProgress('request-ack-serialize-start')}
+    $observerRequestAck = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress
+    ${windowsObserverInputProgress('request-ack-serialized')}
+    ${windowsObserverInputProgress('request-ack-write-start')}
+    [Console]::Out.WriteLine($observerRequestAck)
     [Console]::Out.Flush()
+    ${windowsObserverInputProgress('request-ack-flushed')}
+    $observerInputComplete = $true
     if ($request.kind -eq 'prepare') {
       if ([int]$request.rootPid -ne [int]$PID) { throw '准备请求必须绑定采集器本体。' }
       $snapshot = @(Get-CimInstance -Query ('SELECT ProcessId, ParentProcessId, CreationDate, WorkingSetSize, CommandLine FROM Win32_Process WHERE ProcessId = ' + [int]$PID))
@@ -44,6 +54,9 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     [Console]::Out.Flush()
     $response = @{ id = [int]$request.id; rows = $rows }
   } catch {
+    if (-not $observerInputComplete) {
+      ${windowsObserverInputFailureScript}
+    }
     $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
   $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress

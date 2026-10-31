@@ -7,6 +7,7 @@ import fc from 'fast-check'
 import postcss from 'postcss'
 import psp from 'postcss-selector-parser'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createStyleHandler } from '@/handler'
 import { loadNativeCssBinding } from '@/native/binding'
 import { ruleTransformSync } from '@/selectorParser/rule-transformer'
 import { normalizeSpacingDeclarations } from '@/selectorParser/spacing'
@@ -70,6 +71,49 @@ const optionCases: IStyleHandlerOptions[] = [
 ]
 
 describe('Rust 规则选择器 AST', () => {
+  it.each([
+    { selector: '.safe,:where(:is(.branch:-moz-any(:lang(ar))))', expected: '.safe', options: {} },
+    { selector: '.safe,:where(:is(.branch:checked))', expected: '.safe', options: {} },
+    { selector: '.safe,.branch:not(:-moz-any(:lang(ar)),:checked)', expected: '.safe,.branch', options: {} },
+    { selector: '.safe,.branch>:not(:last-child:checked)', expected: '.safe', options: {} },
+    { selector: '.safe,.branch:where(.before:before,.keep)', expected: '.safe', options: { uniAppX: true } },
+    { selector: '.safe,.branch:where(:is(.before:before,.keep))', expected: '.safe', options: { uniAppX: true } },
+    { selector: '.safe,.branch:not(:where(.b,.c))', expected: '.safe,.branch', options: { uniAppX: true } },
+  ])('原树裁剪与原生执行：$selector', ({ selector, expected, options }) => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const native = new (loadNativeCssBinding()!.SelectorRuleTransformer)(nativeOptions(options))
+    const result = native.transform(selector)
+    expect(result).not.toBeNull()
+    expect(result!.selector).toBe(expected)
+    expect(result!.remove).toBe(false)
+    compare(selector, options)
+  })
+
+  it('完整 PostCSS 管线在原生与 JS 分支都移除嵌套 RTL', async () => {
+    for (const mode of ['off', 'required']) {
+      vi.stubEnv('WEAPP_TW_NATIVE', mode)
+      const result = await createStyleHandler()('.safe,:where(:is(.branch:-moz-any(:lang(ar)))){color:red}')
+      const selectors: string[] = []
+      result.root.walkRules((rule) => {
+        selectors.push(rule.selector)
+      })
+      expect(selectors, mode).toEqual(['.safe'])
+    }
+  })
+
+  it('深层无效分支在间距重写前移除且不改调用方声明', () => {
+    const css = '.a>:not(:last-child:checked){margin-top:1px;margin-bottom:2px}'
+    for (const mode of ['off', 'required']) {
+      vi.stubEnv('WEAPP_TW_NATIVE', mode)
+      const root = postcss.parse(css)
+      const rule = root.first as postcss.Rule
+      ruleTransformSync(rule, {})
+      expect(root.nodes).toEqual([])
+      expect(rule.selector).toBe('')
+      expect(rule.nodes.map(node => node.toString())).toEqual(['margin-top:1px', 'margin-bottom:2px'])
+    }
+  })
+
   it('删除规则时仍保持调用方持有的 rule 和声明状态', () => {
     function run(mode: string) {
       vi.stubEnv('WEAPP_TW_NATIVE', mode)
@@ -83,6 +127,10 @@ describe('Rust 规则选择器 AST', () => {
 
   it.each([
     '.a:where(.b,.c):where(.d,.e)',
+    '.safe,:where(:is(.branch:-moz-any(:lang(ar))))',
+    '.safe,:where(:is(.branch:checked))',
+    '.safe,.branch:not(:-moz-any(:lang(ar)),:checked)',
+    '.safe,.branch>:not(:last-child:checked)',
     '.a:where(:is(.b,.c))',
     '.a:where(.b)',
     '.a:where(.b:checked,.c)',

@@ -1,8 +1,10 @@
-import type { ChildProcessWithoutNullStreams } from 'node:child_process'
+import type { ChildProcessWithoutNullStreams, SpawnOptionsWithoutStdio } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { existsSync, promises as fs, realpathSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { parseBenchmarkMode, parseBenchmarkNumber, readBenchmarkArg } from './benchmark/options'
+import { summarizeRunMetrics } from './benchmark/statistics'
 
 // 模块级正则，避免函数内重复编译
 const READY_TIME_DIRECT_RE = /ready\s+in\s+([\d.]+)\s*ms/i
@@ -73,29 +75,8 @@ function createExecutableCommand(command: string): PnpmCommand {
   }
 }
 
-function parseArg(flag: string, argv: string[]) {
-  const prefix = `${flag}=`
-  const inline = argv.find(value => value.startsWith(prefix))
-  if (inline) {
-    return inline.slice(prefix.length)
-  }
-  const index = argv.indexOf(flag)
-  if (index === -1) {
-    return undefined
-  }
-  return argv[index + 1]
-}
-
-function parseNumber(value: string | undefined, fallback: number) {
-  if (value == null) {
-    return fallback
-  }
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : fallback
-}
-
 function resolveBaseCwd() {
-  let cursor = path.resolve(process.env.INIT_CWD || process.cwd())
+  let cursor = path.resolve(process.env['INIT_CWD'] || process.cwd())
   while (true) {
     if (existsSync(path.join(cursor, 'pnpm-workspace.yaml'))) {
       return cursor
@@ -115,22 +96,22 @@ function resolvePathArg(baseCwd: string, value: string | undefined, fallbackPath
 
 function resolveOptions(): BenchCliOptions {
   const argv = process.argv.slice(2)
-  const mode = (parseArg('--mode', argv) ?? 'both') as BenchCliOptions['mode']
+  const mode = parseBenchmarkMode(readBenchmarkArg('--mode', argv))
   const baseCwd = resolveBaseCwd()
-  const cwd = resolvePathArg(baseCwd, parseArg('--cwd', argv), 'templates/uni-app-tailwindcss-v4')
-  const output = resolvePathArg(baseCwd, parseArg('--output', argv), 'benchmark/vite-adapter-perf-report.json')
+  const cwd = resolvePathArg(baseCwd, readBenchmarkArg('--cwd', argv), 'templates/uni-app-tailwindcss-v4')
+  const output = resolvePathArg(baseCwd, readBenchmarkArg('--output', argv), 'benchmark/vite-adapter-perf-report.json')
 
   return {
     cwd,
-    script: parseArg('--script', argv) ?? 'dev:mp-weixin',
-    buildScript: parseArg('--build-script', argv) ?? 'build:mp-weixin',
-    runs: parseNumber(parseArg('--runs', argv), 5),
-    timeoutMs: parseNumber(parseArg('--timeout', argv), 120000),
-    warmup: parseNumber(parseArg('--warmup', argv), 1),
+    script: readBenchmarkArg('--script', argv) ?? 'dev:mp-weixin',
+    buildScript: readBenchmarkArg('--build-script', argv) ?? 'build:mp-weixin',
+    runs: parseBenchmarkNumber(readBenchmarkArg('--runs', argv), 5, '--runs', 'positive-integer'),
+    timeoutMs: parseBenchmarkNumber(readBenchmarkArg('--timeout', argv), 120000, '--timeout', 'positive-number'),
+    warmup: parseBenchmarkNumber(readBenchmarkArg('--warmup', argv), 1, '--warmup', 'nonnegative-integer'),
     mode,
     output,
-    projectFile: parseArg('--project-file', argv) ?? 'src/pages/index/index.vue',
-    hotMarker: parseArg('--hot-marker', argv) ?? 'text-[#0f0f0f]',
+    projectFile: readBenchmarkArg('--project-file', argv) ?? 'src/pages/index/index.vue',
+    hotMarker: readBenchmarkArg('--hot-marker', argv) ?? 'text-[#0f0f0f]',
   }
 }
 
@@ -138,25 +119,10 @@ function now() {
   return performance.now()
 }
 
-function formatStats(values: number[]): Stats {
-  const sorted = [...values].sort((a, b) => a - b)
-  const mean = sorted.reduce((acc, value) => acc + value, 0) / sorted.length
-  const mid = Math.floor(sorted.length / 2)
-  const median = sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) / 2
-    : sorted[mid]
-  const variance = sorted.reduce((acc, value) => acc + ((value - mean) ** 2), 0) / sorted.length
-  return {
-    mean,
-    median,
-    stddev: Math.sqrt(variance),
-  }
-}
-
 function createEnv(mode: 'optimized' | 'legacy') {
   const env = { ...process.env }
-  const pathValue = env.PATH || env.Path || env.path
-  env.PATH = [
+  const pathValue = env['PATH'] || env['Path'] || env['path']
+  env['PATH'] = [
     path.dirname(process.execPath),
     pathValue,
     '/usr/local/bin',
@@ -164,21 +130,21 @@ function createEnv(mode: 'optimized' | 'legacy') {
     '/bin',
   ].filter(Boolean).join(path.delimiter)
   if (mode === 'legacy') {
-    env.WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH = '1'
-    env.WEAPP_TW_VITE_DISABLE_DIRTY = '1'
-    env.WEAPP_TW_VITE_DISABLE_JS_PRECHECK = '1'
+    env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] = '1'
+    env['WEAPP_TW_VITE_DISABLE_DIRTY'] = '1'
+    env['WEAPP_TW_VITE_DISABLE_JS_PRECHECK'] = '1'
   }
   else {
-    delete env.WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH
-    delete env.WEAPP_TW_VITE_DISABLE_DIRTY
-    delete env.WEAPP_TW_VITE_DISABLE_JS_PRECHECK
+    delete env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH']
+    delete env['WEAPP_TW_VITE_DISABLE_DIRTY']
+    delete env['WEAPP_TW_VITE_DISABLE_JS_PRECHECK']
   }
-  env.WEAPP_TW_BENCH = '1'
+  env['WEAPP_TW_BENCH'] = '1'
   return env
 }
 
 function resolvePnpmCommand(): PnpmCommand {
-  const pathPnpm = process.env.PATH
+  const pathPnpm = process.env['PATH']
     ?.split(path.delimiter)
     .map(item => path.join(item, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'))
     .find(item => existsSync(item))
@@ -186,8 +152,8 @@ function resolvePnpmCommand(): PnpmCommand {
     return createExecutableCommand(pathPnpm)
   }
 
-  const pnpmBin = process.env.PNPM_HOME
-    ? path.join(process.env.PNPM_HOME, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm')
+  const pnpmBin = process.env['PNPM_HOME']
+    ? path.join(process.env['PNPM_HOME'], process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm')
     : undefined
   if (pnpmBin && existsSync(pnpmBin)) {
     return createExecutableCommand(pnpmBin)
@@ -199,7 +165,7 @@ function resolvePnpmCommand(): PnpmCommand {
   }
 }
 
-function spawnPnpm(args: string[], options: Parameters<typeof spawn>[2]) {
+function spawnPnpm(args: string[], options: SpawnOptionsWithoutStdio) {
   const pnpmCommand = resolvePnpmCommand()
   return spawn(pnpmCommand.command, [...pnpmCommand.args, ...args], options)
 }
@@ -374,25 +340,6 @@ async function runSingleCase(options: BenchCliOptions, mode: 'optimized' | 'lega
   }
 }
 
-function summarizeRuns(optimizedRuns: RunMetrics[], legacyRuns: RunMetrics[]): SummaryRow[] {
-  const metrics: Array<keyof RunMetrics> = ['startupMs', 'hotUpdateMs', 'coldBuildMs']
-  return metrics.map((metric) => {
-    const optimizedValues = optimizedRuns.map(run => run[metric])
-    const legacyValues = legacyRuns.map(run => run[metric])
-    const optimized = formatStats(optimizedValues)
-    const legacy = formatStats(legacyValues)
-    const improvementPercent = legacy.mean === 0
-      ? 0
-      : ((legacy.mean - optimized.mean) / legacy.mean) * 100
-    return {
-      metric,
-      optimized,
-      legacy,
-      improvementPercent,
-    }
-  })
-}
-
 function printSummary(summary: SummaryRow[]) {
   const table = summary.map((row) => {
     return {
@@ -435,7 +382,7 @@ async function main() {
     ? []
     : await runMode(options, 'legacy')
 
-  const summary = legacyRuns.length > 0 ? summarizeRuns(optimizedRuns, legacyRuns) : []
+  const summary = summarizeRunMetrics(options.mode, optimizedRuns, legacyRuns, ['startupMs', 'hotUpdateMs', 'coldBuildMs'])
   if (summary.length > 0) {
     printSummary(summary)
   }

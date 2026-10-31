@@ -39,7 +39,21 @@ it('网站、Expo 与 CSS 语义在固定预装环境运行，拒绝版本漂移
 it('预装环境不省略网站、Expo 与 CSS 的实际语义验收', () => {
   const websiteCommands = website.steps.map((step: { run?: string }) => step.run).filter(Boolean)
   expect(websiteCommands).toContain('node scripts/ci/verify-playwright-image.mjs chromium firefox webkit')
-  expect(websiteCommands).toContain('pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts scripts/full-page-toc-entry.test.ts scripts/full-page-toc-policy.test.ts scripts/full-page-toc.test.ts --update=none')
+  const unitCommands = websiteCommands.filter((command: string) => command.startsWith('pnpm --filter @weapp-tailwindcss/website exec vitest run '))
+  expect(unitCommands).toHaveLength(1)
+  const targets = unitCommands[0].trim().split(/\s+/).slice(6)
+  expect(targets).toEqual(expect.arrayContaining([
+    'scripts/visual-baselines',
+    'scripts/browser-local.test.ts',
+    'scripts/full-page-capabilities.test.ts',
+    'scripts/full-page-observed.test.ts',
+    'scripts/full-page-toc-entry.test.ts',
+    'scripts/full-page-toc-policy.test.ts',
+    'scripts/full-page-toc.test.ts',
+    'scripts/full-page-monitor.test.ts',
+    'scripts/full-page-composition.test.ts',
+    '--update=none',
+  ]))
   expect(websiteCommands).toContain('pnpm --filter @weapp-tailwindcss/website e2e:visual:test')
   const expoCommands = expo.steps.map((step: { run?: string }) => step.run).filter(Boolean)
   expect(expoCommands).toContain(`node scripts/ci/verify-playwright-image.mjs ${'$'}{{ matrix.browser }}`)

@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { weappViteInputProject } from './constants.mjs'
 import { compareOperationInputs } from './operation-evidence.mjs'
 
 function origins(input, candidate) {
@@ -79,6 +80,7 @@ export async function compareDiagnosticInputs(directory) {
   const operationComparisons = []
   for (const base of sessions.filter(session => session.controller.identity.role === 'base')) {
     const identity = base.controller.identity
+    const inputOnly = identity.project === weappViteInputProject && identity.mode === 'inputs'
     const current = sessions.find(session => session.controller.identity.role === 'current'
       && session.controller.identity.kind === identity.kind && session.controller.identity.run === identity.run)
     if (!current) {
@@ -93,6 +95,9 @@ export async function compareDiagnosticInputs(directory) {
       }
       operationComparisons.push({ kind: identity.kind, run: identity.run, ...compareOperationInputs(base.controller, current.controller) })
     }
+    if (inputOnly) {
+      continue
+    }
     const count = identity.kind === 'build' ? 1 : 8
     for (let index = 1; index <= count; index++) {
       const [baseInputs, currentInputs] = await Promise.all([base, current].map(session => fs.readFile(path.join(session.folder, `inputs-${index}.json`), 'utf8').then(JSON.parse)))
@@ -100,15 +105,24 @@ export async function compareDiagnosticInputs(directory) {
       comparisons.push({ kind: identity.kind, run: identity.run, index, phase: baseInputs.phase, ...result })
     }
   }
-  if (comparisons.length !== 11) {
+  const inputOnly = sessions.some(session => session.controller.identity.project === weappViteInputProject && session.controller.identity.mode === 'inputs')
+  if (!inputOnly && comparisons.length !== 11) {
     throw new Error('诊断缺失固定 3 build / 3 mutation / 3 rollback / start / stop 的阶段')
+  }
+  if (inputOnly && operationComparisons.length === 0) {
+    throw new Error('weapp-vite input-only 缺少可比较的操作输入证据')
   }
   return {
     diagnosticOnly: true,
     canExplainFormalRegression: false,
-    explanation: comparisons.every(item => item.sameActualCandidatesAndSourceHashes) && operationComparisons.every(item => item.sameRecordedOperationsAndInputs)
-      ? '已核对候选和来源；插桩分配仍只提供归因线索，不能替代正式预算或独立建立因果'
-      : '两侧实际候选、源码或调用输入不同，或存在无法跨进程比较的身份；不能用本轮分配差异解释正式失败，先核对列出的证据',
+    explanation: inputOnly
+      ? (operationComparisons.every(item => item.sameRecordedOperationsAndInputs)
+          ? '已核对 weapp-vite input-only 的实际调用输入和完成边界；诊断仍只提供归因线索，不能替代正式预算或独立建立因果'
+          : '两侧 weapp-vite input-only 的实际调用输入不同，或存在无法跨进程比较的身份；不能用本轮差异解释正式失败，先核对列出的证据')
+      : (comparisons.every(item => item.sameActualCandidatesAndSourceHashes) && operationComparisons.every(item => item.sameRecordedOperationsAndInputs)
+          ? '已核对候选和来源；插桩分配仍只提供归因线索，不能替代正式预算或独立建立因果'
+          : '两侧实际候选、源码或调用输入不同，或存在无法跨进程比较的身份；不能用本轮分配差异解释正式失败，先核对列出的证据'),
+    inputOnly,
     comparisons,
     operationComparisons,
   }

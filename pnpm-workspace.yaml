@@ -118,7 +118,7 @@ overrides:
   # devframe 与 agentic 使用双向精确 peer，各工具链保留自己的配套版本。
   '@eslint/config-inspector@3.5.0>devframe': 1.2.6
   '@eslint/config-inspector@3.5.0>@devframes/agentic': 1.2.6
-  weapp-vite@7.6.0>@modelcontextprotocol/server: 2.4.0
+  weapp-vite@7.7.0>@modelcontextprotocol/server: 2.4.0
   '@weapp-vite/mcp@2.1.0>@modelcontextprotocol/server': 2.4.0
 
 catalogs:
@@ -392,7 +392,7 @@ catalogs:
   weappIdeCli:
     weapp-ide-cli: ^6.3.0
   weappVite:
-    weapp-vite: ^7.6.0
+    weapp-vite: ^7.7.0
   webpackTools:
     '@pmmmwh/react-refresh-webpack-plugin': ^0.6.3
     '@types/webpack-env': ^1.18.8
@@ -419,17 +419,15 @@ packageExtensions:
     dependencies:
       stylelint: 16.10.0
       stylelint-taro-rn: 4.3.1
-  weapp-vite@7.6.0:
+  weapp-vite@7.7.0:
     dependencies:
-      '@babel/plugin-transform-dynamic-import': 8.0.1
-      '@devframes/agentic': 1.2.5
+      '@devframes/agentic': 1.2.6
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1':
     dependencies:
       '@babel/core': ^7.26.10
 
 patchedDependencies:
   watchpack@2.6.3: patches/watchpack@2.6.3.patch
-  weapp-vite@7.6.0: patches/weapp-vite@7.6.0.patch
   '@lynx-js/tasm@0.0.49': patches/@lynx-js__tasm@0.0.49.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch
@@ -443,3 +441,4 @@ patchedDependencies:
   rollup@4.65.1: patches/rollup@4.65.1.patch
   '@mpxjs/webpack-plugin@2.11.1': patches/@mpxjs__webpack-plugin@2.11.1.patch
   webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch
+  postcss-preset-env@11.6.1: patches/postcss-preset-env@11.6.1.patch

@@ -3,9 +3,12 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as savePacing from '../../performance/demo/save-pacing.mjs'
 import { benchmarkProjects } from '../scripts/projects.mjs'
 import { runCase } from '../scripts/run-matrix.mjs'
+import * as watchReadiness from '../scripts/watch-readiness.mjs'
 import { createServiceFixture, mpxProject, versionFor } from './helpers/gc-service.mjs'
 
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), sampler: vi.fn() }))
@@ -31,6 +34,15 @@ async function fixture(rollback, mutation, projectOptions = {}) {
   await writeFile(source, original)
   await writeFile(output, original)
   const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() })
+  child.kill = vi.fn(() => {
+    child.exitCode = 0
+    child.emit('close', 0)
+    return true
+  })
+  vi.spyOn(process, 'kill').mockImplementation((pid, signal) => {
+    expect(pid).toBe(-child.pid)
+    return child.kill(signal)
+  })
   mocks.spawn.mockReset().mockImplementation(() => {
     queueMicrotask(() => child.stdout.emit('data', Buffer.from('fixture-ready\n')))
     return child
@@ -90,6 +102,49 @@ function observeOutputRead(test, writes) {
 }
 
 describe('watch 回滚的文件观察边界', () => {
+  it('首次保存等待期间退出时，不继续写入 mutation', async () => {
+    const test = await fixture(async () => {})
+    const beforeSave = vi.fn(async () => {
+      test.child.signalCode = 'SIGTERM'
+    })
+    vi.spyOn(savePacing, 'createSavePacer').mockReturnValue({ beforeSave, settled: vi.fn() })
+    await expect(test.run()).rejects.toThrow(/dev exited during hmr round=1.*signal=SIGTERM/)
+    expect(beforeSave).toHaveBeenCalledTimes(1)
+    expect(test.writes()).toBe(0)
+    expect(await fs.readFile(test.source, 'utf8')).toBe(test.original)
+  })
+
+  it('回滚前保存等待期间退出时，先清理再恢复源码', async () => {
+    const test = await fixture(async ({ output, original, writeFile }) => {
+      expect(test.stop).toHaveBeenCalled()
+      await writeFile(output, original)
+    })
+    const beforeSave = vi.fn(async () => {}).mockImplementationOnce(async () => {}).mockImplementationOnce(async () => {
+      test.child.signalCode = 'SIGTERM'
+    })
+    vi.spyOn(savePacing, 'createSavePacer').mockReturnValue({ beforeSave, settled: vi.fn() })
+    await expect(test.run()).rejects.toThrow(/dev exited during hmr rollback round=1.*signal=SIGTERM/)
+    expect(beforeSave).toHaveBeenCalledTimes(2)
+    expect(test.writes()).toBe(2)
+    expect(await fs.readFile(test.source, 'utf8')).toBe(test.original)
+  })
+
+  it('mutation 提交观察返回时退出，不继续正常回滚', async () => {
+    const test = await fixture(async ({ output, original, writeFile }) => {
+      expect(test.stop).toHaveBeenCalled()
+      await writeFile(output, original)
+    }, undefined, { watchBuildLogs })
+    vi.spyOn(savePacing, 'createSavePacer').mockReturnValue({ beforeSave: vi.fn(async () => {}), settled: vi.fn() })
+    const complete = vi.spyOn(watchReadiness, 'isWatchBuildComplete').mockImplementationOnce(() => {
+      test.child.signalCode = 'SIGTERM'
+      return true
+    })
+    await expect(test.run()).rejects.toThrow(/dev exited before hmr commit round=1.*signal=SIGTERM/)
+    expect(complete).toHaveBeenCalledTimes(1)
+    expect(test.writes()).toBe(2)
+    expect(await fs.readFile(test.source, 'utf8')).toBe(test.original)
+  })
+
   it('Uni 回滚文件已恢复仍等待本轮生产者提交，不复用旧 DONE 或 stderr 日志', async () => {
     let release
     let atRollback

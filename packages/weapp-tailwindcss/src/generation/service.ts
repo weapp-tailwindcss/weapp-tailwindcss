@@ -1,13 +1,15 @@
 import type { FrameworkPostcssOwner } from './framework-postcss'
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './index'
 import type { CompilationDependencyChange, CompilerShadowReport, CssStage, GenerationArtifact, SourceScope } from '@/compiler'
-import { finalizeWebCssPropertyFallbacks } from '@weapp-tailwindcss/postcss/transform'
+import { finalizeWebCssPropertyFallbacks, transformTailwindV4WebRpxCss } from '@weapp-tailwindcss/postcss/transform'
 import { consumeCompilationScopeChanges, createCompilerShadowReport, createCssFragment, createGenerationArtifact, getCompilerShadowRunRevision, mergeCompilationDependencyChanges, recordCompilerShadowReport } from '@/compiler'
 import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { getFrameworkCompilerSession } from '@/compiler/framework-compiler-session'
 import { recordRpxThemeRisk } from '@/compiler/rpx-theme-diagnostics'
-import { adaptGeneratedCssWithFrameworkPipeline, adaptGeneratedCssWithFrameworkRootPipeline, hasFrameworkPostcssOptions } from './framework-postcss'
+import { useWebRpxCompatibility } from '@/compiler/style-capabilities'
+import { adaptGeneratedCssWithFrameworkPipeline, adaptGeneratedCssWithFrameworkRootPipeline, hasFrameworkPostcssOptions, hasFrameworkWebRpxFinalizer } from './framework-postcss'
 import { normalizeFrameworkProcessedUserCss, restoreFrameworkProcessedUserCss } from './framework-user-css'
+import { resolveGeneratorStyleOptions } from './generation-helpers'
 import { generateCssByGenerator } from './index'
 import { resolveGeneratedCssClassSet } from './result-helpers'
 import { preferScopedGeneratedCssRules } from './scoped-rules'
@@ -104,12 +106,19 @@ async function generateTailwindV4CssWithImplementation(
   }
   const frameworkPostcssOwner = options.frameworkPostcssOwner ?? options.profile
   const normalizedGeneratorOptions = options.profile.generator
+  const hasFrameworkPipeline = hasFrameworkPostcssOptions(frameworkPostcssOwner)
   const shouldReplayFrameworkPostcss = options.cssStage === 'framework-processed'
-    && hasFrameworkPostcssOptions(frameworkPostcssOwner)
+    && hasFrameworkPipeline
+  const deferWebRpxConversion = normalizedGeneratorOptions.target === 'web'
+    && useWebRpxCompatibility(resolveGeneratorStyleOptions(options.profile, options.cssHandlerOptions, normalizedGeneratorOptions.styleOptions))
+    && (shouldReplayFrameworkPostcss || options.deferWebRpxConversion === true || hasFrameworkWebRpxFinalizer(frameworkPostcssOwner))
 
-  const generationInput = !shouldReplayFrameworkPostcss && options.frameworkProcessedUserCss
-    ? { ...options, userRawSource: [options.userRawSource, options.frameworkProcessedUserCss].filter(Boolean).join('\n'), frameworkProcessedUserCss: undefined }
-    : options
+  const generationInput = {
+    ...(!shouldReplayFrameworkPostcss && options.frameworkProcessedUserCss
+      ? { ...options, userRawSource: [options.userRawSource, options.frameworkProcessedUserCss].filter(Boolean).join('\n'), frameworkProcessedUserCss: undefined }
+      : options),
+    ...(deferWebRpxConversion ? { deferWebRpxConversion: true } : {}),
+  }
   const scope = options.scope ?? {
     id: options.outputFile ?? options.file,
     kind: options.cssHandlerOptions.isMainChunk ? 'global' : 'component',
@@ -168,9 +177,13 @@ async function generateTailwindV4CssWithImplementation(
   const composedCss = shouldReplayFrameworkPostcss && options.frameworkProcessedUserCss
     ? await restoreFrameworkProcessedUserCss(adaptedCss, generated, generated.frameworkProcessedUserCss ?? options.frameworkProcessedUserCss, options, normalizedGeneratorOptions)
     : adaptedCss
-  const scopedCss = isVueScopedStyleRequest(resolvePostcssRequestOption(options.cssHandlerOptions))
-    ? preferScopedGeneratedCssRules(composedCss)
+  // 框架优先按自身配置消费 rpx，未消费的声明才使用通用 Web 兜底。
+  const webCss = shouldReplayFrameworkPostcss && deferWebRpxConversion
+    ? transformTailwindV4WebRpxCss(composedCss)
     : composedCss
+  const scopedCss = isVueScopedStyleRequest(resolvePostcssRequestOption(options.cssHandlerOptions))
+    ? preferScopedGeneratedCssRules(webCss)
+    : webCss
   const css = generated.target === 'web' && !options.deferWebCssPropertyFallback
     ? finalizeWebCssPropertyFallbacks([scopedCss], normalizedGeneratorOptions.webCompat)[0]!
     : scopedCss

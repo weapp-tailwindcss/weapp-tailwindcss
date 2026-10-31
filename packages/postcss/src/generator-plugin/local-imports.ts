@@ -1,4 +1,4 @@
-import type { AtRule, Node, Root } from 'postcss'
+import type { AtRule, ChildNode, Node, Root } from 'postcss'
 import type { TailwindCssDirectiveOptions } from './directives'
 import { postcss } from '../postcss-runtime'
 import {
@@ -309,7 +309,7 @@ function resolveOutputImportRequest(file: string, request: string) {
   return normalizeOutputPath(baseDir ? `${baseDir}/${clean}` : clean)
 }
 
-function isSelfOutputImport(outputFile: string, node: Node) {
+function isSelfOutputImport(outputFile: string, node: ChildNode) {
   if (node.type !== 'atrule' || node.name !== 'import') {
     return false
   }

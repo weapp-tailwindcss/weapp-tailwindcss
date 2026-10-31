@@ -23,6 +23,7 @@ import {
 import {
   buildCases,
   filterCasesForPlatform,
+  getBaseWatchCaseName,
   pickCases,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
 import {
@@ -1836,11 +1837,14 @@ describe('watch-hmr regression summary helpers', () => {
       skipBuild: true,
       quietSass: true,
       webOnly: false,
+      miniProgramOnly: false,
       miniProgramScope: 'main-package',
       styleOnly: false,
       mainStyleOnly: false,
       reportFile,
       maxHotUpdateMs: 100,
+      maxPluginProcessMs: 0,
+      maxMemoryRssDeltaMb: 0,
     }
 
     expect(resolveReportPath(tempDir, reportFile)).toBe(path.join(tempDir, reportFile))
@@ -1861,6 +1865,9 @@ describe('watch-hmr regression summary helpers', () => {
     expect(report.repositoryRoot).toBe(path.basename(tempDir))
     expect(report.options.caseName).toBe('demo')
     expect(report.options.webOnly).toBe(false)
+    expect(report.options.miniProgramOnly).toBe(false)
+    expect(report.options.maxPluginProcessMs).toBe(0)
+    expect(report.options.maxMemoryRssDeltaMb).toBe(0)
     expect(report.options.miniProgramScope).toBe('main-package')
     expect(report.options.mainStyleOnly).toBe(false)
     expect(report.summary).toMatchObject({ count: 1, hotUpdateAvgMs: 30, rollbackAvgMs: 40 })
@@ -3317,6 +3324,7 @@ describe('watch-hmr regression cases', () => {
 
     for (const watchCase of cases) {
       const payload = createStyleMutationPayload(watchCase)
+      expect(payload.marker).toContain(`tw-watch-style-${watchCase.name}-`)
 
       const baseWatchCaseName = watchCase.name.split(':', 1)[0]
       if (applyUnsupportedCases.has(baseWatchCaseName)) {
@@ -3519,6 +3527,44 @@ describe('watch-hmr regression cases', () => {
     const win32DemoCases = pickCases(win32Cases, 'demo')
     expect(win32DemoCases.every(watchCase => watchCase.group === 'demo')).toBe(true)
     expect(win32DemoCases.find(watchCase => watchCase.name === 'uni-app-vite-tailwindcss-v4')).toBeDefined()
+  })
+
+  it('分组选例保持基础名精确匹配，显式平台选择保留完整身份', () => {
+    const cases = buildCases('/repo')
+    const expectedGroups: Array<{ caseName: CliOptions['caseName'], names: string[] }> = [
+      {
+        caseName: 'demo',
+        names: [
+          'gulp-tailwindcss-v4',
+          'weapp-vite-tailwindcss-v4',
+          'mpx-tailwindcss-v4',
+          'taro-vite-react-tailwindcss-v4',
+          'taro-webpack-react-tailwindcss-v4',
+          'taro-vite-vue3-tailwindcss-v4',
+          'taro-webpack-vue3-tailwindcss-v4',
+          'uni-app-vite-tailwindcss-v4',
+        ],
+      },
+      { caseName: 'demo-core', names: ['gulp-tailwindcss-v4', 'weapp-vite-tailwindcss-v4', 'mpx-tailwindcss-v4'] },
+      { caseName: 'demo-taro-react', names: ['taro-vite-react-tailwindcss-v4', 'taro-webpack-react-tailwindcss-v4'] },
+      { caseName: 'demo-taro-vue3', names: ['taro-vite-vue3-tailwindcss-v4', 'taro-webpack-vue3-tailwindcss-v4'] },
+      { caseName: 'demo-uni', names: ['uni-app-vite-tailwindcss-v4'] },
+      { caseName: 'both', names: ['taro-webpack-react-tailwindcss-v4', 'uni-app-vite-tailwindcss-v4'] },
+    ]
+
+    for (const { caseName, names } of expectedGroups) {
+      expect(pickCases(cases, caseName).map(item => item.name).sort(), caseName).toEqual(names.sort())
+      expect(getBaseWatchCaseName(caseName), caseName).toBeUndefined()
+    }
+    expect(pickCases(cases, 'all')).toBe(cases)
+    expect(getBaseWatchCaseName('all')).toBeUndefined()
+    expect(cases).toHaveLength(20)
+    for (const watchCase of cases) {
+      expect(pickCases(cases, watchCase.name)).toEqual([watchCase])
+    }
+    expect(getBaseWatchCaseName('taro-vite-react-tailwindcss-v4')).toBe('taro-vite-react-tailwindcss-v4')
+    expect(getBaseWatchCaseName('taro-vite-react-tailwindcss-v4:alipay')).toBe('taro-vite-react-tailwindcss-v4')
+    expect(getBaseWatchCaseName('uni-app-vite-tailwindcss-v4:mp-alipay')).toBe('uni-app-vite-tailwindcss-v4')
   })
 
   it('keeps issue33 and Vue3 watch cases across PR smoke and nightly CI matrices', async () => {

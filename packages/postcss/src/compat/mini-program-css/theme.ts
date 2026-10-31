@@ -14,7 +14,7 @@ export function collectThemeVariableRule(root: postcss.Root, options: FinalizeMi
   const shouldPreserveContentInit = usesTwContentVariable(root)
 
   for (const node of root.nodes ?? []) {
-    if (!isMiniProgramThemeVariableRule(node)) {
+    if (node.type !== 'rule' || !isMiniProgramThemeVariableRule(node)) {
       continue
     }
 

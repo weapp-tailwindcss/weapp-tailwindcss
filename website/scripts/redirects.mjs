@@ -37,6 +37,11 @@ export function createRedirectRules() {
   ]
 }
 
+export function createNextRedirectRules() {
+  // next 的禁爬文件使用同源单跳，部署后仍校验最终响应的禁爬策略。
+  return [['/robots.txt', '/robots-disallow.txt', 302], ...createRedirectRules()]
+}
+
 export function getCurrentDocRoutes() {
   return new Set(seoLocales.flatMap(locale => walkMarkdownFiles(locale.docsRoot).map((file) => {
     const relative = path.relative(locale.docsRoot, file)
@@ -59,14 +64,17 @@ export function validateRedirectRules(rules = createRedirectRules()) {
 export function writeRedirects() {
   const rules = createRedirectRules()
   validateRedirectRules(rules)
-  const outputFile = path.join(websiteRoot, 'static', '_redirects')
-  const next = `${rules.map(rule => rule.join(' ')).join('\n')}\n`
-  const previous = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, 'utf8') : ''
-  if (previous !== next) {
-    fs.writeFileSync(outputFile, next)
-    return true
+  let changed = false
+  for (const [directory, redirects] of [['static', rules], ['static-next', createNextRedirectRules()]]) {
+    const outputFile = path.join(websiteRoot, directory, '_redirects')
+    const next = `${redirects.map(rule => rule.join(' ')).join('\n')}\n`
+    const previous = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, 'utf8') : ''
+    if (previous !== next) {
+      fs.writeFileSync(outputFile, next)
+      changed = true
+    }
   }
-  return false
+  return changed
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

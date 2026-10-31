@@ -6,6 +6,7 @@ import type { Compiler, CompilerSnapshot } from '@/core/compiler/types'
 import { processFrameworkCss, removeTailwindPostcssPlugins } from '@weapp-tailwindcss/postcss/transform'
 import { composeGenerationArtifact, createCssFragment, createGenerationArtifact, createStylePlatformAdapter } from '@/compiler'
 import { finalizeMiniProgramGeneratorCss } from './generation-helpers'
+import { hasWebRpxFinalizerPlugin } from './web-rpx-finalizer'
 
 export interface FrameworkPostcssOwner {
   readonly cssPreflight: CssPreflightOptions
@@ -130,6 +131,10 @@ export function captureResolvedFrameworkPostcssOptions(
 
 export function hasFrameworkPostcssOptions(owner: FrameworkPostcssOwner): boolean {
   return frameworkPostcssOptions.has(owner)
+}
+
+export function hasFrameworkWebRpxFinalizer(owner: FrameworkPostcssOwner): boolean {
+  return hasWebRpxFinalizerPlugin(frameworkPostcssOptions.get(owner)?.plugins)
 }
 
 function createGeneratedCssHandlerOptions(

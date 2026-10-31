@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
 import postcss from 'postcss'
+import { describe, expect, it, vi } from 'vitest'
 import { processFrameworkCss } from '@/framework-pipeline'
 import { createStyleHandler } from '@/handler'
 
@@ -16,13 +16,15 @@ describe('作者与框架重放的插件边界', () => {
       },
     }] } })
     const css = '.input{}'
-    const combined = await postcss(handler.getPipeline().plugins).process(css, { from: undefined })
+    const combined = await handler.getPipeline().process(css, { from: undefined })
     const staged = await handler(css)
     expect(staged.css).toBe(combined.css)
     expect(staged.css).toContain('rgba(255, 0, 0, 0.5)')
   })
   it('作者阶段执行显式传入插件，框架重放仍排除重复生成插件', async () => {
-    const Once = vi.fn((root) => { root.append({ selector: '.plugin-output', nodes: [{ prop: 'color', value: 'red' }] }) })
+    const Once = vi.fn((root) => {
+      root.append({ selector: '.plugin-output', nodes: [{ prop: 'color', value: 'red' }] })
+    })
     const plugin = { postcssPlugin: '@tailwindcss/postcss', Once }
     const options = { plugins: [plugin] }
     const handler = createStyleHandler({ cssPreflight: false, postcssOptions: options })

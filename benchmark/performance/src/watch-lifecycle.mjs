@@ -8,6 +8,7 @@ import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { summarize } from './stats.mjs'
 import { closeWatchResources, createWatchControl, runWatchOperation } from './watch-lifecycle/control.mjs'
+import { assertWatchCssAssets } from './watch-lifecycle/css-assets.mjs'
 
 /** 复用真实编译契约的双 CSS 入口，整个样本序列保留同一 watcher。 */
 export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, runs, signal }) {
@@ -15,6 +16,7 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-watch-perf-')))
   const output = path.join(root, 'dist')
   let close = async () => {}
+  let closeResource = 'unacquired'
   const control = createWatchControl(kind, signal, root)
   const write = (file, content) => {
     control.assertActive()
@@ -51,6 +53,7 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
           watchChange(file, change) { control.record('watch-change', { file, change: change.event }) },
           buildStart() { control.record('build-start') },
           writeBundle: { order: 'post', handler(_options, bundle) {
+            assertWatchCssAssets(bundle)
             control.css = Object.values(bundle).filter(asset => asset.type === 'asset' && asset.fileName.endsWith('.css')).sort((a, b) => a.fileName.localeCompare(b.fileName)).map(asset => String(asset.source)).join('\n')
           } },
         }],
@@ -64,6 +67,7 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
         },
       })
       close = () => watcher.close()
+      closeResource = 'vite-watcher'
       watcher.on('event', (event) => {
         control.record('rollup-event', { code: event.code, error: event.error?.message })
         if (event.code === 'END') {
@@ -95,8 +99,15 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
           },
         }],
       })
-      const closeCompiler = () => new Promise((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
+      const closeCompiler = () => new Promise((resolve, reject) => {
+        control.record('close-start', { resource: 'webpack-compiler' })
+        compiler.close((error) => {
+          control.record(error ? 'close-failed' : 'close-complete', { resource: 'webpack-compiler', error: error?.message })
+          error ? reject(error) : resolve()
+        })
+      })
       close = closeCompiler
+      closeResource = 'webpack-compiler'
       compiler.hooks.invalid.tap('BenchmarkWatchEvidence', (file, time) => control.record('invalid', { file, time }))
       compiler.hooks.watchRun.tap('BenchmarkWatchEvidence', () => {
         control.record('watch-run', { modified: [...compiler.modifiedFiles ?? []], removed: [...compiler.removedFiles ?? []] })
@@ -118,9 +129,16 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
         }
       })
       close = () => closeWatchResources([
-        () => new Promise((resolve, reject) => watcher.close(error => error ? reject(error) : resolve())),
+        () => new Promise((resolve, reject) => {
+          control.record('close-start', { resource: 'webpack-watcher' })
+          watcher.close((error) => {
+            control.record(error ? 'close-failed' : 'close-complete', { resource: 'webpack-watcher', error: error?.message })
+            error ? reject(error) : resolve()
+          })
+        }),
         closeCompiler,
       ])
+      closeResource = 'webpack-resources'
     }
     await control.nextBuild(0)
     const startupMs = performance.now() - started
@@ -151,9 +169,11 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       await change([['view.html', template]], css => !/z-index:\s*9876/.test(css))
       const css = await change([['main.css', mainCss]], css => css.includes('author-main') && css.includes('author-secondary'))
       const milliseconds = performance.now() - start
+      control.record('sample-restored', { index })
       outputs.push(css)
       globalThis.gc?.()
       samples.push({ milliseconds, heapMb: process.memoryUsage().heapUsed / 1024 ** 2, rssMb: process.memoryUsage().rss / 1024 ** 2, outputHash: createHash('sha256').update(css).digest('hex') })
+      control.record('sample-created', { index })
     }
     const measured = samples.slice(warmups)
     if (new Set(measured.map(sample => sample.outputHash)).size !== 1) {
@@ -161,9 +181,29 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       await Promise.all(outputs.map((css, index) => fs.writeFile(path.join(artifacts, `${index}.css`), css)))
       throw new Error(`恢复后 CSS 产物不一致，证据：${artifacts}`)
     }
-    return { kind, size, startupMs, warmups, runs, time: summarize(measured.map(sample => sample.milliseconds)), peakRssMb: process.resourceUsage().maxRSS / 1024, peakHeapMb: Math.max(...measured.map(sample => sample.heapMb)), outputCss: outputs.at(-1), samples }
+    control.record('report-start')
+    const report = { kind, size, startupMs, warmups, runs, watchReceipt: control.receipt, time: summarize(measured.map(sample => sample.milliseconds)), peakRssMb: process.resourceUsage().maxRSS / 1024, peakHeapMb: Math.max(...measured.map(sample => sample.heapMb)), outputCss: outputs.at(-1), samples }
+    control.record('report-created')
+    return report
   }, async () => {
-    await close()
-    await fs.rm(root, { recursive: true, force: true })
+    const resource = closeResource
+    control.record('close-start', { resource })
+    try {
+      await close()
+      control.record('close-complete', { resource })
+    }
+    catch (error) {
+      control.record('close-failed', { resource, error: error?.message })
+      throw error
+    }
+    control.record('remove-start')
+    try {
+      await fs.rm(root, { recursive: true, force: true })
+      control.record('remove-complete')
+    }
+    catch (error) {
+      control.record('remove-failed', { error: error?.message })
+      throw error
+    }
   })
 }

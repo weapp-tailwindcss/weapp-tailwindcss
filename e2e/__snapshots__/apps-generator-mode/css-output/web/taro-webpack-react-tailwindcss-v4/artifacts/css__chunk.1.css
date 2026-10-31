@@ -772,7 +772,7 @@
   }
  /*! tokens: px-[29rpx] <= src/pages/index/index.tsx */
   .px-\[29rpx\] {
-    padding-inline: 0.90625rem;
+    padding-inline: 0.725rem;
   }
  /*! tokens: py-2 <= src/pages/index/index.tsx */
   .py-2 {
@@ -784,11 +784,11 @@
   }
  /*! tokens: text-[31rpx] <= src/pages/index/index.tsx */
   .text-\[31rpx\] {
-    font-size: 0.96875rem;
+    font-size: 0.775rem;
   }
  /*! tokens: text-[100rpx] <= src/pages/index/index.tsx */
   .text-\[100rpx\] {
-    font-size: 3.125rem;
+    font-size: 2.5rem;
   }
  /*! tokens: text-[#fff] <= src/pages/index/index.tsx */
   .text-\[\#fff\] {

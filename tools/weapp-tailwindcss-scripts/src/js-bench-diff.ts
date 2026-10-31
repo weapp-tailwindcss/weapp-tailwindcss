@@ -2,11 +2,13 @@
 // Per-file micro benchmark with diffing against a saved baseline.
 // Usage:
 //   pnpm --filter weapp-tailwindcss bench:js-diff
-//   pnpm --filter weapp-tailwindcss bench:js-diff -- --engines=babel,swc,oxc --iter=8 --warmup=1
+//   pnpm --filter weapp-tailwindcss bench:js-diff -- --engines=babel,oxc --iter=8 --warmup=1
 //   pnpm --filter weapp-tailwindcss bench:js-diff -- --save=.bench/baseline.json
 //   pnpm --filter weapp-tailwindcss bench:js-diff -- --compare=.bench/baseline.json
 //   pnpm --filter weapp-tailwindcss bench:js-diff -- --glob="packages/weapp-tailwindcss/test/fixtures/js/**/*.js"
-import type { IJsHandlerOptions, JsHandlerResult } from 'weapp-tailwindcss/src/types'
+import type { IJsHandlerOptions } from 'weapp-tailwindcss/types'
+import type { JsBenchmarkHandler, RunnableJsEngine } from './benchmark/js-engines'
+import type { BenchSnapshot, PerEngineStats, PerFileResult } from './benchmark/js-snapshots'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
@@ -16,43 +18,19 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import pc from 'picocolors'
+import { loadJsBenchmarkHandler, parseJsBenchmarkEngines } from './benchmark/js-engines'
+import { compareToBabel, diffSnapshots, toSnapshot } from './benchmark/js-snapshots'
+import { parseBenchmarkNumber } from './benchmark/options'
+import { assertFiniteSamples, percentile } from './benchmark/statistics'
 import { resolveCorePackagePath } from './paths'
 
-type EngineId = 'babel' | 'swc' | 'oxc'
-
 interface RunOptions {
-  engines: EngineId[]
+  engines: RunnableJsEngine[]
   glob: string | string[]
   iter: number
   warmup: number
-  save?: string
-  compare?: string
-}
-
-interface PerEngineStats {
-  iter: number
-  samples: number[]
-  median: number
-  mean: number
-  p95: number
-}
-
-interface PerFileResult {
-  id: string
-  engines: Record<string, PerEngineStats>
-}
-
-interface BenchSnapshot {
-  version: 1
-  meta: {
-    date: string
-    commit?: string
-    engines: EngineId[]
-    iter: number
-    warmup: number
-    glob: string | string[]
-  }
-  files: PerFileResult[]
+  save?: string | undefined
+  compare?: string | undefined
 }
 
 const __filename = fileURLToPath(import.meta.url)
@@ -86,11 +64,10 @@ function parseArgs(): RunOptions {
     const v = args.find(a => a.startsWith(p))
     return v ? after(v, p) : d
   }
-  const enginesStr = get('engines', 'babel,swc,oxc')!
-  const engines = enginesStr.split(',').map(s => s.trim()).filter(Boolean) as EngineId[]
+  const engines = parseJsBenchmarkEngines(get('engines'))
   const glob = get('glob', 'packages/weapp-tailwindcss/test/fixtures/**/*.{js,jsx,ts,tsx,wxs}')!
-  const iter = Number(get('iter', '8'))
-  const warmup = Number(get('warmup', '1'))
+  const iter = parseBenchmarkNumber(get('iter'), 8, '--iter', 'positive-integer')
+  const warmup = parseBenchmarkNumber(get('warmup'), 1, '--warmup', 'nonnegative-integer')
   const save = get('save')
   const compare = get('compare')
   return { engines, glob, iter, warmup, save, compare }
@@ -98,14 +75,6 @@ function parseArgs(): RunOptions {
 
 function now() {
   return performance.now()
-}
-
-function percentile(sorted: number[], p: number) {
-  if (sorted.length === 0) {
-    return 0
-  }
-  const idx = Math.ceil((p / 100) * sorted.length) - 1
-  return sorted[Math.min(Math.max(idx, 0), sorted.length - 1)]
 }
 
 async function loadFiles(globPattern: string | string[]) {
@@ -138,38 +107,11 @@ function makeBaseOptions(): IJsHandlerOptions {
   }
 }
 
-function useBabel() {
-  const { jsHandler } = require('weapp-tailwindcss/src/js/babel') as typeof import('weapp-tailwindcss/src/js/babel')
-  return jsHandler
-}
-
-function useSwc() {
-  const { swcJsHandler } = require('weapp-tailwindcss/src/experimental/swc') as typeof import('weapp-tailwindcss/src/experimental/swc')
-  return swcJsHandler
-}
-
-function useOxc() {
-  const { oxcJsHandler } = require('weapp-tailwindcss/src/js/fast-path/oxc') as typeof import('weapp-tailwindcss/src/js/fast-path/oxc')
-  return oxcJsHandler
-}
-
-function getHandler(id: EngineId) {
-  if (id === 'babel') {
-    return useBabel()
-  }
-  if (id === 'swc') {
-    return useSwc()
-  }
-  if (id === 'oxc') {
-    return useOxc()
-  }
-  throw new Error(`unknown engine: ${id}`)
-}
-
 function computeStats(samples: number[]): PerEngineStats {
+  assertFiniteSamples(samples)
   const sorted = [...samples].sort((a, b) => a - b)
   const sum = samples.reduce((a, b) => a + b, 0)
-  const mean = samples.length > 0 ? (sum / samples.length) : 0
+  const mean = sum / samples.length
   return {
     iter: samples.length,
     samples,
@@ -180,15 +122,15 @@ function computeStats(samples: number[]): PerEngineStats {
 }
 
 async function benchPerFile(
-  id: EngineId,
+  id: RunnableJsEngine,
   files: { id: string, code: string }[],
   options: IJsHandlerOptions,
   iter: number,
   warmup: number,
 ) {
-  const handler: (code: string, opts: IJsHandlerOptions) => JsHandlerResult = getHandler(id)
-  const fallbackHandler: ((code: string, opts: IJsHandlerOptions) => JsHandlerResult) | undefined = id === 'oxc'
-    ? useBabel()
+  const handler = await loadJsBenchmarkHandler(id)
+  const fallbackHandler: JsBenchmarkHandler | undefined = id === 'oxc'
+    ? await loadJsBenchmarkHandler('babel')
     : undefined
   const results: PerFileResult[] = []
 
@@ -243,26 +185,6 @@ function mergePerEngine(a: PerFileResult[], b: PerFileResult[]) {
   return [...map.values()]
 }
 
-function toSnapshot(
-  engines: EngineId[],
-  iter: number,
-  warmup: number,
-  glob: string | string[],
-  files: PerFileResult[],
-): BenchSnapshot {
-  return {
-    version: 1,
-    meta: {
-      date: new Date().toISOString(),
-      engines,
-      iter,
-      warmup,
-      glob,
-    },
-    files,
-  }
-}
-
 async function saveSnapshot(pathname: string, snap: BenchSnapshot) {
   await fs.outputJson(path.resolve(repoRoot, pathname), snap, { spaces: 2 })
 }
@@ -273,74 +195,6 @@ async function loadSnapshot(pathname: string): Promise<BenchSnapshot | undefined
     return undefined
   }
   return fs.readJson(abs)
-}
-
-function ratio(a: number, b: number) {
-  if (b <= 0) {
-    return 0
-  }
-  return a / b
-}
-
-function percent(deltaRatio: number) {
-  return `${(deltaRatio * 100).toFixed(1)}%`
-}
-
-function compareToBabel(files: PerFileResult[]) {
-  const rows: Array<{
-    file: string
-    swcVsBabel?: string
-    oxcVsBabel?: string
-  }> = []
-  for (const f of files) {
-    const babel = f.engines.babel?.median
-    const swc = f.engines.swc?.median
-    const oxc = f.engines.oxc?.median
-    rows.push({
-      file: f.id,
-      swcVsBabel: (typeof swc === 'number' && typeof babel === 'number') ? percent(1 - ratio(swc, babel)) : undefined,
-      oxcVsBabel: (typeof oxc === 'number' && typeof babel === 'number') ? percent(1 - ratio(oxc, babel)) : undefined,
-    })
-  }
-  return rows
-}
-
-function diffSnapshots(curr: BenchSnapshot, base: BenchSnapshot) {
-  const baseMap = new Map(base.files.map(f => [f.id, f]))
-  const deltas: Array<{
-    file: string
-    engine: string
-    base: number
-    curr: number
-    deltaMs: number
-    deltaPct: string
-  }> = []
-  for (const f of curr.files) {
-    const old = baseMap.get(f.id)
-    if (!old) {
-      continue
-    }
-    for (const [engine, stats] of Object.entries(f.engines)) {
-      const prev = old.engines[engine]
-      if (!prev) {
-        continue
-      }
-      const baseMed = prev.median
-      const currMed = stats.median
-      const d = currMed - baseMed
-      const pct = baseMed > 0 ? (d / baseMed) : 0
-      deltas.push({
-        file: f.id,
-        engine,
-        base: baseMed,
-        curr: currMed,
-        deltaMs: d,
-        deltaPct: percent(pct),
-      })
-    }
-  }
-  deltas.sort((a, b) => Math.abs(b.deltaMs) - Math.abs(a.deltaMs))
-  return deltas
 }
 
 async function main() {
@@ -365,8 +219,8 @@ async function main() {
       merged = mergePerEngine(merged, res)
       console.log(pc.green(`done: ${id}`))
     }
-    catch (err: any) {
-      console.log(pc.red(`${id} failed: ${err?.message ?? err}`))
+    catch (error) {
+      throw new Error(`${id} failed: ${error instanceof Error ? error.message : String(error)}`, { cause: error })
     }
   }
 

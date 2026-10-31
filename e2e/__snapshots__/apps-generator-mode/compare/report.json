@@ -8836,7 +8836,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 452164,
+      "bytes": 452048,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -11156,7 +11156,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 443880,
+      "bytes": 443764,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -13477,7 +13477,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 461673,
+      "bytes": 461593,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -15816,7 +15816,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 459565,
+      "bytes": 459485,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -18153,7 +18153,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 640712,
+      "bytes": 640559,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -19971,7 +19971,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 637633,
+      "bytes": 637480,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -21789,7 +21789,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 337114,
+      "bytes": 337108,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -23583,7 +23583,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 333943,
+      "bytes": 333937,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -25386,7 +25386,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 89437,
+      "bytes": 89624,
       "selectors": [
         "#app",
         "*",
@@ -25759,7 +25759,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 85298,
+      "bytes": 85437,
       "selectors": [
         "#app",
         "*",
@@ -26130,7 +26130,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 108546,
+      "bytes": 101512,
       "selectors": [
         "#app",
         "*",
@@ -26618,7 +26618,6 @@
         "[nvue] uni-view",
         "abc",
         "body",
-        "button:after",
         "code.hljs",
         "input[type='search']::-webkit-search-cancel-button",
         "pre code.hljs",
@@ -26812,7 +26811,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 108546,
+      "bytes": 101512,
       "selectors": [
         "#app",
         "*",
@@ -27300,7 +27299,6 @@
         "[nvue] uni-view",
         "abc",
         "body",
-        "button:after",
         "code.hljs",
         "input[type='search']::-webkit-search-cancel-button",
         "pre code.hljs",

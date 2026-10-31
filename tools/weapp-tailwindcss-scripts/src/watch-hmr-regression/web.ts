@@ -498,7 +498,7 @@ async function runSourceDomReplacementSequence(
   page: Page,
   config: WebHmrConfig,
   sourceOriginal: string,
-  cssEntryOriginal?: string | undefined,
+  cssEntryOriginal: string | undefined,
   createReloadRecovery: () => ReturnType<typeof createWebHmrReloadRecovery>,
   waitForCompileSettled: WaitForCompileSettled,
 ) {

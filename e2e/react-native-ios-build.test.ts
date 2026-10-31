@@ -54,6 +54,9 @@ async function fixture() {
     if (file === 'xcrun' && args[1] === 'get_app_container') {
       return container
     }
+    if (file === 'xcrun' && args[0] === 'lipo') {
+      return 'arm64\n'
+    }
     if (file === 'xcrun' && args[1] === 'launch') {
       return `${bundleId}: 12345\n`
     }
@@ -70,13 +73,13 @@ it('核对本轮安装二进制后直接启动应用，不经过系统深链确�
   const current = await fixture()
   await buildAndLaunchIos(current.options, current.execute)
   const calls = current.execute.mock.calls
-  expect(calls.map(([file]) => file)).toEqual(['pnpm', 'pod', 'xcodebuild', 'xcodebuild', 'plutil', 'plutil', 'xcrun', 'xcrun', 'xcrun', 'xcrun'])
+  expect(calls.map(([file]) => file)).toEqual(['pnpm', 'pod', 'xcodebuild', 'xcodebuild', 'plutil', 'plutil', 'xcrun', 'xcrun', 'xcrun', 'xcrun', 'xcrun', 'xcrun', 'xcrun', 'xcrun'])
   expect(calls[1]).toEqual(['pod', ['install', `--project-directory=${path.join(current.options.project, 'ios')}`], current.options.project, true])
   for (const [file, args] of calls) {
     if (file === 'xcodebuild') {
       expect(args).toContain(`id=${device}`)
     }
-    if (file === 'xcrun' && args[1] !== 'launch') {
+    if (file === 'xcrun' && args[0] === 'simctl' && args[1] !== 'launch') {
       expect(args[2]).toBe(device)
     }
     expect(args).not.toContain('boot')

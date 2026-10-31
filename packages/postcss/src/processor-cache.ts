@@ -1,12 +1,14 @@
 import type { ProcessOptions, Processor } from 'postcss'
 import type { FeatureSignal } from './content-probe'
-import type { StyleProcessingPipeline } from './pipeline'
+import type { PhasedStyleProcessingPipeline, StyleProcessingPipeline } from './pipeline'
 import type { IStyleHandlerOptions } from './types'
 import { LRUCache } from 'lru-cache'
 import postcss from 'postcss'
 import { signalToCacheKey } from './content-probe'
 import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
 import { createStylePipeline } from './pipeline'
+import { getPresetInsertionCacheState } from './preset-insertion-cache-policy'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 
 function createProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
   return {
@@ -50,7 +52,7 @@ function getSimpleProcessOptionsCacheKey(options: Record<string, unknown>) {
 export class StyleProcessorCache {
   private readonly pipelineCacheByKey = new LRUCache<string, StyleProcessingPipeline>({ max: 64 })
   private readonly processOptionsCache = new WeakMap<IStyleHandlerOptions, { value: ProcessOptions, cacheKey?: string | undefined }>()
-  private readonly processorCacheByKey = new LRUCache<string, Processor>({ max: 64 })
+  private readonly processorCacheByKey = new LRUCache<string, Processor | PhasedStyleProcessingPipeline>({ max: 64 })
 
   private createProcessorCacheKey(options: IStyleHandlerOptions) {
     const from = options.postcssOptions?.options?.from
@@ -81,8 +83,12 @@ export class StyleProcessorCache {
   }
 
   getPipeline(options: IStyleHandlerOptions, signal?: FeatureSignal) {
+    const insertions = getPresetInsertionCacheState(options.cssPresetEnv)
+    if (insertions.key === undefined) {
+      return createStylePipeline(options, signal)
+    }
     const optionsKey = this.createProcessorCacheKey(options)
-    const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
+    const compositeKey = this.createCompositeCacheKey(`${optionsKey}|${insertions.key}`, signal)
     return this.getPipelineByKey(compositeKey, options, signal)
   }
 
@@ -97,6 +103,9 @@ export class StyleProcessorCache {
 
   getProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
     const source = options.postcssOptions?.options
+    if (hasOpaqueProcessOptions(source)) {
+      return createProcessOptions(options)
+    }
     const cacheKey = source
       ? getSimpleProcessOptionsCacheKey(source as Record<string, unknown>) ?? fingerprintOptions(source)
       : undefined
@@ -112,14 +121,19 @@ export class StyleProcessorCache {
   }
 
   getProcessor(options: IStyleHandlerOptions, signal?: FeatureSignal) {
+    const insertions = getPresetInsertionCacheState(options.cssPresetEnv)
+    if (insertions.key === undefined) {
+      const pipeline = createStylePipeline(options, signal)
+      return pipeline.kind === 'flat' ? postcss(pipeline.plugins) : pipeline
+    }
     const optionsKey = this.createProcessorCacheKey(options)
-    const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
+    const compositeKey = this.createCompositeCacheKey(`${optionsKey}|${insertions.key}`, signal)
 
     let processor = this.processorCacheByKey.get(compositeKey)
     if (!processor) {
       // 同次处理的选项快照未变，直接传递签名，避免 miss 路径重复遍历嵌套配置。
       const pipeline = this.getPipelineByKey(compositeKey, options, signal)
-      processor = postcss(pipeline.plugins)
+      processor = pipeline.kind === 'flat' ? postcss(pipeline.plugins) : pipeline
       this.processorCacheByKey.set(compositeKey, processor)
     }
     return processor

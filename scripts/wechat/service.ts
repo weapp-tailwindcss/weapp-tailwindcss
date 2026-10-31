@@ -5,7 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { wechatVersion } from '../e2e-preflight/probes/wechat-version'
-import { WechatEnvironmentError, wechatTransportDetail } from './errors'
+import { WechatEnvironmentError, wechatResponseDetail, wechatTransportDetail } from './errors'
 
 export function wechatCliPath() {
   const cli = process.env.E2E_PREFLIGHT_WECHAT_CLI
@@ -273,8 +273,8 @@ export async function wechatRequest(port: string | number, operation: Operation,
       const validObject = !!result && typeof result === 'object' && !Array.isArray(result)
       if (!response.ok || (!validObject && !stableWindowId) || (validObject && ((result as Record<string, unknown>).code || (result as Record<string, unknown>).error || (result as Record<string, unknown>).success === false))) {
         blocked.add(actualPort)
-        // 不回显可能包含凭据的服务端正文，保留状态码供定位。
-        throw new WechatEnvironmentError(`微信 IDE ${operation.kind} 失败（HTTP ${response.status}）；请检查 IDE 认证/项目授权，E2E 不会登录、刷新票据或重试账号操作。`)
+        // 服务端把多种项目异常统一返回 500，只保留安全分类，不回显正文或推断账号故障。
+        throw new WechatEnvironmentError(`微信 IDE ${operation.kind} 失败（HTTP ${response.status}，127.0.0.1:${actualPort}）；${wechatResponseDetail(response.status, result)}；停止本轮项目请求并保留现场，E2E 不会登录、刷新票据或重试账号操作。`)
       }
       if (operation.kind === 'auto') {
         const objectResult = validObject ? result as Record<string, unknown> : undefined

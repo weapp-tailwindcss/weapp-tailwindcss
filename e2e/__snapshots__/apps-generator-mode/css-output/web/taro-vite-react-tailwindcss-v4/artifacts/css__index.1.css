@@ -337,7 +337,7 @@
   }
  /*! tokens: grid-cols-[200rpx_minmax(900rpx,_1fr)_000089px] <= src/sub-normal/pages/index.tsx */
   .grid-cols-\[200rpx_minmax\(900rpx\,_1fr\)_000089px\] {
-    grid-template-columns: 6.25rem minmax(28.125rem, 1fr) 2.225rem;
+    grid-template-columns: 5rem minmax(22.5rem, 1fr) 2.225rem;
   }
  /*! tokens: grid-rows-[auto_minmax(0,_1fr)] <= src/sub-normal/pages/index.tsx */
   .grid-rows-\[auto_minmax\(0\,_1fr\)\] {

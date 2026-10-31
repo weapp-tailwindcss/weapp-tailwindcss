@@ -120,6 +120,12 @@ function createTaroPlatformCase(
     )
   }
   const replaceOutputFiles = (files: string[]) => files.map(replaceOutputFile)
+  const subPackageMutations = watchCase.subPackageMutations?.map(mutation => ({
+    ...mutation,
+    outputWxml: replaceOutputFile(mutation.outputWxml),
+    outputStyleCandidates: replaceOutputFiles(mutation.outputStyleCandidates),
+    globalStyleCandidates: replaceOutputFiles(mutation.globalStyleCandidates),
+  }))
 
   return {
     ...watchCase,
@@ -133,12 +139,7 @@ function createTaroPlatformCase(
     outputWxml: replaceOutputFile(watchCase.outputWxml),
     outputStyleCandidates: replaceOutputFiles(watchCase.outputStyleCandidates),
     globalStyleCandidates: replaceOutputFiles(watchCase.globalStyleCandidates),
-    subPackageMutations: watchCase.subPackageMutations?.map(mutation => ({
-      ...mutation,
-      outputWxml: replaceOutputFile(mutation.outputWxml),
-      outputStyleCandidates: replaceOutputFiles(mutation.outputStyleCandidates),
-      globalStyleCandidates: replaceOutputFiles(mutation.globalStyleCandidates),
-    })),
+    ...(subPackageMutations ? { subPackageMutations } : {}),
   }
 }
 
@@ -162,6 +163,21 @@ function createUniAppPlatformCase(
     path.join(buildOutputRoot, `common.${outputExtensions.style}`),
     path.join(buildOutputRoot, `app.${outputExtensions.style}`),
   ]
+  const outputIntegrityGuards = watchCase.outputIntegrityGuards?.map(guard => ({
+    ...guard,
+    ...(guard.file ? { file: replaceOutputFile(guard.file) } : {}),
+    ...(guard.directory ? { directory: replacePlatformPath(guard.directory) } : {}),
+  }))
+  const subPackageMutations = watchCase.subPackageMutations?.map(mutation => ({
+    ...mutation,
+    outputWxml: replaceOutputFile(mutation.outputWxml),
+    outputJs: replacePlatformPath(mutation.outputJs),
+    outputStyleCandidates: replaceOutputFiles(mutation.outputStyleCandidates),
+    globalStyleCandidates: [
+      ...replaceOutputFiles(mutation.globalStyleCandidates),
+      ...buildGlobalStyleCandidates,
+    ],
+  }))
   return {
     ...watchCase,
     name: `${watchCase.name}:${platform}`,
@@ -175,21 +191,8 @@ function createUniAppPlatformCase(
     outputJs: replacePlatformPath(watchCase.outputJs),
     outputStyleCandidates: buildGlobalStyleCandidates,
     globalStyleCandidates: buildGlobalStyleCandidates,
-    outputIntegrityGuards: watchCase.outputIntegrityGuards?.map(guard => ({
-      ...guard,
-      ...(guard.file ? { file: replaceOutputFile(guard.file) } : {}),
-      ...(guard.directory ? { directory: replacePlatformPath(guard.directory) } : {}),
-    })),
-    subPackageMutations: watchCase.subPackageMutations?.map(mutation => ({
-      ...mutation,
-      outputWxml: replaceOutputFile(mutation.outputWxml),
-      outputJs: replacePlatformPath(mutation.outputJs),
-      outputStyleCandidates: replaceOutputFiles(mutation.outputStyleCandidates),
-      globalStyleCandidates: [
-        ...replaceOutputFiles(mutation.globalStyleCandidates),
-        ...buildGlobalStyleCandidates,
-      ],
-    })),
+    ...(outputIntegrityGuards ? { outputIntegrityGuards } : {}),
+    ...(subPackageMutations ? { subPackageMutations } : {}),
   }
 }
 

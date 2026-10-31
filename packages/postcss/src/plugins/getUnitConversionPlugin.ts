@@ -133,7 +133,7 @@ export function resolveUnitConversionConfig(
   options: Pick<IStyleHandlerOptions, 'platform' | 'unitConversion'>,
 ): UnitConversionConfig | undefined {
   const unitConversion = options.unitConversion
-  if (!unitConversion || unitConversion === false) {
+  if (!unitConversion) {
     return undefined
   }
 
@@ -141,7 +141,7 @@ export function resolveUnitConversionConfig(
     unitConversion,
     resolveUnitConversionPlatform(options),
   )
-  if (!config || config === false || config.disabled || !hasRules(config)) {
+  if (!config || config.disabled || !hasRules(config)) {
     return undefined
   }
 

@@ -55,7 +55,7 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
       throw error
     }
   }
-  const identity = (pids: readonly number[] | undefined, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'identity', pids }, value => parseWindowsProcesses(JSON.stringify(value)), timeoutMs, requestSignal)
+  const identity = (pids: readonly number[] | undefined, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'identity', ...(pids === undefined ? {} : { pids }) }, value => parseWindowsProcesses(JSON.stringify(value)), timeoutMs, requestSignal)
   const memory = (rootPid: number, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'memory', rootPid, cwd: process.cwd() }, parseWindowsMemorySample, timeoutMs, requestSignal)
   try {
     const readyAt = await transport.waitUntilReady(startupDeadline - Date.now(), signal)

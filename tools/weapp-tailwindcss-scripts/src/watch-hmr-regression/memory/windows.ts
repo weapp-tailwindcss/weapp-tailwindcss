@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
-import { windowsObserverInputScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/input-script'
+import { windowsObserverInputFailureScript, windowsObserverInputProgress, windowsObserverInputScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/input-script'
 import { windowsObserverShutdownScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/shutdown-script'
 
 // 单次 fixture 与持久会话复用同一采集函数，保留 Watch 自身的进程范围。
@@ -64,17 +64,30 @@ $ErrorActionPreference = 'Stop'
 [Console]::Out.Flush()
 ${windowsWatchMemoryFunction}
 while ($null -ne ($line = [Console]::In.ReadLine())) {
+  $request = $null
+  $observerInputLine = $null
+  $observerInputStage = $null
+  $observerInputComplete = $false
+  $observerInputTrace = -not $observerJsonLoaded
   try {
   ${windowsObserverInputScript}
-  $request = Microsoft.PowerShell.Utility\\ConvertFrom-Json -InputObject $line
   if ($request.kind -ne 'memory') { throw 'Watch memory source accepts memory requests only' }
-  [Console]::Out.WriteLine('{"event":"request-received","kind":"memory","id":' + [string][int]$request.id + '}')
+  ${windowsObserverInputProgress('request-ack-serialize-start')}
+  $observerRequestAck = '{"event":"request-received","kind":"memory","id":' + [string][int]$request.id + '}'
+  ${windowsObserverInputProgress('request-ack-serialized')}
+  ${windowsObserverInputProgress('request-ack-write-start')}
+  [Console]::Out.WriteLine($observerRequestAck)
   [Console]::Out.Flush()
+  ${windowsObserverInputProgress('request-ack-flushed')}
+  $observerInputComplete = $true
   $rows = Get-WatchMemory -root ([int]$request.rootPid) -repositoryRoot ([string]$request.cwd)
   [Console]::Out.WriteLine('{"event":"query-completed","kind":"memory","id":' + [string][int]$request.id + '}')
   [Console]::Out.Flush()
   $response = @{ id = [int]$request.id; rows = $rows }
   } catch {
+  if (-not $observerInputComplete) {
+    ${windowsObserverInputFailureScript}
+  }
   $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
   $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress

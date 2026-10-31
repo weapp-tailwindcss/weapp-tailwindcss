@@ -1,0 +1,70 @@
+---
+status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1323
+baseline: f9f0cd0aad68f3e0774790d15b87fc443c7ef4e8
+regressions:
+  - packages/postcss/test/mini-program-css.test.ts
+  - packages/postcss/test/root-cleanups-selectors.test.ts
+  - packages/postcss/test/selectorParser.test.ts
+  - packages/postcss/test/css-macro.test.ts
+  - packages/postcss/test/css-macro-idempotency.test.ts
+  - packages/postcss/test/unit-conversion.test.ts
+  - packages/postcss/test/coverage-extra.test.ts
+  - packages/postcss/test/class-presence.test.ts
+  - packages/postcss/test/empty-blocks.test.ts
+  - packages/postcss/test/web-css-compat.test.ts
+  - packages/postcss/test/mp.test.ts
+  - packages/postcss/test/vite-css-rules-selector-prefilter.test.ts
+  - packages/postcss/test/container-node-identity.test.ts
+  - packages/postcss/test/handler-object-shapes.test.ts
+  - packages/postcss/test/container-cleanup-contract.test.ts
+---
+
+# CSS 内容分类与节点种类判别
+
+## 症状
+
+依赖升级后的 scripts 标准严格类型检查在小程序 CSS 裁剪及 selector 转换中报告普通 Rule、Pseudo 为 never。继续加非空断言或强转，只会掩盖分类函数本身的错误声明。
+
+## 根因与纠正
+
+`isMiniProgramPreflightRule`、`isBrowserElementPreflightRule` 和 `isMiniProgramThemeVariableRule` 判断的是规则内容是否属于某一类，却声明为 `node is Rule`。这个声明同时表示：返回 false 时，输入就不是 Rule。实际普通 class 规则也是 Rule，因而已由 walkRules 确认的节点在 false 分支被错误排除。RTL 特定伪类分类器对已确认的 Pseudo 有相同问题。
+
+四个内容分类器明确返回 boolean。小程序分类器接收 PostCSS 的 AnyNode 判别联合，保留 comment、at-rule、declaration、root、document 的非匹配语义；只有 `node.type === 'rule'` 才进入规则内容判断。theme 和 preflight 收集器分别在需要 Rule 操作的边界显式判别。单个 selector 也在 Map 查询前检查实际取值，不用断言隐藏索引边界。RTL 分类体与集合保持原样。
+
+相邻严格检查还要求把“已经检查过派生结果”与“节点本身已判别”分开：CSS macro 先确认 comment 再解析条件，selector fallback 捕获唯一子节点后检查 id。macro 平台接收端允许既有调用方的显式 undefined，递归扫描明确返回 boolean，walk 回调只做收集、不返回数组长度。环境字典按原键访问，单位配置删除已被前置否定覆盖的 false 比较；这些修改保留原分支与 CSS 转换结果。
+
+数组边界同样应捕获将要消费的节点：class 存在条件只在同一复合选择器内查找已有 class，保留组合子边界；空块扫描只标记实际存在的当前块或父块；唯一小程序选择器先检查节点。渐变与 selector 转换上下文的可选类型准确保留现有显式 undefined 字段，不改变对象键。Tailwind v4 版本接收端与调用方对齐，变量祖先声明使用真实 Declaration 类型并覆盖 Root 的 Document 父节点，不以假定祖先一定是 Rule 或 AtRule 截断遍历。
+
+这修复的是类型契约。现有证据没有显示对应 CSS 输出发生了运行时错误，不把原有通过结果重新归因为本次修复。
+
+祖先容器还必须包含 Root 的 Document 父节点。class 祖先与关键帧扫描使用真实祖先联合；注册隔离只克隆 Rule/AtRule 包装器，停止于所属 Root/Document，空祖先仅在确有空 nodes 时删除。私有 self-import 判别接收唯一 walk 调用方提供的 ChildNode，Harmony remove 回调返回 void。没有扩大 Root-only 转换算法的输入域。
+
+PostCSS 的声明原对象与 visitor 代理也不能当作两个缓存身份。真实运行时的 `proxyOf` 返回同一个原对象，公开类型未声明此属性；在属性存在且值为非空对象时使用它，否则使用声明本身。三个读写点都消费同一身份函数和 `WeakMap<object, string>`，不能直接以代理对象替代，也不借助强转隐藏上游边界。真实 preset-env 在同一 AST 上两次处理，验证 preserve 开关、精确回退、声明身份与次序。
+
+handler 的空白和诊断字段也须区分“字段不存在”和“字段值为 undefined”。删除作者首节点后，原 before 值可能确实缺失，输出原本仍显式写入 `raws.before = undefined`；通过真实 raws 对象的局部接收契约保留该赋值，不删除字段或改成空串。上游各 raws 是可扩展字典，局部类型同时保留 `Record<string, unknown>` 与具体 before 契约；首次仅含可选 before 的弱类型与 RootRaws 没有共同显式字段，严格检查仍报错，该日志保留。非 Error 作者异常的诊断同样原本含 own `name: undefined`，公开事件接收端允许此既有形状。两者只补正类型边界，不改变 CSS、异常拒绝值或事件对象。
+
+清理 helper 的容器域也应由实际算法决定。`removeEmptyBlockAtRules` 仅使用共同的 `walkAtRules` 与节点删除，`splitUnresolvedAuthorVariableFallbacks` 仅使用 `walkDecls`、声明克隆及父容器插入；二者原本就能处理 Document，没有 Root 专用来源、主题或 banner 逻辑。接收类型明确补全为 Root 或 Document，保持原遍历和共享只读变量表；不把其他 Root-only 算法一起扩大输入域。
+
+## 验证
+
+在本任务独立依赖工作树、Node24.22.1/pnpm12.15.0、包含本地改动的源码下：
+
+- `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/mini-program-css.test.ts test/root-cleanups-selectors.test.ts test/selectorParser.test.ts --update=none`：3文件82项通过。新增边界要求普通 Rule 不命中这些分类时仍可消费 selector/nodes，其他五类节点全部返回 false；既有用例覆盖主题、preflight、普通 class/id、复杂原生标签、嵌套清理、RTL 以及 before/after/root 伪类。
+- 原配置 `pnpm --filter @weapp-tailwindcss/scripts exec tsc --noEmit --pretty false`：98→72条诊断，26条相关错误消失，整体仍失败。没有修改 flags、noCheck 或源码包含范围。
+- 后续四文件边界修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/css-macro.test.ts test/css-macro-idempotency.test.ts test/selectorParser.test.ts test/unit-conversion.test.ts test/coverage-extra.test.ts --update=none`：5文件119项通过；相同严格入口72→60条，仍失败。四个源码文件显式 lint 通过，既有条件编译、平台别名、嵌套注释、缺失 endif、空分支、唯一 id 与禁用单位配置断言保留。
+- 后续六文件索引与上下文修复使用 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/class-presence.test.ts test/empty-blocks.test.ts test/coverage-extra.test.ts test/web-css-compat.test.ts test/mp.test.ts test/selectorParser.test.ts test/vite-css-rules-selector-prefilter.test.ts --update=none`：7文件148项通过；相同严格入口60→45条，仍失败。六个源码文件显式 lint 通过，未更新快照或 CSS 基线。
+- 祖先与身份组的五个新增控制用例在修改前已通过，运行时没有新失败复现；类型失败由原严格入口的十条诊断证明。修改后 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/container-node-identity.test.ts test/mini-program-generated-css.test.ts test/web-property-framework-normalization.test.ts test/web-property-fallback-phases.test.ts test/style-transform-ownership.test.ts test/local-imports.test.ts test/handler-gradient-fallback.test.ts --update=none --coverage.enabled=false`：7文件117项通过，注册正常/异常恢复和相邻 Root 身份、class/关键帧及真实 raw/proxy 重访均覆盖。原严格入口34→24条，仍失败；未修改编译配置、快照或 CSS 基线。
+- handler 两个新增形状控制在修改生产代码前已经通过，不记录为新运行时缺陷。首次新 CSS 缩进期望误写，修正为实际 PostCSS 默认输出后两项通过，原日志保留；明确验证 own before/own name、输入根不变及原拒绝值。`CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/handler-object-shapes.test.ts test/user-stage-leading-source.test.ts test/handler.root.test.ts test/handler.cache.test.ts test/handler-cache-preparation.test.ts --update=none --coverage.enabled=false`：五文件20项通过，覆盖相邻来源和缓存边界。原严格入口7→4条，整体仍失败，未放宽编译参数或输入域。
+
+- 清理契约三个新增运行时控制在源码修改前已全部通过，原失败是严格入口的两个参数类型错误。修改后 `pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/container-cleanup-contract.test.ts test/root-cleanups-selectors.test.ts test/empty-blocks.test.ts test/uni-app-x-document.test.ts test/uni-app-x.test.ts test/handler.root.test.ts --update=none --coverage.enabled=false`：6文件56项通过，覆盖嵌套空块多轮计数、保留 statement/comment、空 Document、多个 Root 的 fallback 及声明/Input 身份。三文件显式 lint 通过；首次新测试的五条格式错误已修正并保留失败日志。原严格入口4→2条，剩作者阶段受保护接口访问，仍未通过。
+
+## 适用边界
+
+PostCSS 包自己的 tsconfig 仍带既有 noCheck，普通构建不代表严格类型验收。本次使用原 scripts 严格入口观察其实际消费的源码，剩余错误继续阻断整包类型通过。内部内容分类签名和收集边界变化不改变正式 RSS 预算、原生事件链路或平台支持范围。
+
+清理契约补正没有改变 handler 的 parser、保护占位、缓存或 source map 流程。已知 opaque parser/stringifier 与 Document 准备边界的设计仍未实施，不能把这两个参数错误消失写成完整多文档处理修复。
+
+## 规则评估
+
+不新增 AGENTS 条目。现有“先修根因、按 AST 所有权划分边界、补回归”的规则充分；不要将所有按内容命名的函数统一改为类型守卫，也不要因本轮错误数量扩大到不相关判别函数。
