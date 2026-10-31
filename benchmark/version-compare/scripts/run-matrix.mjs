@@ -366,7 +366,10 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
         reject(new Error(`build timeout ${timeoutMs}ms`))
       }, timeoutMs)
 
-      child.once('error', (error) => { clearTimeout(timer); reject(error) })
+      child.once('error', (error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
       child.once('close', (exitCode) => {
         clearTimeout(timer)
         resolve(exitCode ?? 1)
@@ -565,7 +568,9 @@ async function runHmrRounds({
     async () => {
       if (sourceDirty) {
         await fs.writeFile(sourcePath, original, 'utf8')
-        if (diagnostics?.source) await diagnostics.source('failure-restored', sourcePath, original)
+        if (diagnostics?.source) {
+          await diagnostics.source('failure-restored', sourcePath, original)
+        }
       }
     },
   ])
@@ -836,6 +841,7 @@ async function main() {
     throw new Error('输入证据与分配采样必须分开运行')
   }
   validateAllocationRequest({
+    mode: inputDiagnostics ? 'inputs' : 'allocation',
     enabled: allocationDiagnostics || inputDiagnostics,
     guardMode: process.argv.includes('--guard'),
     baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',

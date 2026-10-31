@@ -4,12 +4,12 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { persistCompilationEvidence } from './capture.mjs'
-import { diagnosticSymbol, limits, mpxProject } from './constants.mjs'
+import { diagnosticSymbol, limits, mpxProject, validateDiagnosticMode } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
 import { runWithCleanup } from './failures.mjs'
 import { createOperationRecorder } from './operations.mjs'
-import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
 import { createUniInputObserver, uniInputProject } from './uni-observer.mjs'
+import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
 
 async function start() {
   const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
@@ -21,6 +21,7 @@ async function start() {
     return
   }
   const identity = JSON.parse(serialized)
+  validateDiagnosticMode(identity.mode)
   const writer = createEvidenceWriter(identity.sessionDirectory)
   const preloadPath = fileURLToPath(import.meta.url)
   const moduleHashes = Object.fromEntries(Object.keys(identity.moduleHashes).map((name) => {
@@ -90,7 +91,9 @@ async function start() {
 
   async function fail(error) {
     recordingError = error instanceof Error ? error.message : String(error)
-    return runWithCleanup(async () => { throw error }, [() => sampler?.close(), writeStatus])
+    return runWithCleanup(async () => {
+      throw error
+    }, [() => sampler?.close(), writeStatus])
   }
 
   async function capture(collections, stop = false, completedPhase, rootCompilationId, finalizationId) {

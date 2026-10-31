@@ -23,10 +23,10 @@ describe('分配诊断输入和正式门禁隔离', () => {
     expect(() => diagnosticMutationMarker(4, original)).toThrow('固定三轮')
   })
 
-  const valid = { enabled: true, guardMode: false, baselineRef: 'a'.repeat(40), selectedProjects: [{ key: allocationProject }], buildRuns: 3, hmrRuns: 3 }
+  const valid = { enabled: true, mode: 'inputs', guardMode: false, baselineRef: 'a'.repeat(40), selectedProjects: [{ key: allocationProject }], buildRuns: 3, hmrRuns: 3 }
   it('仅接受已登记项目与完整基线，拒绝正式 guard、缩短或扩大工作负载', () => {
     expect(() => validateAllocationRequest(valid)).not.toThrow()
-    for (const patch of [{ guardMode: true }, { baselineRef: 'main' }, { hmrRuns: 2 }, { hmrRuns: 4 }, { buildRuns: 1 }, { selectedProjects: [] }, { selectedProjects: [{ key: 'other' }] }]) {
+    for (const patch of [{ mode: 'allocation' }, { mode: undefined }, { mode: 'unknown' }, { guardMode: true }, { baselineRef: 'main' }, { hmrRuns: 2 }, { hmrRuns: 4 }, { buildRuns: 1 }, { selectedProjects: [] }, { selectedProjects: [{ key: 'other' }] }]) {
       expect(() => validateAllocationRequest({ ...valid, ...patch })).toThrow()
     }
     expect(() => validateAllocationRequest({ enabled: false })).not.toThrow()

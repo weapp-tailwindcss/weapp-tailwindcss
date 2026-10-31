@@ -28,7 +28,7 @@ async function fixture(source = '') {
 }
 
 it('仅显式登记的单个 Taro Vite 诊断接受固定工作负载，不扩展其他框架', () => {
-  const request = { enabled: true, guardMode: false, baselineRef: 'a'.repeat(40), selectedProjects: [project], buildRuns: 3, hmrRuns: 3 }
+  const request = { enabled: true, mode: 'inputs', guardMode: false, baselineRef: 'a'.repeat(40), selectedProjects: [project], buildRuns: 3, hmrRuns: 3 }
   expect(() => validateAllocationRequest(request)).not.toThrow()
   expect(() => validateAllocationRequest({ ...request, guardMode: true })).toThrow('正式')
   expect(() => validateAllocationRequest({ ...request, buildRuns: 0 })).toThrow('固定')
@@ -55,7 +55,7 @@ it('Taro 诊断绑定仓库 Node runner 并验证 CLI 包身份，缺失 runner 
   expect(controllers.some(controller => controller.setupError?.includes('身份或 bin 不匹配'))).toBe(true)
 })
 
-it.each(['inputs', 'allocation'])('真实 Taro runner 改写 argv 后仍保留 %s worker 的来源和采样证据', async (mode) => {
+it.each(['inputs'])('真实 Taro runner 改写 argv 后仍保留 %s worker 的来源和采样证据', async (mode) => {
   const { root, cwd, entry } = await fixture(`
 const observer = globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})];
 if (!observer) throw new Error('runner preload absent');

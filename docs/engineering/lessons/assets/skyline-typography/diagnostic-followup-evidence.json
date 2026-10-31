@@ -1,5 +1,5 @@
 {
-  "description": "独立诊断保留正式失败；不属于性能预算验收。分配数据包含已回收对象，不能与RSS相减或当作无泄漏证明。",
+  "description": "独立诊断保留正式失败；不属于性能预算验收。分配数据包含已回收对象，不能与RSS相减或当作无泄漏证明。 更正：历史CDP分配采样隐式强制GC，不能作为无主动GC的自然工作负载归因证据。",
   "recordedAt": "2026-10-30T18:41:44.851777+00:00",
   "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
   "current": "beb717a4214d9fa932d40b283daf1b1e63c76c27",
@@ -124,5 +124,53 @@
       "watch闭环缺证，不为取样延长生产store生命周期"
     ],
     "formalAcceptance": false
+  },
+  "allocationSamplingCorrection": {
+    "runtime": "Node 22.23.4",
+    "mechanism": "V8 inspector startSampling无条件设置kSamplingForceGC；get/stopSampling经GetAllocationProfile主动CollectAllGarbage",
+    "source": [
+      "https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/inspector/v8-heap-profiler-agent-impl.cc#L566",
+      "https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/profiler/sampling-heap-profiler.cc#L278"
+    ],
+    "affectedEvidence": "本文件Mpx allocation及PR后续Uni allocation run41126621553，历史raw完整性不变，撤回无主动GC与自然GC/RSS因果解释",
+    "unaffectedEvidence": "inputs模式、独立运行且未同时启用allocation采样的被动GC观测、未启用allocation采样的正式Benchmark41109215069不经过该采样器；allocation会话共采的GC日志同样受隐式GC干预",
+    "implementation": "allocation入口明确拒绝，不通过切换includeObjectsCollectedByMajorGC/minorGC参数绕过；inputs继续支持",
+    "formalAcceptance": false,
+    "rssRegressionResolved": false
+  },
+  "nativeCumulativeFollowup": {
+    "sourceHead": "37af1f4f1cf75853755d9189510ab7cd4fca06bd",
+    "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+    "environment": "macOS arm64, Node 22.23.4 / ABI127, 本机忽略工件，未发布addon",
+    "parameters": {
+      "intervalBytes": 262144,
+      "stackDepth": 128,
+      "flags": 6,
+      "forceGc": false
+    },
+    "firstFailure": "非字典输出超过16MiB，失败保留；仅修正完整字符串字典传输，不改变采样参数或16/64MiB上限",
+    "current": {
+      "profileSha256": "8d9164f47fa991bb641efbac902cb2bdf8ac5ba3f4c1a23a9be559a8315478b5",
+      "encodedBytes": 9352654,
+      "decodedBytes": 19115395,
+      "nodes": 59412,
+      "samples": 20975,
+      "unknownNodeSamples": 0,
+      "nonDiagnosticEstimatedBytes": 5577660128
+    },
+    "base": {
+      "profileSha256": "fee2d11d050d17482f2b68ca482aa2a3df033d40b7a71e993e6a9183cfc4d785",
+      "encodedBytes": 9553367,
+      "decodedBytes": 19447701,
+      "nodes": 60898,
+      "samples": 21487,
+      "unknownNodeSamples": 0,
+      "nonDiagnosticEstimatedBytes": 5703014720
+    },
+    "validation": "两侧identity/preload/addon/receipt/全部字典引用/连续ordinal独立通过；各3mutation及rollback、源码同SHA恢复；wrapper exit0，Uni完成回执且四PID均消失，Uni单独OS退出码未记录",
+    "estimate": "原生每sample size*count，按V8 ScaleSample扩展；排除诊断祖先子树，不等同存活堆/RSS。node直方图与逐sample舍入位置不同",
+    "limits": "单次插桩本机watch对照，没有cold build；两侧延迟不同、没有等价post-major或尾部边界。Rollup map分配约+14.07MiB仍非产品根因",
+    "formalAcceptance": false,
+    "rssRegressionResolved": false
   }
 }
