@@ -8,7 +8,7 @@ import { snapshotConfiguration } from '@/compiler/configuration-snapshot'
 export interface FrameworkBuildFacts {
   readonly root: string
   readonly command: 'build' | 'serve'
-  readonly build: Readonly<{ outDir: string }>
+  readonly build: Readonly<{ outDir: string, watch?: boolean }>
 }
 
 export interface FrameworkGenerationRequest {
@@ -42,6 +42,7 @@ export interface ViteFrameworkExtraPluginContext extends FrameworkExtraConfigura
   ensureRuntimeClassSet: (force?: boolean) => Promise<ReadonlySet<string>>
   generateCss: (id: string, code: string, request?: FrameworkGenerationRequest) => Promise<string | undefined>
   getResolvedConfig: () => FrameworkBuildFacts | undefined
+  getSkylineTypographyResetCss: () => string | undefined
   readonly hmrCssModuleVersions: Omit<ViteHmrCssModuleVersionTracker, 'clear'>
   beginSfcStyleUpdate: () => void
   isEnabled: () => boolean

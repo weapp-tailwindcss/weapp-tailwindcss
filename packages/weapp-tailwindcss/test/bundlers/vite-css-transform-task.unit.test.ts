@@ -36,6 +36,50 @@ function createOptions(
 }
 
 describe('vite css transform task', () => {
+  it.each(['', '.author{color:red; // 作者 SCSS 注释\n}'])('只适配本轮已编译的 apply 资产，保留独立 reset、条件和 scoped 声明顺序：%s', async (comment) => {
+    const rawSource = 'view,text{--tw-leading:var(--weapp-tw-invalid-reset)}@media(min-width:1px){.label[data-v-a]{display:flex}}.label[data-v-a]{color:blue!important}'
+    const generateCss = vi.fn()
+    const styleHandler = vi.fn(async source => ({ css: source }))
+    const result = await executeViteCssTransformTask(createOptions({
+      annotateCss: css => css,
+      generateCss,
+      generatorRawSource: comment + 'view,text{--tw-leading:var(--weapp-tw-invalid-reset)}@reference "./theme.css";.label{@apply flex}.label{color:blue!important}',
+      hasCompiledGeneratorSource: true,
+      rawSource,
+      removeRootCoveredCssFromScopedAsset: css => css,
+      styleHandler,
+      vitePipelineCssAsset: true,
+    }))
+    expect(generateCss).not.toHaveBeenCalled()
+    expect(styleHandler).toHaveBeenCalledWith(rawSource, {})
+    expect(result.css).toBe(rawSource)
+    expect(result.kind).toBe('compiled')
+    expect(result.shouldRecordCssAsset).toBe(true)
+  })
+
+  it.each([
+    { hasCompiledGeneratorSource: false },
+    { generatorRawSource: '@import "tailwindcss";.label{@apply flex}' },
+    { generatorRawSource: '@source "./components";.label{@apply flex}' },
+    { generatorRawSource: '@import "./entry.css";.label{@apply flex}' },
+    { generatorRawSource: '@use "./entry.scss";.label{@apply flex}' },
+    { generatorRawSource: '@forward "./entry.scss";.label{@apply flex}' },
+    { rawSource: '.label{@apply flex}' },
+  ])('没有当前完整模块证据或仍需生成时继续生成：%j', async (overrides) => {
+    const generateCss = vi.fn(async () => ({
+      css: '.generated{}', classSet: new Set<string>(), dependencies: [],
+      metadata: { file: '/project/label.vue' }, source: 'generator' as const, target: 'weapp',
+    }))
+    await executeViteCssTransformTask(createOptions({
+      generateCss,
+      generatorRawSource: '@reference "./theme.css";.label{@apply flex}',
+      hasCompiledGeneratorSource: true,
+      rawSource: '.label[data-v-a]{display:flex}',
+      ...overrides,
+    }))
+    expect(generateCss).toHaveBeenCalledOnce()
+  })
+
   it('returns a structured Tailwind generation result', async () => {
     const generateCss = vi.fn(async () => ({
       classSet: new Set(['text-red-500']),

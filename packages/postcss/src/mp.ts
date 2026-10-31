@@ -2,7 +2,9 @@
 import type { IStyleHandlerOptions } from './types'
 import { Declaration, Rule } from 'postcss'
 import { collectUsedTailwindcssV4Variables, createUsedCssVarsV4Nodes, isTailwindcssV4, testIfRootHostForV4, usesTailwindcssV4ContentVariable } from './compat/tailwindcss-v4'
+import { resolveSkylineTypographyCompatibility } from './compat/tailwindcss-v4/skyline-typography'
 import { isUniAppXEnabled } from './compat/uni-app-x'
+import { resolvePostcssStyleTarget } from './frameworks'
 import { isOnlyBeforeAndAfterPseudoElement } from './selectorParser'
 import { appendRuleSelector, assignRuleSelectors } from './utils/selector-guard'
 import { hasTwVars } from './utils/tw-vars'
@@ -207,7 +209,9 @@ export function commonChunkPreflight(
     injectPreflightDeclarations(node, options, contentUsage)
   }
   if (injectAdditionalCssVarScope && isTailwindcss4 && testIfRootHostForV4(node)) {
-    const nodes = createUsedCssVarsV4Nodes(collectUsedTailwindcssV4Variables(node.root()))
+    const target = resolvePostcssStyleTarget(options)
+    const skyline = resolveSkylineTypographyCompatibility(options, (target === 'generic' || target === 'mini-program') && options.uniAppX !== true)
+    const nodes = createUsedCssVarsV4Nodes(collectUsedTailwindcssV4Variables(node.root()), skyline)
     if (nodes.length === 0) {
       return
     }

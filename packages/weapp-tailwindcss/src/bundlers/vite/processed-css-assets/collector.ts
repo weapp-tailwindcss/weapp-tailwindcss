@@ -2,7 +2,7 @@ import type { OutputBundle } from 'rollup'
 import type { CollectViteProcessedCssAssetOptions, InjectViteProcessedCssAssetOptions } from './markers-imports'
 import { containsCssAfterMinify, filterExistingCssRules, mergeCoveredCssRuleDeclarations, mergeMiniProgramPreflightRuleDeclarations, mergeMiniProgramThemeScopeRuleDeclarations } from '@weapp-tailwindcss/postcss/transform'
 import { extractMarkedUserLayerComponentsCss, mergeMarkedUserLayerComponentsCss } from '../../../generation/user-layer-order'
-import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
+import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
 import { getActiveViteSourceOutputRelationOwner } from '../source-output-relations'
@@ -30,10 +30,13 @@ export function collectViteProcessedCssAssetResults(
     }
     const rawSource = readAssetSource(output)
     const singleMarkerFile = collectSingleViteGeneratedCssMarkerFile(rawSource)
-    if (singleMarkerFile) {
-      // 框架可能改变样式文件名；生成标记提供源码与实际产物的身份关系。
-      getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(singleMarkerFile, file)
-      options.debug?.('css marker ownership: %s -> %s', singleMarkerFile, file)
+    for (const marker of parseBundlerGeneratedCssMarkerBlocks(rawSource)) {
+      if (marker.bundler !== 'vite' || !marker.file) {
+        continue
+      }
+      // 合并资产也须保留每个样式模块的归属；唯一来源判断仅用于后续搬移。
+      getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(marker.file, file)
+      options.debug?.('css marker ownership: %s -> %s', marker.file, file)
     }
     if (!options.isViteProcessedCssAsset?.(output, file)) {
       continue
@@ -51,7 +54,7 @@ export function collectViteProcessedCssAssetResults(
       )
       && shouldFilterRootGeneratedCssMarkerForScopedAsset(file, singleMarkerFile, options.resolveViteProcessedCssOutputFile)
     ) {
-      nextCss = removeCssCoveredByRootStyleBundleSources(bundle, file, nextCss)
+      nextCss = removeCssCoveredByRootStyleBundleSources(bundle, file, nextCss, { preserveSkylineTypography: Boolean(options.createCssPipelineContext?.(file).getSkylineTypographyResetCss?.()) })
     }
     nextCss = options.transformCss?.(nextCss, file) ?? nextCss
     if (nextCss !== rawSource) {
@@ -238,10 +241,12 @@ export function injectViteProcessedCssIntoMainCssAssets(
     const importedStyleFiles = normalizedOriginalCss.importedStyleFiles
     const importedBundleCssSources = collectImportedBundleCssSources(bundle, importedStyleFiles)
     const importedBundleCssCoverage = prepareImportedCssCoverage(importedBundleCssSources)
+    const resetPreservation = { preserveSkylineTypography: Boolean(options.createCssPipelineContext?.(file).getSkylineTypographyResetCss?.()) }
     nextCss = removeCssCoveredByImportedViteResults(
       nextCss,
       importedBundleCssSources,
       importedBundleCssCoverage,
+      resetPreservation,
     )
     const importedViteCssResults = viteCssResults.filter(record => isViteProcessedCssResultImported(record, importedStyleFiles))
     const bundleAssetFiles = collectBundleAssetFiles(bundle)
@@ -257,6 +262,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       nextCss,
       uncoveredImportedCssSources,
       prepareImportedCssCoverage(uncoveredImportedCssSources),
+      resetPreservation,
     )
     const importedCssCoverage = prepareImportedCssCoverage(importedCssSources)
     const targetViteCssResults: typeof viteCssResults = []
@@ -277,7 +283,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       }
       targetViteCssResults.push(record)
       let css = measure('normalizeRecord', () => normalizeInjectableCssForTarget(stripBundlerGeneratedCssMarkers(record.css).trim(), file).trim())
-      css = measure('importCoverage', () => removeCssCoveredByImportedViteResults(css, importedCssSources, importedCssCoverage).trim())
+      css = measure('importCoverage', () => removeCssCoveredByImportedViteResults(css, importedCssSources, importedCssCoverage, resetPreservation).trim())
       if (css.length === 0) {
         continue
       }
@@ -328,7 +334,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
           removeCssRulesCoveredBySources(
             nextCss,
             finalImportedCssSources,
-            { exactOnly: true },
+            { exactOnly: true, ...resetPreservation },
             finalImportedCssCoverage?.coverage,
           ).trim(),
           file,

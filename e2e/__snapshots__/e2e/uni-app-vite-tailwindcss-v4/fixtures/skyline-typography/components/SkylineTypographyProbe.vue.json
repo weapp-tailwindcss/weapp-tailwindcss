@@ -1,0 +1,10 @@
+{
+  "file": "fixtures/skyline-typography/components/SkylineTypographyProbe.vue",
+  "count": 4,
+  "tokens": [
+    "font-normal",
+    "leading-[36px]",
+    "text-header-md",
+    "text-probe-small"
+  ]
+}

@@ -1,0 +1,1282 @@
+{
+  "scope": "最终插件生产管线在 DevTools 模拟器的定向验收；不含真机或全仓全面验收",
+  "source": {
+    "baseCommit": "4c94ab4b4d14464dca9cc8cd67fbdeed816e688b",
+    "fingerprintAlgorithm": "SHA-256(JSON.stringify(manifest))；manifest 记录相对基线新增或修改的生产源码和 demo 输入",
+    "sha256": "2223bced70ade07a0d7ec9bc8cd382dd50759861a551161d8aa09919dad76f45",
+    "manifest": [
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/components/SkylineTypographyExternal.vue",
+        "sha256": "4b60768ded78269df712309cbf127a3dd8cb99aa1412ba1ee9e12d53db536fbd"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/components/SkylineTypographyNoStyle.vue",
+        "sha256": "198f064898b8ce669145f19c66760b1ef47f6e331e68e61ef29b64509605a6c8"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/components/SkylineTypographyProbe.vue",
+        "sha256": "56c18b679fb059e9eb5201617e009f95d759259fefa190861b7db51706f366b3"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/components/SkylineTypographyScoped.vue",
+        "sha256": "7bc76764be6957d7e559dd76b31550ab7b01cdc515f59dd0dabede22dd8ad091"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/components/skyline-typography/external.css",
+        "sha256": "54d0107dcba445e683d5aa4cdead5ca1cef5c2fe0637e5825854ed677158427c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/src/main.css",
+        "sha256": "33af064206cf045d5cf05e3a90db8a797a3b6cdd01956a9a1cdc31b27f2833a9"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/vite.config.ts",
+        "sha256": "6f38f4afd75cc6131abd4829e09c2dcd60512897752c0e84f096f6c02973a2ea"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize-options.ts",
+        "sha256": "edcbe642c37b07ccb4181d1299cebe944c9bff15c11bbaed2eda2a442d7f0294"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize.ts",
+        "sha256": "4086c9da0026969cb8abbf306d9b49779dbace3fea460cf2b757e10b14184627"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/preflight.ts",
+        "sha256": "6d9c56add9ed53192efd05ac338530b95860323f2f8691824fcb4cdddd2a6917"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/prune-generated.ts",
+        "sha256": "b0979c66a5b6df4720c8232d32c572406d42d8d7237d14951d61ddc7db73a493"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/cleanup.ts",
+        "sha256": "a0635a90d314d2001e2dc5686f5ee7930e612ea54f5d71389ff097583fe4e05a"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/covered-rules.ts",
+        "sha256": "ee9ba73959f263d6b2cbe6554133d3af69a8d4cc5ae3ef4c87b1537c3993208b"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/generated-output.ts",
+        "sha256": "3b8646e5813dc441da03181863107f884d3af398288527dc2a3bcd7362fe68e4"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/skyline-typography.ts",
+        "sha256": "c585cf118fdd68b6b413d664015dec4e93d1ca8ac7f583d1c4f811ac251d03d8"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/variables.ts",
+        "sha256": "1b56a048f4f40930c259a36e44043cbc72c4cc52856916fd8a6b95c78843754a"
+      },
+      {
+        "file": "packages/postcss/src/compat/webpack-css/preflight.ts",
+        "sha256": "14faa5d6787af4b7a1aaff838faa4ddf73534797dc8e4eed3e285f23df4c67e1"
+      },
+      {
+        "file": "packages/postcss/src/generator-plugin/index.ts",
+        "sha256": "f76a9647b45d3e0b1dbc9211a2d0b46228cb39872b24dd1456cfbb83fedf073a"
+      },
+      {
+        "file": "packages/postcss/src/handler.ts",
+        "sha256": "a8cf9c2da27bf79657125d6ce12dccbcd4555676e63b6e00c157454de9bb41bf"
+      },
+      {
+        "file": "packages/postcss/src/mp.ts",
+        "sha256": "5e72ce2379014fdfeef6c764e3d9e4c2894b821ff8760a6521c2db1248158193"
+      },
+      {
+        "file": "packages/postcss/src/plugins/post.ts",
+        "sha256": "332deec67e9e8a9d9d48dc0d5fe4417d1ef4cf8298da00c1760fe62e73b02e4a"
+      },
+      {
+        "file": "packages/postcss/src/transform.ts",
+        "sha256": "ae2922aa1464b5984d2ab2479416024a1ecc4d36eda162e32b7efce207111f60"
+      },
+      {
+        "file": "packages/postcss/src/types.ts",
+        "sha256": "ae4db5d475253e721f571758b11fdd68f70d0c0db8f970658c7f6cadd5becc75"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/gulp/shared/create-native-framework-plugins/file-transforms.ts",
+        "sha256": "6df900c0f031a8b13863d1cc23b35dbeaaa4764ec9bb6991e35e854f54e29516"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/final-assets.ts",
+        "sha256": "3e18ffc0e17eff771c17933e4ef47413e6d381f90c79f49c5c7663c97b092354"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/plugin.ts",
+        "sha256": "7c84b2f0e7d1852651bd16e39b2ca07adea2d83a49f04f372bd51768711b40c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-memory.ts",
+        "sha256": "cd912c93da71f571ae87d2b5bb6072f74fd3e4cb1cae400d1d7e800654b49cf1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/index.ts",
+        "sha256": "1701f2f1804e1f6ed890c53a4e5eff0c8ee168f9066fddd7f511a99a0d26759e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/plugin-descriptors.ts",
+        "sha256": "e978c779d78e437e9dac98d1ca64b2c7f1a0f1876662d9dfb5b9e39980651e9d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/skyline-typography.ts",
+        "sha256": "2d2e1c813c9282ea0465ccda03476b47e6170bea422ce14b3e20e02c76d7120a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-entry-transform.ts",
+        "sha256": "690c09b8d92ff16bc42f5f56606929c7492b6df15e5ab948b31cdd10e96e59de"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/finalize/bundle.ts",
+        "sha256": "00501a1c3294c76fc66e43cf8f1788b738c04cd2afcda8d1deeb16d72f274443"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/collector.ts",
+        "sha256": "fe3c0f1fd6ac0abb083b0e24eae17589ca578172ba3fb0b4b4aba37bd212ccb5"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/coverage.ts",
+        "sha256": "56059ec988f759c16df7bd1c8f98cbc86a588039e4ad093139283e78892f884e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/injection-plan.ts",
+        "sha256": "ba82ac488c0c3793db9f166ef94e9a7ed9c810e60b0a9a97515918c45c74f912"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins-runtime.ts",
+        "sha256": "3d2290b74d34757d28a33ea6d0d23effc17b4fa0b2e7bb179113669d8783061a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins.ts",
+        "sha256": "83058830b98e8388a1dd62b10047402a5bcde8d1e5d4f6590c1b7c9ba9d8c888"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-assets.ts",
+        "sha256": "15d52d0235df08989be83099723ba8077e544ab6e6d5adc4fe57231cb02261ab"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-context.ts",
+        "sha256": "82b5f26446098859bf19fce09f6c168caf4ad67619f85449f471ae9bb1d480e0"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-generator.ts",
+        "sha256": "e28ec92d94b5cb58603cf923c1f32476e4f7200a9d2d1b350618b7921ad290e3"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-services.ts",
+        "sha256": "4006f8b40b6df3974cfac4243e84e678316a7ace287fca991527d98dedec394a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-skyline-typography.ts",
+        "sha256": "aef20fcada87fa4f80191aa7e37863089b545946f97e12111f26ba90ca464b18"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-strategy.ts",
+        "sha256": "0425cc7b47f580ff26d0e85becdc66c9fada324c85cda933474abac4eb6873c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets.ts",
+        "sha256": "c304d16aa5c987879a7f9a578efd465a6e2c3b57a6539e2fb5b18afe95cf97b7"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/finalize.ts",
+        "sha256": "36928842ad39ef7122def725e444531932eff1db44e4a6fed033e32b154c9334"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/memory-trace.ts",
+        "sha256": "c1b7e1655fefb81f0e05725ca7cdaa7b0066f9db4817f8dbe7af3af3fa12ea4d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/compiler/transform-services.ts",
+        "sha256": "12dc078293dea0a3e175c8f50c847894555e2589d1aaac11cde9fbf9f9241a15"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/compiler.ts",
+        "sha256": "54caef4764faf4788952c677566bc76cd41176e19fe2ee6576cade4a83a4966b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/skyline-typography.ts",
+        "sha256": "88dd4d9cd83e69289c5cf8f785f6af143626248b1be024fba84845f45686df25"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/style-options.ts",
+        "sha256": "5899933b9a9dae65ae40785750fba7d02048e661e88c038e75939e09ed8b2413"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/transforms.ts",
+        "sha256": "2f64434d5acb24e60e8b0baf43132c43698ef5384b6cc400c74c2012a4fb3353"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/generation/generation-helpers/preflight.ts",
+        "sha256": "83c699d00129145e1a73512ed1584162913e09c89cb4f63b3fdef2e93ec5ac08"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/types/user-defined-options/general.ts",
+        "sha256": "30a0a3d25670bbe58530dafdc9b55e6200566b371e769bb2e2db4981a8efefeb"
+      }
+    ]
+  },
+  "production": {
+    "runId": "fb753925-be6b-4216-8d0b-f156937e348c",
+    "buildMarker": "b6fe01bf-fb2f-4e89-ae25-9241161611b8",
+    "driver": "App-Service 调用真实组件公开 action，与源码按钮共用；不改写构建产物",
+    "tool": {
+      "version": "2.02.2608080",
+      "SDKVersion": "3.10.3"
+    },
+    "device": {
+      "model": "iPhone 12/13 (Pro)",
+      "platform": "devtools",
+      "pixelRatio": 3
+    },
+    "rawFiles": [
+      {
+        "file": "e2e/.artifacts/skyline-typography/fb753925-be6b-4216-8d0b-f156937e348c/evidence.json",
+        "sha256": "6ed6fb3c8b55dc84806aeb291c191287931d15c08a33e268f10b6ad883335529"
+      },
+      {
+        "file": "e2e/.artifacts/skyline-typography/fb753925-be6b-4216-8d0b-f156937e348c/inputs.json",
+        "sha256": "8a8af04a616622dbc7c4a40ca12e09a5cc0696353206a2b4f57aa0415bd7908e"
+      },
+      {
+        "file": "e2e/.artifacts/skyline-typography/fb753925-be6b-4216-8d0b-f156937e348c/environment.json",
+        "sha256": "a83ba89220ed9ba14fcf8684d125509db1d13281ef34bc00e9f9fe1f9c8d1597"
+      },
+      {
+        "file": "e2e/.artifacts/skyline-typography/fb753925-be6b-4216-8d0b-f156937e348c/cleanup.json",
+        "sha256": "a9fb801e4b8a63a47be96e3470b607053f267a1d206508e0781dc560248f3841"
+      }
+    ],
+    "cssHashes": [
+      {
+        "asset": "app.wxss",
+        "sha256": "fe80a0894da47bad56a4c5acc42b4bd138718989a0e4fabbbc4431a79f65549b"
+      },
+      {
+        "asset": "components/HelloWorld.wxss",
+        "sha256": "edb3cf265767e0e60b398b28c2ab024b35e228094d8da8e7b0f020596ca7171e"
+      },
+      {
+        "asset": "components/SkylineTypographyExternal.wxss",
+        "sha256": "bed5018e5c22b1e8c943a76a6e1922c41bfe4f8ccc142746049e83feef132d5b"
+      },
+      {
+        "asset": "components/SkylineTypographyNoStyle.wxss",
+        "sha256": "f57836b2b94ec77f124ad3339299883b033bb4f384f85febdef90106ecd32f6f"
+      },
+      {
+        "asset": "components/SkylineTypographyProbe.wxss",
+        "sha256": "50abaaa6cbbc964254b7af92a9abb3b0c402e607db6f3d9cfa629dc2b1497be8"
+      },
+      {
+        "asset": "components/SkylineTypographyScoped.wxss",
+        "sha256": "65a6e0e76e8c39dfc0dddce949011502bc25097e7e54c6fb77a7cf3018ec5f96"
+      },
+      {
+        "asset": "components/TButton.wxss",
+        "sha256": "f57836b2b94ec77f124ad3339299883b033bb4f384f85febdef90106ecd32f6f"
+      },
+      {
+        "asset": "main.wxss",
+        "sha256": "598e23893cba28270691c49b438b88072ab0d627a1f62055a64c4899f4efcdd1"
+      },
+      {
+        "asset": "pages-order/pages/home/home.wxss",
+        "sha256": "1a32ebe2dfbdd3565e50a17845199be6cada6722d26365b0eb5398960eeeaa18"
+      },
+      {
+        "asset": "pages-order/pages/user/user.wxss",
+        "sha256": "1a32ebe2dfbdd3565e50a17845199be6cada6722d26365b0eb5398960eeeaa18"
+      },
+      {
+        "asset": "pages/index/index.wxss",
+        "sha256": "f77ae52b57267a873f2c028666c0d0f718e164db058db45f2f34fb1159204ee6"
+      },
+      {
+        "asset": "pages/skyline-typography/skyline.wxss",
+        "sha256": "fe59b5de88b823fb078a425891f40106378101bebe31fcd0f0e7d6b720472600"
+      },
+      {
+        "asset": "pages/skyline-typography/webview.wxss",
+        "sha256": "fe59b5de88b823fb078a425891f40106378101bebe31fcd0f0e7d6b720472600"
+      },
+      {
+        "asset": "sub-independent/pages/index.wxss",
+        "sha256": "0b24d6143f65326d60bd825657cf3daa90648747ac3bbab52519135b7af5ed42"
+      },
+      {
+        "asset": "sub-normal/pages/index.wxss",
+        "sha256": "b64d3fab2335839c3fca9da092873bba64ae378b03e9fb82044da20b7cb4885e"
+      }
+    ],
+    "probeOrder": {
+      "header": [
+        "probe-utility",
+        "probe-child",
+        "probe-no-style-header",
+        "probe-scoped-header",
+        "probe-external-header"
+      ],
+      "small": [
+        "probe-child-small",
+        "probe-no-style-small",
+        "probe-scoped-small",
+        "probe-external-small"
+      ],
+      "weight": [
+        "probe-weight",
+        "probe-child-weight",
+        "probe-no-style-weight",
+        "probe-scoped-weight",
+        "probe-external-weight"
+      ]
+    },
+    "observations": [
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "default",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "inline",
+        "marker": "1/0/0",
+        "headerHeights": [
+          88,
+          88,
+          88,
+          88,
+          88
+        ],
+        "smallHeights": [
+          88,
+          88,
+          88,
+          88
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "inline-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "utility",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "combined",
+        "marker": "1/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "inline-clear-utility",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "utility-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "theme",
+        "marker": "0/0/1",
+        "headerHeights": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "smallHeights": [
+          48,
+          48,
+          48,
+          48
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          80,
+          48
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "theme-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "smallHeights": [
+          48,
+          48,
+          48,
+          48
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          80,
+          48
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "utility-after-theme",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438,
+          241.89999389648438
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "phase": "reset",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125,
+          263.20001220703125
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": false
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "default",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "inline",
+        "marker": "1/0/0",
+        "headerHeights": [
+          88,
+          88,
+          88,
+          88,
+          88
+        ],
+        "smallHeights": [
+          88,
+          88,
+          88,
+          88
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "inline-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "utility",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "combined",
+        "marker": "1/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "inline-clear-utility",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "utility-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "theme",
+        "marker": "0/0/1",
+        "headerHeights": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "smallHeights": [
+          48,
+          48,
+          48,
+          48
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          80,
+          48
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "theme-clear",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "utility-after-theme",
+        "marker": "0/1/0",
+        "headerHeights": [
+          72,
+          72,
+          72,
+          72,
+          72
+        ],
+        "smallHeights": [
+          72,
+          72,
+          72,
+          72
+        ],
+        "weightWidths": [
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625,
+          241.890625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      },
+      {
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "phase": "reset",
+        "marker": "0/0/0",
+        "headerHeights": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "smallHeights": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "weightWidths": [
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625,
+          263.140625
+        ],
+        "directThemeHeights": [
+          64,
+          40
+        ],
+        "authorEmptyHeight": 56,
+        "computedStylesAvailable": true
+      }
+    ],
+    "screenshots": [
+      {
+        "file": "production-skyline.png",
+        "sha256": "3ea9b3f04817114a8f4a69bf704f50aeb5f806493a0ece980855e59d20201fff"
+      },
+      {
+        "file": "production-webview.png",
+        "sha256": "f190ed8ac25bc30c1a998e8db4712cec4fc73e33944b203d76f9bdf1f65daffc"
+      }
+    ],
+    "cleanup": {
+      "projectClosed": true,
+      "nativeUi": "最终微信开发者工具原生应用入口返回项目列表，显示已有用户头像；没有操作登录或账号"
+    }
+  },
+  "watch": {
+    "scope": "同一 uni watch 进程中新增、编辑、scoped、删除 style，等待真实 WXSS 更新后 reLaunch；不宣称保留页面状态的 HMR",
+    "rawFiles": [
+      {
+        "file": "e2e/.artifacts/skyline-watch-implementation/retry/evidence.json",
+        "sha256": "2b6fb5ee065bb830eeaff090d13ad7f9b269e9f97df47ce054464cb484827d6d"
+      },
+      {
+        "file": "e2e/.artifacts/skyline-watch-implementation/retry/environment.json",
+        "sha256": "e1f588e9c00f65a9416505fe2e1233aec56a7888241b521aafcfb7dde02f6b88"
+      },
+      {
+        "file": "e2e/.artifacts/skyline-watch-implementation/retry/cleanup.json",
+        "sha256": "a3d6477145f1bbaa3710221e5cc69eb295d7e0d5823a614fd39a368756732e3d"
+      }
+    ],
+    "observations": [
+      {
+        "phase": "no-style",
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "cssSha256": "48286723a5d2e358ef164d9a476f5de878073bf2ce4abe828be39be4cf2a82ca",
+        "headerHeight": 64,
+        "smallHeight": 40
+      },
+      {
+        "phase": "no-style",
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "cssSha256": "48286723a5d2e358ef164d9a476f5de878073bf2ce4abe828be39be4cf2a82ca",
+        "headerHeight": 64,
+        "smallHeight": 40
+      },
+      {
+        "phase": "add-style",
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "cssSha256": "3bfc4f747a25c2db877528c3a252e50b74ddf79fe6cda10b0922bc10ed29dbe4",
+        "headerHeight": 72,
+        "smallHeight": 40
+      },
+      {
+        "phase": "add-style",
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "cssSha256": "3bfc4f747a25c2db877528c3a252e50b74ddf79fe6cda10b0922bc10ed29dbe4",
+        "headerHeight": 72,
+        "smallHeight": 40
+      },
+      {
+        "phase": "edit-style",
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "cssSha256": "fbdcd57476be6ca13da1f8947f579910a150085544b90b2a4888c008b7105658",
+        "headerHeight": 84,
+        "smallHeight": 40
+      },
+      {
+        "phase": "edit-style",
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "cssSha256": "fbdcd57476be6ca13da1f8947f579910a150085544b90b2a4888c008b7105658",
+        "headerHeight": 84,
+        "smallHeight": 40
+      },
+      {
+        "phase": "scoped-style",
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "cssSha256": "5010fc5483c874d4ee076b9335ea2a62637274100d7614b4efdc44e74b07640b",
+        "headerHeight": 76,
+        "smallHeight": 40
+      },
+      {
+        "phase": "scoped-style",
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "cssSha256": "5010fc5483c874d4ee076b9335ea2a62637274100d7614b4efdc44e74b07640b",
+        "headerHeight": 76,
+        "smallHeight": 40
+      },
+      {
+        "phase": "delete-style",
+        "renderer": "skyline",
+        "route": "pages/skyline-typography/skyline",
+        "cssSha256": "48286723a5d2e358ef164d9a476f5de878073bf2ce4abe828be39be4cf2a82ca",
+        "headerHeight": 64,
+        "smallHeight": 40
+      },
+      {
+        "phase": "delete-style",
+        "renderer": "webview",
+        "route": "pages/skyline-typography/webview",
+        "cssSha256": "48286723a5d2e358ef164d9a476f5de878073bf2ce4abe828be39be4cf2a82ca",
+        "headerHeight": 64,
+        "smallHeight": 40
+      }
+    ],
+    "cleanup": [
+      {
+        "sourceRestored": true
+      },
+      {
+        "projectClosed": true
+      }
+    ]
+  },
+  "limitations": [
+    "主题变量移除后 Skyline 仍有 80/48px 残留，与直接主题变量负控一致，未宣称修复",
+    "作者空值保留原语义，其覆盖清除残留是独立问题",
+    "Skyline SelectorQuery 未返回行高/字重计算字段，使用矩形和原生对照",
+    "无手机真机、其他基础库或其他平台运行时验收",
+    "watch 成功证据早于最后一次非字体注册需求收集顺序修正；最终 production IDE 与 static 已在该修正后复验"
+  ],
+  "outputChecks": [
+    {
+      "report": "e2e/.artifacts/skyline-implementation/h5-output.json",
+      "sha256": "e6b4e6e0bd99a336bbd76a45be909ec50107353f975b1220d65499049ebba10e",
+      "platform": "h5",
+      "stylesheets": 9,
+      "noSentinel": true,
+      "nestedFallback": true,
+      "files": [
+        {
+          "file": "assets/SkylineTypographyProbe-CPngXGhu.css",
+          "sha256": "4ce2c60c9a81be41771d18ad4d3c934b3523042b93cd6f1f48e1dadbeaf44967"
+        },
+        {
+          "file": "assets/index-0jCFn4zx.css",
+          "sha256": "0bbbaeab753a14781774386a95d620a1912e774fb65cd588e35b83cd416ccb74"
+        },
+        {
+          "file": "assets/index-BQn96GC9.css",
+          "sha256": "146e3a12cd98a6d483e2a3271ae01dd9a3c57fa14dbd8e44ab7a7cf2dbaf3bf3"
+        },
+        {
+          "file": "assets/index-DE4UVvK2.css",
+          "sha256": "281b267af94fa04af38d650a07e23bfd2637317cfaa6adee8dcdade52fb3fb60"
+        },
+        {
+          "file": "assets/index-TfVcj9Zs.css",
+          "sha256": "7a739996678e5bd786b76520b79326e54db644e9beffafca38b7ed3ce9a9e473"
+        },
+        {
+          "file": "assets/index-sKWKUAyC.css",
+          "sha256": "e0406d78f2703f992b74e4ce21e9e7887cb2439f1f503279e05fb2a052d0f0fa"
+        },
+        {
+          "file": "assets/skyline-CrikANkh.css",
+          "sha256": "8cefc317c838b39b09ba6c58d56a52b5a3fd34e8bebeb4c9fc656661d2317769"
+        },
+        {
+          "file": "assets/uni.a0d0d8d0.css",
+          "sha256": "a0d0d8d060db432ab8fc66707fb3a9fe3a1fc4ac481bd133338be0fc299676fc"
+        },
+        {
+          "file": "assets/webview-CDaVbU1E.css",
+          "sha256": "b0ca42710b6347195f1dc05beade1bfa9ef1fa10dd88bc3d9b5952c4c603b547"
+        }
+      ]
+    },
+    {
+      "report": "e2e/.artifacts/skyline-implementation/alipay-output.json",
+      "sha256": "b021e03ca8c7bfbe8a3143a7e81da4c5cf4ce12022272a15a47b89db190dcb47",
+      "platform": "mp-alipay",
+      "stylesheets": 13,
+      "noSentinel": true,
+      "nestedFallback": true,
+      "files": [
+        {
+          "file": "app.acss",
+          "sha256": "fb16719b99ecb9758aaab86c90b9dfb5870d0376825c1fc3ed262cded7849155"
+        },
+        {
+          "file": "components/HelloWorld.acss",
+          "sha256": "4bba21ce7bcd3f913b84c21262c5bc35f6b1bfef6604877168954451f781be89"
+        },
+        {
+          "file": "components/SkylineTypographyExternal.acss",
+          "sha256": "8816eeeff7ca0ca121740af2216c9010412fb0cc30fe0ab51f84bc330af48b77"
+        },
+        {
+          "file": "components/SkylineTypographyProbe.acss",
+          "sha256": "65367f04655baf5a985b5247195fb1be6efe78b617795634377b4013ae4f5742"
+        },
+        {
+          "file": "components/SkylineTypographyScoped.acss",
+          "sha256": "a28345599aec8c7d28588b9c4608ac3efc3617b2c0cf202a0c849b5b576430d6"
+        },
+        {
+          "file": "main.acss",
+          "sha256": "c9c1a67aab785bc42b4854dbe5f945a947a57d4d46cf0076d45990eb2738aeef"
+        },
+        {
+          "file": "pages-order/pages/home/home.acss",
+          "sha256": "8e5e0882ef811b2cc475b2f8d2e873b2810b644f7f370885737cbc98437ef4ee"
+        },
+        {
+          "file": "pages-order/pages/user/user.acss",
+          "sha256": "8e5e0882ef811b2cc475b2f8d2e873b2810b644f7f370885737cbc98437ef4ee"
+        },
+        {
+          "file": "pages/index/index.acss",
+          "sha256": "dec1f9b3c11ed0b8039067e1fb67346df7f7ada1ef9f3ee0278223020a4de494"
+        },
+        {
+          "file": "pages/skyline-typography/skyline.acss",
+          "sha256": "120fb9edb6c03a2db414da138e2c6e90dccf61e12b225b705656756e4860bba4"
+        },
+        {
+          "file": "pages/skyline-typography/webview.acss",
+          "sha256": "120fb9edb6c03a2db414da138e2c6e90dccf61e12b225b705656756e4860bba4"
+        },
+        {
+          "file": "sub-independent/pages/index.acss",
+          "sha256": "0b24d6143f65326d60bd825657cf3daa90648747ac3bbab52519135b7af5ed42"
+        },
+        {
+          "file": "sub-normal/pages/index.acss",
+          "sha256": "32f547dc5c128898d4cc638a48a0c975e4e0f943d86221d4841fc1daa78841c5"
+        }
+      ]
+    }
+  ]
+}

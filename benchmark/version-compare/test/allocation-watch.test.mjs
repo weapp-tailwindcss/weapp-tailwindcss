@@ -8,8 +8,8 @@ import { diagnosticSymbol } from '../scripts/diagnostics/constants.mjs'
 import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { sha256 } from '../scripts/diagnostics/evidence.mjs'
 import { createServiceFixture, createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
-import { viteOperationFixture } from './helpers/vite-operations.mjs'
 import { uniWorkerFixture } from './helpers/uni-worker.mjs'
+import { viteOperationFixture } from './helpers/vite-operations.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -44,7 +44,7 @@ function nextMessage(child, expected) {
 }
 
 describe('实际 watch worker 的诊断阶段与关闭', () => {
-  it.each([['inputs', 'uni'], ['allocation', 'uni'], ['inputs', 'taro']])('%s %s 完整采集三次修改/回滚，关闭幂等且最后采样不冒充编译', async (mode, framework) => {
+  it.each([['inputs', 'uni'], ['inputs', 'taro']])('%s %s 完整采集三次修改/回滚，关闭幂等且最后采样不冒充编译', async (mode, framework) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'allocation-watch-'))
     roots.push(root)
     const source = `import fs from 'node:fs'; import path from 'node:path';

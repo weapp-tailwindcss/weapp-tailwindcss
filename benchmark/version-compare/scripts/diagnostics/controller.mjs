@@ -5,7 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { createGcDiagnostics } from '../gc-diagnostics.mjs'
 import { appendNodeImport } from '../gc-paths.mjs'
-import { diagnosticMutationMarker, limits, mutationMarkerRule } from './constants.mjs'
+import { diagnosticMutationMarker, limits, mutationMarkerRule, validateDiagnosticMode } from './constants.mjs'
 import { rootRelativeKey, sha256 } from './evidence.mjs'
 import { describeFailure, runWithCleanup } from './failures.mjs'
 import { verifyOperationEvidence } from './operation-evidence.mjs'
@@ -21,11 +21,12 @@ export async function createCaseDiagnostics(options) {
   if (!options.allocation) {
     return createGcDiagnostics(options)
   }
+  validateDiagnosticMode(options.allocation)
   const gc = await createGcDiagnostics(options)
   if (!gc?.env.WEAPP_TW_BENCH_GC_SESSION) {
     throw new Error('分配诊断无法取得实际 worker 身份')
   }
-  const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), platform: process.platform, mode: options.allocation === 'inputs' ? 'inputs' : 'allocation' }
+  const identity = { ...JSON.parse(gc.env.WEAPP_TW_BENCH_GC_SESSION), platform: process.platform, mode: options.allocation }
   {
     const serviceFile = path.join(identity.root, 'packages/weapp-tailwindcss/src/core/compiler/generator-service-pool.ts')
     const available = await fs.access(serviceFile).then(() => true, (error) => {
@@ -70,7 +71,9 @@ export async function createCaseDiagnostics(options) {
     mutationMarker: diagnosticMutationMarker,
     spawned(pid, child) {
       gc.spawned(pid)
-      if (child) worker.attach(child)
+      if (child) {
+        worker.attach(child)
+      }
     },
     mark,
     async source(type, sourcePath, expected, marker) {
@@ -185,7 +188,11 @@ export async function createCaseDiagnostics(options) {
           diagnosticOnly: true,
           mutationMarkerRule,
         }
-        await runWithCleanup(async () => { if (failure) throw failure.error }, [
+        await runWithCleanup(async () => {
+          if (failure) {
+            throw failure.error
+          }
+        }, [
           () => fs.writeFile(path.join(directory, 'allocation-controller.json'), JSON.stringify(manifest, null, 2)),
         ])
       }, [() => gc.finish(), outcome => worker.finish(execution, outcome, status)])

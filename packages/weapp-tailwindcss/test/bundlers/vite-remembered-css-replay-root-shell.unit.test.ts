@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { normalizeViteCssCacheKey } from '@/bundlers/vite/generate-bundle/vite-css-cache'
 
 const generateTailwindV4Css = vi.fn()
 
@@ -276,8 +277,9 @@ describe('bundlers/vite remembered css replay root shell', () => {
     const { processRememberedCssReplay } = await import('@/bundlers/vite/generate-bundle/remembered-css-replay')
     const createScopedGeneratorRuntime = vi.fn(async () => new Set(['fresh']))
     const cssTaskFactories: Array<() => Promise<void>> = []
+    const activeViteCssCacheFiles = new Set<string>()
     await processRememberedCssReplay({
-      activeViteCssCacheFiles: new Set<string>(),
+      activeViteCssCacheFiles,
       addWatchFile: vi.fn(),
       bundle: {},
       bundleFiles: ['app.wxss'],
@@ -300,6 +302,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
           outputFile: 'app.wxss',
           rawSource: '@import "tailwindcss";',
           sourceFile: '/repo/src/app.css',
+          sourceInputs: [{ sourceFile: '/repo/src/theme.css', rawSource: '@theme { --color-brand: red; }' }],
         }],
       ]),
       isNativeAppStyleTarget: false,
@@ -308,6 +311,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
       lastCssResultByFile: new Map(),
       lastCssSourceHashByFile: new Map(),
       metrics: { css: { total: 0, transformed: 0, cacheHits: 0, elapsed: 0 } },
+      normalizeViteCssCacheKey,
       onUpdate: vi.fn(),
       opts: { cssMatcher: (file: string) => file.endsWith('.wxss'), htmlMatcher: () => false },
       pendingRememberedCssReplayUpdates: [],
@@ -323,14 +327,16 @@ describe('bundlers/vite remembered css replay root shell', () => {
     } as any)
     expect(createScopedGeneratorRuntime).not.toHaveBeenCalled()
     expect(cssTaskFactories).toHaveLength(0)
+    expect(activeViteCssCacheFiles).toEqual(new Set(['/repo/src/app.css', '/repo/src/theme.css']))
   })
 
   it('skips scoped runtime work when the remembered file uses a different path separator', async () => {
     const { processRememberedCssReplay } = await import('@/bundlers/vite/generate-bundle/remembered-css-replay')
     const createScopedGeneratorRuntime = vi.fn(async () => new Set(['fresh']))
     const cssTaskFactories: Array<() => Promise<void>> = []
+    const activeViteCssCacheFiles = new Set<string>()
     await processRememberedCssReplay({
-      activeViteCssCacheFiles: new Set<string>(),
+      activeViteCssCacheFiles,
       addWatchFile: vi.fn(),
       bundle: {},
       bundleFiles: ['pages\\index\\index.wxss'],
@@ -353,6 +359,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
           outputFile: 'pages/index/index.wxss',
           rawSource: '@import "tailwindcss";',
           sourceFile: '/repo/src/pages/index/index.css',
+          sourceInputs: [{ sourceFile: 'C:\\repo\\theme.css', rawSource: '@theme { --color-brand: red; }' }],
         }],
       ]),
       isNativeAppStyleTarget: false,
@@ -361,6 +368,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
       lastCssResultByFile: new Map(),
       lastCssSourceHashByFile: new Map(),
       metrics: { css: { total: 0, transformed: 0, cacheHits: 0, elapsed: 0 } },
+      normalizeViteCssCacheKey,
       onUpdate: vi.fn(),
       opts: { cssMatcher: (file: string) => file.endsWith('.wxss'), htmlMatcher: () => false },
       pendingRememberedCssReplayUpdates: [],
@@ -376,5 +384,6 @@ describe('bundlers/vite remembered css replay root shell', () => {
     } as any)
     expect(createScopedGeneratorRuntime).not.toHaveBeenCalled()
     expect(cssTaskFactories).toHaveLength(0)
+    expect(activeViteCssCacheFiles).toEqual(new Set(['/repo/src/pages/index/index.css', 'C:/repo/theme.css']))
   })
 })

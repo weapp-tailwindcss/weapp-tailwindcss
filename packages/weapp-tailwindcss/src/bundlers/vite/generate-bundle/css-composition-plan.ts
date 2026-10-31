@@ -1,3 +1,4 @@
+import type { BundlerGeneratedCssMarkerBlock } from '../../shared/generated-css-marker'
 import type { RememberedCssSource } from './types'
 import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
 import {
@@ -9,6 +10,7 @@ import { hasUserCssLayerBlocks } from '../../../generation/user-css'
 import { hasBundlerGeneratedCssMarker, parseBundlerGeneratedCssMarkerBlocks } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { normalizeCssSourceForCompare } from '../css-output'
+import { areCurrentCompiledCssSources } from './compiled-css-source'
 import { mergeRememberedCssSources } from './remembered-css'
 import { hasScopedSourceDirectives } from './scoped-generator-sources'
 import { hasTailwindGenerationSource, normalizeSfcSourceFileForCompare } from './sfc-style-source'
@@ -29,6 +31,8 @@ export interface ResolveViteCssCompositionPlanOptions<HandlerOptions extends Css
   explicitSourceFileKeys: ReadonlySet<string>
   file: string
   generatedSourceFiles?: readonly string[] | undefined
+  generatedSourceMarkers?: readonly BundlerGeneratedCssMarkerBlock[] | undefined
+  getCssSourceVersion?: ((sourceFile: string) => string | undefined) | undefined
   getCssHandlerOptions: (file: string) => HandlerOptions
   getOriginalCssLayerSource: ((file: string) => string | undefined) | undefined
   isRootStyleOutputFile: (file: string) => boolean
@@ -59,6 +63,7 @@ export interface ViteCssCompositionPlan<HandlerOptions extends CssCompositionHan
   generatorSourceKind: RememberedCssSource['kind']
   generatorUserLayerRawSource: string | undefined
   hasCurrentTailwindGenerationDirective: boolean
+  hasCompiledGeneratorSource: boolean
   hasRememberedApplySource: boolean
   hasSameOutputRememberedTailwindGenerationSource: boolean
   hasStaleViteProcessedCssSource: boolean
@@ -163,6 +168,10 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
       || hasMatchingGeneratedSource
     )
   const generatorSourceFile = restoredGenerationSource?.sourceFile ?? options.assetSourceFile
+  const generationSources = rememberedSources.flatMap(source => source.sourceInputs ?? [source]).filter(source => hasTailwindGenerationSource(source.rawSource))
+  const generatedSourceMarkers = options.generatedSourceMarkers ?? parseBundlerGeneratedCssMarkerBlocks(options.rawSource)
+  const hasCompiledGeneratorSource = options.getCssSourceVersion != null
+    && areCurrentCompiledCssSources(generationSources, generatedSourceMarkers, options.getCssSourceVersion)
   const generatorSourceKind = restoreRememberedGenerationSource
     ? hasOwnedImportShell ? 'output-import-shell' : 'generation'
     : hasTailwindGenerationSource(generatorRawSource) ? 'generation' : undefined
@@ -233,6 +242,7 @@ export function resolveViteCssCompositionPlan<HandlerOptions extends CssComposit
     generatorSourceKind,
     generatorUserLayerRawSource,
     hasCurrentTailwindGenerationDirective,
+    hasCompiledGeneratorSource,
     hasRememberedApplySource,
     hasSameOutputRememberedTailwindGenerationSource,
     hasStaleViteProcessedCssSource,

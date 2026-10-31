@@ -1,0 +1,31 @@
+{
+  "name": "Skyline 字体变量对照",
+  "appid": "",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxb3d842a4a7e3440d",
+    "libVersion": "3.10.3",
+    "componentFramework": "glass-easel",
+    "lazyCodeLoading": "requiredComponents",
+    "rendererOptions": {
+      "skyline": {
+        "defaultDisplayBlock": true,
+        "disableABTest": true
+      }
+    },
+    "setting": {
+      "urlCheck": false,
+      "skylineRenderEnable": true
+    },
+    "usingComponents": true
+  },
+  "mp-alipay": {
+    "usingComponents": true
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3"
+}

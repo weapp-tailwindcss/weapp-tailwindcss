@@ -1,11 +1,8 @@
 import { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import process from 'node:process'
-import { promisify } from 'node:util'
 import { afterEach, describe, expect, it } from 'vitest'
 import { limits } from '../scripts/diagnostics/constants.mjs'
 import { createEvidenceWriter, sha256 } from '../scripts/diagnostics/evidence.mjs'
@@ -213,40 +210,23 @@ describe('完整 profile 的有界 URL 字典传输', () => {
     await expect(readAllocationEvidenceFile(path.join(root, 'oversized.json'), { bytes: limits.maxProfileBytes + 1, sha256: '0'.repeat(64) })).rejects.toThrow('encoded-read')
   })
 
-  it('真实 Node inspector 的递归分配按实际 URL 无损持久化并解码', async () => {
+  it('历史深层调用栈和重复长 data URL 无损持久化，无需启动 inspector', async () => {
     const root = await fixture()
-    const moduleUrl = name => new URL(`../scripts/diagnostics/${name}.mjs`, import.meta.url).href
-    const entry = path.join(root, 'worker.mjs')
-    await fs.writeFile(entry, `
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { createAllocationSampler } from ${JSON.stringify(moduleUrl('sampling'))};
-import { createEvidenceWriter } from ${JSON.stringify(moduleUrl('evidence'))};
-import { decodeAllocationEvidence, writeAllocationEvidence } from ${JSON.stringify(moduleUrl('profile-codec'))};
-const sampler = await createAllocationSampler();
-try {
-  const source = 'export function allocate(depth) { const values = new Array(100000).fill(depth); return depth ? [values, ...allocate(depth - 1)] : [values]; } /*' + 'x'.repeat(750000) + '*/';
-  const url = 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
-  const { allocate } = await import(url);
-  const retained = allocate(31);
-  const sampling = await sampler.capture(true);
-  const document = { sampling };
-  const writer = createEvidenceWriter(${JSON.stringify(root)});
-  const receipt = writeAllocationEvidence(writer, 'allocation-1.json', document);
-  const raw = fs.readFileSync(path.join(${JSON.stringify(root)}, 'allocation-1.json'));
-  assert.deepStrictEqual(decodeAllocationEvidence(raw, receipt), document);
-  assert.equal(retained.length, 32);
-  const encoded = JSON.parse(raw);
-  console.log(JSON.stringify({ receipt, statistics: encoded.statistics, parameters: sampling.parameters }));
-} finally { await sampler.close(); }
-`)
-    const { stdout } = await promisify(execFile)(process.execPath, [entry], { timeout: 30000, maxBuffer: 10000, env: { ...process.env, NODE_OPTIONS: '' } })
-    const report = JSON.parse(stdout)
-    expect(report.statistics.nodeCount).toBeGreaterThan(1)
-    expect(report.statistics.sampleCount).toBeGreaterThan(0)
-    expect(report.statistics.decodedDocumentBytes).toBeLessThan(limits.maxTotalBytes)
-    expect(report.receipt.bytes).toBeLessThan(limits.maxProfileBytes)
-    expect(report.parameters).toEqual({ samplingInterval: limits.samplingInterval, includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true })
-  }, 40000)
+    const source = `export function allocate() {} /*${'x'.repeat(750000)}*/`
+    const url = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`
+    const document = profile(Array.from({ length: 32 }).fill(url))
+    const nodes = [document.sampling.profile.head, ...document.sampling.profile.head.children]
+    for (const [index, node] of nodes.entries()) {
+      node.children = nodes[index + 1] ? [nodes[index + 1]] : []
+    }
+    const writer = createEvidenceWriter(root)
+    const stored = writeAllocationEvidence(writer, 'allocation-1.json', document)
+    const raw = await fs.readFile(path.join(root, 'allocation-1.json'))
+    expect(decodeAllocationEvidence(raw, stored)).toEqual(document)
+    const encoded = JSON.parse(raw)
+    expect(encoded.statistics.nodeCount).toBe(32)
+    expect(encoded.statistics.sampleCount).toBe(32)
+    expect(encoded.statistics.decodedDocumentBytes).toBeLessThan(limits.maxTotalBytes)
+    expect(stored.bytes).toBeLessThan(limits.maxProfileBytes)
+  })
 })

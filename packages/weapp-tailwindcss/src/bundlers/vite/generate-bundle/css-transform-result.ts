@@ -46,13 +46,15 @@ export function applyViteCssTransformTaskResult(
   if (result.shouldRecordCssAsset) {
     options.recordCssAssetResult?.(options.outputFile, result.css)
   }
+  if (result.kind === 'tailwind' || result.kind === 'compiled') {
+    recordViteCssContribution(options, result.css)
+  }
 
   if (result.kind === 'tailwind') {
     options.debug('css generated result: %s bytes=%d', options.file, result.css.length)
     for (const candidate of result.classSet ?? []) {
       options.transformRuntime.add(candidate)
     }
-    recordViteCssContribution(options, result.css)
     options.debug(
       'css handle via tailwind v%s engine(%s): %s',
       options.tailwindcssMajorVersion,

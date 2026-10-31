@@ -59,6 +59,7 @@ import { createViteFrameworkRuntimeFacts } from './framework-runtime-facts'
 import { createFrameworkRuntimeLifecycle } from './framework-runtime-lifecycle'
 import { collectConfiguredCssEntries, isInternalUserDefinedOptions, isNuxtPageHotModule, isWebOrNativeAppPlatform } from './framework-runtime-utils'
 import { createFrameworkExtraConfiguration } from './framework-services'
+import { resolveViteSkylineTypographyResetCss } from './framework-skyline-typography'
 import { createFrameworkSourceCandidatesPlugin } from './framework-source-candidates-plugin'
 import { createFrameworkSourceDiscovery } from './framework-source-discovery'
 import { createFrameworkSourceScanSession, syncFrameworkSourceCandidatesForHotUpdate } from './framework-source-scan-session'
@@ -141,7 +142,7 @@ function createRuntimePlugins(options: ViteFrameworkRuntimeOptions, frameworkBra
   const customAttributesEntities = toCustomAttributesEntities(customAttributes)
   let recordedGeneratorCandidates: Set<string> | undefined
   const sourceCandidateCollector = createSourceCandidateCollector({ bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues, customAttributesEntities, disabledDefaultTemplateHandler })
-  const cssAssets = createFrameworkCssAssets({ debug, getSourceCandidateSource: file => sourceCandidateCollector.source(file) })
+  const cssAssets = createFrameworkCssAssets({ debug, getSourceCandidateSource: file => sourceCandidateCollector.source(file), normalizeSfcSource: frameworkBranch.normalizeSfcSource })
   construction.addCleanup(() => cssAssets.dispose(), cleanupOrder.assets)
   const { originalCssLayerSourceByFile, rememberOriginalCssLayerSource, cleanGeneratedCssByFile, generatedClassSetByFile, processedCssRegistry, cssMemory, markCssAssetProcessed, isCssAssetProcessed, recordCssAssetResult, recordViteProcessedCssAssetResult, replaceViteProcessedCssAssetOutputs, getViteProcessedCssAssetResults, getViteProcessedCssAssetResult, pruneViteCssCaches, frameworkRootImportShellTargetByFile } = cssAssets
   const { runtimeState, refreshRuntimeState, invalidateRuntimeClassSet, ensureRuntimeClassSet, ensureBundleRuntimeClassSet } = createViteRuntimeClassSet({ opts, forceRuntimeRefresh: resolveContextViteRuntimeRefresh(originalOpts), initialTailwindRuntime, refreshTailwindcssRuntime: refreshTailwindRuntime, runtimeClassSetFeatureEnabled, customAttributesEntities, disabledDefaultTemplateHandler, debug })
@@ -228,8 +229,9 @@ function createRuntimePlugins(options: ViteFrameworkRuntimeOptions, frameworkBra
       getResolvedConfig: () => resolvedConfig && Object.freeze({
         root: resolvedConfig.root,
         command: resolvedConfig.command,
-        build: Object.freeze({ outDir: resolvedConfig.build.outDir }),
+        build: Object.freeze({ outDir: resolvedConfig.build.outDir, watch: resolvedConfig.build.watch != null }),
       }),
+      getSkylineTypographyResetCss: () => resolveViteSkylineTypographyResetCss(opts, resolveViteStylePlatform(), resolveCurrentGeneratorBranch().isWeb, tailwindcssMajorVersion),
       hmrCssModuleVersions: Object.freeze({
         filterIds: hmrCssModuleVersions.filterIds,
         filterModules: hmrCssModuleVersions.filterModules,

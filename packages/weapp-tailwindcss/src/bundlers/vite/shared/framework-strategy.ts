@@ -14,6 +14,7 @@ export interface ViteFrameworkCssPipelineContext {
   readonly matchesCss: (file: string) => boolean
   readonly matchesMainCss: (file: string) => boolean
   readonly resolveStylePlatform: () => string | undefined
+  readonly getSkylineTypographyResetCss?: (() => string | undefined) | undefined
 }
 
 export interface ViteFrameworkSourcesStrategy {
@@ -36,7 +37,7 @@ export interface ViteFrameworkGenerationStrategy {
   }) => boolean
   transformGeneratedCss?: (css: string, context: ViteFrameworkCssPipelineContext & {
     defaultWebCssCompat: (css: string) => string
-    removeScopedPreflight: (css: string, options?: { preserveRuntimeProperties?: boolean }) => string
+    removeScopedPreflight: (css: string, options?: { preserveRuntimeProperties?: boolean, preserveSkylineTypography?: boolean }) => string
     shouldApplyWebCssCompat: boolean
   }) => string
 }

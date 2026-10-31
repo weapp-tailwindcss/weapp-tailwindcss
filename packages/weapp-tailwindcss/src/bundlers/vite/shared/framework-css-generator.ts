@@ -18,6 +18,7 @@ import type { InternalUserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
 import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
+import { getCompilationScopeDependencyRevision, getRegisteredCompilationScopeDependencyRevision, getRegisteredCompilationScopeVersion } from '@/compiler'
 import { generateTailwindV4Css } from '@/context/generation'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '@/generation/directives'
 import { normalizeEmptyTailwindCustomVariants } from '@/generation/user-css'
@@ -27,8 +28,10 @@ import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/cs
 import { createBundlerGeneratedCssEndMarker, createBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../generate-bundle'
-import { isSfcStyleSourceFile, resolveSfcStyleRequestFromKnownSource } from '../generate-bundle/sfc-style-source'
+import { compiledCssSourceScopeId, createCompiledCssSourceHash } from '../generate-bundle/compiled-css-source'
+import { extractSfcStyleBlocks, isSfcStyleSourceFile, resolveSfcStyleRequestFromKnownSource } from '../generate-bundle/sfc-style-source'
 import { removeScopedTailwindPreflightCss } from '../processed-css-assets'
+import { parseVueRequest } from '../query'
 import { resolveViteServeRootMiniProgramImportShell } from '../serve-root-import-shell'
 import { cleanUrl, isCSSRequest, isHTMLRequest, resolveViteCssPipelineRequestFile } from '../utils'
 import { resolveWeappViteSourceRoot } from '../weapp-vite-config'
@@ -92,7 +95,7 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     }
     const resolvedConfig = getResolvedConfig()
     const file = cleanUrl(id)
-    const inferredSfcStyleRequest = isSfcStyleSourceFile(file) ? resolveSfcStyleRequestFromKnownSource(file, cssMemory.getKnownSfcSource(file), code) : file
+    const inferredSfcStyleRequest = isSfcStyleSourceFile(file) ? resolveSfcStyleRequestFromKnownSource(file, cssMemory.getKnownSfcSource(file), code, id) : file
     const requestFile = isCSSRequest(id) ? inferredSfcStyleRequest === file ? resolveViteCssPipelineRequestFile(id) : inferredSfcStyleRequest : inferredSfcStyleRequest
     if (!isCSSRequest(requestFile) || opts.htmlMatcher(file) || isHTMLRequest(file)) {
       return void 0
@@ -105,6 +108,18 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     const shouldPreserveStyleOutputExtension = frameworkCssPipelineStrategy?.styles?.shouldPreserveStyleOutputExtension?.(cssPipelineContext) ?? frameworkCssPipelineStrategy?.generation?.isNativeAppStyleTarget?.(cssPipelineContext) === true
     const sourceRoot = resolveWeappViteSourceRoot(resolvedConfig, opts.appType)
     const outputFile = resolveViteCssPipelineOutputFile(requestFile, opts, rootDir, currentGeneratorBranch.isWeb, shouldPreserveStyleOutputExtension, sourceRoot)
+    const markerFile = currentGeneratorBranch.isWeb ? normalizeViteProcessedCssFile(file) : normalizeOutputPathKey(requestFile)
+    const moduleScopeId = compiledCssSourceScopeId(requestFile)
+    const moduleScope = !currentGeneratorBranch.isWeb && hasTailwindApplyDirective(code) && !hasTailwindRootDirectives(code, { importFallback: true })
+      ? { id: moduleScopeId, kind: 'component' as const }
+      : undefined
+    const sourceRevision = getCompilationScopeDependencyRevision(runtimeState, moduleScopeId)
+    const knownSfcSource = isSfcStyleSourceFile(file) ? cssMemory.getKnownSfcSource(file) : undefined
+    const authorSource = knownSfcSource == null
+      ? cssMemory.getKnownCssSource(requestFile) ?? code
+      : extractSfcStyleBlocks(knownSfcSource).find(style => style.index === (parseVueRequest(requestFile).query.index ?? 0))?.source ?? code
+    let compiledSourceHash: string | undefined
+    const createGeneratedMarker = () => createBundlerGeneratedCssMarker('vite', markerFile, compiledSourceHash)
     const generatorTransformCode = currentGeneratorBranch.isWeb ? generatorCode : normalizeMiniProgramGeneratorCssSource(generatorCode, outputFile)
     const fileKey = normalizeGeneratedCssCacheFile(file)
     const fullRuntime = getSourceCandidates() ?? getRecordedGeneratorCandidates() ?? await ensureRuntimeClassSet()
@@ -154,7 +169,7 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
       const previousTracedCss = tracedGeneratedCssByFile.get(fileKey)
       if (previousTracedCss !== void 0) {
         hmrCandidateState.finishTarget(file)
-        return `${createBundlerGeneratedCssMarker('vite', normalizeViteProcessedCssFile(file))}
+        return `${createGeneratedMarker()}
 ${previousTracedCss}`
       }
     }
@@ -166,7 +181,7 @@ ${previousTracedCss}`
     const previousCss = pendingHmrChange && !forceFullHmrCssRegeneration ? cleanGeneratedCssByFile.get(fileKey) : void 0
     const previousGeneratorCss = previousCss && !currentGeneratorBranch.isWeb ? normalizeMiniProgramGeneratorCssSource(previousCss, outputFile) : previousCss
     const hmrDebugState = hmrCandidateState.snapshotDebugState()
-    const generated = await hmrTimingRecorder.measure(`generateCss.${resolvedConfig?.command ?? 'unknown'}`, () => generateTailwindV4Css({ opts, runtimeState, runtime, rawSource: generatorTransformCode, file, outputFile, cssHandlerOptions, cssUserHandlerOptions: transformCssHandlerOptions.getCssUserHandlerOptions(requestFile), cssSources: transientCssSource ? [transientCssSource] : void 0, getSourceCandidatesForEntries: getGenerationSourceCandidatesForEntries, generatorPlatform: resolveGeneratorPlatform(), styleHandler, debug, previousCss: previousGeneratorCss, previousClassSet: pendingHmrChange && !forceFullHmrCssRegeneration ? generatedClassSetByFile.get(fileKey) : void 0, deferWebCssPropertyFallback: resolvedConfig?.command === 'build', deferEmptyScopedCssSource: shouldDeferEmptyScopedCssSource, deferCssAdaptation: resolvedConfig?.command === 'build' && !transient && !currentGeneratorBranch.isWeb && !shouldAdaptFrameworkWatchCss(), disableSourceScan: hookContext?.disableSourceScan === true, cssStage: hookContext?.cssStage, restoreLocalCssImports: !currentGeneratorBranch.isWeb }), { file, memoryDebug: { cleanCacheHit: cleanGeneratedCssByFile.has(fileKey), forceFullHmrCssRegeneration, ...hmrDebugState, pendingResolved: pendingHmrChange !== void 0, runtimeCandidates: runtime.size, target: currentGeneratorOptions.target } })
+    const generated = await hmrTimingRecorder.measure(`generateCss.${resolvedConfig?.command ?? 'unknown'}`, () => generateTailwindV4Css({ opts, runtimeState, runtime, rawSource: generatorTransformCode, file, outputFile, scope: moduleScope, cssHandlerOptions, cssUserHandlerOptions: transformCssHandlerOptions.getCssUserHandlerOptions(requestFile), cssSources: transientCssSource ? [transientCssSource] : void 0, getSourceCandidatesForEntries: getGenerationSourceCandidatesForEntries, generatorPlatform: resolveGeneratorPlatform(), styleHandler, debug, previousCss: previousGeneratorCss, previousClassSet: pendingHmrChange && !forceFullHmrCssRegeneration ? generatedClassSetByFile.get(fileKey) : void 0, deferWebCssPropertyFallback: resolvedConfig?.command === 'build', deferEmptyScopedCssSource: shouldDeferEmptyScopedCssSource, deferCssAdaptation: resolvedConfig?.command === 'build' && !transient && !currentGeneratorBranch.isWeb && !shouldAdaptFrameworkWatchCss(), disableSourceScan: hookContext?.disableSourceScan === true, cssStage: hookContext?.cssStage, restoreLocalCssImports: !currentGeneratorBranch.isWeb }), { file, memoryDebug: { cleanCacheHit: cleanGeneratedCssByFile.has(fileKey), forceFullHmrCssRegeneration, ...hmrDebugState, pendingResolved: pendingHmrChange !== void 0, runtimeCandidates: runtime.size, target: currentGeneratorOptions.target } })
     if (!isSourceCurrent()) {
       return undefined
     }
@@ -179,6 +194,13 @@ ${previousTracedCss}`
       }
       return void 0
     }
+    const scopeVersion = moduleScope ? getRegisteredCompilationScopeVersion(runtimeState, moduleScopeId) : undefined
+    if (moduleScope && generated.artifact && scopeVersion
+      && authorSource.trim() === code.trim()
+      && getRegisteredCompilationScopeDependencyRevision(runtimeState, moduleScopeId) === sourceRevision) {
+      compiledSourceHash = createCompiledCssSourceHash(authorSource, scopeVersion, requestFile)
+    }
+    debug('vite compiled source proof: %s scope=%s artifact=%s current=%s authorMatches=%s', requestFile, scopeVersion, generated.artifact != null, compiledSourceHash != null, authorSource.trim() === code.trim())
     const finalizedCss = finalizeViteMiniProgramCss(generated.css)
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, frameworkCssPipelineStrategy)
     const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: (css: string) => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
@@ -216,8 +238,8 @@ ${previousTracedCss}`
     }
     cssMemory.rememberCssSource({ outputFile, rawSource: code, sourceFile: requestFile, delivery: currentGeneratorBranch.isWeb ? 'vite-module' : undefined })
     debug('css generated for vite postcss pipeline: %s bytes=%d', requestFile, tracedCss.length)
-    return `${createBundlerGeneratedCssMarker('vite', normalizeViteProcessedCssFile(file))}
-${tracedCss}${currentGeneratorBranch.isWeb ? `\n${createBundlerGeneratedCssEndMarker('vite', normalizeViteProcessedCssFile(file))}` : ''}`
+    return `${createGeneratedMarker()}
+${tracedCss}${currentGeneratorBranch.isWeb ? `\n${createBundlerGeneratedCssEndMarker('vite', markerFile)}` : ''}`
   }
   const queue = createFrameworkCssGenerationQueue(normalizeGeneratedCssCacheFile, generateTailwindCssForVitePipelineNow)
   // 排队时固定来源代次，不能让删除前接收的任务借用同名新文件的提交权。

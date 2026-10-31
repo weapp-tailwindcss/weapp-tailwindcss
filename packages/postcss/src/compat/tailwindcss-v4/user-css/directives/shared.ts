@@ -1,7 +1,6 @@
 import type { TailwindCssDirectiveAnalysis } from '../../../../generator-plugin/directives'
 import path from 'node:path'
 import {
-  analyzeTailwindCssDirectives,
   normalizeTailwindCssImportRequest as baseNormalizeTailwindCssImportRequest,
   isTailwindCssGenerationDirective,
   isTailwindCssImportAtRule,
@@ -19,6 +18,7 @@ import {
   extractTailwindDirectiveLines,
   extractTailwindSourceForPostcssFallback,
 } from './fallback'
+import { analyzeCssSourceDirectives } from './source-analysis'
 
 const TAILWIND_REMOVABLE_SOURCE_DIRECTIVE_NAMES = new Set([
   'config',
@@ -198,7 +198,7 @@ function analyzeParseableTailwindDirectives(
 ): TailwindCssDirectiveAnalysis | undefined {
   try {
     const ignoreLayer = options.ignoreLayer ?? hasGeneratedCssArtifacts(rawSource)
-    return analyzeTailwindCssDirectives(postcss.parse(rawSource), { ...options, ignoreLayer })
+    return analyzeCssSourceDirectives(rawSource, { ...options, ignoreLayer })
   }
   catch {
     return undefined

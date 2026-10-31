@@ -136,6 +136,20 @@ describe('vite css memory', () => {
     expect(memory.getKnownSfcSource(sfcFile)).toBeUndefined()
   })
 
+  it('作者移除 style 后撤销对应索引的旧输入与签名', async () => {
+    const sfcFile = '/project/Label.vue'
+    let source = '<style>.first{@apply flex}</style><style>.deleted{@apply block}</style>'
+    const memory = createViteCssMemory({ debug: vi.fn(), getSourceCandidateSource: () => source })
+    memory.rememberCssSource({ outputFile: 'first.css', sourceFile: `${sfcFile}?vue&type=style&index=0`, rawSource: '.first{@apply flex}' })
+    memory.rememberCssSource({ outputFile: 'removed.css', sourceFile: `${sfcFile}?vue&type=style&index=1`, rawSource: '.deleted{@apply block}' }, 'old-proof')
+    source = '<style>.first{@apply flex}</style>'
+    await memory.refreshRememberedCssSourceByCurrentFile(sfcFile)
+    expect(memory.getRememberedCssSourceEntry('first.css')?.rawSource).toBe('.first{@apply flex}')
+    expect(memory.getRememberedCssSourceEntry('removed.css')).toBeUndefined()
+    expect(memory.getRememberedCssSignature('removed.css')).toBeUndefined()
+    memory.dispose()
+  })
+
   it('logs missing current file refresh sources and keeps unrelated requests untouched', async () => {
     const debug = vi.fn()
     const memory = createViteCssMemory({

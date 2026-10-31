@@ -1,6 +1,11 @@
 import type { CssOptions, CssPreflightOptions, CssSelectorReplacement } from '../../types'
 
 export interface FinalizeMiniProgramCssOptions {
+  /** Skyline 兼容只读取嵌套开关及注册清理配置。 */
+  cssOptions?: Pick<CssOptions, 'skyline' | 'cssRemoveProperty' | 'atRules' | 'platform'> | undefined
+  cssRemoveProperty?: boolean | undefined
+  platform?: string | undefined
+  atRules?: CssOptions['atRules'] | undefined
   cssPreflight?: CssPreflightOptions | undefined
   cssSelectorReplacement?: CssSelectorReplacement | undefined
   isTailwindcssV4?: boolean | undefined

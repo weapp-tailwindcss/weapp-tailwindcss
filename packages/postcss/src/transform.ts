@@ -7,6 +7,7 @@ export {
   resolvePostcssStyleBranchProfile,
 } from './branches'
 export * from './compat'
+export { assertSkylineTypographyCss, createSkylineTypographyResetCss, isSkylineTypographyError, isSkylineTypographyResetRule, resolveSkylineTypographyCompatibility, SKYLINE_INVALID_RESET_PROPERTY } from './compat/tailwindcss-v4/skyline-typography'
 export { createLocalUtilityOrderPlan, UNI_APP_X_LOCAL_UTILITY_MARKER } from './compat/uni-app-x/local-utility-order'
 export {
   compileCssMacroConditionalComments,

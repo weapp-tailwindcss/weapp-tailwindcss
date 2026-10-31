@@ -22,6 +22,17 @@ function createOptions() {
 }
 
 describe('vite css transform result application', () => {
+  it('提交已编译资产的适配结果，避免新处理与缓存回放的贡献记录分叉', () => {
+    const options = createOptions()
+    applyViteCssTransformTaskResult({
+      ...options,
+      result: { css: '.label[data-v-a]{display:flex}', dependencies: [], kind: 'compiled', shouldRecordCssAsset: true },
+    })
+    expect(options.recordViteProcessedCssAssetResult).toHaveBeenCalledWith('app.acss', '.label[data-v-a]{display:flex}', { injectIntoMain: true, outputFile: 'app.acss' })
+    expect(options.transformRuntime.size).toBe(0)
+    expect(options.addWatchFile).not.toHaveBeenCalled()
+  })
+
   it('applies Tailwind dependencies, candidates and Vite asset records', () => {
     const options = createOptions()
     const css = applyViteCssTransformTaskResult({

@@ -6,14 +6,18 @@ import { createResolvedCompiler } from '@/core/compiler/compiler'
 import { requireFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolvePublicGenerationStyleOptions } from './generator-runtime'
 import { createCompilerContext } from './index'
+import { resolveStyleOptionsFromContext } from './style-options'
 
 /** 从已独占的上下文投影核心需要的转换服务。 */
 export function createCompilerTransformServices(context: InternalUserDefinedOptions): CompilerTransformServices {
+  const styleOptions = resolveStyleOptionsFromContext(context)
   return {
     styleHandler: context.styleHandler,
     jsHandler: context.jsHandler,
     templateHandler: context.templateHandler,
     preserveWebkitProperties: context.cssOptions?.preserveWebkitProperties,
+    skyline: styleOptions.cssOptions?.skyline,
+    stylePlatform: styleOptions.cssOptions?.platform ?? styleOptions.platform,
   }
 }
 

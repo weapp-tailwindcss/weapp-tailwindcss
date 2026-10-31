@@ -1,0 +1,226 @@
+{
+  "description": "保留 825760 的有效远端失败与后续源码的有限本地对照，不混用提交或无效基线。",
+  "remoteFailure": {
+    "associatedHead": "825760e14ac9192d0c0cd60c3fc60d07638d5299",
+    "run": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41080961313",
+    "attempt": 1,
+    "checkout": "53d5a8d2390abb4e3e2536ab4a2cc877fdbce28e",
+    "node": "22.23.4",
+    "result": "failure",
+    "mpx": {
+      "job": 124150480861,
+      "buildSamplesPerSide": 3,
+      "hmrSamplesPerSide": 3,
+      "initial": {
+        "peakRssMiB": [
+          1562,
+          2033.21
+        ],
+        "steadyRssMiB": [
+          1541.09,
+          1796.83
+        ]
+      },
+      "reversedConfirmation": {
+        "peakRssMiB": [
+          1574.8,
+          1950.39
+        ],
+        "steadyRssMiB": [
+          1555.96,
+          1721.91
+        ]
+      },
+      "passed": false
+    },
+    "taroWebpack": {
+      "job": 124150480809,
+      "buildSamplesPerSide": 3,
+      "hmrSamplesPerSide": 3,
+      "baselineBuildPeakRssMiB": [
+        1304.921875,
+        1280.48046875,
+        1392.296875
+      ],
+      "currentBuildPeakRssMiB": [
+        1428.7578125,
+        1393.16015625,
+        1397.98828125
+      ],
+      "passed": false
+    },
+    "synthetic": {
+      "job": 124150134187,
+      "passed": true,
+      "cases": 78,
+      "warmups": 5,
+      "runs": 21,
+      "violations": []
+    }
+  },
+  "localFollowup": {
+    "description": "本地 Node 24 的有限对照，不代替最新远端 Node 22 门禁。",
+    "sourceManifestSha256": "0f8e14a2f4d8a802ad08ca12939721cb5860b462a22f176f243066ba4401b659",
+    "preparedCurrentSourceMatchesManifest": true,
+    "environment": {
+      "platform": "macOS arm64",
+      "node": "24.22.1",
+      "pnpm": "12.15.0",
+      "WEAPP_TW_HMR_MEMORY_DEBUG": "0",
+      "WEAPP_TW_BENCH_GC_DIAGNOSTICS": "0"
+    },
+    "options": {
+      "buildRuns": 3,
+      "hmrRuns": 3,
+      "timeoutMs": 180000,
+      "pollIntervalMs": 30
+    },
+    "baseline": "base:35762afa58b7bdd665324e46e23011106d2727fb",
+    "current": "current:5.6.3",
+    "matrixValid": false,
+    "invalidProjects": [
+      {
+        "key": "demo-mpx-tailwindcss-v4__mp-weixin",
+        "version": "base:35762afa58b7bdd665324e46e23011106d2727fb",
+        "error": "hmr rollback 1 timeout 180000ms marker=twbench17933804111440"
+      }
+    ],
+    "validProjects": [
+      "demo-taro-webpack-react-tailwindcss-v4__mp-weixin"
+    ],
+    "taroCompare": {
+      "key": "demo-taro-webpack-react-tailwindcss-v4__mp-weixin",
+      "project": "demo/taro-webpack-react-tailwindcss-v4",
+      "target": "mp-weixin",
+      "baselineBuild": 9124.721334000002,
+      "currentBuild": 8952.772750000004,
+      "buildDeltaPct": -1.8844255918182748,
+      "baselineHmr": 12685.614750000008,
+      "currentHmr": 12746.137540999975,
+      "hmrDeltaPct": 0.47709781664279716,
+      "baselineHmrMedian": 9724.311708999972,
+      "currentHmrMedian": 10292.027457999997,
+      "hmrMedianDeltaPct": 5.83810727163956,
+      "baselineBuildPlugin": 1168,
+      "currentBuildPlugin": 1167,
+      "buildPluginDeltaPct": -0.08561643835616438,
+      "baselineHmrPlugin": 873,
+      "currentHmrPlugin": 897,
+      "hmrPluginStatistic": "p95",
+      "hmrPluginDeltaPct": 2.7491408934707904,
+      "baselineHmrPluginGuard": 762,
+      "currentHmrPluginGuard": 897,
+      "hmrPluginGuardDeltaPct": 17.716535433070867,
+      "baselineHmrPluginMedian": 762,
+      "currentHmrPluginMedian": 852,
+      "hmrPluginMedianDeltaPct": 11.811023622047244,
+      "baselineBuildPeakRssMb": 1541.9375,
+      "currentBuildPeakRssMb": 1525.0625,
+      "buildPeakRssDeltaPct": -1.0944023347249807,
+      "baselineBuildSteadyRssMb": 1519.6953125,
+      "currentBuildSteadyRssMb": 1518.1171875,
+      "buildSteadyRssDeltaPct": -0.10384482909300281,
+      "baselineHmrPeakRssMb": 1357.765625,
+      "currentHmrPeakRssMb": 1364.953125,
+      "hmrPeakRssDeltaPct": 0.5293623485275671,
+      "baselineHmrSteadyRssMb": 1155.828125,
+      "currentHmrSteadyRssMb": 1140.546875,
+      "hmrSteadyRssDeltaPct": -1.3221040109229043,
+      "baselineHmrSampleCount": 3,
+      "currentHmrSampleCount": 3,
+      "baselineHmrPluginSampleCount": 3,
+      "currentHmrPluginSampleCount": 3,
+      "baselineBuildSamples": [
+        11958.391707999981,
+        9124.721334000002,
+        9041.646875000035
+      ],
+      "currentBuildSamples": [
+        11751.889666000032,
+        8952.772750000004,
+        8882.690332999977
+      ],
+      "baselineBuildPluginSamples": [
+        1168,
+        1164,
+        1181
+      ],
+      "currentBuildPluginSamples": [
+        1161,
+        1167,
+        1177
+      ],
+      "baselineHmrSamples": [
+        2423.9267910000053,
+        12685.614750000008,
+        9724.311708999972
+      ],
+      "currentHmrSamples": [
+        2514.973874999967,
+        12746.137540999975,
+        10292.027457999997
+      ],
+      "baselineHmrPluginSamples": [
+        873,
+        762,
+        733
+      ],
+      "currentHmrPluginSamples": [
+        852,
+        897,
+        739
+      ],
+      "baselineHmrPluginSteadySamples": [
+        762,
+        733
+      ],
+      "currentHmrPluginSteadySamples": [
+        897,
+        739
+      ],
+      "baselineBuildPeakRssSamples": [
+        1873.421875,
+        1541.9375,
+        1521.484375
+      ],
+      "currentBuildPeakRssSamples": [
+        1679.375,
+        1525.0625,
+        1522.546875
+      ],
+      "baselineBuildSteadyRssSamples": [
+        1833.609375,
+        1519.6953125,
+        1498.09375
+      ],
+      "currentBuildSteadyRssSamples": [
+        1646.0625,
+        1518.1171875,
+        1503.03125
+      ],
+      "baselineBuildMode": "build",
+      "currentBuildMode": "build",
+      "baselineHmrMode": "watch",
+      "currentHmrMode": "watch",
+      "hmrEndToEndGuard": true
+    },
+    "rawReportedGuard": {
+      "passed": true,
+      "blocking": true,
+      "thresholds": {
+        "minimumMemoryRegressionMb": 64,
+        "minimumTailRegressionSamples": 2,
+        "minimumTimingRegressionMs": 10,
+        "maximumMedianRegressionPValue": 0.05,
+        "regressionPercent": 5
+      },
+      "violations": []
+    },
+    "interpretation": "CLI 排除了 Mpx baseline 失败后退出 0，不代表整轮性能通过。只有 Taro 具有完整双侧样本且原门禁无违例；HMR 插件中位数增加 11.81%，不概括为全面改善。",
+    "rawSha256": {
+      "matrix-raw.json": "834a0659f029209eec750dec31cbe66bbb981a7e24d173d10878f70341922ab8",
+      "summary.json": "8815a89fb9bf004cfeffbcbc90e8979c70b582e5701f14253cbeb9138c1713b1",
+      "report.md": "7adb6c3b442bfd12d3fcd27a17ce34b5e3bdd8e7bccd14aab9306f8aed06cf18"
+    }
+  }
+}

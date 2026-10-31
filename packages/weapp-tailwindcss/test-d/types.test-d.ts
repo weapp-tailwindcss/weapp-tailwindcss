@@ -192,3 +192,7 @@ expectAssignable<UserDefinedOptions>({
 expectError<UserDefinedOptions>({ logLevel: 'verbose' })
 expectError<UserDefinedOptions>({ cssPreflightRange: 'alll' })
 expectError<UserDefinedOptions>({ cssSelectorReplacement: { root: 1 } })
+
+expectAssignable<UserDefinedOptions>({ cssOptions: { skyline: true } })
+expectAssignable<IStyleHandlerOptions>({ cssOptions: { skyline: false } })
+expectNotAssignable<UserDefinedOptions>({ cssOptions: { skyline: 'true' } })

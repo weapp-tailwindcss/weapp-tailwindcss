@@ -1,15 +1,15 @@
 import type { TailwindV4GenerationCoreInput } from '@/context/generation'
 import type { TailwindV4GenerationCoreResult } from '@/generation/service'
-import { stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
+import { analyzeTailwindCssDirectives, parseScssSource, stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { generateTailwindV4Css } from '@/context/generation'
 import { hasTailwindRootImportDirectives } from '../../../generation/directives'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
-import { hasBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
+import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeCssSourceForCompare } from '../css-output'
 import { hasTailwindGenerationSource } from './sfc-style-source'
 import { replaceWebCssModule } from './web-css-module'
 
-export type ViteCssTransformTaskKind = 'tailwind' | 'web' | 'import-shell' | 'style'
+export type ViteCssTransformTaskKind = 'tailwind' | 'compiled' | 'web' | 'import-shell' | 'style'
 
 export interface ViteCssTransformTaskResult {
   classSet?: Set<string> | undefined
@@ -34,6 +34,7 @@ export interface ExecuteViteCssTransformTaskOptions {
   generatorSourceFile: string
   generatorUserLayerRawSource?: string | undefined
   getSourceCandidatesForEntries: TailwindV4GenerationCoreInput['getSourceCandidatesForEntries']
+  hasCompiledGeneratorSource?: boolean | undefined
   isWebGeneratorTarget: boolean
   normalizeGeneratorUserRawSource: (
     source: string,
@@ -71,10 +72,43 @@ function resolveBundleUserRawSource(options: ExecuteViteCssTransformTaskOptions)
     : undefined
 }
 
+function hasOnlyLocalApplyGeneration(source: string) {
+  try {
+    const root = parseScssSource(source)
+    const analysis = analyzeTailwindCssDirectives(root, { importFallback: true })
+    if (!analysis.hasTailwindApplyDirective || analysis.hasTailwindRootDirectives) {
+      return false
+    }
+    let hasImports = false
+    // reference 不输出依赖样式；普通导入可能间接包含随候选变化的根入口。
+    root.walkAtRules(/^(?:import|use|forward)$/i, () => {
+      hasImports = true
+    })
+    return !hasImports
+  }
+  catch {
+    return false
+  }
+}
+
 export async function executeViteCssTransformTask(
   options: ExecuteViteCssTransformTaskOptions,
 ): Promise<ViteCssTransformTaskResult> {
   await options.runtimeState.readyPromise
+  // 本轮模块已完成 apply 和框架编译，只适配实际资产，避免拼接 SFC 源码重生成丢失样式块边界。
+  if (!options.isWebGeneratorTarget
+    && options.hasCompiledGeneratorSource
+    && hasOnlyLocalApplyGeneration(options.generatorRawSource)
+    && !hasTailwindGenerationSource(options.rawSource)) {
+    const { css } = await options.styleHandler(stripBundlerGeneratedCssMarkers(options.rawSource), options.styleHandlerOptions)
+    return {
+      css: stripDeferredCssSourceMarkers(options.removeRootCoveredCssFromScopedAsset(options.annotateCss(css))),
+      dependencies: [],
+      diffSource: options.rawSource,
+      kind: 'compiled',
+      shouldRecordCssAsset: true,
+    }
+  }
   const previousGeneratorCss = options.previousCss && !options.isWebGeneratorTarget
     ? options.normalizeMiniProgramGeneratorRawSource(options.previousCss, options.outputFile)
     : options.previousCss

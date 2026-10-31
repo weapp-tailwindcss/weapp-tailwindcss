@@ -2,6 +2,7 @@ import type { FinalizeMiniProgramCssOptions } from './finalize-options'
 import postcss from 'postcss'
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../mini-program-prefixes'
 import { appendTailwindcssV4MiniProgramGradientRules, collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4Declaration } from '../tailwindcss-v4'
+import { assertSkylineTypographyInput, isSkylineTypographyError, normalizeSkylineTypographyReset, removeSkylineTypographyRegistrations, resolveSkylineTypographyCompatibility } from '../tailwindcss-v4/skyline-typography'
 import { removeUnsupportedCascadeLayers, removeUnsupportedMiniProgramAtRules, removeUnsupportedMiniProgramAtRulesRoot } from './at-rules'
 import {
   hasTailwindcssV4Signal,
@@ -33,13 +34,21 @@ export { insertHoistedRules } from './hoist'
 export { collectPreflightRules } from './preflight'
 
 export function finalizeMiniProgramCssRoot(root: postcss.Root, options: FinalizeMiniProgramCssOptions = {}) {
+  const shouldInjectTailwindcssV4Defaults = options.isTailwindcssV4 === true
+  const skyline = resolveSkylineTypographyCompatibility(options, shouldInjectTailwindcssV4Defaults)
+  if (skyline) {
+    assertSkylineTypographyInput(root)
+  }
   unwrapTailwindSourceMedia(root)
   const stableColors = removeUnsupportedModernColorDeclarations(root, options.isTailwindcssV4 === true && options.tailwindcssV4GradientFallback === true)
   const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.preserveWebkitProperties).preserveProperties
-  const shouldInjectTailwindcssV4Defaults = options.isTailwindcssV4 === true
   const tailwindcssV4DefaultNodes = shouldInjectTailwindcssV4Defaults
-    ? createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root))
+    ? createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root), skyline)
     : []
+  if (skyline) {
+    // 注册同样提供运行时默认值需求，先收集再删除，避免改变其余变量的补齐行为。
+    removeSkylineTypographyRegistrations(root)
+  }
   removeUnsupportedCascadeLayers(root)
   removeTailwindGenerationDirectives(root)
   removeUnsupportedMiniProgramAtRulesRoot(root)
@@ -51,6 +60,9 @@ export function finalizeMiniProgramCssRoot(root: postcss.Root, options: Finalize
   removeTailwindContainerMaxWidthMediaRules(root)
   removeTailwindContainerWidthRules(root, { generatedOnly: true })
   root.walkDecls((decl) => {
+    if (skyline) {
+      normalizeSkylineTypographyReset(decl)
+    }
     if (shouldInjectTailwindcssV4Defaults) {
       normalizeTailwindcssV4Declaration(decl)
     }
@@ -67,7 +79,7 @@ export function finalizeMiniProgramCssRoot(root: postcss.Root, options: Finalize
   }
 
   const hoistAnchor = createHoistInsertionAnchor(root)
-  const preflightRules = collectPreflightRules(root, options)
+  const preflightRules = collectPreflightRules(root, { ...options, preserveSkylineTypography: skyline })
   if (preflightRules.length === 0) {
     const resetRule = createPreflightResetRule(options.cssPreflight)
     if (resetRule) {
@@ -119,6 +131,7 @@ export function finalizeMiniProgramCss(css: string, options: FinalizeMiniProgram
       isTailwindcssV4 = TAILWIND_V4_BANNER_RE.test(repairedCss)
     }
   }
+  resolveSkylineTypographyCompatibility(options, isTailwindcssV4 === true)
   let root: postcss.Root
   let cleanedCss: string | undefined
   try {
@@ -139,7 +152,10 @@ export function finalizeMiniProgramCss(css: string, options: FinalizeMiniProgram
     finalizeMiniProgramCssRoot(root, { ...options, isTailwindcssV4 })
     return root.toString()
   }
-  catch {
+  catch (error) {
+    if (isSkylineTypographyError(error)) {
+      throw error
+    }
     return removeSpecificityPlaceholdersFromSource(cleanedCss ?? removeUnsupportedMiniProgramAtRules(repairedCss))
   }
 }
