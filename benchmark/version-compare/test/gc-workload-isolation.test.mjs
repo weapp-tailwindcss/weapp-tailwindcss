@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
+import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildSummary, evaluatePerformanceGuard } from '../scripts/ci-report.mjs'
 import { summarizeProcessMemory } from '../scripts/process-memory.mjs'
@@ -35,6 +36,10 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
     const memory = summarizeProcessMemory([100, 120].map((rssMb, index) => ({ at: 1000 + index * 250, rssMb, processCount: 1, processes: [{ pid: 123, ppid: 1, rssMb, command: 'fixture-node' }] })))
     const options = { buildRuns: 3, hmrRuns: 3, timeoutMs: 1000, pollIntervalMs: 1 }
     let watchChild
+    vi.spyOn(process, 'kill').mockImplementation((pid, signal) => {
+      expect(pid).toBe(-watchChild.pid)
+      return watchChild.kill(signal)
+    })
     let sourceWrites = 0
     let mutationCount = 0
     const timing = durationMs => Buffer.from(`[weapp-tailwindcss:hmr] ${JSON.stringify({ bundler: 'webpack', phase: 'total', durationMs })}\n`)
@@ -47,9 +52,6 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
           mutationCount += 1
           watchChild.stdout.emit('data', timing(20 + mutationCount))
         }
-        if (sourceWrites >= 6) {
-          watchChild.exitCode = 0
-        }
       }
     })
 
@@ -59,6 +61,11 @@ describe('GC 诊断与原 benchmark workload 隔离', () => {
       mocks.spawn.mockReset().mockImplementation((_command, args) => {
         const index = mocks.spawn.mock.calls.length - 1
         const child = Object.assign(new EventEmitter(), { pid: 1000 + index, exitCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() })
+        child.kill = vi.fn(() => {
+          child.exitCode = 0
+          child.emit('close', 0)
+          return true
+        })
         if (args[1] === project.devScript) {
           watchChild = child
           queueMicrotask(() => child.stdout.emit('data', Buffer.from('fixture-ready\n')))

@@ -12,6 +12,7 @@ import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
+import { assertWatchRunning, stopChild } from './watch-process.mjs'
 import { isWatchReady } from './watch-readiness.mjs'
 
 const defaultVersions = [
@@ -275,61 +276,6 @@ async function fetchProbeText(url) {
   return `${html}\n${assetTexts.join('\n')}`
 }
 
-function stopChild(child) {
-  return new Promise((resolve) => {
-    if (child.exitCode != null || child.signalCode != null) {
-      resolve()
-      return
-    }
-
-    let done = false
-    const finish = () => {
-      if (done) {
-        return
-      }
-      done = true
-      resolve()
-    }
-
-    child.once('close', finish)
-
-    try {
-      if (child.pid && process.platform !== 'win32') {
-        process.kill(-child.pid, 'SIGINT')
-      }
-      else {
-        child.kill('SIGINT')
-      }
-    }
-    catch {}
-
-    setTimeout(() => {
-      try {
-        if (child.pid && process.platform !== 'win32') {
-          process.kill(-child.pid, 'SIGTERM')
-        }
-        else {
-          child.kill('SIGTERM')
-        }
-      }
-      catch {}
-    }, 1200)
-
-    setTimeout(() => {
-      try {
-        if (child.pid && process.platform !== 'win32') {
-          process.kill(-child.pid, 'SIGKILL')
-        }
-        else {
-          child.kill('SIGKILL')
-        }
-      }
-      catch {}
-      finish()
-    }, 4000)
-  })
-}
-
 async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnostics) {
   const start = now()
   const child = spawnPnpmWithEnv(cwd, ['run', buildScript], {
@@ -365,7 +311,10 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnost
         reject(new Error(`build timeout ${timeoutMs}ms`))
       }, timeoutMs)
 
-      child.once('error', (error) => { clearTimeout(timer); reject(error) })
+      child.once('error', (error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
       child.once('close', (exitCode) => {
         clearTimeout(timer)
         resolve(exitCode ?? 1)
@@ -460,9 +409,7 @@ async function runHmrRounds({
 
   return runWithCleanup(async () => {
     const ready = await waitFor(async () => {
-      if (child.exitCode != null) {
-        throw new Error(`dev exited early code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
-      }
+      assertWatchRunning(child, 'dev exited early', logs)
       const texts = await Promise.all(probePaths.map(readText))
       const outputHasContent = texts.every(text => typeof text === 'string' && text.trim().length > 0)
       return isWatchReady({
@@ -475,6 +422,7 @@ async function runHmrRounds({
       })
     }, timeoutMs, pollIntervalMs)
 
+    assertWatchRunning(child, 'dev exited early', logs)
     if (!ready) {
       throw new Error(`dev warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
@@ -495,9 +443,7 @@ async function runHmrRounds({
       }
 
       const ok = await waitFor(async () => {
-        if (child.exitCode != null) {
-          throw new Error(`dev exited during hmr round=${i + 1} code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
-        }
+        assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
         for (const probePath of probePaths) {
           const text = await readText(probePath)
           if (text?.includes(marker)) {
@@ -507,12 +453,14 @@ async function runHmrRounds({
         return false
       }, timeoutMs, pollIntervalMs)
 
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       if (!ok) {
         throw new Error(`hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('mutation-observed', i + 1)
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       times.push({
         durationMs: now() - start,
         pluginProcessMs: pluginTiming?.durationMs,
@@ -526,6 +474,7 @@ async function runHmrRounds({
         await diagnostics.source('rollback-written', sourcePath, original, marker)
       }
       const rolledBack = await waitFor(async () => {
+        assertWatchRunning(child, `dev exited during hmr rollback round=${i + 1}`, logs)
         for (const probePath of probePaths) {
           const text = await readText(probePath)
           // 这里只确认可读、非空且 marker 已移除，不把文件观察等同于生产者提交完成。
@@ -536,6 +485,7 @@ async function runHmrRounds({
         return true
       }, timeoutMs, pollIntervalMs)
       roundLogs.close()
+      assertWatchRunning(child, `dev exited during hmr rollback round=${i + 1}`, logs)
       if (!rolledBack) {
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
@@ -548,6 +498,7 @@ async function runHmrRounds({
     if (diagnostics?.beforeStop) {
       await diagnostics.beforeStop()
     }
+    assertWatchRunning(child, 'dev exited during hmr shutdown', logs)
     return {
       samples: times,
       memory: memorySampler.stop(),
@@ -558,7 +509,9 @@ async function runHmrRounds({
     async () => {
       if (sourceDirty) {
         await fs.writeFile(sourcePath, original, 'utf8')
-        if (diagnostics?.source) await diagnostics.source('failure-restored', sourcePath, original)
+        if (diagnostics?.source) {
+          await diagnostics.source('failure-restored', sourcePath, original)
+        }
       }
     },
   ])
@@ -589,9 +542,7 @@ async function runDevServerHmrRounds({
   try {
     let baseUrl = `http://127.0.0.1:${port}/`
     const ready = await waitFor(async () => {
-      if (child.exitCode != null) {
-        throw new Error(`dev server exited early code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
-      }
+      assertWatchRunning(child, 'dev server exited early', logs)
       for (const candidate of resolveLoggedBaseUrls(logs, `http://127.0.0.1:${port}/`)) {
         try {
           const text = await fetchText(candidate)
@@ -606,6 +557,7 @@ async function runDevServerHmrRounds({
       return false
     }, timeoutMs, pollIntervalMs)
 
+    assertWatchRunning(child, 'dev server exited early', logs)
     if (!ready) {
       throw new Error(`dev server warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
@@ -621,9 +573,7 @@ async function runDevServerHmrRounds({
 
       let lastError = ''
       const ok = await waitFor(async () => {
-        if (child.exitCode != null) {
-          throw new Error(`dev server exited during hmr round=${i + 1} code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
-        }
+        assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
         for (const url of probeUrls) {
           try {
             const text = await fetchProbeText(url)
@@ -639,11 +589,13 @@ async function runDevServerHmrRounds({
         return false
       }, timeoutMs, pollIntervalMs)
 
+      assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
       if (!ok) {
         throw new Error(`dev server hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${lastError}\n${logs.slice(-120).join('\n')}`)
       }
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
+      assertWatchRunning(child, `dev server exited during hmr round=${i + 1}`, logs)
       times.push({
         durationMs: now() - start,
         pluginProcessMs: pluginTiming?.durationMs,
@@ -653,6 +605,7 @@ async function runDevServerHmrRounds({
       await fs.writeFile(sourcePath, original, 'utf8')
       let rollbackError = ''
       const rolledBack = await waitFor(async () => {
+        assertWatchRunning(child, `dev server exited during hmr rollback round=${i + 1}`, logs)
         let successfulProbe = false
         for (const url of probeUrls) {
           try {
@@ -669,12 +622,14 @@ async function runDevServerHmrRounds({
         return successfulProbe
       }, timeoutMs, pollIntervalMs)
       roundLogs.close()
+      assertWatchRunning(child, `dev server exited during hmr rollback round=${i + 1}`, logs)
       if (!rolledBack) {
         throw new Error(`dev server hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${rollbackError}\n${logs.slice(-120).join('\n')}`)
       }
     }
 
     await fs.writeFile(sourcePath, original, 'utf8')
+    assertWatchRunning(child, 'dev server exited during hmr shutdown', logs)
     return {
       samples: times,
       memory: memorySampler.stop(),

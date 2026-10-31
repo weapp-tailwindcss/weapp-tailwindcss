@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runCase } from '../scripts/run-matrix.mjs'
 import { createServiceFixture, mpxProject, versionFor } from './helpers/gc-service.mjs'
@@ -27,6 +28,15 @@ async function fixture(rollback, mutation) {
   await writeFile(source, original)
   await writeFile(output, original)
   const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() })
+  child.kill = vi.fn(() => {
+    child.exitCode = 0
+    child.emit('close', 0)
+    return true
+  })
+  vi.spyOn(process, 'kill').mockImplementation((pid, signal) => {
+    expect(pid).toBe(-child.pid)
+    return child.kill(signal)
+  })
   mocks.spawn.mockReset().mockImplementation(() => {
     queueMicrotask(() => child.stdout.emit('data', Buffer.from('fixture-ready\n')))
     return child
@@ -49,7 +59,6 @@ async function fixture(rollback, mutation) {
     }
     else {
       await rollback({ output, original, writeFile })
-      child.exitCode = 0
     }
   })
   return {
