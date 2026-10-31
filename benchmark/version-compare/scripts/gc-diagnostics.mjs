@@ -8,6 +8,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { appendNodeImport, sameFilesystemPath } from './gc-paths.mjs'
 import { getGcDiagnosticService } from './gc-projects.mjs'
+import { captureWorkerOutput } from './worker-output.mjs'
 
 const preloadSourcePath = fileURLToPath(new URL('./gc-preload.mjs', import.meta.url))
 const pathHelperSourcePath = fileURLToPath(new URL('./gc-paths.mjs', import.meta.url))
@@ -72,6 +73,7 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
     return undefined
   }
 
+  const traceGcNvp = (env.WEAPP_TW_BENCH_GC_NVP ?? process.env.WEAPP_TW_BENCH_GC_NVP) === '1'
   const role = versionMeta.diagnosticIdentity?.role ?? versionMeta.version
   const safeRole = role.replace(/[^a-z\d-]/gi, '_').slice(0, 64)
   let sessionDirectory
@@ -81,11 +83,15 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
   }
   catch (error) {
     reportFailure(error)
+    if (traceGcNvp) {
+      throw error
+    }
     return undefined
   }
   const boundaries = []
   let boundaryCount = 0
   let rootPid
+  let workerOutput
   let setupError
   let childEnv
   let expectedEntry
@@ -93,6 +99,7 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
   let pathHelperSha256
   const identity = {
     ...versionMeta.diagnosticIdentity,
+    ...(traceGcNvp ? { traceGcNvp: true } : {}),
     role,
     version: versionMeta.version,
     root: versionMeta.root,
@@ -137,14 +144,37 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
         boundaries.push({ type, round, atEpochMs: Date.now(), atMonotonicMs: performance.now() })
       }
     },
-    spawned(pid) {
+    spawned(pid, child) {
       rootPid = pid
       this.mark('spawn')
+      if (traceGcNvp && child) {
+        workerOutput = captureWorkerOutput(child, sessionDirectory, (error) => {
+          reportFailure(error)
+          if (child.exitCode == null && child.signalCode == null) {
+            // 此 PID 来自本任务以 detached 启动的 pnpm 进程组，只终止已确认归属的组。
+            try {
+              if (process.platform === 'win32') {
+                child.kill('SIGTERM')
+              }
+              else { process.kill(-pid, 'SIGTERM') }
+            }
+            catch (terminationError) {
+              reportFailure(terminationError)
+            }
+          }
+        })
+      }
     },
     async finish() {
+      const outputEvidence = workerOutput?.finish()
+      let evidenceError
       try {
         const processFiles = (await fs.readdir(sessionDirectory)).filter(file => /^gc-\d+\.ndjson$/.test(file))
         const processEvidence = await Promise.all(processFiles.map(file => inspectProcessFile(sessionDirectory, file, expectedEntry, preloadSha256, pathHelperSha256, identity)))
+        const invalidProcessEvidence = traceGcNvp && processEvidence.some(item => !item.ready || item.recordIntegrityUnavailable || !item.completeFinalLine || !item.lastWriteAccounted || item.recordingError || item.lastAccounting?.observationStopped !== false || item.lastAccounting?.counts?.eventsTruncated !== 0)
+        if (traceGcNvp && (setupError || !outputEvidence?.complete || outputEvidence.recordingError || !processEvidence.length || invalidProcessEvidence || boundaryCount > maxBoundaries)) {
+          evidenceError = new Error(outputEvidence?.recordingError ?? 'GC trace 诊断证据不完整，保留失败，不接受部分证据')
+        }
         await fs.writeFile(path.join(sessionDirectory, 'controller.json'), `${JSON.stringify({
           schemaVersion: 1,
           identity,
@@ -156,6 +186,7 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
           pathHelperSha256,
           setupError,
           processEvidence,
+          outputEvidence,
           missingPreloadEvidence: !processEvidence.some(item => item.ready),
           boundaries,
           boundaryCount,
@@ -166,6 +197,12 @@ export async function createGcDiagnostics({ cwd, versionMeta, projectMeta, direc
       }
       catch (error) {
         reportFailure(error)
+        if (traceGcNvp) {
+          evidenceError = error
+        }
+      }
+      if (evidenceError) {
+        throw evidenceError
       }
     },
   }

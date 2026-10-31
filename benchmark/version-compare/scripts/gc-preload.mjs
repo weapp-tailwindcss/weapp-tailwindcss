@@ -5,6 +5,7 @@ import path from 'node:path'
 import { constants, performance, PerformanceObserver } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import v8 from 'node:v8'
 import { sameFilesystemPath } from './gc-paths.mjs'
 
 const maxEvents = 2048
@@ -62,6 +63,16 @@ function start() {
     }
   }
 
+  function callbackMemory() {
+    const atEpochMs = Date.now()
+    const usage = process.memoryUsage()
+    const heap = v8.getHeapStatistics()
+    const residentMapping = process.platform === 'linux'
+      ? { supported: true, path: path.resolve('/proc', 'self', 'smaps_rollup'), text: fs.readFileSync(path.resolve('/proc', 'self', 'smaps_rollup'), 'utf8') }
+      : { supported: false, platform: process.platform }
+    return { atEpochMs, samplePoint: 'observer-callback', ...usage, v8Heap: heap, residentMapping, completedAtEpochMs: Date.now() }
+  }
+
   try {
     write({
       type: 'process-start',
@@ -74,6 +85,12 @@ function start() {
       actualEntry,
       execPath: fs.realpathSync(process.execPath),
       nodeVersion: process.version,
+      v8Version: process.versions.v8,
+      platform: process.platform,
+      arch: process.arch,
+      traceGcNvp: identity.traceGcNvp === true,
+      explicitGcRequests: 0,
+      ...(identity.traceGcNvp ? { nodeTiming: performance.nodeTiming.toJSON() } : {}),
       preloadPath,
       preloadSha256,
       pathHelperSha256,
@@ -120,7 +137,7 @@ function start() {
         callbackAtEpochMs,
         events: retained,
         // major 内存为 observer 回调时的快照，不能解释为 GC 刚结束时的内存。
-        majorCallbackMemory: hasMajor ? { atEpochMs: Date.now(), samplePoint: 'observer-callback', ...process.memoryUsage() } : undefined,
+        majorCallbackMemory: hasMajor ? identity.traceGcNvp ? callbackMemory() : { atEpochMs: Date.now(), samplePoint: 'observer-callback', ...process.memoryUsage() } : undefined,
       }
       if (costs.bytesWritten + Buffer.byteLength(JSON.stringify(record)) + 2048 > maxBytes) {
         record.events = []
@@ -129,7 +146,7 @@ function start() {
       }
       counts.eventsRecorded += record.events.length
       counts.eventsTruncated += entries.length - record.events.length
-      observationStopped ||= counts.eventsRecorded >= maxEvents
+      observationStopped ||= counts.eventsRecorded >= maxEvents || (identity.traceGcNvp === true && counts.eventsTruncated > 0)
       write(record)
       write({
         type: 'accounting',
@@ -143,11 +160,17 @@ function start() {
       }, true)
       if (observationStopped) {
         observer.disconnect()
+        if (identity.traceGcNvp) {
+          v8.setFlagsFromString('--notrace-gc-nvp')
+        }
         fs.closeSync(fd)
       }
     }
     catch (error) {
       observer.disconnect()
+      if (identity.traceGcNvp) {
+        v8.setFlagsFromString('--notrace-gc-nvp')
+      }
       try {
         write({ type: 'recording-error', atEpochMs: Date.now(), counts, costs, error: error instanceof Error ? error.message : String(error) })
       }
@@ -159,7 +182,25 @@ function start() {
       process.stderr.write(`[benchmark-gc] 诊断写入失败：${error instanceof Error ? error.message : String(error)}\n`)
     }
   })
-  observer.observe({ entryTypes: ['gc'] })
+  // V8 自身输出 GC 完成时的堆量；observer 快照保留其延迟边界，不请求 GC。
+  try {
+    if (identity.traceGcNvp) {
+      v8.setFlagsFromString('--trace-gc-nvp')
+    }
+    observer.observe({ entryTypes: ['gc'] })
+  }
+  catch (error) {
+    if (identity.traceGcNvp) {
+      v8.setFlagsFromString('--notrace-gc-nvp')
+    }
+    try {
+      write({ type: 'recording-error', atEpochMs: Date.now(), error: error instanceof Error ? error.message : String(error) })
+    }
+    finally {
+      fs.closeSync(fd)
+    }
+    throw error
+  }
 }
 
 try {
