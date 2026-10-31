@@ -482,7 +482,7 @@ async function main() {
     throw new Error('输入证据与分配采样必须分开运行')
   }
   const instrumentationEnabled = allocationDiagnostics || inputDiagnostics
-  validateAllocationRequest({ enabled: instrumentationEnabled, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns })
+  validateAllocationRequest({ mode: inputDiagnostics ? 'inputs' : 'allocation', enabled: instrumentationEnabled, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns })
   const allocationDirectory = instrumentationEnabled ? path.join(resultDir, 'allocation-preparation') : undefined
 
   await fs.mkdir(resultDir, { recursive: true })
@@ -573,7 +573,7 @@ async function main() {
       diagnosticOnly: true,
       mode: allocationDiagnostics ? 'allocation' : 'inputs',
       budgetAcceptance: false,
-      reason: '插桩与 inspector 观测的时间、RSS 只作诊断，不进入正式预算或反序确认',
+      reason: '插桩与诊断观测的时间、RSS 只作诊断，不进入正式预算或反序确认',
       versions: [baselineVersion, currentVersion],
       rawPath,
       buildRuns,

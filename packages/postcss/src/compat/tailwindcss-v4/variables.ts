@@ -2,6 +2,7 @@ import type { Root, Rule } from 'postcss'
 import { Declaration } from 'postcss'
 import cssVarsV4 from '../../cssVarsV4'
 import { createCssVarNodes } from '../../utils/css-vars'
+import { getSkylineTypographyResetValue } from './skyline-typography'
 
 export const RADIUS_THRESHOLD = 100000
 export const CLAMP_PX = 9999
@@ -101,12 +102,12 @@ export function usesTailwindcssV4ContentVariable(root: Root) {
 }
 
 // Tailwind v4 的变量默认值只为当前 CSS 实际使用到的变量补齐，避免全量变量串入
-export function createUsedCssVarsV4Nodes(usedProps: ReadonlySet<string>) {
+export function createUsedCssVarsV4Nodes(usedProps: ReadonlySet<string>, skyline = false) {
   return cssVarsV4
     .filter(def => usedProps.has(def.prop) && !UNSUPPORTED_CUSTOM_PROPERTY_DEFAULT_PROPS.has(def.prop))
     .map(def => new Declaration({
       prop: def.prop,
-      value: def.value,
+      value: skyline ? getSkylineTypographyResetValue(def.prop) ?? def.value : def.value,
     }))
 }
 
@@ -160,12 +161,12 @@ function collectScopedTailwindcssV4DefaultVariables(root: Root) {
 }
 
 // 为会移除 @property 的小程序产物补齐缺失的 Tailwind v4 运行时默认变量
-export function createMissingCssVarsV4Nodes(root: Root, usedProps: ReadonlySet<string>) {
+export function createMissingCssVarsV4Nodes(root: Root, usedProps: ReadonlySet<string>, skyline = false) {
   const scopedProps = collectScopedTailwindcssV4DefaultVariables(root)
   return cssVarsV4
     .filter(def => usedProps.has(def.prop) && !scopedProps.has(def.prop) && !UNSUPPORTED_CUSTOM_PROPERTY_DEFAULT_PROPS.has(def.prop))
     .map(def => new Declaration({
       prop: def.prop,
-      value: def.value,
+      value: skyline ? getSkylineTypographyResetValue(def.prop) ?? def.value : def.value,
     }))
 }

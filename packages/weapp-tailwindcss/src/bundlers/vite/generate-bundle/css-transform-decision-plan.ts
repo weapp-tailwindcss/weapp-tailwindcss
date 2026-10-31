@@ -14,6 +14,7 @@ export interface ResolveViteCssTransformDecisionPlanOptions {
   generatorCandidatesChanged: boolean
   generatorRawSource: string
   hasCurrentTailwindGenerationDirective: boolean
+  hasCompiledGeneratorSource?: boolean | undefined
   hasRememberedApplySource: boolean
   hasRuntimeAffectingChanges: boolean
   hasSameOutputRememberedTailwindGenerationSource: boolean
@@ -93,6 +94,7 @@ export function resolveViteCssTransformDecisionPlan(
   // 首次完整构建的结构化来源已证明框架完成生成；原始 apply 缓存只供后续增量重放。
   // 不能把已压缩、已合并的当前产物再当作者源码生成，否则会重复贡献局部规则。
   const shouldReuseCompletedBuildCss = !options.useIncrementalMode
+    && options.hasCompiledGeneratorSource === true
     && options.cssAssetIdentityKind === 'bundler-generated'
     && options.cssAssetSourceFile != null
     && !hasTailwindGenerationSource(strippedViteProcessedCss)
@@ -120,6 +122,7 @@ export function resolveViteCssTransformDecisionPlan(
 }
 
 export interface ResolveViteCssTransformCachePlanOptions {
+  hasCompiledGeneratorSource?: boolean | undefined
   cssBundleSourceHash?: string | undefined
   cssIsMainChunk: boolean
   cssRuntimeAffectingHash: string
@@ -152,6 +155,8 @@ export function resolveViteCssTransformCachePlan(
     options.cssRuntimeAffectingHash,
   )
   const tailwindcssMajorVersion = options.tailwindcssMajorVersion ?? 'unknown'
+  // 收集器会清除标记；相同 CSS 文本不能让不同来源证据共享转换结果。
+  const sourceMode = options.hasCompiledGeneratorSource ? ['compiled-source'] : []
   const cssCacheKey = `${options.outputFile}:css:${cssRuntimeSignature}:${tailwindcssMajorVersion}`
 
   return {
@@ -167,6 +172,7 @@ export function resolveViteCssTransformCachePlan(
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
+      ...sourceMode,
     ].join(':'),
     // 来源文本仅通过候选与来源标注影响样式；全局 HTML/JS 内容不能使无关 CSS 失效。
     cssTaskHash: [
@@ -174,6 +180,7 @@ export function resolveViteCssTransformCachePlan(
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
+      ...sourceMode,
     ].join(':'),
     rememberedCssRuntimeSignature,
   }

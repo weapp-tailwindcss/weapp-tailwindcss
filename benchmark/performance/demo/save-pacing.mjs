@@ -4,13 +4,13 @@ import { setTimeout } from 'node:timers/promises'
 // 该间隔只约束下一次输入，不用于判断 HMR 成功，也不计入保存到生效耗时。
 export const interSaveQuietMs = 150
 
-export function createSavePacer() {
+export function createSavePacer(quietMs = interSaveQuietMs) {
   let settledAt = performance.now()
   return {
     settled() { settledAt = performance.now() },
     async beforeSave() {
-      while (performance.now() - settledAt < interSaveQuietMs) {
-        await setTimeout(Math.max(1, interSaveQuietMs - (performance.now() - settledAt)))
+      while (performance.now() - settledAt < quietMs) {
+        await setTimeout(Math.max(1, quietMs - (performance.now() - settledAt)))
       }
     },
   }

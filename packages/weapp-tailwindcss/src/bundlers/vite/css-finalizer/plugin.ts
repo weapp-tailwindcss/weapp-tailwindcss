@@ -26,7 +26,7 @@ import { createFrameworkCssContext, extendFrameworkCssContext } from '../shared/
 import { createFrameworkStyleAssetContext } from '../shared/framework-style-assets'
 import { isHTMLRequest } from '../utils'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
-import { finalizeCssAssets } from './final-assets'
+import { assertSkylineTypographyBundle, finalizeCssAssets } from './final-assets'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
 import { createCssHandlerOptions, finalizeWebCss, inferPlatformFromViteOutDir, registerGeneratorDependencies, shouldGenerateCssByGenerator } from './options'
 
@@ -70,6 +70,9 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }).options
         const generatorBranch = generatorOptions.branch
         const isWebGeneratorTarget = generatorBranch.isWeb
+        if (!isWebGeneratorTarget) {
+          assertSkylineTypographyBundle(bundle, context)
+        }
         const cssPipelineContext = createFrameworkCssContext({
           bundle,
           currentGeneratorBranch: generatorBranch,

@@ -1,0 +1,14 @@
+{
+  "file": "fixtures/skyline-typography/components/HelloWorld.vue",
+  "count": 8,
+  "tokens": [
+    "bg-[#f8fafc]",
+    "flex",
+    "gap-2",
+    "items-center",
+    "px-4",
+    "py-3",
+    "rounded-[20rpx]",
+    "text-slate-700"
+  ]
+}

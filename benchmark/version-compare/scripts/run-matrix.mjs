@@ -4,6 +4,7 @@ import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { createSavePacer } from '../../performance/demo/save-pacing.mjs'
 import { validateAllocationRequest } from './diagnostics/constants.mjs'
 import { createCaseDiagnostics } from './diagnostics/controller.mjs'
 import { runWithCleanup } from './diagnostics/failures.mjs'
@@ -13,7 +14,7 @@ import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
 import { assertWatchRunning, stopChild } from './watch-process.mjs'
-import { isWatchReady } from './watch-readiness.mjs'
+import { isWatchBuildComplete, isWatchReady } from './watch-readiness.mjs'
 
 const defaultVersions = [
   { version: '4.9.8', root: '/tmp/weapp-tailwindcss-4.9.8' },
@@ -382,6 +383,8 @@ async function runHmrRounds({
   injectType,
   devEnv,
   watchReadyLog,
+  watchBuildLogs,
+  watchSettleMs,
   rounds,
   timeoutMs,
   pollIntervalMs,
@@ -404,8 +407,8 @@ async function runHmrRounds({
   const memorySampler = createProcessMemorySampler(child.pid)
   const logBuffer = createWatchLogBuffer()
   const logs = logBuffer.lines
-  child.stdout.on('data', logBuffer.collect)
-  child.stderr.on('data', logBuffer.collect)
+  child.stdout.on('data', buf => logBuffer.collect(buf, 'stdout'))
+  child.stderr.on('data', buf => logBuffer.collect(buf, 'stderr'))
 
   return runWithCleanup(async () => {
     const ready = await waitFor(async () => {
@@ -429,10 +432,13 @@ async function runHmrRounds({
     diagnostics?.mark('watch-ready')
 
     const times = []
+    const savePacer = createSavePacer(watchSettleMs)
 
     for (let i = 0; i < rounds; i += 1) {
       const marker = diagnostics?.mutationMarker?.(i + 1, original) ?? `twbench${Date.now()}${i}`
       const next = injectContent(original, marker, injectType)
+      await savePacer.beforeSave()
+      assertWatchRunning(child, `dev exited during hmr round=${i + 1}`, logs)
       const roundLogs = logBuffer.beginRound()
       const start = now()
       diagnostics?.mark('mutation-write', i + 1)
@@ -467,6 +473,23 @@ async function runHmrRounds({
         pluginTiming,
       })
 
+      // 保留 marker/timing 的原计时边界，但下一次写入必须等本轮产物提交。
+      if (watchBuildLogs) {
+        const committed = await waitFor(() => {
+          assertWatchRunning(child, `dev exited before hmr commit round=${i + 1}`, logs)
+          return isWatchBuildComplete(roundLogs.stdoutLines, watchBuildLogs)
+        }, Math.max(0, timeoutMs - (now() - start)), pollIntervalMs)
+        assertWatchRunning(child, `dev exited before hmr commit round=${i + 1}`, logs)
+        if (!committed) {
+          throw new Error(`hmr commit ${i + 1} timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
+        }
+      }
+      roundLogs.close()
+      savePacer.settled()
+      await savePacer.beforeSave()
+      assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
+      const rollbackLogs = logBuffer.beginRound()
+      const rollbackStart = now()
       diagnostics?.mark('rollback-write', i + 1)
       await fs.writeFile(sourcePath, original, 'utf8')
       sourceDirty = false
@@ -474,22 +497,23 @@ async function runHmrRounds({
         await diagnostics.source('rollback-written', sourcePath, original, marker)
       }
       const rolledBack = await waitFor(async () => {
-        assertWatchRunning(child, `dev exited during hmr rollback round=${i + 1}`, logs)
+        assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
         for (const probePath of probePaths) {
           const text = await readText(probePath)
-          // 这里只确认可读、非空且 marker 已移除，不把文件观察等同于生产者提交完成。
+          // 文件观察和本轮生产者提交是独立条件，不能用任意一方替代另一方。
           if (!text?.trim() || text.includes(marker)) {
             return false
           }
         }
-        return true
-      }, timeoutMs, pollIntervalMs)
-      roundLogs.close()
-      assertWatchRunning(child, `dev exited during hmr rollback round=${i + 1}`, logs)
+        return isWatchBuildComplete(rollbackLogs.stdoutLines, watchBuildLogs)
+      }, Math.max(0, timeoutMs - (now() - rollbackStart)), pollIntervalMs)
+      rollbackLogs.close()
+      assertWatchRunning(child, watchBuildLogs ? `dev exited before rollback commit round=${i + 1}` : `dev exited during hmr rollback round=${i + 1}`, logs)
       if (!rolledBack) {
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
       diagnostics?.mark('rollback-observed', i + 1)
+      savePacer.settled()
       if (diagnostics?.source) {
         await diagnostics.source('rollback-observed', sourcePath, original, marker)
       }
@@ -536,8 +560,8 @@ async function runDevServerHmrRounds({
   const memorySampler = createProcessMemorySampler(child.pid)
   const logBuffer = createWatchLogBuffer()
   const logs = logBuffer.lines
-  child.stdout.on('data', logBuffer.collect)
-  child.stderr.on('data', logBuffer.collect)
+  child.stdout.on('data', buf => logBuffer.collect(buf, 'stdout'))
+  child.stderr.on('data', buf => logBuffer.collect(buf, 'stderr'))
 
   try {
     let baseUrl = `http://127.0.0.1:${port}/`
@@ -713,6 +737,8 @@ export async function runCase(versionMeta, projectMeta, options) {
           injectType: projectMeta.injectType,
           devEnv: projectMeta.devEnv,
           watchReadyLog: projectMeta.watchReadyLog,
+          watchBuildLogs: projectMeta.watchBuildLogs,
+          watchSettleMs: projectMeta.watchSettleMs,
           rounds: options.hmrRuns,
           timeoutMs: options.timeoutMs,
           pollIntervalMs: options.pollIntervalMs,
@@ -783,6 +809,7 @@ async function main() {
     throw new Error('输入证据与分配采样必须分开运行')
   }
   validateAllocationRequest({
+    mode: inputDiagnostics ? 'inputs' : 'allocation',
     enabled: allocationDiagnostics || inputDiagnostics,
     guardMode: process.argv.includes('--guard'),
     baselineRef: versions.find(version => version.diagnosticIdentity?.role === 'base')?.diagnosticIdentity?.sourceCommit ?? '',

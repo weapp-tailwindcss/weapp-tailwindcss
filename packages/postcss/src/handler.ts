@@ -11,12 +11,13 @@ import { isAutoprefixerPlugin } from './autoprefixer'
 import { protectDynamicColorMixAlpha, protectDynamicVarFallbacks } from './compat/color-mix'
 import { normalizeCssLineComments } from './compat/line-comments'
 import { removeEmptyBlockAtRules } from './compat/mini-program-css/root-cleanups'
+import { assertSkylineTypographyInput, resolveSkylineTypographyCompatibility } from './compat/tailwindcss-v4/skyline-typography'
 import { splitUnresolvedAuthorVariableFallbacks } from './compat/uni-app-x-uvue/theme'
 import { probeFeatures } from './content-probe'
 import { getDefaultOptions } from './defaults'
 import { fingerprintStyleOptions } from './fingerprint'
 import { processUserCss } from './framework-pipeline'
-import { resolvePostcssFrameworkProfile } from './frameworks'
+import { resolvePostcssFrameworkProfile, resolvePostcssStyleTarget } from './frameworks'
 import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
 import { hasDynamicPxDesignWidth } from './plugins/getPxTransformPlugin'
@@ -87,6 +88,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     sourcePrepared = false,
   ) {
     const resolvedOptions = resolver.resolve(opt)
+    const target = resolvePostcssStyleTarget(resolvedOptions)
+    const skyline = resolveSkylineTypographyCompatibility(resolvedOptions, resolvedOptions.majorVersion === 4 && !resolvedOptions.uniAppX && (target === 'generic' || target === 'mini-program'))
     const plugins = resolvedOptions.postcssOptions?.plugins
     const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
@@ -116,6 +119,11 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     }
 
     const normalizedRawSource = sourcePrepared ? rawSource : normalizeCssLineComments(rawSource)
+    let validatedRoot: Root | undefined
+    if (skyline) {
+      validatedRoot = root ?? postcss.parse(normalizedRawSource, resolvedOptions.postcssOptions?.options)
+      assertSkylineTypographyInput(validatedRoot)
+    }
     // uni-app x 的 WebView/小程序目标也会复用 preserve:false 的 preset，
     // 需要先保护作者变量，否则主题 fallback 会在生成阶段被静态化。
     const isUniAppXFramework = resolvedOptions.appType === 'uni-app-x'
@@ -129,7 +137,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       ? protectDynamicColorMixAlpha(protectedVarFallbacks.css)
       : undefined
     const source = protectedColorMix?.css ?? protectedVarFallbacks.css
-    const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? source
+    const canReuseValidatedRoot = validatedRoot !== undefined && !resolvedOptions.postcssOptions?.options?.parser && !resolvedOptions.postcssOptions?.options?.syntax
+    const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? (canReuseValidatedRoot ? validatedRoot : undefined) ?? source
     const restoreProtectedResult = (result: PostcssResult) => {
       const restoredCss = protectedVarFallbacks.restore(protectedColorMix?.restore(result.css) ?? result.css)
       if (restoredCss !== result.css) {
@@ -226,6 +235,9 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
         }
       }
       finalResult = restoreProtectedResult(finalResult)
+      if (skyline) {
+        assertSkylineTypographyInput(finalResult.root as Root)
+      }
       const shouldSplitAuthorVariableFallbacks = resolvedOptions.uniAppX
         && (resolvedOptions.uniAppXCssTarget === 'uvue' || !isUniAppXFramework)
       if (shouldSplitAuthorVariableFallbacks && finalResult.root) {

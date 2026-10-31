@@ -1,16 +1,13 @@
-import type { OutputAsset, OutputChunk } from 'rollup'
-import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
-import type { BundleMetrics } from './metrics'
-import type { GenerateBundleContext, PendingRememberedCssReplayUpdate, RememberedCssSource } from './types'
+import type { OutputAsset } from 'rollup'
+import type { ProcessRememberedCssReplayOptions } from './remembered-css-replay/types'
+import type { PendingRememberedCssReplayUpdate } from './types'
 import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
 import { AssetEmissionPlan, getCompilationScopeDependencyRevision } from '@/compiler'
 import { generateTailwindV4Css } from '@/context/generation'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { normalizeMiniProgramGeneratorCssSource, normalizeMiniProgramImportShell } from '../../../generation/output-import-shell'
-import { isSourcePreprocessorRequest } from '../../../generation/style-requests'
 import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
-import { canProcessViteSourceStyleAsCss, SOURCE_STYLE_OUTPUT_EXT_RE } from '../css-output'
 import { createRuntimeAffectingSourceSignature } from '../runtime-affecting-signature'
 import { isHTMLRequest } from '../utils'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
@@ -18,6 +15,7 @@ import { selectUnbundledCssReplaySources } from './bundled-css-sources'
 import { createCssRuntimeSignature } from './css-share-scope'
 import { measureElapsed } from './metrics'
 import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createGeneratedReplayCacheProof, createGeneratedReplayCacheSignature, createRememberedCssRuntimeSignature, getGeneratedReplayCache, mergeRememberedCssSources } from './remembered-css'
+import { dedupeRememberedCssReplayGroup, resolveRememberedCssReplayOutputFile, shouldSkipRawRememberedCssSource } from './remembered-css-replay/source-plan'
 import { registerGeneratorDependencies } from './rollup-assets'
 import { isRootMiniProgramStyleOutputFile, shouldPreserveFrameworkRootMiniProgramImportShell } from './root-style-output'
 import { createScopedGeneratorCandidateSignature, createScopedGeneratorSourceTraceMap } from './scoped-generator'
@@ -25,104 +23,6 @@ import { hasScopedSourceDirectives } from './scoped-generator-sources'
 import { createCandidateSignature } from './signatures'
 import { createMergedCssSourceTraceMap } from './source-trace'
 import { rememberLastCssResult } from './vite-css-cache'
-
-function dedupeRememberedCssReplayGroup(
-  group: Array<{ key: string, remembered: RememberedCssSource }>,
-) {
-  const bySourceAndOutput = new Map<string, { key: string, remembered: RememberedCssSource }>()
-  for (const item of group) {
-    const sourceKey = `${normalizeOutputPathKey(item.remembered.sourceFile)}\0${normalizeOutputPathKey(item.remembered.outputFile)}`
-    bySourceAndOutput.set(sourceKey, item)
-  }
-  return [...bySourceAndOutput.values()]
-}
-
-interface ProcessRememberedCssReplayOptions {
-  addWatchFile: (id: string) => void
-  bundle: Record<string, OutputAsset | OutputChunk>
-  bundleFiles: string[]
-  cache: GenerateBundleContext['opts']['cache']
-  changedCssFiles: Set<string>
-  createScopedGeneratorRuntime: (
-    outputFile: string,
-    cssHandlerOptions: { isMainChunk?: boolean | undefined },
-    runtime: Set<string>,
-    rawSource?: string | undefined,
-    sourceFile?: string | undefined,
-    scopeToSource?: boolean | undefined,
-  ) => Promise<Set<string>>
-  createScopedSourceCandidateGetter: (
-    outputFile: string,
-    cssHandlerOptions: { isMainChunk?: boolean | undefined },
-    sourceFile?: string | undefined,
-  ) => GenerateBundleContext['getSourceCandidatesForEntries']
-  createScopedSourceCandidateSourceGetter: (
-    outputFile: string,
-    cssHandlerOptions: { isMainChunk?: boolean | undefined },
-    sourceFile?: string | undefined,
-  ) => GenerateBundleContext['getSourceCandidateSourcesForEntries']
-  cssTaskFactories: Array<() => Promise<void>>
-  cssPipelineContext: ViteFrameworkCssPipelineContext
-  cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
-  debug: GenerateBundleContext['debug']
-  defaultStyleOutputExtension: string
-  emitOrReplayCssAsset: (fileName: string, source: string) => OutputAsset | undefined
-  generatorRuntime: Set<string>
-  generatorPlatform?: string | undefined
-  getCssHandlerOptions: (file: string) => ReturnType<ReturnType<typeof import('../css-handler-options').createCssHandlerOptionsCache>['getCssHandlerOptions']>
-  getCssUserHandlerOptions: (file: string) => ReturnType<ReturnType<typeof import('../css-handler-options').createCssHandlerOptionsCache>['getCssUserHandlerOptions']>
-  getRememberedCssSignature?: ((file: string) => string | undefined) | undefined
-  getRememberedCssSources?: (() => Iterable<[string, RememberedCssSource]>) | undefined
-  captureCssSource?: GenerateBundleContext['captureCssSource']
-  frameworkRootImportShellTargetByFile?: ReadonlyMap<string, string> | undefined
-  isNativeAppStyleTarget: boolean
-  isWebGeneratorTarget: boolean
-  lastCssRawSourceHashByFile: Map<string, string>
-  lastCssResultByFile: Map<string, string>
-  lastCssSourceHashByFile: Map<string, string>
-  markCssAssetProcessed: GenerateBundleContext['markCssAssetProcessed']
-  metrics: BundleMetrics
-  normalizeViteCssCacheKey: (file: string) => string
-  onUpdate: GenerateBundleContext['opts']['onUpdate']
-  opts: GenerateBundleContext['opts']
-  pendingRememberedCssReplayUpdates: PendingRememberedCssReplayUpdate[]
-  recordCssAssetResult: GenerateBundleContext['recordCssAssetResult']
-  recordViteProcessedCssAssetResult: GenerateBundleContext['recordViteProcessedCssAssetResult']
-  rootDir: string
-  runtimeSignature: string
-  runtimeState: GenerateBundleContext['runtimeState']
-  setRememberedCssSignature?: ((file: string, cssRuntimeSignature: string) => void) | undefined
-  shouldInjectCssIntoMainFromOutput: (
-    outputFile: string,
-    sourceFile: string,
-    cssHandlerOptions: { isMainChunk?: boolean | undefined },
-  ) => boolean
-  shouldPreserveAppCssExtension: boolean
-  sourceRoot: string | undefined
-  styleHandler: GenerateBundleContext['opts']['styleHandler']
-  timeTask: (name: string, task: () => Promise<void>) => Promise<void>
-  useIncrementalMode: boolean
-  activeViteCssCacheFiles: Set<string>
-}
-
-export function shouldSkipRawRememberedCssSource(rawSource: string, sourceFile: string) {
-  const cleanSourceFile = sourceFile.replace(/[?#].*$/, '')
-  return (SOURCE_STYLE_OUTPUT_EXT_RE.test(cleanSourceFile) || isSourcePreprocessorRequest(sourceFile))
-    && !canProcessViteSourceStyleAsCss(rawSource, sourceFile)
-}
-
-export function resolveRememberedCssReplayOutputFile(
-  outputFile: string,
-  targetByFile: ReadonlyMap<string, string> | undefined,
-) {
-  const outputKey = normalizeOutputPathKey(outputFile)
-  for (const [shellFile, targetFile] of targetByFile ?? []) {
-    if (normalizeOutputPathKey(shellFile) === outputKey) {
-      return targetFile
-    }
-  }
-  return outputFile
-}
 
 function createRememberedCssReplayUpdates(
   css: string,
@@ -234,6 +134,13 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       continue
     }
     const { sourceFile } = rememberedCssSource
+    // 当前资产已拥有输出时仍须保活每个贡献模块，不能在跳过回放后被 prune 淘汰。
+    for (const { remembered } of replayableRememberedGroup) {
+      activeViteCssCacheFiles.add(normalizeViteCssCacheKey(remembered.sourceFile))
+      for (const input of remembered.sourceInputs ?? []) {
+        activeViteCssCacheFiles.add(normalizeViteCssCacheKey(input.sourceFile))
+      }
+    }
     // 异步 CSS 任务尚未写入 bundle 时，本轮输出计划也拥有该目标，不能再排入旧回放。
     if (
       activeViteCssCacheFiles.has(`planned:${normalizeViteCssCacheKey?.(outputFile) ?? normalizeOutputPathKey(outputFile)}`)
@@ -495,3 +402,5 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     })
   }
 }
+
+export { resolveRememberedCssReplayOutputFile, shouldSkipRawRememberedCssSource } from './remembered-css-replay/source-plan'

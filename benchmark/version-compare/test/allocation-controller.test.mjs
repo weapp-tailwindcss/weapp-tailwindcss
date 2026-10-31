@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -8,10 +7,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { diagnosticSymbol } from '../scripts/diagnostics/constants.mjs'
 import { createCaseDiagnostics } from '../scripts/diagnostics/controller.mjs'
 import { sha256 } from '../scripts/diagnostics/evidence.mjs'
-import { decodeAllocationEvidence } from '../scripts/diagnostics/profile-codec.mjs'
 import { createUniServiceFixture, uniProject, versionFor } from './helpers/gc-service.mjs'
-import { viteOperationFixture } from './helpers/vite-operations.mjs'
 import { uniWorkerFixture } from './helpers/uni-worker.mjs'
+import { viteOperationFixture } from './helpers/vite-operations.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -54,7 +52,7 @@ async function runNode(entry, env) {
 }
 
 describe('实际 Node worker 的输入与分配诊断', () => {
-  it.each(['inputs', 'allocation'])('%s 模式两侧同 preload，真实候选与 SHA 完整，输入模式不产生 profile', async (mode) => {
+  it.each(['inputs'])('%s 模式两侧同 preload，真实候选与 SHA 完整，输入模式不产生 profile', async (mode) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'allocation-worker-'))
     roots.push(root)
     const controllers = []
@@ -93,43 +91,34 @@ if (allocation.length !== 20000) throw new Error('fixture');
       expect(inputs.sources[0].maps.sourceById[0]).toMatchObject({ comparableKey: '<root>/input.vue', sha256: sha256('中文 flex extra') })
       const files = await fs.readdir(directory)
       expect(files.includes('allocation-1.json')).toBe(mode === 'allocation')
-      if (mode === 'allocation') {
-        const profile = decodeAllocationEvidence(await fs.readFile(path.join(directory, 'allocation-1.json')), inputs.profileReceipt)
-        expect(profile.sampling.parameters).toMatchObject({ includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true })
-        expect(profile.sampling.profile.samples.length).toBeGreaterThan(0)
-        const frames = decodeAllocationEvidence(await fs.readFile(path.join(directory, inputs.framesFile)))
-        expect(frames.allocationFrames.length).toBeGreaterThan(0)
-        expect(frames.profileReceipt).toEqual(inputs.profileReceipt)
-        const profileFile = path.join(directory, inputs.profileFile)
-        const inputFile = path.join(directory, 'inputs-1.json')
-        const originalProfile = await fs.readFile(profileFile)
-        const originalInputs = await fs.readFile(inputFile)
-        const envelope = JSON.parse(originalProfile.toString())
-        expect(envelope.encoding).toMatch(/\.v1$/)
-        const invalidProfile = Buffer.from(originalProfile.toString().replace(envelope.encoding, envelope.encoding.replace(/\.v1$/, '.v2')))
-        expect(invalidProfile.length).toBe(originalProfile.length)
-        expect(invalidProfile.equals(originalProfile)).toBe(false)
-        await fs.writeFile(profileFile, invalidProfile)
-        await fs.writeFile(inputFile, originalInputs.toString().replace(inputs.profileReceipt.sha256, sha256(invalidProfile)))
-        await expect(diagnostics.finish()).rejects.toThrow('结构无效')
-        await fs.writeFile(profileFile, originalProfile)
-        await fs.writeFile(inputFile, originalInputs)
-        const statusFile = path.join(directory, 'status.json')
-        const originalStatus = await fs.readFile(statusFile)
-        const missingReceipt = JSON.parse(originalStatus)
-        delete missingReceipt.frameReceipts[0].receipt
-        await fs.writeFile(statusFile, JSON.stringify(missingReceipt))
-        await expect(diagnostics.finish()).rejects.toThrow('receipt')
-        await fs.writeFile(statusFile, originalStatus)
-        const corrupted = await fs.readFile(path.join(directory, inputs.framesFile))
-        corrupted[0] = 91
-        await fs.writeFile(path.join(directory, inputs.framesFile), corrupted)
-        await expect(diagnostics.finish()).rejects.toThrow('栈映射缺失或哈希不匹配')
-      }
       controllers.push(controller)
     }
     expect(controllers[0].moduleHashes).toEqual(controllers[1].moduleHashes)
   }, 30000)
+
+  it.each(['allocation', 'unknown', true])('模式 %s 在创建会话或写入证据前拒绝', async (allocation) => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'allocation-disabled-'))
+    roots.push(root)
+    const { cwd } = await createUniServiceFixture(root)
+    const directory = path.join(root, 'evidence')
+    await expect(createCaseDiagnostics({ allocation, cwd, versionMeta: versionFor(root), projectMeta: uniProject, directory, kind: 'build', run: 1 })).rejects.toThrow(allocation === 'allocation' ? 'kSamplingForceGC' : '诊断模式')
+    await expect(fs.access(directory)).rejects.toThrow()
+  })
+
+  it.each(['allocation', 'unknown'])('直接加载 preload 也拒绝 %s，不执行业务入口或写诊断文件', async (mode) => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'allocation-preload-disabled-'))
+    roots.push(root)
+    const marker = path.join(root, 'business-ran')
+    const entry = path.join(root, 'entry.mjs')
+    await fs.writeFile(entry, `import fs from 'node:fs'; fs.writeFileSync(${JSON.stringify(marker)}, 'unexpected');`)
+    const preload = new URL('../scripts/diagnostics/preload.mjs', import.meta.url).href
+    await expect(runNode(entry, {
+      NODE_OPTIONS: `--import=${preload}`,
+      WEAPP_TW_BENCH_GC_EXPECTED_ENTRY: entry,
+      WEAPP_TW_BENCH_ALLOCATION_SESSION: JSON.stringify({ mode, sessionDirectory: root }),
+    })).rejects.toThrow(mode === 'allocation' ? 'kSamplingForceGC' : '诊断模式')
+    expect(await fs.readdir(root)).toEqual(['entry.mjs'])
+  })
 
   it('实际写入不同于预期或 worker 缺失证据时明确失败，保留错误 manifest', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'allocation-missing-'))

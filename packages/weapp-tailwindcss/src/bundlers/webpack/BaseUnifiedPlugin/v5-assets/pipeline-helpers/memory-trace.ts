@@ -3,6 +3,7 @@ import type { WebpackSourceCandidateScanMemoryStats } from '../source-candidate-
 import type { WebpackCssHandlerOptions } from './preflight-runtime'
 import process from 'node:process'
 import { postcss } from '@weapp-tailwindcss/postcss/transform'
+import { isSkylineTypographyEnabledForContext } from '@/context/skyline-typography'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
 import { getTailwindV4IncrementalGenerateCacheStats } from '@/tailwindcss/v4-engine'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, parseImportRequest } from '../../../../../generation/directives'
@@ -122,6 +123,10 @@ export function finalizeMiniProgramUserCssAssetSource(
           ? resolveConfiguredWebpackCssPreflight(compilerOptions, styleOptions)
           : undefined,
     isTailwindcssV4: true,
+    cssOptions: { ...styleOptions.cssOptions, skyline: isSkylineTypographyEnabledForContext(compilerOptions) },
+    platform: styleOptions.platform,
+    atRules: styleOptions.atRules,
+    cssRemoveProperty: styleOptions.cssRemoveProperty,
     tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
     preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
   })

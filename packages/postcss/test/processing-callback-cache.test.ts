@@ -43,6 +43,18 @@ function createHandler(options?: ProcessOptions) {
 }
 
 describe('处理选项回调的外部状态不能作为完整结果缓存', () => {
+  it.each(['parser', 'syntax'] as const)('关闭 Skyline 时不提前读取继承的 %s 访问器', async (key) => {
+    const read = vi.fn(() => {
+      throw new Error('不应求值的继承访问器')
+    })
+    const prototype = Object.create(null, { [key]: { get: read } })
+    const options: ProcessOptions = Object.create(prototype)
+    const { handler } = createHandler(options)
+    expect((await handler(css)).css).toBe(css)
+    expect((await handler(css)).css).toBe(css)
+    expect(read).not.toHaveBeenCalled()
+  })
+
   it('同一个 parser 闭包变化后，文本重新解析并与新 handler 一致', async () => {
     let color = 'red'
     const parser = vi.fn<Parser>((source, options) => {

@@ -36,10 +36,22 @@ export const limits = Object.freeze({
   commandTimeoutMs: 10000,
 })
 
-export function validateAllocationRequest({ enabled, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns }) {
+export const allocationSamplingUnavailable = '分配采样已禁用：Node 22.23.4 的 V8 inspector 会隐式请求 kSamplingForceGC，违反诊断不能主动请求 GC 的约束；请单独使用 inputs 模式'
+
+export function validateDiagnosticMode(mode) {
+  if (mode === 'allocation') {
+    throw new Error(allocationSamplingUnavailable)
+  }
+  if (mode !== 'inputs') {
+    throw new Error('诊断模式必须明确为 inputs；不将未知模式降级或作为分配采样执行')
+  }
+}
+
+export function validateAllocationRequest({ enabled, mode, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns }) {
   if (!enabled) {
     return
   }
+  validateDiagnosticMode(mode)
   if (guardMode || !/^[a-f\d]{40}$/i.test(baselineRef)) {
     throw new Error('分配诊断必须使用完整 Git 基线 SHA，且不能与正式 --guard 一起运行')
   }

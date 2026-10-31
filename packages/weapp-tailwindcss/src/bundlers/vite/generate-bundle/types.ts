@@ -83,6 +83,8 @@ export interface RememberedCssSource {
   outputFile: string
   rawSource: string
   sourceFile: string
+  /** 推断合并内容时仍保留每个样式请求的作者输入，供编译载荷逐一核验。 */
+  sourceInputs?: readonly { rawSource: string, sourceFile: string }[] | undefined
 }
 
 export interface PendingRememberedCssReplayUpdate {

@@ -158,6 +158,12 @@ export const benchmarkProjects = [
     devScript: 'dev:mp-weixin',
     injectType: 'vue',
     hmrMode: 'watch',
+    watchReadyLog: /ready in \d+(?:\.\d+)?m?s/i,
+    watchBuildLogs: {
+      start: /(?:Incremental Compiling|开始差量编译)\.\.\./,
+      complete: /DONE\s+Build complete\. Watching for changes\.\.\./,
+    },
+    watchSettleMs: 600,
   },
   {
     key: 'demo-uni-app-vite-tailwindcss-v4__h5',

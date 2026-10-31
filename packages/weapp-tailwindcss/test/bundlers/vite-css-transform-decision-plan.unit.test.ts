@@ -86,6 +86,19 @@ describe('vite css transform decision plan', () => {
 })
 
 describe('vite css transform cache plan', () => {
+  it('同一资产文本的源码生成与已编译模块证据分别缓存，撤销证据后恢复原签名', () => {
+    const createPlan = (hasCompiledGeneratorSource: boolean) => resolveViteCssTransformCachePlan({
+      hasCompiledGeneratorSource,
+      cssBundleSourceHash: 'same-css', cssIsMainChunk: false, cssRuntimeAffectingHash: 'same-source', cssShareScope: 'scope',
+      outputFile: 'component.acss', runtimeSignature: 'runtime', scopedGeneratorCandidateSignature: 'candidates', sourceTraceSignature: 'trace',
+    })
+    const source = createPlan(false)
+    const compiled = createPlan(true)
+    expect(compiled.cssTaskHash).not.toBe(source.cssTaskHash)
+    expect(compiled.cssSharedCacheKey).not.toBe(source.cssSharedCacheKey)
+    expect(createPlan(false)).toEqual(source)
+  })
+
   it('builds stable cache and remembered signatures', () => {
     expect(resolveViteCssTransformCachePlan({
       cssIsMainChunk: true,

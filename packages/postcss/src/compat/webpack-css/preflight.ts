@@ -1,4 +1,5 @@
 import postcss from 'postcss'
+import { getSkylineTypographyResetValue, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 
 function isMiniProgramPreflightRule(rule: postcss.Rule) {
   const selectors = new Set((rule.selectors ?? [rule.selector])
@@ -6,13 +7,15 @@ function isMiniProgramPreflightRule(rule: postcss.Rule) {
   return selectors.has('view') && selectors.has('text') && selectors.has('::before') && selectors.has('::after')
 }
 
-export function removeMiniProgramPreflightSelectorRule(source: string) {
+export function removeMiniProgramPreflightSelectorRule(source: string, options?: { preserveSkylineTypography?: boolean }) {
   try {
     const root = postcss.parse(source)
     let changed = false
     root.walkRules((rule) => {
       if (isMiniProgramPreflightRule(rule)) {
-        rule.remove()
+        if (!options?.preserveSkylineTypography || !retainSkylineTypographyResets(rule)) {
+          rule.remove()
+        }
         changed = true
       }
     })
@@ -23,13 +26,17 @@ export function removeMiniProgramPreflightSelectorRule(source: string) {
   }
 }
 
-export function dedupeMiniProgramPreflightSelectorRules(source: string) {
+export function dedupeMiniProgramPreflightSelectorRules(source: string, options?: { preserveSkylineTypography?: boolean }) {
   try {
     const root = postcss.parse(source)
     let firstRule: postcss.Rule | undefined
     const existingProps = new Set<string>()
     let changed = false
     root.walkRules((rule) => {
+      // 字体初始化与作者 setter 的先后顺序、条件及优先级不能按属性集合合并。
+      if (options?.preserveSkylineTypography && rule.nodes.some(node => node.type === 'decl' && getSkylineTypographyResetValue(node.prop) !== undefined)) {
+        return
+      }
       if (!isMiniProgramPreflightRule(rule)) {
         return
       }

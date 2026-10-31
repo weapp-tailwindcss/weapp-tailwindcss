@@ -171,6 +171,7 @@ export async function resolveSfcStyleSourceFromOutputFile(
     outputFile,
     rawSource,
     sourceFile: resolveSfcStyleHandlerSourceFile(sourceFile, styleBlocks),
+    sourceInputs: styleBlocks.map(style => ({ rawSource: style.source, sourceFile: createSfcStyleRequest(sourceFile, style) })),
   }
 }
 

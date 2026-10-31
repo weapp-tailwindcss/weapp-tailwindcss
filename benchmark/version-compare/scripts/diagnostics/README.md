@@ -1,6 +1,8 @@
 # Uni / Taro Vite / Mpx 输入与分配诊断
 
-这两个手动模式用于定位性能失败，不能证明正式性能验收通过。`--input-diagnostics` 记录完整候选和来源，不启用 inspector；`--allocation-diagnostics` 额外启动包含 major/minor GC 已回收对象的统计分配采样。二者分开运行，均要求一个完整 Git 基线 SHA、一个已登记的 Uni、Taro Vite React 或 Mpx 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚。禁止与 `--guard` 同时使用。
+`--input-diagnostics` 用于定位性能失败，记录完整候选和来源，不启用 inspector，不能证明正式性能验收通过。它要求完整 Git 基线 SHA、一个已登记的 Uni、Taro Vite React 或 Mpx 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚，禁止与 `--guard` 同时使用。
+
+`--allocation-diagnostics` 当前已禁用，CLI、dispatch、控制器和 worker 均明确拒绝，不自动降级为 inputs。Node 22.23.4 的 [inspector 实现](https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/inspector/v8-heap-profiler-agent-impl.cc#L566)在 startSampling 中无条件设置 `kSamplingForceGC`；[GetAllocationProfile](https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/profiler/sampling-heap-profiler.cc#L278)因此会主动触发 GC。包含已回收对象的两个参数不能关闭此标志，仅检查未发送 `collectGarbage` 请求不足以证明没有强制 GC。其它运行时也未证明满足约束，不能按版本猜测放行。
 
 ## 运行入口
 
@@ -10,11 +12,11 @@
 pnpm bench:ci -- --input-diagnostics --baseline-ref fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417 --only demo-uni-app-vite-tailwindcss-v4__mp-weixin --build-runs 3 --hmr-runs 3 --result-dir .tmp/benchmark-input-diagnostic
 ```
 
-分配模式使用同一参数，将 `--input-diagnostics` 换成 `--allocation-diagnostics`，并使用独立结果目录。工作流为这两个模式固定 Node 22.23.4；本地应核对实际 worker 的 `process-start.json`，不能以父 shell 的版本代替。该版本 V8 inspector 支持 `includeObjectsCollectedByMajorGC` 和 `includeObjectsCollectedByMinorGC`。实现不发送 GC 或 heap snapshot 请求；协议失败则停止诊断。
+输入工作流固定 Node 22.23.4；本地应核对实际 worker 的 `process-start.json`，不能以父 shell 的版本代替。历史 CDP allocation 工件保留供审计，但受隐式 GC 和采样开销干预，不能解释自然工作负载的 GC/RSS，也不能作为无主动 GC 的根因证据或正式放行依据。下文 profile 及采样协议仅描述历史工件格式，现有 codec 继续支持读取，不表示采样入口可运行。
 
 Taro Vite React 使用 `--only demo-taro-vite-react-tailwindcss-v4__mp-weixin`，其余限制相同。Taro 的仓库 runner 在加载 CLI 前改写 `process.argv`，preload 因此绑定准备副本中的 `scripts/taro-build-runner.mjs`，同时核对实际解析的 `@tarojs/cli` 包身份和 bin 声明。不能绑定未直接执行的 CLI bin，也不能把缺少对应进程证据解释为没有 GC 或分配。GC 模式仅在显式选择 Taro 的诊断 dispatch 开启；普通 PR 的 Taro 采样与门禁保持原行为。
 
-Linux 使用 Benchmark 工作流的手动入口，选择准确 PR 分支，填写同一完整 `baseline_ref`、上述 `only`、`build_runs=3`、`hmr_runs=3`，仅启用 `input_diagnostics` 或 `allocation_diagnostics` 之一。两个输入默认关闭。等价 CLI 模板如下；`PR_BRANCH` 需要替换为真实分支名：
+Linux 使用 Benchmark 工作流的手动入口，选择准确 PR 分支，填写同一完整 `baseline_ref`、上述 `only`、`build_runs=3`、`hmr_runs=3`，仅启用 `input_diagnostics`。诊断输入默认关闭；`allocation_diagnostics` 保留为明确报错入口。等价 CLI 模板如下；`PR_BRANCH` 需要替换为真实分支名：
 
 ```sh
 gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417 -f only=demo-uni-app-vite-tailwindcss-v4__mp-weixin -f build_runs=3 -f hmr_runs=3 -f input_diagnostics=true
@@ -22,7 +24,7 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 
 显式 `gc_diagnostics=true` 仍保留已有自然 GC、预算和反序确认行为。所有显式诊断 dispatch 的 job（包括 skipped job）使用独立 Diagnostic check 名及并发组。普通 PR 的 check 名、预算和调度逻辑保持原行为；诊断成功不能替换正式 PR 的失败。
 
-新输入/分配模式使用同一确定性 `twbenchdiagnosticround1..3` 修改标记，不读取时钟或进程身份。初始来源已包含本轮标记时立即失败。这样两侧实际写入保持等量；原正式及自然 GC 模式仍使用原 marker 规则。控制器会记录生成规则，实际文本哈希仍需逐项比较，不能只比较归一化后的 marker 哈希。
+输入模式及历史分配工件使用同一确定性 `twbenchdiagnosticround1..3` 修改标记，不读取时钟或进程身份。初始来源已包含本轮标记时立即失败。这样两侧实际写入保持等量；原正式及自然 GC 模式仍使用原 marker 规则。控制器会记录生成规则，实际文本哈希仍需逐项比较，不能只比较归一化后的 marker 哈希。
 
 ## 证据与解释
 
@@ -52,7 +54,7 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9db
 
 采样间隔固定 256 KiB，每会话最多 8 个阶段、32 个 store、每 store 4096 个来源条目、每集合 100000 个候选；每文件最多 16 MiB、每会话输出最多 64 MiB。栈映射最多读取 128 个准备副本内仓库模块、累计 32 MiB；原始采样保留采样窗口内的第三方调用栈，不因映射范围收紧而删减样本。冷构建在首个 `vite.completed` / 根 compilation 完成事件取样并停止，watch 在最后一次 stop 握手取样；停止后的产物写入、关闭和进程退出分配不在 profile 中。必须对照 `sampling.completedAtEpochMs`、完成事件、释放事件与 RSS 峰值时间，不得以 profile 中没有分配来排除窗口外的内存峰值。超限、未知锚点、worker 缺失或阶段不匹配使诊断失败，不截断后继续。
 
-这些限制约束诊断输入/输出和阶段数，不能硬性限制 V8 inspector 内部的采样内存。watch 停止握手最多等待 10 秒；失败仍由原 runner 结束自己创建的子进程并恢复已修改来源。没有强制 GC、额外业务重建或产品源码埋点。
+这些限制约束诊断输入/输出和阶段数，不能硬性限制 V8 inspector 内部的采样内存。watch 停止握手最多等待 10 秒；失败仍由原 runner 结束自己创建的子进程并恢复已修改来源。受支持的 inputs 模式不启用 inspector 或请求 GC，不增加业务重建或产品源码埋点；历史 allocation 采样会隐式强制 GC。
 
 ## Mpx 操作与实际输入
 
@@ -95,7 +97,7 @@ Vite 的无 observer 准备构建可在前述 `verify-preparation-build.mjs` 命
 
 ## Taro 冷构建尾部阶段
 
-Taro 的 input / allocation 两种显式模式同时启用尾部数值观测，普通 PR、正式门禁、单独 GC 模式和 watch 轮次不启用。定位 RSS 尾峰优先使用 input 模式，避免把大 profile 的序列化、映射和压缩开销混入尾部判断。allocation 模式的原停止点仍在主 `finalizeGenerateBundle` 的 `onEnd` 前；后续阶段记录不是延长后的分配 profile。
+Taro 的 inputs 显式模式启用尾部数值观测，普通 PR、正式门禁、单独 GC 模式和 watch 轮次不启用。已禁用的历史 allocation 模式也曾记录尾部数值，但其 profile 隐式强制 GC；原停止点在主 `finalizeGenerateBundle` 的 `onEnd` 前，后续阶段记录不是延长后的分配 profile。
 
 源码准备阶段验证并插桩独立 CSS finalizer。依赖安装后，从准备副本的 Taro runner 实际解析 Vite，再从 Vite 解析 Rollup，沿各包 `exports.import` 的相对静态 ESM 图查找唯一 AST 锚点。`tail-dependencies.json` 记录实际版本、包元数据哈希、源码前后 SHA 和锚点。路径 realpath 必须留在无 Git 元数据的准备副本内；全部依赖锚点成功后使用临时文件 rename 替换，避免原位写穿 pnpm 硬链接。未知布局、重复插桩和路径逃逸直接失败。未注册尾部 observer 时执行原语句，不求值统计参数、不增加回调、Promise 或 await。
 
@@ -105,7 +107,7 @@ Taro 的 input / allocation 两种显式模式同时启用尾部数值观测，�
 
 资产只统计全资产与脚本的数量和 UTF-8 字节，不复制 CSS、JS、AST 或 sourcemap 全文，不读取用户 opts 或额外调用 cssMatcher。无法从已知元数据确定的 CSS 数量和字节、sourcemap 序列化大小及未观测到的 styleHandler 调用次数保持 `unknown`；不能用文件名启发式分类。候选、sourceId、生成次数及请求 CSS 全文复用同序列的 `source.snapshot` 和已有生成操作，不重复扫描或额外调用 handler。reporter 是否可能压缩或序列化 map，应读取本次 resolved `logLevel/reportCompressedSize/ssr/sourcemap`，不能从框架名猜测。
 
-每进程最多 64 个尾部事件、每次最多 4096 个资产；仍共用原操作事件数与文件/会话字节预算。没有强制 GC、额外构建、采样间隔或正式阈值变更。阶段结束与实际 RSS 峰的时序需要在同次诊断中对照；诊断 fixture 成功不表示 Taro 性能回归已修复。
+每进程最多 64 个尾部事件、每次最多 4096 个资产；仍共用原操作事件数与文件/会话字节预算。inputs 尾部观测不请求 GC、不增加构建，也不改变正式阈值；历史 allocation profile 会隐式强制 GC。阶段结束与实际 RSS 峰的时序需要在同次诊断中对照；诊断 fixture 成功不表示 Taro 性能回归已修复。
 
 
 ## Uni HMR 的 bundle 输入补证
@@ -124,7 +126,7 @@ gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=e769e69b97c88b379a
 
 `uni.dependencies` 被动检查同一 worker 已完成的 CJS Module 缓存，记录实际 physical 文件、包身份、package SHA 和观测时文件 SHA；只将这些项标为 `loaded-cjs-cache`。按 importer 解析的 CLI、Vite 内部 Rollup/PostCSS 和主包依赖另列为 `resolved-only`，不会为了补证执行依赖。ESM 注册表、被 bundle 内联的模块、尚未使用的入口没有公开只读枚举依据时，逐项写入 `missingEvidence`；不能从 resolve 或锁文件推出 loaded，也不能从加载推出调用或 CPU 归属。文件 SHA 是观测时磁盘字节，不证明加载时字节；登记的 wrapper 身份也不证明 Rollup/Oxc 等原生后端已被覆盖，未登记的 backend 保持缺证。读取及原有事件/归档预算超限即失败，不截断放行。
 
-控制器复核原始字节与处理器文本、每份输入/规划/完成唯一性、bundle 生命周期和实际 finalization 关系；缺失或未知结构阻断。原有 3 build 各一份、watch 8 份与双侧 11 个阶段对照继续执行。还须人工核对 run head、`versions.json`/controller 的准确 sourceCommit、worker Node/entry/preload SHA、清洁工作树和实际 mutation/rollback SHA。同步归档、哈希、Promise 包装及上下文传播都有观察成本；没有 observer 时不求值诊断详情、不增加 await。诊断保持 `diagnosticOnly=true`、`budgetAcceptance=false`，不能替代未插桩的正式性能门禁，不能据一次 profile 直接认定某个依赖为根因。
+控制器复核原始字节与处理器文本、每份输入/规划/完成唯一性、bundle 生命周期和实际 finalization 关系；缺失或未知结构阻断。原有 3 build 各一份、watch 8 份与双侧 11 个阶段对照继续执行。还须人工核对 run head、`versions.json`/controller 的准确 sourceCommit、worker Node/entry/preload SHA、清洁工作树和实际 mutation/rollback SHA。同步归档、哈希、Promise 包装及上下文传播都有观察成本；没有 observer 时不求值诊断详情、不增加 await。inputs 不请求 GC；历史 allocation 受隐式强制 GC 干预。诊断保持 `diagnosticOnly=true`、`budgetAcceptance=false`，不能替代未插桩的正式性能门禁，不能据一次 profile 直接认定某个依赖为根因。
 
 runner 将本次 pnpm worker 的 stdout/stderr 原始字节分别归档为 `worker-stdout.log`、`worker-stderr.log`，`worker-result.json` 保存字节/SHA、实际退出状态、首错完整 cause/AggregateError 链和诊断次错。日志与错误回执同样受16MiB单文件、64MiB会话总预算约束，超限明确失败；未观测到 close 不标为完整。构建/HMR、子进程停止、源码恢复和 diagnostics.finish 复用聚合收尾，后一项失败不覆盖首错。输出完整仅表示日志被完整归档，不能表示构建或诊断通过。
 

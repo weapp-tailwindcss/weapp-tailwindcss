@@ -5,6 +5,7 @@ import { transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss/transfo
 import { createUniAppViteStyleInjector } from '@/style-injector/vite/uni-app'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 import { uniViteRuntimeStrategy } from '../shared/uni/runtime-strategy'
+import { createUniAppSkylineTypography } from './skyline-typography'
 
 function isUniAppWebviewStylePlatform(platform: string | undefined) {
   return platform === 'app' || platform === 'app-plus'
@@ -42,7 +43,7 @@ export const uniAppCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
       const safeCss = isUniAppWebviewStylePlatform(context.resolveStylePlatform())
         ? transformWebCssSafeSelectors(webCss, { escapeMap: context.escapeMap })
         : webCss
-      return context.removeScopedPreflight(safeCss)
+      return context.removeScopedPreflight(safeCss, { preserveSkylineTypography: Boolean(context.getSkylineTypographyResetCss?.()) })
     },
   },
   styles: {
@@ -100,11 +101,18 @@ export const uniAppCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
 }
 
 export function createUniAppVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
+  let normalizeSfcSource = (source: string, _id: string) => source
   return createViteFrameworkPlugins(options, {
     frameworkName: 'uni-app',
     runtimeStrategy: uniViteRuntimeStrategy,
     adaptWatchCssBeforeFrameworkCache: true,
     cssPipelineStrategy: uniAppCssPipelineStrategy,
+    createExtraPlugins(context) {
+      const typography = createUniAppSkylineTypography(context)
+      normalizeSfcSource = typography.normalizeSfcSource
+      return [typography.plugin]
+    },
+    normalizeSfcSource: (source, id) => normalizeSfcSource(source, id),
     styleInjectorDelegate: createUniAppViteStyleInjector,
   })
 }

@@ -1,0 +1,4240 @@
+{
+  "description": "独立 UNI_INPUT_DIR 的最终生产管线复验；历史 implementation-evidence.json 继续绑定原提交，不覆盖历史证据。",
+  "source": {
+    "beforeIde": "2026-10-30T14:05:10.891Z",
+    "baseCommit": "7b787355006f071877a66287283efeef59427080",
+    "manifestSha256": "90842621068205f2738bf665cad78edf215a0192d6c5f9d0dd70e0e952aff689",
+    "files": [
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/App.vue",
+        "sha256": "43b3473957ae9dbc7091f95af4c2e56df5bb585833693be748047ebf57bef25c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/HelloWorld.vue",
+        "sha256": "406d6b3f328949fe82593ab73d2ab9ad781810ebc512e7696fbb2ef0283018b9"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyExternal.vue",
+        "sha256": "4b60768ded78269df712309cbf127a3dd8cb99aa1412ba1ee9e12d53db536fbd"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyNoStyle.vue",
+        "sha256": "198f064898b8ce669145f19c66760b1ef47f6e331e68e61ef29b64509605a6c8"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyProbe.vue",
+        "sha256": "7431268287adc1c994a30d35582723000e44bf52d0c48e3693bc5017619a3880"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/SkylineTypographyScoped.vue",
+        "sha256": "7bc76764be6957d7e559dd76b31550ab7b01cdc515f59dd0dabede22dd8ad091"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/components/skyline-typography/external.css",
+        "sha256": "54d0107dcba445e683d5aa4cdead5ca1cef5c2fe0637e5825854ed677158427c"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/main.css",
+        "sha256": "17c3881d9aae106b936a05f4284cbd5e713671f012b937e8aed6500107187161"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/main.ts",
+        "sha256": "f061fc235dc666784f64c4d6a0f216f3f6f4a46f2ad15b8461ecc415ac556ec8"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/manifest.json",
+        "sha256": "eb6b69d76812e026588e7a49349d48c62a49b1f8164c8e37055785fbb04eaaec"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages.json",
+        "sha256": "cb85d981021114fab09253b1b5d9d9469095755046fb59d04d171ca1be93f3ed"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages/skyline-typography/skyline.vue",
+        "sha256": "533bba593fe897d8972fdb33a6843ee583329e31b354dd74a1dac83b28738c07"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/pages/skyline-typography/webview.vue",
+        "sha256": "ee7d8e51802a0150aa16643b3edac0592126f0f36d80dc0b08ce7b8663ad122a"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/fixtures/skyline-typography/run.mjs",
+        "sha256": "dfb4fffb7fa8dab5a374000ba931176609b3bec217363de7e084e6cb9bd88ab5"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/package.json",
+        "sha256": "b142a2f44e900271f05ced1e04fb6aeaa2801f7027e95a683168cd64f93d39a7"
+      },
+      {
+        "file": "demo/uni-app-vite-tailwindcss-v4/vite.config.ts",
+        "sha256": "0a7faac60219cdec4ab8545f92b7b149493f2c9cf93a8505a5cdae1918267447"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize-options.ts",
+        "sha256": "edcbe642c37b07ccb4181d1299cebe944c9bff15c11bbaed2eda2a442d7f0294"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize.ts",
+        "sha256": "4086c9da0026969cb8abbf306d9b49779dbace3fea460cf2b757e10b14184627"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/preflight.ts",
+        "sha256": "6d9c56add9ed53192efd05ac338530b95860323f2f8691824fcb4cdddd2a6917"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/prune-generated.ts",
+        "sha256": "b0979c66a5b6df4720c8232d32c572406d42d8d7237d14951d61ddc7db73a493"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/cleanup.ts",
+        "sha256": "a0635a90d314d2001e2dc5686f5ee7930e612ea54f5d71389ff097583fe4e05a"
+      },
+      {
+        "file": "packages/postcss/src/compat/scoped-css/covered-rules.ts",
+        "sha256": "ee9ba73959f263d6b2cbe6554133d3af69a8d4cc5ae3ef4c87b1537c3993208b"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/generated-output.ts",
+        "sha256": "3b8646e5813dc441da03181863107f884d3af398288527dc2a3bcd7362fe68e4"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/skyline-typography.ts",
+        "sha256": "c585cf118fdd68b6b413d664015dec4e93d1ca8ac7f583d1c4f811ac251d03d8"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/directives/shared.ts",
+        "sha256": "ebff21de56771b51f288760172c6540cd7b1ade7ac0e40e05fa78547a1f57240"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/directives/source-analysis.ts",
+        "sha256": "05f329e8859995b1172695de30bd9d76fbf6c83d5865634b7e77a825a7f60efc"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/variables.ts",
+        "sha256": "1b56a048f4f40930c259a36e44043cbc72c4cc52856916fd8a6b95c78843754a"
+      },
+      {
+        "file": "packages/postcss/src/compat/webpack-css/preflight.ts",
+        "sha256": "14faa5d6787af4b7a1aaff838faa4ddf73534797dc8e4eed3e285f23df4c67e1"
+      },
+      {
+        "file": "packages/postcss/src/generator-plugin/index.ts",
+        "sha256": "f76a9647b45d3e0b1dbc9211a2d0b46228cb39872b24dd1456cfbb83fedf073a"
+      },
+      {
+        "file": "packages/postcss/src/handler.ts",
+        "sha256": "6893835eb149d9ffcb34d23f4c1886ec854600a9cf1d782862876e8cb74b48dd"
+      },
+      {
+        "file": "packages/postcss/src/mp.ts",
+        "sha256": "5e72ce2379014fdfeef6c764e3d9e4c2894b821ff8760a6521c2db1248158193"
+      },
+      {
+        "file": "packages/postcss/src/plugins/post.ts",
+        "sha256": "332deec67e9e8a9d9d48dc0d5fe4417d1ef4cf8298da00c1760fe62e73b02e4a"
+      },
+      {
+        "file": "packages/postcss/src/transform.ts",
+        "sha256": "ae2922aa1464b5984d2ab2479416024a1ecc4d36eda162e32b7efce207111f60"
+      },
+      {
+        "file": "packages/postcss/src/types.ts",
+        "sha256": "ae4db5d475253e721f571758b11fdd68f70d0c0db8f970658c7f6cadd5becc75"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/gulp/shared/create-native-framework-plugins/file-transforms.ts",
+        "sha256": "6df900c0f031a8b13863d1cc23b35dbeaaa4764ec9bb6991e35e854f54e29516"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/final-assets.ts",
+        "sha256": "3e18ffc0e17eff771c17933e4ef47413e6d381f90c79f49c5c7663c97b092354"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-finalizer/plugin.ts",
+        "sha256": "7c84b2f0e7d1852651bd16e39b2ca07adea2d83a49f04f372bd51768711b40c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/css-memory.ts",
+        "sha256": "cd912c93da71f571ae87d2b5bb6072f74fd3e4cb1cae400d1d7e800654b49cf1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/index.ts",
+        "sha256": "1701f2f1804e1f6ed890c53a4e5eff0c8ee168f9066fddd7f511a99a0d26759e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/plugin-descriptors.ts",
+        "sha256": "e978c779d78e437e9dac98d1ca64b2c7f1a0f1876662d9dfb5b9e39980651e9d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/frameworks/uni-app/skyline-typography.ts",
+        "sha256": "c8daa0c7136cc4122c7479c9871ab8471467dc2592c021116c33ed52e986fd43"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-composition-plan.ts",
+        "sha256": "4dbb7f9568da084223a8ef25a9313c00b270125b4815ad94c4f78b170bf3ed1e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-entry-transform.ts",
+        "sha256": "3423225579d2376420d5d3b1116954b7c0a8f1059939856bbda37ed6c282fd52"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-decision-plan.ts",
+        "sha256": "04b857836a8394e4614039733b0f83d1bcd18d27cbc21d8fff1f87a53fc0e455"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-result.ts",
+        "sha256": "8f4b1b4d469d58582207367d3c5a9d4db3d54be37d79f634fa16a06d6a831527"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/css-transform-task.ts",
+        "sha256": "1408dd76efe3625fd69a9edda8a279508a580bb17d16174f7d7489c64da084f8"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/finalize/bundle.ts",
+        "sha256": "00501a1c3294c76fc66e43cf8f1788b738c04cd2afcda8d1deeb16d72f274443"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/remembered-css-plan.ts",
+        "sha256": "cfda300fd11f5458bb29ba150dcf5a25867f639dbb3ba002d9c92c252291c6bc"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/generate-bundle/transform-scheduling.ts",
+        "sha256": "2526d09cebdc1753a07b1fbd9e1b87836e57ba7b56c753aa0c6b1560e8b72fe2"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/collector.ts",
+        "sha256": "fe3c0f1fd6ac0abb083b0e24eae17589ca578172ba3fb0b4b4aba37bd212ccb5"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/coverage.ts",
+        "sha256": "56059ec988f759c16df7bd1c8f98cbc86a588039e4ad093139283e78892f884e"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/processed-css-assets/injection-plan.ts",
+        "sha256": "ba82ac488c0c3793db9f166ef94e9a7ed9c810e60b0a9a97515918c45c74f912"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins-runtime.ts",
+        "sha256": "3d2290b74d34757d28a33ea6d0d23effc17b4fa0b2e7bb179113669d8783061a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/create-framework-plugins.ts",
+        "sha256": "83058830b98e8388a1dd62b10047402a5bcde8d1e5d4f6590c1b7c9ba9d8c888"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-assets.ts",
+        "sha256": "15d52d0235df08989be83099723ba8077e544ab6e6d5adc4fe57231cb02261ab"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-context.ts",
+        "sha256": "82b5f26446098859bf19fce09f6c168caf4ad67619f85449f471ae9bb1d480e0"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-css-generator.ts",
+        "sha256": "e28ec92d94b5cb58603cf923c1f32476e4f7200a9d2d1b350618b7921ad290e3"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-services.ts",
+        "sha256": "4006f8b40b6df3974cfac4243e84e678316a7ace287fca991527d98dedec394a"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-skyline-typography.ts",
+        "sha256": "c641161fabe5b959921ec7d6783706f7d1aa81a2d5ccbc8e950ea7df8cddf3ed"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/vite/shared/framework-strategy.ts",
+        "sha256": "0425cc7b47f580ff26d0e85becdc66c9fada324c85cda933474abac4eb6873c1"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets.ts",
+        "sha256": "ce84fc1687927e352526db3603ca95116ba401e5296976cb3a77b936e609143c"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/css-finalizers.ts",
+        "sha256": "b54eb7be264b6f454cf66197b2dba492b20fac4b78a907fc6591a4bb525d4e2f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/finalize.ts",
+        "sha256": "36928842ad39ef7122def725e444531932eff1db44e4a6fed033e32b154c9334"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/pipeline-helpers/memory-trace.ts",
+        "sha256": "c1b7e1655fefb81f0e05725ca7cdaa7b0066f9db4817f8dbe7af3af3fa12ea4d"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/compiler/transform-services.ts",
+        "sha256": "12dc078293dea0a3e175c8f50c847894555e2589d1aaac11cde9fbf9f9241a15"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/compiler.ts",
+        "sha256": "54caef4764faf4788952c677566bc76cd41176e19fe2ee6576cade4a83a4966b"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/skyline-typography.ts",
+        "sha256": "d12db199384bf1575565cec747f02ebba867f9d059490f7c019accf71ae387f7"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/context/style-options.ts",
+        "sha256": "5899933b9a9dae65ae40785750fba7d02048e661e88c038e75939e09ed8b2413"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/transforms.ts",
+        "sha256": "86f658d22c26674bde6663c014dc6d896ec01253c42188b5f4130862da30736f"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/generation/generation-helpers/preflight.ts",
+        "sha256": "83c699d00129145e1a73512ed1584162913e09c89cb4f63b3fdef2e93ec5ac08"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/types/user-defined-options/general.ts",
+        "sha256": "30a0a3d25670bbe58530dafdc9b55e6200566b371e769bb2e2db4981a8efefeb"
+      }
+    ]
+  },
+  "run": "3ac91a9d-72ca-4a84-875e-dd2b43085393",
+  "buildMarker": "e7e78c8d-3129-4c40-87f1-f96e4bd8b3a5",
+  "tool": {
+    "version": "2.02.2608080",
+    "SDKVersion": "3.10.3"
+  },
+  "driver": "App-Service 调用真实组件公开 action，与源码按钮共用；不改写构建产物",
+  "cssHashes": [
+    {
+      "asset": "app.wxss",
+      "sha256": "fe80a0894da47bad56a4c5acc42b4bd138718989a0e4fabbbc4431a79f65549b"
+    },
+    {
+      "asset": "components/HelloWorld.wxss",
+      "sha256": "442728f3d9d2db56f3f66ae84726908b55608b2101ee0015cd7fe26df6a10756"
+    },
+    {
+      "asset": "components/SkylineTypographyExternal.wxss",
+      "sha256": "2d1550051a9a539bc97381522de50939444f73e1df9e8a411ab9d73092b2ea6f"
+    },
+    {
+      "asset": "components/SkylineTypographyNoStyle.wxss",
+      "sha256": "f57836b2b94ec77f124ad3339299883b033bb4f384f85febdef90106ecd32f6f"
+    },
+    {
+      "asset": "components/SkylineTypographyProbe.wxss",
+      "sha256": "97419f26b0466ad380438a2557d9ec08deeb03a597fcffcd4609e51560e1503d"
+    },
+    {
+      "asset": "components/SkylineTypographyScoped.wxss",
+      "sha256": "c18a00ddcd620c314c8de38e8aed602ae58f4ee2d9613ac0be9456982ffe3607"
+    },
+    {
+      "asset": "main.wxss",
+      "sha256": "6a9a6d4a92b9c7d93446aeb4e975bd774ac16aa6833be884cbd6bffad446d59f"
+    },
+    {
+      "asset": "pages/skyline-typography/skyline.wxss",
+      "sha256": "bd5a7ffa0dc0922973f97391880041721430edbf988c3530b89b7a6b2a65ce01"
+    },
+    {
+      "asset": "pages/skyline-typography/webview.wxss",
+      "sha256": "bd5a7ffa0dc0922973f97391880041721430edbf988c3530b89b7a6b2a65ce01"
+    }
+  ],
+  "rawEvidence": [
+    {
+      "file": "inputs.json",
+      "sha256": "4223283ea48a60cc41c9e5bf0c4048f528965ff09c238e5fa52e4733b36a9aa0"
+    },
+    {
+      "file": "environment.json",
+      "sha256": "b889cf84fa09ae8869dfd0257df0cc8fd7d5ffabca7a8328720462ad5d993c3f"
+    },
+    {
+      "file": "evidence.json",
+      "sha256": "bcbd87da750343e9c883a0e43828d8ee1737d105bf57ffba3602087c98252a12"
+    },
+    {
+      "file": "cleanup.json",
+      "sha256": "133677fa81274df99c4b53911e29838d44d48b0eb32f81b14de841bf00ab50aa"
+    }
+  ],
+  "observations": [
+    {
+      "renderer": "skyline",
+      "phase": "default",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "inline",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "inline-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "utility",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "combined",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "inline-clear-utility",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "utility-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "theme",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-theme-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "theme-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 80
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 48
+        },
+        "probe-theme-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "utility-after-theme",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "skyline",
+      "phase": "reset",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-child-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-no-style-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-scoped-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-external-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-weight-original": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-weight-reference": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-weight-regular": {
+          "width": 241.89999389648438,
+          "height": 48
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40
+        },
+        "probe-theme-weight": {
+          "width": 263.20001220703125,
+          "height": 48
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "default",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-child-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-no-style-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-scoped-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-external-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "inline",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "inline-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-child-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-no-style-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-scoped-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-external-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "utility",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "combined",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "inline-clear-utility",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "utility-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-child-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-no-style-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-scoped-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-external-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "theme",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 48,
+          "line-height": "24px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 48,
+          "line-height": "24px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 48,
+          "line-height": "24px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 48,
+          "line-height": "24px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 80,
+          "line-height": "40px",
+          "font-weight": "400"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 48,
+          "line-height": "24px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "theme-clear",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-child-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-no-style-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-scoped-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-external-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "utility-after-theme",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-child-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-no-style-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-scoped-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-external-weight": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 72,
+          "line-height": "36px",
+          "font-weight": "400"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    },
+    {
+      "renderer": "webview",
+      "phase": "reset",
+      "measurements": {
+        "probe-utility": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-no-style-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-scoped-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-external-header": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-child-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-no-style-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-scoped-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-external-small": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-child-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-no-style-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-scoped-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-external-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-missing-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-missing-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-initial-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-empty-literal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-empty-nested": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-valid-literal": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-valid-nested": {
+          "width": 280,
+          "height": 88,
+          "line-height": "44px",
+          "font-weight": "400"
+        },
+        "probe-cycle-literal": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-cycle-nested": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "400"
+        },
+        "probe-original": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-reference": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-weight-original": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-reference": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-weight-regular": {
+          "width": 241.890625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "400"
+        },
+        "probe-theme-variable": {
+          "width": 280,
+          "height": 64,
+          "line-height": "32px",
+          "font-weight": "700"
+        },
+        "probe-theme-small-variable": {
+          "width": 280,
+          "height": 40,
+          "line-height": "20px",
+          "font-weight": "400"
+        },
+        "probe-theme-weight": {
+          "width": 263.140625,
+          "height": 48,
+          "line-height": "48px",
+          "font-weight": "700"
+        },
+        "probe-author-empty": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        },
+        "probe-normal": {
+          "width": 280,
+          "height": 56,
+          "line-height": "normal",
+          "font-weight": "400"
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "closed": true,
+    "loginPreserved": true
+  },
+  "limitations": [
+    "仅 DevTools 模拟器，无手机真机证据",
+    "Skyline 未返回行高、字重计算字段；以矩形尺寸和原生对照核验",
+    "祖先主题变量移除和作者空值异常保留独立负控"
+  ]
+}

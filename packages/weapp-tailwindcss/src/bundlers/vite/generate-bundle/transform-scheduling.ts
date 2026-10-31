@@ -1,3 +1,4 @@
+import type { RememberedCssSource } from './types'
 import { discardedViteCssSource } from '../css-memory/source-lifecycle'
 import { recordViteCssContribution } from './css-transform-result'
 
@@ -34,6 +35,7 @@ export function scheduleViteCssTransform(options: any) {
     generatorSourceFile,
     generatorSourceKind,
     generatorUserLayerRawSource,
+    hasCompiledGeneratorSource,
     getLastCssResult,
     hasRuntimeAffectingChanges,
     isWebGeneratorTarget,
@@ -94,6 +96,7 @@ export function scheduleViteCssTransform(options: any) {
       generatorRawSource,
       generatorSourceFile,
       generatorUserLayerRawSource,
+      hasCompiledGeneratorSource,
       getSourceCandidatesForEntries: scopedSourceCandidateGetter,
       isWebGeneratorTarget,
       normalizeGeneratorUserRawSource,
@@ -167,7 +170,8 @@ export function scheduleViteCssTransform(options: any) {
             originalSource,
             outputFile,
             rememberedCssRuntimeSignature,
-            rememberedSourcesCount: rememberedCssSources.length,
+            rememberedSourceInputs: rememberedCssSources.flatMap((source: RememberedCssSource) => source.sourceInputs ?? [source]),
+            rememberedSourcesCount: rememberedCssSources.reduce((count: number, source: RememberedCssSource) => count + (source.sourceInputs?.length ?? 1), 0),
             rememberCssSource,
             vitePipelineCssInjectionOutputFile,
           }, source)

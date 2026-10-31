@@ -9,7 +9,7 @@ export function validateBenchmarkDispatch({ baselineRef = '', gcDiagnostics = fa
   if (inputDiagnostics && allocationDiagnostics) {
     throw new Error('输入证据与分配采样必须分开运行')
   }
-  validateAllocationRequest({ enabled: inputDiagnostics || allocationDiagnostics, guardMode: false, baselineRef, selectedProjects: only.split(',').filter(Boolean).map(key => ({ key: key.trim() })), buildRuns: Number(buildRuns), hmrRuns: Number(hmrRuns) })
+  validateAllocationRequest({ mode: inputDiagnostics ? 'inputs' : 'allocation', enabled: inputDiagnostics || allocationDiagnostics, guardMode: false, baselineRef, selectedProjects: only.split(',').filter(Boolean).map(key => ({ key: key.trim() })), buildRuns: Number(buildRuns), hmrRuns: Number(hmrRuns) })
   if (baselineRef) {
     if (!/^[a-f\d]{40}$/i.test(baselineRef)) {
       throw new Error('baseline_ref 必须是完整的 40 位 Git commit SHA')

@@ -33,6 +33,7 @@ describe('已完成的 Vite CSS 编译结果', () => {
       generatorCandidateSignatureInitialized: false,
       generatorCandidatesChanged: true,
       generatorRawSource: '@reference "../theme.css"; .probe { @apply h-8; }',
+      hasCompiledGeneratorSource: true,
       hasCurrentTailwindGenerationDirective: false,
       hasRememberedApplySource: true,
       hasRuntimeAffectingChanges: true,
@@ -57,6 +58,8 @@ describe('已完成的 Vite CSS 编译结果', () => {
   })
 
   it.each([
+    { hasCompiledGeneratorSource: false },
+    { hasCompiledGeneratorSource: undefined },
     { useIncrementalMode: true },
     { cssAssetIdentityKind: 'user' },
     { cssAssetSourceFile: undefined },

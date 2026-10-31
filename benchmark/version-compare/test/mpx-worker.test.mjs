@@ -39,6 +39,7 @@ const worker = `import fs from 'node:fs'; import path from 'node:path';
 const observer = globalThis[Symbol.for(${JSON.stringify(diagnosticSymbol)})];
 const ops = observer.operations;
 const identity = JSON.parse(process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION);
+if (process.moduleLoadList.includes('NativeModule inspector')) throw new Error('input mode loaded inspector');
 const file = path.resolve('source.mpx');
 const read = () => fs.readFileSync(file, 'utf8');
 const candidates = () => new Set(read().includes('twbenchdiagnosticround') ? ['flex', 'bg-[#123456]'] : ['flex']);
@@ -93,7 +94,7 @@ await compile(); process.send('ready');
 `
 
 describe('Mpx 诊断的真实 Node worker 协议', () => {
-  it.each([[false, 'inputs', false], [true, 'inputs', false], [false, 'allocation', false], [false, 'inputs', true]])('三轮增删、额外编译与停止采样后释放保留，服务=%s 模式=%s child先完成=%s', async (servicePool, mode, childFirst) => {
+  it.each([[false, 'inputs', false], [true, 'inputs', false], [false, 'inputs', true]])('三轮增删、额外编译与停止采样后释放保留，服务=%s 模式=%s child先完成=%s', async (servicePool, mode, childFirst) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mpx-diagnostic-worker-'))
     roots.push(root)
     if (servicePool) {

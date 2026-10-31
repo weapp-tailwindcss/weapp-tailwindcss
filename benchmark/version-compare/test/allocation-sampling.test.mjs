@@ -1,49 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import { compareInputSnapshots } from '../scripts/diagnostics/compare.mjs'
-import { limits } from '../scripts/diagnostics/constants.mjs'
 import { createAllocationSampler } from '../scripts/diagnostics/sampling.mjs'
 
-function fakeSession(error) {
-  return {
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    post: vi.fn((method, parameters, callback) => callback(error?.(method), { profile: { head: { children: [] }, samples: [] } })),
-  }
-}
-
-describe('包含已回收对象的独立分配采样', () => {
-  it('固定双方相同参数，完成后关闭本进程 inspector，不发送 GC 或 heap snapshot 请求', async () => {
-    const session = fakeSession()
-    const sampler = await createAllocationSampler({ session })
-    expect(session.post.mock.calls[0].slice(0, 2)).toEqual(['HeapProfiler.startSampling', { samplingInterval: limits.samplingInterval, includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true }])
-    const result = await sampler.capture()
-    expect(result.sampledAllocatedBytesIncludingCollected).toBe(true)
-    await sampler.capture(true)
-    await sampler.close()
-    expect(session.post.mock.calls.map(([method]) => method)).toEqual(['HeapProfiler.startSampling', 'HeapProfiler.getSamplingProfile', 'HeapProfiler.stopSampling'])
-    expect(session.disconnect).toHaveBeenCalledOnce()
-    await expect(sampler.capture()).rejects.toThrow('关闭')
+describe('隐式强制 GC 的分配采样入口', () => {
+  it('默认入口立即拒绝，不创建 inspector 会话', async () => {
+    await expect(createAllocationSampler()).rejects.toThrow('kSamplingForceGC')
   })
 
-  it('协议不支持或关闭失败仍断开诊断会话', async () => {
-    const startFailure = fakeSession(() => new Error('unsupported'))
-    await expect(createAllocationSampler({ session: startFailure })).rejects.toThrow('unsupported')
-    expect(startFailure.disconnect).toHaveBeenCalledOnce()
-    const stopFailure = fakeSession(method => method.endsWith('stopSampling') ? new Error('stop failure') : undefined)
-    const sampler = await createAllocationSampler({ session: stopFailure })
-    await expect(sampler.close()).rejects.toThrow('stop failure')
-    expect(stopFailure.disconnect).toHaveBeenCalledOnce()
-  })
-
-  it('阶段有固定上限，超限不再向 inspector 发采样请求', async () => {
-    const session = fakeSession()
-    const sampler = await createAllocationSampler({ session })
-    for (let i = 0; i < limits.maxSnapshots; i++) {
-      await sampler.capture()
+  it('注入会话也不能绕过禁用，不连接、发送请求或关闭他人会话', async () => {
+    const session = { connect: vi.fn(), post: vi.fn(), disconnect: vi.fn() }
+    await expect(createAllocationSampler({ session })).rejects.toThrow('kSamplingForceGC')
+    for (const method of Object.values(session)) {
+      expect(method).not.toHaveBeenCalled()
     }
-    await expect(sampler.capture()).rejects.toThrow('上限')
-    expect(session.post).toHaveBeenCalledTimes(limits.maxSnapshots + 1)
-    await sampler.close()
   })
 })
 

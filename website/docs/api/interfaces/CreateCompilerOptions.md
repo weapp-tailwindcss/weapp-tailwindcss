@@ -361,7 +361,9 @@ CSS 生成与兼容后处理的微调配置。
 `cssPreflight`、`cssPreflightRange`、`cssChildCombinatorReplaceValue`、`cssPresetEnv`、`autoprefixer`、
 `atRules`、`injectAdditionalCssVarScope`、`cssSelectorReplacement`、`rem2rpx`、`px2rpx`、`unitsToPx`、
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
-与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties` 都推荐放在这里。
+与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
+
+`cssOptions.skyline`（`boolean`）默认 `false`，用于微信小程序 Skyline 的 Tailwind CSS 4 字体变量初始化兼容，仅在微信构建目标显式开启。该开关保留嵌套变量消费和有效 setter，支持 `cssPreflight: false`；保留变量冲突或显式保留 `@property` 的配置会报错。配置、组件本地样式与已知运行时边界见 [Skyline 字体变量回退](/docs/issues/css-vars#skyline-字体变量回退)。
 
 小程序兼容处理默认保留 `-webkit-font-smoothing`，因此不会因本项目的属性删除策略丢失
 `antialiased` 或 `subpixel-antialiased` 的字体平滑声明。

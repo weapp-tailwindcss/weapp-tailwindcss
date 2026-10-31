@@ -9,6 +9,7 @@ import { protectDynamicColorMixAlpha } from '../color-mix'
 import { pruneMiniProgramGeneratedCss } from '../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../mini-program-css/modern-colors'
 import { normalizeTailwindcssRpxDeclarations, normalizeTailwindcssWebRpxDeclarations } from '../tailwindcss-rpx'
+import { assertSkylineTypographyCss, resolveSkylineTypographyCompatibility } from './skyline-typography'
 
 const defaultStyleHandler = createStyleHandler({
   cssChildCombinatorReplaceValue: ['view', 'text'],
@@ -35,6 +36,9 @@ export async function transformTailwindV4CssToWeapp(
   css: string,
   options?: Partial<IStyleHandlerOptions>,
 ) {
+  if (resolveSkylineTypographyCompatibility(options ?? {}, !options?.uniAppX)) {
+    assertSkylineTypographyCss(css)
+  }
   const macroCss = hasCssMacroStyleOptions(options)
     ? await transformCssMacroCss(css, options)
     : css

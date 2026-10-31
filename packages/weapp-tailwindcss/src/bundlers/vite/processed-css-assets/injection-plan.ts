@@ -351,13 +351,14 @@ export function removeCssCoveredByImportedViteResults(
   css: string,
   importedCssSources: string[],
   prepared = prepareImportedCssCoverage(importedCssSources),
+  options?: { preserveSkylineTypography?: boolean },
 ) {
   if (!prepared) {
     return css
   }
   return restoreCssImportAtRules(
     css,
-    removeCssRulesCoveredBySources(css, prepared.sources, { exactOnly: true }, prepared.coverage),
+    removeCssRulesCoveredBySources(css, prepared.sources, { exactOnly: true, ...options }, prepared.coverage),
   )
 }
 

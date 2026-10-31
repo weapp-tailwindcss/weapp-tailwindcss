@@ -162,6 +162,11 @@ export interface WebCssCompatOptions {
 export type WebCssCompatUserOptions = boolean | WebCssCompatOptions
 
 export interface CssOptions {
+  /**
+   * 启用微信 Skyline 的 Tailwind CSS v4 字体变量初始化兼容，默认关闭。
+   * 保留运行时变量与主题 fallback；仅用于小程序，不能与 cssRemoveProperty: false 同时启用。
+   */
+  skyline?: boolean | undefined
   cssPreflight?: CssPreflightOptions | undefined
   cssPreflightRange?: 'all' | undefined
   cssChildCombinatorReplaceValue?: string | string[] | undefined

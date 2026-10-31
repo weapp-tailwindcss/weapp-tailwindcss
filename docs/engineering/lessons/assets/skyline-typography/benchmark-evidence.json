@@ -1,0 +1,201 @@
+{
+  "description": "GitHub Actions 中有效的 uni-app 两侧性能对照；不代表整个 Benchmark 工作流通过。",
+  "run": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41074040592",
+  "job": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41074040592/job/124133283952",
+  "associatedHead": "04fa36e622993c1626c3a333201a7ce62f2ea2ca",
+  "baseline": "base:35762afa58b7bdd665324e46e23011106d2727fb",
+  "environment": "GitHub Actions ubuntu-latest / Node 22，PR 工作流 checkout",
+  "project": "demo-uni-app-vite-tailwindcss-v4__mp-weixin",
+  "options": {
+    "buildRuns": 3,
+    "hmrRuns": 3,
+    "timeoutMs": 180000,
+    "pollIntervalMs": 30
+  },
+  "samples": [
+    {
+      "version": "base:35762afa58b7bdd665324e46e23011106d2727fb",
+      "buildMs": [
+        7127.641337,
+        7163.123937,
+        7258.332619999999
+      ],
+      "hmrMs": [
+        1993.6994249999989,
+        1001.3568099999975,
+        1018.6248339999947
+      ],
+      "buildPluginMs": [
+        2480,
+        2527,
+        2623
+      ],
+      "hmrPluginMs": [
+        507,
+        149,
+        142
+      ]
+    },
+    {
+      "version": "current:5.6.3",
+      "buildMs": [
+        7107.841457999995,
+        7144.301166999998,
+        7188.743422000007
+      ],
+      "hmrMs": [
+        1811.3334170000016,
+        1151.0075910000014,
+        961.8482720000029
+      ],
+      "buildPluginMs": [
+        2477,
+        2505,
+        2443
+      ],
+      "hmrPluginMs": [
+        479,
+        134,
+        127
+      ]
+    }
+  ],
+  "compare": {
+    "key": "demo-uni-app-vite-tailwindcss-v4__mp-weixin",
+    "project": "demo/uni-app-vite-tailwindcss-v4",
+    "target": "mp-weixin",
+    "baselineBuild": 7163.123937,
+    "currentBuild": 7144.301166999998,
+    "buildDeltaPct": -0.2627732001505154,
+    "baselineHmr": 1993.6994249999989,
+    "currentHmr": 1811.3334170000016,
+    "hmrDeltaPct": -9.147116446602643,
+    "baselineHmrMedian": 1018.6248339999947,
+    "currentHmrMedian": 1151.0075910000014,
+    "hmrMedianDeltaPct": 12.99622320026878,
+    "baselineBuildPlugin": 2527,
+    "currentBuildPlugin": 2477,
+    "buildPluginDeltaPct": -1.9786307874950535,
+    "baselineHmrPlugin": 507,
+    "currentHmrPlugin": 479,
+    "hmrPluginStatistic": "p95",
+    "hmrPluginDeltaPct": -5.522682445759369,
+    "baselineHmrPluginGuard": 149,
+    "currentHmrPluginGuard": 134,
+    "hmrPluginGuardDeltaPct": -10.06711409395973,
+    "baselineHmrPluginMedian": 149,
+    "currentHmrPluginMedian": 134,
+    "hmrPluginMedianDeltaPct": -10.06711409395973,
+    "baselineBuildPeakRssMb": 667.171875,
+    "currentBuildPeakRssMb": 640.56640625,
+    "buildPeakRssDeltaPct": -3.98779830909389,
+    "baselineBuildSteadyRssMb": 656.423828125,
+    "currentBuildSteadyRssMb": 640.56640625,
+    "buildSteadyRssDeltaPct": -2.415729166976605,
+    "baselineHmrPeakRssMb": 1178.56640625,
+    "currentHmrPeakRssMb": 1120.7890625,
+    "hmrPeakRssDeltaPct": -4.902340966415103,
+    "baselineHmrSteadyRssMb": 1066.34375,
+    "currentHmrSteadyRssMb": 1001.84765625,
+    "hmrSteadyRssDeltaPct": -6.048339829440554,
+    "baselineHmrSampleCount": 3,
+    "currentHmrSampleCount": 3,
+    "baselineHmrPluginSampleCount": 3,
+    "currentHmrPluginSampleCount": 3,
+    "baselineBuildSamples": [
+      7127.641337,
+      7163.123937,
+      7258.332619999999
+    ],
+    "currentBuildSamples": [
+      7107.841457999995,
+      7144.301166999998,
+      7188.743422000007
+    ],
+    "baselineBuildPluginSamples": [
+      2480,
+      2527,
+      2623
+    ],
+    "currentBuildPluginSamples": [
+      2477,
+      2505,
+      2443
+    ],
+    "baselineHmrSamples": [
+      1993.6994249999989,
+      1001.3568099999975,
+      1018.6248339999947
+    ],
+    "currentHmrSamples": [
+      1811.3334170000016,
+      1151.0075910000014,
+      961.8482720000029
+    ],
+    "baselineHmrPluginSamples": [
+      507,
+      149,
+      142
+    ],
+    "currentHmrPluginSamples": [
+      479,
+      134,
+      127
+    ],
+    "baselineHmrPluginSteadySamples": [
+      149,
+      142
+    ],
+    "currentHmrPluginSteadySamples": [
+      134,
+      127
+    ],
+    "baselineBuildPeakRssSamples": [
+      670.484375,
+      667.171875,
+      639.12890625
+    ],
+    "currentBuildPeakRssSamples": [
+      638.98828125,
+      650.54296875,
+      640.56640625
+    ],
+    "baselineBuildSteadyRssSamples": [
+      670.484375,
+      656.423828125,
+      639.12890625
+    ],
+    "currentBuildSteadyRssSamples": [
+      638.98828125,
+      647.18359375,
+      640.56640625
+    ],
+    "baselineBuildMode": "build",
+    "currentBuildMode": "build",
+    "baselineHmrMode": "watch",
+    "currentHmrMode": "watch",
+    "hmrEndToEndGuard": true
+  },
+  "guard": {
+    "passed": true,
+    "thresholds": {
+      "minimumMemoryRegressionMb": 64,
+      "minimumTailRegressionSamples": 2,
+      "minimumTimingRegressionMs": 10,
+      "maximumMedianRegressionPValue": 0.05,
+      "regressionPercent": 5
+    },
+    "violations": [],
+    "blocking": true
+  },
+  "rawSha256": {
+    "matrix-raw.json": "ffafca332a98355d951dd0e165cdf6a37e2b26653f9b31ce8c5fc017cbb3efba",
+    "summary.json": "adaa10e318cfcd7612d7051617ef85ffc4d25a3099670c6638f76af6a79c9854",
+    "report.md": "f4c50ad4632f4cb2d76536e7e3b030f61e5614c3a1cadb872da1c4e7e6514cbd"
+  },
+  "limitations": [
+    "仅此提交的 uni-app 分片，最终合并仍需最新提交的全部检查。",
+    "端到端 HMR 中位数增加约 13%，插件没有同步退化，现有门禁没有违规。",
+    "同一工作流的 Synthetic runner 前置单测因固定时钟冲突失败，实际 synthetic gate 尚未执行。"
+  ]
+}

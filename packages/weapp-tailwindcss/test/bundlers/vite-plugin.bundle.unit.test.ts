@@ -14630,10 +14630,21 @@ ${utilities}
     expect(rememberCssSource).toHaveBeenCalledWith(
       expect.objectContaining({
         outputFile: 'pages/index/index.wxss',
-        sourceFile,
+        sourceFile: expect.stringContaining(`${sourceFile}?`),
+        rawSource: expect.stringContaining('.first-style'),
       }),
       expect.any(String),
     )
+    expect(rememberCssSource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceFile: expect.stringContaining(`${sourceFile}?`),
+        rawSource: expect.stringContaining('.base-style'),
+      }),
+      expect.any(String),
+    )
+    for (const [entry] of rememberCssSource.mock.calls) {
+      expect(entry.rawSource.includes('.first-style') && entry.rawSource.includes('.base-style')).toBe(false)
+    }
   }, TEST_TIMEOUT_MS)
 
   it('refreshes merged sfc style sources before regenerating stale vite pipeline css assets', async () => {

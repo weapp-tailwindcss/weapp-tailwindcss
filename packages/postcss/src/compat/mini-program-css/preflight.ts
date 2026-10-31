@@ -1,5 +1,6 @@
 import type { CssPreflightOptions, CssSelectorReplacement } from '../../types'
 import postcss from 'postcss'
+import { isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import {
   isEmptyTwContentDeclaration,
   isMiniProgramPreflightRule,
@@ -48,10 +49,13 @@ function applyConfiguredPreflightDeclarations(
   rule.append([...configuredNodes, ...remainingNodes])
 }
 
-export function collectPreflightRules(root: postcss.Root, options: { cssPreflight?: CssPreflightOptions | undefined, cssSelectorReplacement?: CssSelectorReplacement | undefined } = {}) {
+export function collectPreflightRules(root: postcss.Root, options: { cssPreflight?: CssPreflightOptions | undefined, cssSelectorReplacement?: CssSelectorReplacement | undefined, preserveSkylineTypography?: boolean } = {}) {
   const preflightNodes: postcss.Rule[] = []
 
   for (const node of root.nodes ?? []) {
+    if (node.type === 'rule' && options.preserveSkylineTypography && isSkylineTypographyResetRule(node)) {
+      continue
+    }
     if (node.type === 'rule' && isMiniProgramPreflightRule(node)) {
       preflightNodes.push(node)
     }
@@ -80,7 +84,9 @@ export function collectPreflightRules(root: postcss.Root, options: { cssPrefligh
     }
     else if (hasElementSelector && selectors.every(selector => MINI_PROGRAM_ELEMENT_SCOPE_SELECTORS.has(selector))) {
       if (options.cssPreflight === false) {
-        rule.removeAll()
+        if (!options.preserveSkylineTypography || !retainSkylineTypographyResets(rule)) {
+          rule.removeAll()
+        }
         continue
       }
       rule.selector = MINI_PROGRAM_ELEMENT_SCOPE_SELECTOR

@@ -1,5 +1,6 @@
 import type { CompilationDependencyChange, CompilationScopeDependency, CompilationScopeGraphSource, CompilationScopeSnapshotSource } from './compilation-scope-graph'
 import type { CompilationChange, CompilationResult, SourceKind, SourceScope } from './types'
+import { randomUUID } from 'node:crypto'
 import { CompilationDependencyState } from './compilation-dependency-state'
 import { createCompilationScopeGraph, createCompilationScopeSnapshot, dependencyNodeId, dependencySignature, mergeCompilationScopeDependencies, sourceNodeId } from './compilation-scope-graph'
 import { ensureCompilerOwnerActive } from './compiler-owner-state'
@@ -46,6 +47,7 @@ export type CompilationScopeExecution<T>
 
 interface CompilationScopeEntry {
   active: boolean
+  registration: number
   executions: Set<Promise<unknown>>
   latest?: CompilationResult | undefined
   pending: Promise<void>
@@ -64,6 +66,8 @@ function cloneScopeSource(source: CompilationScopeSource): CompilationScopeSourc
 }
 
 export class CompilationSessionPool {
+  private readonly identity = randomUUID()
+  private registration = 0
   private readonly dependencyState = new CompilationDependencyState()
   private readonly entries = new Map<string, CompilationScopeEntry>()
   private disposed = false
@@ -131,6 +135,17 @@ export class CompilationSessionPool {
     return this.dependencyState.getRevision(scopeId)
   }
 
+  /** 未注册或已淘汰的 scope 不能提供已编译载荷的新鲜度证明。 */
+  getRegisteredScopeDependencyRevision(scopeId: string) {
+    return this.entries.has(scopeId) ? this.dependencyState.getRevision(scopeId) : undefined
+  }
+
+  /** 注册代次与依赖版本共同标识载荷，淘汰后重建不能复用旧的零版本。 */
+  getRegisteredScopeVersion(scopeId: string) {
+    const entry = this.entries.get(scopeId)
+    return entry ? `${this.identity}:${entry.registration}:${this.dependencyState.getRevision(scopeId)}` : undefined
+  }
+
   private getEntry(scope: SourceScope) {
     if (this.disposed) {
       throw new Error('CompilationSessionPool 已释放。')
@@ -146,6 +161,7 @@ export class CompilationSessionPool {
     }
     const entry: CompilationScopeEntry = {
       active: true,
+      registration: ++this.registration,
       executions: new Set(),
       pending: Promise.resolve(),
       scope: { ...scope },

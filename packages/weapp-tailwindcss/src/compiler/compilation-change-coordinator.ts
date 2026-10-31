@@ -119,6 +119,18 @@ export function getCompilationScopeDependencyRevision(owner: object, scopeId: st
   return getCompilationChangeCoordinator(owner).getScopeDependencyRevision(scopeId)
 }
 
+/** 仅活动编译 scope 可以为模块生成结果提供依赖版本。 */
+export function getRegisteredCompilationScopeDependencyRevision(owner: object, scopeId: string) {
+  ensureCompilerOwnerActive(owner)
+  return getCompilationSessionPool(owner).getRegisteredScopeDependencyRevision(scopeId)
+}
+
+/** 资产只能复用同一注册代次的编译依赖快照。 */
+export function getRegisteredCompilationScopeVersion(owner: object, scopeId: string) {
+  ensureCompilerOwnerActive(owner)
+  return getCompilationSessionPool(owner).getRegisteredScopeVersion(scopeId)
+}
+
 export function invalidateCompilationScope(owner: object, scopeId: string) {
   getCompilationChangeCoordinator(owner).invalidateScope(scopeId)
 }

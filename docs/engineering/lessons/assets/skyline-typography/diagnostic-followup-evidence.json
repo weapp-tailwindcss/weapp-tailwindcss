@@ -1,0 +1,253 @@
+{
+  "description": "独立诊断保留正式失败；不属于性能预算验收。分配数据包含已回收对象，不能与RSS相减或当作无泄漏证明。 更正：历史CDP分配采样隐式强制GC，不能作为无主动GC的自然工作负载归因证据。",
+  "recordedAt": "2026-10-30T18:41:44.851777+00:00",
+  "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+  "current": "beb717a4214d9fa932d40b283daf1b1e63c76c27",
+  "workerNode": "22.23.4",
+  "platform": "linux",
+  "taroInput": {
+    "run": 41105184687,
+    "artifactId": 13002115468,
+    "zipSha256": "1c8225f9cbe57a9cd7ebf443a3e3ed3094874922dfa4f8f5bf068226ed176e10",
+    "completeWorkers": 8,
+    "buildSnapshotsEachSide": [
+      1,
+      1,
+      1
+    ],
+    "watchSnapshotsEachSide": 8,
+    "comparedStages": 11,
+    "candidateSetDifferences": 0,
+    "sourceHashDifferencesEachStage": 6,
+    "sourceTextInterpretation": "全文核对仅@config中各准备副本base/current绝对根不同，保留实际哈希，不更改canExplainFormalRegression=false结论",
+    "callsEachColdBuild": {
+      "generatorGenerate": 5,
+      "nativeGenerate": 5,
+      "engineCompile": 6
+    },
+    "callsEachWatch": {
+      "generatorGenerate": 20,
+      "nativeGenerate": 20,
+      "engineCompile": 8,
+      "nativeReuse": 13,
+      "operationEvents": 491
+    },
+    "firstMutationThenRollbackGeneration": {
+      "base": [
+        3,
+        4
+      ],
+      "current": [
+        4,
+        3
+      ]
+    },
+    "laterEachMutationAndRollbackGeneration": 2,
+    "candidateOrder": "候选集合相同但数组顺序不同；8并发扫描及Map/Set提交允许完成时序影响顺序，基线自身三轮也存在请求顺序变化，尚无因果trace证明PR导致回归",
+    "formalAcceptance": false
+  },
+  "mpxAllocation": {
+    "run": 41105163602,
+    "artifactId": 13001890705,
+    "zipSha256": "6bf9f67dd76918dd69d23b5250185f7aa20f81a12053c5a5540622b82c1f7ec1",
+    "fullDiagnosticComplete": false,
+    "failures": {
+      "baseRollback3": "frames解码文档67898105字节超过67108864字节固定上限",
+      "currentWatchStop": "没有活动候选store，拒绝空证据"
+    },
+    "coldSessions": [
+      {
+        "directory": "base-build-1-ddLiJB",
+        "totalSelfSize": 3424008000,
+        "diagnosticSelfSize": 39820352
+      },
+      {
+        "directory": "base-build-2-iBjsNr",
+        "totalSelfSize": 3453133736,
+        "diagnosticSelfSize": 44222128
+      },
+      {
+        "directory": "base-build-3-wCjZ4C",
+        "totalSelfSize": 3453912376,
+        "diagnosticSelfSize": 38485712
+      },
+      {
+        "directory": "current-build-1-S7eVPN",
+        "totalSelfSize": 3400365808,
+        "diagnosticSelfSize": 40848824
+      },
+      {
+        "directory": "current-build-2-HghWps",
+        "totalSelfSize": 3437266992,
+        "diagnosticSelfSize": 42841648
+      },
+      {
+        "directory": "current-build-3-fUF7NY",
+        "totalSelfSize": 3411067000,
+        "diagnosticSelfSize": 43044520
+      }
+    ],
+    "boundedProfileAndFramesReceiptDecode": "6/6通过；identity/phase/index、profile与frames回执及node对应一致",
+    "samplesWithoutNode": 0,
+    "sourceMapAttributedFrames": 0,
+    "allocationPreloadValidation": "6/6实际startup.preloadSha256匹配allocation controller.moduleHashes[preload.mjs]",
+    "naturalGcPreloadValidation": "6/6自然GC process-start匹配identity.expectedPreloadSha256；该字段不用于allocation preload，二者哈希不同是两个独立模块",
+    "coldOperationsEachSession": {
+      "events": 229,
+      "textFiles": 41,
+      "snapshots": 1,
+      "webpackCreated": 2,
+      "webpackRootCompleted": 1,
+      "generatorGenerate": 7,
+      "nativeGenerate": 7,
+      "engineBuild": 7,
+      "engineCompile": 14,
+      "serviceCreate": 3,
+      "serviceAcquire": 3,
+      "serviceRelease": 3,
+      "serviceDispose": 3,
+      "engineDispose": 6
+    },
+    "candidateAndRawSourceHashes": "3/3配对相同；保序调用输入30项比较不相同，不宣称调用输入等价",
+    "medianTotalSelfSize": {
+      "base": 3453133736,
+      "current": 3411067000
+    },
+    "medianDiagnosticSelfSize": {
+      "base": 39820352,
+      "current": 42841648
+    },
+    "limits": [
+      "没有source-map归因，不能用生成chunk hash比较新增热点",
+      "缺少与普通RSS峰时刻的对齐，根compilation完成时停止采样不能覆盖全部构建尾部",
+      "原始采样与观察器会改变分配及GC，不能替代正式门禁",
+      "watch闭环缺证，不为取样延长生产store生命周期"
+    ],
+    "formalAcceptance": false
+  },
+  "allocationSamplingCorrection": {
+    "runtime": "Node 22.23.4",
+    "mechanism": "V8 inspector startSampling无条件设置kSamplingForceGC；get/stopSampling经GetAllocationProfile主动CollectAllGarbage",
+    "source": [
+      "https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/inspector/v8-heap-profiler-agent-impl.cc#L566",
+      "https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/profiler/sampling-heap-profiler.cc#L278"
+    ],
+    "affectedEvidence": "本文件Mpx allocation及PR后续Uni allocation run41126621553，历史raw完整性不变，撤回无主动GC与自然GC/RSS因果解释",
+    "unaffectedEvidence": "inputs模式、独立运行且未同时启用allocation采样的被动GC观测、未启用allocation采样的正式Benchmark41109215069不经过该采样器；allocation会话共采的GC日志同样受隐式GC干预",
+    "implementation": "allocation入口明确拒绝，不通过切换includeObjectsCollectedByMajorGC/minorGC参数绕过；inputs继续支持",
+    "formalAcceptance": false,
+    "rssRegressionResolved": false
+  },
+  "nativeCumulativeFollowup": {
+    "sourceHead": "37af1f4f1cf75853755d9189510ab7cd4fca06bd",
+    "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+    "environment": "macOS arm64, Node 22.23.4 / ABI127, 本机忽略工件，未发布addon",
+    "parameters": {
+      "intervalBytes": 262144,
+      "stackDepth": 128,
+      "flags": 6,
+      "forceGc": false
+    },
+    "firstFailure": "非字典输出超过16MiB，失败保留；仅修正完整字符串字典传输，不改变采样参数或16/64MiB上限",
+    "current": {
+      "profileSha256": "8d9164f47fa991bb641efbac902cb2bdf8ac5ba3f4c1a23a9be559a8315478b5",
+      "encodedBytes": 9352654,
+      "decodedBytes": 19115395,
+      "nodes": 59412,
+      "samples": 20975,
+      "unknownNodeSamples": 0,
+      "nonDiagnosticEstimatedBytes": 5577660128
+    },
+    "base": {
+      "profileSha256": "fee2d11d050d17482f2b68ca482aa2a3df033d40b7a71e993e6a9183cfc4d785",
+      "encodedBytes": 9553367,
+      "decodedBytes": 19447701,
+      "nodes": 60898,
+      "samples": 21487,
+      "unknownNodeSamples": 0,
+      "nonDiagnosticEstimatedBytes": 5703014720
+    },
+    "validation": "两侧identity/preload/addon/receipt/全部字典引用/连续ordinal独立通过；各3mutation及rollback、源码同SHA恢复；wrapper exit0，Uni完成回执且四PID均消失，Uni单独OS退出码未记录",
+    "estimate": "原生每sample size*count，按V8 ScaleSample扩展；排除诊断祖先子树，不等同存活堆/RSS。node直方图与逐sample舍入位置不同",
+    "limits": "单次插桩本机watch对照，没有cold build；两侧延迟不同、没有等价post-major或尾部边界。Rollup map分配约+14.07MiB仍非产品根因",
+    "formalAcceptance": false,
+    "rssRegressionResolved": false
+  },
+  "naturalGcTraceFollowup": {
+    "run": 41164422113,
+    "attempt": 1,
+    "head": "499ee899766dd6d45a595bf444c813fc55b2b1c3",
+    "baseline": "35762afa58b7bdd665324e46e23011106d2727fb",
+    "productionTreeSameAs": "37af1f4f1cf75853755d9189510ab7cd4fca06bd",
+    "artifactId": 13028590971,
+    "zipSha256": "7296fd4a004846f7c95e9fe92ddd633ad885695d4bce7a6616c2a0f1c3a2db57",
+    "jobLogSha256": "f0c9933d4761c8db870743329f907955155832455ade3c501e6ab84a7accd220",
+    "environment": "Linux x64, Node22.23.4, V8 12.4.254.21-node.57；两侧各3build/3HMR，保留原预算和超时",
+    "collector": "独立分支显式gc_diagnostics启用V8 trace-gc-nvp；无allocation sampler或GC请求；major回调另记V8统计与smaps_rollup，父进程有界保留完整stdout/stderr原始字节",
+    "validation": {
+      "workers": 8,
+      "majorEvents": 26,
+      "outputMaxEncodedBytes": 592042,
+      "outputLimitBytes": 2097152,
+      "forcedFlagEvents": 0,
+      "truncations": 0,
+      "recordingErrors": 0,
+      "preloadSha256": "896356c9f59ba2760a96d53965c5e27af087bd04ec1e5699ec367b8c71304111",
+      "pathHelperSha256": "dcc30d4c6986d58824dd50e7f7f62de799ddccaab68ee03b7c9b7780821a93f8",
+      "independentReview": "身份、启动源码、NDJSON逐条记账、输出bytes/chunks/SHA、单PID/isolate、26份OS映射与原始数值/summary/原gate均独立核验"
+    },
+    "memoryMiB": {
+      "basePeak": 1179.87109375,
+      "currentPeak": 1249.9375,
+      "baseSteady": 1138.978515625,
+      "currentSteady": 1143.62890625
+    },
+    "hmrTrace": {
+      "base": {
+        "pid": 8869,
+        "minor": 357,
+        "major": 4,
+        "endTimeMinusTraceMs": [
+          2.107464999988224,
+          3.386987000008503
+        ],
+        "majorAfterBytes": [
+          17527104,
+          71916632,
+          205197992,
+          374648776
+        ],
+        "lastMajorPhase": "mutation3",
+        "lastMajorCallbackDelayMs": 370.702,
+        "lastDoneReceiptToLastRssMs": 0
+      },
+      "current": {
+        "pid": 9433,
+        "minor": 351,
+        "major": 4,
+        "endTimeMinusTraceMs": [
+          1.9359390000101513,
+          2.945430999987366
+        ],
+        "majorAfterBytes": [
+          17548360,
+          72664824,
+          205491704,
+          319517680
+        ],
+        "lastMajorPhase": "mutation1",
+        "lastMajorCallbackDelayMs": 514.241,
+        "lastDoneReceiptToLastRssMs": 38
+      },
+      "mapping": "各单一isolate的全部minor/major与observer同序逐项匹配；额外kind8不混配。endTime拟合支持近结束时间；整数trace与observer不是同一零点，pause/duration偏差不全归为舍入。"
+    },
+    "limits": "最后major分属第三轮与第一轮，回调前已有18/19个后续GC；双方最终rollback后无自然major，缺少同阶段空闲尾postmajor。没有同次输入全文及源码恢复SHA回执，不能借旧input证明本轮输入等价。",
+    "diagnosticRunSuccess": true,
+    "rawOriginalGatePassed": true,
+    "canExplainFormalRegression": false,
+    "equivalentFinalPostMajor": false,
+    "formalAcceptance": false,
+    "rssRegressionResolved": false,
+    "conclusion": "仅证明本轮GC时点和回调边界不同，steady仅增加4.650MiB，未重现正式约89MiB尾差。正式41109215069失败仍有效；不复跑碰绿、不据此猜改产品。"
+  }
+}
