@@ -1,0 +1,26 @@
+<script setup lang="uts">
+import NoAuthorStyle from './none.uvue'
+import PlainAuthorStyle from './plain.uvue'
+import ScopedAuthorStyle from './scoped.uvue'
+import MultipleAuthorStyles from './multiple.uvue'
+</script>
+
+<template>
+  <view>
+    <text>Issue 1325：每个色块应为 120 × 32 px</text>
+    <view id="issue-1325-page" class="h-[32px] w-[120px] bg-[#0e7490]"><text>page</text></view>
+    <NoAuthorStyle />
+    <PlainAuthorStyle />
+    <ScopedAuthorStyle />
+    <MultipleAuthorStyles />
+    <view id="issue-1325-native" class="issue-1325-native"><text>native CSS</text></view>
+  </view>
+</template>
+
+<style>
+.issue-1325-native {
+  width: 120px;
+  height: 32px;
+  background-color: #0e7490;
+}
+</style>

@@ -10,7 +10,7 @@
 | authored-styles | 样式注入 demo 的生产、dev、连续修改及 Web 刷新 | 这些 demo 没有 Tailwind 生成接入，只验证其已有样式注入能力 |
 | native-build | Taro RN CLI 构建、实际应用注册及页面探针进入 bundle | 保持 disabled 配置，不提供 utility 样式或 Android/iOS 设备覆盖 |
 | webview-build | Taro harmony-hybrid、uni app 的 CLI 构建及 utility 产物 | 不提供原生桥接或设备运行证据 |
-| HBuilderX 专属 | uni-app-x-vapor 在清单中明确登记 | 无可移植 CLI，不加入成功计数；Harmony IDE/设备验收另行执行 |
+| HBuilderX 专属 | uni-app-x-vapor 在清单中明确登记 | 原生 iOS/Harmony IDE 与设备验收另行执行，H5 本地对照尚未纳入此矩阵；不加入成功计数 |
 
 普通 utility 同时检查 `h-8`、`h-20`、`h-50`、`mt-2`、`flex`、`text-slate-500`、spacing 定义或内联值一致性，以及任意值和透明色对照。期望间距来自配置与实际产物，按倍数检查，不能拿某个模板的默认数值套用所有 demo。页面探针同时具有唯一 id、本轮标记、文本和真实 class 属性，孤立字符串不能充当消费证据。
 

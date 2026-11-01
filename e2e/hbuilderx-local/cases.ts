@@ -1,7 +1,9 @@
 import type { AppUpdateMode } from './hmr-lifecycle'
 import type { AppRenderMode } from './render-mode'
+import type { RuntimeStructureNodeExpectation } from './runtime-structure'
 import process from 'node:process'
 import { issue1144InitialStyles, issue1144Steps } from './issue-1144'
+import { createIssue1325IosCase } from './issue-1325'
 
 export const rawTailwindDirectiveRE = /@(import\s+["']tailwindcss|tailwind|apply|theme|source)\b[^;\n{}]*[;{]/
 const unsafeMiniProgramSelectorFragments = ['.i-\\[', '.before\\:'] as const
@@ -106,6 +108,7 @@ export interface AppCase {
   runtimeLogContains?: Array<string | RegExp>
   runtimeLogNotContains?: Array<string | RegExp>
   renderMode?: AppRenderMode
+  runtimeNodes?: RuntimeStructureNodeExpectation[]
   harmonyRuntimeTextPairs?: HarmonyRuntimeTextPair[]
   runtime?: AndroidRuntimeStyleExpectation
   logNotContains?: Array<string | RegExp>
@@ -1003,6 +1006,7 @@ export const uniAppXAppCases: AppCase[] = [
     runtimeLogContains: ['App Launch'],
     logNotContains: [...issue1002AppLogNotContains, ...iconifyNativeLogNotContains, ...nativeScopedAuthorLogNotContains],
   },
+  createIssue1325IosCase(defaultIosLaunchArgs),
   {
     name: 'uni-app-x-vapor-tailwindcss-v4 harmony vapor',
     renderMode: 'vapor',

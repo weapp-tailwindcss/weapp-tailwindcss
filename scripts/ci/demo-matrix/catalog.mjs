@@ -25,7 +25,7 @@ export const demos = [
   demo('uni-app-vite-vue3-hbuilderx-tailwindcss-v4', 'uni', ['mp-weixin', 'h5', 'app'], 'pages/index/index.vue', { inputRoot: '.' }),
   demo('uni-app-x-vdom-tailwindcss-v4', 'uni', ['h5'], 'pages/index/index.uvue', { inputRoot: '.' }),
   demo('issue-1144-uni-app-x-web', 'uni', ['h5'], 'pages/index/index.uvue', { inputRoot: '.' }),
-  demo('uni-app-x-vapor-tailwindcss-v4', 'hbuilderx', [], undefined, { limitation: '仅有 HBuilderX Harmony 设备 launch；没有独立 CLI 构建或 Web 目标。' }),
+  demo('uni-app-x-vapor-tailwindcss-v4', 'hbuilderx', [], undefined, { limitation: '原生 iOS/Harmony 需要 HBuilderX 与设备；H5 仅作本地对照，尚未纳入此 CI 矩阵。' }),
   demo('mpx-tailwindcss-v4', 'mpx', ['wx', 'ali', 'swan', 'tt', 'dd'], 'src/pages/index.mpx', { node22: true }),
   demo('gulp-tailwindcss-v4', 'gulp', ['weapp', 'tt'], 'src/pages/index/index.wxml', { node22: true, sourceByTarget: { tt: 'src/pages/index/index.ttml' } }),
   demo('weapp-vite-tailwindcss-v4', 'weapp-vite', ['weapp'], 'pages/index/index.wxml', { node22: true }),

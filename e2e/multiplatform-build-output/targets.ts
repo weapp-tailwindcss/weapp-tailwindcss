@@ -191,6 +191,18 @@ function createUniAppXVaporTargets(project: string): MultiplatformTarget[] {
   return [target({
     framework: 'uni-app-x',
     projectDir: `demo/${project}`,
+    platform: 'h5',
+    coverage: 'local',
+    reason: 'npm H5 编译器使用 VDOM，只作浏览器样式首屏对照，不替代 Vapor 原生验收。',
+  }), target({
+    framework: 'uni-app-x',
+    projectDir: `demo/${project}`,
+    platform: 'app-ios',
+    coverage: 'local',
+    reason: 'Vapor iOS 样式回归依赖本地 HBuilderX 与 Xcode 模拟器，使用独立 Vapor case 验证。',
+  }), target({
+    framework: 'uni-app-x',
+    projectDir: `demo/${project}`,
     platform: 'app-harmony',
     coverage: 'local',
     reason: 'Harmony Vapor 产物依赖本地 HBuilderX 5.24 与在线 Harmony 设备，使用独立 Vapor case 验证。',

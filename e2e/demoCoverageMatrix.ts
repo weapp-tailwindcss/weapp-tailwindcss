@@ -416,7 +416,19 @@ function uniAppXPlatforms(name: string): DemoPlatformCoverage[] {
 }
 
 function uniAppXVaporPlatforms(name: string): DemoPlatformCoverage[] {
-  return [local('app-harmony', {
+  return [local('h5', {
+    devScript: 'dev:h5',
+    buildScript: 'build:h5',
+    evidence: 'multiplatform target matrix; local H5 browser control',
+    command: `pnpm --filter @weapp-tailwindcss-demo/${name} run build:h5`,
+    hmrCoverage: 'exempt',
+    reason: '项目 npm 编译器的 H5 分支实际使用 VDOM；这里只作为样式首屏对照，不能替代 Vapor iOS 或声明 Web HMR 已验收。',
+  }), local('app-ios', {
+    devScript: 'dev:ios:simulator',
+    evidence: 'hbuilderx local iOS Vapor case',
+    command: `E2E_HBUILDERX_LOCAL=1 E2E_HBUILDERX_CASE='${name} ios vapor' pnpm e2e:hbuilderx:local:ios`,
+    reason: 'Vapor iOS 样式矩阵需要本地 HBuilderX、Xcode 与已绑定模拟器，逐轮验证真实节点和截图。',
+  }), local('app-harmony', {
     devScript: 'dev:app-harmony',
     evidence: 'hbuilderx local Harmony Vapor case',
     command: `E2E_HBUILDERX_LOCAL=1 E2E_HBUILDERX_APP_PLATFORM=app-harmony E2E_HBUILDERX_CASE='${name} harmony vapor' pnpm e2e:hbuilderx:local:harmony`,

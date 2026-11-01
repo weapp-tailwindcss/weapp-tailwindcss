@@ -8,7 +8,13 @@
   "license": "MIT",
   "scripts": {
     "dev:app-harmony": "cross-env WEAPP_TW_HMR_TIMING=1 UNI_APP_X_DOM2=true hbuilderx launch app-harmony --project . --deviceId 127.0.0.1:5557",
-    "predev:app-harmony": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs"
+    "predev:app-harmony": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "dev:ios:simulator": "cross-env WEAPP_TW_HMR_TIMING=1 UNI_APP_X_DOM2=true hbuilderx launch app-ios --project . --iosTarget simulator",
+    "predev:ios:simulator": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "dev:h5": "cross-env WEAPP_TW_HMR_TIMING=1 UNI_INPUT_DIR=. uni",
+    "predev:h5": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build -p h5",
+    "prebuild:h5": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5030320261023001",

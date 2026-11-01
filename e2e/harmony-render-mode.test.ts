@@ -16,8 +16,8 @@ const issue1125ProbeUtilities = [
 
 describe('Harmony VDOM and Vapor render mode coverage', () => {
   it('requires mutually exclusive compiler mode logs for both Harmony branches', () => {
-    const vdom = uniAppXAppCases.find(item => item.renderMode === 'vdom')
-    const vapor = uniAppXAppCases.find(item => item.renderMode === 'vapor')
+    const vdom = uniAppXAppCases.find(item => item.platform === 'app-harmony' && item.renderMode === 'vdom')
+    const vapor = uniAppXAppCases.find(item => item.platform === 'app-harmony' && item.renderMode === 'vapor')
     const vdomContract = resolveAppRuntimeLogContract(vdom ?? {})
     const vaporContract = resolveAppRuntimeLogContract(vapor ?? {})
 
