@@ -31,10 +31,11 @@ export function createGenerationConfigHook(options: GenerationConfigOptions): No
           alias: [{ find: /^tailwindcss$/, replacement: options.generatorPlaceholderCssFile }],
         },
       }
-      if (config.css?.postcss !== undefined) {
+      if (config.css?.postcss !== undefined && typeof config.css.postcss !== 'string') {
         return baseConfig
       }
-      return resolvePostcssConfig(root).then((postcssConfig) => {
+      const postcssRoot = typeof config.css?.postcss === 'string' ? path.resolve(root, config.css.postcss) : root
+      return resolvePostcssConfig(postcssRoot).then((postcssConfig) => {
         if (!postcssConfig) {
           return baseConfig
         }

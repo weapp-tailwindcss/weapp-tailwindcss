@@ -7,7 +7,7 @@ import { corePackageRoot } from './paths'
 const root = process.argv[2] ? resolve(process.cwd(), process.argv[2]) : corePackageRoot
 const distDir = join(root, 'dist')
 
-async function* walk(dir) {
+async function* walk(dir: string): AsyncGenerator<string, void, unknown> {
   const entries = await readdir(dir, { withFileTypes: true })
   for (const entry of entries) {
     const filepath = join(dir, entry.name)

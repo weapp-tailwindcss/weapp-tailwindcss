@@ -1,8 +1,10 @@
+import type { IosApplicationArchitecture } from './ios-architecture'
 import { createHash } from 'node:crypto'
 import { readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
+import { collectIosApplicationArchitecture } from './ios-architecture'
 import { withIosBuildScratch } from './ios-build-scratch'
 import { iosAppWasNotRunning } from './ios-command'
 import { inspectIosBundleProvider } from './ios-provider'
@@ -107,7 +109,11 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
       if (JSON.stringify(built) !== JSON.stringify(installed)) {
         throw new Error('iOS 模拟器内应用与本轮构建二进制不一致')
       }
-      Object.assign(evidence, { stage: 'terminate', container, binarySha256: built })
+      const applicationArchitecture: IosApplicationArchitecture = { source: 'installed-app-single-slice', files: [] }
+      Object.assign(evidence, { stage: 'application-architecture', container, binarySha256: built, applicationArchitecture })
+      await save()
+      await collectIosApplicationArchitecture(applicationArchitecture, { application, container, executable, hashes: built, project }, execute, save)
+      evidence.stage = 'terminate'
       await save()
       try {
         await execute('xcrun', ['simctl', 'terminate', device, bundleId], project)

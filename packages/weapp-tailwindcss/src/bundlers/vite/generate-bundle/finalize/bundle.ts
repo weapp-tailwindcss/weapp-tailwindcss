@@ -129,21 +129,25 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     recordCssAssetResult,
   })
   normalizeBundleFileNameKeysForTest(bundle)
-  removeCssCoveredByRootStyleAssets(bundle, {
-    preserveSkylineTypography: Boolean(finalizeCssPipelineContext?.getSkylineTypographyResetCss?.()),
-    cssMatcher: opts.cssMatcher,
-    debug,
-    includeTailwindGeneratedCssAssets: finalizeCssPipelineContext !== undefined
-      && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
-        bundleFiles,
-        isWebGeneratorTarget,
-        outDir,
-      })) === true,
-    isViteProcessedCssAsset,
-    onUpdate,
-    recordCssAssetResult,
-    subpackageRoots: collectMiniProgramSubpackageRoots(bundle),
-  })
+  const includeTailwindGeneratedCssAssets = finalizeCssPipelineContext !== undefined
+    && cssPipelineStrategy?.styles?.includeTailwindGeneratedCssAssetsInRootCoverage?.(extendFrameworkCssContext(finalizeCssPipelineContext, {
+      bundleFiles,
+      isWebGeneratorTarget,
+      outDir,
+    })) === true
+  if (!isWebGeneratorTarget || includeTailwindGeneratedCssAssets) {
+    removeCssCoveredByRootStyleAssets(bundle, {
+      preserveSkylineTypography: Boolean(finalizeCssPipelineContext?.getSkylineTypographyResetCss?.()),
+      cssMatcher: opts.cssMatcher,
+      debug,
+      includeTailwindGeneratedCssAssets,
+      isViteProcessedCssAsset,
+      onUpdate,
+      recordCssAssetResult,
+      subpackageRoots: collectMiniProgramSubpackageRoots(bundle),
+    })
+  }
+
   if (
     finalizeCssPipelineContext !== undefined
     && cssPipelineStrategy?.assets?.shouldRemoveDuplicateUnlinkedRootCssAssetsReferencedByHtml?.(extendFrameworkCssContext(finalizeCssPipelineContext, {

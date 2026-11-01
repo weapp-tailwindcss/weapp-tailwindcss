@@ -18,14 +18,17 @@ const runtime = source => ({ filePath: 'fixture-runtime.js', source })
 const classes = 'class DevRuntime {}\nclass Module {}'
 const helper = 'const __exportAll = () => {}'
 
-it('uses upstream lifecycle fixes and keeps only the host dynamic import patch', () => {
+it('uses the upstream lifecycle and host dynamic import fixes', () => {
   const workspace = parse(readFileSync(path.join(repo, 'pnpm-workspace.yaml'), 'utf8'))
-  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.6.0')
+  const frameworkPackage = frameworkRequire('weapp-vite/package.json')
+  expect(frameworkPackage.version).toBe('7.7.0')
+  expect(frameworkPackage.dependencies?.['@babel/plugin-transform-dynamic-import']).toBe('^8.0.1')
   for (const version of ['7.3.0', '7.4.0']) {
     expect(workspace.patchedDependencies?.[`weapp-vite@${version}`]).toBeUndefined()
   }
-  expect(workspace.patchedDependencies?.['weapp-vite@7.6.0']).toBe('patches/weapp-vite@7.6.0.patch')
-  expect(workspace.packageExtensions?.['weapp-vite@7.6.0']?.dependencies?.['@babel/plugin-transform-dynamic-import']).toBe('8.0.1')
+  expect(workspace.patchedDependencies?.['weapp-vite@7.6.0']).toBeUndefined()
+  expect(workspace.patchedDependencies?.['weapp-vite@7.7.0']).toBeUndefined()
+  expect(workspace.packageExtensions?.['weapp-vite@7.7.0']?.dependencies?.['@devframes/agentic']).toBe('1.2.6')
 })
 
 it('accepts both external and inline common runtime helpers', () => {

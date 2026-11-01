@@ -24,7 +24,7 @@ export interface IOptions {
 const postcssHtmlTransform: PluginCreator<IOptions> = (opts: IOptions = {}) => {
   // 参考：https://docs.taro.zone/docs/envs#processenvtaro_env
   const options = defu(opts, {
-    platform: process.env.TARO_ENV,
+    platform: process.env['TARO_ENV'],
   })
   let selectorFilter: RegExp
   let walkRules: (rule: Rule) => void

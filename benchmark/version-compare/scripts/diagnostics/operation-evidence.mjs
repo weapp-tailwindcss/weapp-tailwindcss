@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { limits, mpxProject } from './constants.mjs'
+import { limits, mpxProject, weappViteInputProject } from './constants.mjs'
 import { isOperationEvidenceFilename, rootRelativeKey, sha256 } from './evidence.mjs'
 import { verifyViteCompletions, verifyWebpackCompletions } from './operation-completions.mjs'
 import { verifyServiceEvidence } from './service-evidence.mjs'
@@ -13,7 +13,9 @@ const operationMetadataFields = new Set(['engineId', 'nativePoolId', 'serviceGen
 /** 控制器逐份复核全文引用；不以缺失或截断记录证明没有操作。 */
 export async function verifyOperationEvidence(directory, status, identity = {}) {
   const files = (await fs.readdir(directory)).filter(isOperationEvidenceFilename)
-  if (files.includes('operation-terminal.json')) throw new Error('操作录制存在首败回执，证据未完成')
+  if (files.includes('operation-terminal.json')) {
+    throw new Error('操作录制存在首败回执，证据未完成')
+  }
   let bytes = 0
   for (const file of files) {
     const size = (await fs.stat(path.join(directory, file))).size
@@ -90,7 +92,10 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     throw new Error('操作缺少完成证据')
   }
   const webpack = identity.project === undefined || identity.project === mpxProject
-  const requiredOperations = [...(webpack ? ['webpack.created', 'webpack.completed', 'scan.source'] : ['vite.completed', 'source.snapshot']), 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.success']
+  const weappViteInput = identity.project === weappViteInputProject && identity.mode === 'inputs'
+  const requiredOperations = weappViteInput
+    ? ['generator.generate.start', 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.start', 'engine.build.success']
+    : [...(webpack ? ['webpack.created', 'webpack.completed', 'scan.source'] : ['vite.completed', 'source.snapshot']), 'generator.generate.success', 'native.create.success', 'native.generate.success', 'engine.compile.success', 'engine.build.success']
   if (identity.capabilities?.compilerServicePool.available) {
     requiredOperations.push('service.lookup.start', 'service.create.start', 'service.acquire', 'acquire.key.success', 'request.key.success', 'acquire.sourceSnapshot.success', 'request.snapshot.success', 'result.copy.success')
   }
@@ -99,15 +104,30 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
       throw new Error(`必需操作证据缺失：${required}`)
     }
   }
+  if (weappViteInput) {
+    const hasScan = events.some(event => event.name === 'raw-generation.candidates')
+    const hasCacheReuse = events.some(event => event.name === 'generator.cache' && event.details?.cacheHit === true)
+    if (!hasScan && !hasCacheReuse) {
+      throw new Error('weapp-vite input-only 缺少 raw-generation 输入或明确 cacheHit 复用证据')
+    }
+    if (identity.kind === 'build') {
+      const completions = events.filter(event => event.name === 'weapp-vite.completed')
+      if (completions.length !== 1 || completions[0].details?.kind !== 'build' || completions[0].details?.sessionClosed !== true || status.weappViteCompletedCount !== 1) {
+        throw new Error('weapp-vite input-only 缺少唯一 session.close 后生产完成证据')
+      }
+    }
+  }
   const count = name => events.filter(event => event.name === name).length
   const snapshots = []
   for (const file of files.filter(file => /^inputs-\d+\.json$/.test(file))) {
     snapshots.push([file, JSON.parse(await fs.readFile(path.join(directory, file), 'utf8'))])
   }
-  if (snapshots.length !== status.snapshotCount) {
+  if (!weappViteInput && snapshots.length !== status.snapshotCount) {
     throw new Error('阶段快照数量与最后状态不一致')
   }
-  const completions = (webpack ? verifyWebpackCompletions : verifyViteCompletions)(events, snapshots, status)
+  const completions = weappViteInput
+    ? { weappViteInput: { generationCount: count('raw-generation.candidates'), buildCount: count('engine.build.success') } }
+    : (webpack ? verifyWebpackCompletions : verifyViteCompletions)(events, snapshots, status)
   const serviceEvidence = verifyServiceEvidence(events)
   const uniInput = identity.project === uniInputProject && identity.mode === 'inputs' ? await verifyUniInputEvidence(directory, status.uniInput, events) : undefined
   const phaseCounts = new Map()
@@ -128,7 +148,7 @@ export async function verifyOperationEvidence(directory, status, identity = {}) 
     ...(uniInput ? { uniInput } : {}),
     capabilities: identity.capabilities,
     lifecycleBoundary: '按实际调用记录；watch-stop 仅停止采样。关闭尾部可能缺失，不以创建减释放推断泄漏或原生内存释放。',
-    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'native.generate.start', 'webpack.completed', 'scan.signature', 'source.snapshot', 'vite.completed'].includes(event.name) || (uniInput && ['uni.bundle.input', 'uni.snapshot', 'uni.plan', 'uni.cache', 'uni.selection'].includes(event.name))).map(event => `operation-${event.sequence}.json`),
+    inputFiles: events.filter(event => ['scan.source', 'generator.generate.start', 'generator.cache', 'native.generate.start', 'webpack.completed', 'scan.signature', 'source.snapshot', 'vite.completed', 'engine.build.start', 'raw-generation.scan.start', 'raw-generation.candidates'].includes(event.name) || (uniInput && ['uni.bundle.input', 'uni.snapshot', 'uni.plan', 'uni.cache', 'uni.selection'].includes(event.name))).map(event => `operation-${event.sequence}.json`),
   }
 }
 

@@ -112,7 +112,7 @@ async function processViteCssEntryTransformNow(options: any) {
         currentSubpackageRoots != null
         && isSubpackageOutputFile(normalizedOutputFile, currentSubpackageRoots)
       )
-    return isRootOrSubpackageCss
+    return isWebGeneratorTarget || isRootOrSubpackageCss
       ? css
       : removeCssCoveredByRootStyleBundleSources(bundle, outputFile, css, { preserveSkylineTypography: isSkylineTypographyEnabledForContext(opts, runtimeState.tailwindRuntime.majorVersion, generatorPlatform) })
   }

@@ -188,10 +188,10 @@ export function diffWatchArtifactSnapshots(
     const entry: WatchArtifactDiffEntry = {
       file,
       status,
-      beforeSha256: before?.sha256,
-      afterSha256: after?.sha256,
-      beforeSize: before?.size,
-      afterSize: after?.size,
+      ...(before?.sha256 !== undefined ? { beforeSha256: before.sha256 } : {}),
+      ...(after?.sha256 !== undefined ? { afterSha256: after.sha256 } : {}),
+      ...(before?.size !== undefined ? { beforeSize: before.size } : {}),
+      ...(after?.size !== undefined ? { afterSize: after.size } : {}),
     }
     if (status !== 'unchanged') {
       if (before?.content != null && after?.content != null) {

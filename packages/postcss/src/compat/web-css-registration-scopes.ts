@@ -1,6 +1,10 @@
 import postcss from 'postcss'
 import { getCssAtRulePrelude, isCssPropertyRegistration } from '../utils/css-custom-property'
 
+function isScopeWrapper(node: postcss.Node | undefined): node is postcss.AtRule | postcss.Rule {
+  return node?.type === 'atrule' || node?.type === 'rule'
+}
+
 /** 只隔离注册并保留原始祖先语境；同一祖先内的普通样式照常转换。 */
 export function withPreservedRegistrationScopes(root: postcss.Root, transform: () => void) {
   const registrations: postcss.AtRule[] = []
@@ -23,9 +27,9 @@ export function withPreservedRegistrationScopes(root: postcss.Root, transform: (
     }
     texts.add(text)
     let scope: postcss.ChildNode = registration.clone()
-    let ancestor = registration.parent
-    while (ancestor && ancestor !== root) {
-      const wrapper = (ancestor as postcss.AtRule | postcss.Rule).clone().removeAll()
+    let ancestor: postcss.Node['parent'] = registration.parent
+    while (isScopeWrapper(ancestor)) {
+      const wrapper = ancestor.clone().removeAll()
       wrapper.append(scope)
       scope = wrapper
       ancestor = ancestor.parent
@@ -52,14 +56,14 @@ export function withPreservedRegistrationScopes(root: postcss.Root, transform: (
       }
       for (const marker of markers) {
         let anchor: postcss.ChildNode = marker
-        while (anchor.parent && anchor.parent !== root) {
-          anchor = anchor.parent as postcss.ChildNode
+        while (isScopeWrapper(anchor.parent)) {
+          anchor = anchor.parent
         }
         root.insertBefore(anchor, scope.clone())
-        let parent = marker.parent
+        let parent: postcss.Node['parent'] = marker.parent
         marker.remove()
-        while (parent && parent !== root && parent.nodes.length === 0) {
-          const next = parent.parent
+        while (parent && parent !== root && parent.nodes?.length === 0) {
+          const next: postcss.Node['parent'] = parent.parent
           parent.remove()
           parent = next
         }

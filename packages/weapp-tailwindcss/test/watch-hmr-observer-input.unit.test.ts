@@ -75,16 +75,15 @@ it('已读行不会续借 JSON 解析或查询的绝对截止', async () => {
   await expect(transport.close()).rejects.toThrow('timeoutMs=5000')
 })
 
-it.each([{ args: windowsObserverArgs }, { args: windowsWatchMemoryArgs }])('原生脚本在首个 JSON cmdlet 前冲刷已读行，JSON 模块只按宿主 manifest 加载', ({ args }) => {
+it.each([{ args: windowsObserverArgs }, { args: windowsWatchMemoryArgs }])('原生脚本在首个 JSON 解析器前冲刷已读行，使用独立 .NET 序列化器', ({ args }) => {
   const script = Buffer.from(args.at(-1)!, 'base64').toString('utf16le')
   const read = script.indexOf('[Console]::In.ReadLine()')
   const marker = script.indexOf('request-line-received')
-  const parse = script.indexOf('Microsoft.PowerShell.Utility\\ConvertFrom-Json')
+  const parse = script.indexOf('$observerJsonSerializer.DeserializeObject($line)')
   expect(marker).toBeGreaterThan(read)
   expect(parse).toBeGreaterThan(marker)
   expect(script.slice(marker, parse)).toContain('[Console]::Out.Flush()')
-  expect(script).toContain('[System.IO.Path]::Combine($PSHOME,')
-  expect(script).toContain('Import-Module -Name $observerJsonManifest -ErrorAction Stop')
-  expect(script.indexOf('Import-Module -Name $observerJsonManifest')).toBeGreaterThan(marker)
-  expect(script).not.toMatch(/(?<![\\\w-])ConvertFrom-Json\s+-InputObject/)
+  expect(script).toContain('Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop')
+  expect(script).toContain('New-Object System.Web.Script.Serialization.JavaScriptSerializer')
+  expect(script).not.toMatch(/Convert(?:From|To)-Json|Import-Module/)
 })

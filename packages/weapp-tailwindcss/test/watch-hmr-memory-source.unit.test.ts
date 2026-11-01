@@ -184,10 +184,10 @@ describe('persistent Watch memory source', () => {
     fixture.child.emit('close', null, 'SIGKILL')
   })
 
-  it('emits native readiness before the first JSON cmdlet and preserves Watch platform patterns', () => {
+  it('emits native readiness before the first JSON serializer and preserves Watch platform patterns', () => {
     const script = Buffer.from(windowsWatchMemoryArgs.at(-1)!, 'base64').toString('utf16le')
-    expect(script.indexOf('observer-ready')).toBeLessThan(script.indexOf('ConvertFrom-Json'))
-    expect(script.slice(0, script.indexOf('observer-ready'))).not.toContain('ConvertTo-Json')
+    expect(script.indexOf('observer-ready')).toBeLessThan(script.indexOf('$observerJsonSerializer.DeserializeObject'))
+    expect(script.slice(0, script.indexOf('observer-ready'))).not.toContain('$observerJsonSerializer.Serialize')
     expect(script).toContain('taro-build-runner\\.mjs\\s+build\\s+--type\\s+\\S+\\s+--watch')
     expect(script).toContain('WorkingSetSize,CommandLine')
   })

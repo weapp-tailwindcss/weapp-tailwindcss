@@ -22,8 +22,11 @@ const WEAPP_AUTOPREFIXER_DEFAULT_OPTIONS: AutoprefixerOptions = {
 
 const AUTOPREFIXER_PLUGIN_NAME = 'autoprefixer'
 
-export function isAutoprefixerPlugin(plugin: AcceptedPlugin): boolean {
-  return (plugin as { postcssPlugin?: string } | undefined)?.postcssPlugin === AUTOPREFIXER_PLUGIN_NAME
+export function isAutoprefixerPlugin(plugin: unknown): boolean {
+  return plugin !== null
+    && (typeof plugin === 'object' || typeof plugin === 'function')
+    && 'postcssPlugin' in plugin
+    && plugin.postcssPlugin === AUTOPREFIXER_PLUGIN_NAME
 }
 
 export function resolveAutoprefixerPlugin(

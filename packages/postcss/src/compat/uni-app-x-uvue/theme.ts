@@ -1,4 +1,4 @@
-import type { Root, Rule } from 'postcss'
+import type { Document, Root, Rule } from 'postcss'
 import valueParser from 'postcss-value-parser'
 import { isTailwindcssV4ThemeVariable } from '../tailwindcss-v4/variables'
 
@@ -134,7 +134,7 @@ function getUnresolvedAuthorVariableFallback(value: string) {
  * HBuilderX 不接受带 fallback 的 var() 声明，拆成静态 fallback 与动态变量两条声明。
  */
 export function splitUnresolvedAuthorVariableFallbacks(
-  root: Root,
+  root: Root | Document,
   variables: ReadonlyMap<string, string>,
 ) {
   if (typeof root.walkDecls !== 'function') {

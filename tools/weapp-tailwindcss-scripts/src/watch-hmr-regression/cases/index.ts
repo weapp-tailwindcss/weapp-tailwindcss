@@ -1,4 +1,4 @@
-import type { CliOptions, ConcreteWatchCaseName, DemoWatchShardName, WatchCase } from '../types'
+import type { CliOptions, ConcreteOrPlatformWatchCaseName, ConcreteWatchCaseName, DemoWatchShardName, PlatformWatchCaseName, WatchCase } from '../types'
 import process from 'node:process'
 import { buildDemoCases } from './demo'
 
@@ -28,6 +28,8 @@ const localOnlyWatchCaseNames = new Set<ConcreteWatchCaseName>([
   'uni-app-x-vdom-tailwindcss-v4',
 ])
 
+export function getBaseWatchCaseName(caseName: ConcreteOrPlatformWatchCaseName): ConcreteWatchCaseName
+export function getBaseWatchCaseName(caseName: CliOptions['caseName']): ConcreteWatchCaseName | undefined
 export function getBaseWatchCaseName(caseName: CliOptions['caseName']): ConcreteWatchCaseName | undefined {
   if (caseName === 'all' || caseName === 'both' || caseName === 'demo' || isDemoWatchShardName(caseName)) {
     return undefined
@@ -35,7 +37,7 @@ export function getBaseWatchCaseName(caseName: CliOptions['caseName']): Concrete
   return caseName.split(':', 1)[0] as ConcreteWatchCaseName
 }
 
-export function isPlatformWatchCaseName(caseName: CliOptions['caseName']) {
+export function isPlatformWatchCaseName(caseName: CliOptions['caseName']): caseName is PlatformWatchCaseName {
   return Boolean(getBaseWatchCaseName(caseName) && caseName.includes(':'))
 }
 
@@ -68,12 +70,12 @@ export function pickCases(allCases: WatchCase[], caseName: CliOptions['caseName'
   }
 
   if (caseName === 'demo') {
-    return allCases.filter(item => item.group === caseName && defaultDemoWatchCaseNames.has(item.name))
+    return allCases.filter(item => item.group === caseName && !isPlatformWatchCaseName(item.name) && defaultDemoWatchCaseNames.has(item.name))
   }
 
   if (isDemoWatchShardName(caseName)) {
     const shardCases = new Set(demoWatchShardCases[caseName])
-    return allCases.filter(item => shardCases.has(item.name))
+    return allCases.filter(item => !isPlatformWatchCaseName(item.name) && shardCases.has(item.name))
   }
 
   if (caseName === 'both') {

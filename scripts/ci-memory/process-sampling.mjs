@@ -81,6 +81,8 @@ export function parseWindowsSample(output, at = Date.now()) {
 
 function sampleWindows(rootPid) {
   const script = [
+    'Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop',
+    '$observerJsonSerializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer',
     `$root = ${rootPid}`,
     '$processes = Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,WorkingSetSize,Name,CreationDate',
     '$children = @{}',
@@ -93,7 +95,7 @@ function sampleWindows(rootPid) {
     'while ($stack.Count -gt 0) { $current = $stack[$stack.Count - 1]; $stack.RemoveAt($stack.Count - 1); $processId = [int]$current.ProcessId; if ($tracked.ContainsKey($processId)) { continue }; $tracked[$processId] = $current; if ($children.ContainsKey($processId)) { foreach ($child in $children[$processId]) { [void]$stack.Add($child) } } }',
     '$total = 0; $max = 0; $rows = @()',
     'foreach ($process in $tracked.Values) { $workingSet = if ($null -eq $process.WorkingSetSize) { 0 } else { [double]$process.WorkingSetSize }; $total += $workingSet; if ($workingSet -gt $max) { $max = $workingSet }; $startedAt = if ($null -eq $process.CreationDate) { "unknown" } else { $process.CreationDate.ToUniversalTime().ToString("o") }; $rows += @{ pid = [int]$process.ProcessId; ppid = [int]$process.ParentProcessId; rssKb = $workingSet / 1KB; startedAt = $startedAt; command = [string]$process.Name } }',
-    '[Console]::Out.WriteLine((@{ rssMb = [int][Math]::Round($total / 1MB); maxProcessRssMb = [int][Math]::Round($max / 1MB); processCount = [int]$tracked.Count; rows = @($rows) } | ConvertTo-Json -Depth 4 -Compress))',
+    '[Console]::Out.WriteLine($observerJsonSerializer.Serialize(@{ rssMb = [int][Math]::Round($total / 1MB); maxProcessRssMb = [int][Math]::Round($max / 1MB); processCount = [int]$tracked.Count; rows = @($rows) }))',
   ].join('; ')
   const result = spawnSync('powershell', ['-NoProfile', '-Command', script], {
     encoding: 'utf8',

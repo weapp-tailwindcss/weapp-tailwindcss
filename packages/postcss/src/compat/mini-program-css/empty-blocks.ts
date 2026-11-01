@@ -81,14 +81,16 @@ export function hasEmptyCssBlockCandidate(css: string) {
     }
     if (code === 34 || code === 39) {
       quote = code
-      if (blocks.length > 0) {
-        blocks[blocks.length - 1].hasContent = true
+      const block = blocks[blocks.length - 1]
+      if (block) {
+        block.hasContent = true
       }
       continue
     }
     if (code === 92) {
-      if (blocks.length > 0) {
-        blocks[blocks.length - 1].hasContent = true
+      const block = blocks[blocks.length - 1]
+      if (block) {
+        block.hasContent = true
       }
       index++
       continue
@@ -137,8 +139,9 @@ export function hasEmptyCssBlockCandidate(css: string) {
       if (!block.hasContent && !block.isKeyframeStep) {
         return true
       }
-      if (blocks.length > 0) {
-        blocks[blocks.length - 1].hasContent = true
+      const parentBlock = blocks[blocks.length - 1]
+      if (parentBlock) {
+        parentBlock.hasContent = true
       }
       statementStart = index + 1
       continue
@@ -147,8 +150,9 @@ export function hasEmptyCssBlockCandidate(css: string) {
       statementStart = index + 1
       continue
     }
-    if (!isCssWhitespace(code) && blocks.length > 0) {
-      blocks[blocks.length - 1].hasContent = true
+    const block = blocks[blocks.length - 1]
+    if (!isCssWhitespace(code) && block) {
+      block.hasContent = true
     }
   }
   return false

@@ -6,6 +6,23 @@ export class WechatEnvironmentError extends Error {
   }
 }
 
+/** 只保留白名单业务码和响应形状，不把服务错误正文当成认证结论或写入日志。 */
+export function wechatResponseDetail(status: number, result: unknown): string {
+  const object = result && typeof result === 'object' && !Array.isArray(result)
+    ? result as Record<string, unknown>
+    : undefined
+  const code = object?.code
+  const allowed = new Set(['APPID_ERROR', 'PROJECT_PATH_NOT_FOUND', 'PROJECT_CONFIG_JSON_ERROR'])
+  const safeCode = typeof code === 'number' && Number.isSafeInteger(code) && Math.abs(code) <= 1_000_000
+    ? String(code)
+    : typeof code === 'string' && allowed.has(code) ? code : undefined
+  const shape = object ? '对象' : Array.isArray(result) ? '数组' : result === null ? 'null' : typeof result
+  const category = status === 401 || status === 403
+    ? '认证或服务授权未确认'
+    : '服务或项目操作未完成，不能据此判定认证失败'
+  return `${category}；响应类型=${shape}${safeCode === undefined ? '' : `；业务码=${safeCode}`}`
+}
+
 /** 只提取标准连接错误代码，避免把服务正文、URL 凭据或票据写入诊断。 */
 export function wechatTransportDetail(error: unknown): string {
   const codes = new Set<string>()

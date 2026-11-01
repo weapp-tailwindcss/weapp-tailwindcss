@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { shouldSkipGenericWebProductionSourceCandidates, shouldUseGenericWebFinalizerFastPath, shouldUseGenericWebProductionFastPath } from '@/bundlers/vite/shared/generic-web-production-fast-path'
+import { describe, expect, it, vi } from 'vitest'
+import { createGenericWebProductionBundleHooks, shouldSkipGenericWebProductionSourceCandidates, shouldUseGenericWebFinalizerFastPath, shouldUseGenericWebProductionFastPath } from '@/bundlers/vite/shared/generic-web-production-fast-path'
 
 describe('generic Web production fast path', () => {
   const productionWeb = {
     command: 'build' as const,
     allowWebProductionFastPath: true,
-    hasProcessedCss: true,
+    hasGeneratedCss: true,
     isWebGeneratorTarget: true,
     requiresSourceCandidateState: false,
     watch: undefined,
@@ -37,19 +37,35 @@ describe('generic Web production fast path', () => {
   it('skips source candidate state before generated css is recorded', () => {
     const options = {
       ...productionWeb,
-      hasProcessedCss: false,
+      hasGeneratedCss: false,
     }
     expect(shouldSkipGenericWebProductionSourceCandidates(options)).toBe(true)
     expect(shouldUseGenericWebProductionFastPath(options)).toBe(false)
   })
 
-  it('enables the finalizer fast path only without platform-specific css structures', () => {
-    expect(shouldUseGenericWebFinalizerFastPath({
+  it('来源追踪启用时仍执行完整 bundle 管线', () => {
+    const hooks = createGenericWebProductionBundleHooks({
+      allowWebProductionFastPath: true,
+      requiresSourceCandidateState: true,
+      getHasGeneratedCss: () => true,
+      getIsWebGeneratorTarget: () => true,
+      getResolvedConfig: () => ({ command: 'build', build: {} }) as any,
+      onStart: vi.fn(),
+      onEnd: vi.fn(),
+    })
+    expect(hooks.shouldProcessBundle()).toBe(true)
+  })
+
+  it('最终资产采集资格不依赖生成阶段是否已登记可重放 CSS', () => {
+    const options = {
       ...productionWeb,
+      hasGeneratedCss: false,
       hasFrameworkRootImportShells: false,
       isHarmonyAppStyleTarget: false,
       isNativeAppStyleTarget: false,
-    })).toBe(true)
+    }
+    expect(shouldUseGenericWebProductionFastPath(options)).toBe(false)
+    expect(shouldUseGenericWebFinalizerFastPath(options)).toBe(true)
   })
 
   it.each([

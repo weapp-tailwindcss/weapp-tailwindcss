@@ -1,9 +1,11 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
+import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
 import { createViteCssFinalizerOutputPlugin } from '@/bundlers/vite/css-finalizer'
 import { createUniAppXAssetPipeline } from '@/bundlers/vite/frameworks/uni-app-x/asset-pipeline'
+import { createFrameworkProcessedCssRegistry } from '@/bundlers/vite/shared/framework-processed-css-registry'
 import { UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER, withUniAppXWebPreflightReset } from '@/uni-app-x/web-preflight-reset'
 
 const mocks = vi.hoisted(() => ({
@@ -116,7 +118,7 @@ describe('vite css finalizer output plugin', () => {
       measure: vi.fn(),
       record: vi.fn(),
     }
-    const records = new Map<string, any>([
+    const initialRecords = new Map<string, any>([
       ['/project/src/app.css', {
         css: ':root{--spacing:.25rem;--brand:red}.app{color:var(--brand);background-color:#ecfdf5cc}.icon-mdi--home{display:inline-block}',
         outputFile: 'assets/app.css',
@@ -126,6 +128,10 @@ describe('vite css finalizer output plugin', () => {
         outputFile: 'assets/admin.css',
       }],
     ])
+    const registry = createFrameworkProcessedCssRegistry()
+    for (const [file, record] of initialRecords) {
+      registry.record(file, record.css, record)
+    }
     const { context } = createContext({
       allowWebProductionFastPath: true,
       opts: {
@@ -139,7 +145,9 @@ describe('vite css finalizer output plugin', () => {
       },
       cssPipelineStrategy: { generation: { transformGeneratedCss } },
       hmrTimingRecorder,
-      getViteProcessedCssAssetResults: vi.fn(() => records.entries()),
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
       isViteProcessedCssAsset: vi.fn((_asset: OutputAsset, file?: string) => file?.endsWith('.css') === true),
       resolveCssAssetIdentity: vi.fn((_asset: OutputAsset, file?: string) => ({
         kind: 'bundler-generated',
@@ -189,12 +197,16 @@ describe('vite css finalizer output plugin', () => {
   })
 
   it('falls back when a Generic Web processed css record has no final asset identity', async () => {
-    const records = new Map<string, any>([
+    const initialRecords = new Map<string, any>([
       ['/project/src/missing.css', {
         css: '.missing{color:red}',
         outputFile: 'assets/missing.css',
       }],
     ])
+    const registry = createFrameworkProcessedCssRegistry()
+    for (const [file, record] of initialRecords) {
+      registry.record(file, record.css, record)
+    }
     const { context } = createContext({
       allowWebProductionFastPath: true,
       opts: {
@@ -206,7 +218,9 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'web' },
       },
-      getViteProcessedCssAssetResults: vi.fn(() => records.entries()),
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
       isViteProcessedCssAsset: vi.fn(() => false),
     })
     const plugin = createViteCssFinalizerOutputPlugin(context as any)
@@ -219,12 +233,16 @@ describe('vite css finalizer output plugin', () => {
   })
 
   it('uses the single HTML-owned css asset for a Generic Web registry result', async () => {
-    const records = new Map<string, any>([
+    const initialRecords = new Map<string, any>([
       ['/project/src/style.css', {
         css: '.generated{color:red}.icon-\\[mdi--home\\]{display:inline-block}',
         outputFile: 'src/style.css',
       }],
     ])
+    const registry = createFrameworkProcessedCssRegistry()
+    for (const [file, record] of initialRecords) {
+      registry.record(file, record.css, record)
+    }
     const { context } = createContext({
       allowWebProductionFastPath: true,
       opts: {
@@ -236,7 +254,9 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'web' },
       },
-      getViteProcessedCssAssetResults: vi.fn(() => records.entries()),
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
       isViteProcessedCssAsset: vi.fn(() => false),
       resolveCssAssetIdentity: vi.fn(() => ({ kind: 'user' })),
     })
@@ -260,9 +280,13 @@ describe('vite css finalizer output plugin', () => {
   })
 
   it('falls back for ambiguous HTML-owned Generic Web css assets', async () => {
-    const records = new Map<string, any>([
+    const initialRecords = new Map<string, any>([
       ['/project/src/style.css', { css: '.generated{color:red}', outputFile: 'src/style.css' }],
     ])
+    const registry = createFrameworkProcessedCssRegistry()
+    for (const [file, record] of initialRecords) {
+      registry.record(file, record.css, record)
+    }
     const { context } = createContext({
       allowWebProductionFastPath: true,
       opts: {
@@ -274,7 +298,9 @@ describe('vite css finalizer output plugin', () => {
         onUpdate: vi.fn(),
         generator: { target: 'web' },
       },
-      getViteProcessedCssAssetResults: vi.fn(() => records.entries()),
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
       isViteProcessedCssAsset: vi.fn(() => false),
       resolveCssAssetIdentity: vi.fn(() => ({ kind: 'user' })),
     })
@@ -291,6 +317,83 @@ describe('vite css finalizer output plugin', () => {
     expect(context.ensureRuntimeClassSet).not.toHaveBeenCalled()
     expect(String(first.source)).not.toContain('.generated')
     expect(String(second.source)).not.toContain('.generated')
+  })
+
+  it.each([
+    ['Uint8Array', (css: string) => new TextEncoder().encode(css)],
+    ['Buffer', (css: string) => Buffer.from(css)],
+    ['子数组', (css: string) => new TextEncoder().encode(`xx${css}yy`).subarray(2, -2)],
+  ])('普通 Web 作者资产正确读取 UTF-8：%s', async (_label, encode) => {
+    const registry = createFrameworkProcessedCssRegistry()
+    const { context } = createContext({
+      allowWebProductionFastPath: true,
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
+      isViteProcessedCssAsset: () => true,
+    })
+    context.opts.generator = { target: 'web' }
+    context.opts.mainCssChunkMatcher = () => false
+    const css = '.typed::after{content:"中文";color:red}'
+    const output = { ...asset('typed.css', ''), source: encode(css) }
+
+    await getHandler(createViteCssFinalizerOutputPlugin(context as any)).call({}, {}, { 'typed.css': output })
+
+    expect(output.source).toBe(css)
+    expect(registry.get('typed.css')?.css).toBe(css)
+    expect(context.opts.onUpdate).not.toHaveBeenCalled()
+  })
+
+  it('唯一资产映射失败后仍报告已执行的 marker 清理', async () => {
+    const registry = createFrameworkProcessedCssRegistry()
+    registry.record('/project/missing.css', '.missing{color:red}', { outputFile: 'missing.css' })
+    const { context } = createContext({
+      allowWebProductionFastPath: true,
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
+      isViteProcessedCssAsset: () => true,
+    })
+    context.opts.generator = { target: 'web' }
+    context.opts.mainCssChunkMatcher = () => false
+    const original = `${createBundlerGeneratedCssMarker('vite', '/project/theme.css')}\n.theme{color:blue}`
+    const output = asset('theme.css', original)
+
+    await getHandler(createViteCssFinalizerOutputPlugin(context as any)).call({}, {}, { 'theme.css': output })
+
+    expect(String(output.source)).not.toContain('vite-generated-css:')
+    expect(String(output.source)).not.toContain('.missing')
+    expect(context.opts.onUpdate).toHaveBeenCalledWith('theme.css', original, String(output.source))
+  })
+
+  it('只登记用户 matcher 允许的真实 Web CSS 资产', async () => {
+    const registry = createFrameworkProcessedCssRegistry()
+    const { context } = createContext({
+      allowWebProductionFastPath: true,
+      recordViteProcessedCssAssetResult: vi.fn(registry.record),
+      replaceViteProcessedCssAssetOutputs: vi.fn(registry.replaceOutputs),
+      getViteProcessedCssAssetResults: vi.fn(registry.entries),
+      isViteProcessedCssAsset: () => true,
+    })
+    context.opts.generator = { target: 'web' }
+    context.opts.mainCssChunkMatcher = () => false
+    context.opts.htmlMatcher = (file: string) => file === 'excluded.css'
+    const included = asset('included.css', `${createBundlerGeneratedCssMarker('vite', '/project/theme.css')}\n.theme{color:blue}`)
+    const excludedSource = `${createBundlerGeneratedCssMarker('vite', '/project/excluded.css')}\n.excluded{color:red}`
+    const excluded = asset('excluded.css', excludedSource)
+
+    await getHandler(createViteCssFinalizerOutputPlugin(context as any)).call({}, {}, {
+      'included.css': included,
+      'excluded.css': excluded,
+    })
+
+    expect(String(included.source)).toContain('.theme{color:blue}')
+    expect(String(included.source)).not.toContain('vite-generated-css:')
+    expect(excluded.source).toBe(excludedSource)
+    expect(registry.get('excluded.css')).toBeUndefined()
+    expect(registry.get('included.css')?.css.trim()).toBe('.theme{color:blue}')
+    expect(context.opts.onUpdate).toHaveBeenCalledOnce()
+    expect(context.ensureRuntimeClassSet).not.toHaveBeenCalled()
   })
 
   it('finalizes ordinary css assets through the configured style handler', async () => {

@@ -54,7 +54,9 @@ describe('Skyline Tailwind v4 字体变量', () => {
     let important = false
     postcss.parse(css).walkRules('.reset', (rule) => {
       expect(rule.parent?.type).toBe('atrule')
-      rule.walkDecls('--tw-leading', (decl) => { important = Boolean(decl.important) })
+      rule.walkDecls('--tw-leading', (decl) => {
+        important = Boolean(decl.important)
+      })
     })
     expect(important).toBe(true)
     expect(values(css, '--tw-leading', '.reset')).toEqual(['var(--weapp-tw-invalid-reset)'])
@@ -62,7 +64,9 @@ describe('Skyline Tailwind v4 字体变量', () => {
 
   it('按 CSS 标识符身份处理转义属性和纯 initial，不把字符串当关键词', () => {
     const root = postcss.parse(String.raw`.x{--\74 w-leading:/*说明*/ i\6e itial;--tw-font-weight:"initial"}`)
-    root.walkDecls((decl) => { normalizeSkylineTypographyReset(decl) })
+    root.walkDecls((decl) => {
+      normalizeSkylineTypographyReset(decl)
+    })
     expect(root.first?.toString()).toContain('var(--weapp-tw-invalid-reset)')
     expect(values(root.toString(), '--tw-font-weight')).toEqual(['"initial"'])
   })
@@ -74,7 +78,7 @@ describe('Skyline Tailwind v4 字体变量', () => {
   })
 
   it('不把作者的全局空值替换为插件默认值', async () => {
-    const { css } = await handler({ cssOptions: { skyline: true } })(theme + 'view,text{--tw-leading:;--tw-font-weight: }' + utility)
+    const { css } = await handler({ cssOptions: { skyline: true } })(`${theme}view,text{--tw-leading:;--tw-font-weight: }${utility}`)
     expect(values(css, '--tw-leading')).toEqual([''])
     expect(values(css, '--tw-font-weight')).toEqual([' '])
   })
@@ -145,21 +149,31 @@ describe('Skyline Tailwind v4 字体变量', () => {
   })
 
   it.each(['parser', 'syntax'] as const)('保持作者 %s 的调用及输出语义', async (key) => {
+    let selector = '.parser-applied'
     const parser = vi.fn<Parser>((css, options) => {
       const root = postcss.parse(css, options)
-      root.walkRules('.author', rule => { rule.selector = '.parser-applied' })
+      root.walkRules('.author', (rule) => {
+        rule.selector = selector
+      })
       return root
     })
     const options = key === 'parser' ? { parser } : { syntax: { parse: parser, stringify: postcss.stringify } }
     const transform = handler({ cssOptions: { skyline: true }, postcssOptions: { options } })
     const result = await transform(`${source}.author{color:red}`)
     expect(result.css).toContain('.parser-applied')
-    expect((await transform(`${source}.author{color:red}`)).css).toBe(result.css)
     expect(parser).toHaveBeenCalledTimes(1)
+    selector = '.parser-current'
+    const current = await transform(`${source}.author{color:red}`)
+    expect(parser).toHaveBeenCalledTimes(2)
+    expect(current.css).toContain('.parser-current')
+    expect(current.css).not.toContain('.parser-applied')
+    expect(current.css).not.toBe(result.css)
+    const expected = await handler({ cssOptions: { skyline: true } })(`${source}.parser-current{color:red}`)
+    expect(current.css).toBe(expected.css)
   })
 
   it.each(['property', 'PROPERTY', String.raw`p\72 operty`])('局部注册按 CSS 身份清理并补齐自有默认值：%s', async (name) => {
-    const input = `@${name} --tw-leading{syntax:"*";inherits:false}` + theme + utility
+    const input = `@${name} --tw-leading{syntax:"*";inherits:false}${theme}${utility}`
     const { css } = await handler({ isMainChunk: false, cssOptions: { skyline: true } })(input)
     expect(css).not.toContain(`@${name}`)
     expect(values(css, '--tw-leading')).toEqual(['var(--weapp-tw-invalid-reset)'])
@@ -178,7 +192,7 @@ describe('Skyline Tailwind v4 字体变量', () => {
 
   it('直接 finalizer 与 Root 入口共享兼容，同时保留作者空值', () => {
     const options = { isTailwindcssV4: true, cssOptions: { skyline: true } }
-    const input = source + '.empty{--tw-leading:}'
+    const input = `${source}.empty{--tw-leading:}`
     const css = finalizeMiniProgramCss(input, options)
     expect(values(css, '--tw-leading')).toEqual(['var(--weapp-tw-invalid-reset)', ''])
     const root = postcss.parse(input)

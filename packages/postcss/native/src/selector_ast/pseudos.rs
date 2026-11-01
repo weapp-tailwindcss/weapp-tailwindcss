@@ -5,7 +5,7 @@ use super::{
 };
 use std::collections::VecDeque;
 
-pub fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> Option<()> {
+pub fn prune(ast: &mut Arena, id: usize, context: &Context) -> Option<()> {
     if transform::unsupported(ast, id, context) {
         if let Some(selector) = ast.top_selector(id) {
             ast.remove(selector);
@@ -32,6 +32,24 @@ pub fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) ->
         }
         return Some(());
     }
+    if context.options.uni_app_x && eq(value, ":where") {
+        if let Some(parent) = ast.nodes[id].parent.filter(|parent| {
+            ast.nodes[*parent].kind == Kind::Selector && ast.nodes[*parent].parent.is_some()
+        }) {
+            let original_size = ast.nodes.len();
+            let multiple = collect_branches(ast, id).map(|branches| branches.len() > 1);
+            // 资格预览只使用新增克隆，不能占用正式重写的节点预算。
+            ast.nodes.truncate(original_size);
+            if multiple? {
+                ast.remove(parent);
+            }
+        }
+    }
+    Some(())
+}
+
+pub fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> Option<()> {
+    let value = &ast.nodes[id].value;
     if eq(value, ":root") {
         if let Some(root) = context
             .options
@@ -57,6 +75,16 @@ pub fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) ->
     Some(())
 }
 
+fn collect_branches(ast: &mut Arena, id: usize) -> Option<Vec<usize>> {
+    let mut branches = Vec::new();
+    for branch in ast.nodes[id].children.clone() {
+        if ast.nodes[branch].kind == Kind::Selector {
+            branches.extend(expand(ast, branch)?);
+        }
+    }
+    Some(branches)
+}
+
 fn flatten(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> Option<()> {
     if context.options.uni_app_x {
         ast.nodes[id].value = text(":is");
@@ -70,12 +98,7 @@ fn flatten(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> O
     if ast.nodes[id].children.is_empty() {
         return Some(());
     }
-    let mut branches = Vec::new();
-    for branch in ast.nodes[id].children.clone() {
-        if ast.nodes[branch].kind == Kind::Selector {
-            branches.extend(expand(ast, branch)?);
-        }
-    }
+    let branches = collect_branches(ast, id)?;
     for branch in &branches {
         context.spacing |= transform::spacing(ast, *branch, context.options);
     }

@@ -1,7 +1,7 @@
+import type { StyleProcessingPipeline } from '@/pipeline'
 import fs from 'fs-extra'
 import path from 'pathe'
 import postcss from 'postcss'
-import { test } from 'vitest'
 import { probeFeatures } from '@/content-probe'
 import { createStyleHandler } from '@/index'
 import { createStylePipeline } from '@/pipeline'
@@ -47,61 +47,68 @@ const v4Signal = probeFeatures(v4Code)
 const simpleSignal = probeFeatures(simpleCode)
 const rpxSignal = probeFeatures(rpxCode)
 
+function requireFlat(pipeline: StyleProcessingPipeline) {
+  if (pipeline.kind !== 'flat') {
+    throw new Error('Expected a flat pruning benchmark pipeline')
+  }
+  return pipeline
+}
+
 // 预构建 pipeline 和 processor
-const fullPipeline = createStylePipeline(baseOptions as any)
+const fullPipeline = requireFlat(createStylePipeline(baseOptions as any))
 const fullProcessor = postcss(fullPipeline.plugins)
 
-const v4Pipeline = createStylePipeline({ ...baseOptions } as any, v4Signal)
-const v4Processor = postcss(v4Pipeline.plugins)
+const v4Pipeline = requireFlat(createStylePipeline({ ...baseOptions } as any, v4Signal))
+const _v4Processor = postcss(v4Pipeline.plugins)
 
-const simplePipeline = createStylePipeline({ ...baseOptions } as any, simpleSignal)
+const simplePipeline = requireFlat(createStylePipeline({ ...baseOptions } as any, simpleSignal))
 const simpleProcessor = postcss(simplePipeline.plugins)
 
-const rpxPipeline = createStylePipeline({ ...baseOptions } as any, rpxSignal)
+const rpxPipeline = requireFlat(createStylePipeline({ ...baseOptions } as any, rpxSignal))
 const rpxProcessor = postcss(rpxPipeline.plugins)
 
-test('pipeline pruning benchmark - 信号探测开销', async ({ bench }) => {
-  await bench.compare(
-    bench('probeFeatures: v4 CSS (198 行)', () => {
+it('pipeline pruning benchmark - 信号探测开销', async ({ bench: benchmark }) => {
+  await benchmark.compare(
+    benchmark('probeFeatures: v4 CSS (198 行)', () => {
       probeFeatures(v4Code)
     }),
-    bench('probeFeatures: 简单 CSS (20 行)', () => {
+    benchmark('probeFeatures: 简单 CSS (20 行)', () => {
       probeFeatures(simpleCode)
     }),
-    bench('probeFeatures: rpx CSS (5 行)', () => {
+    benchmark('probeFeatures: rpx CSS (5 行)', () => {
       probeFeatures(rpxCode)
     }),
   )
 })
 
-test('pipeline pruning benchmark - 插件数量对比', async ({ bench }) => {
-  await bench.compare(
-    bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - 简单 CSS`, async () => {
+it('pipeline pruning benchmark - 插件数量对比', async ({ bench: benchmark }) => {
+  await benchmark.compare(
+    benchmark(`完整流水线 (${fullPipeline.plugins.length} 插件) - 简单 CSS`, async () => {
       await fullProcessor.process(simpleCode, { from: undefined })
     }),
-    bench(`裁剪流水线 (${simplePipeline.plugins.length} 插件) - 简单 CSS`, async () => {
+    benchmark(`裁剪流水线 (${simplePipeline.plugins.length} 插件) - 简单 CSS`, async () => {
       await simpleProcessor.process(simpleCode, { from: undefined })
     }),
-    bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - rpx CSS`, async () => {
+    benchmark(`完整流水线 (${fullPipeline.plugins.length} 插件) - rpx CSS`, async () => {
       await fullProcessor.process(rpxCode, { from: undefined })
     }),
-    bench(`裁剪流水线 (${rpxPipeline.plugins.length} 插件) - rpx CSS`, async () => {
+    benchmark(`裁剪流水线 (${rpxPipeline.plugins.length} 插件) - rpx CSS`, async () => {
       await rpxProcessor.process(rpxCode, { from: undefined })
     }),
   )
 })
 
-test('pipeline pruning benchmark - 端到端 handler 对比', async ({ bench }) => {
+it('pipeline pruning benchmark - 端到端 handler 对比', async ({ bench: benchmark }) => {
   const handler = createStyleHandler({ isMainChunk: true })
 
-  await bench.compare(
-    bench('handler: v4 CSS (含现代特征)', async () => {
+  await benchmark.compare(
+    benchmark('handler: v4 CSS (含现代特征)', async () => {
       await handler(v4Code, { isMainChunk: true, majorVersion: 4 })
     }),
-    bench('handler: 简单 CSS (无现代特征)', async () => {
+    benchmark('handler: 简单 CSS (无现代特征)', async () => {
       await handler(simpleCode, { isMainChunk: true })
     }),
-    bench('handler: rpx CSS (无现代特征)', async () => {
+    benchmark('handler: rpx CSS (无现代特征)', async () => {
       await handler(rpxCode, { isMainChunk: true })
     }),
   )

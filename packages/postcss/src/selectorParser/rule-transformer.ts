@@ -1,14 +1,14 @@
 // selector 规则级处理器，负责重写选择器并规整相关声明
 import type { Rule } from 'postcss'
-import type { Root, Selector, SyncProcessor } from 'postcss-selector-parser'
+import type { Container, Node, Root, SyncProcessor } from 'postcss-selector-parser'
 import type { IStyleHandlerOptions } from '../types'
 import type { CachedSelectorTransformResult, TransformContext } from './rule-transformer/types'
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
 import { createNativeSelectorRuleTransformer } from './native-rule'
-import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
+import { handleClassNode, handleCombinatorNode, handleTagOrAttribute, handleUniversalNode, pruneSelectorNode, rewriteSelectorNode } from './rule-transformer/nodes'
 import { resolveSelectorTransformOptions } from './rule-transformer/options'
-import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
+import { prunePseudoNode, rewritePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
 import { getUnsupportedPseudoClassSet } from './rule-transformer/unsupported-pseudos'
 import {
   isNotLastChildPseudo,
@@ -36,11 +36,31 @@ function canSkipRuleTransform(rule: Rule) {
   return SIMPLE_SELECTOR_FAST_PATH.test(selector)
 }
 
-// transformSelectors 会遍历选择器 AST 并触发各类节点处理逻辑
+function isAttachedToRoot(node: Node, root: Root) {
+  let current: Node | Container = node
+  while (current.parent) {
+    current = current.parent
+  }
+  return current === root
+}
+
+// 先在原树裁剪分支，避免展开克隆后继续修改已脱离产物的后代。
 function transformSelectors(selectors: Root, context: TransformContext) {
+  selectors.walk((node) => {
+    if (!isAttachedToRoot(node, selectors)) {
+      return
+    }
+    if (node.type === 'selector') {
+      pruneSelectorNode(node, context)
+    }
+    else if (node.type === 'pseudo') {
+      prunePseudoNode(node, context)
+    }
+  })
+
   selectors.walk((node, index) => {
-    const parent = node.parent?.type === 'selector'
-      ? node.parent as Selector
+    const parent = psp.isSelector(node.parent)
+      ? node.parent
       : undefined
 
     switch (node.type) {
@@ -51,11 +71,11 @@ function transformSelectors(selectors: Root, context: TransformContext) {
         handleUniversalNode(node, context)
         break
       case 'selector':
-        handleSelectorNode(node, context)
+        rewriteSelectorNode(node, context)
         break
       case 'pseudo':
         if (!isNotLastChildPseudo(node)) {
-          handlePseudoNode(node, index, context, parent)
+          rewritePseudoNode(node, index, context, parent)
         }
         break
       case 'combinator':

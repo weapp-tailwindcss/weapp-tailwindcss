@@ -5,7 +5,8 @@ import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../.
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../css-output'
-import { collectMatchingGeneratedCssMarkerFiles, resolveViteProcessedCssAssetSource } from '../processed-css-assets/markers-imports'
+import { collectViteProcessedCssAssetResults } from '../processed-css-assets/collector'
+import { collectMatchingGeneratedCssMarkerFiles, readAssetSource, resolveViteProcessedCssAssetSource } from '../processed-css-assets/markers-imports'
 import { extendFrameworkCssContext } from '../shared/framework-css-context'
 import { shouldUseGenericWebFinalizerFastPath } from '../shared/generic-web-production-fast-path'
 import { finalizeWebCss } from './options'
@@ -26,12 +27,6 @@ interface GenericWebCssAsset {
   asset: OutputAsset
   file: string
   original: string
-}
-
-function readAssetSource(asset: OutputAsset) {
-  return typeof asset.source === 'string'
-    ? asset.source
-    : asset.source.toString()
 }
 
 function collectCssAssets(
@@ -129,7 +124,7 @@ function resolveProcessedCssAssets(
       return
     }
     const existing = processedAssets.get(output)
-    if (existing !== undefined && existing.css !== recordCss) {
+    if (existing !== undefined && existing.css !== recordCss && (!existing.useAssetSource || !useAssetSource)) {
       return
     }
     processedAssets.set(output, { css: recordCss, useAssetSource })
@@ -146,12 +141,10 @@ export function tryFinalizeGenericWebCss(
   const { bundle, context } = options
   const resolvedConfig = context.getResolvedConfig()
   const collectStartedAt = performance.now()
-  const processedCssResults = [...(context.getViteProcessedCssAssetResults?.() ?? [])]
   if (!shouldUseGenericWebFinalizerFastPath({
     command: resolvedConfig?.command,
     allowWebProductionFastPath: context.allowWebProductionFastPath === true,
     hasFrameworkRootImportShells: (context.frameworkRootImportShellTargetByFile?.size ?? 0) > 0,
-    hasProcessedCss: processedCssResults.length > 0,
     isHarmonyAppStyleTarget: options.isHarmonyAppStyleTarget,
     isNativeAppStyleTarget: options.isNativeAppStyleTarget,
     isWebGeneratorTarget: options.isWebGeneratorTarget,
@@ -164,10 +157,36 @@ export function tryFinalizeGenericWebCss(
   const cssAssets = collectCssAssets(bundle, context)
   const bundleFiles = [...cssAssets.values()].map(item => item.file)
   options.recordTiming('assets.enumerate', enumerateStartedAt)
+
+  // 只收集真实 Web 资产，不把生成模块映射到推测输出，也不跨独立入口重放或去重。
+  const cssBundle = Object.fromEntries([...cssAssets.values()].map(({ asset, file }) => [file, asset]))
+  collectViteProcessedCssAssetResults(cssBundle, {
+    isViteProcessedCssAsset: context.isViteProcessedCssAsset,
+    markCssAssetProcessed: context.markCssAssetProcessed,
+    recordCssAssetResult: context.recordCssAssetResult,
+    recordViteProcessedCssAssetResult: context.recordViteProcessedCssAssetResult,
+    replaceViteProcessedCssAssetOutputs: context.replaceViteProcessedCssAssetOutputs,
+    debug: context.debug,
+  })
+  const collectionFallback = () => {
+    // 资产已完成 marker 清理时，即使唯一映射失败也必须报告这次实际写入。
+    for (const { asset, file, original } of cssAssets.values()) {
+      const collected = readAssetSource(asset)
+      if (collected !== original) {
+        context.opts.onUpdate(file, original, collected)
+      }
+    }
+    return false
+  }
+  const processedCssResults = [...(context.getViteProcessedCssAssetResults?.() ?? [])]
+  if (processedCssResults.length === 0) {
+    return collectionFallback()
+  }
+
   const processedAssets = resolveProcessedCssAssets(cssAssets, processedCssResults, options, bundleFiles)
   options.recordTiming('processedCss.collect', collectStartedAt)
   if (!processedAssets) {
-    return false
+    return collectionFallback()
   }
 
   const writeStartedAt = performance.now()

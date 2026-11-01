@@ -1,6 +1,7 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GeneratorSourceRecord } from '../source-resolver'
 import type { ResolvedCompilationProfile } from '@/compiler/compilation-profile'
+import type { ResolvedGenerationStyleOptions } from '@/compiler/style-capabilities'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../directives'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
@@ -121,7 +122,7 @@ export function resolveGeneratorStyleOptions(
   profile: ResolvedCompilationProfile,
   cssHandlerOptions: IStyleHandlerOptions,
   generatorStyleOptions: Partial<IStyleHandlerOptions> | undefined,
-): Partial<IStyleHandlerOptions> {
+): ResolvedGenerationStyleOptions {
   const resolvedStyleOptions = profile.styleOptions
   const scopedVueStyleSource = isVueScopedStyleRequest(resolvePostcssRequestOption(cssHandlerOptions))
   const preflightStyleOptions: Partial<IStyleHandlerOptions> = {

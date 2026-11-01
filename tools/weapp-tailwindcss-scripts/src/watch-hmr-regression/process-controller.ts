@@ -26,12 +26,12 @@ export const WATCH_STOP_PHASES = [
 ] as const
 // Web 原有停止总窗为 3000ms；在该窗口内为最终 KILL 的身份复核与退出确认预留后半段。
 export const WEB_STOP_PHASES = [{ signal: 'SIGTERM', waitMs: 1500 }, { signal: 'SIGKILL', waitMs: 1500 }] as const
-function queryBudget(remaining: number) {
+function queryBudget(remaining: number, reserveMs = 1000) {
   // execFile 探针原有 1000ms 回收期也属于调用方的绝对截止。
-  if (remaining <= 1001) {
+  if (remaining <= reserveMs + 1) {
     throw new Error('进程身份查询剩余预算不足以确认探针回收，禁止继续调度。')
   }
-  return remaining - 1000
+  return remaining - reserveMs
 }
 /** 只终止本次活句柄与已登记出生身份，根 close 不能替代后代退出确认。 */
 export function createWatchProcessController(child: ChildProcess, options: ControllerOptions = {}) {
@@ -51,11 +51,15 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
     }
   }
   child.on('error', onError)
+  let stopDeadline: number | undefined
+  const managedStop = () => stopDeadline !== undefined && options.identitySource !== undefined
+  const reservation = () => managedStop() ? 0 : 1000
+  const probeBudget = (remaining: number) => queryBudget(remaining, reservation())
   const observer = options.identitySource?.observer ?? options.observer ?? { table: readProcessTable, subset: readProcessSubset }
   const ownership = createProcessOwnershipTracker(child, closed, {
     observer: {
-      table: (timeoutMs, signal) => observer.table(queryBudget(timeoutMs), signal),
-      subset: (pids, timeoutMs, signal) => observer.subset(ownership.group, pids, queryBudget(timeoutMs), signal),
+      table: (timeoutMs, signal) => observer.table(probeBudget(timeoutMs), signal),
+      subset: (pids, timeoutMs, signal) => observer.subset(ownership.group, pids, probeBudget(timeoutMs), signal),
     },
   })
   let stopping: Promise<void> | undefined
@@ -70,13 +74,13 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
       throw trackingError
     }
     const remaining = deadline - Date.now()
-    queryBudget(remaining)
+    probeBudget(remaining)
     const controller = new AbortController()
     const abort = setTimeout(() => {
       const reason = new Error('进程身份操作执行截止，等待原有探针回收。')
       controller.abort(reason)
       onAbort?.(reason)
-    }, remaining - 1000)
+    }, remaining - reservation())
     let timer: NodeJS.Timeout | undefined
     try {
       const current = await Promise.race([
@@ -106,7 +110,13 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
       clearTimeout(timer)
     }
   }
-  const captureAt = (deadline: number) => bounded(deadline, () => ownership.capture(deadline), reason => ownership.abortPending(reason))
+  const captureAt = (phaseEnd: number) => {
+    // 热宿主只在总停止窗末尾预留一次回收；冷探针仍保留各自原有的一秒。
+    const deadline = managedStop()
+      ? Math.min(phaseEnd, stopDeadline! - 1000, options.identitySource!.queryDeadline?.(phaseEnd) ?? phaseEnd)
+      : phaseEnd
+    return bounded(deadline, () => ownership.capture(deadline), reason => ownership.abortPending(reason))
+  }
   const requestedRootSignals = new Set<NodeJS.Signals>()
   const waitForRootClose = async (deadline: number) => {
     let timer: NodeJS.Timeout | undefined
@@ -170,7 +180,7 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
           }
           const current = windowsLatest
             ? windowsLatest.get(identity.pid)
-            : (await bounded(until, (available, signal) => observer.subset(undefined, [identity.pid], queryBudget(available), signal))).find(row => row.pid === identity.pid)
+            : (await bounded(until, (available, signal) => observer.subset(undefined, [identity.pid], probeBudget(available), signal))).find(row => row.pid === identity.pid)
           if (!current || current.started !== identity.started || current.zombie || Date.now() >= until) {
             continue
           }
@@ -247,7 +257,11 @@ export function createWatchProcessController(child: ChildProcess, options: Contr
   }
   const stop = async () => {
     const phases = options.phases ?? WATCH_STOP_PHASES
-    await stopWithWatchIdentity(options.identitySource, phases.reduce((total, phase) => total + phase.waitMs, 0), started => stopTarget(phases, started))
+    const duration = phases.reduce((total, phase) => total + phase.waitMs, 0)
+    await stopWithWatchIdentity(options.identitySource, duration, (started) => {
+      stopDeadline = started + duration
+      return stopTarget(phases, started)
+    })
   }
   return {
     snapshot: () => ownership.current,

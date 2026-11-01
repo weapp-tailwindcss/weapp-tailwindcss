@@ -222,6 +222,7 @@ export const benchmarkProjects = [
     devScript: 'dev:e2e-watch',
     injectType: 'wxml-class',
     hmrMode: 'watch',
+    inputDiagnosticOnly: true,
   },
   {
     key: 'demo-web-react-vite-tailwindcss-v4__web',

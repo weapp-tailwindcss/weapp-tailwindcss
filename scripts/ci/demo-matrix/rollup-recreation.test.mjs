@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { expect, it, vi } from 'vitest'
 import { rollupTestVariants } from './rollup-test-runtime.mjs'
 import { getWatchPathEntry } from './rollup-watch-paths.mjs'
+import { watchRunScope } from './rollup-watch-scope.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 const scenarios = rollupTestVariants().flatMap(runtime =>
@@ -37,6 +38,7 @@ it.each(scenarios)('reconciles a dependency recreated during native subscription
     task = this
     return run.apply(this, args)
   })
+  let close
   try {
     await mkdir(dataDir)
     await replaceSourceFile(entry, 'export { default as value } from "./data/value.json"; export { default as derived } from "virtual:derived"')
@@ -60,8 +62,8 @@ it.each(scenarios)('reconciles a dependency recreated during native subscription
         },
       }],
     })
+    close = watchRunScope(watcher)
     watcher.on('event', (event) => {
-      void event.result?.close()
       if (event.code === 'ERROR') {
         errors++
       }
@@ -99,7 +101,7 @@ it.each(scenarios)('reconciles a dependency recreated during native subscription
   }
   finally {
     release.resolve()
-    await watcher?.close()
+    await close?.()
     registration?.mockRestore()
     observer.mockRestore()
     await rm(dir, { recursive: true, force: true })

@@ -56,7 +56,7 @@ export function collectPreflightRules(root: postcss.Root, options: { cssPrefligh
     if (node.type === 'rule' && options.preserveSkylineTypography && isSkylineTypographyResetRule(node)) {
       continue
     }
-    if (isMiniProgramPreflightRule(node)) {
+    if (node.type === 'rule' && isMiniProgramPreflightRule(node)) {
       preflightNodes.push(node)
     }
   }

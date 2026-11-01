@@ -24,7 +24,12 @@ export function runMemoryProbe(command: string, args: string[], options: {
     return Promise.reject(new MemoryProbeAbortedError('memory probe aborted', { cause: signal.reason }))
   }
   const expiresAt = Date.now() + options.timeoutMs
-  const lifecycle = createMemoryProbeDiagnostics(command, args, { expiresAt, timeoutMs: options.timeoutMs, closeTimeoutMs: options.closeTimeoutMs ?? 1000, context: options.diagnosticContext })
+  const lifecycle = createMemoryProbeDiagnostics(command, args, {
+    expiresAt,
+    timeoutMs: options.timeoutMs,
+    closeTimeoutMs: options.closeTimeoutMs ?? 1000,
+    ...(options.diagnosticContext ? { context: options.diagnosticContext } : {}),
+  })
   return new Promise((resolve, reject) => {
     let child: ChildProcess
     const launch = resolveObserverLaunchEnvironment(command, options.launchOptions)

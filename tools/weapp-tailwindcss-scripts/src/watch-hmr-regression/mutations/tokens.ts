@@ -95,7 +95,7 @@ export function buildIssue33ArbitraryClassTokens() {
 }
 
 export function isIssue33RoundEnabled() {
-  return process.env.E2E_WATCH_ROUND_PROFILE === 'issue33'
+  return process.env['E2E_WATCH_ROUND_PROFILE'] === 'issue33'
 }
 
 export function appendIssue33RoundConfig(rounds: MutationRoundConfig[]) {

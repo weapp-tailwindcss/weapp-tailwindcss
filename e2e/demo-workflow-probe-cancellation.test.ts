@@ -59,7 +59,24 @@ vi.mock('../scripts/demo-e2e-workflow/process-tree', async (importOriginal) => {
   return { ...actual, createWorkflowProcessTree: (...[child, closed, options]: Parameters<typeof actual.createWorkflowProcessTree>) => {
     state.child = child
     // 夹具只缩短合作等待；生产的 5 秒身份探针和 2 秒强制清理预算保持原值。
-    state.tree = actual.createWorkflowProcessTree(child, closed, { ...options, cooperativeMs: 1000 })
+    const tree = actual.createWorkflowProcessTree(child, closed, { ...options, cooperativeMs: 1000 })
+    state.tree = {
+      ...tree,
+      capture(deadline?: number) {
+        if (!state.armed || state.failures !== 0) {
+          return tree.capture(deadline)
+        }
+        // 首个故意失败的查询在同一同步时刻取预算；返回 Promise 即恢复真实取消与清理时钟。
+        const startedAt = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(startedAt)
+        try {
+          return tree.capture(deadline)
+        }
+        finally {
+          clock.mockRestore()
+        }
+      },
+    }
     return state.tree
   } }
 })

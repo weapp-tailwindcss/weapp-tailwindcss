@@ -1,6 +1,7 @@
 import type { GeneratorSourceRecord } from '../source-resolver'
 import type { GeneratorPipelineExecutionContext } from './context'
 import type { CompilationScopeDependency } from '@/compiler/index'
+import type { ResolvedGenerationStyleOptions } from '@/compiler/style-capabilities'
 import { shouldUseMiniProgramCssBranch } from '@/compiler/target'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
 import { runWithConcurrency } from '../../utils/run-tasks'
@@ -95,7 +96,10 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
         source: normalizeGeneratorSource(record.source),
       }))
     : sourceRecords
-  const generatorStyleOptions = resolveGeneratorStyleOptions(profile, cssHandlerOptions, generatorOptions.styleOptions)
+  const generatorStyleOptions: ResolvedGenerationStyleOptions = {
+    ...resolveGeneratorStyleOptions(profile, cssHandlerOptions, generatorOptions.styleOptions),
+    ...(options.deferWebRpxConversion ? { deferWebRpxConversion: true } : {}),
+  }
   const configuredContainerCompat = hasConfiguredContainerCompatSources(
     generatorSourceRecords.map(record => record.source),
   )

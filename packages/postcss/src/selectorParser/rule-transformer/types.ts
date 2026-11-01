@@ -5,9 +5,9 @@ export interface TransformContext {
   rule: Rule
   options: IStyleHandlerOptions
   requiresSpacingNormalization: boolean
-  rootReplacement?: string
-  universalReplacement?: string
-  selectorReplacerOptions?: InternalCssSelectorReplacerOptions
+  rootReplacement?: string | undefined
+  universalReplacement?: string | undefined
+  selectorReplacerOptions?: InternalCssSelectorReplacerOptions | undefined
   unsupportedPseudoClasses?: ReadonlySet<string>
 }
 

@@ -1,5 +1,6 @@
 import type { ObserverLaunchDiagnostic } from './launch-environment'
 import type { ProcessObserverQuery } from './transport'
+import { observerInputStages } from './input'
 
 const stages = ['request-received', 'query-completed', 'response-ready'] as const
 
@@ -17,6 +18,7 @@ export interface ObserverRequestDiagnostic {
   stages: Array<{ stage: string, elapsedMs: number }>
   progress: number
   inputReceived?: boolean
+  inputProgress?: number
 }
 
 /** 诊断只记录本次传输阶段，不授予业务进程归属，也不重置请求截止。 */
@@ -49,6 +51,21 @@ export function createObserverDiagnostics(pid: number | undefined, launch?: Obse
       request.inputReceived = true
       request.stages.push({ stage: 'request-line-received', elapsedMs: elapsed() })
     },
+    inputProgress(request: ObserverRequestDiagnostic, stage: unknown) {
+      const current = request.inputProgress ?? 0
+      const expectedProgress = current === observerInputStages.length - 1 ? 1 : 0
+      if (!request.inputReceived || stage !== observerInputStages[current] || request.progress !== expectedProgress) {
+        throw new Error('身份采集器输入子阶段重复、顺序无效或已跨过输入阶段。')
+      }
+      request.inputProgress = current + 1
+      request.stages.push({ stage: stage as string, elapsedMs: elapsed() })
+    },
+    inputFailed(request: ObserverRequestDiagnostic, stage: unknown) {
+      if (!request.inputReceived || !(observerInputStages as readonly unknown[]).includes(stage)) {
+        throw new Error('身份采集器输入失败缺少已读原始行或受管阶段。')
+      }
+      request.stages.push({ stage: `input-failed:${String(stage)}`, elapsedMs: elapsed() })
+    },
     progress(message: { event: unknown, pid?: unknown, kind?: unknown, version?: unknown }, request?: ObserverRequestDiagnostic) {
       if (message.event === 'observer-ready') {
         if (readyAt !== undefined || message.pid !== pid || !Number.isInteger(message.pid)) {
@@ -63,6 +80,9 @@ export function createObserverDiagnostics(pid: number | undefined, launch?: Obse
       }
       if (readyAt === undefined || !request || message.kind !== request.kind || message.event !== stages[request.progress]) {
         throw new Error('身份采集器请求进度缺少本轮身份或阶段顺序无效。')
+      }
+      if (request.inputProgress !== undefined && request.inputProgress !== (message.event === 'request-received' ? observerInputStages.length - 1 : observerInputStages.length)) {
+        throw new Error('身份采集器请求进度跳过尚未确认的输入子阶段。')
       }
       request.progress++
       request.stages.push({ stage: message.event as string, elapsedMs: elapsed() })

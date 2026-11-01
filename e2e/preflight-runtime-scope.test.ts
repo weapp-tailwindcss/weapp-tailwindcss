@@ -40,7 +40,7 @@ describe('扩展原生工具链预检范围', () => {
     expect(initialChecks(true).map(check => check.id)).toEqual(expect.arrayContaining(['runtime-android', 'runtime-ios']))
   })
 
-  it.each(['runtime-android', 'runtime-ios'] as const)('%s 缺证时扩展报告不能通过 verify', async (id) => {
+  it.each(['runtime-android', 'runtime-ios'] as const)('%s 探针失败时扩展报告不能通过 verify', async (id) => {
     const { report, session, dir } = await setup(true)
     await computerEvidence(session)
     const probe = vi.fn(async target => target === id
@@ -48,8 +48,10 @@ describe('扩展原生工具链预检范围', () => {
       : passingCheck(target))
     const live = new PreflightSession(report, session.file, dir, probe)
     live.interactionAt = session.interactionAt
-    await expect(live.verify(report.identity)).rejects.toThrow('禁止启动')
+    await expect(live.verify(report.identity)).rejects.toThrow(`${id} 已阻断：工具缺失`)
     expect(report.status).toBe('blocked')
+    expect(report.verifiedAt).toBeUndefined()
+    expect(probe.mock.calls.at(-1)?.[0]).toBe(id)
   })
 
   it('扩展领取前重查工具链，阶段前再查且失败停止', async () => {

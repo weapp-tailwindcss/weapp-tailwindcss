@@ -32,6 +32,7 @@ export const webpackLoaderEntries = {
   'weapp-tw-runtime-classset-loader': 'src/bundlers/webpack/loaders/weapp-tw-runtime-classset-loader.ts',
   'weapp-tw-css-generation-loader': 'src/bundlers/webpack/loaders/weapp-tw-css-generation-loader.ts',
   'weapp-tw-css-import-rewrite-loader': 'src/bundlers/webpack/loaders/weapp-tw-css-import-rewrite-loader.ts',
+  'weapp-tw-web-rpx-finalize-loader': 'src/bundlers/webpack/loaders/weapp-tw-web-rpx-finalize-loader.ts',
 } as const
 
 export const runtimeCjsEntries = {

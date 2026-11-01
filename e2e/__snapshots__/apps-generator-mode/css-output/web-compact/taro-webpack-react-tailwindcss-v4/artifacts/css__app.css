@@ -13057,7 +13057,7 @@ wx-button {
 }
  /*! tokens: px-[29rpx] <= src/pages/index/index.tsx */
 .px-\[29rpx\] {
-  padding-inline: 0.90625rem;
+  padding-inline: 0.725rem;
 }
  /*! tokens: py-2 <= src/pages/index/index.tsx */
 .py-2 {
@@ -13069,11 +13069,11 @@ wx-button {
 }
  /*! tokens: text-[31rpx] <= src/pages/index/index.tsx */
 .text-\[31rpx\] {
-  font-size: 0.96875rem;
+  font-size: 0.775rem;
 }
  /*! tokens: text-[100rpx] <= src/pages/index/index.tsx */
 .text-\[100rpx\] {
-  font-size: 3.125rem;
+  font-size: 2.5rem;
 }
  /*! tokens: text-[#fff] <= src/pages/index/index.tsx */
 .text-\[\#fff\] {
@@ -13162,11 +13162,23 @@ abc {
   background: #222;
 }
 .weapp-tw-user-ui-card {
-  gap: 0.25rem;
+  -webkit-align-items: center;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
+  animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
+  color: var(--weapp-tw-user-ui-color, #175e75);
+  gap: 0.2rem;
 }
 .weapp-tw-user-ui-loading {
-  height: 1rem;
-  width: 1rem;
+  -webkit-animation: weappTwUserUiRotation 1s linear infinite;
+  animation: weappTwUserUiRotation 1s linear infinite;
+  display: inline-block;
+  height: 0.8rem;
+  width: 0.8rem;
 }
 @-webkit-keyframes weappTwUserUiRotation {
   to {
@@ -13311,25 +13323,6 @@ page {
   syntax: '*';
   initial-value: '';
   inherits: false;
-}
-.weapp-tw-user-ui-card {
-  -webkit-align-items: center;
-  display: -webkit-inline-flex;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -ms-flex-align: center;
-  align-items: center;
-  -webkit-animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
-  animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
-  color: var(--weapp-tw-user-ui-color, #175e75);
-  gap: 0.2rem;
-}
-.weapp-tw-user-ui-loading {
-  -webkit-animation: weappTwUserUiRotation 1s linear infinite;
-  animation: weappTwUserUiRotation 1s linear infinite;
-  display: inline-block;
-  height: 0.8rem;
-  width: 0.8rem;
 }
 .issue-940-style-class {
   color: #010203;

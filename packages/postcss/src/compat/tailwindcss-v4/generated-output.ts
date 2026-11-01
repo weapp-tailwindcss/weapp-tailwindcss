@@ -4,10 +4,11 @@ import { hasCssMacroStyleOptions, transformCssMacroCss } from '../../css-macro/a
 import { createStyleHandler } from '../../handler'
 import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
 import { applyConfiguredCssUnits } from '../../plugins/applyConfiguredCssUnits'
+import { dedupeCoveredCssRules } from '../../vite-css-rules'
 import { protectDynamicColorMixAlpha } from '../color-mix'
 import { pruneMiniProgramGeneratedCss } from '../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../mini-program-css/modern-colors'
-import { normalizeTailwindcssWebRpxDeclarations } from '../tailwindcss-rpx'
+import { normalizeTailwindcssRpxDeclarations, normalizeTailwindcssWebRpxDeclarations } from '../tailwindcss-rpx'
 import { assertSkylineTypographyCss, resolveSkylineTypographyCompatibility } from './skyline-typography'
 
 const defaultStyleHandler = createStyleHandler({
@@ -67,25 +68,31 @@ export async function transformTailwindV4CssToWeapp(
   return pruneMiniProgramGeneratedCss(protectedCss.restore(result.css), pruneOptions)
 }
 
-export function transformTailwindV4WebRpxCss(css: string) {
-  if (!css.includes('rpx')) {
+function normalizeGeneratedWebRpxCss(css: string, convertUnits: boolean) {
+  if (!/rpx/i.test(css)) {
     return css
   }
 
   try {
     const root = postcss.parse(css)
-    const changed = normalizeTailwindcssWebRpxDeclarations(root, { majorVersion: 4 })
-    return changed ? root.toString() : css
+    const changed = convertUnits
+      ? normalizeTailwindcssWebRpxDeclarations(root, { majorVersion: 4 })
+      : normalizeTailwindcssRpxDeclarations(root, { majorVersion: 4 })
+    return changed ? dedupeCoveredCssRules(root.toString()) : css
   }
   catch {
     return css
   }
 }
 
+export function transformTailwindV4WebRpxCss(css: string) {
+  return normalizeGeneratedWebRpxCss(css, true)
+}
+
 export async function transformTailwindV4GeneratedCss(
   css: string,
   target: 'weapp' | 'web',
-  options?: Partial<IStyleHandlerOptions>,
+  options?: Partial<IStyleHandlerOptions> & { deferWebRpxConversion?: boolean | undefined },
   webRpxCompatibility = false,
 ) {
   if (target === 'weapp') {
@@ -96,9 +103,11 @@ export async function transformTailwindV4GeneratedCss(
     ? transformCssMacroCss(css, options)
     : css
   const resolvedWebCss = await webCss
+  // 属性语义必须在单位消失前纠正；只有通用单位兜底可以延后。
   const calculatedWebCss = await applyConfiguredCssCalc(resolvedWebCss, options ?? {})
-  const convertedWebCss = await applyConfiguredCssUnits(calculatedWebCss, options ?? {})
-  return webRpxCompatibility
+  const normalizedWebCss = webRpxCompatibility ? normalizeGeneratedWebRpxCss(calculatedWebCss, false) : calculatedWebCss
+  const convertedWebCss = await applyConfiguredCssUnits(normalizedWebCss, options ?? {})
+  return webRpxCompatibility && !options?.deferWebRpxConversion
     ? transformTailwindV4WebRpxCss(convertedWebCss)
     : convertedWebCss
 }

@@ -1,4 +1,4 @@
-import type { Declaration, Result as PostcssResult, Rule } from 'postcss'
+import type { Declaration, Result as PostcssResult, Root, Rule } from 'postcss'
 import type { IStyleHandlerOptions, UniAppXUnsupportedMode } from '../types'
 import postcssCalc from '@weapp-tailwindcss/postcss-calc'
 import postcss from 'postcss'
@@ -144,22 +144,37 @@ function reportUnsupportedRule(
   rule.warn(result, message)
 }
 
-export function applyUniAppXUvueCompatibility(
-  result: PostcssResult,
-  options?: Pick<
-    IStyleHandlerOptions,
-    'customPropertyValues' | 'customPropertyCompatibilityValues' | 'isMainChunk' | 'uniAppX' | 'uniAppXCssTarget' | 'uniAppXUnsupported'
-  >,
-) {
+type UvueCompatibilityOptions = Pick<
+  IStyleHandlerOptions,
+  'customPropertyValues' | 'customPropertyCompatibilityValues' | 'isMainChunk' | 'uniAppX' | 'uniAppXCssTarget' | 'uniAppXUnsupported'
+>
+
+export function applyUniAppXUvueCompatibility(result: PostcssResult, options?: UvueCompatibilityOptions) {
   if (!isUniAppXUvueTarget(options)) {
     return result
   }
 
-  const mode = normalizeUnsupportedMode(options?.uniAppXUnsupported)
+  const container = result.root
+  const roots = container.type === 'document' ? container.nodes : [container]
   const warningCache = new Set<string>()
-  const sfcStyleRequest = options?.isMainChunk !== true && isUvueSfcStyleRequest(result)
+  // Document 的 from 描述聚合输入，作者样式判定必须使用各 Root 自己的来源。
+  const sourceOptions = container.type === 'document' ? { ...result.opts, from: undefined } : result.opts
+  const calcMessages = roots.flatMap(root => applyRootCompatibility(root, result, warningCache, sourceOptions, options))
+  const nextResult = container.toResult(result.opts)
+  nextResult.messages.push(...result.messages, ...calcMessages)
+  return nextResult
+}
 
-  let root = result.root
+/** 主题和作者来源证据只属于当前样式 Root，不能传播到同一 Document 的兄弟。 */
+function applyRootCompatibility(
+  root: Root,
+  result: PostcssResult,
+  warningCache: Set<string>,
+  sourceOptions: PostcssResult['opts'],
+  options?: UvueCompatibilityOptions,
+) {
+  const mode = normalizeUnsupportedMode(options?.uniAppXUnsupported)
+  const sfcStyleRequest = options?.isMainChunk !== true && isUvueSfcStyleRequest({ root, opts: sourceOptions })
   let calcMessages: PostcssResult['messages'] = []
 
   consumeUniAppXSystemRootTheme(root, new Map([
@@ -179,18 +194,13 @@ export function applyUniAppXUvueCompatibility(
       decl.value = transformedValues[index]!
     })
     const calcResult = postcss([postcssCalc()]).process(root, result.opts).sync()
-    root = calcResult.root
     calcMessages = calcResult.messages
     removeEmptyStandardDeclarations(root)
   }
 
   if (sfcStyleRequest) {
     stripScopedTailwindNoise(root)
-
-    const nextResult = root.toResult(result.opts)
-    nextResult.messages.push(...result.messages)
-    nextResult.messages.push(...calcMessages)
-    return nextResult
+    return calcMessages
   }
 
   root.walkRules((rule) => {
@@ -225,8 +235,5 @@ export function applyUniAppXUvueCompatibility(
     }
   })
 
-  const nextResult = root.toResult(result.opts)
-  nextResult.messages.push(...result.messages)
-  nextResult.messages.push(...calcMessages)
-  return nextResult
+  return calcMessages
 }

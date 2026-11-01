@@ -13,6 +13,36 @@ pub struct Context<'a> {
     pub spacing: bool,
 }
 
+fn attached_to_root(ast: &Arena, id: usize, root: usize) -> bool {
+    let mut current = id;
+    while let Some(parent) = ast.nodes[current].parent {
+        current = parent;
+    }
+    current == root
+}
+
+pub fn prune_attached(
+    ast: &mut Arena,
+    parent: usize,
+    root: usize,
+    context: &mut Context,
+) -> Option<()> {
+    for child in ast.nodes[parent].children.clone() {
+        if !attached_to_root(ast, child, root) {
+            continue;
+        }
+        match ast.nodes[child].kind {
+            Kind::Selector => prune_selector(ast, child, context),
+            Kind::Pseudo => pseudos::prune(ast, child, context)?,
+            _ => {}
+        }
+        if attached_to_root(ast, child, root) {
+            prune_attached(ast, child, root, context)?;
+        }
+    }
+    Some(())
+}
+
 pub fn walk(ast: &mut Arena, parent: usize, context: &mut Context) -> Option<()> {
     ast.nodes[parent].cursor = Some(0);
     while (ast.nodes[parent].cursor? as usize) < ast.nodes[parent].children.len() {
@@ -35,39 +65,7 @@ fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> Opt
     match ast.nodes[id].kind {
         Kind::Class => escape(ast, id, context.mapping)?,
         Kind::Universal => universal(ast, id, context),
-        Kind::Selector => {
-            let children = &ast.nodes[id].children;
-            let unsupported_element = children.iter().any(|child| {
-                let node = &ast.nodes[*child];
-                node.kind == Kind::Pseudo
-                    && ([
-                        "::backdrop",
-                        "::-ms-backdrop",
-                        "::-webkit-backdrop",
-                        "::file-selector-button",
-                    ]
-                    .iter()
-                    .any(|value| eq(&node.value, value))
-                        || (context.options.uni_app_x
-                            && [":before", ":after", "::before", "::after"]
-                                .iter()
-                                .any(|value| eq(&node.value, value))))
-            });
-            if unsupported_element {
-                ast.remove(id);
-                return Some(());
-            }
-            if children
-                .iter()
-                .any(|child| unsupported(ast, *child, context))
-            {
-                if let Some(root_selector) = ast.top_selector(id) {
-                    ast.remove(root_selector);
-                }
-                return Some(());
-            }
-            context.spacing |= spacing(ast, id, context.options);
-        }
+        Kind::Selector => context.spacing |= spacing(ast, id, context.options),
         Kind::Pseudo if !not_last_child(ast, id) => {
             pseudos::visit(ast, id, index, context)?;
         }
@@ -97,6 +95,38 @@ fn visit(ast: &mut Arena, id: usize, index: usize, context: &mut Context) -> Opt
         _ => {}
     }
     Some(())
+}
+
+fn prune_selector(ast: &mut Arena, id: usize, context: &Context) {
+    let children = &ast.nodes[id].children;
+    let unsupported_element = children.iter().any(|child| {
+        let node = &ast.nodes[*child];
+        node.kind == Kind::Pseudo
+            && ([
+                "::backdrop",
+                "::-ms-backdrop",
+                "::-webkit-backdrop",
+                "::file-selector-button",
+            ]
+            .iter()
+            .any(|value| eq(&node.value, value))
+                || (context.options.uni_app_x
+                    && [":before", ":after", "::before", "::after"]
+                        .iter()
+                        .any(|value| eq(&node.value, value))))
+    });
+    if unsupported_element {
+        ast.remove(id);
+        return;
+    }
+    if children
+        .iter()
+        .any(|child| unsupported(ast, *child, context))
+    {
+        if let Some(root_selector) = ast.top_selector(id) {
+            ast.remove(root_selector);
+        }
+    }
 }
 
 pub fn unsupported(ast: &Arena, id: usize, context: &Context) -> bool {

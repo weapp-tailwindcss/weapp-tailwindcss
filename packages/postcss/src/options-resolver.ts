@@ -2,6 +2,8 @@ import type { IStyleHandlerOptions } from './types'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
 import { LRUCache } from 'lru-cache'
 import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
+import { getPresetInsertionCacheState } from './preset-insertion-cache-policy'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 
 const SIMPLE_OVERRIDE_UNSET = '__unset__'
 const CSS_OPTION_KEYS = [
@@ -239,10 +241,20 @@ export function createOptionsResolver(baseOptions: IStyleHandlerOptions): Option
     }
 
     // 调用方可以原位修改 Map、白名单或嵌套选项，不能只按对象身份复用旧签名。
-    const key = getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides)
+    const baseInsertions = getPresetInsertionCacheState(normalizedBaseOptions.cssPresetEnv)
+    const topInsertions = getPresetInsertionCacheState(overrides.cssPresetEnv)
+    const nestedInsertions = getPresetInsertionCacheState(overrides.cssOptions?.cssPresetEnv)
+    const cacheable = baseInsertions.key !== undefined && topInsertions.key !== undefined && nestedInsertions.key !== undefined
+      && !hasOpaqueProcessOptions(normalizedBaseOptions.postcssOptions?.options)
+      && !hasOpaqueProcessOptions(overrides.postcssOptions?.options)
+    const key = cacheable
+      ? `${getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides)}|${JSON.stringify([baseInsertions.key, topInsertions.key, nestedInsertions.key])}`
+      : undefined
 
-    const cached = cacheByKey.get(key)
-    if (cached && fingerprintStyleOptions(cached.options) === cached.fingerprint) {
+    const cached = key === undefined ? undefined : cacheByKey.get(key)
+    const cachedInsertions = cached && getPresetInsertionCacheState(cached.options.cssPresetEnv)
+    if (cached && cachedInsertions?.key !== undefined
+      && `${fingerprintStyleOptions(cached.options)}|${cachedInsertions.key}` === cached.fingerprint) {
       return cached.options
     }
 
@@ -259,7 +271,12 @@ export function createOptionsResolver(baseOptions: IStyleHandlerOptions): Option
       base,
     )
     const normalized = normalizeCssOptions(merged)
-    cacheByKey.set(key, { options: normalized, fingerprint: fingerprintStyleOptions(normalized) })
+    if (key !== undefined) {
+      const insertions = getPresetInsertionCacheState(normalized.cssPresetEnv)
+      if (insertions.key !== undefined) {
+        cacheByKey.set(key, { options: normalized, fingerprint: `${fingerprintStyleOptions(normalized)}|${insertions.key}` })
+      }
+    }
     return normalized
   }
 

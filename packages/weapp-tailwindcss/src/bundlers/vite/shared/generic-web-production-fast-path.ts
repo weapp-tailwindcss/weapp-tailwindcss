@@ -9,10 +9,10 @@ interface GenericWebProductionBuildOptions {
 }
 
 interface GenericWebProductionFastPathOptions extends GenericWebProductionBuildOptions {
-  hasProcessedCss: boolean
+  hasGeneratedCss: boolean
 }
 
-export interface GenericWebFinalizerFastPathOptions extends GenericWebProductionFastPathOptions {
+export interface GenericWebFinalizerFastPathOptions extends GenericWebProductionBuildOptions {
   hasFrameworkRootImportShells: boolean
   isHarmonyAppStyleTarget: boolean
   isNativeAppStyleTarget: boolean
@@ -20,7 +20,8 @@ export interface GenericWebFinalizerFastPathOptions extends GenericWebProduction
 
 interface GenericWebProductionBundleHooksOptions {
   allowWebProductionFastPath: boolean
-  getHasProcessedCss: () => boolean
+  requiresSourceCandidateState?: boolean
+  getHasGeneratedCss: () => boolean
   getIsWebGeneratorTarget: () => boolean
   getResolvedConfig: () => ResolvedConfig | undefined
   onEnd: () => void
@@ -68,7 +69,7 @@ export function shouldUseGenericWebProductionFastPath(
   options: GenericWebProductionFastPathOptions,
 ) {
   return shouldSkipGenericWebProductionSourceCandidates(options)
-    && options.hasProcessedCss
+    && options.hasGeneratedCss
 }
 
 /**
@@ -77,7 +78,7 @@ export function shouldUseGenericWebProductionFastPath(
 export function shouldUseGenericWebFinalizerFastPath(
   options: GenericWebFinalizerFastPathOptions,
 ) {
-  return shouldUseGenericWebProductionFastPath(options)
+  return shouldSkipGenericWebProductionSourceCandidates(options)
     && !options.hasFrameworkRootImportShells
     && !options.isHarmonyAppStyleTarget
     && !options.isNativeAppStyleTarget
@@ -99,7 +100,8 @@ export function createGenericWebProductionBundleHooks(
       return !shouldUseGenericWebProductionFastPath({
         command: config?.command,
         allowWebProductionFastPath: options.allowWebProductionFastPath,
-        hasProcessedCss: options.getHasProcessedCss(),
+        hasGeneratedCss: options.getHasGeneratedCss(),
+        requiresSourceCandidateState: options.requiresSourceCandidateState,
         isWebGeneratorTarget: options.getIsWebGeneratorTarget(),
         watch: config?.build?.watch,
       })

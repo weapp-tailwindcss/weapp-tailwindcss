@@ -49,7 +49,9 @@ export function createUniAppXHarmonyApplyCssExpander(generatedCss: string) {
     if (css.includes('@apply') || !css.includes('@reference')) {
       return css
     }
-    root.walkAtRules('reference', rule => rule.remove())
+    root.walkAtRules('reference', (rule) => {
+      rule.remove()
+    })
     return root.toString()
   }
 }

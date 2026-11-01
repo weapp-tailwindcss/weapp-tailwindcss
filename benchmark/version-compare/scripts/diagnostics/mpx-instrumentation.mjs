@@ -5,5 +5,5 @@ export { instrumentOperationSource as instrumentMpxSource } from './operation-in
 export const mpxTargets = [
   ['webpack', 'packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets.ts'],
   ['scan', 'packages/weapp-tailwindcss/src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/source-candidate-cache.ts'],
-  ...generationTargets,
+  ...generationTargets.filter(([kind]) => kind !== 'raw-generation'),
 ]

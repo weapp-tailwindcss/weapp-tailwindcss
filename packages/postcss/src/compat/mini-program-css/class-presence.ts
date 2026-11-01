@@ -18,10 +18,18 @@ export function normalizeClassPresenceSelectors(root: Root) {
         const index = siblings.indexOf(attribute)
         let start = index
         let end = index
-        while (start > 0 && siblings[start - 1].type !== 'combinator') {
+        while (start > 0) {
+          const previous = siblings[start - 1]
+          if (!previous || previous.type === 'combinator') {
+            break
+          }
           start--
         }
-        while (end + 1 < siblings.length && siblings[end + 1].type !== 'combinator') {
+        while (end + 1 < siblings.length) {
+          const next = siblings[end + 1]
+          if (!next || next.type === 'combinator') {
+            break
+          }
           end++
         }
         const classNode = siblings.slice(start, end + 1).find(node => node.type === 'class')

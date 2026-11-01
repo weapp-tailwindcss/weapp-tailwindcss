@@ -208,8 +208,8 @@ describe('watch mutation evidence entrypoints', () => {
     }
   })
 
-  it.each(['template', 'script'] as const)('checks safe CSS through the %s round assertion', (kind) => {
-    const target = kind === 'script' ? 'js' : 'wxml'
+  it.each(['template', 'script', 'content'] as const)('checks safe CSS through the %s round assertion', (kind) => {
+    const target = kind === 'template' ? 'wxml' : 'js'
     const snapshot = outputs(undefined, `${reference}\n${aliasRule}`, `const className = "${alias} data-v-a1"`)
     const currentMutation = { ...mutation, verifyEscapedIn: [target] } as ClassMutationConfig
     expect(assertRoundOutputs(watchCase, kind, 'fixture.vue', 'add', currentMutation, [], [], 1, [utility], [escaped], snapshot)).toEqual([escaped])

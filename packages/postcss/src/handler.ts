@@ -20,9 +20,13 @@ import { processUserCss } from './framework-pipeline'
 import { resolvePostcssFrameworkProfile, resolvePostcssStyleTarget } from './frameworks'
 import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
+import { hasDynamicPxDesignWidth } from './plugins/getPxTransformPlugin'
 import { createInjectPreflight } from './preflight'
+import { getPresetInsertionCacheState } from './preset-insertion-cache-policy'
+import { hasOpaqueProcessOptions } from './process-options-cache-policy'
 import { StyleProcessorCache } from './processor-cache'
 import { captureRootCacheSnapshot, cloneRootWithCurrentSources, hasOnlyCapturedInputs, matchRootCacheSnapshot } from './root-cache'
+import { mayLoadExternalSourceMap } from './source-map-cache-policy'
 import { contentHash } from './utils/content-hash'
 
 /** CSS 结果缓存最大条目数 */
@@ -90,7 +94,10 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
     const hasExternalPlugins = hasUserPlugins && !configured.every(isKnownPurePostcssPlugin)
-    let cacheable = !hasExternalPlugins
+    const hasOpaqueOptions = hasOpaqueProcessOptions(resolvedOptions.postcssOptions?.options)
+    const presetInsertions = getPresetInsertionCacheState(resolvedOptions.cssPresetEnv)
+    let cacheable = !hasExternalPlugins && !hasOpaqueOptions && !presetInsertions.present && !hasDynamicPxDesignWidth(resolvedOptions)
+      && !mayLoadExternalSourceMap(rawSource, resolvedOptions.postcssOptions?.options)
     // 确定性准备属于缓存未命中的处理；原始输入和配置已经完整标识其输出。
     const optsFp = cacheable ? fingerprintStyleOptions(resolvedOptions) : ''
     const cacheKey = `${optsFp}|${contentHash(rawSource)}|${root === undefined ? 'text' : 'root'}|${sourcePrepared ? 'prepared' : 'raw'}`
@@ -130,7 +137,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       ? protectDynamicColorMixAlpha(protectedVarFallbacks.css)
       : undefined
     const source = protectedColorMix?.css ?? protectedVarFallbacks.css
-    const canReuseValidatedRoot = !resolvedOptions.postcssOptions?.options?.parser && !resolvedOptions.postcssOptions?.options?.syntax
+    const canReuseValidatedRoot = validatedRoot !== undefined && !resolvedOptions.postcssOptions?.options?.parser && !resolvedOptions.postcssOptions?.options?.syntax
     const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? (canReuseValidatedRoot ? validatedRoot : undefined) ?? source
     const restoreProtectedResult = (result: PostcssResult) => {
       const restoredCss = protectedVarFallbacks.restore(protectedColorMix?.restore(result.css) ?? result.css)
@@ -144,8 +151,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       return result
     }
     if (hasExternalPlugins) {
-      const userAutoprefixer = configured.some(plugin => isAutoprefixerPlugin(plugin as never))
-        || (!Array.isArray(plugins) && Boolean(plugins?.autoprefixer))
+      const userAutoprefixer = configured.some(isAutoprefixerPlugin)
+        || (!Array.isArray(plugins) && Boolean(plugins?.['autoprefixer']))
       // 用户阶段每次执行；只有它完成后的 AST 才能作为确定性平台阶段的缓存输入。
       const platformOptions = {
         ...resolvedOptions,
@@ -166,7 +173,9 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
           let result = restoreProtectedResult(transformed)
           // 作者删除首节点的空白归属必须跨 layer 提升保留，不能重新暴露块内缩进。
           if (firstUserNode && !firstUserNode.parent && result.root.first && result.root.first.raws.before !== firstUserBefore) {
-            result.root.first.raws.before = firstUserBefore
+            // 显式 undefined 与缺失键都参与来源快照，保留原写入语义。
+            const leadingRaws: Record<string, unknown> & { before?: string | undefined } = result.root.first.raws
+            leadingRaws.before = firstUserBefore
             const updated = result.root.toResult(result.opts)
             updated.messages.push(...result.messages)
             result = updated
@@ -186,7 +195,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     }
     // 外部插件已经完成，平台阶段探测本轮实际输入；包内 macro 仍随管线执行时保持保守探测。
     let signal: FeatureSignal | undefined
-    if (!hasUserPlugins) {
+    if (!hasUserPlugins && !hasOpaqueOptions && !presetInsertions.present) {
       try {
         signal = probeFeatures(source)
       }
@@ -206,10 +215,10 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const processOptions = processorCache.getProcessOptions(resolvedOptions)
 
     const startedAt = performance.now()
-    return processor.process(
-      getProcessInput(),
-      processOptions,
-    ).async().then(async (result) => {
+    const pending = 'kind' in processor
+      ? processor.process(getProcessInput(), processOptions)
+      : processor.process(getProcessInput(), processOptions).async()
+    return pending.then(async (result) => {
       const styleBranch = resolvePostcssFrameworkProfile(resolvedOptions)
       let finalResult = styleBranch.postprocess(result, resolvedOptions)
       if (resolvedOptions.isMainChunk !== false && finalResult.root) {

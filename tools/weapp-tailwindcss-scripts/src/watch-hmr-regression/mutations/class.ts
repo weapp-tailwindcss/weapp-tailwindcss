@@ -1,6 +1,7 @@
 import type {
   AddedClassHmrMetrics,
   ClassMutationConfig,
+  ClassMutationKind,
   ClassMutationMetrics,
   CliOptions,
   CommentCarrierHmrMetrics,
@@ -72,7 +73,7 @@ export async function waitForClassMutationBaselineOutputs(
   watchCase: WatchCase,
   options: CliOptions,
   session: WatchSession,
-  mutationKind: 'template' | 'script' | 'content',
+  mutationKind: ClassMutationKind,
   globalStyleOutputs: string[],
 ): Promise<RoundOutputs> {
   return waitForClassOutputBaseline(watchCase, options, session, mutationKind, globalStyleOutputs)
@@ -95,8 +96,8 @@ function isIssue33Round(roundConfig: MutationRoundConfig) {
 }
 
 function shouldPersistIssue33Snapshot() {
-  return process.env.E2E_WATCH_SAVE_SNAPSHOTS === '1'
-    || process.env.E2E_WATCH_ROUND_PROFILE === 'issue33'
+  return process.env['E2E_WATCH_SAVE_SNAPSHOTS'] === '1'
+    || process.env['E2E_WATCH_ROUND_PROFILE'] === 'issue33'
 }
 
 function sanitizePathSegment(value: string) {
@@ -108,7 +109,7 @@ function asErrorMessage(error: unknown) {
 }
 
 function createRollbackProbeSource(
-  mutationKind: 'template' | 'script' | 'content',
+  mutationKind: ClassMutationKind,
   mutation: ClassMutationConfig,
   sourceOriginal: string,
   payload: {
@@ -137,7 +138,7 @@ function createRollbackProbeSource(
 
 function resolveIssue33SnapshotDir(
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script',
+  mutationKind: ClassMutationKind,
   phase: 'add' | 'modify' | 'delete',
   stage: 'success' | 'failure',
 ) {
@@ -159,7 +160,7 @@ function resolveIssue33FailureDir(watchCase: WatchCase) {
 
 async function writeIssue33FailureLog(
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script',
+  mutationKind: ClassMutationKind,
   roundName: string,
   phase: 'add' | 'modify' | 'delete',
   sourceFile: string,
@@ -190,7 +191,7 @@ async function writeIssue33FailureLog(
 
 async function writeIssue33Snapshot(
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script',
+  mutationKind: ClassMutationKind,
   phase: 'add' | 'modify' | 'delete',
   stage: 'success' | 'failure',
   roundName: string,
@@ -250,7 +251,7 @@ async function collectOutputMtimes(files: string[]) {
 
 async function waitForRoundOutputs(
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script' | 'content',
+  mutationKind: ClassMutationKind,
   phase: 'add' | 'modify',
   globalStyleOutputs: string[],
   options: CliOptions,
@@ -304,7 +305,7 @@ async function waitForRoundOutputs(
 async function resolveRoundOutputs(
   assertedOutputs: RoundOutputAssertion | undefined,
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script' | 'content',
+  mutationKind: ClassMutationKind,
   phase: 'add' | 'modify',
   globalStyleOutputs: string[],
   options: CliOptions,
@@ -358,7 +359,7 @@ function assertIssue33ScriptTokenHealth(
 
 export function assertRoundOutputs(
   watchCase: WatchCase,
-  mutationKind: 'template' | 'script',
+  mutationKind: ClassMutationKind,
   sourcePath: string,
   phase: 'add' | 'modify',
   mutation: ClassMutationConfig,
@@ -429,11 +430,17 @@ export async function runClassMutation(
   watchCase: WatchCase,
   options: CliOptions,
   session: WatchSession,
-  mutationKind: 'template' | 'script' | 'content',
+  mutationKind: ClassMutationKind,
   mutation: ClassMutationConfig,
   sourceOriginal: string,
   globalStyleOutputs: string[],
 ): Promise<ClassMutationMetrics> {
+  const roundConfigs = mutation.roundConfigs ?? resolveMutationRoundConfigs()
+  const firstRoundConfig = roundConfigs[0]
+  if (!firstRoundConfig) {
+    throw new Error(`[${watchCase.label}] no mutation rounds configured for mutation=${mutationKind}`)
+  }
+
   const classVariableName = '__twWatchClass'
   const sourcePath = mutation.sourceFile
   const isContentMutation = mutationKind === 'content'
@@ -461,8 +468,6 @@ export async function runClassMutation(
     js: await getMtime(watchCase.outputJs),
   }
   let baselineOutputMtimes = await collectOutputMtimes(mutationOutputFiles)
-
-  const roundConfigs = mutation.roundConfigs ?? resolveMutationRoundConfigs()
 
   for (const roundConfig of roundConfigs) {
     const roundStartedAt = Date.now()
@@ -991,7 +996,7 @@ export async function runClassMutation(
       classVariableName,
       globalStyleOutputs,
       minRequiredGlobalStyleEscapedClasses,
-      roundConfig: roundConfigs[0],
+      roundConfig: firstRoundConfig,
       baselineMtime,
       verifyClassLiteralIn,
     })
@@ -1033,7 +1038,7 @@ export async function runClassMutation(
         globalStyleOutputs,
         minRequiredGlobalStyleEscapedClasses: mutation.commentCarrierMinRequiredGlobalStyleEscapedClasses
           ?? minRequiredGlobalStyleEscapedClasses,
-        roundConfig: roundConfigs[0],
+        roundConfig: firstRoundConfig,
         baselineMtime,
       })
       baselineMtime = commentCarrierResult.baselineMtime
@@ -1041,6 +1046,7 @@ export async function runClassMutation(
     }
   }
 
+  const roundComparison = buildRoundComparison(roundMetrics)
   return {
     mutationKind,
     sourceFile: sourcePath,
@@ -1049,7 +1055,7 @@ export async function runClassMutation(
     classTokens: preferredRound.classTokens,
     escapedClasses: preferredRound.escapedClasses,
     rounds: roundMetrics,
-    roundComparison: buildRoundComparison(roundMetrics),
+    ...(roundComparison ? { roundComparison } : {}),
     verifyEscapedIn: mutation.verifyEscapedIn,
     verifyClassLiteralIn,
     globalStyleOutputs,
@@ -1063,8 +1069,8 @@ export async function runClassMutation(
     rollbackEffectiveMs: preferredRound.rollbackEffectiveMs,
     rollbackPluginProcessMs: preferredRound.rollbackPluginProcessMs,
     rollbackPluginProcessSamples: preferredRound.rollbackPluginProcessSamples,
-    addedClassHmr,
-    sameClassLiteralHmr,
-    commentCarrierHmr,
+    ...(addedClassHmr ? { addedClassHmr } : {}),
+    ...(sameClassLiteralHmr ? { sameClassLiteralHmr } : {}),
+    ...(commentCarrierHmr ? { commentCarrierHmr } : {}),
   }
 }

@@ -206,7 +206,7 @@ function createRuntimePlugins(
           : undefined,
       })
       generatedCssByFile.set(file, tracedCss)
-      processedCssRegistry.record(file, tracedCss, { injectIntoMain: opts.mainCssChunkMatcher(outputFile, undefined), outputFile })
+      // 生成缓存还未经过 Vite PostCSS，最终资产由 finalizer 按实际输出登记。
       processedCssRegistry.markSource(file)
       recordedCandidates = new Set(runtime)
       for (const dependency of generated.dependencies) {

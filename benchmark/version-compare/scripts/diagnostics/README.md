@@ -1,6 +1,6 @@
-# Uni / Taro Vite / Mpx 输入与分配诊断
+# Uni / Taro Vite / Mpx / weapp-vite 输入与分配诊断
 
-`--input-diagnostics` 用于定位性能失败，记录完整候选和来源，不启用 inspector，不能证明正式性能验收通过。它要求完整 Git 基线 SHA、一个已登记的 Uni、Taro Vite React 或 Mpx 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚，禁止与 `--guard` 同时使用。
+`--input-diagnostics` 用于定位性能失败，记录完整候选和来源，不启用 inspector，不能证明正式性能验收通过。它要求完整 Git 基线 SHA、一个已登记的 Uni、Taro Vite React、Mpx 或 weapp-vite 小程序项目、3 次冷构建和同一 watcher 的 3 次修改/回滚，禁止与 `--guard` 同时使用。
 
 `--allocation-diagnostics` 当前已禁用，CLI、dispatch、控制器和 worker 均明确拒绝，不自动降级为 inputs。Node 22.23.4 的 [inspector 实现](https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/inspector/v8-heap-profiler-agent-impl.cc#L566)在 startSampling 中无条件设置 `kSamplingForceGC`；[GetAllocationProfile](https://github.com/nodejs/node/blob/v22.23.4/deps/v8/src/profiler/sampling-heap-profiler.cc#L278)因此会主动触发 GC。包含已回收对象的两个参数不能关闭此标志，仅检查未发送 `collectGarbage` 请求不足以证明没有强制 GC。其它运行时也未证明满足约束，不能按版本猜测放行。
 
@@ -16,10 +16,18 @@ pnpm bench:ci -- --input-diagnostics --baseline-ref fdc3d5856c8dd4b9dbb6417e1206
 
 Taro Vite React 使用 `--only demo-taro-vite-react-tailwindcss-v4__mp-weixin`，其余限制相同。Taro 的仓库 runner 在加载 CLI 前改写 `process.argv`，preload 因此绑定准备副本中的 `scripts/taro-build-runner.mjs`，同时核对实际解析的 `@tarojs/cli` 包身份和 bin 声明。不能绑定未直接执行的 CLI bin，也不能把缺少对应进程证据解释为没有 GC 或分配。GC 模式仅在显式选择 Taro 的诊断 dispatch 开启；普通 PR 的 Taro 采样与门禁保持原行为。
 
+weapp-vite input-only 诊断使用 `--only demo-weapp-vite-tailwindcss-v4__mp-weixin`，除完整 `--baseline-ref` 外必须提供不同的完整 `--current-ref`。`current_ref` 是本轮 measured source，driver 仍是当前工作树；准备副本会核对真实 `weapp-vite` CLI 身份、入口字节和生产 `session.close` 后的唯一完成回执。它固定 3 次冷构建和同一 watcher 的 3 次修改/回滚，不加载 inspector、不请求 GC，也不加入 Uni/Taro/Mpx 的诊断范围。7.7.0 已包含宿主 dynamic-import 转换修复，模板和锁文件按正式版解析；本诊断只比较输入与调用证据，不能替代正式 RSS 门禁。
+
 Linux 使用 Benchmark 工作流的手动入口，选择准确 PR 分支，填写同一完整 `baseline_ref`、上述 `only`、`build_runs=3`、`hmr_runs=3`，仅启用 `input_diagnostics`。诊断输入默认关闭；`allocation_diagnostics` 保留为明确报错入口。等价 CLI 模板如下；`PR_BRANCH` 需要替换为真实分支名：
 
 ```sh
 gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417 -f only=demo-uni-app-vite-tailwindcss-v4__mp-weixin -f build_runs=3 -f hmr_runs=3 -f input_diagnostics=true
+```
+
+weapp-vite 的等价入口还需传入准确的当前源码 SHA：
+
+```sh
+gh workflow run benchmark.yml --ref PR_BRANCH -f baseline_ref=35762afa58b7bdd665324e46e23011106d2727fb -f current_ref=MEASURED_SOURCE_SHA -f only=demo-weapp-vite-tailwindcss-v4__mp-weixin -f build_runs=3 -f hmr_runs=3 -f input_diagnostics=true
 ```
 
 显式 `gc_diagnostics=true` 仍保留已有自然 GC、预算和反序确认行为。所有显式诊断 dispatch 的 job（包括 skipped job）使用独立 Diagnostic check 名及并发组。普通 PR 的 check 名、预算和调度逻辑保持原行为；诊断成功不能替换正式 PR 的失败。

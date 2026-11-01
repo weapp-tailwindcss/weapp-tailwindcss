@@ -65,6 +65,7 @@ pub fn transform(input: &[u16], options: &Options, mapping: &EscapeMapping) -> O
         mapping,
         spacing: false,
     };
+    transform::prune_attached(&mut ast, root, root, &mut context)?;
     transform::walk(&mut ast, root, &mut context)?;
     transform::cleanup(&mut ast, root);
     let remove = ast.nodes[root].children.is_empty();

@@ -1,10 +1,10 @@
 import type { IStyleHandlerOptions } from '../../../types'
 import type { GeneratedThemeDeclarationResolver } from './generated-cleanup'
-import { applyConfiguredCssCalc } from '../../../plugins/applyConfiguredCssCalc'
 import { filterExistingCssRules } from '../../../vite-css-rules'
 import { removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../../mini-program-css/modern-colors'
 import { removeLocalUtilityMarkers } from '../../uni-app-x/local-utility-order'
+import { transformTailwindV4GeneratedCss } from '../generated-output'
 import { removeTailwindApplyAtRules } from './at-rules'
 import { removeTailwindSourceDirectives } from './directives'
 import { removeTailwindV4GeneratedUserCssArtifacts } from './generated-cleanup'
@@ -16,7 +16,10 @@ export async function transformGeneratorUserCss(
   options: {
     compileAuthorCssFunctions?: ((css: string) => Promise<string>) | undefined
     generatorTarget: string
-    generatorStyleOptions: Partial<IStyleHandlerOptions>
+    generatorStyleOptions: Partial<IStyleHandlerOptions> & {
+      webRpxCompatibility?: boolean | undefined
+      deferWebRpxConversion?: boolean | undefined
+    }
     cssUserHandlerOptions: IStyleHandlerOptions
     styleHandler: (css: string, options: IStyleHandlerOptions) => Promise<{ css: string }>
     importFallback: boolean
@@ -83,17 +86,19 @@ export async function transformGeneratorUserCss(
     return userSource
   }
   if (options.generatorTarget !== 'weapp') {
-    return applyConfiguredCssCalc(userSource, {
+    return transformTailwindV4GeneratedCss(userSource, 'web', {
+      ...options.generatorStyleOptions,
       cssCalc: options.generatorStyleOptions.cssOptions?.cssCalc
         ?? options.generatorStyleOptions.cssCalc
         ?? options.cssUserHandlerOptions.cssOptions?.cssCalc
         ?? options.cssUserHandlerOptions.cssCalc,
       customPropertyValues: options.generatorStyleOptions.customPropertyValues
         ?? options.cssUserHandlerOptions.customPropertyValues,
-      customPropertyContextCss: options.generatorStyleOptions.customPropertyContextCss
-        ?? options.cssUserHandlerOptions.customPropertyContextCss,
-      contextCss: typeof options.generatedSource === 'string' ? options.generatedSource : undefined,
-    })
+      customPropertyContextCss: [
+        options.generatorStyleOptions.customPropertyContextCss ?? options.cssUserHandlerOptions.customPropertyContextCss,
+        typeof options.generatedSource === 'string' ? options.generatedSource : undefined,
+      ].filter(Boolean).join('\n'),
+    }, options.generatorStyleOptions.webRpxCompatibility === true)
   }
   const { css } = await options.styleHandler(userSource, {
     ...options.generatorStyleOptions,

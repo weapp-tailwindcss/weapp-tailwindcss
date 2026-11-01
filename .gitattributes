@@ -23,6 +23,8 @@
 *.cmd             text eol=crlf
 *.coffee          text
 *.css             text diff=css
+# 该原始产物基线逐字保留 Vite 的末尾空行，不能为格式检查改写生成结果。
+benchmark/performance/test/fixtures/watch/vite.css whitespace=-blank-at-eof
 *.htm             text diff=html
 *.html            text diff=html
 *.inc             text

@@ -98,8 +98,12 @@ function isSfcStyleRequestSource(source: unknown) {
   return new URLSearchParams(query).get('type') === 'style'
 }
 
-export function isUvueSfcStyleRequest(result: PostcssResult) {
+export function isUvueSfcStyleRequest(result: Pick<PostcssResult, 'root' | 'opts'>) {
   if (isSfcStyleRequestSource(result.opts.from)) {
+    return true
+  }
+
+  if (isSfcStyleRequestSource(result.root.source?.input.from)) {
     return true
   }
 

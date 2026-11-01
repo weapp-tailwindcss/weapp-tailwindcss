@@ -77,6 +77,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
     throw new Error('微信 IDE HTTP 服务端口已改变；必须重新 prepare。')
   }
   await assertWechatLogin(binding.httpPort)
+  process.stdout.write(`[preflight] 微信 IDE 127.0.0.1:${binding.httpPort} 登录查询通过；此项不代表项目操作或运行时已通过。\n`)
   if (ctx.phase === 'live') {
     return { detail: '微信 IDE 已有 HTTP 服务与登录状态可用；未启动 CLI。', binding }
   }

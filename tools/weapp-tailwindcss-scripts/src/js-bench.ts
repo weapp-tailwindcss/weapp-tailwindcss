@@ -1,17 +1,18 @@
 /* empty */
-// Micro benchmark for JS handlers: Babel vs SWC vs OXC POCs.
+// Babel/OXC 低级 JS handler 微基准；SWC 仅保留历史快照读取。
 // Usage:
 //   pnpm --filter weapp-tailwindcss bench:js-handlers
-//   pnpm --filter weapp-tailwindcss bench:js-handlers -- --engines=babel,swc,oxc --iter=5 --warmup=1
+//   pnpm --filter weapp-tailwindcss bench:js-handlers -- --engines=babel,oxc --iter=5 --warmup=1
 //   pnpm --filter weapp-tailwindcss bench:js-handlers -- --glob="packages/weapp-tailwindcss/test/fixtures/jsx/**/*.js"
 //
 // Notes:
-// - SWC requires @swc/core.
+// - SWC 实现已退役，显式选择时在读取输入前报错。
 // - OXC uses the experimental JS fast path when oxc-parser is available.
 // - We focus on transform hot-path. For fairness and determinism, we run with:
 //   { alwaysEscape: true, needEscaped: true, generateMap: false }
 //   so the handlers do roughly the same amount of work regardless of classNameSet.
-import type { IJsHandlerOptions, JsHandlerResult } from 'weapp-tailwindcss/src/types'
+import type { IJsHandlerOptions } from 'weapp-tailwindcss/types'
+import type { JsBenchmarkHandler, RunnableJsEngine } from './benchmark/js-engines'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
@@ -21,6 +22,9 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import pc from 'picocolors'
+import { loadJsBenchmarkHandler, parseJsBenchmarkEngines } from './benchmark/js-engines'
+import { parseBenchmarkNumber } from './benchmark/options'
+import { percentile } from './benchmark/statistics'
 import { resolveCorePackagePath } from './paths'
 
 // Resolve repo root independenty of CWD.
@@ -47,10 +51,8 @@ function registerCoreAlias() {
 
 registerCoreAlias()
 
-type EngineId = 'babel' | 'swc' | 'oxc'
-
 interface RunOptions {
-  engines: EngineId[]
+  engines: RunnableJsEngine[]
   glob: string | string[]
   iter: number
   warmup: number
@@ -64,11 +66,10 @@ function parseArgs(): RunOptions {
     const v = args.find(a => a.startsWith(p))
     return v ? aAfter(v, p) : d
   }
-  const enginesStr = get('engines', 'babel,swc,oxc')!
-  const engines = enginesStr.split(',').map(s => s.trim()).filter(Boolean) as EngineId[]
+  const engines = parseJsBenchmarkEngines(get('engines'))
   const glob = get('glob', 'packages/weapp-tailwindcss/test/fixtures/**/*.{js,jsx,ts,tsx,wxs}')!
-  const iter = Number(get('iter', '5'))
-  const warmup = Number(get('warmup', '1'))
+  const iter = parseBenchmarkNumber(get('iter'), 5, '--iter', 'positive-integer')
+  const warmup = parseBenchmarkNumber(get('warmup'), 1, '--warmup', 'nonnegative-integer')
   return { engines, glob, iter, warmup }
 }
 
@@ -78,14 +79,6 @@ function now() {
 
 function toFixed2(n: number) {
   return Number.isFinite(n) ? n.toFixed(2) : String(n)
-}
-
-function percentile(sorted: number[], p: number) {
-  if (sorted.length === 0) {
-    return 0
-  }
-  const idx = Math.ceil((p / 100) * sorted.length) - 1
-  return sorted[Math.min(Math.max(idx, 0), sorted.length - 1)]
 }
 
 async function loadFiles(globPattern: string | string[]) {
@@ -107,7 +100,7 @@ async function loadFiles(globPattern: string | string[]) {
 
 function makeBaseOptions(): IJsHandlerOptions {
   return {
-    // Ensure the three engines do comparable work
+    // 保留原基准选项与测量工作量。
     alwaysEscape: true,
     needEscaped: true,
     generateMap: false,
@@ -122,44 +115,17 @@ function makeBaseOptions(): IJsHandlerOptions {
   }
 }
 
-function useBabel() {
-  // Import the Babel implementation
-
-  const { jsHandler } = require('weapp-tailwindcss/src/js/babel') as typeof import('weapp-tailwindcss/src/js/babel')
-  return jsHandler
-}
-
-function useSwc() {
-  const { swcJsHandler } = require('weapp-tailwindcss/src/experimental/swc') as typeof import('weapp-tailwindcss/src/experimental/swc')
-  return swcJsHandler
-}
-
-function useOxc() {
-  return import('weapp-tailwindcss/src/js/fast-path/oxc').then(({ oxcJsHandler }) => oxcJsHandler)
-}
-
 async function runEngine(
-  id: EngineId,
+  id: RunnableJsEngine,
   files: { id: string, code: string }[],
   options: IJsHandlerOptions,
   iter: number,
   warmup: number,
 ) {
-  let handler: (code: string, opts: IJsHandlerOptions) => JsHandlerResult | undefined
-  let fallbackHandler: ((code: string, opts: IJsHandlerOptions) => JsHandlerResult) | undefined
-  if (id === 'babel') {
-    handler = useBabel()
-  }
-  else if (id === 'swc') {
-    handler = useSwc()
-  }
-  else if (id === 'oxc') {
-    handler = await useOxc()
-    fallbackHandler = useBabel()
-  }
-  else {
-    throw new Error(`unknown engine: ${id}`)
-  }
+  const handler = await loadJsBenchmarkHandler(id)
+  const fallbackHandler: JsBenchmarkHandler | undefined = id === 'oxc'
+    ? await loadJsBenchmarkHandler('babel')
+    : undefined
 
   // Warmup
   for (let w = 0; w < warmup; w++) {
@@ -231,9 +197,8 @@ async function main() {
       }
       console.log('')
     }
-    catch (err: any) {
-      console.log(pc.red(`${id} failed: ${err?.message ?? err}`))
-      console.log('')
+    catch (error) {
+      throw new Error(`${id} failed: ${error instanceof Error ? error.message : String(error)}`, { cause: error })
     }
   }
 }

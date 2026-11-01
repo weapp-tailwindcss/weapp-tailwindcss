@@ -43,7 +43,9 @@ export async function runProcessCommand(command: string, args: string[], timeout
       clearTimeout(deadlineTimer)
       clearTimeout(reapTimer)
       receipt.settledAt = Date.now()
-      receipt.failure = error === undefined ? undefined : String(error)
+      if (error !== undefined) {
+        receipt.failure = String(error)
+      }
       complete()
       if (error !== undefined) {
         reject(error)
@@ -97,7 +99,9 @@ export async function runProcessCommand(command: string, args: string[], timeout
       }
       finish()
     })
-    receipt.pid = child.pid
+    if (child.pid !== undefined) {
+      receipt.pid = child.pid
+    }
     const resource = { child, receipt, settled: completion }
     const ownership = retainProcessCommand(owner, resource)
     child.once('exit', (code, signal) => {

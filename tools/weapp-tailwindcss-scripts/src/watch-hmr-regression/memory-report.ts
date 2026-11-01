@@ -14,7 +14,7 @@ function toFiniteNumber(value: unknown) {
 }
 
 function readProcessMemoryValue(sample: HmrMemoryDebugSample, key: 'heapUsedMb' | 'rssMb') {
-  const processStats = sample.data.process
+  const processStats = sample.data['process']
   if (!processStats || typeof processStats !== 'object' || Array.isArray(processStats)) {
     return undefined
   }

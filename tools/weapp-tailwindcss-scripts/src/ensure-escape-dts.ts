@@ -5,7 +5,7 @@ import { corePackageRoot } from './paths'
 
 const DIST_DIR = path.resolve(corePackageRoot, 'dist')
 
-function DECLARATION_TEMPLATE(importPath) {
+function DECLARATION_TEMPLATE(importPath: string) {
   return `import type { ITemplateHandlerOptions } from '${importPath}';
 
 export declare const weappTwIgnore: typeof String.raw;
@@ -15,7 +15,7 @@ export { isAllowedClassName, unescape } from '@weapp-tailwindcss/escape';
 `
 }
 
-async function writeDeclaration(filename, importPath) {
+async function writeDeclaration(filename: string, importPath: string) {
   const target = path.resolve(DIST_DIR, filename)
   await mkdir(path.dirname(target), { recursive: true })
   await writeFile(target, DECLARATION_TEMPLATE(importPath), 'utf8')

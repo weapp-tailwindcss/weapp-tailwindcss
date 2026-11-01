@@ -515,7 +515,7 @@ wx-button {
 }
  /*! tokens: px-[29rpx] <= src/pages/index/index.vue */
 .px-\[29rpx\] {
-  padding-inline: 0.90625rem;
+  padding-inline: 0.725rem;
 }
  /*! tokens: py-2 <= src/pages/index/index.vue */
 .py-2 {
@@ -527,11 +527,11 @@ wx-button {
 }
  /*! tokens: text-[31rpx] <= src/pages/index/index.vue */
 .text-\[31rpx\] {
-  font-size: 0.96875rem;
+  font-size: 0.775rem;
 }
  /*! tokens: text-[55rpx] <= src/pages/index/index.vue */
 .text-\[55rpx\] {
-  font-size: 1.71875rem;
+  font-size: 1.375rem;
 }
  /*! tokens: text-[#c31d6b] <= src/pages/index/index.vue */
 .text-\[\#c31d6b\] {

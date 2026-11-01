@@ -74,7 +74,7 @@ export async function main() {
               ? await runWebOnlyCase(watchCase, options)
               : await runCase(
                   options.miniProgramScope === 'main-package'
-                    ? { ...watchCase, subPackageMutations: undefined }
+                    ? { ...watchCase, subPackageMutations: [] }
                     : watchCase,
                   options,
                 )

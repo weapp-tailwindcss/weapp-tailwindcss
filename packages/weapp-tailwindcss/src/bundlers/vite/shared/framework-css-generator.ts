@@ -217,9 +217,9 @@ ${previousTracedCss}`
     cleanGeneratedCssByFile.set(fileKey, outputCss)
     tracedGeneratedCssByFile.set(fileKey, tracedCss)
     generatedClassSetByFile.set(fileKey, new Set(generated.classSet))
-    const shouldInjectGeneratedCssIntoMain = mainCssChunkMatcher(outputFile, opts.appType) || (hasTailwindRootDirectives(generatorTransformCode, { importFallback: currentGeneratorOptions.importFallback }) && !normalizeOutputPathKey(outputFile).includes('/'))
-    recordViteProcessedCssAssetResult(file, tracedCss, { injectIntoMain: shouldInjectGeneratedCssIntoMain, outputFile })
-    if (tracedCss.includes('weapp-tailwindcss layer components start')) {
+    // Web 模块仍需经过真实框架 PostCSS；生成缓存不能提前作为已处理产物重放。
+    if (!currentGeneratorBranch.isWeb) {
+      const shouldInjectGeneratedCssIntoMain = mainCssChunkMatcher(outputFile, opts.appType) || (hasTailwindRootDirectives(generatorTransformCode, { importFallback: currentGeneratorOptions.importFallback }) && !normalizeOutputPathKey(outputFile).includes('/'))
       recordViteProcessedCssAssetResult(file, tracedCss, { injectIntoMain: shouldInjectGeneratedCssIntoMain, outputFile })
     }
     if (shouldPreserveStyleOutputExtension && outputFile.endsWith('.css')) {

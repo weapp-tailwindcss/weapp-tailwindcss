@@ -1,7 +1,9 @@
 export const diagnosticSymbol = 'weapp-tailwindcss.benchmark.allocation-observer.v1'
 export const allocationProject = 'demo-uni-app-vite-tailwindcss-v4__mp-weixin'
 export const mpxProject = 'demo-mpx-tailwindcss-v4__mp-weixin'
+export const weappViteInputProject = 'demo-weapp-vite-tailwindcss-v4__mp-weixin'
 export const allocationProjects = Object.freeze([allocationProject, 'demo-taro-vite-react-tailwindcss-v4__mp-weixin', mpxProject])
+export const inputProjects = Object.freeze([...allocationProjects, weappViteInputProject])
 export const mutationMarkerRule = '固定 twbenchdiagnosticround 加 1..3；两侧相同，不含时钟或进程信息；初始源码碰撞即失败'
 
 /**
@@ -47,7 +49,10 @@ export function validateDiagnosticMode(mode) {
   }
 }
 
-export function validateAllocationRequest({ enabled, mode, guardMode, baselineRef, selectedProjects, buildRuns, hmrRuns }) {
+export function validateAllocationRequest({ enabled, mode, guardMode, baselineRef, currentRef = '', selectedProjects, buildRuns, hmrRuns }) {
+  if (currentRef && (mode !== 'inputs' || selectedProjects[0]?.key !== weappViteInputProject || selectedProjects.length !== 1)) {
+    throw new Error('current_ref 仅允许用于 weapp-vite input-only 诊断')
+  }
   if (!enabled) {
     return
   }
@@ -55,7 +60,11 @@ export function validateAllocationRequest({ enabled, mode, guardMode, baselineRe
   if (guardMode || !/^[a-f\d]{40}$/i.test(baselineRef)) {
     throw new Error('分配诊断必须使用完整 Git 基线 SHA，且不能与正式 --guard 一起运行')
   }
-  if (selectedProjects.length !== 1 || !allocationProjects.includes(selectedProjects[0].key) || buildRuns !== 3 || hmrRuns !== 3) {
-    throw new Error('分配诊断仅接受登记的 Uni、Taro Vite 或 Mpx 项目和固定 build 3 / HMR 3 工作负载')
+  const allowedProjects = mode === 'inputs' ? inputProjects : allocationProjects
+  if (selectedProjects.length !== 1 || !allowedProjects.includes(selectedProjects[0].key) || buildRuns !== 3 || hmrRuns !== 3) {
+    throw new Error('诊断仅接受登记的单个项目和固定 build 3 / HMR 3 工作负载')
+  }
+  if (mode === 'inputs' && selectedProjects[0]?.key === weappViteInputProject && (!/^[a-f\d]{40}$/i.test(currentRef) || currentRef.toLowerCase() === baselineRef.toLowerCase())) {
+    throw new Error('weapp-vite input-only 诊断必须提供不同于 baseline_ref 的完整 current_ref')
   }
 }

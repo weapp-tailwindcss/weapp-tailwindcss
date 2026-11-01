@@ -4,7 +4,7 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { persistCompilationEvidence } from './capture.mjs'
-import { diagnosticSymbol, limits, mpxProject, validateDiagnosticMode } from './constants.mjs'
+import { diagnosticSymbol, limits, mpxProject, validateDiagnosticMode, weappViteInputProject } from './constants.mjs'
 import { createEvidenceWriter, sha256 } from './evidence.mjs'
 import { runWithCleanup } from './failures.mjs'
 import { createOperationRecorder } from './operations.mjs'
@@ -12,8 +12,8 @@ import { createUniInputObserver, uniInputProject } from './uni-observer.mjs'
 import { createViteTailObserver, viteTailProject } from './vite-tail-observer.mjs'
 
 async function start() {
-  const serialized = process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
-  const expectedEntry = process.env.WEAPP_TW_BENCH_GC_EXPECTED_ENTRY
+  const serialized = process.env.WEAPP_TW_BENCH_INPUT_SESSION ?? process.env.WEAPP_TW_BENCH_ALLOCATION_SESSION
+  const expectedEntry = process.env.WEAPP_TW_BENCH_INPUT_EXPECTED_ENTRY ?? process.env.WEAPP_TW_BENCH_GC_EXPECTED_ENTRY
   if (!serialized || !expectedEntry || !process.argv[1]) {
     return
   }
@@ -39,6 +39,7 @@ async function start() {
   let webpackCreatedCount = 0
   let webpackCompletedCount = 0
   let viteCompletedCount = 0
+  let weappViteCompletedCount = 0
   const webpackPhases = new WeakMap()
   const capturedPhases = new Set()
   let complete = false
@@ -54,6 +55,7 @@ async function start() {
   writer.write('process-start.json', {
     identity,
     pid: process.pid,
+    ppid: process.ppid,
     nodeVersion: process.version,
     executable: fs.realpathSync(process.execPath),
     actualEntry: fs.realpathSync(process.argv[1]),
@@ -84,6 +86,7 @@ async function start() {
       storeCount: storeId,
       frameReceipts,
       ...(viteTail ? { viteTail: viteTail.summary() } : {}),
+      ...(identity.project === weappViteInputProject ? { weappViteCompletedCount } : {}),
       elapsedMs: performance.now() - startedAt,
       ...writer.accounting(),
     }))
@@ -179,6 +182,18 @@ async function start() {
       queue = queue.then(() => capture(collections, identity.kind === 'build', phase, undefined, id))
       return queue
     },
+    ...(identity.project === weappViteInputProject && identity.mode === 'inputs'
+      ? {
+          weappVite: {
+            completed(details) {
+              weappViteCompletedCount += 1
+              operations.emit('weapp-vite.completed', details)
+              complete = true
+              writeStatus()
+            },
+          },
+        }
+      : {}),
   }
 
   // 仅诊断控制器在结束 watch 前请求 stopSampling，不改变业务信号处理或生产关闭顺序。
@@ -198,7 +213,18 @@ async function start() {
       return
     }
     lastCommand = command.sequence
-    queue = queue.then(() => capture(undefined, true)).then(() => {
+    queue = queue.then(async () => {
+      if (identity.project === weappViteInputProject && identity.mode === 'inputs') {
+        if (!operations.summary().totals.some(item => item.name === 'engine.build.success')) {
+          throw new Error('weapp-vite 输入诊断停止前缺少真实 engine.build 完成事件')
+        }
+        complete = true
+        writeStatus()
+        fs.writeFileSync(path.join(identity.sessionDirectory, 'reply.json'), JSON.stringify({ sequence: command.sequence, complete }))
+        clearInterval(timer)
+        return
+      }
+      await capture(undefined, true)
       fs.writeFileSync(path.join(identity.sessionDirectory, 'reply.json'), JSON.stringify({ sequence: command.sequence, complete }))
       clearInterval(timer)
     }).catch((error) => {

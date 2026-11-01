@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createServer } from 'vite'
 import { expect, it } from 'vitest'
-import { openBrowser } from './browser.mjs'
+import { openBrowser as openMatrixBrowser } from './browser.mjs'
+
+function openBrowser(url, session, artifactDir) {
+  // 原用例总预算为 30 秒；启动截止后还需写入状态、截图并关闭本轮浏览器。
+  return openMatrixBrowser(url, session, artifactDir, { startupTimeout: 15_000 })
+}
 
 it('等待已有 DOM 的 HMR 应用完成后才允许开始下一轮', async () => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-hmr-idle-')))

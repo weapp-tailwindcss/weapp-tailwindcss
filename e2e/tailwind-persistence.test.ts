@@ -1,9 +1,10 @@
 import type { CapabilityIdentity, CapabilityReport, CaseContract } from './tailwind-capabilities/types'
 import { Buffer } from 'node:buffer'
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { persistReport } from './tailwind-capabilities/context'
 import { capabilityCoverageEvidence, createTailwindCoverageCells, writeCapabilityCoverage } from './tailwind-capabilities/coverage'
 import { jsonArray, jsonChunks, writeJsonFile } from './tailwind-capabilities/json'
@@ -11,6 +12,7 @@ import { receipt, validateCapabilityReport } from './tailwind-capabilities/repor
 
 const directories: string[] = []
 afterEach(async () => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
 })
@@ -22,7 +24,7 @@ async function fixture(count = 1) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'tailwind-persistence-'))
   directories.push(root)
   const contracts: CaseContract[] = Array.from({ length: count }, (_, index) => ({ id: `case-${index}`, candidate: 'flex', features: ['display'], fixture: 'independent-view', expectation: { support: 'supported', stage: 'generation' }, requiredAssertions: ['display'], expectedValues: { display: 'flex' } }))
-  const observedAt = new Date().toISOString()
+  const observedAt = filesystemObservedAt(root)
   const file = path.join(root, 'shared.css')
   await writeFile(file, '.flex { display: flex }')
   const artifact = await receipt(file, root, 'run', contracts.map(item => item.id), 'css')
@@ -69,6 +71,21 @@ describe('有界 JSON 持久化', () => {
 })
 
 describe('大规模覆盖证据索引', () => {
+  it.each(['coverage', 'report'] as const)('Date 超前时 %s 持久化接受本轮产物，仍拒绝旧证据', async (kind) => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.now() + 60_000)
+    const { root, report, contracts, options } = await fixture()
+    const persist = () => kind === 'coverage'
+      ? writeCapabilityCoverage(path.join(root, 'coverage.json'), report, contracts, options)
+      : persistReport({ root, directory: root, runId: report.runId }, report, contracts)
+    await expect(persist()).resolves.toBeUndefined()
+    const coverage = JSON.parse(await readFile(path.join(root, 'coverage.json'), 'utf8'))
+    expect(coverage.evidence).toMatchObject([{ status: 'passed' }])
+    const old = new Date(Date.parse(report.observedAt) - 60_000)
+    await utimes(path.join(root, 'shared.css'), old, old)
+    await expect(persist()).rejects.toThrow('早于本轮')
+  })
+
   it('共享产物归属和结果查找的读取次数随案例数线性增长', async () => {
     const { root, report, contracts, options } = await fixture(2048)
     let idsRead = 0

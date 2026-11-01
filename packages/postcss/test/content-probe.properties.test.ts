@@ -1,10 +1,10 @@
 import type { FeatureSignal } from '@/content-probe'
 import type { IStyleHandlerOptions } from '@/types'
-import { EMPTY_SIGNAL, FULL_SIGNAL, probeFeatures } from '@/content-probe'
-import { createStylePipeline } from '@/pipeline'
+import fc from 'fast-check'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
-import fc from 'fast-check'
+import { FULL_SIGNAL, probeFeatures } from '@/content-probe'
+import { createStylePipeline } from '@/pipeline'
 
 // ---------------------------------------------------------------------------
 // 辅助：生成器与工具函数
@@ -85,7 +85,6 @@ function getNodeIds(options: IStyleHandlerOptions, signal?: FeatureSignal): stri
   return createStylePipeline(options, signal).nodes.map(n => n.id)
 }
 
-
 // ===========================================================================
 // Property 1: 探测完备性（无漏报）
 // ===========================================================================
@@ -101,7 +100,7 @@ describe('Feature: postcss-pipeline-pruning, Property 1: 探测完备性（无�
     fc.assert(
       fc.property(
         fc.constantFrom(...PRESET_ENV_KEYWORDS).chain(kw => arbCssWithKeyword(kw).map(css => ({ css, keyword: kw }))),
-        ({ css, keyword }) => {
+        ({ css }) => {
           const signal = probeFeatures(css)
           expect(signal.hasPresetEnvFeatures).toBe(true)
         },
@@ -313,10 +312,16 @@ describe('Feature: postcss-pipeline-pruning, Property 4: 流水线等价性', ()
 
           // 裁剪流水线（使用信号）
           const prunedPipeline = createStylePipeline({ ...options }, signal)
+          if (prunedPipeline.kind !== 'flat') {
+            throw new Error('Expected a flat pruning pipeline')
+          }
           const prunedProcessor = postcss(prunedPipeline.plugins)
 
           // 完整流水线（不传信号）
           const fullPipeline = createStylePipeline({ ...options })
+          if (fullPipeline.kind !== 'flat') {
+            throw new Error('Expected a flat full pipeline')
+          }
           const fullProcessor = postcss(fullPipeline.plugins)
 
           const [prunedResult, fullResult] = await Promise.all([

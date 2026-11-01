@@ -41,7 +41,7 @@ pnpm e2e:demo:matrix issue-uview-plus-cssentries:mp-alipay
 
 weapp-vite 的首轮产物写出早于监听初始化完成；首次修改前必须等到“小程序初次构建完成”和“开发服务已就绪”日志，不能仅凭探针产物存在发起修改。后续轮次仍核验本轮标识、类名和样式产物，不使用额外延时或重试修改掩盖丢失事件。
 
-weapp-vite 7.6.0 已包含运行时兼容检查、信号与会话关闭的上游修复，但宿主转换只使用 `transform-modules-commonjs`，遗留的动态 `import()` 无法在原 CommonJS 宿主执行。[局部补丁](../../../patches/weapp-vite@7.6.0.patch) 在同一 `renderChunk` 中配套使用官方 `transform-dynamic-import` 8.0.1，保留 Promise 拒绝、动态表达式单次求值、拆包和 source map；根与独立模板分别登记该依赖及补丁。[真实产物回归](./weapp-vite-engine-compat.test.mjs) 执行拆分 chunk，不能通过自定义动态加载器掩盖转换遗漏。上游发布等价修复后，须先复验本目录三项 weapp-vite 回归及真实 HMR，再删除此补丁。
+weapp-vite 7.7.0 已包含运行时兼容检查、信号与会话关闭，以及宿主 `transform-dynamic-import` 的上游修复；宿主仍在同一 `renderChunk` 中使用官方 CommonJS 转换，保留 Promise 拒绝、动态表达式单次求值、拆包和 source map。[真实产物回归](./weapp-vite-engine-compat.test.mjs) 执行拆分 chunk，不能通过自定义动态加载器掩盖转换遗漏。升级 weapp-vite 后，须先复验本目录三项 weapp-vite 回归及真实 HMR。
 
 Taro React demo 与 Taro/Mpx 独立模板的 legacy ESLint 配置使用各消费项目显式声明的插件及 TS parser，避免 pnpm 隔离安装后从错误的依赖图解析。行为回归见 [framework-eslint.test.mjs](./framework-eslint.test.mjs)；独立模板在自己的冻结安装后执行同一合同，覆盖允许项、错误项、TS/JS 与 `.mpx` 解析边界。Mpx demo 的本地配置仍未启用这些规则，不能借用模板结果宣称其 lint 通过。
 

@@ -204,6 +204,7 @@ export async function generateCssForWebpackPipeline(
       isMainChunk: false,
     },
     cssStage: 'raw',
+    deferWebRpxConversion: loaderContext.loaders?.some(loader => loader.path.includes('weapp-tw-web-rpx-finalize-loader')),
     styleHandler: compilerOptions.styleHandler,
     incrementalCache: false,
     debug: process.env['WEAPP_TW_LOADER_DEBUG']

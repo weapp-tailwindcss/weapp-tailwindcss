@@ -128,8 +128,8 @@ describe('Style 回滚的真实产物清理边界', () => {
     vi.spyOn(shared, 'waitForCompileSettled').mockImplementation(async (...args) => {
       const elapsed = await settle(...args)
       if (++settled === 2) {
-        rewrittenAt = Date.now()
         await writeFile(secondary, original)
+        rewrittenAt = Date.now()
       }
       return elapsed
     })

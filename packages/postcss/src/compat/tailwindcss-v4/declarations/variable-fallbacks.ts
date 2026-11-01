@@ -67,7 +67,8 @@ function normalizeTailwindcssV4GradientStopsFallback(value: string) {
       }
 
       const firstCommaIndex = node.nodes.findIndex(child => child.type === 'div' && child.value === ',')
-      if (firstCommaIndex < 0) {
+      const firstComma = node.nodes[firstCommaIndex]
+      if (firstComma?.type !== 'div' || firstComma.value !== ',') {
         continue
       }
 
@@ -79,15 +80,13 @@ function normalizeTailwindcssV4GradientStopsFallback(value: string) {
 
       const viaFallbackNodes = fallbackNodes.slice(0, splitIndex)
       const stopNodes = fallbackNodes.slice(splitIndex)
-      const nextVarNode = {
+      const nextVarNode: valueParser.FunctionNode = {
         ...node,
         nodes: [
-          { type: 'word', value: '--tw-gradient-via-stops' },
-          { type: 'div', value: ',', before: '', after: ' ' },
+          firstArg,
+          { ...firstComma, before: '', after: ' ' },
           ...viaFallbackNodes,
         ],
-        sourceEndIndex: undefined,
-        sourceIndex: undefined,
       }
       nodes.splice(index, 1, nextVarNode, ...stopNodes)
       changed = true
@@ -124,7 +123,7 @@ function normalizeTailwindcssV4GradientPositionFallback(value: string) {
     const commaIndex = args.findIndex(child => child.type === 'div' && child.value === ',')
     const comma = commaIndex === -1 ? undefined : args[commaIndex]
     if (comma) {
-      const hasFallback = args.slice(commaIndex + 1).some(child => child.type !== 'space')
+      const hasFallback = commaIndex + 1 < args.length
       if (!hasFallback && node.after !== ' ') {
         node.after = ' '
         changed = true
@@ -132,11 +131,16 @@ function normalizeTailwindcssV4GradientPositionFallback(value: string) {
       return
     }
 
+    // 新增分隔符只有零宽来源；未闭合字符串可能让解析器的结束位置超出本阶段输入。
+    const end = Math.min(node.sourceEndIndex, value.length)
+    const anchor = end - (node.unclosed ? 0 : 1) - node.after.length
     node.nodes.push({
       type: 'div',
       value: ',',
       before: '',
       after: '',
+      sourceIndex: anchor,
+      sourceEndIndex: anchor,
     })
     node.after = ' '
     changed = true

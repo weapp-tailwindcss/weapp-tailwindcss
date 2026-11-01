@@ -186,11 +186,12 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     launch.mockImplementation(async () => wechatRequest(address.port, { kind: 'auto', project: options.projectPath, port: 45678 }))
     const run = vi.fn()
     const error = await withTemplateIdeSession(options, run).catch(error => error)
-    expect(error.message).toContain('auto 失败（HTTP 500）')
+    expect(error.message).toContain(`微信 IDE auto 失败（HTTP 500，127.0.0.1:${address.port}）`)
+    expect(error.message).toContain('业务码=APPID_ERROR')
     expect(requests).toEqual(['/v2/auto'])
     expect(observedClose).not.toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
-    expect(await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')).toContain('auto 失败（HTTP 500）')
+    expect(await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')).toBe(formatWorkflowError(error))
   })
 
   it('启动层已聚合认证与收尾失败时保留完整错误，不再发送清理请求', async () => {

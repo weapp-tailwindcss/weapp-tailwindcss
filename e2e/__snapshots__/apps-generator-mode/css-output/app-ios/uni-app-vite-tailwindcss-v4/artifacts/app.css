@@ -2712,7 +2712,6 @@ wx-button {
   margin-top: var(--spacing);
 }
  /*! tokens: mt-2 <= src/pages/index/index.vue */
- /*! tokens: mt-2 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .mt-2 {
   margin-top: calc(var(--spacing) * 2);
 }
@@ -2721,12 +2720,10 @@ wx-button {
   margin-top: calc(var(--spacing) * 3);
 }
  /*! tokens: mt-4 <= src/pages/index/index.vue */
- /*! tokens: mt-4 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .mt-4 {
   margin-top: calc(var(--spacing) * 4);
 }
  /*! tokens: mt-6 <= src/pages/index/index.vue */
- /*! tokens: mt-6 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .mt-6 {
   margin-top: calc(var(--spacing) * 6);
 }
@@ -2791,12 +2788,10 @@ wx-button {
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='black' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
  /*! tokens: block <= src/pages/index/index.vue */
- /*! tokens: block <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .block {
   display: block;
 }
  /*! tokens: flex <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*! tokens: flex <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .flex {
   display: flex;
 }
@@ -2809,7 +2804,6 @@ wx-button {
   aspect-ratio: calc(4 * 3 + 1) / 3;
 }
  /*! tokens: h-12 <= src/pages/index/index.vue */
- /*! tokens: h-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .h-12 {
   height: calc(var(--spacing) * 12);
 }
@@ -2826,7 +2820,6 @@ wx-button {
   height: 45px;
 }
  /*! tokens: w-12 <= src/pages/index/index.vue */
- /*! tokens: w-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .w-12 {
   width: calc(var(--spacing) * 12);
 }
@@ -2843,7 +2836,6 @@ wx-button {
   width: 323px;
 }
  /*! tokens: flex-col <= src/pages/index/index.vue */
- /*! tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .flex-col {
   flex-direction: column;
 }
@@ -2856,7 +2848,6 @@ wx-button {
   flex-direction: row-reverse;
 }
  /*! tokens: items-center <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*! tokens: items-center <= src/components/HelloWorld.vue, src/main.css, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .items-center {
   align-items: center;
 }
@@ -2865,12 +2856,10 @@ wx-button {
   justify-content: space-between;
 }
  /*! tokens: gap-2 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*! tokens: gap-2 <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
 .gap-2 {
   gap: calc(var(--spacing) * 2);
 }
  /*! tokens: gap-3 <= src/pages/index/index.vue */
- /*! tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .gap-3 {
   gap: calc(var(--spacing) * 3);
 }
@@ -2942,7 +2931,6 @@ wx-button {
   border-radius: 0.25rem;
 }
  /*! tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*! tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
 .rounded-_b20rpx_B {
   border-radius: 0.625rem;
 }
@@ -2955,12 +2943,10 @@ wx-button {
   border-radius: 9999px;
 }
  /*! tokens: rounded-xl <= src/pages/index/index.vue */
- /*! tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .rounded-xl {
   border-radius: 0.5rem;
 }
  /*! tokens: border <= src/pages/index/index.vue */
- /*! tokens: border <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
@@ -2975,7 +2961,6 @@ wx-button {
   border-color: rgb(164, 244, 207);
 }
  /*! tokens: border-slate-200 <= src/pages/index/index.vue */
- /*! tokens: border-slate-200 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .border-slate-200 {
   border-color: rgb(226, 232, 240);
 }
@@ -3016,7 +3001,6 @@ wx-button {
   background-color: rgb(236, 253, 245);
 }
  /*! tokens: bg-emerald-500 <= src/pages/index/index.vue */
- /*! tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .bg-emerald-500 {
   background-color: rgb(0, 185, 129);
 }
@@ -3049,7 +3033,6 @@ wx-button {
   background-color: rgb(15, 23, 43);
 }
  /*! tokens: bg-white <= src/pages/index/index.vue */
- /*! tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .bg-white {
   background-color: #fff;
 }
@@ -3115,7 +3098,6 @@ wx-button {
   padding-inline: calc(var(--spacing) * 3);
 }
  /*! tokens: px-4 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*! tokens: px-4 <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .px-4 {
   padding-inline: calc(var(--spacing) * 4);
 }
@@ -3132,7 +3114,6 @@ wx-button {
   padding-block: var(--spacing);
 }
  /*! tokens: py-2 <= src/pages/index/index.vue */
- /*! tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .py-2 {
   padding-block: calc(var(--spacing) * 2);
 }
@@ -3149,24 +3130,20 @@ wx-button {
   padding-top: calc(var(--spacing) * 2);
 }
  /*! tokens: text-center <= src/pages/index/index.vue */
- /*! tokens: text-center <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .text-center {
   text-align: center;
 }
  /*! tokens: text-base <= src/pages/index/index.vue */
- /*! tokens: text-base <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-base {
   font-size: var(--text-base);
   line-height: var(--tw-leading, var(--text-base--line-height));
 }
  /*! tokens: text-sm <= src/pages/index/index.vue */
- /*! tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-sm {
   font-size: var(--text-sm);
   line-height: var(--tw-leading, var(--text-sm--line-height));
 }
  /*! tokens: text-xs <= src/pages/index/index.vue */
- /*! tokens: text-xs <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-xs {
   font-size: var(--text-xs);
   line-height: var(--tw-leading, var(--text-xs--line-height));
@@ -3176,7 +3153,6 @@ wx-button {
   font-size: 0.75rem;
 }
  /*! tokens: text-[26rpx] <= src/pages/index/index.vue */
- /*! tokens: text-[26rpx] <= src/main.css, src/pages/index/index.vue */
 .text-_b26rpx_B {
   font-size: 0.8125rem;
 }
@@ -3202,13 +3178,11 @@ wx-button {
   line-height: calc(var(--spacing) * 5);
 }
  /*! tokens: font-bold <= src/pages/index/index.vue */
- /*! tokens: font-bold <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .font-bold {
   --tw-font-weight: var(--font-weight-bold);
   font-weight: var(--font-weight-bold);
 }
  /*! tokens: font-semibold <= src/pages/index/index.vue */
- /*! tokens: font-semibold <= src/main.css, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .font-semibold {
   --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
@@ -3234,7 +3208,6 @@ wx-button {
   color: #666;
 }
  /*! tokens: text-slate-500 <= src/pages/index/index.vue */
- /*! tokens: text-slate-500 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-500 {
   color: rgb(98, 116, 142);
 }
@@ -3243,12 +3216,10 @@ wx-button {
   color: rgb(49, 65, 88);
 }
  /*! tokens: text-slate-800 <= src/pages/index/index.vue */
- /*! tokens: text-slate-800 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-800 {
   color: rgb(29, 41, 61);
 }
  /*! tokens: text-slate-900 <= src/pages/index/index.vue */
- /*! tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-900 {
   color: rgb(15, 23, 43);
 }
@@ -3257,7 +3228,6 @@ wx-button {
   color: #3ab7bf;
 }
  /*! tokens: text-white <= src/pages/index/index.vue */
- /*! tokens: text-white <= src/main.css, src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .text-white {
   color: #fff;
 }
@@ -3266,7 +3236,6 @@ wx-button {
   text-decoration-line: underline;
 }
  /*! tokens: shadow-sm <= src/pages/index/index.vue */
- /*! tokens: shadow-sm <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .shadow-sm {
   --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -3297,7 +3266,6 @@ wx-button {
   content: var(--tw-content) !important;
 }
  /*! tokens: active:bg-emerald-600 <= src/pages/index/index.vue */
- /*! tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .active_cbg-emerald-600:active {
   background-color: rgb(0, 150, 105);
 }
@@ -3585,202 +3553,6 @@ body {
   --default-font-family: var(--font-inter), system-ui;
   --default-mono-font-family: var(--font-plex-mono), monospace;
 }
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
-progress {
-  vertical-align: baseline;
-}
-img,
-svg,
-video,
-canvas,
-audio,
-iframe,
-embed,
-object {
-  display: block;
-  vertical-align: middle;
-}
-img,
-video {
-  max-width: 100%;
-  height: auto;
-}
-button,
-input,
-select,
-optgroup,
-textarea,
-::file-selector-button {
-  font: inherit;
-  font-feature-settings: inherit;
-  font-variation-settings: inherit;
-  letter-spacing: inherit;
-  color: inherit;
-  border-radius: 0;
-  background-color: transparent;
-  opacity: 1;
-}
-textarea {
-  resize: vertical;
-}
-button,
-input:where([type='button'], [type='reset'], [type='submit']),
-::file-selector-button {
-  appearance: button;
-}
-button::after,
-wx-button::after {
-  display: none;
-  border: none;
-  content: '';
-}
-@property --tw-space-y-reverse {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-space-x-reverse {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-divide-x-reverse {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-border-style {
-  syntax: '*';
-  inherits: false;
-  initial-value: solid;
-}
-@property --tw-divide-y-reverse {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-gradient-position {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-gradient-from {
-  syntax: '<color>';
-  inherits: false;
-  initial-value: #0000;
-}
-@property --tw-gradient-via {
-  syntax: '<color>';
-  inherits: false;
-  initial-value: #0000;
-}
-@property --tw-gradient-to {
-  syntax: '<color>';
-  inherits: false;
-  initial-value: #0000;
-}
-@property --tw-gradient-stops {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-gradient-via-stops {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-gradient-from-position {
-  syntax: '<length-percentage>';
-  inherits: false;
-  initial-value: 0%;
-}
-@property --tw-gradient-via-position {
-  syntax: '<length-percentage>';
-  inherits: false;
-  initial-value: 50%;
-}
-@property --tw-gradient-to-position {
-  syntax: '<length-percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-@property --tw-leading {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-font-weight {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-@property --tw-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-@property --tw-inset-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-@property --tw-inset-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-inset-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-@property --tw-ring-color {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-ring-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-@property --tw-inset-ring-color {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-inset-ring-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-@property --tw-ring-inset {
-  syntax: '*';
-  inherits: false;
-}
-@property --tw-ring-offset-width {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-@property --tw-ring-offset-color {
-  syntax: '*';
-  inherits: false;
-  initial-value: #fff;
-}
-@property --tw-ring-offset-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-@property --tw-content {
-  syntax: '*';
-  initial-value: '';
-  inherits: false;
-}
-/* stylelint-disable custom-property-pattern */
-/* Core plugin extractor sources are intentionally not loaded here. */
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
  /*! tokens: before:content-['independent_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-independent/pages/index.vue */
 .before_ccontent-_b_aindependent_subpackage_uni-app-vite-tailwindcss-v4_a_B::before {

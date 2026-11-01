@@ -5,7 +5,7 @@ import { corePackageRoot } from './paths'
 
 const root = corePackageRoot
 
-const entryShims = {
+const entryShims: Record<string, { target: string, defaultExport?: boolean }> = {
   'css-macro.d.ts': { target: './css-macro/index.js', defaultExport: true },
   'framework.d.ts': { target: './framework/index.js' },
   'generator.d.ts': { target: './generator/index.js' },

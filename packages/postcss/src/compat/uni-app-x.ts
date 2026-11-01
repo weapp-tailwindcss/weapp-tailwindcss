@@ -207,7 +207,9 @@ export function applyUniAppXBaseCompatibility(
   if (defaults.size === 0) {
     return result
   }
-  return result.root.toResult(result.opts)
+  const nextResult = result.root.toResult(result.opts)
+  nextResult.messages.push(...result.messages)
+  return nextResult
 }
 
 export function stripUnsupportedPseudoForUniAppX(node: Pseudo, enabled: boolean) {

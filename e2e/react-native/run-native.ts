@@ -21,7 +21,7 @@ import { createAndroidEnvironment } from './android-environment'
 import { androidPairCoordinates, androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
 import { captureMetroEvidence } from './metro-evidence'
-import { createExpoNativeEnvironment } from './native-environment'
+import { createExpoNativeEnvironment, withNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
@@ -35,6 +35,7 @@ import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { createIosScreenshotDiagnostics } from './ios-screenshot'
 import { launchIosRuntime } from './ios-runtime'
+import { awaitIosApplicationEnvironment } from './ios-architecture'
 import { readRuntimePublication } from './installation-evidence'
 import { prepareMetroHttpObservation } from './http-observation'
 import type { HmrObservationSnapshot } from '../../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
@@ -359,22 +360,16 @@ async function collectNativeEnvironment(device: string): Promise<Partial<ReactNa
       abi: abi.stdout.trim(),
     }
   }
-  const [devices, modelIdentifier, abi] = await Promise.all([
+  const [devices, modelIdentifier] = await Promise.all([
     execa('xcrun', ['simctl', 'list', 'devices', 'available', '-j']),
     execa('xcrun', ['simctl', 'getenv', device, 'SIMULATOR_MODEL_IDENTIFIER'], { reject: false }),
-    execa('xcrun', ['simctl', 'spawn', device, '/usr/bin/uname', '-m']),
   ])
   const parsed = JSON.parse(devices.stdout) as { devices: Record<string, Array<{ name: string, udid: string }>> }
   const simulator = Object.values(parsed.devices).flat().find(item => item.udid === device)
   const model = modelIdentifier.stdout.trim()
   return {
     deviceName: `${simulator?.name ?? 'iOS Simulator'}${model ? ` (${model})` : ''}`,
-    abi: abi.stdout.trim(),
   }
-}
-
-function withNativeEnvironment(report: ReactNativeReport, environment: Partial<ReactNativeReport['environment']>) {
-  return { ...report, environment: { ...report.environment, ...environment } }
 }
 
 let restoreAfterCapture = async () => {}
@@ -448,13 +443,16 @@ async function main() {
     }
     run = startExpo(runArgs, env, logFile)
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
-    const baseline = await waitForReportOrExit('rn-hmr-baseline', run, activeMetro, {
+    const baselineRequest = waitForReportOrExit('rn-hmr-baseline', run, activeMetro, {
       cssHmrColor: '#10b981',
       recover: () => relaunchRuntime(device, runtimeHost),
       reportTimeout: 300_000,
       startupTimeout: 1_800_000,
       requireLaunchCompletion: true,
     })
+    const baseline = platform === 'ios'
+      ? await awaitIosApplicationEnvironment(baselineRequest, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), 'utf8'), device, 'com.weapptailwindcss.rncompat')
+      : await baselineRequest
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(baselineReport, null, 2)}\n`, 'utf8')
     semanticReporter.assertReceipts(baselineReport)

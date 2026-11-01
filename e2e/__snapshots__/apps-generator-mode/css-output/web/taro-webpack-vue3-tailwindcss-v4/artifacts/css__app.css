@@ -1402,15 +1402,15 @@ page {
   }
  /*! tokens: rounded-[20rpx] <= src/app.css, src/pages/index/index.vue */
   .rounded-\[20rpx\] {
-    border-radius: 0.625rem;
+    border-radius: 0.5rem;
   }
  /*! tokens: rounded-[24rpx] <= src/pages/index/index.vue */
   .rounded-\[24rpx\] {
-    border-radius: 0.75rem;
+    border-radius: 0.6rem;
   }
  /*! tokens: rounded-[28rpx] <= src/pages/index/index.vue */
   .rounded-\[28rpx\] {
-    border-radius: 0.875rem;
+    border-radius: 0.7rem;
   }
  /*! tokens: border <= src/pages/index/index.vue */
   .border {
@@ -1553,11 +1553,11 @@ page {
   }
  /*! tokens: px-[18rpx] <= src/app.css */
   .px-\[18rpx\] {
-    padding-inline: 0.5625rem;
+    padding-inline: 0.45rem;
   }
  /*! tokens: px-[29rpx] <= src/pages/index/index.vue */
   .px-\[29rpx\] {
-    padding-inline: 0.90625rem;
+    padding-inline: 0.725rem;
   }
  /*! tokens: px-[32px] <= src/pages/index/index.vue */
   .px-\[32px\] {
@@ -1581,7 +1581,7 @@ page {
   }
  /*! tokens: py-[10rpx] <= src/app.css */
   .py-\[10rpx\] {
-    padding-block: 0.3125rem;
+    padding-block: 0.25rem;
   }
  /*! tokens: py-[18px] <= src/pages/index/index.vue */
   .py-\[18px\] {
@@ -1589,19 +1589,19 @@ page {
   }
  /*! tokens: py-[24rpx] <= src/pages/index/index.vue */
   .py-\[24rpx\] {
-    padding-block: 0.75rem;
+    padding-block: 0.6rem;
   }
  /*! tokens: text-[26rpx] <= src/app.css, src/pages/index/index.vue */
   .text-\[26rpx\] {
-    font-size: 0.8125rem;
+    font-size: 0.65rem;
   }
  /*! tokens: text-[31rpx] <= src/pages/index/index.vue */
   .text-\[31rpx\] {
-    font-size: 0.96875rem;
+    font-size: 0.775rem;
   }
  /*! tokens: text-[100rpx] <= src/pages/index/index.vue */
   .text-\[100rpx\] {
-    font-size: 3.125rem;
+    font-size: 2.5rem;
   }
  /*! tokens: font-semibold <= src/app.css */
   .font-semibold {
@@ -10904,7 +10904,7 @@ abc {
     display: inline-flex;
     -ms-flex-align: center;
     align-items: center;
-    border-radius: 0.625rem;
+    border-radius: 0.5rem;
     gap: calc(var(--spacing) * 2);
     --tw-gradient-position: to right in oklab;
     background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
@@ -10917,20 +10917,32 @@ abc {
       var(--tw-gradient-from) var(--tw-gradient-from-position),
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     );
-    padding-block: 0.3125rem;
-    padding-inline: 0.5625rem;
+    padding-block: 0.25rem;
+    padding-inline: 0.45rem;
     --tw-font-weight: var(--font-weight-semibold);
     color: var(--color-white);
-    font-size: 0.8125rem;
+    font-size: 0.65rem;
     font-weight: var(--font-weight-semibold);
   }
 }
 .weapp-tw-user-ui-card {
-  gap: 0.25rem;
+  -webkit-align-items: center;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
+  animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
+  color: var(--weapp-tw-user-ui-color, #175e75);
+  gap: 0.2rem;
 }
 .weapp-tw-user-ui-loading {
-  height: 1rem;
-  width: 1rem;
+  -webkit-animation: weappTwUserUiRotation 1s linear infinite;
+  animation: weappTwUserUiRotation 1s linear infinite;
+  display: inline-block;
+  height: 0.8rem;
+  width: 0.8rem;
 }
 @-webkit-keyframes weappTwUserUiRotation {
   to {
@@ -11265,23 +11277,4 @@ page {
       --tw-content: '';
     }
   }
-}
-.weapp-tw-user-ui-card {
-  -webkit-align-items: center;
-  display: -webkit-inline-flex;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -ms-flex-align: center;
-  align-items: center;
-  -webkit-animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
-  animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
-  color: var(--weapp-tw-user-ui-color, #175e75);
-  gap: 0.2rem;
-}
-.weapp-tw-user-ui-loading {
-  -webkit-animation: weappTwUserUiRotation 1s linear infinite;
-  animation: weappTwUserUiRotation 1s linear infinite;
-  display: inline-block;
-  height: 0.8rem;
-  width: 0.8rem;
 }
