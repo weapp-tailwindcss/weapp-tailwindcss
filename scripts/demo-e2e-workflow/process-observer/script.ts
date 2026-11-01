@@ -16,11 +16,11 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   $observerInputLine = $null
   $observerInputStage = $null
   $observerInputComplete = $false
-  $observerInputTrace = -not $observerJsonLoaded
+  $observerInputTrace = $null -eq $observerJsonSerializer
   try {
     ${windowsObserverInputScript}
     ${windowsObserverInputProgress('request-ack-serialize-start')}
-    $observerRequestAck = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress
+    $observerRequestAck = $observerJsonSerializer.Serialize(@{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind })
     ${windowsObserverInputProgress('request-ack-serialized')}
     ${windowsObserverInputProgress('request-ack-write-start')}
     [Console]::Out.WriteLine($observerRequestAck)
@@ -50,7 +50,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     } else {
       throw "无法识别的身份采集操作：$($request.kind)"
     }
-    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'query-completed'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    [Console]::Out.WriteLine($observerJsonSerializer.Serialize(@{ event = 'query-completed'; id = [int]$request.id; kind = [string]$request.kind }))
     [Console]::Out.Flush()
     $response = @{ id = [int]$request.id; rows = $rows }
   } catch {
@@ -59,9 +59,9 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     }
     $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
-  $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress
+  $json = $observerJsonSerializer.Serialize($response)
   if ($null -eq $response.error) {
-    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'response-ready'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    [Console]::Out.WriteLine($observerJsonSerializer.Serialize(@{ event = 'response-ready'; id = [int]$request.id; kind = [string]$request.kind }))
     [Console]::Out.Flush()
   }
   [Console]::Out.WriteLine($json)

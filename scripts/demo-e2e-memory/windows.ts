@@ -32,11 +32,13 @@ export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = proc
   return [
     '$ErrorActionPreference = \'Stop\'',
     '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)',
+    'Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop',
+    '$observerJsonSerializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer',
     `$root = [int]${JSON.stringify(rootPid)}`,
     `$repositoryRoot = '${cwd.replaceAll('\'', '\'\'')}'`,
     query,
     ...statements,
-    `[Console]::Out.WriteLine((${result} | ConvertTo-Json -Compress -Depth 4))`,
+    `[Console]::Out.WriteLine($observerJsonSerializer.Serialize((${result})))`,
   ].join('; ')
 }
 

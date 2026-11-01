@@ -51,8 +51,10 @@ export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = proc
   return [
     '$ErrorActionPreference = "Stop"',
     '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)',
+    'Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop',
+    '$observerJsonSerializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer',
     windowsWatchMemoryFunction,
-    `Get-WatchMemory -root ${JSON.stringify(rootPid)} -repositoryRoot '${cwd.replaceAll('\'', '\'\'')}' | ConvertTo-Json -Compress -Depth 4`,
+    `$observerJsonSerializer.Serialize((Get-WatchMemory -root ${JSON.stringify(rootPid)} -repositoryRoot '${cwd.replaceAll('\'', '\'\'')}'))`,
   ].join('\n')
 }
 
@@ -68,7 +70,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   $observerInputLine = $null
   $observerInputStage = $null
   $observerInputComplete = $false
-  $observerInputTrace = -not $observerJsonLoaded
+  $observerInputTrace = $null -eq $observerJsonSerializer
   try {
   ${windowsObserverInputScript}
   if ($request.kind -ne 'memory') { throw 'Watch memory source accepts memory requests only' }
@@ -90,7 +92,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   }
   $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
-  $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress
+  $json = $observerJsonSerializer.Serialize($response)
   if ($null -eq $response.error) {
   [Console]::Out.WriteLine('{"event":"response-ready","kind":"memory","id":' + [string][int]$request.id + '}')
   [Console]::Out.Flush()

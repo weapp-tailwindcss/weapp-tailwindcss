@@ -125,7 +125,7 @@ it.each([{ args: windowsObserverArgs }, { args: windowsWatchMemoryArgs }])('ä¸¤ä
   expect(reset).toBeGreaterThan(read)
   expect(marker).toBeGreaterThan(reset)
   expect(script.slice(reset, marker)).toContain('$observerInputComplete = $false')
-  expect(script.slice(reset, marker)).toContain('$observerInputTrace = -not $observerJsonLoaded')
+  expect(script.slice(reset, marker)).toContain('$observerInputTrace = $null -eq $observerJsonSerializer')
   expect(script).toContain('if (-not $observerInputComplete)')
   expect(script.indexOf('$observerInputComplete = $true')).toBeGreaterThan(script.indexOf('$observerInputStage = \'request-ack-flushed\''))
   for (const stage of observerInputStages) {
