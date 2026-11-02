@@ -237,11 +237,6 @@ function getStyleSources(source: string, sourceFile: string, isCss: boolean) {
     : [source]
 }
 
-function extractStyleDirectiveSources(source: string, sourceFile: string, isCss: boolean) {
-  return getStyleSources(source, sourceFile, isCss)
-    .filter(styleSource => hasTailwindSourceDirectives(styleSource, { importFallback: true }))
-}
-
 function isLocalStyleImportRequest(request: string | undefined) {
   return typeof request === 'string'
     && request.length > 0
@@ -266,10 +261,9 @@ function resolveLocalStyleImportFile(request: string, base: string) {
   return undefined
 }
 
-function collectLocalStyleImportFiles(source: string, sourceFile: string, isCss: boolean) {
+function collectLocalStyleImportFiles(sources: string[], sourceFile: string) {
   const files: string[] = []
   const base = path.dirname(sourceFile)
-  const sources = getStyleSources(source, sourceFile, isCss)
   for (const styleSource of sources) {
     try {
       const root = postcss.parse(styleSource)
@@ -296,13 +290,14 @@ function extractStyleDirectiveSourcesDeep(
   seen: Set<string>,
   isCss = false,
 ): Array<{ source: string, file: string }> {
-  const ownSources = extractStyleDirectiveSources(source, sourceFile, isCss)
+  const styleSources = getStyleSources(source, sourceFile, isCss)
+  const ownSources = styleSources.filter(styleSource => hasTailwindSourceDirectives(styleSource, { importFallback: true }))
   if (ownSources.some(styleSource => hasTailwindRootDirectives(styleSource, { importFallback: true }))) {
     return ownSources.map(styleSource => ({ source: styleSource, file: sourceFile }))
   }
 
   const sources: Array<{ source: string, file: string }> = []
-  for (const importedFile of collectLocalStyleImportFiles(source, sourceFile, isCss)) {
+  for (const importedFile of collectLocalStyleImportFiles(styleSources, sourceFile)) {
     const normalizedImportedFile = path.resolve(importedFile)
     if (seen.has(normalizedImportedFile)) {
       continue

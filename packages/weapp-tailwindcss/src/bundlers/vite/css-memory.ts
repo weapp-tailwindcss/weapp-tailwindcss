@@ -1,4 +1,5 @@
 import type { RememberedCssSource } from './generate-bundle'
+import type { SfcStyleBlock } from '@/utils/sfc'
 import path from 'node:path'
 import { extractSfcStyleBlocks } from '@/utils/sfc'
 import { isSourceStyleRequest, stripRequestQuery } from '../../generation/style-requests'
@@ -56,12 +57,7 @@ export function normalizeCssSourceIdentity(sourceFile: string) {
   return normalizeOutputPathKey(stripRequestQuery(cleanSourceFile))
 }
 
-function hasSfcStyleBlocks(source: string, file: string) {
-  return extractSfcStyleBlocks(source, file).length > 0
-}
-
-function extractSfcStyleSource(source: string, index: number | undefined, file: string) {
-  const styles = extractSfcStyleBlocks(source, file)
+function extractSfcStyleSource(styles: SfcStyleBlock[], index: number | undefined) {
   return index === undefined
     ? styles.length > 0 ? styles.map(style => style.source).join('\n') : undefined
     : styles[index]?.source
@@ -106,8 +102,10 @@ export function createViteCssMemory(options: {
       return
     }
     // 主模块 transform 提供本轮源码；候选扫描范围之外的组件也须撤销已删除的样式。
-    refreshRememberedSfcStyleSources(file, options.normalizeSfcSource?.(code, file) ?? code)
-    if (!hasSfcStyleBlocks(code, file)) {
+    const styles = extractSfcStyleBlocks(code, file)
+    const normalizedSource = options.normalizeSfcSource?.(code, file) ?? code
+    refreshRememberedSfcStyleSources(file, normalizedSource, normalizedSource === code ? styles : undefined)
+    if (styles.length === 0) {
       knownSfcSources.delete(normalizeKnownSfcSourceKey(file))
       return
     }
@@ -214,13 +212,17 @@ export function createViteCssMemory(options: {
     }
   }
 
-  const refreshRememberedSfcStyleSources = (file: string, source: string) => {
+  const refreshRememberedSfcStyleSources = (file: string, source: string, parsedStyles?: SfcStyleBlock[]) => {
     const matchedRememberedSources = [...rememberedCssSources.values()].filter(remembered =>
       normalizeOutputPathKey(stripRequestQuery(cleanUrl(remembered.sourceFile))) === normalizeOutputPathKey(file),
     )
+    if (matchedRememberedSources.length === 0) {
+      return
+    }
+    const styles = parsedStyles ?? extractSfcStyleBlocks(source, file)
     for (const remembered of matchedRememberedSources) {
       const { query } = parseVueRequest(remembered.sourceFile)
-      const styleSource = extractSfcStyleSource(source, query.type === 'style' ? query.index : undefined, file)
+      const styleSource = extractSfcStyleSource(styles, query.type === 'style' ? query.index : undefined)
       if (styleSource !== undefined) {
         refreshRememberedCssSourceBySourceFile(remembered.sourceFile, styleSource)
       }

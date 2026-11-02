@@ -69,6 +69,10 @@ export function extractSfcStyleBlocks(source: string, filename: string): SfcStyl
   if (/\.svelte$/i.test(filename.replace(/[?#].*$/, ''))) {
     return extractSvelteStyleBlocks(source)
   }
+  // 仅作确定的负判定；可能含样式时仍由顶层结构解析确认归属。
+  if (!source.includes('<style')) {
+    return []
+  }
   const parsed = parseVueLikeSfc(source)
   if (!parsed.complete) {
     return []
