@@ -8,6 +8,7 @@ baseline: 80efee1e22769557c4c73308c546f446c929320a
 regressions:
   - packages/weapp-tailwindcss/test/source-line-limit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/sfc-style-boundary.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/sfc-style-work.unit.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
   - e2e/hbuilderx-source-mutations.test.ts
   - e2e/hbuilderx-source-only.test.ts
@@ -41,14 +42,14 @@ regressions:
 以下命令在独立安装依赖的本任务 worktree 执行，Node 24.22.1、pnpm 12.15.0：
 
 ```sh
-pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts test/source-line-limit.test.ts --update=none
+pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/sfc-style-work.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts test/source-line-limit.test.ts --update=none
 pnpm --filter weapp-tailwindcss build
 pnpm architecture:check
 pnpm agents:check
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 ```
 
-最新复验为 33 文件、400 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+最新复验为 34 文件、407 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
 
 验收器的 replace 与 append 现在组合成一次保存，避免丢失 append 或产生额外原生重载；Web 同文件追加也保持一次保存。四个辅助测试文件共 42 项通过：
 
@@ -68,7 +69,11 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-app-process-clean
 
 PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态槽声明。补充经过延迟插件入口的删除回归，在旧声明上报同一初始化错误；登记钩子后，30 项槽位/事务回归和 4 项框架组装回归通过。没有移除或放宽声明校验。
 
-完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 400 项。
+完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 407 项。
+
+`2ac24b4d13a950f723703a49b64109ab18ec65bf` 的 [Mpx benchmark 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401524) 记录构建插件中位耗时 909→991ms、构建峰值 RSS 1091.01→1179.13MB、稳态 RSS 1034.70→1102.87MB、HMR 峰值 RSS 1439.58→1554.29MB 和稳态 RSS 1427.78→1534.14MB；均超过原有 5% 门槛。[Taro Vite 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401537) 为 HMR 插件 p95 1711→1857ms，三次样本中两次回归。原始 job 日志与完整 benchmark/GC artifacts 已保存，不能据其他检查成功忽略这些失败；没有通过提高阈值或反复重跑放行。
+
+补充确定的解析工作量回归后，对无 `<style` 的 Vue-like 输入直接返回空样式；可能包含标签时继续使用顶层解析器，Svelte 在负判定前独立分派。同一次 CSS memory 刷新只解析一次，规范化前后字符串不同时分别解析；来源扫描的指令与 import 遍历共享同一解析结果。没有跨刷新全局缓存或长期持有 AST。七项新增回归同时断言解析次数、生成块索引变化、删除、外部 src 空槽和来源扫描结果。局部 kernel 的八索引刷新中位耗时由约 3.827ms 降至 0.537ms，实际七个 Mpx 源码合计约 0.113→0.031ms；这些局部数据不能证明整条 Mpx/Taro CI 性能门禁已通过。
 
 类型检查仍失败，仅保留已在基线复现的五项诊断：`generic-web-production-fast-path.ts:100` 的 TS2379；`weapp-tw-web-rpx-finalize-loader.ts:28` 的 TS2322、34/35 的 TS4111、40 的 TS2345。本次没有新增诊断，不能据此写成类型检查通过。
 
@@ -95,11 +100,19 @@ B 在 `8ef80b1` 后重打 R3 完整运行时闭包，旧 R2 receipt 保留。21 
 
 CI 行数修复后，以 `7f85958ecb399cc7f104155a0f505026a3713ed4` 的运行时代码重新构建并打包 R4；后续提交仅补充本记录。21 个 tarball、实际可达的 21 个包、1375 个文件和 36 条内部依赖边均核对一致，B 的独立 frozen install 通过。R4 实际 Vite CJS 入口 SHA256 为 `8fd3a38703e3aa0fdad0fc87f4246e8edb4cb8243996346fb7256cdd965fac8d`，B 锁哈希为 `b41105b24aa64289347cb3bdcd2123f0778c8d8680a4249056ce6ac2e3fb0b90`。再次核对 A/B 直接依赖锁，差异仍仅为 `weapp-tailwindcss`；上述 Tailwind、Vue、Vite 与 DCloud 版本保持一致。旧 R3 证据保留；R4 安装核对不计为设备验收通过。
 
+性能解析工作量优化后，以 `c4031d58c` 的运行时代码重建 R5。21 个 tarball、实际可达的 21 个包、1375 个文件及 36 条内部运行时依赖边均逐一核对，独立 frozen install 通过。实际 Vite CJS 入口 SHA256 为 `1b21c931d235a88b0ca88e3964c118721bab48e50e1bb24dab997fc75b7f86c3`，B 锁 SHA256 为 `a36590cb639a3fb5bad77191cc21306cc7466426bd83299b200427d796fd761a`。A/B 直接依赖锁差异仍仅为 `weapp-tailwindcss`；Tailwind、Vue、Vite 和 DCloud 版本保持一致。R4 现场保留，R5 安装审计不代表设备验收通过。
+
 原工程的 `manifest.config.ts` 虽注释声称回退原 manifest，实际会把未提供环境变量的 DCloud AppID 和 uniCloud spaceId 置空。A/B 均通过原生成入口显式保留原提交的 `VITE_DCLOUD_APPID`、`VITE_UNICLOUD_SPACE_ID`，同时提供用户授权的 `VITE_WX_APPID`；后续受控启动继承同一环境，避免构建时再次清空。此为验收环境固定，不修改原工程厂商或业务代码。
 
 用户明确选择 Pixel 5 后，经 Android Studio 启动已安装的 `Pixel_5`，核对为 `emulator-5554`。本轮 `87910ff3-2d48-4e4e-8a90-8025b99334fe` 的 prepare 中微信、HBuilderX、iOS、Android、Harmony、Web 全通过；Chrome 原生入口超时后，另起本轮预检，以应用内入口完成真实 AX 读取、截图、输入、点击及完成回执，保留实际调用记录。随后 verify 的微信再次在 `App.getCurrentPage` 超时，门禁仍阻断。此前原生 UI 保存的基础库 3.17.6 错误为 `appLaunch with non-empty page stack`，不是业务样式结论。所有失败报告和截图均保留；没有复用失败报告继续设备调度。
 
 同时修正了预检自身的确定缺陷：仅 prepare 创建临时微信 fixture，成功运行并关闭后封存；verify/live 只读校验，来源被篡改时失败，不再重写六个文件后继续。四个定向回归文件共 96 项通过。修正后的新轮次 `a896c308-9139-4725-a6fd-eb01925bbb95` 中 prepare 和真实 computer use 均通过，verify 仍在 `App.getCurrentPage within 1979ms` 超时，收尾截图也超时。因此该修正不能被描述为 IDE 卡死的唯一根因。已阻断并结束本轮服务、关闭任务浏览器页，保留用户 IDE 与设备会话；后续须安全恢复 IDE 后重新预检。
+
+用户随后确认没有其他窗口并授权受控重启。通过当前会话原生应用控制正常退出所选 Stable IDE，核对原 PID 退出及新实例，关闭重启自动恢复的本任务旧探针窗口后重新 prepare。新轮次 `0232e901-3de6-4a6c-a710-9e5538505e54` 的登录查询通过，但微信仍阻断，其余平台脚本探针通过；未进入 computer use 门禁或任何产品设备验收。实际 automator 1.4.0 在成功的 `Tool.getInfo` 握手后执行三十秒 `waitForAppReady`，最后一笔 `App.getCurrentPage` 的剩余时限为 1984ms；这不是整轮只等待两秒。截图另收到 IDE 的 `timeout waiting for automator response`，未发现可据此放宽门禁的确定预检实现错误。报告、原日志和重启后的项目列表截图保留，账号与用户配置未重置。
+
+随后只运行一次带 `DEBUG=automator:protocol` 的有界微信 worker 诊断，使用全新 UUID 和独立临时项目，不生成可领取报告。IDE 2.02.2608080、SDK 3.17.5 的握手原响应保存；四次 `App.getCurrentPage` 中，前两次返回 `getPageMetaByWebviewId(null)` 元数据错误，后两次取得有效 pageId/path，随后真实节点、点击、数据和截图均成功，worker 正常退出。此结果说明该次短暂未就绪由现有轮询收敛，不能反推旧超时的唯一根因，也不能替代新的全端预检。此前 UI 的 SDK 3.17.6 记录继续单列，不与本次握手混报。
+
+新的 `50703b2d-e5a8-4951-bdad-e03dfa6179cb` 各平台脚本探针通过，当前会话 Chrome 原生入口超时后立即记录阻断并结束服务。切换应用内浏览器后重新建立 `7541b033-1082-4f12-9b8e-989c88325b8d`，以真实 AX、输入、点击、PNG 和实际工具调用 ID 完成 computer use，verify 全部通过。但任务领取以 `pnpm exec` 启动，实际 PATH 比 prepare/verify 的脚本运行环境少了同一 pnpm 安装的 `node-gyp-bin`，完整身份比较正确阻断，设备测试尚未启动。本轮已结束并关闭任务标签页。任务启动器现固定这个实际工具目录，仍执行完整身份比较；只读身份核对通过，下一轮须随新代码重新 prepare，不复用已阻断报告。
 
 ## 适用边界
 
