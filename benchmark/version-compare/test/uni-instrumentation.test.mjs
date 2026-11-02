@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 import { diagnosticSymbol } from '../scripts/diagnostics/constants.mjs'
+import { invalidationTargets } from '../scripts/diagnostics/invalidation-instrumentation.mjs'
 import { generationTargets } from '../scripts/diagnostics/operation-instrumentation.mjs'
 import { prepareAllocationRoot } from '../scripts/diagnostics/prepare.mjs'
 import { instrumentUniInputSource, uniInputTargets } from '../scripts/diagnostics/uni-instrumentation.mjs'
@@ -20,7 +21,7 @@ it('全部真实 Uni 锚点及 cache callback 先验证，再写准备副本', a
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'uni-input-prepare-'))
   roots.push(temporary)
   const root = path.join(temporary, 'copy')
-  const files = [store, finalize, ...generationTargets.map(([, relative]) => relative), ...uniInputTargets.map(([, relative]) => relative)]
+  const files = [store, finalize, ...generationTargets.map(([, relative]) => relative), ...uniInputTargets.map(([, relative]) => relative), ...invalidationTargets.map(([, relative]) => relative)]
   for (const relative of files) {
     const file = path.join(root, relative)
     await fs.mkdir(path.dirname(file), { recursive: true })
@@ -33,8 +34,15 @@ it('全部真实 Uni 锚点及 cache callback 先验证，再写准备副本', a
   await expect(prepareAllocationRoot(root, sourceRoot, path.join(temporary, 'evidence'), 'demo-uni-app-vite-tailwindcss-v4__mp-weixin', 'inputs')).rejects.toThrow('回调锚点')
   expect(await fs.readFile(path.join(root, store), 'utf8')).toBe(originalStore)
   await fs.writeFile(file, original)
+  const invalidationFile = path.join(root, invalidationTargets.find(([kind]) => kind === 'root-invalidation')[1])
+  const invalidationSource = await fs.readFile(invalidationFile, 'utf8')
+  await fs.writeFile(invalidationFile, invalidationSource.replace('this.dependencyRoots.get(id)', 'unknownDependency(id)'))
+  await expect(prepareAllocationRoot(root, sourceRoot, path.join(temporary, 'evidence'), 'demo-uni-app-vite-tailwindcss-v4__mp-weixin', 'inputs')).rejects.toThrow('dependency match')
+  expect(await fs.readFile(path.join(root, store), 'utf8')).toBe(originalStore)
+  await fs.writeFile(invalidationFile, invalidationSource)
   const manifest = await prepareAllocationRoot(root, sourceRoot, path.join(temporary, 'evidence'), 'demo-uni-app-vite-tailwindcss-v4__mp-weixin', 'inputs')
   expect(manifest.filter(item => item.anchor.kind.startsWith('uni-'))).toHaveLength(8)
+  expect(manifest.filter(item => item.anchor.kind.startsWith('invalidation-'))).toHaveLength(4)
   expect(await fs.readFile(path.join(root, finalize), 'utf8')).toContain('uniInput.completed({ metrics, timingDetails })')
   await expect(prepareAllocationRoot(root, sourceRoot, path.join(temporary, 'again'), 'demo-uni-app-vite-tailwindcss-v4__mp-weixin', 'inputs')).rejects.toThrow('重复')
   const control = path.join(temporary, 'allocation-control')
