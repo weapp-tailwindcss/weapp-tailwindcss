@@ -1,24 +1,21 @@
-import type { WebHmrStep } from '../cases'
+import type { HmrSourceMutation, WebHmrStep } from '../cases'
 import fs from 'node:fs/promises'
 import { readUtf8 } from '../process'
+import { applyHmrSourceMutation } from '../source-mutations'
 
 function resolveAnchor(source: string, anchors: string[]) {
   return anchors.find(anchor => source.includes(anchor))
 }
 
-export async function rewriteHmrMarker(file: string, anchors: string[], steps: WebHmrStep[], stepIndex: number, replacement?: { from: string, to: string }, writeSource = async (target: string, content: string) => fs.writeFile(target, content, 'utf8')) {
+export async function rewriteHmrMarker(file: string, anchors: string[], steps: WebHmrStep[], stepIndex: number, mutation?: HmrSourceMutation, writeSource = async (target: string, content: string) => fs.writeFile(target, content, 'utf8')) {
   let source = await readUtf8(file)
   const persistentMarkerRE = /<view class="[^"]*\bhbuilderx-web-hmr-probe\b[^"]*">[^<]*<\/view>/
   const step = steps[stepIndex]
   if (!step) {
     throw new Error(`缺少 Web HMR 步骤：${stepIndex}`)
   }
-  if (replacement) {
-    const { from, to } = replacement
-    if (!source.includes(from)) {
-      throw new Error(`HMR 源码变更找不到替换目标：${file}`)
-    }
-    source = source.replace(from, to)
+  if (mutation) {
+    source = applyHmrSourceMutation(source, mutation)
   }
   const persistentMarker = `<view class="hbuilderx-web-hmr-probe ${step.markerClass.replace(/\bhbuilderx-web-hmr-probe\b/g, '').trim()}">${step.markerText}</view>`
   if (persistentMarkerRE.test(source)) {

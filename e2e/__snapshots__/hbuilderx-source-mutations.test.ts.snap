@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`原生对照的一次保存同时替换颜色、增加作者 style 并更新 marker 1`] = `
+"<template>
+  <view><view id="native-hmr-probe" class="hbuilderx-app-native-hmr-probe h-[41px] w-[173px] bg-[#9a3412]" style="margin-bottom: 40px;" data-wt-runtime-token="combined-save"><text class="control-marker-text">control-add-style</text></view>
+		<view id="control-anchor"><text>1325 no-plugin control</text></view></view>
+</template>
+<script setup lang="uts">
+console.log('1325-no-plugin-control')
+</script>
+<style>
+.hbuilderx-app-native-hmr-probe { display: flex; width: 173px; height: 41px; align-items: center; justify-content: center; background-color: #9a3412; }
+.control-marker-text { font-size: 18px; color: #ffffff; }
+</style>
+<style>.control-author { color: #111827; }</style>
+"
+`;
