@@ -1,7 +1,5 @@
 import type { Plugin } from 'vite'
 import type { CreateUniAppXPluginsOptions } from './vite/plugin-options'
-import path from 'node:path'
-import process from 'node:process'
 import {
   normalizeUniAppXImportantApplyForSass,
   postcss,
@@ -17,20 +15,13 @@ import { resolveUniUtsPlatform } from '@/utils'
 import { omitUndefined } from '@/utils/object'
 import { resolveUniAppXBorderPreflightOptions } from './border-preflight'
 import { resolveUniAppXOptions } from './options'
-import {
-  collectUniAppXHarmonyApplyStyleSources,
-  collectUniAppXHarmonyApplyUtilities,
-  createUniAppXBundleAssetSourceGetter,
-  createUniAppXHarmonyApplyGeneratorSource,
-  injectUniAppXHarmonyBundleStyles,
-  injectUniAppXStylePlaceholder,
-} from './style-asset'
 import { resolveUniAppXStyleIsolationEnabled } from './style-isolation'
 import { retainUniAppXAuthorApplyCss } from './vite/author-apply'
 import { createUniAppXHarmonyApplyExpander } from './vite/harmony-apply'
 import { createUniAppXNativeHmrReloader } from './vite/native-hmr'
 import { createUniAppXNativeBuildTargetResolver } from './vite/native-target'
 import { createSfcStyleTransactions } from './vite/sfc-transactions'
+import { createUniAppXStylePlaceholderPlugin } from './vite/style-placeholder'
 import { isCssModuleExport, normalizeRelativeTailwindReferences, reportStyleWarnings, resolvePreprocessorTransform, resolveUniAppXCssTarget } from './vite/style-request'
 import { createUniAppXStyleResult } from './vite/style-result'
 import { createUniAppXSfcStyleSources, resolveUniAppXStyleSource } from './vite/style-source'
@@ -432,67 +423,17 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     },
   }
 
-  const stylePlaceholderPlugin: Plugin = {
-    name: 'weapp-tailwindcss:uni-app-x:style-placeholder',
-    enforce: 'post',
-    generateBundle: {
-      order: 'post',
-      async handler(_options, bundle) {
-        if (!isEnabled()) {
-          return
-        }
-        const currentUtsPlatform = utsPlatform
-        const canInferHarmonyTarget = !currentUtsPlatform.normalized || currentUtsPlatform.isApp
-        const isHarmonyTarget = currentUtsPlatform.isAppHarmony || (canInferHarmonyTarget && isHarmonyBuildTarget())
-        if (!isNativeAppBuildTarget() && !isHarmonyTarget) {
-          return
-        }
-        const getAssetSource = createUniAppXBundleAssetSourceGetter(bundle)
-        if (isHarmonyTarget) {
-          const cssSources: string[] = []
-          const harmonySources = harmonyApply.getSources(this?.getModuleIds?.())
-          // 空权威快照也是当前状态，不能用旧 chunk map 复活已经删除的样式。
-          const applyStyleSources = harmonySources.hasSourceSnapshots
-            ? [...harmonySources.sources]
-            : collectUniAppXHarmonyApplyStyleSources(bundle)
-          const applyUtilities = harmonySources.hasSourceSnapshots
-            ? harmonySources.utilities
-            : collectUniAppXHarmonyApplyUtilities(bundle)
-          if (applyStyleSources.length > 0 && applyUtilities.size > 0) {
-            const harmonyApplyCssFile = path.resolve(getResolvedConfig()?.root ?? process.cwd(), 'uni-app-x-harmony-apply.css')
-            const generatedCss = await generateCss?.(
-              harmonyApplyCssFile,
-              createUniAppXHarmonyApplyGeneratorSource(applyStyleSources, applyUtilities),
-              {
-                addWatchFile: this?.addWatchFile?.bind(this),
-                disableSourceScan: true,
-                sourceCandidates: [],
-                transient: true,
-              },
-            )
-            if (typeof generatedCss === 'string' && generatedCss.trim().length > 0) {
-              cssSources.push(generatedCss)
-            }
-          }
-          injectUniAppXHarmonyBundleStyles(bundle, {
-            cssSources,
-            componentMatcher: resolvedUniAppXOptions.componentLocalStyles.componentMatcher,
-            excludeComponents: shouldEnableComponentLocalStyle(),
-          })
-        }
-        for (const [file, item] of Object.entries(bundle)) {
-          if (item.type !== 'asset' || !file.endsWith('.uvue.ts')) {
-            continue
-          }
-          const currentSource = String(item.source)
-          const nextSource = injectUniAppXStylePlaceholder(file, currentSource, getAssetSource)
-          if (nextSource !== currentSource) {
-            item.source = nextSource
-          }
-        }
-      },
-    },
-  }
+  const stylePlaceholderPlugin = createUniAppXStylePlaceholderPlugin({
+    isEnabled,
+    utsPlatform,
+    isNativeAppBuildTarget,
+    isHarmonyBuildTarget,
+    getResolvedConfig,
+    generateCss,
+    harmonyApply,
+    componentMatcher: resolvedUniAppXOptions.componentLocalStyles.componentMatcher,
+    shouldEnableComponentLocalStyle,
+  })
 
   return [
     ...cssPlugins,

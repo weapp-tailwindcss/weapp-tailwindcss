@@ -6,6 +6,7 @@ issues:
   - https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1325
 baseline: 80efee1e22769557c4c73308c546f446c929320a
 regressions:
+  - packages/weapp-tailwindcss/test/source-line-limit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/sfc-style-boundary.unit.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
   - e2e/hbuilderx-source-mutations.test.ts
@@ -40,14 +41,14 @@ regressions:
 以下命令在独立安装依赖的本任务 worktree 执行，Node 24.22.1、pnpm 12.15.0：
 
 ```sh
-pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts --update=none
+pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts test/source-line-limit.test.ts --update=none
 pnpm --filter weapp-tailwindcss build
 pnpm architecture:check
 pnpm agents:check
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 ```
 
-最新复验为 32 文件、399 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+最新复验为 33 文件、400 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
 
 验收器的 replace 与 append 现在组合成一次保存，避免丢失 append 或产生额外原生重载；Web 同文件追加也保持一次保存。四个辅助测试文件共 42 项通过：
 
@@ -66,6 +67,8 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-app-process-clean
 临时原工程矩阵还修正了追加普通 style 与既有 scoped 规则优先级不同导致的误判；新增块保持对应作用域，逐步保存产物哈希。20 项矩阵/恢复离线检查及 10 项编译 hook 追踪检查通过，仍不等同于设备矩阵通过。
 
 PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态槽声明。补充经过延迟插件入口的删除回归，在旧声明上报同一初始化错误；登记钩子后，30 项槽位/事务回归和 4 项框架组装回归通过。没有移除或放宽声明校验。
+
+完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 400 项。
 
 类型检查仍失败，仅保留已在基线复现的五项诊断：`generic-web-production-fast-path.ts:100` 的 TS2379；`weapp-tw-web-rpx-finalize-loader.ts:28` 的 TS2322、34/35 的 TS4111、40 的 TS2345。本次没有新增诊断，不能据此写成类型检查通过。
 
@@ -89,6 +92,8 @@ pnpm exec vitest run --config e2e/fixtures/issue-1325-style-boundary.vitest.ts -
 HBuilderX 固定 5.34.2026102909，iOS 固定 iPhone 18 Pro / iOS 27.2。隐私页“同意并进入应用”的既有授权保留。旧预检均已关闭或阻断，不能复用；全部设备验收仍须新 prepare、当前会话 computer use、verify 和领取。
 
 B 在 `8ef80b1` 后重打 R3 完整运行时闭包，旧 R2 receipt 保留。21 个 tarball 及实际可达的 21 个包、1374 个文件、36 条内部运行时依赖边均逐一核对；不把 pnpm store 中旧版本实例误计为当前入口。R3 实际 Vite CJS 入口 SHA256 为 `d4fce46a49241624487cfe60e548a2dc5529a2b7d5a46d971ea4f3292fa5c1ad`，B 锁哈希为 `d92e5b2a345bc5a0ff9e1e08247f38441848ae0e8e42b1917031e589dd399ca9`。A/B 直接依赖锁差异仅为 `weapp-tailwindcss`；Tailwind 4.3.3、Vue 3.5.44、Vite 5.2.8 及 DCloud 配套版本保持原锁。B 的 `pnpm install --frozen-lockfile --ignore-scripts` 通过。tarball 没有原生 `.node` 二进制，本轮消费 JS 后端。
+
+CI 行数修复后，以 `7f85958ecb399cc7f104155a0f505026a3713ed4` 的运行时代码重新构建并打包 R4；后续提交仅补充本记录。21 个 tarball、实际可达的 21 个包、1375 个文件和 36 条内部依赖边均核对一致，B 的独立 frozen install 通过。R4 实际 Vite CJS 入口 SHA256 为 `8fd3a38703e3aa0fdad0fc87f4246e8edb4cb8243996346fb7256cdd965fac8d`，B 锁哈希为 `b41105b24aa64289347cb3bdcd2123f0778c8d8680a4249056ce6ac2e3fb0b90`。再次核对 A/B 直接依赖锁，差异仍仅为 `weapp-tailwindcss`；上述 Tailwind、Vue、Vite 与 DCloud 版本保持一致。旧 R3 证据保留；R4 安装核对不计为设备验收通过。
 
 原工程的 `manifest.config.ts` 虽注释声称回退原 manifest，实际会把未提供环境变量的 DCloud AppID 和 uniCloud spaceId 置空。A/B 均通过原生成入口显式保留原提交的 `VITE_DCLOUD_APPID`、`VITE_UNICLOUD_SPACE_ID`，同时提供用户授权的 `VITE_WX_APPID`；后续受控启动继承同一环境，避免构建时再次清空。此为验收环境固定，不修改原工程厂商或业务代码。
 
