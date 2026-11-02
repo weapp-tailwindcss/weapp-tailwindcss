@@ -14,7 +14,10 @@ function hook(plugin: Plugin, name: 'load' | 'transform' | 'generateBundle' | 'w
 function deferred<T>() {
   let resolve!: (value: T) => void
   let reject!: (error: Error) => void
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 const id = '/project/Probe.uvue'
@@ -29,19 +32,27 @@ function generateStyles(_id: string, source: string) {
 function fixture(extra: Partial<Parameters<typeof createUniAppXPlugins>[0]> = {}) {
   const generateCss = vi.fn(generateStyles)
   const plugins = createUniAppXPlugins({
-    appType: 'uni-app-x', customAttributesEntities: [], disabledDefaultTemplateHandler: false,
-    mainCssChunkMatcher: () => false, runtimeState: { readyPromise: Promise.resolve() },
+    appType: 'uni-app-x',
+    customAttributesEntities: [],
+    disabledDefaultTemplateHandler: false,
+    mainCssChunkMatcher: () => false,
+    runtimeState: { readyPromise: Promise.resolve() },
     styleHandler: async css => ({ css, map: { toJSON: () => ({ version: 3, sources: [], names: [], mappings: '' }) } }) as any,
-    jsHandler: vi.fn() as any, ensureRuntimeClassSet: async () => new Set<string>(), generateCss,
+    jsHandler: vi.fn() as any,
+    ensureRuntimeClassSet: async () => new Set<string>(),
+    generateCss,
     uniUtsPlatform: resolveUniUtsPlatform('app-harmony'),
     getResolvedConfig: () => ({ root: '/project', command: 'build', build: { watch: true, outDir: 'dist/app-harmony' } } as ResolvedConfig),
-    uniAppX: { enabled: true, componentLocalStyles: false }, ...extra,
+    uniAppX: { enabled: true, componentLocalStyles: false },
+    ...extra,
   })
   const sfc = plugins.find(p => p.name === 'weapp-tailwindcss:uni-app-x:nvue')!
   const css = plugins.find(p => p.name === 'weapp-tailwindcss:uni-app-x:css:pre')!
   const bundle = plugins.find(p => p.name === 'weapp-tailwindcss:uni-app-x:style-placeholder')!
   return {
-    generateCss, sfc, css,
+    generateCss,
+    sfc,
+    css,
     transform: (source: string, sourceId = id) => hook(sfc, 'transform').call({}, source, sourceId),
     load: () => hook(css, 'load').call({}, `${id}?vue&type=style&index=0&lang.css`),
     async output(source: string, moduleIds?: string[]) {
@@ -72,7 +83,9 @@ it('follows a newer transaction when the previously awaited SFC rejects', async 
 })
 
 it('keeps the settled current failure visible to later style requests', async () => {
-  const f = fixture({ registerModuleGraphCandidates: async () => { throw new Error('current failed') } })
+  const f = fixture({ registerModuleGraphCandidates: async () => {
+    throw new Error('current failed')
+  } })
   await expect(f.transform(currentSource)).rejects.toThrow('current failed')
   await expect(f.load()).rejects.toThrow('current failed')
 })
@@ -110,7 +123,9 @@ it('forgets a deleted file without discarding unrelated current sources', async 
 
 it('does not publish failed Harmony transforms into bundle fallback styles', async () => {
   const f = fixture({ registerModuleGraphCandidates: async (_id, source) => {
-    if (source === oldSource) throw new Error('failed')
+    if (source === oldSource) {
+      throw new Error('failed')
+    }
     return new Set()
   } })
   await f.transform(currentSource)
@@ -167,7 +182,9 @@ it('follows the current failed revision even after an older transform succeeds',
 it('recovers style reads and Harmony sources after a failed current revision', async () => {
   let fail = true
   const f = fixture({ registerModuleGraphCandidates: async () => {
-    if (fail) throw new Error('failed')
+    if (fail) {
+      throw new Error('failed')
+    }
     return new Set()
   } })
   await expect(f.transform(oldSource)).rejects.toThrow('failed')
@@ -178,7 +195,8 @@ it('recovers style reads and Harmony sources after a failed current revision', a
 })
 
 it.each(['/project/Probe.uvue', 'C:\\project\\Probe.uvue', '\\\\server\\share\\Probe.uvue', 'relative/Probe.uvue'])(
-  'replaces Harmony references and rules by their source identity: %s', async (sourceId) => {
+  'replaces Harmony references and rules by their source identity: %s',
+  async (sourceId) => {
     const f = fixture()
     await f.transform(oldSource, sourceId)
     await f.transform(currentSource, sourceId)
