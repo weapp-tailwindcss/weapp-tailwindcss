@@ -7,7 +7,7 @@ export const pluginSlots = [
   { name: 'weapp-tailwindcss:uni-app-x:css:pre', enforce: 'pre', hooks: { transform: true, load: { order: 'pre' }, handleHotUpdate: { order: 'pre' } } },
   { name: 'weapp-tailwindcss:uni-app-x:css', hooks: { transform: true } },
   ...sourcePluginSlots,
-  { name: 'weapp-tailwindcss:uni-app-x:nvue', enforce: 'pre', hooks: { buildStart: true, transform: { order: 'pre' }, handleHotUpdate: { order: 'post' }, buildEnd: true, closeBundle: true } },
+  { name: 'weapp-tailwindcss:uni-app-x:nvue', enforce: 'pre', hooks: { buildStart: true, transform: { order: 'pre' }, handleHotUpdate: { order: 'post' }, watchChange: true, buildEnd: true, closeBundle: true } },
   ...frameworkTransformSlots,
   ...injectorPluginSlots(createUniViteStyleInjector.slots),
   { name: 'weapp-tailwindcss:uni-app-x:style-placeholder', enforce: 'post', hooks: { generateBundle: { order: 'post' } } },

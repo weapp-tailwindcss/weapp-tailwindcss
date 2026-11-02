@@ -1,6 +1,8 @@
 import type { Plugin, ResolvedConfig } from 'vite'
 import { resolveUniUtsPlatform } from '@weapp-tailwindcss/env'
 import { beforeEach, expect, it, vi } from 'vitest'
+import { pluginSlots } from '@/bundlers/vite/frameworks/uni-app-x/plugin-descriptors'
+import { createDeferredVitePlugins } from '@/bundlers/vite/shared/plugin-slots'
 import { createUniAppXPlugins } from '@/uni-app-x/vite'
 
 const transformUVue = vi.hoisted(() => vi.fn())
@@ -63,6 +65,16 @@ function fixture(extra: Partial<Parameters<typeof createUniAppXPlugins>[0]> = {}
     },
   }
 }
+
+it('routes source deletion through the declared Vite lifecycle', async () => {
+  const f = fixture()
+  await f.transform(oldSource)
+  const deferred = createDeferredVitePlugins(pluginSlots.filter(slot => slot.name === f.sfc.name), () => [f.sfc])[0]!
+  const configResolved = deferred.configResolved as (config: ResolvedConfig) => Promise<void>
+  await configResolved.call({}, { root: '/project', command: 'build', build: { watch: true } } as ResolvedConfig)
+  await hook(deferred, 'watchChange').call({}, id, { event: 'delete' })
+  expect(await f.output(oldSource, [id])).not.toContain('173px')
+})
 
 it('follows a newer transaction when the previously awaited SFC rejects', async () => {
   const first = deferred<Set<string>>()

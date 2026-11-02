@@ -1,16 +1,26 @@
 ---
 status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1325
 issues:
   - https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1319
   - https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1325
 baseline: 80efee1e22769557c4c73308c546f446c929320a
+regressions:
+  - packages/weapp-tailwindcss/test/bundlers/sfc-style-boundary.unit.test.ts
+  - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
+  - e2e/hbuilderx-source-mutations.test.ts
+  - e2e/fixtures/issue-1325-style-boundary.repro.test.ts
 ---
 
 # SFC 样式边界与事务修复
 
 本记录继续 [main 根因验收](main-1319-1325-root-cause-acceptance.md)。保留旧失败现场，单独记录修复版；设备验收尚未完成，两个 Issue 均不能标记为全面根治。
 
-## 根因与实现
+## 症状
+
+原工程 `mp-html.uvue` 的脚本注释包含伪 style，基线会把后续脚本作为 CSS 返回并触发 UTS 的 `Unknown word`。并行转换还存在过期事务失败击穿较新样式请求、Harmony 删除后残留旧规则的问题。
+
+## 根因与纠正
 
 `<style>` 全局正则跨过 SFC 顶层边界，把脚本字符串、注释和自定义块内容当作 CSS。原工程 `mp-html.uvue` 的注释误匹配使 UTS 进入真实 style 请求，产生 `Unknown word`。转换器另一个正则会把伪 scoped 标签当作载体，造成 MagicString 区间重叠。
 
@@ -24,7 +34,7 @@ baseline: 80efee1e22769557c4c73308c546f446c929320a
 
 保留 #1319 已合入的零宽重置、基础类注入和作者覆盖顺序；没有新增公开 API、关闭 preflight、合并所有 style 或改动厂商文件。
 
-## 本地回归
+## 验证
 
 以下命令在独立安装依赖的本任务 worktree 执行，Node 24.22.1、pnpm 12.15.0：
 
@@ -36,7 +46,17 @@ pnpm agents:check
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 ```
 
-32 文件、394 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+32 文件、398 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+
+验收器的 replace 与 append 现在组合成一次保存，避免丢失 append 或产生额外原生重载；Web 同文件追加也保持一次保存。四个辅助测试文件共 42 项通过：
+
+```sh
+pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-source-mutations.test.ts e2e/hbuilderx-local-helpers.test.ts e2e/issue-1144-runner.test.ts e2e/hbuilderx-attach.test.ts --update=none
+```
+
+这些测试不启动设备，也不作为原始平台的通过证据。
+
+PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态槽声明。补充经过延迟插件入口的删除回归，在旧声明上报同一初始化错误；登记钩子后，30 项槽位/事务回归和 4 项框架组装回归通过。没有移除或放宽声明校验。
 
 类型检查仍失败，仅保留已在基线复现的五项诊断：`generic-web-production-fast-path.ts:100` 的 TS2379；`weapp-tw-web-rpx-finalize-loader.ts:28` 的 TS2322、34/35 的 TS4111、40 的 TS2345。本次没有新增诊断，不能据此写成类型检查通过。
 
@@ -57,6 +77,16 @@ pnpm exec vitest run --config e2e/fixtures/issue-1325-style-boundary.vitest.ts -
 
 HBuilderX 固定 5.34.2026102909，iOS 固定 iPhone 18 Pro / iOS 27.2。隐私页“同意并进入应用”的既有授权保留。旧预检均已关闭或阻断，不能复用；全部设备验收仍须新 prepare、当前会话 computer use、verify 和领取。
 
+B 在 `a40769d` 后重打完整运行时闭包。21 个 tarball 及实际可达的 21 个包、1374 个文件、36 条内部运行时依赖边均逐一核对；不把 pnpm store 中旧版本实例误计为当前入口。实际 Vite CJS 入口 SHA256 为 `d27c08e0cfca34e2da795bfca4eeaa2840daf8d557eecc118661920b93071ce7`，B 锁哈希为 `c061217c5353a4111ff728d20946b960935623f94153422149230467430cc930`。A/B 直接依赖锁差异仅为 `weapp-tailwindcss`；DCloud、Tailwind、Vue、Vite 保持原锁。B 的 frozen install 通过。tarball 没有原生 `.node` 二进制，本轮消费 JS 后端。
+
+用户明确选择 Pixel 5 后，经 Android Studio 启动已安装的 `Pixel_5`，核对为 `emulator-5554`。本轮 `87910ff3-2d48-4e4e-8a90-8025b99334fe` 的 prepare 中微信、HBuilderX、iOS、Android、Harmony、Web 全通过；Chrome 原生入口超时后，另起本轮预检，以应用内入口完成真实 AX 读取、截图、输入、点击及完成回执，保留实际调用记录。随后 verify 的微信再次在 `App.getCurrentPage` 超时，门禁仍阻断。此前原生 UI 保存的基础库 3.17.6 错误为 `appLaunch with non-empty page stack`，不是业务样式结论。所有失败报告和截图均保留；没有复用失败报告继续设备调度。
+
+## 适用边界
+
 当前两个 Issue 的结论均为“验证未完成”：尚未取得修复版原首页的微信/Harmony Vapor 边框全序列，以及 Vapor+iOS 的十次冷启动和十轮连续更新。H5、VDOM、静态回归及 CI 不替代这些证据。后续按首次偏离记录编译、产物、节点与截图，严格 HMR 与原生重载分别统计。
 
 Refs #1319，Refs #1325；不自动合并 PR 或关闭 Issue。
+
+## 规则评估
+
+沿用现有 SFC、构建图、生命周期、跨平台路径与原生证据规则；本次用共享实现和可执行回归固化边界，不新增 AGENTS 规则。
