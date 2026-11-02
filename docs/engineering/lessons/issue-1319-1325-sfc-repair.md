@@ -9,6 +9,8 @@ regressions:
   - packages/weapp-tailwindcss/test/source-line-limit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/sfc-style-boundary.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/sfc-style-work.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-sfc-style-snapshot.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-framework-watch-snapshot.unit.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
   - e2e/hbuilderx-source-mutations.test.ts
   - e2e/hbuilderx-source-only.test.ts
@@ -43,14 +45,15 @@ regressions:
 以下命令在独立安装依赖的本任务 worktree 执行，Node 24.22.1、pnpm 12.15.0：
 
 ```sh
-pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/sfc-style-work.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts test/source-line-limit.test.ts --update=none
+pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x test/bundlers/sfc-style-boundary.unit.test.ts test/bundlers/sfc-style-work.unit.test.ts test/bundlers/vite-css-memory.test.ts test/bundlers/shared/generator-css/source-files.test.ts test/bundlers/vite-sfc-style-source.unit.test.ts test/bundlers/vite-framework-watch-snapshot.unit.test.ts test/bundlers/vite-sfc-style-snapshot.unit.test.ts test/ci/architecture-contract.test.ts test/ci/framework-boundaries.test.ts test/ci/generation-ownership.test.ts test/source-line-limit.test.ts --update=none
+pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-scoped-generator-sources.unit.test.ts test/bundlers/vite-scoped-generator.unit.test.ts test/bundlers/vite-watch-css-output.test.ts test/bundlers/vite-watch-css-post.unit.test.ts test/bundlers/vite-framework-runtime-facts.unit.test.ts --update=none
 pnpm --filter weapp-tailwindcss build
 pnpm architecture:check
 pnpm agents:check
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 ```
 
-最新复验为 34 文件、407 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+最新两批复验合计 41 文件、460 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
 
 验收器的 replace 与 append 现在组合成一次保存，避免丢失 append 或产生额外原生重载；Web 同文件追加也保持一次保存。四个辅助测试文件共 42 项通过：
 
@@ -70,7 +73,7 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-app-process-clean
 
 PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态槽声明。补充经过延迟插件入口的删除回归，在旧声明上报同一初始化错误；登记钩子后，30 项槽位/事务回归和 4 项框架组装回归通过。没有移除或放宽声明校验。
 
-完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 407 项。
+完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 460 项。
 
 `2ac24b4d13a950f723703a49b64109ab18ec65bf` 的 [Mpx benchmark 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401524) 记录构建插件中位耗时 909→991ms、构建峰值 RSS 1091.01→1179.13MB、稳态 RSS 1034.70→1102.87MB、HMR 峰值 RSS 1439.58→1554.29MB 和稳态 RSS 1427.78→1534.14MB；均超过原有 5% 门槛。[Taro Vite 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401537) 为 HMR 插件 p95 1711→1857ms，三次样本中两次回归。原始 job 日志、Mpx benchmark/GC artifacts 与 Taro benchmark artifacts 已保存，不能据其他检查成功忽略这些失败；没有通过提高阈值或反复重跑放行。
 
@@ -79,6 +82,10 @@ PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态
 `1a555c150d91ab873c2f10f6629f2fe4729b5f4e` 的全部 PR 检查随后结束：233 项成功、29 项按条件跳过、3 项失败。失败为 [Taro Webpack 构建](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41411745466/job/125166515552)、[Uni Vite HMR RSS](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41411745466/job/125166515523) 及性能汇总。Taro 构建中位耗时 18805.03→20063.41ms，增加 6.69%；Uni HMR 峰值 RSS 1065.46→1228.52MB、稳态 1044.55→1129.44MB，反序确认仍超预算。首次原日志均保留，没有重跑或调整原门槛。
 
 同一源码以 Node 24.22.1 在本地完成一次 Uni `--input-diagnostics`：固定基线 `80efee1e22769557c4c73308c546f446c929320a`，三次构建、同 watcher 三轮修改和回滚。实际 worker 身份与两侧入口均已核对；不能把本地 Node 24 的诊断当作 Linux Node 22.23.4 的正式预算结论。归一工程根后，初始候选快照相同；首次修改时扫描快照与真实模板产物的更新时序不同，后续 watch 事件次数也不同，因此额外的 service 重建尚不能归为性能根因。当前记录缺失具体失效 id 与命中原因，新增仅对 Uni input 准备副本生效的追踪，保留 watchChange、compiler.invalidate、每个 root 的依赖/候选命中和版本变化、服务失效身份。单次 iterable 不预消费，未注册 observer 时不求诊断详情，不主动 GC，不改正式预算和关闭顺序。6 个定向测试文件共 64 项通过，包含真实 Node fixture、异常传播、锚点原子失败和固定观测上限；诊断补丁本身不计为性能修复。
+
+进一步确认普通 Uni 的 generator、watch 与来源收集会对同一完整 SFC 重复构建模板 AST。现在每个 CSS memory 实例维护最多 128 个文件的 LRU，仅保存当前 raw/prepared 全文身份与冻结的扁平 style 元数据，文本相同时共用对象，不保留 AST。来源扫描的权威空文本与空 style 继续优先，规范化前后索引分别保存；子请求不能覆盖完整文档，remove、prune 与 dispose 同步淘汰。generator 单次请求只取一次快照，watch 跨消费者复用。新增两个快照测试文件，并复验 scoped 生成、watch 输出与框架组装；上列两批共 460 项通过。独立只读审查没有发现接入阻塞。缓存统计仅为逻辑字符量，不能据此推断进程 RSS 或声明性能门禁已修复。
+
+唯一 Linux input 诊断 [run 41434891295](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41434891295) 固定优化前源码 `1da466c008b6f125996d557256ec329e23ce8302` 与基线 `80efee1e22769557c4c73308c546f446c929320a`，仅执行 Uni mp-weixin 的三次构建、三轮 HMR。该 run 已结束，日志与 artifacts 分析单独保留；新快照代码没有改变其输入，也没有再次调度相同诊断。诊断成功不等同于正式性能预算通过。
 
 类型检查仍失败，仅保留已在基线复现的五项诊断：`generic-web-production-fast-path.ts:100` 的 TS2379；`weapp-tw-web-rpx-finalize-loader.ts:28` 的 TS2322、34/35 的 TS4111、40 的 TS2345。本次没有新增诊断，不能据此写成类型检查通过。
 
