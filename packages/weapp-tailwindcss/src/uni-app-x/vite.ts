@@ -1,4 +1,3 @@
-import type { SourceDescription } from 'rollup'
 import type { Plugin } from 'vite'
 import type { CreateUniAppXPluginsOptions } from './vite/plugin-options'
 import path from 'node:path'
@@ -31,6 +30,7 @@ import { retainUniAppXAuthorApplyCss } from './vite/author-apply'
 import { createUniAppXHarmonyApplyExpander } from './vite/harmony-apply'
 import { createUniAppXNativeHmrReloader } from './vite/native-hmr'
 import { createUniAppXNativeBuildTargetResolver } from './vite/native-target'
+import { createSfcStyleTransactions } from './vite/sfc-transactions'
 import { isCssModuleExport, normalizeRelativeTailwindReferences, reportStyleWarnings, resolvePreprocessorTransform, resolveUniAppXCssTarget } from './vite/style-request'
 import { createUniAppXStyleResult } from './vite/style-result'
 import { createUniAppXSfcStyleSources, resolveUniAppXStyleSource } from './vite/style-source'
@@ -40,6 +40,12 @@ import { createUniAppXWebSfcHmr } from './vite/web-sfc-hmr'
 export { createUniAppXAssetTask } from './vite/asset-task'
 
 type TransformUVue = typeof import('./transform')['transformUVue']
+interface SfcTransformState {
+  result: ReturnType<TransformUVue>
+  localStyleSource?: string
+  runtimeSet: ReadonlySet<string>
+  webRules?: string
+}
 let transformUVuePromise: Promise<TransformUVue> | undefined
 function loadTransformUVue(): Promise<TransformUVue> {
   transformUVuePromise ??= import('./transform').then(mod => mod.transformUVue)
@@ -93,7 +99,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
   }>()
   const nativeLocalStyleModuleIds = new Set<string>()
   const sfcStyleSources = createUniAppXSfcStyleSources()
-  const pendingSfcTransforms = new Map<string, Promise<Pick<SourceDescription, 'code' | 'map'> | undefined>>()
+  const sfcTransactions = createSfcStyleTransactions<SfcTransformState>()
   const webSfcHmr = createUniAppXWebSfcHmr({
     isEnabled: () => isEnabled() && isWebGeneratorTarget() && getResolvedConfig()?.command === 'serve',
     transform: (source, id) => runTransformSfc(source, id, {}),
@@ -186,7 +192,6 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       if (!shouldGenerateCss && (!isNativeStyle || isNativeSfcAuthorStyle)) {
         return
       }
-      harmonyApply.rememberSource(sourceCode, id)
       const generatedCss = (
         shouldGenerateCss
       )
@@ -216,6 +221,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       const postcssResult = isWebGeneratorTarget() && typeof generatedCss === 'string' && generatedCss.trim().length > 0
         ? await postcss().process(styleCode, styleHandlerOptions.postcssOptions.options)
         : await styleHandler(styleCode, styleHandlerOptions)
+      harmonyApply.rememberSource(sourceCode, id)
       return createUniAppXStyleResult(id, postcssResult)
     }
   }
@@ -230,18 +236,6 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       return result.css
     },
   })
-  async function waitForSfcTransform(id: string) {
-    const file = cleanUrl(id)
-    let pending = pendingSfcTransforms.get(file)
-    while (pending) {
-      await pending
-      const current = pendingSfcTransforms.get(file)
-      if (current === pending) {
-        return
-      }
-      pending = current
-    }
-  }
   const cssPrePlugin: Plugin = {
     name: 'weapp-tailwindcss:uni-app-x:css:pre',
     enforce: 'pre',
@@ -253,8 +247,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         if (!query.vue || query.type !== 'style' || !UVUE_NVUE_RE.test(filename)) {
           return
         }
-        await waitForSfcTransform(filename)
-        return sfcStyleSources.load(filename, query.index ?? 0)
+        return sfcTransactions.read(cleanUrl(filename), () => sfcStyleSources.load(filename, query.index ?? 0))
       },
     },
     async transform(code, id) {
@@ -263,22 +256,30 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       }
       await runtimeState.readyPromise
       const { filename, query } = parseVueRequest(id)
-      if (query.vue && query.type === 'style') {
-        await waitForSfcTransform(filename)
+      const readStyleSource = () => {
+        const styleSource = sfcStyleSources.getOverride(filename, query.index ?? 0)
+        const source = resolveUniAppXStyleSource(code, query, styleSource, filename)
+        if (source.skip) {
+          return source
+        }
+        return {
+          ...source,
+          code: query.vue && query.type === 'style' && sfcStyleSources.shouldAppendLocalStyle(filename, query.index ?? 0)
+            ? webLocalStyle.appendToStyle(source.code, id)
+            : source.code,
+        }
       }
-      const styleSource = sfcStyleSources.getOverride(filename, query.index ?? 0)
-      const resolvedSource = resolveUniAppXStyleSource(code, query, styleSource, filename)
+      const resolvedSource = query.vue && query.type === 'style'
+        ? await sfcTransactions.read(cleanUrl(filename), readStyleSource)
+        : readStyleSource()
       if (resolvedSource.skip) {
         return
       }
-      const styleCode = query.vue && query.type === 'style' && sfcStyleSources.shouldAppendLocalStyle(filename, query.index ?? 0)
-        ? webLocalStyle.appendToStyle(resolvedSource.code, id)
-        : resolvedSource.code
       // Vite 热更新会绕过 SFC 主模块，直接把原始样式交给预处理器；先移除
       // Sass 无法解析的 important utility 后，再由后续 CSS 阶段还原。
       const preprocessorCode = query.vue && query.type === 'style'
-        ? normalizeUniAppXImportantApplyForSass(styleCode)
-        : styleCode
+        ? normalizeUniAppXImportantApplyForSass(resolvedSource.code)
+        : resolvedSource.code
       const preprocessor = resolvePreprocessorTransform(preprocessorCode, id, query.lang, {
         isIosPlatform,
         isNativeAppStyleTarget: isNativeAppStyleTarget(),
@@ -305,18 +306,6 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
   const cssPlugins = [cssPlugin, cssPrePlugin]
 
   async function transformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }, authoritative = true, isCurrent = () => true) {
-    if (authoritative && isWebGeneratorTarget()) {
-      for (const style of extractSfcStyleBlocks(code, id)) {
-        webCssEntryDiagnostics?.observeSourceImports(style.source, id)
-      }
-    }
-    if (authoritative && isNativeAppBuildTarget(id)) {
-      nativeLocalStyleModuleIds.add(id)
-      nativeLocalStyleModuleIds.add(cleanUrl(id))
-    }
-    if (authoritative) {
-      harmonyApply.rememberSource(code, id, true)
-    }
     const enableComponentLocalStyle = shouldEnableComponentLocalStyle()
     const enablePageLocalStyle = shouldEnablePageLocalStyleForFile(id)
     const moduleGraphCandidates = authoritative ? await registerModuleGraphCandidates?.(id, code) : undefined
@@ -324,10 +313,8 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     const currentRuntimeSet: Set<string> = moduleGraphCandidates?.size
       ? new Set([...runtimeSet, ...moduleGraphCandidates])
       : new Set(runtimeSet)
-    if (authoritative && isCurrent()) {
-      nativeHmrReloader.remember(currentRuntimeSet)
-    }
     const transformUVue = await loadTransformUVue()
+    let webRules: string | undefined
     const transformOptions = omitUndefined({
       componentMatcher: resolvedUniAppXOptions.componentLocalStyles.componentMatcher,
       ...(customAttributesEntities.length > 0 ? { customAttributesEntities } : {}),
@@ -342,10 +329,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       ...(isWebGeneratorTarget()
         ? {
             onWebLocalStyleRules: (rules: string) => {
-              if (isCurrent()) {
-                webLocalStyle.remember(id, rules)
-                webCssEntryDiagnostics?.requestCheck()
-              }
+              webRules = rules
             },
           }
         : {}),
@@ -353,31 +337,37 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     const result = Object.keys(transformOptions).length > 0
       ? transformUVue(code, id, jsHandler, currentRuntimeSet, transformOptions)
       : transformUVue(code, id, jsHandler, currentRuntimeSet)
+    const state: SfcTransformState = { result, runtimeSet: currentRuntimeSet, ...(webRules === undefined ? {} : { webRules }) }
     if (!authoritative || !isCurrent() || !result?.code) {
-      return result
+      return state
     }
-    harmonyApply.rememberSource(result.code, id)
-    const expandedCode = await harmonyApply.expandStyles(result.code, id, context)
-    return expandedCode === result.code ? result : { code: expandedCode, map: null }
+    state.localStyleSource = result.code
+    const expandedCode = await harmonyApply.expandStyles(result.code, id, context, code)
+    state.result = expandedCode === result.code ? result : { code: expandedCode, map: null }
+    return state
   }
 
   function runTransformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }) {
     const file = cleanUrl(id)
-    const pending: ReturnType<typeof transformSfc> = transformSfc(code, id, context, true, () => pendingSfcTransforms.get(file) === pending).then((result) => {
-      // 只发布最新完整 SFC 的最终结果；旧异步事务不得回滚当前样式快照。
-      if (pendingSfcTransforms.get(file) === pending) {
-        sfcStyleSources.remember(file, code, result?.code ?? code)
+    return sfcTransactions.run(file, isCurrent => transformSfc(code, id, context, true, isCurrent), (state) => {
+      // 完整 SFC 的样式快照、Harmony 来源和局部规则在成功事务中一起发布。
+      sfcStyleSources.remember(file, code, state.result?.code ?? code)
+      harmonyApply.rememberSfc(code, state.localStyleSource ?? state.result?.code ?? code, id)
+      nativeHmrReloader.remember(state.runtimeSet)
+      if (isNativeAppBuildTarget(id)) {
+        nativeLocalStyleModuleIds.add(id)
+        nativeLocalStyleModuleIds.add(file)
       }
-      return result
-    })
-    pendingSfcTransforms.set(file, pending)
-    const cleanup = () => {
-      if (pendingSfcTransforms.get(file) === pending) {
-        pendingSfcTransforms.delete(file)
+      if (isWebGeneratorTarget()) {
+        for (const style of extractSfcStyleBlocks(code, id)) {
+          webCssEntryDiagnostics?.observeSourceImports(style.source, id)
+        }
       }
-    }
-    void pending.then(cleanup, cleanup)
-    return pending
+      if (state.webRules !== undefined) {
+        webLocalStyle.remember(id, state.webRules)
+        webCssEntryDiagnostics?.requestCheck()
+      }
+    }).then(state => state.result)
   }
 
   const nvuePlugin: Plugin = {
@@ -404,10 +394,21 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
             return
           }
           // 原生子请求保留转换，但共享主模块身份，不发布完整 SFC 的权威状态。
-          return transformSfc(code, filename, this, false)
+          return transformSfc(code, filename, this, false).then(state => state.result)
         }
         return runTransformSfc(code, id, this)
       },
+    },
+    watchChange(id, change) {
+      if (!isEnabled() || change?.event !== 'delete') {
+        return
+      }
+      const file = cleanUrl(id)
+      sfcTransactions.invalidate(file)
+      sfcStyleSources.remember(file, '', '')
+      harmonyApply.forgetSource(id)
+      nativeLocalStyleModuleIds.delete(id)
+      nativeLocalStyleModuleIds.delete(file)
     },
     handleHotUpdate: {
       order: 'post',
@@ -449,13 +450,14 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         const getAssetSource = createUniAppXBundleAssetSourceGetter(bundle)
         if (isHarmonyTarget) {
           const cssSources: string[] = []
-          const applyStyleSources = harmonyApply.styleSources.size > 0
-            ? [...harmonyApply.styleSources]
+          const harmonySources = harmonyApply.getSources(this?.getModuleIds?.())
+          // 空权威快照也是当前状态，不能用旧 chunk map 复活已经删除的样式。
+          const applyStyleSources = harmonySources.hasSourceSnapshots
+            ? [...harmonySources.sources]
             : collectUniAppXHarmonyApplyStyleSources(bundle)
-          const applyUtilities = new Set([
-            ...harmonyApply.utilities,
-            ...collectUniAppXHarmonyApplyUtilities(bundle),
-          ])
+          const applyUtilities = harmonySources.hasSourceSnapshots
+            ? harmonySources.utilities
+            : collectUniAppXHarmonyApplyUtilities(bundle)
           if (applyStyleSources.length > 0 && applyUtilities.size > 0) {
             const harmonyApplyCssFile = path.resolve(getResolvedConfig()?.root ?? process.cwd(), 'uni-app-x-harmony-apply.css')
             const generatedCss = await generateCss?.(
