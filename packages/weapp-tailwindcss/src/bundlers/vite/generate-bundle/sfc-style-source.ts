@@ -40,7 +40,7 @@ function normalizeSfcStyleSourceForCompare(source: string) {
   return source.replace(/\r\n?/g, '\n').trim()
 }
 
-function createSfcStyleRequest(sourceFile: string, styleBlock: SfcStyleBlock) {
+function createSfcStyleRequest(sourceFile: string, styleBlock: Readonly<SfcStyleBlock>) {
   const params = new URLSearchParams()
   params.set('vue', '')
   params.set('type', 'style')
@@ -64,7 +64,15 @@ export function resolveSfcStyleRequestFromKnownSource(
   if (!sfcSource) {
     return sourceFile
   }
-  const styleBlocks = extractSfcStyleBlocks(sfcSource, sourceFile)
+  return resolveSfcStyleRequestFromBlocks(sourceFile, extractSfcStyleBlocks(sfcSource, sourceFile), styleSource, currentRequest)
+}
+
+export function resolveSfcStyleRequestFromBlocks(
+  sourceFile: string,
+  styleBlocks: readonly Readonly<SfcStyleBlock>[],
+  styleSource: string,
+  currentRequest?: string,
+) {
   if (styleBlocks.length === 0) {
     return sourceFile
   }

@@ -259,7 +259,7 @@ function createRuntimePlugins(options: ViteFrameworkRuntimeOptions, frameworkBra
   registerConstructedVitePlugins(construction, extraPlugins)
   const installFrameworkWatchCssCacheAdapter = createFrameworkWatchCssCacheAdapter({
     shouldAdapt: shouldAdaptFrameworkWatchCss,
-    getKnownSfcSource: cssMemory.getKnownSfcSource,
+    getKnownSfcStyleSnapshot: cssMemory.getKnownSfcStyleSnapshot,
     getCssHandlerOptions: transformCssHandlerOptions.getCssHandlerOptions,
     styleHandler,
     debug,

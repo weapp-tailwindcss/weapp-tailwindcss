@@ -1,9 +1,9 @@
 import type { RememberedCssSource } from './generate-bundle'
 import type { SfcStyleBlock } from '@/utils/sfc'
 import path from 'node:path'
-import { extractSfcStyleBlocks } from '@/utils/sfc'
 import { isSourceStyleRequest, stripRequestQuery } from '../../generation/style-requests'
 import { normalizeOutputPathKey } from '../shared/module-graph'
+import { createViteSfcStyleSnapshots } from './css-memory/sfc-snapshot'
 import { createViteCssSourceLifecycle, normalizeViteCssSourceOwner } from './css-memory/source-lifecycle'
 import { pruneMapToMaxSize, touchMapEntry } from './map-cache'
 import { parseVueRequest } from './query'
@@ -57,7 +57,7 @@ export function normalizeCssSourceIdentity(sourceFile: string) {
   return normalizeOutputPathKey(stripRequestQuery(cleanSourceFile))
 }
 
-function extractSfcStyleSource(styles: SfcStyleBlock[], index: number | undefined) {
+function extractSfcStyleSource(styles: readonly Readonly<SfcStyleBlock>[], index: number | undefined) {
   return index === undefined
     ? styles.length > 0 ? styles.map(style => style.source).join('\n') : undefined
     : styles[index]?.source
@@ -88,6 +88,7 @@ export function createViteCssMemory(options: {
   const rememberedCssSignatureByFile = new Map<string, string>()
   const knownCssSources = new Map<string, string>()
   const knownSfcSources = new Map<string, string>()
+  const sfcStyleSnapshots = createViteSfcStyleSnapshots(VITE_KNOWN_SFC_SOURCE_CACHE_MAX)
   const sourceLifecycle = createViteCssSourceLifecycle()
 
   const rememberKnownSfcSource = (id: string, code: string) => {
@@ -102,7 +103,7 @@ export function createViteCssMemory(options: {
       return
     }
     // 主模块 transform 提供本轮源码；候选扫描范围之外的组件也须撤销已删除的样式。
-    const styles = extractSfcStyleBlocks(code, file)
+    const styles = sfcStyleSnapshots.resolve(normalizeKnownSfcSourceKey(file), code, 'raw').styles
     const normalizedSource = options.normalizeSfcSource?.(code, file) ?? code
     refreshRememberedSfcStyleSources(file, normalizedSource, normalizedSource === code ? styles : undefined)
     if (styles.length === 0) {
@@ -129,6 +130,11 @@ export function createViteCssMemory(options: {
       touchMapEntry(knownSfcSources, key, source)
     }
     return source == null ? source : options.normalizeSfcSource?.(source, file) ?? source
+  }
+
+  const getKnownSfcStyleSnapshot = (file: string) => {
+    const source = getKnownSfcSource(file)
+    return source == null ? undefined : sfcStyleSnapshots.resolve(normalizeKnownSfcSourceKey(file), source, 'prepared')
   }
 
   const getKnownCssSource = (file: string) => {
@@ -212,14 +218,14 @@ export function createViteCssMemory(options: {
     }
   }
 
-  const refreshRememberedSfcStyleSources = (file: string, source: string, parsedStyles?: SfcStyleBlock[]) => {
+  const refreshRememberedSfcStyleSources = (file: string, source: string, parsedStyles?: readonly Readonly<SfcStyleBlock>[]) => {
     const matchedRememberedSources = [...rememberedCssSources.values()].filter(remembered =>
       normalizeOutputPathKey(stripRequestQuery(cleanUrl(remembered.sourceFile))) === normalizeOutputPathKey(file),
     )
     if (matchedRememberedSources.length === 0) {
       return
     }
-    const styles = parsedStyles ?? extractSfcStyleBlocks(source, file)
+    const styles = parsedStyles ?? sfcStyleSnapshots.resolve(normalizeKnownSfcSourceKey(file), source, 'prepared').styles
     for (const remembered of matchedRememberedSources) {
       const { query } = parseVueRequest(remembered.sourceFile)
       const styleSource = extractSfcStyleSource(styles, query.type === 'style' ? query.index : undefined)
@@ -317,6 +323,7 @@ export function createViteCssMemory(options: {
           knownSfcSources.delete(key)
         }
       }
+      sfcStyleSnapshots.prune(activeKnownSfcFiles)
     }
     pruneMapToMaxSize(rememberedCssSources, VITE_REMEMBERED_CSS_CACHE_MAX, (rememberedKey) => {
       rememberedCssSignatureByFile.delete(String(rememberedKey))
@@ -341,6 +348,7 @@ export function createViteCssMemory(options: {
       }
     }
     knownSfcSources.delete(normalizeKnownSfcSourceKey(file))
+    sfcStyleSnapshots.delete(normalizeKnownSfcSourceKey(file))
     return outputs
   }
 
@@ -354,8 +362,10 @@ export function createViteCssMemory(options: {
       rememberedCssSignatureByFile.clear()
       knownCssSources.clear()
       knownSfcSources.clear()
+      sfcStyleSnapshots.clear()
     },
     getKnownSfcSource,
+    getKnownSfcStyleSnapshot,
     getKnownCssSource,
     getRememberedCssSignature: (file: string) => rememberedCssSignatureByFile.get(normalizeOutputPathKey(file)),
     getRememberedCssSourceEntry: (file: string) => rememberedCssSources.get(normalizeOutputPathKey(file)),
@@ -369,6 +379,7 @@ export function createViteCssMemory(options: {
       knownCssSourcesRaw: summarizeStringMapCache(knownCssSources),
       knownSfcSources: knownSfcSources.size,
       knownSfcSourcesRaw: summarizeStringMapCache(knownSfcSources),
+      sfcStyleSnapshots: sfcStyleSnapshots.getStats(),
     }),
     rememberCssSource,
     rememberKnownSfcSource,
