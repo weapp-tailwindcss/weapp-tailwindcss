@@ -48,7 +48,7 @@ it.each([
   const { sfc, css } = nativePlugins()
   const source = '<template><view class="h-8" /></template><style lang="scss">.author { @apply h-8!; }</style>'
   const output = await hook(sfc, 'transform').call({}, source, id)
-  const styles = extractSfcStyleBlocks(output.code)
+  const styles = extractSfcStyleBlocks(output.code, 'Probe.uvue')
   expect(styles).toHaveLength(3)
   expect(styles[0]!.source).toContain('.weapp-tw-border')
   // 原生 compiler 的主模块按转换后 descriptor 的索引请求每个 style。
@@ -64,7 +64,7 @@ it('does not let native script requests replace the complete SFC style snapshot'
   const id = '/project/Probe.uvue'
   const source = '<template><view class="h-8" /></template><style>.author { color: red; }</style>'
   const output = await hook(sfc, 'transform').call({}, source, id)
-  const styles = extractSfcStyleBlocks(output.code)
+  const styles = extractSfcStyleBlocks(output.code, 'Probe.uvue')
   for (const [query, payload] of [
     ['type=script&setup=true&lang.uts', 'export default defineComponent({})'],
     ['type=script&lang.uts', 'export default {}'],
@@ -86,7 +86,7 @@ it('keeps external scoped styles outside the generated inline style carrier', as
   const external = '<style scoped lang="scss" src="./author.scss"></style>'
   const output = await hook(sfc, 'transform').call({}, `<template><view class="h-8" /></template>${external}`, id)
   expect(output.code).toContain(external)
-  const styles = extractSfcStyleBlocks(output.code)
+  const styles = extractSfcStyleBlocks(output.code, 'Probe.uvue')
   expect(styles).toHaveLength(3)
   expect(styles[1]!.source).toBe('')
   expect(styles[2]!.source).toContain('@apply h-8;')
@@ -105,7 +105,7 @@ it.each([
   for (const utility of ['h-8', 'h-12', '', 'h-8']) {
     const source = `<template><view class="${utility}" /></template>${author}`
     const output = await hook(sfc, 'transform').call({}, source, id)
-    const styles = extractSfcStyleBlocks(output.code)
+    const styles = extractSfcStyleBlocks(output.code, 'Probe.uvue')
     // 样式可乱序加载，缓存不能按请求顺序消费或移动索引。
     for (const index of [...styles.keys()].reverse()) {
       const request = `${id}?vue&type=style&index=${index}&inline&lang.css`
@@ -116,7 +116,7 @@ it.each([
       expect(await hook(css, 'load').call({}, `${id}?vue&type=style&index=${index}&lang.css`)).toEqual({ code: '', map: null })
     }
     const repeated = await hook(sfc, 'transform').call({}, output.code, id)
-    expect(extractSfcStyleBlocks(repeated.code)).toEqual(styles)
+    expect(extractSfcStyleBlocks(repeated.code, 'Probe.uvue')).toEqual(styles)
     if (utility) {
       const request = `${id}?vue&type=style&index=${styles.length - 1}&lang.css`
       expect((await hook(css, 'load').call({}, request)).code).toBe(styles.at(-1)!.source)
@@ -127,9 +127,13 @@ it.each([
 
 it('keeps the latest complete native SFC when older asynchronous transforms finish later', async () => {
   let release!: () => void
-  const pending = new Promise<void>((resolve) => { release = resolve })
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
   let started!: () => void
-  const ready = new Promise<void>((resolve) => { started = resolve })
+  const ready = new Promise<void>((resolve) => {
+    started = resolve
+  })
   const { sfc, css } = nativePlugins({
     registerModuleGraphCandidates: async (_id, source) => {
       if (source.includes('h-8')) {
@@ -146,7 +150,7 @@ it('keeps the latest complete native SFC when older asynchronous transforms fini
   release()
   await old
   const style = await hook(css, 'load').call({}, `${id}?vue&type=style&index=1&inline&lang.css`)
-  expect(style.code).toBe(extractSfcStyleBlocks(current.code)[1]!.source)
+  expect(style.code).toBe(extractSfcStyleBlocks(current.code, 'Probe.uvue')[1]!.source)
   expect(style.code).toContain('@apply h-12;')
   expect(style.code).not.toContain('@apply h-8;')
 })
@@ -174,9 +178,13 @@ it('does not replay raw author Sass after the native compiler has preprocessed i
 
 it('does not publish stale Web scoped rules after a newer complete SFC', async () => {
   let release!: () => void
-  const pending = new Promise<void>((resolve) => { release = resolve })
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
   let started!: () => void
-  const ready = new Promise<void>((resolve) => { started = resolve })
+  const ready = new Promise<void>((resolve) => {
+    started = resolve
+  })
   const { sfc, css } = nativePlugins({
     isWebGeneratorTarget: () => true,
     registerModuleGraphCandidates: async (_id, source) => {
@@ -214,7 +222,9 @@ it('waits for the current main transform when another transaction replaces the o
   const releases: Array<() => void> = []
   const { sfc, css } = nativePlugins({
     registerModuleGraphCandidates: async () => {
-      await new Promise<void>(resolve => { releases.push(resolve) })
+      await new Promise<void>((resolve) => {
+        releases.push(resolve)
+      })
       return new Set()
     },
   })
@@ -222,7 +232,9 @@ it('waits for the current main transform when another transaction replaces the o
   const first = hook(sfc, 'transform').call({}, '<template><view class="h-8" /></template>', id)
   await vi.waitFor(() => expect(releases).toHaveLength(1))
   let settled = false
-  const loaded = hook(css, 'load').call({}, `${id}?vue&type=style&index=1&lang.css`).finally(() => { settled = true })
+  const loaded = hook(css, 'load').call({}, `${id}?vue&type=style&index=1&lang.css`).finally(() => {
+    settled = true
+  })
   const second = hook(sfc, 'transform').call({}, '<template><view class="h-12" /></template>', id)
   await vi.waitFor(() => expect(releases).toHaveLength(2))
   releases[0]!()
@@ -231,5 +243,5 @@ it('waits for the current main transform when another transaction replaces the o
   expect(settled).toBe(false)
   releases[1]!()
   const output = await second
-  expect((await loaded).code).toBe(extractSfcStyleBlocks(output.code)[1]!.source)
+  expect((await loaded).code).toBe(extractSfcStyleBlocks(output.code, 'Probe.uvue')[1]!.source)
 })

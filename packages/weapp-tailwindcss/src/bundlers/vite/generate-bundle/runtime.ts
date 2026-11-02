@@ -89,7 +89,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const processStyles = context.shouldProcessStyles?.() ?? context.processStyles !== false
     const addWatchFile = (id: string) => this.addWatchFile?.(id)
     const { opts, runtimeState, ensureBundleRuntimeClassSet, debug, markCssAssetProcessed, isCssAssetProcessed, isViteProcessedCssAsset, resolveCssAssetIdentity, recordCssAssetResult, recordViteProcessedCssAssetResult, replaceViteProcessedCssAssetOutputs, getViteProcessedCssAssetResults, getViteProcessedCssAssetResult, getSourceCandidates, getSourceCandidateSource, getSourceCandidateSources, extractSourceCandidates, getSourceCandidatesForEntries, getSourceCandidateSourcesForEntries, waitForSourceCandidateSyncs, rememberCssSource, getRememberedCssSources, getRememberedCssSignature, setRememberedCssSignature, getKnownCssSource, getKnownSfcSource, getOriginalCssLayerSource, recordGeneratorCandidates, pruneViteCssCaches, getViteCssCacheStats, hmrTimingRecorder } = context
-    const getBundlerSfcSource = (sourceFile: string) => { const code = this.getModuleInfo?.(sourceFile)?.code; return typeof code === 'string' && hasSfcStyleSources(code) ? code : void 0 }
+    const getBundlerSfcSource = (sourceFile: string) => { const code = this.getModuleInfo?.(sourceFile)?.code; return typeof code === 'string' && hasSfcStyleSources(code, sourceFile) ? code : void 0 }
     const getSfcSource = (sourceFile: string) => getBundlerSfcSource(sourceFile) ?? getKnownSfcSource?.(sourceFile)
     const getCssSource = (sourceFile: string) => getKnownCssSource?.(sourceFile) ?? getSourceCandidateSource?.(sourceFile)
     const { cache, onEnd, onStart, onUpdate, styleHandler, templateHandler, jsHandler } = opts

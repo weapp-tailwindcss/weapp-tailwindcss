@@ -117,7 +117,7 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     const knownSfcSource = isSfcStyleSourceFile(file) ? cssMemory.getKnownSfcSource(file) : undefined
     const authorSource = knownSfcSource == null
       ? cssMemory.getKnownCssSource(requestFile) ?? code
-      : extractSfcStyleBlocks(knownSfcSource).find(style => style.index === (parseVueRequest(requestFile).query.index ?? 0))?.source ?? code
+      : extractSfcStyleBlocks(knownSfcSource, requestFile).find(style => style.index === (parseVueRequest(requestFile).query.index ?? 0))?.source ?? code
     let compiledSourceHash: string | undefined
     const createGeneratedMarker = () => createBundlerGeneratedCssMarker('vite', markerFile, compiledSourceHash)
     const generatorTransformCode = currentGeneratorBranch.isWeb ? generatorCode : normalizeMiniProgramGeneratorCssSource(generatorCode, outputFile)

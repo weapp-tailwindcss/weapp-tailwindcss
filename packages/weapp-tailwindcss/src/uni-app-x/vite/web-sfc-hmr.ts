@@ -32,7 +32,7 @@ export function createUniAppXWebSfcHmr(options: WebSfcHmrOptions) {
       // 完整 SFC 事务取代已排队的 CSS 事务，防止过滤器丢弃当前样式模块。
       options.beginSfcStyleUpdate?.()
       const source = sources.get(ctx) ?? await ctx.read()
-      if (hasUniAppXImportantApply(source, normalizeUniAppXImportantApplyForSass)) {
+      if (hasUniAppXImportantApply(source, normalizeUniAppXImportantApplyForSass, ctx.file)) {
         ctx.server.ws.send({ type: 'full-reload', path: ctx.file })
         return true
       }

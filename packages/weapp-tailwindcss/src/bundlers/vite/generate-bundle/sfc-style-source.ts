@@ -1,61 +1,27 @@
 import type { OutputChunk } from 'rollup'
 import type { BundleSnapshot } from '../bundle-state'
 import type { RememberedCssSource } from './types'
+import type { SfcStyleBlock } from '@/utils/sfc'
 import path from 'node:path'
 import { isTailwindV4CssEntry } from '@/tailwindcss/v4/css-entries'
+import { extractSfcStyleBlocks, isSfcSourceFile } from '@/utils/sfc'
 import { hasTailwindApplyDirective, hasTailwindNonRootGenerationDirectives, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../../../generation/directives'
 import { scoreTailwindV4CssSourceFileMatch } from '../../../generation/source-resolver/matching'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { CSS_SOURCE_OUTPUT_EXT_RE } from '../css-output'
 import { scoreMatchingStyleFileBase } from './style-matching'
 
-const SFC_STYLE_SOURCE_EXTENSIONS = ['.vue', '.uvue', '.nvue', '.svelte', '.mpx'] as const
-const SFC_STYLE_BLOCK_RE = /<style\b([^>]*)>([\s\S]*?)<\/style>/gi
-const SFC_SCOPED_STYLE_ATTR_RE = /(?:^|\s)scoped(?:\s|=|$)/i
-const SFC_LANG_STYLE_ATTR_RE = /(?:^|\s)lang(?:=(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`]+)))?/i
+export { extractSfcStyleBlocks } from '@/utils/sfc'
+export type { SfcStyleBlock } from '@/utils/sfc'
 
-export function isSfcStyleSourceFile(file: string) {
-  const normalizedFile = file.replace(/[?#].*$/, '')
-  return SFC_STYLE_SOURCE_EXTENSIONS.some(extension => normalizedFile.endsWith(extension))
+export const isSfcStyleSourceFile = isSfcSourceFile
+
+export function extractSfcStyleSources(source: string, filename: string) {
+  return extractSfcStyleBlocks(source, filename).map(style => style.source)
 }
 
-export interface SfcStyleBlock {
-  attrs: string
-  index: number
-  scoped: boolean
-  source: string
-}
-
-export function extractSfcStyleBlocks(source: string) {
-  const styleSources: SfcStyleBlock[] = []
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  let index = 0
-  let match = SFC_STYLE_BLOCK_RE.exec(source)
-  while (match !== null) {
-    const attrs = match[1] ?? ''
-    styleSources.push({
-      attrs,
-      index,
-      scoped: SFC_SCOPED_STYLE_ATTR_RE.test(attrs),
-      source: match[2] ?? '',
-    })
-    index += 1
-    match = SFC_STYLE_BLOCK_RE.exec(source)
-  }
-  return styleSources
-}
-
-export function extractSfcStyleSources(source: string) {
-  return extractSfcStyleBlocks(source).map(style => style.source)
-}
-
-export function hasSfcStyleSources(source: string) {
-  return extractSfcStyleSources(source).length > 0
-}
-
-function resolveSfcStyleBlockLang(attrs: string) {
-  const match = SFC_LANG_STYLE_ATTR_RE.exec(attrs)
-  return match?.[1] ?? match?.[2] ?? match?.[3]
+export function hasSfcStyleSources(source: string, filename: string) {
+  return extractSfcStyleSources(source, filename).length > 0
 }
 
 function resolveSfcStyleHandlerSourceFile(sourceFile: string, styleBlocks: SfcStyleBlock[]) {
@@ -63,8 +29,8 @@ function resolveSfcStyleHandlerSourceFile(sourceFile: string, styleBlocks: SfcSt
   return scopedStyleBlock
     ? [
         `${sourceFile}?vue&type=style&index=${scopedStyleBlock.index}&scoped=true`,
-        ...resolveSfcStyleBlockLang(scopedStyleBlock.attrs)
-          ? [`lang=${encodeURIComponent(resolveSfcStyleBlockLang(scopedStyleBlock.attrs)!)}`]
+        ...scopedStyleBlock.lang
+          ? [`lang=${encodeURIComponent(scopedStyleBlock.lang!)}`]
           : [],
       ].join('&')
     : sourceFile
@@ -82,7 +48,7 @@ function createSfcStyleRequest(sourceFile: string, styleBlock: SfcStyleBlock) {
   if (styleBlock.scoped) {
     params.set('scoped', 'true')
   }
-  const lang = resolveSfcStyleBlockLang(styleBlock.attrs)
+  const lang = styleBlock.lang
   if (lang) {
     params.set('lang', lang)
   }
@@ -98,7 +64,7 @@ export function resolveSfcStyleRequestFromKnownSource(
   if (!sfcSource) {
     return sourceFile
   }
-  const styleBlocks = extractSfcStyleBlocks(sfcSource)
+  const styleBlocks = extractSfcStyleBlocks(sfcSource, sourceFile)
   if (styleBlocks.length === 0) {
     return sourceFile
   }
@@ -160,7 +126,7 @@ export async function resolveSfcStyleSourceFromOutputFile(
     debug('sfc style source infer skipped: missing known source for %s -> %s', outputFile, sourceFile)
     return undefined
   }
-  const styleBlocks = extractSfcStyleBlocks(source)
+  const styleBlocks = extractSfcStyleBlocks(source, sourceFile)
   const rawSource = styleBlocks.map(style => style.source).join('\n')
   if (!rawSource || !hasTailwindGenerationSourceForFile(sourceFile, rawSource)) {
     debug('sfc style source infer skipped: no tailwind generation source for %s -> %s', outputFile, sourceFile)

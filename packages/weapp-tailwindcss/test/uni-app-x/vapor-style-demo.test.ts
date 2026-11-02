@@ -45,7 +45,7 @@ it('records the Vapor demo SFC and generated native CSS for every author style v
     const id = `issue-1325/${file}`
     const output = await hook(sfc, 'transform').call({}, source, id)
     const styles = []
-    for (const style of extractSfcStyleBlocks(output.code)) {
+    for (const style of extractSfcStyleBlocks(output.code, 'Probe.uvue')) {
       const request = `${id}?vue&type=style&index=${style.index}&inline&lang.css`
       const loaded = await hook(css, 'load').call({}, request)
       const input = loaded?.code ?? style.source

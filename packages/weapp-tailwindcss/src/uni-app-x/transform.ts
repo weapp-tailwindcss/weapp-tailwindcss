@@ -4,6 +4,7 @@ import type { CreateJsHandlerOptions, ICustomAttributesEntities, JsHandler } fro
 import { NodeTypes, parse as parseTemplate } from '@vue/compiler-dom'
 import { isUniAppXStyleSourceEmpty, normalizeUniAppXImportantApplyForSass } from '@weapp-tailwindcss/postcss/transform'
 import MagicString from 'magic-string'
+import { parseVueLikeSfc } from '@/utils/sfc'
 import { generateCode, replaceWxml } from '@/wxml'
 import { createAttributeMatcher } from '@/wxml/custom-attributes'
 import { injectBorderPreflightClass, shouldInjectBorderPreflight } from './border-preflight'
@@ -22,6 +23,10 @@ interface SfcBlock {
   start: number
   end: number
   attrs: string
+  blockStart: number
+  blockEnd: number
+  selfClosing: boolean
+  attributes: Record<string, string | true>
 }
 
 interface ParsedSfc {
@@ -176,64 +181,14 @@ const defaultCreateJsHandlerOptions: CreateJsHandlerOptions = {
   },
 }
 const UVUE_NVUE_RE = /\.(?:uvue|nvue)(?:\?.*)?$/
-const SFC_BLOCK_RE = /<(template|script|style)\b([^>]*)>/gi
-const SCRIPT_SETUP_RE = /(?:^|\s)setup(?:\s|=|$)/
-const STYLE_SCOPED_RE = /(?:^|\s)scoped(?:\s|=|$)/i
-
-function findSfcBlockEnd(code: string, type: string, contentStart: number) {
-  const closeTag = new RegExp(`<\\/${type}\\s*>`, 'gi')
-  if (type !== 'template') {
-    const match = closeTag.exec(code.slice(contentStart))
-    return match
-      ? {
-          blockEnd: contentStart + match.index + match[0].length,
-          contentEnd: contentStart + match.index,
-        }
-      : undefined
-  }
-
-  const tag = new RegExp(`<\\/?${type}\\b[^>]*>`, 'gi')
-  tag.lastIndex = contentStart
-  let depth = 1
-  let match = tag.exec(code)
-  while (match) {
-    if (match[0].startsWith('</')) {
-      depth -= 1
-    }
-    else if (!match[0].trimEnd().endsWith('/>')) {
-      depth += 1
-    }
-    if (depth === 0) {
-      return {
-        blockEnd: tag.lastIndex,
-        contentEnd: match.index,
-      }
-    }
-    match = tag.exec(code)
-  }
-}
 
 function parseSfc(code: string): ParsedSfc {
   const descriptor: ParsedSfc = { errors: [], styles: [] }
 
-  for (const match of code.matchAll(SFC_BLOCK_RE)) {
-    const type = match[1]!
-    const attrs = match[2] ?? ''
-    const blockStart = match.index ?? 0
-    const contentStart = blockStart + match[0].length
-    const blockBoundary = findSfcBlockEnd(code, type, contentStart)
-    if (!blockBoundary) {
-      descriptor.errors.push(new Error(`未闭合的 ${type} SFC 块`))
-      continue
-    }
-    const { contentEnd } = blockBoundary
-    const content = code.slice(contentStart, contentEnd)
-    const block: SfcBlock = {
-      content,
-      start: contentStart,
-      end: contentEnd,
-      attrs,
-    }
+  const parsed = parseVueLikeSfc(code)
+  descriptor.errors.push(...parsed.errors)
+  for (const block of parsed.blocks) {
+    const { type, content } = block
 
     if (type === 'template' && !descriptor.template) {
       try {
@@ -250,7 +205,7 @@ function parseSfc(code: string): ParsedSfc {
     }
 
     if (type === 'script') {
-      if (SCRIPT_SETUP_RE.test(attrs)) {
+      if (block.attributes['setup'] !== undefined) {
         descriptor.scriptSetup ??= block
       }
       else {
@@ -390,8 +345,8 @@ export function transformUVue(
       )
     }
 
-    const scopedStyle = [...descriptor.styles].reverse().find(style => STYLE_SCOPED_RE.test(style.attrs)
-      && !/(?:^|\s)src\s*=/.test(style.attrs)
+    const scopedStyle = [...descriptor.styles].reverse().find(style => style.attributes['scoped'] !== undefined
+      && style.attributes['src'] === undefined
       && (!options.onWebLocalStyleRules || !isUniAppXStyleSourceEmpty(style.content)))
     if (localStyleCollector && options.onWebLocalStyleRules && descriptor.template) {
       // 所有 Web 载体都需要回放缓存；HMR 可能绕过主模块直接重编译样式请求。
@@ -401,7 +356,14 @@ export function transformUVue(
     }
     if (localStyleCollector?.hasStyles() && scopedStyle && !options.onWebLocalStyleRules) {
       const separator = scopedStyle.content.endsWith('\n') ? '' : '\n'
-      ms.appendLeft(scopedStyle.end, `${separator}${localStyleCollector.toStyleRules({ native: options.native === true })}`)
+      const rules = localStyleCollector.toStyleRules({ native: options.native === true })
+      if (scopedStyle.selfClosing) {
+        // 自闭合块没有内容区间，须展开载体后写入局部规则。
+        ms.update(scopedStyle.blockStart, scopedStyle.blockEnd, `<style${scopedStyle.attrs}>${rules}</style>`)
+      }
+      else {
+        ms.appendLeft(scopedStyle.end, `${separator}${rules}`)
+      }
     }
     else if (localStyleCollector?.hasStyles() && !scopedStyle) {
       // 新增的局部样式块会单独进入预处理器，important utility 统一使用中间标记。

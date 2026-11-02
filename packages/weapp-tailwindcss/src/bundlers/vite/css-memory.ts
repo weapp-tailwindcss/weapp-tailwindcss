@@ -1,5 +1,6 @@
 import type { RememberedCssSource } from './generate-bundle'
 import path from 'node:path'
+import { extractSfcStyleBlocks } from '@/utils/sfc'
 import { isSourceStyleRequest, stripRequestQuery } from '../../generation/style-requests'
 import { normalizeOutputPathKey } from '../shared/module-graph'
 import { createViteCssSourceLifecycle, normalizeViteCssSourceOwner } from './css-memory/source-lifecycle'
@@ -10,7 +11,6 @@ import { cleanUrl, isWeappViteSidecarRequest } from './utils'
 
 const VITE_REMEMBERED_CSS_CACHE_MAX = 96
 const VITE_KNOWN_SFC_SOURCE_CACHE_MAX = 128
-const SFC_STYLE_BLOCK_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi
 const SFC_COMPONENT_FILE_RE = /\.(?:vue|uvue|nvue|svelte|mpx)$/i
 
 function toMb(bytes: number) {
@@ -56,38 +56,15 @@ export function normalizeCssSourceIdentity(sourceFile: string) {
   return normalizeOutputPathKey(stripRequestQuery(cleanSourceFile))
 }
 
-function hasSfcStyleBlocks(source: string) {
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  return SFC_STYLE_BLOCK_RE.test(source)
+function hasSfcStyleBlocks(source: string, file: string) {
+  return extractSfcStyleBlocks(source, file).length > 0
 }
 
-function extractSfcStyleBlock(source: string, index: number | undefined) {
-  const targetIndex = index ?? 0
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  let currentIndex = 0
-  let match = SFC_STYLE_BLOCK_RE.exec(source)
-  while (match !== null) {
-    if (currentIndex === targetIndex) {
-      return match[1] ?? ''
-    }
-    currentIndex++
-    match = SFC_STYLE_BLOCK_RE.exec(source)
-  }
-  return undefined
-}
-
-function extractSfcStyleSource(source: string, index: number | undefined) {
-  if (index !== undefined) {
-    return extractSfcStyleBlock(source, index)
-  }
-  const styleSources: string[] = []
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  let match = SFC_STYLE_BLOCK_RE.exec(source)
-  while (match !== null) {
-    styleSources.push(match[1] ?? '')
-    match = SFC_STYLE_BLOCK_RE.exec(source)
-  }
-  return styleSources.length > 0 ? styleSources.join('\n') : undefined
+function extractSfcStyleSource(source: string, index: number | undefined, file: string) {
+  const styles = extractSfcStyleBlocks(source, file)
+  return index === undefined
+    ? styles.length > 0 ? styles.map(style => style.source).join('\n') : undefined
+    : styles[index]?.source
 }
 
 function normalizeKnownSfcSourceKey(file: string) {
@@ -130,7 +107,7 @@ export function createViteCssMemory(options: {
     }
     // 主模块 transform 提供本轮源码；候选扫描范围之外的组件也须撤销已删除的样式。
     refreshRememberedSfcStyleSources(file, options.normalizeSfcSource?.(code, file) ?? code)
-    if (!hasSfcStyleBlocks(code)) {
+    if (!hasSfcStyleBlocks(code, file)) {
       knownSfcSources.delete(normalizeKnownSfcSourceKey(file))
       return
     }
@@ -145,9 +122,8 @@ export function createViteCssMemory(options: {
     const scanSource = options.getSourceCandidateSource(file)
     if (scanSource != null) {
       const preparedSource = options.normalizeSfcSource?.(scanSource, file) ?? scanSource
-      if (hasSfcStyleBlocks(preparedSource)) {
-        return preparedSource
-      }
+      // 当前扫描结果即使没有样式也具权威性，不能回退到旧文档。
+      return preparedSource
     }
     const key = normalizeKnownSfcSourceKey(file)
     const source = knownSfcSources.get(key)
@@ -244,11 +220,11 @@ export function createViteCssMemory(options: {
     )
     for (const remembered of matchedRememberedSources) {
       const { query } = parseVueRequest(remembered.sourceFile)
-      const styleSource = extractSfcStyleSource(source, query.type === 'style' ? query.index : undefined)
+      const styleSource = extractSfcStyleSource(source, query.type === 'style' ? query.index : undefined, file)
       if (styleSource !== undefined) {
         refreshRememberedCssSourceBySourceFile(remembered.sourceFile, styleSource)
       }
-      else if (query.type === 'style') {
+      else {
         const identity = normalizeCssSourceIdentity(remembered.sourceFile)
         for (const [key, entry] of rememberedCssSources) {
           if (normalizeCssSourceIdentity(entry.sourceFile) === identity) {
@@ -278,6 +254,9 @@ export function createViteCssMemory(options: {
       return cached
     }
     const file = cleanUrl(stripRequestQuery(sourceFile))
+    if (SFC_COMPONENT_FILE_RE.test(file)) {
+      return undefined
+    }
     const knownSource = knownCssSources.get(normalizeCssSourceIdentity(sourceFile))
     if (knownSource != null) {
       return knownSource

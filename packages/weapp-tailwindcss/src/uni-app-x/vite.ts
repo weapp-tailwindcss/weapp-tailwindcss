@@ -166,7 +166,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
   async function transformStyle(code: string, id: string, query?: ReturnType<typeof parseVueRequest>['query'], hookContext?: { addWatchFile?: (id: string) => void }) {
     const isNativeStyle = isNativeAppBuildTarget(id)
     const parsed = query ?? parseVueRequest(id).query
-    const resolvedSource = resolveUniAppXStyleSource(code, parsed)
+    const resolvedSource = resolveUniAppXStyleSource(code, parsed, undefined, id)
     if (resolvedSource.skip) {
       return
     }
@@ -267,7 +267,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         await waitForSfcTransform(filename)
       }
       const styleSource = sfcStyleSources.getOverride(filename, query.index ?? 0)
-      const resolvedSource = resolveUniAppXStyleSource(code, query, styleSource)
+      const resolvedSource = resolveUniAppXStyleSource(code, query, styleSource, filename)
       if (resolvedSource.skip) {
         return
       }
@@ -306,7 +306,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
 
   async function transformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }, authoritative = true, isCurrent = () => true) {
     if (authoritative && isWebGeneratorTarget()) {
-      for (const style of extractSfcStyleBlocks(code)) {
+      for (const style of extractSfcStyleBlocks(code, id)) {
         webCssEntryDiagnostics?.observeSourceImports(style.source, id)
       }
     }

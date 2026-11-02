@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { postcss } from '@weapp-tailwindcss/postcss/transform'
+import { extractSfcStyleBlocks, isSfcSourceFile } from '@/utils/sfc'
 import {
   hasTailwindRootDirectives,
   hasTailwindSourceDirectives,
@@ -8,7 +9,6 @@ import {
   resolveCssEntrySource,
 } from './directives'
 
-const SFC_STYLE_BLOCK_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi
 const STYLE_IMPORT_EXTENSIONS = ['.css', '.scss', '.sass', '.less', '.styl', '.stylus', '.pcss', '.postcss']
 
 export interface SourceSideCssEntryOptions {
@@ -231,32 +231,15 @@ function createSourceStylePathCandidates(
   return [...candidates]
 }
 
-function extractStyleDirectiveSources(source: string) {
-  const styleSources: string[] = []
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  let match = SFC_STYLE_BLOCK_RE.exec(source)
-  while (match !== null) {
-    const styleSource = match[1] ?? ''
-    if (hasTailwindSourceDirectives(styleSource, { importFallback: true })) {
-      styleSources.push(styleSource)
-    }
-    match = SFC_STYLE_BLOCK_RE.exec(source)
-  }
-  if (styleSources.length > 0) {
-    return styleSources
-  }
-  return hasTailwindSourceDirectives(source, { importFallback: true }) ? [source] : []
+function getStyleSources(source: string, sourceFile: string, isCss: boolean) {
+  return !isCss && isSfcSourceFile(sourceFile)
+    ? extractSfcStyleBlocks(source, sourceFile).map(style => style.source)
+    : [source]
 }
 
-function extractSfcStyleSources(source: string) {
-  const styleSources: string[] = []
-  SFC_STYLE_BLOCK_RE.lastIndex = 0
-  let match = SFC_STYLE_BLOCK_RE.exec(source)
-  while (match !== null) {
-    styleSources.push(match[1] ?? '')
-    match = SFC_STYLE_BLOCK_RE.exec(source)
-  }
-  return styleSources
+function extractStyleDirectiveSources(source: string, sourceFile: string, isCss: boolean) {
+  return getStyleSources(source, sourceFile, isCss)
+    .filter(styleSource => hasTailwindSourceDirectives(styleSource, { importFallback: true }))
 }
 
 function isLocalStyleImportRequest(request: string | undefined) {
@@ -283,12 +266,10 @@ function resolveLocalStyleImportFile(request: string, base: string) {
   return undefined
 }
 
-function collectLocalStyleImportFiles(source: string, base: string) {
+function collectLocalStyleImportFiles(source: string, sourceFile: string, isCss: boolean) {
   const files: string[] = []
-  const sources = extractSfcStyleSources(source)
-  if (sources.length === 0) {
-    sources.push(source)
-  }
+  const base = path.dirname(sourceFile)
+  const sources = getStyleSources(source, sourceFile, isCss)
   for (const styleSource of sources) {
     try {
       const root = postcss.parse(styleSource)
@@ -313,15 +294,15 @@ function extractStyleDirectiveSourcesDeep(
   source: string,
   sourceFile: string,
   seen: Set<string>,
+  isCss = false,
 ): Array<{ source: string, file: string }> {
-  const ownSources = extractStyleDirectiveSources(source)
+  const ownSources = extractStyleDirectiveSources(source, sourceFile, isCss)
   if (ownSources.some(styleSource => hasTailwindRootDirectives(styleSource, { importFallback: true }))) {
     return ownSources.map(styleSource => ({ source: styleSource, file: sourceFile }))
   }
 
   const sources: Array<{ source: string, file: string }> = []
-  const base = path.dirname(sourceFile)
-  for (const importedFile of collectLocalStyleImportFiles(source, base)) {
+  for (const importedFile of collectLocalStyleImportFiles(source, sourceFile, isCss)) {
     const normalizedImportedFile = path.resolve(importedFile)
     if (seen.has(normalizedImportedFile)) {
       continue
@@ -354,9 +335,10 @@ export function resolveSourceSideCssEntrySource(
 ): SourceSideCssEntrySource | undefined {
   for (const sourceFile of createSourceStylePathCandidates(file, sourceOptions)) {
     try {
-      const source = sourceOptions.sourceFile
+      const usingSourceCss = Boolean(sourceOptions.sourceFile
         && path.resolve(sourceOptions.sourceFile) === path.resolve(sourceFile)
-        && typeof sourceOptions.sourceCss === 'string'
+        && typeof sourceOptions.sourceCss === 'string')
+      const source = usingSourceCss
         ? sourceOptions.sourceCss
         : existsSync(sourceFile)
           ? readFileSync(sourceFile, 'utf8')
@@ -364,7 +346,7 @@ export function resolveSourceSideCssEntrySource(
       if (source === undefined) {
         continue
       }
-      const directiveSources = extractStyleDirectiveSourcesDeep(source, sourceFile, new Set([path.resolve(sourceFile)]))
+      const directiveSources = extractStyleDirectiveSourcesDeep(source, sourceFile, new Set([path.resolve(sourceFile)]), usingSourceCss)
       for (const styleSource of directiveSources) {
         const cssEntrySource = resolveCssEntrySource(styleSource.source, path.dirname(styleSource.file), resolveOptions)
         if (cssEntrySource) {

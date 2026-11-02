@@ -30,13 +30,13 @@ export function createUniAppXSfcStyleSources() {
       const file = cleanUrl(id)
       const previous = snapshots.get(file)
       // 重复转换已发布的 SFC 时保留原作者来源，避免把生成块重新当成作者块。
-      const authored = previous?.output === source ? previous.authored : extractSfcStyleBlocks(source)
-      const styles = extractSfcStyleBlocks(output)
+      const authored = previous?.output === source ? previous.authored : extractSfcStyleBlocks(source, file)
+      const styles = extractSfcStyleBlocks(output, file)
       const overrides = new Map<number, string>()
       const indices = managedIndices.get(file) ?? new Set<number>()
       for (const [index, style] of styles.entries()) {
         // 外部样式始终由框架按 src 加载，不能用 SFC 的空内文覆盖。
-        if (/(?:^|\s)src\s*=/.test(style.attrs)) {
+        if (style.src !== undefined) {
           continue
         }
         indices.add(index)
@@ -61,7 +61,7 @@ export function createUniAppXSfcStyleSources() {
   }
 }
 
-export function resolveUniAppXStyleSource(code: string, query: VueStyleQuery, styleSource?: string) {
+export function resolveUniAppXStyleSource(code: string, query: VueStyleQuery, styleSource?: string, filename = 'Component.uvue') {
   // Vite 的 CSS HMR 模块可能没有 `vue&type=style` 查询参数，但其内容仍是
   // 包含完整 SFC/template 的包装代码。此类 payload 不能继续交给 PostCSS。
   if (VITE_CSS_HMR_MODULE_RE.test(code)) {
@@ -73,7 +73,7 @@ export function resolveUniAppXStyleSource(code: string, query: VueStyleQuery, st
   if (styleSource === '') {
     return { code: '' }
   }
-  const styleBlocks = extractSfcStyleBlocks(code)
+  const styleBlocks = extractSfcStyleBlocks(code, filename)
   if (styleBlocks.length === 0) {
     return { code }
   }
@@ -86,6 +86,6 @@ export function resolveUniAppXStyleSource(code: string, query: VueStyleQuery, st
   return style ? { code: style.source } : { skip: true as const }
 }
 
-export function hasUniAppXImportantApply(source: string, normalize: (source: string) => string) {
-  return extractSfcStyleBlocks(source).some(style => normalize(style.source) !== style.source)
+export function hasUniAppXImportantApply(source: string, normalize: (source: string) => string, file: string) {
+  return extractSfcStyleBlocks(source, file).some(style => normalize(style.source) !== style.source)
 }

@@ -71,7 +71,7 @@ async function createFixture(target: 'weapp' | 'web') {
       candidates = new Set(nodes.flat())
       const source = `<template>${nodes.map(utilities => `<view class="${utilities.join(' ')}" />`).join('')}</template>`
       const sfc = await transform(sfcPlugin, source, id)
-      const localCss = extractSfcStyleBlocks(sfc.code).map(style => style.source).join('\n')
+      const localCss = extractSfcStyleBlocks(sfc.code, 'Probe.uvue').map(style => style.source).join('\n')
       const aliases = new Map<string, string>()
       postcss.parse(localCss).walkRules((rule) => {
         rule.walkAtRules('apply', (apply) => {
