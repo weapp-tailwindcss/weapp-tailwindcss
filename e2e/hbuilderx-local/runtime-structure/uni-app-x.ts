@@ -39,7 +39,7 @@ function __wtInstallRuntimeStructure() {
           for (const node of __wtRuntimeElements(root, '#' + id)) { nodes.push(__wtRuntimeNode(node)) }
         }
         sequence++
-        console.log(${prefix} + JSON.stringify({ schemaVersion: 1, runId: ${nonce}, adapter: 'uni-app-x-element', instanceId, sequence, token: marker.getAttribute('data-wt-runtime-token') ?? '', pixelRatio: uni.getWindowInfo().pixelRatio, markerCount, marker: nodes[0], nodes }))
+        console.log(${prefix} + JSON.stringify({ schemaVersion: 1, runId: ${nonce}, adapter: 'uni-app-x-element', instanceId, sequence, token: marker.dataset.get('wtRuntimeToken') as string ?? '', pixelRatio: uni.getWindowInfo().pixelRatio, markerCount, marker: __wtRuntimeNode(marker), nodes }))
       } catch (error) {
         console.log(${prefix} + JSON.stringify({ runId: ${nonce}, error: String(error) }))
       }

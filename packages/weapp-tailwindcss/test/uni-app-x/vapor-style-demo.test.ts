@@ -60,5 +60,6 @@ it('records the Vapor demo SFC and generated native CSS for every author style v
     artifacts.push({ file, source, transformed: output.code, styles })
   }
   // 这是插件层静态产物，不代表 HBuilderX 编译或设备运行已通过。
-  await expect(JSON.stringify(artifacts, null, 2)).toMatchFileSnapshot('./__snapshots__/vapor-style-demo.json')
+  const appSource = await fs.readFile(path.resolve(root, 'App.uvue'), 'utf8')
+  await expect(JSON.stringify({ appSource, artifacts }, null, 2)).toMatchFileSnapshot('./__snapshots__/vapor-style-demo.json')
 })

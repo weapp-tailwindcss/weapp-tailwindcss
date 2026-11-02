@@ -64,7 +64,7 @@ export function injectRuntimeStructureProbe(source: string, runId: string, adapt
   if (adapter === 'uni-app-x-element') {
     const helper = createUniAppXElementProbe(runId, nodeIds)
     if (!script) {
-      return `${source}\n<script lang="uts">${helper}\nexport default { setup() { __wtInstallRuntimeStructure() } }</script>\n`
+      return `${source}\n<script setup lang="uts">${helper}\n__wtInstallRuntimeStructure()\n</script>\n`
     }
     const body = normal ? extendOptions(script.content, { setup: '__wtInstallRuntimeStructure()' }) : `${script.content}\n__wtInstallRuntimeStructure()\n`
     return source.slice(0, script.loc.start.offset) + helper + body + source.slice(script.loc.end.offset)

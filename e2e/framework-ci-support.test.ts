@@ -201,7 +201,7 @@ describeFrameworkCi('framework support matrix ci', () => {
       'uni-app-x-vdom-tailwindcss-v4 android',
       'uni-app-x-vdom-tailwindcss-v4 ios',
       'uni-app-x-vdom-tailwindcss-v4 harmony',
-      'uni-app-x-vapor-tailwindcss-v4 ios vapor',
+      'uni-app-x-vapor-tailwindcss-v4 ios vapor native-reload',
       'uni-app-x-vapor-tailwindcss-v4 harmony vapor',
     ])
     for (const item of appCases) {

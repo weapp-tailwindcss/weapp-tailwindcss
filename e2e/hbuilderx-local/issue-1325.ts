@@ -14,9 +14,11 @@ export function createIssue1325IosCase(launchArgs: string[]): AppCase {
     { name: 'restore-author-style', color: '#9f1239', mutation: { file, append: initial } },
   ]
   return {
-    name: 'uni-app-x-vapor-tailwindcss-v4 ios vapor',
+    name: 'uni-app-x-vapor-tailwindcss-v4 ios vapor native-reload',
     renderMode: 'vapor',
     platform: 'app-ios',
+    // 5.34 无插件原生对照也会重启；仅此回归显式验收原生重载。
+    updateMode: 'native-reload',
     projectDir: 'demo/uni-app-x-vapor-tailwindcss-v4',
     outputDir: 'unpackage/dist/dev/app-ios',
     sourceFile: file,

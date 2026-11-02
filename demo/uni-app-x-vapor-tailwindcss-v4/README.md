@@ -45,7 +45,11 @@ CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x/vapor-style-
 真实 iOS 验收入口在仓库根目录执行，按多端手册绑定设备、保留 IDE 会话：
 
 ```bash
-CI=1 E2E_HBUILDERX_LOCAL=1 E2E_HBUILDERX_CASE='uni-app-x-vapor-tailwindcss-v4 ios vapor' pnpm e2e:hbuilderx:local:ios
+CI=1 E2E_HBUILDERX_LOCAL=1 E2E_HBUILDERX_CASE='uni-app-x-vapor-tailwindcss-v4 ios vapor native-reload' pnpm e2e:hbuilderx:local:ios
 ```
 
-此入口将本轮 token 与子组件作者 style 的新增、替换、删除、恢复合并为一次保存，不触发额外的父页面更新；逐轮保存截图和六个真实 UniElement 矩形。尺寸门禁验证生成的布局持续存在；作者文字颜色和背景色还需结合截图核对。首次原生运行后再登记真实 bytes 文件，不预设 Harmony 的产物类名。当前原生验收状态和限制见 [排查记录](../../docs/engineering/lessons/uni-app-x-vapor-style-snapshot.md)。
+此入口将本轮 token 与子组件作者 style 的新增、替换、删除、恢复合并为一次保存，不触发额外的父页面更新；逐轮保存截图和六个真实 UniElement 矩形。尺寸门禁验证生成的布局持续存在；作者文字颜色和背景色还需结合截图核对。
+
+HBuilderX 5.34、iPhone 18 Pro / iOS 27.2 的首屏及四轮更新已通过。保存会产生新的 `App Launch`；独立的[无插件原生 CSS 对照](../../e2e/fixtures/issue-1325-vapor-native-control/README.md)也会重启，所以此专属入口显式报告 `native-reload`，不计作纯 HMR。其他 iOS/Harmony 用例保持原有模式。`App.uvue` 使用 `script setup` 生命周期，结构探针从原生 dataset Map 读取当前 token。
+
+当前 bytecode 的真实样式在 `unpackage/dist/dev/app-ios/bytes/*.style.bytes`；nativecode 对应 `.style.mm`，两者不可混用。完整验证和原报告间歇故障尚未复现的边界见[排查记录](../../docs/engineering/lessons/uni-app-x-vapor-style-snapshot.md)。

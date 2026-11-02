@@ -94,6 +94,9 @@ describe('HBuilderX local helpers', () => {
 
   it('Vapor 作者样式的连续变更与本轮 marker 在同一子组件保存中交付', async () => {
     const item = createIssue1325IosCase([])
+    expect(item.updateMode).toBe('native-reload')
+    expect(item.hmrSteps!.map(step => step.name)).toEqual(['add-author-style', 'replace-author-style', 'delete-author-style', 'restore-author-style'])
+    expect(item.runtimeNodes).toEqual(['page', 'none', 'plain', 'scoped', 'multiple', 'native'].map(name => ({ id: `issue-1325-${name}`, width: 120, height: 32 })))
     const root = await fs.mkdtemp(path.resolve(os.tmpdir(), 'vapor-author-style-'))
     const file = path.resolve(root, item.sourceFile)
     try {
