@@ -98,7 +98,7 @@ describe('真实探针的阻断条件', () => {
     await mkdir(path.join(dir, 'package.nw'))
     await writeFile(path.join(dir, 'package.nw', 'package.json'), JSON.stringify({ name: '微信开发者工具', version: '2.02.2608070' }))
     run.mockResolvedValue('{"login":false}')
-    await expect(wechat({ ...context, binding: { command: cli, appid: 'wx6ffee4673b257014' } })).rejects.toThrow('登录未确认')
+    await expect(wechat({ ...context, phase: 'prepare', binding: { command: cli } })).rejects.toThrow('登录未确认')
     expect(run).not.toHaveBeenCalled()
     expect((await wechatVersion(cli)).version).toBe('2.02.2608070')
     expect(run.mock.calls.every(([, args]) => !args.includes('--version'))).toBe(true)

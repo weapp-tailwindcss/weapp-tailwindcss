@@ -1,6 +1,6 @@
 import type { MiniProgram } from '@weapp-vite/miniprogram-automator'
 import type { ProbeContext, ProbeOutput } from '../types'
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -20,6 +20,7 @@ import { availablePort } from './port'
 import { rustToolchain } from './rust'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
+import { assertWechatProbeProject, createWechatProbeProject, inspectWechatProbeProject } from './wechat-project'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
   const manifest = JSON.parse(await readFile(path.join(ctx.root, 'package.json'), 'utf8'))
@@ -70,41 +71,33 @@ export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {
   return { detail: 'HBuilderX CLI/host/channel、项目查询及平台组件入口通过。', binding: { command: cli, host, version, channel, ...await hbuilderxTools(cli) } }
 }
 
-export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
+export async function wechat(ctx: ProbeContext): Promise<ProbeOutput & { binding: Record<string, string> }> {
   const appid = ctx.phase === 'prepare' ? resolveWechatAppId() : assertWechatAppIdBinding(ctx.binding?.['appid'])
-  const binding = { ...await existingWechatService(ctx.binding?.command), appid }
-  if (ctx.binding?.httpPort && ctx.binding.httpPort !== binding.httpPort) {
+  const fixture = ctx.phase === 'prepare' ? undefined : await assertWechatProbeProject(ctx, appid)
+  const binding = { ...await existingWechatService(ctx.binding?.['command']), appid, ...fixture }
+  if (ctx.binding?.['httpPort'] && ctx.binding['httpPort'] !== binding.httpPort) {
     throw new Error('微信 IDE HTTP 服务端口已改变；必须重新 prepare。')
   }
   await assertWechatLogin(binding.httpPort)
   process.stdout.write(`[preflight] 微信 IDE 127.0.0.1:${binding.httpPort} 登录查询通过；此项不代表项目操作或运行时已通过。\n`)
   if (ctx.phase === 'live') {
-    return { detail: '微信 IDE 已有 HTTP 服务与登录状态可用；未启动 CLI。', binding }
+    return { detail: '微信探针项目来源、已有 HTTP 服务与登录状态可用；未启动 CLI。', binding }
   }
-  const project = path.join(ctx.dir, 'wechat-project')
-  await mkdir(path.join(project, 'pages', 'probe'), { recursive: true })
-  const files: Record<string, string> = {
-    'project.config.json': JSON.stringify({ appid, projectname: `preflight-${ctx.runId}`, compileType: 'miniprogram', miniprogramRoot: './', setting: { es6: true } }),
-    'app.json': JSON.stringify({ pages: ['pages/probe/index'], window: { navigationBarTitleText: '环境预检' } }),
-    'app.js': 'App({})',
-    [path.join('pages', 'probe', 'index.js')]: `Page({data:{marker:${JSON.stringify(ctx.runId)},clicked:false},tap(){this.setData({clicked:true})}})`,
-    [path.join('pages', 'probe', 'index.json')]: '{}',
-    [path.join('pages', 'probe', 'index.wxml')]: '<view id="marker">{{marker}}</view><button id="probe" bindtap="tap">验证</button><view id="result">{{clicked}}</view>',
+  if (ctx.phase === 'prepare') {
+    await createWechatProbeProject(ctx, appid)
   }
-  for (const [name, content] of Object.entries(files)) {
-    await writeFile(path.join(project, name), content)
-  }
+  const project = path.resolve(ctx.dir, 'wechat-project')
   const port = await availablePort()
   let mini: MiniProgram | undefined
   let openedByProbe = false
   const screenshot = path.join(ctx.dir, 'wechat.png')
-  return runWithCleanup(async () => {
+  const output = await runWithCleanup(async () => {
     try {
       // 仅请求已开启的 IDE 服务，避免 CLI 隐式启动触发登录票据刷新。
       process.stdout.write(`[preflight] 打开本轮微信探针 ${project}，自动化端口 ${port}\n`)
       const opened = await wechatRequest(binding.httpPort, { kind: 'auto', project, port }, 30_000)
       openedByProbe = true
-      if (opened.autoPort !== port) {
+      if (opened['autoPort'] !== port) {
         throw new Error('微信 IDE 自动化端口与本轮请求不一致。')
       }
       await assertWechatLogin(binding.httpPort)
@@ -155,4 +148,9 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
       await closeWechatProject(project, mini, 10_000, binding.httpPort)
     }
   })
+  // IDE 可以在首次运行时补写默认配置；只有探针和项目清理均成功才封存。
+  const verifiedFixture = ctx.phase === 'prepare'
+    ? await inspectWechatProbeProject(ctx, appid)
+    : await assertWechatProbeProject(ctx, appid)
+  return { ...output, binding: { ...binding, ...verifiedFixture } }
 }
