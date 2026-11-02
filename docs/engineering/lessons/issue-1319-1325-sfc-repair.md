@@ -9,6 +9,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/sfc-style-boundary.unit.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
   - e2e/hbuilderx-source-mutations.test.ts
+  - e2e/hbuilderx-source-only.test.ts
   - e2e/fixtures/issue-1325-style-boundary.repro.test.ts
 ---
 
@@ -55,6 +56,14 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-source-mutations.
 ```
 
 这些测试不启动设备，也不作为原始平台的通过证据。
+
+另补 e2e 私有的外部 CSS 独立更新入口：父 SFC 字节保持不变，外部文件须预先登记到原生恢复清单；每步等待新编译同步、实际节点与产物内容变化，停止与恢复仍由原 runner 统一负责。失败不能被吞掉或通过后续重试覆盖，原生停止未知时保留源码现场。以下四个离线回归文件共 54 项通过，包含 Windows/UNC/相对路径、软链、串行更新、falsy 拒绝值和清理边界：
+
+```sh
+pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-app-process-cleanup.test.ts e2e/hbuilderx-source-only.test.ts e2e/hbuilderx-hmr-lifecycle.test.ts e2e/hbuilderx-source-mutations.test.ts --update=none
+```
+
+临时原工程矩阵还修正了追加普通 style 与既有 scoped 规则优先级不同导致的误判；新增块保持对应作用域，逐步保存产物哈希。20 项矩阵/恢复离线检查及 10 项编译 hook 追踪检查通过，仍不等同于设备矩阵通过。
 
 PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态槽声明。补充经过延迟插件入口的删除回归，在旧声明上报同一初始化错误；登记钩子后，30 项槽位/事务回归和 4 项框架组装回归通过。没有移除或放宽声明校验。
 
