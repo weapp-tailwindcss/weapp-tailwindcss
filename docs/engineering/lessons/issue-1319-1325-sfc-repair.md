@@ -46,7 +46,7 @@ pnpm agents:check
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 ```
 
-32 文件、398 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
+最新复验为 32 文件、399 项通过，包含原四项失败语义、实际 bundle 删除/替换/文件退出、异步交错、错误恢复、POSIX/Windows/UNC/相对 module id，以及属性内 `>`、CRLF、嵌套模板、空块、多块、预处理器、外部 src、CSS 伪标签和扫描伪指令。另补无作者 style 的完整 SFC 请求：没有对应块时跳过 CSS，已发布的生成块 override 仍生效，空 override 清除旧样式。包的 ESM/CJS 与声明构建通过；架构及规则检查通过。
 
 验收器的 replace 与 append 现在组合成一次保存，避免丢失 append 或产生额外原生重载；Web 同文件追加也保持一次保存。四个辅助测试文件共 42 项通过：
 
@@ -69,6 +69,8 @@ pnpm exec vitest run --config e2e/fixtures/issue-1325-style-boundary.vitest.ts -
 
 两次均 5 项通过；常规包单测同时保留独立正确性断言。快照记录完整 SFC、转换结果及三个索引的请求/返回。修复前日志和快照保留，未用成功重跑覆盖失败。
 
+真实 H5 构建的 `e2e/issue-1319-static.test.ts` 以 `--update=none` 复验 1 项通过，已有产物快照无差异；这仅证明构建输出，不计入原生运行态验收。
+
 ## 原工程与设备验收
 
 原工程仍固定 `cq112233/unibestX@b239192f46611f51877aef48ca851b4c67c47f44`，A 使用原锁 npm 5.6.3，B 使用修复版完整运行时闭包。B 原验收目录在恢复时已不存在，因此从同一原提交重新建立独立副本并安装，没有复制 A 的可写依赖目录。旧 B 的源码归档、tarball、安装 receipt、编译失败及截图继续保留。
@@ -77,9 +79,13 @@ pnpm exec vitest run --config e2e/fixtures/issue-1325-style-boundary.vitest.ts -
 
 HBuilderX 固定 5.34.2026102909，iOS 固定 iPhone 18 Pro / iOS 27.2。隐私页“同意并进入应用”的既有授权保留。旧预检均已关闭或阻断，不能复用；全部设备验收仍须新 prepare、当前会话 computer use、verify 和领取。
 
-B 在 `a40769d` 后重打完整运行时闭包。21 个 tarball 及实际可达的 21 个包、1374 个文件、36 条内部运行时依赖边均逐一核对；不把 pnpm store 中旧版本实例误计为当前入口。实际 Vite CJS 入口 SHA256 为 `d27c08e0cfca34e2da795bfca4eeaa2840daf8d557eecc118661920b93071ce7`，B 锁哈希为 `c061217c5353a4111ff728d20946b960935623f94153422149230467430cc930`。A/B 直接依赖锁差异仅为 `weapp-tailwindcss`；DCloud、Tailwind、Vue、Vite 保持原锁。B 的 frozen install 通过。tarball 没有原生 `.node` 二进制，本轮消费 JS 后端。
+B 在 `8ef80b1` 后重打 R3 完整运行时闭包，旧 R2 receipt 保留。21 个 tarball 及实际可达的 21 个包、1374 个文件、36 条内部运行时依赖边均逐一核对；不把 pnpm store 中旧版本实例误计为当前入口。R3 实际 Vite CJS 入口 SHA256 为 `d4fce46a49241624487cfe60e548a2dc5529a2b7d5a46d971ea4f3292fa5c1ad`，B 锁哈希为 `d92e5b2a345bc5a0ff9e1e08247f38441848ae0e8e42b1917031e589dd399ca9`。A/B 直接依赖锁差异仅为 `weapp-tailwindcss`；Tailwind 4.3.3、Vue 3.5.44、Vite 5.2.8 及 DCloud 配套版本保持原锁。B 的 `pnpm install --frozen-lockfile --ignore-scripts` 通过。tarball 没有原生 `.node` 二进制，本轮消费 JS 后端。
+
+原工程的 `manifest.config.ts` 虽注释声称回退原 manifest，实际会把未提供环境变量的 DCloud AppID 和 uniCloud spaceId 置空。A/B 均通过原生成入口显式保留原提交的 `VITE_DCLOUD_APPID`、`VITE_UNICLOUD_SPACE_ID`，同时提供用户授权的 `VITE_WX_APPID`；后续受控启动继承同一环境，避免构建时再次清空。此为验收环境固定，不修改原工程厂商或业务代码。
 
 用户明确选择 Pixel 5 后，经 Android Studio 启动已安装的 `Pixel_5`，核对为 `emulator-5554`。本轮 `87910ff3-2d48-4e4e-8a90-8025b99334fe` 的 prepare 中微信、HBuilderX、iOS、Android、Harmony、Web 全通过；Chrome 原生入口超时后，另起本轮预检，以应用内入口完成真实 AX 读取、截图、输入、点击及完成回执，保留实际调用记录。随后 verify 的微信再次在 `App.getCurrentPage` 超时，门禁仍阻断。此前原生 UI 保存的基础库 3.17.6 错误为 `appLaunch with non-empty page stack`，不是业务样式结论。所有失败报告和截图均保留；没有复用失败报告继续设备调度。
+
+同时修正了预检自身的确定缺陷：仅 prepare 创建临时微信 fixture，成功运行并关闭后封存；verify/live 只读校验，来源被篡改时失败，不再重写六个文件后继续。四个定向回归文件共 96 项通过。修正后的新轮次 `a896c308-9139-4725-a6fd-eb01925bbb95` 中 prepare 和真实 computer use 均通过，verify 仍在 `App.getCurrentPage within 1979ms` 超时，收尾截图也超时。因此该修正不能被描述为 IDE 卡死的唯一根因。已阻断并结束本轮服务、关闭任务浏览器页，保留用户 IDE 与设备会话；后续须安全恢复 IDE 后重新预检。
 
 ## 适用边界
 
