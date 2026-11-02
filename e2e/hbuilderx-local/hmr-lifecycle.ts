@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import { StringDecoder } from 'node:string_decoder'
 import { setTimeout } from 'node:timers/promises'
 import { stripVTControlCharacters } from 'node:util'
+import { createIosUpdateTransactions } from './ios-update-transactions'
 
 export type AppUpdateMode = 'hmr' | 'native-reload'
 
@@ -30,7 +31,7 @@ export function observeHmrStep(
   let overflow = false
   let runtimeVerified = false
   let verifiedTransfer: string | undefined
-  let orderedOutput = ''
+  const iosTransactions = platform === 'app-ios' ? createIosUpdateTransactions() : undefined
   const subscribe = (name: 'stdout' | 'stderr') => {
     const decoder = new StringDecoder('utf8')
     const receive = (chunk: Buffer | string) => {
@@ -39,9 +40,7 @@ export function observeHmrStep(
       }
       const text = typeof chunk === 'string' ? chunk : decoder.write(chunk)
       outputs[name] += text
-      if (platform === 'app-ios') {
-        orderedOutput += text
-      }
+      iosTransactions?.update(name, outputs[name])
       overflow = Buffer.byteLength(outputs.stdout) + Buffer.byteLength(outputs.stderr) > 32 * 1024 * 1024
     }
     child[name]?.on('data', receive)
@@ -50,13 +49,7 @@ export function observeHmrStep(
   const subscriptions = [subscribe('stdout'), subscribe('stderr')]
   const output = () => `${outputs.stdout}\n${outputs.stderr}`
   const modeLabel = mode === 'native-reload' ? '原生热重载' : '纯 HMR'
-  const readIosTransfer = () => {
-    const text = stripVTControlCharacters(orderedOutput)
-    const started = Math.max(text.lastIndexOf('开始差量编译'), text.lastIndexOf('开始编译'))
-    const compiled = text.lastIndexOf('编译成功')
-    const synced = text.lastIndexOf('同步手机端程序文件成功')
-    return started >= 0 && compiled > started && synced > compiled ? `${started}:${compiled}:${synced}` : undefined
-  }
+  const readIosTransfer = () => iosTransactions?.read()
   const hasCurrentRuntimeEvidence = () => runtimeVerified && verifiedTransfer === readIosTransfer()
   const state = () => {
     const observed = classifyHmrStep(output())
@@ -108,6 +101,11 @@ export function observeHmrStep(
       }
       if (platform === 'app-ios' && !verifyRuntime) {
         throw new Error('iOS HMR 缺少运行时验证：中间产物与同步日志不能证明设备已更新')
+      }
+      if (platform === 'app-ios') {
+        // 每次显式等待都重新取证，旧证据不能干扰等待中的新事务检查。
+        runtimeVerified = false
+        verifiedTransfer = undefined
       }
       const startedAt = Date.now()
       while (Date.now() - startedAt < timeoutMs) {

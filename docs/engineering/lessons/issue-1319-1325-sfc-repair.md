@@ -14,6 +14,8 @@ regressions:
   - packages/weapp-tailwindcss/test/uni-app-x/vite-style-transactions.test.ts
   - e2e/hbuilderx-source-mutations.test.ts
   - e2e/hbuilderx-source-only.test.ts
+  - e2e/hbuilderx-ios-hmr-completion.test.ts
+  - e2e/hbuilderx-ios-update-transactions.test.ts
   - e2e/fixtures/issue-1325-style-boundary.repro.test.ts
   - benchmark/version-compare/test/invalidation-instrumentation.test.mjs
 ---
@@ -134,7 +136,29 @@ iOS 26.5 这次在 600000ms 内未生成开发产物，App Launch 和节点证�
 
 ## 适用边界
 
-当前两个 Issue 的结论均为“验证未完成”：尚未取得修复版原首页的微信/Harmony Vapor 边框全序列，以及 Vapor+iOS 的十次冷启动和十轮连续更新。H5、VDOM、静态回归及 CI 不替代这些证据。后续按首次偏离记录编译、产物、节点与截图，严格 HMR 与原生重载分别统计。
+### R6 与当前设备的复验
+
+R6 固定运行时源码 `49e347ee8dd6e3a652139a590179014c4ed04ecf`，21 包、1376 文件、36 条内部依赖边和独立 frozen install 均核对通过；1728 条外部包记录保持不变，实际 Vite 入口 SHA256 为 `68098ccc067de5e64b5462f395b68b15275be9b85afcd3b64f85751a52f85b1c`。当前绑定可见的 iPhone 18 Pro / iOS 27.2，UUID 为 `28D7A00A-CBF8-45BD-8ADF-56299C346E72`，Device Hub、simctl 与 HBuilderX 5.34 身份一致，使用现有 ARM64 runtime。此前 iOS 26.5 的基座下载和显示失败只属于旧设备记录。用户另已指定 Harmony 的 Pura 90 new，Android 继续使用 Pixel 5；保留用户原有设备及 IDE 会话。
+
+A npm 5.6.3 与 B R6 的原首页分别完成一次 Vapor 首屏验证：当前运行 token、实际 173×41 marker、背景 `#6d28d9`、App Launch 1 次及源码恢复均通过。七个实际 style 请求与独立 compiler-sfc descriptor 的索引、内容一致。旧版在这一范围也通过，原报告的首屏故障未复现，不能由此认定根治。该批首屏仅完整归档 app-service 与 manifest，没有保存全部原生 `.bytes` 副本，证据限制继续保留；后续矩阵已逐步复制完整产物并记录逐文件 hash。
+
+B 原首页的严格 HMR 在第一次保存后出现 App Launch，按 `restarted` 失败；计划 40 次更新，只取得初始运行态证据，Launch 共 2 次。runner 正常停止、源码恢复，首次失败保留。后续 `native-reload` 验证必须另计，不能覆盖这一严格 HMR 失败。
+
+B 的 child / 无作者 style 单次冷启动通过；四个节点均为 120×32，Tailwind 与原生 CSS 背景一致。首屏和最终各 193 项原生产物的字节、hash 已独立核对。首次竞争样式矩阵在新增普通作者背景时失败，但作者规则与 utility 均完整到达最终 CSS 和原生 bytes；同一节点同时携带普通作者背景与 scoped utility，无法单凭该期待确定原生级联应由谁获胜。保留该失败，不改产品级联，也不把它认作来源或索引丢失。后续独立矩阵使用八个节点分别观察 utility、作者规则及原生对照，避免背景竞争；旧失败仍单列。
+
+独立矩阵首次 40 次原生重载验收在第 3 轮删除时超时：首屏及前 10 次更新完成，App Launch 共 12 次，源码已恢复。冻结 SFC、style 请求和最终 bytes 均保留了前两轮恢复的作者规则、删除了本轮替换块，未发现样式交接偏离；不能把尚未执行的设备采样补成通过。日志显示第一次编译成功后，第二次编译先于第一次同步完成开始，随后第二次明确报告“编译结果未发生变化，跳过同步”。验收器只比较最后的 start、success、sync，无法消费此终态，因而没有调用本步设备取证。该确定的完成判定缺陷须按编译事务及传输归属修复，最新未结算事务仍阻断，后续 no-change 也必须重新取得当前 token、节点和截图；不延长超时或放宽严格 HMR。
+
+验收器现按本轮日志事件维护编译与同步事务，第二次编译不会抢占第一次传输的完成。无变化只结算对应编译，不能替代真实传输；全部事务结束后，设备证据身份同时绑定真实传输和最新结算序号。新编译或同步仍使旧证据失效，显式重新等待会重新采样。真实交错顺序先在旧实现复现失败，再通过修复；本任务 worktree 的六文件 102 项回归、规则与 diff 检查通过，独立实现树另有严格类型及 ESLint 检查，审查补充覆盖 482 个 UTF-8/ANSI 字节切点。设备复验须使用新门禁，旧超时记录保持失败。
+
+```sh
+pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hbuilderx-ios-hmr-completion.test.ts e2e/hbuilderx-ios-update-transactions.test.ts e2e/hbuilderx-hmr-lifecycle.test.ts e2e/hbuilderx-source-only.test.ts e2e/hbuilderx-app-process-cleanup.test.ts e2e/hbuilderx-source-mutations.test.ts --update=none
+```
+
+微信首次“通过”已撤回：automator 1.4.0 的 `retries: 0` 会发出零次请求后抛出 `undefined`，临时 harness 又以 truthy 判断漏报。修正实际调用次数和 unknown 错误聚合后，本地微信 55 项、Web/Harmony 59 项离线回归通过；真实首页重验在作用域遍历报 AiSkillSection 实例数 0。当前 CUA 截图能看到首页组件，但声明图经 app-root、layout-component、tab-page-host 和 slot 包裹，不等于真实渲染归属；尚未执行边框采样，不能判为组件未渲染或样式失败。新观察补丁保留每次查询的 partial，并只对已实际返回的 wrapper 做一次有界诊断，诊断命中不能使验收通过；冻结真实别名映射后八文件 71 项离线回归通过。设备复验继续定位首个偏离，不放宽唯一实例要求。
+
+准确 head `49e347ee8` 的正式 PR CI 已全部结束：234 项成功、29 项条件跳过、2 项失败，独立诊断检查不混入正式计数。失败为 Taro Vite HMR 时间预算及其汇总：中位耗时 1968→2220ms（+12.80%），稳态 p95 1968→2636ms（+33.94%）。原始 job 日志、artifacts 与 SHA 均保留，按正式 raw 重算得到相同违规，未发现可撤销结果的计时错误。唯一 input / 自然 GC 诊断本轮没有复现变慢；候选相同，但部分 CSS 原文包含各自准备根，不能声称全部输入身份相同，GC 证据也不足以归因原尖峰。诊断成功不能替代正式预算，不为换结果重跑或制造提交。Lynx iOS 首次因 GitHub ARM64 runner 容量取消、没有执行步骤；保留 annotations 与 job 日志 404 的事实，一次受控重试后成功。
+
+当前两个 Issue 的结论均为“验证未完成”：尚未取得修复版原首页的微信/Harmony Vapor 边框全序列，以及 Vapor+iOS 的十次冷启动和十轮连续更新。H5、VDOM、静态回归及 CI 不替代这些证据。严格 HMR 的已知重启失败继续单列；原生重载即使通过也不改变它的结论。
 
 Refs #1319，Refs #1325；不自动合并 PR 或关闭 Issue。
 
