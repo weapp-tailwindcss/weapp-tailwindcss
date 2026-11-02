@@ -91,4 +91,16 @@ describe('SFC top-level style boundaries', () => {
     const code = `.example::after { content: '<style>.fake{}</style>'; }`
     expect(resolveUniAppXStyleSource(code, { vue: true, type: 'style', index: 0 } as any, '.author{}')).toEqual({ code })
   })
+
+  it.each([
+    '<script>const text = "<style>@apply h-8;</style>"</script><template><view /></template>',
+    '<!-- <style>@apply h-8;</style> --><template><view /></template>',
+    '<template><view /></template><style></style>',
+    '<template><view /></template><style> \r\n </style>',
+  ])('does not pass a style-less full SFC to CSS processing: %s', (code) => {
+    const query = { vue: true, type: 'style', index: 0 } as any
+    expect(resolveUniAppXStyleSource(code, query)).toEqual({ skip: true })
+    expect(resolveUniAppXStyleSource(code, query, '.generated{}')).toEqual({ code: '.generated{}' })
+    expect(resolveUniAppXStyleSource(code, query, '')).toEqual({ code: '' })
+  })
 })

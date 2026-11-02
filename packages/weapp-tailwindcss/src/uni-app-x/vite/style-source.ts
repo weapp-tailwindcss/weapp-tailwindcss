@@ -2,6 +2,7 @@ import type { parseVueRequest } from '@/bundlers/vite/query'
 import { normalizeUniAppXImportantApplyForSass } from '@weapp-tailwindcss/postcss/transform'
 import { extractSfcStyleBlocks } from '@/bundlers/vite/generate-bundle/sfc-style-source'
 import { cleanUrl } from '@/bundlers/vite/utils'
+import { parseVueLikeSfc } from '@/utils/sfc'
 
 const VITE_CSS_HMR_MODULE_RE = /\b(?:const\s+__vite__css\s*=|__vite__updateStyle\s*\()/
 
@@ -74,7 +75,7 @@ export function resolveUniAppXStyleSource(code: string, query: VueStyleQuery, st
     return { code: '' }
   }
   const styleBlocks = extractSfcStyleBlocks(code, filename)
-  if (styleBlocks.length === 0) {
+  if (styleBlocks.length === 0 && !parseVueLikeSfc(code).complete) {
     return { code }
   }
   // HX 的 CSS 编译可能早于本 hook；仅完整 SFC payload 需要按快照取块，
