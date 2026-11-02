@@ -13,6 +13,7 @@ regressions:
   - e2e/hbuilderx-source-mutations.test.ts
   - e2e/hbuilderx-source-only.test.ts
   - e2e/fixtures/issue-1325-style-boundary.repro.test.ts
+  - benchmark/version-compare/test/invalidation-instrumentation.test.mjs
 ---
 
 # SFC 样式边界与事务修复
@@ -71,9 +72,13 @@ PR 首轮 CI 的真实 H5 构建发现新增 `watchChange` 未同步 Vite 静态
 
 完整 CI 后续发现 `uni-app-x/vite.ts` 为 502 行，超过既有 500 行门槛；本地同一回归先复现失败，再将 bundle 样式占位与 Harmony 产物注入整体提取至 `vite/style-placeholder.ts`。原入口降至 443 行，新模块 103 行，不删空行凑数或放宽规则；原有实际 bundle 与事务回归继续验证相同行为，行数回归纳入上述 407 项。
 
-`2ac24b4d13a950f723703a49b64109ab18ec65bf` 的 [Mpx benchmark 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401524) 记录构建插件中位耗时 909→991ms、构建峰值 RSS 1091.01→1179.13MB、稳态 RSS 1034.70→1102.87MB、HMR 峰值 RSS 1439.58→1554.29MB 和稳态 RSS 1427.78→1534.14MB；均超过原有 5% 门槛。[Taro Vite 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401537) 为 HMR 插件 p95 1711→1857ms，三次样本中两次回归。原始 job 日志与完整 benchmark/GC artifacts 已保存，不能据其他检查成功忽略这些失败；没有通过提高阈值或反复重跑放行。
+`2ac24b4d13a950f723703a49b64109ab18ec65bf` 的 [Mpx benchmark 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401524) 记录构建插件中位耗时 909→991ms、构建峰值 RSS 1091.01→1179.13MB、稳态 RSS 1034.70→1102.87MB、HMR 峰值 RSS 1439.58→1554.29MB 和稳态 RSS 1427.78→1534.14MB；均超过原有 5% 门槛。[Taro Vite 首次失败](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41405977435/job/125148401537) 为 HMR 插件 p95 1711→1857ms，三次样本中两次回归。原始 job 日志、Mpx benchmark/GC artifacts 与 Taro benchmark artifacts 已保存，不能据其他检查成功忽略这些失败；没有通过提高阈值或反复重跑放行。
 
 补充确定的解析工作量回归后，对无 `<style` 的 Vue-like 输入直接返回空样式；可能包含标签时继续使用顶层解析器，Svelte 在负判定前独立分派。同一次 CSS memory 刷新只解析一次，规范化前后字符串不同时分别解析；来源扫描的指令与 import 遍历共享同一解析结果。没有跨刷新全局缓存或长期持有 AST。七项新增回归同时断言解析次数、生成块索引变化、删除、外部 src 空槽和来源扫描结果。局部 kernel 的八索引刷新中位耗时由约 3.827ms 降至 0.537ms，实际七个 Mpx 源码合计约 0.113→0.031ms；这些局部数据不能证明整条 Mpx/Taro CI 性能门禁已通过。
+
+`1a555c150d91ab873c2f10f6629f2fe4729b5f4e` 的全部 PR 检查随后结束：233 项成功、29 项按条件跳过、3 项失败。失败为 [Taro Webpack 构建](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41411745466/job/125166515552)、[Uni Vite HMR RSS](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41411745466/job/125166515523) 及性能汇总。Taro 构建中位耗时 18805.03→20063.41ms，增加 6.69%；Uni HMR 峰值 RSS 1065.46→1228.52MB、稳态 1044.55→1129.44MB，反序确认仍超预算。首次原日志均保留，没有重跑或调整原门槛。
+
+同一源码以 Node 24.22.1 在本地完成一次 Uni `--input-diagnostics`：固定基线 `80efee1e22769557c4c73308c546f446c929320a`，三次构建、同 watcher 三轮修改和回滚。实际 worker 身份与两侧入口均已核对；不能把本地 Node 24 的诊断当作 Linux Node 22.23.4 的正式预算结论。归一工程根后，初始候选快照相同；首次修改时扫描快照与真实模板产物的更新时序不同，后续 watch 事件次数也不同，因此额外的 service 重建尚不能归为性能根因。当前记录缺失具体失效 id 与命中原因，新增仅对 Uni input 准备副本生效的追踪，保留 watchChange、compiler.invalidate、每个 root 的依赖/候选命中和版本变化、服务失效身份。单次 iterable 不预消费，未注册 observer 时不求诊断详情，不主动 GC，不改正式预算和关闭顺序。6 个定向测试文件共 64 项通过，包含真实 Node fixture、异常传播、锚点原子失败和固定观测上限；诊断补丁本身不计为性能修复。
 
 类型检查仍失败，仅保留已在基线复现的五项诊断：`generic-web-production-fast-path.ts:100` 的 TS2379；`weapp-tw-web-rpx-finalize-loader.ts:28` 的 TS2322、34/35 的 TS4111、40 的 TS2345。本次没有新增诊断，不能据此写成类型检查通过。
 
@@ -94,7 +99,7 @@ pnpm exec vitest run --config e2e/fixtures/issue-1325-style-boundary.vitest.ts -
 
 微信原 AppID `wx6d379a8c0aff3ea3` 的打开错误已通过原生 UI 查明为“登录用户不是该小程序的开发者”，不是样式结论。保留截图 `wechat-permission/original.png`，未重置登录或修改票据。用户随后明确授权验收副本使用 weapp-tailwindcss demo AppID `wxb3d842a4a7e3440d`；新验收通过原工程现有 `VITE_WX_APPID` 配置入口覆盖并重新预检，记录该差异。
 
-HBuilderX 固定 5.34.2026102909，iOS 固定 iPhone 18 Pro / iOS 27.2。隐私页“同意并进入应用”的既有授权保留。旧预检均已关闭或阻断，不能复用；全部设备验收仍须新 prepare、当前会话 computer use、verify 和领取。
+HBuilderX 固定 5.34.2026102909；iOS 最初绑定 iPhone 18 Pro / iOS 27.2，后续按用户授权切换现有设备，分别记录运行环境。隐私页“同意并进入应用”的既有授权保留。旧预检均已关闭或阻断，不能复用；全部设备验收仍须新 prepare、当前会话 computer use、verify 和领取。
 
 B 在 `8ef80b1` 后重打 R3 完整运行时闭包，旧 R2 receipt 保留。21 个 tarball 及实际可达的 21 个包、1374 个文件、36 条内部运行时依赖边均逐一核对；不把 pnpm store 中旧版本实例误计为当前入口。R3 实际 Vite CJS 入口 SHA256 为 `d4fce46a49241624487cfe60e548a2dc5529a2b7d5a46d971ea4f3292fa5c1ad`，B 锁哈希为 `d92e5b2a345bc5a0ff9e1e08247f38441848ae0e8e42b1917031e589dd399ca9`。A/B 直接依赖锁差异仅为 `weapp-tailwindcss`；Tailwind 4.3.3、Vue 3.5.44、Vite 5.2.8 及 DCloud 配套版本保持原锁。B 的 `pnpm install --frozen-lockfile --ignore-scripts` 通过。tarball 没有原生 `.node` 二进制，本轮消费 JS 后端。
 
@@ -113,6 +118,12 @@ CI 行数修复后，以 `7f85958ecb399cc7f104155a0f505026a3713ed4` 的运行时
 随后只运行一次带 `DEBUG=automator:protocol` 的有界微信 worker 诊断，使用全新 UUID 和独立临时项目，不生成可领取报告。IDE 2.02.2608080、SDK 3.17.5 的握手原响应保存；四次 `App.getCurrentPage` 中，前两次返回 `getPageMetaByWebviewId(null)` 元数据错误，后两次取得有效 pageId/path，随后真实节点、点击、数据和截图均成功，worker 正常退出。此结果说明该次短暂未就绪由现有轮询收敛，不能反推旧超时的唯一根因，也不能替代新的全端预检。此前 UI 的 SDK 3.17.6 记录继续单列，不与本次握手混报。
 
 新的 `50703b2d-e5a8-4951-bdad-e03dfa6179cb` 各平台脚本探针通过，当前会话 Chrome 原生入口超时后立即记录阻断并结束服务。切换应用内浏览器后重新建立 `7541b033-1082-4f12-9b8e-989c88325b8d`，以真实 AX、输入、点击、PNG 和实际工具调用 ID 完成 computer use，verify 全部通过。但任务领取以 `pnpm exec` 启动，实际 PATH 比 prepare/verify 的脚本运行环境少了同一 pnpm 安装的 `node-gyp-bin`，完整身份比较正确阻断，设备测试尚未启动。本轮已结束并关闭任务标签页。任务启动器现固定这个实际工具目录，仍执行完整身份比较；只读身份核对通过，下一轮须随新代码重新 prepare，不复用已阻断报告。
+
+全端 `1172` 轮次完成新 prepare、真实 computer use、verify 和领取后，B R5 在 iOS 27.2 的原首页已完成 Vapor 编译，未再次出现 `mp-html` 的 `Unknown word`；捕获 1 次带本轮 token 的 App Launch，但隐私页仍覆盖首页。Device Hub 未显示该运行窗口，未取得真实节点，最终截图超时，运行态证据为 0。该次编译成功只缩小编译故障范围，不算首屏或样式验收通过；runner 正常停止、源码恢复确认，首次失败保留。
+
+用户随后授权 iOS 27.0；该 runtime 明确报 `runtime path not found`，未启动产品测试。用户改为授权使用当前已有模拟器后，选择现有 iPhone 17 Pro / iOS 26.5。新全端 `66231b5a` 的 prepare、当前会话真实交互、verify 与完整身份领取均通过；微信旧任务服务锁仅在确认原进程已退出、项目归属本任务且 IDE 回到项目列表后归档回收，账号与用户配置保持原样。该轮先完成上述 Uni 诊断，再启动 B R5 原首页。
+
+iOS 26.5 这次在 600000ms 内未生成开发产物，App Launch 和节点证据均为 0。HBuilderX 原日志表明其先下载缺失的 `launcher-x-vapor-ios-simulator@5.34.2026102719`，遭遇 HTTP/2 `ContentReSendError` 和读取超时，尚未进入编译；已安装的带 `-arm64` 组件是另一基座，不能替代。当前会话 UI 也显示“iOS模拟器(x86_64)正在下载”。已按多端手册请求用户完成官方组件下载，没有复制、重命名基座或修改厂商文件。独立的显示阻塞仍存在：同一 UUID 在 simctl 为 Booted、devicectl 为 shutdown，Device Hub 跳过 framebuffer 后保持 Disconnected，再启动报 NSError 405。两个首次失败现场均已保存，runner 停止与源码恢复确认，门禁关闭；恢复组件与设备显示后须重新完整预检。
 
 ## 适用边界
 
