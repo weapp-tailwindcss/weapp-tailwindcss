@@ -1,0 +1,14 @@
+<script setup lang="uts">
+import StyleMatrix from '../../components/issue-1325/matrix.uvue'
+</script>
+
+<template>
+  <view>
+    <view id="issue-1325-route" class="h-[32px] w-[120px] bg-[#0e7490]"><text>route</text></view>
+    <StyleMatrix />
+  </view>
+</template>
+
+<style>
+.issue-1325-route-author { color: #111827; }
+</style>

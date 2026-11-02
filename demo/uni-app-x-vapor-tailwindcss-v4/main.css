@@ -5,6 +5,7 @@
 }
 @source "./App.uvue";
 @source "./pages/**/*.{uts,uvue}";
+@source "./components/**/*.{uts,uvue}";
 @source not "./unpackage/**/*";
 @custom-variant system-dark {
   @media (prefers-color-scheme: dark) {

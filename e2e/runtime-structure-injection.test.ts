@@ -25,6 +25,7 @@ function element(text = '真实设备文字') {
     id: 'native-hmr-probe',
     tagName: 'VIEW',
     textContent: text,
+    dataset: new Map([['wtRuntimeToken', 'actual-render-token']]),
     parentElement: null as unknown,
     getAttribute: (name: string) => name === 'id' ? marker.id : name === 'data-wt-runtime-token' ? 'actual-render-token' : null,
     getBoundingClientRect: () => ({ left: 12, top: 45, width: 173, height: 41 }),
@@ -37,17 +38,17 @@ describe('运行时结构源码适配', () => {
   it.each(['uni-app-renderjs', 'uni-app-x-element'] as const)('纯模板页面允许添加%s所需的逻辑脚本', (adapter) => {
     const generated = injectRuntimeStructureProbe('<template><view>original</view></template>', 'current-run', adapter)
     const descriptor = parseRuntimeProbeSource(generated)
-    expect(descriptor.script).not.toBeNull()
     if (adapter === 'uni-app-renderjs') {
+      expect(descriptor.script).not.toBeNull()
       expect(() => compileScript(descriptor, { id: 'runtime-probe' })).not.toThrow()
       expect(generated).toContain('methods: { __wtRuntimeReport')
     }
     else {
       const mounted = vi.fn()
-      const options = evaluate(script(generated), { require: () => ({ onMounted: mounted, onUnmounted: vi.fn() }) })
-      options.setup()
+      expect(descriptor.script).toBeNull()
+      expect(descriptor.scriptSetup?.lang).toBe('uts')
+      evaluate(script(generated), { require: () => ({ onMounted: mounted, onUnmounted: vi.fn() }) })
       expect(mounted).toHaveBeenCalledOnce()
-      expect(descriptor.script!.lang).toBe('uts')
     }
   })
 
@@ -62,6 +63,7 @@ describe('运行时结构源码适配', () => {
     const clear = vi.fn()
     const logs: string[] = []
     const marker = element()
+    marker.getAttribute = name => name === 'id' ? marker.id : null
     const text = { ...element(), tagName: 'TEXT', value: '真实设备文字' }
     const root = { getAttribute: () => '', querySelectorAll: () => [marker] }
     marker.parentElement = root
@@ -76,6 +78,20 @@ describe('运行时结构源码适配', () => {
       clearInterval: clear,
       uni: { getElementById: getElement, getWindowInfo: () => ({ pixelRatio: 3 }) },
       console: { log: (value: string) => logs.push(value) },
+      JSON: {
+        stringify(value: unknown) {
+          const seen = new Set<object>()
+          return JSON.stringify(value, (_key, item: unknown) => {
+            if (item !== null && typeof item === 'object') {
+              if (seen.has(item)) {
+                return null
+              }
+              seen.add(item)
+            }
+            return item
+          })
+        },
+      },
     })
     expect(options.setup()).toEqual({ business: 42 })
     expect(getElement).not.toHaveBeenCalled()

@@ -1,0 +1,12 @@
+<template>
+  <view id="issue-1325-multiple" class="h-[32px] w-[120px] bg-[#0e7490]">
+    <text class="issue-1325-multiple-author">multiple</text>
+  </view>
+</template>
+
+<style>
+.issue-1325-multiple-author { color: #111827; }
+</style>
+<style scoped>
+.issue-1325-multiple-author { color: #334155; }
+</style>

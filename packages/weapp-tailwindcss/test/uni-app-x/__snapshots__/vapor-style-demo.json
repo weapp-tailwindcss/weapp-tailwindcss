@@ -1,0 +1,127 @@
+{
+  "appSource": "<script setup lang=\"uts\">\nimport { onAppHide, onAppShow, onExit, onLaunch } from '@dcloudio/uni-app'\n\nonLaunch(() => { console.log('App Launch') })\nonAppShow(() => { console.log('App Show') })\nonAppHide(() => { console.log('App Hide') })\nonExit(() => { console.log('App Exit') })\n</script>\n\n<style lang=\"scss\">\n@import './main.css';\n</style>\n",
+  "artifacts": [
+    {
+      "file": "pages/issue-1325/index.uvue",
+      "source": "<script setup lang=\"uts\">\nimport StyleMatrix from '../../components/issue-1325/matrix.uvue'\n</script>\n\n<template>\n  <view>\n    <view id=\"issue-1325-route\" class=\"h-[32px] w-[120px] bg-[#0e7490]\"><text>route</text></view>\n    <StyleMatrix />\n  </view>\n</template>\n\n<style>\n.issue-1325-route-author { color: #111827; }\n</style>\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<script setup lang=\"uts\">\nimport StyleMatrix from '../../components/issue-1325/matrix.uvue'\n</script>\n\n<template>\n  <view class=\"weapp-tw-border\">\n    <view id=\"issue-1325-route\" class=\"weapp-tw-border wtu-1hh0dz1-0 wtu-zimxue-1 wtu-1mdksnh-2\"><text class=\"weapp-tw-border\">route</text></view>\n    <StyleMatrix />\n  </view>\n</template>\n\n<style>\n.issue-1325-route-author { color: #111827; }\n</style>\n\n<style scoped>\n/*! weapp-tailwindcss local-utility */\n.wtu-1hh0dz1-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-zimxue-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1mdksnh-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": "",
+          "css": "\n.issue-1325-route-author { color: #111827; }\n"
+        },
+        {
+          "index": 2,
+          "attrs": " scoped",
+          "css": ".wtu-1hh0dz1-0 {\n  height: 32px;\n}\n.wtu-zimxue-1 {\n  width: 120px;\n}\n.wtu-1mdksnh-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    },
+    {
+      "file": "components/issue-1325/matrix.uvue",
+      "source": "<script setup lang=\"uts\">\nimport NoAuthorStyle from './none.uvue'\nimport PlainAuthorStyle from './plain.uvue'\nimport ScopedAuthorStyle from './scoped.uvue'\nimport MultipleAuthorStyles from './multiple.uvue'\n</script>\n\n<template>\n  <view>\n    <text>Issue 1325：每个色块应为 120 × 32 px</text>\n    <view id=\"issue-1325-page\" class=\"h-[32px] w-[120px] bg-[#0e7490]\"><text>page</text></view>\n    <NoAuthorStyle />\n    <PlainAuthorStyle />\n    <ScopedAuthorStyle />\n    <MultipleAuthorStyles />\n    <view id=\"issue-1325-native\" class=\"issue-1325-native\"><text>native CSS</text></view>\n  </view>\n</template>\n\n<style>\n.issue-1325-native {\n  width: 120px;\n  height: 32px;\n  background-color: #0e7490;\n}\n</style>\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<script setup lang=\"uts\">\nimport NoAuthorStyle from './none.uvue'\nimport PlainAuthorStyle from './plain.uvue'\nimport ScopedAuthorStyle from './scoped.uvue'\nimport MultipleAuthorStyles from './multiple.uvue'\n</script>\n\n<template>\n  <view class=\"weapp-tw-border\">\n    <text class=\"weapp-tw-border\">Issue 1325：每个色块应为 120 × 32 px</text>\n    <view id=\"issue-1325-page\" class=\"weapp-tw-border wtu-149od2q-0 wtu-1lheasj-1 wtu-106hh3e-2\"><text class=\"weapp-tw-border\">page</text></view>\n    <NoAuthorStyle />\n    <PlainAuthorStyle />\n    <ScopedAuthorStyle />\n    <MultipleAuthorStyles />\n    <view id=\"issue-1325-native\" class=\"weapp-tw-border issue-1325-native\"><text class=\"weapp-tw-border\">native CSS</text></view>\n  </view>\n</template>\n\n<style>\n.issue-1325-native {\n  width: 120px;\n  height: 32px;\n  background-color: #0e7490;\n}\n</style>\n\n<style scoped>\n/*! weapp-tailwindcss local-utility */\n.wtu-149od2q-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1lheasj-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-106hh3e-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": "",
+          "css": "\n.issue-1325-native {\n  width: 120px;\n  height: 32px;\n  background-color: #0e7490;\n}\n"
+        },
+        {
+          "index": 2,
+          "attrs": " scoped",
+          "css": ".wtu-149od2q-0 {\n  height: 32px;\n}\n.wtu-1lheasj-1 {\n  width: 120px;\n}\n.wtu-106hh3e-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    },
+    {
+      "file": "components/issue-1325/none.uvue",
+      "source": "<template>\n  <view>\n    <view id=\"issue-1325-none\" class=\"h-[32px] w-[120px] bg-[#0e7490]\">\n      <text class=\"issue-1325-none-author\">none</text>\n    </view>\n  </view>\n</template>\n\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<template>\n  <view class=\"weapp-tw-border\">\n    <view id=\"issue-1325-none\" class=\"weapp-tw-border wtu-8fxey1-0 wtu-1oc3g8i-1 wtu-16lcynd-2\">\n      <text class=\"weapp-tw-border issue-1325-none-author\">none</text>\n    </view>\n  </view>\n</template>\n\n\n<style scoped>\n/*! weapp-tailwindcss local-utility */\n.wtu-8fxey1-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1oc3g8i-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-16lcynd-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": " scoped",
+          "css": ".wtu-8fxey1-0 {\n  height: 32px;\n}\n.wtu-1oc3g8i-1 {\n  width: 120px;\n}\n.wtu-16lcynd-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    },
+    {
+      "file": "components/issue-1325/plain.uvue",
+      "source": "<template>\n  <view id=\"issue-1325-plain\" class=\"h-[32px] w-[120px] bg-[#0e7490]\">\n    <text class=\"issue-1325-plain-author\">plain</text>\n  </view>\n</template>\n\n<style>\n.issue-1325-plain-author { color: #111827; }\n</style>\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<template>\n  <view id=\"issue-1325-plain\" class=\"weapp-tw-border wtu-1qbgaej-0 wtu-980apk-1 wtu-jwfhnn-2\">\n    <text class=\"weapp-tw-border issue-1325-plain-author\">plain</text>\n  </view>\n</template>\n\n<style>\n.issue-1325-plain-author { color: #111827; }\n</style>\n\n<style scoped>\n/*! weapp-tailwindcss local-utility */\n.wtu-1qbgaej-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-980apk-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-jwfhnn-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": "",
+          "css": "\n.issue-1325-plain-author { color: #111827; }\n"
+        },
+        {
+          "index": 2,
+          "attrs": " scoped",
+          "css": ".wtu-1qbgaej-0 {\n  height: 32px;\n}\n.wtu-980apk-1 {\n  width: 120px;\n}\n.wtu-jwfhnn-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    },
+    {
+      "file": "components/issue-1325/scoped.uvue",
+      "source": "<template>\n  <view id=\"issue-1325-scoped\" class=\"h-[32px] w-[120px] bg-[#0e7490]\">\n    <text class=\"issue-1325-scoped-author\">scoped</text>\n  </view>\n</template>\n\n<style scoped>\n.issue-1325-scoped-author { color: #111827; }\n</style>\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<template>\n  <view id=\"issue-1325-scoped\" class=\"weapp-tw-border wtu-1j0zitr-0 wtu-1vwdywc-1 wtu-1c95mfr-2\">\n    <text class=\"weapp-tw-border issue-1325-scoped-author\">scoped</text>\n  </view>\n</template>\n\n<style scoped>\n.issue-1325-scoped-author { color: #111827; }\n/*! weapp-tailwindcss local-utility */\n.wtu-1j0zitr-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1vwdywc-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1c95mfr-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": " scoped",
+          "css": ".issue-1325-scoped-author {\n  color: #111827;\n}\n.wtu-1j0zitr-0 {\n  height: 32px;\n}\n.wtu-1vwdywc-1 {\n  width: 120px;\n}\n.wtu-1c95mfr-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    },
+    {
+      "file": "components/issue-1325/multiple.uvue",
+      "source": "<template>\n  <view id=\"issue-1325-multiple\" class=\"h-[32px] w-[120px] bg-[#0e7490]\">\n    <text class=\"issue-1325-multiple-author\">multiple</text>\n  </view>\n</template>\n\n<style>\n.issue-1325-multiple-author { color: #111827; }\n</style>\n<style scoped>\n.issue-1325-multiple-author { color: #334155; }\n</style>\n",
+      "transformed": "<style>\n.weapp-tw-border {\n    border-width: 0\n}\n</style>\n<template>\n  <view id=\"issue-1325-multiple\" class=\"weapp-tw-border wtu-47mk6z-0 wtu-1y7u5k-1 wtu-155f0sz-2\">\n    <text class=\"weapp-tw-border issue-1325-multiple-author\">multiple</text>\n  </view>\n</template>\n\n<style>\n.issue-1325-multiple-author { color: #111827; }\n</style>\n<style scoped>\n.issue-1325-multiple-author { color: #334155; }\n/*! weapp-tailwindcss local-utility */\n.wtu-47mk6z-0 {\n  @apply h-[32px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-1y7u5k-1 {\n  @apply w-[120px];\n}\n/*! weapp-tailwindcss local-utility */\n.wtu-155f0sz-2 {\n  @apply bg-[#0e7490];\n}\n</style>\n",
+      "styles": [
+        {
+          "index": 0,
+          "attrs": "",
+          "css": "\n.weapp-tw-border {\n    border-width: 0\n}\n"
+        },
+        {
+          "index": 1,
+          "attrs": "",
+          "css": "\n.issue-1325-multiple-author { color: #111827; }\n"
+        },
+        {
+          "index": 2,
+          "attrs": " scoped",
+          "css": ".issue-1325-multiple-author {\n  color: #334155;\n}\n.wtu-47mk6z-0 {\n  height: 32px;\n}\n.wtu-1y7u5k-1 {\n  width: 120px;\n}\n.wtu-155f0sz-2 {\n  background-color: #0e7490;\n}"
+        }
+      ]
+    }
+  ]
+}

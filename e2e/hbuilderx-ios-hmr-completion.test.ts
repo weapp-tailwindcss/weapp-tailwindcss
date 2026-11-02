@@ -5,16 +5,16 @@ import { observeHmrStep } from './hbuilderx-local/hmr-lifecycle'
 
 const transfer = '开始差量编译...\n项目 demo 编译成功。\n同步手机端程序文件成功\n'
 
-function createStep() {
+function createStep(mode: 'hmr' | 'native-reload') {
   const stdout = new PassThrough()
   const stderr = new PassThrough()
   const child = Object.assign(new ChildProcess(), { stdout, stderr })
-  return { stdout, stderr, observer: observeHmrStep(child, 'app-ios') }
+  return { stdout, stderr, observer: observeHmrStep(child, 'app-ios', mode) }
 }
 
-describe('iOS 本轮 HMR 完成契约', () => {
+describe.each(['hmr', 'native-reload'] as const)('iOS 本轮更新完成契约：%s', (mode) => {
   it('缺少设备取证回调立即拒绝，不能用 pending 表示通过', async () => {
-    const { stdout, observer } = createStep()
+    const { stdout, observer } = createStep(mode)
     try {
       stdout.emit('data', transfer)
       await expect(observer.waitForCompletion(100, () => {})).rejects.toThrow('iOS HMR 缺少运行时验证')
@@ -29,7 +29,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
     '项目 demo 编译成功。\n同步手机端程序文件成功\n',
     `${transfer}开始差量编译...\n`,
   ])('只有中间产物或未完成传输不得执行设备验收：%s', async (output) => {
-    const { stdout, observer } = createStep()
+    const { stdout, observer } = createStep(mode)
     const runtime = vi.fn(async () => {})
     try {
       stdout.emit('data', output)
@@ -41,7 +41,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
   })
 
   it('不同输出流不能把早于编译的同步完成拼成正确顺序', async () => {
-    const { stdout, stderr, observer } = createStep()
+    const { stdout, stderr, observer } = createStep(mode)
     const runtime = vi.fn(async () => {})
     try {
       stderr.emit('data', '同步手机端程序文件成功\n')
@@ -53,7 +53,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
   })
 
   it('当轮编译、传输、设备取证全部完成后才记录 updated', async () => {
-    const { stdout, observer } = createStep()
+    const { stdout, observer } = createStep(mode)
     let release!: () => void
     const runtime = vi.fn((_remainingMs: number, _transfer: string) => new Promise<void>((resolve) => {
       release = resolve
@@ -71,20 +71,27 @@ describe('iOS 本轮 HMR 完成契约', () => {
     finally { observer.dispose() }
   })
 
-  it('同步完成后、设备取证期间到达的重启仍使严格 HMR 失败', async () => {
-    const { stdout, observer } = createStep()
+  it('取证期间重启仅在显式原生重载模式允许', async () => {
+    const { stdout, observer } = createStep(mode)
     try {
       stdout.emit('data', transfer)
-      await expect(observer.waitForCompletion(100, () => {}, async () => {
+      const completed = observer.waitForCompletion(100, () => {}, async () => {
         stdout.emit('data', 'App Launch\n')
-      })).rejects.toThrow('restarted')
+      })
+      if (mode === 'hmr') {
+        await expect(completed).rejects.toThrow('restarted')
+      }
+      else {
+        await expect(completed).resolves.toBeUndefined()
+        expect(observer.snapshot().runtimeVerified).toBe(true)
+      }
       expect(observer.snapshot().state).toBe('restarted')
     }
     finally { observer.dispose() }
   })
 
   it.each([false, true])('取证期间新编译 complete=%s 必须作废旧证据', async (complete) => {
-    const { stdout, observer } = createStep()
+    const { stdout, observer } = createStep(mode)
     const runtime = vi.fn(async (_remainingMs: number, _transfer: string) => 'current').mockImplementationOnce(async () => {
       stdout.emit('data', complete ? transfer : '开始差量编译...\n')
       return 'stale'
@@ -107,7 +114,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
   })
 
   it('设备证明返回后再次开始编译会使完成状态失效', async () => {
-    const { stdout, observer } = createStep()
+    const { stdout, observer } = createStep(mode)
     try {
       stdout.emit('data', transfer)
       await observer.waitForCompletion(100, () => {}, async () => {})

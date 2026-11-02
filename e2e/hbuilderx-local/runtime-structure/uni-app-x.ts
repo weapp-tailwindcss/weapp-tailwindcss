@@ -1,5 +1,5 @@
 /** 由 UniElement 提供真实节点，不读取模板或截图推导文字与布局。 */
-export function createUniAppXElementProbe(runId: string) {
+export function createUniAppXElementProbe(runId: string, nodeIds: string[] = []) {
   const nonce = JSON.stringify(runId)
   const prefix = JSON.stringify(`WT_RUNTIME_STRUCTURE_${runId}=`)
   return `
@@ -34,8 +34,12 @@ function __wtInstallRuntimeStructure() {
         const markerCount = __wtRuntimeElements(root, '#native-hmr-probe').length + (root.getAttribute('id') == 'native-hmr-probe' ? 1 : 0)
         const nodes = [__wtRuntimeNode(marker)] as UTSJSONObject[]
         for (const node of __wtRuntimeElements(marker, 'text')) { nodes.push(__wtRuntimeNode(node)) }
+        for (const id of ${JSON.stringify(nodeIds)} as string[]) {
+          if (root.getAttribute('id') == id) { nodes.push(__wtRuntimeNode(root)) }
+          for (const node of __wtRuntimeElements(root, '#' + id)) { nodes.push(__wtRuntimeNode(node)) }
+        }
         sequence++
-        console.log(${prefix} + JSON.stringify({ schemaVersion: 1, runId: ${nonce}, adapter: 'uni-app-x-element', instanceId, sequence, token: marker.getAttribute('data-wt-runtime-token') ?? '', pixelRatio: uni.getWindowInfo().pixelRatio, markerCount, marker: nodes[0], nodes }))
+        console.log(${prefix} + JSON.stringify({ schemaVersion: 1, runId: ${nonce}, adapter: 'uni-app-x-element', instanceId, sequence, token: marker.dataset.get('wtRuntimeToken') as string ?? '', pixelRatio: uni.getWindowInfo().pixelRatio, markerCount, marker: __wtRuntimeNode(marker), nodes }))
       } catch (error) {
         console.log(${prefix} + JSON.stringify({ runId: ${nonce}, error: String(error) }))
       }

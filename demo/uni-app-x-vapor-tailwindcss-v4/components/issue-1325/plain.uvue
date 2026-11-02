@@ -1,0 +1,9 @@
+<template>
+  <view id="issue-1325-plain" class="h-[32px] w-[120px] bg-[#0e7490]">
+    <text class="issue-1325-plain-author">plain</text>
+  </view>
+</template>
+
+<style>
+.issue-1325-plain-author { color: #111827; }
+</style>

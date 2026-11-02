@@ -1176,7 +1176,7 @@ describe('uni-app-x vite plugins', () => {
     transformUVueMock.mockImplementation((_code, _id, _jsHandler, _runtimeSet, options) => {
       const bridge = (options as { onWebLocalStyleRules?: (rules: string) => void }).onWebLocalStyleRules
       bridge?.('.wtu-hmr { @apply text-red-500; }\n')
-      return { code: 'transformed', map: null } as TransformResult
+      return { code: _code, map: null } as TransformResult
     })
     const modules = await getHotUpdateHandler(nvuePlugin)?.call(nvuePlugin, context)
 
@@ -1235,7 +1235,7 @@ describe('uni-app-x vite plugins', () => {
     transformUVueMock.mockImplementation((_code, _id, _jsHandler, _runtimeSet, options) => {
       const bridge = (options as { onWebLocalStyleRules?: (rules: string) => void }).onWebLocalStyleRules
       bridge?.('.wtu-concurrent { @apply bg-primary; }\n')
-      return { code: 'transformed', map: null } as TransformResult
+      return { code: _code, map: null } as TransformResult
     })
 
     const sfcTransform = getTransformHandler(nvuePlugin)?.call(
@@ -1382,7 +1382,7 @@ describe('uni-app-x vite plugins', () => {
 
     expect(transformUVueMock).toHaveBeenLastCalledWith(
       '<template><view class="px-4" /></template>',
-      '/project/src/layouts/default.uvue?vue&type=template',
+      '/project/src/layouts/default.uvue',
       jsHandler,
       runtimeSet,
         {
@@ -1479,17 +1479,17 @@ describe('uni-app-x vite plugins', () => {
       transformUVueMock.mockImplementation((_code, _id, _jsHandler, _runtimeSet, options) => {
         const bridge = (options as { onWebLocalStyleRules?: (rules: string) => void }).onWebLocalStyleRules
         bridge?.('.wtu-web { @apply bg-primary; }\n')
-        return { code: 'transformed', map: null } as TransformResult
+        return { code: _code, map: null } as TransformResult
       })
 
       await getTransformHandler(nvuePlugin)?.call(
         nvuePlugin,
-        '<template><image class="w-[100rpx]!" /></template>',
+        '<template><image class="w-[100rpx]!" /></template><style scoped>.author { color: red; }</style>',
         '/project/pages/index/index.uvue',
       )
 
       expect(transformUVueMock).toHaveBeenLastCalledWith(
-        '<template><image class="w-[100rpx]!" /></template>',
+        '<template><image class="w-[100rpx]!" /></template><style scoped>.author { color: red; }</style>',
         '/project/pages/index/index.uvue',
         jsHandler,
         synchronizedRuntimeSet,

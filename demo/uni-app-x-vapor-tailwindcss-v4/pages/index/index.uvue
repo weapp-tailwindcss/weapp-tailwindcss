@@ -1,9 +1,9 @@
 <script setup lang="uts">
+import Issue1325Styles from '../../components/issue-1325/matrix.uvue'
 const probeText = 'issue-1125 Vapor line-height probe'
 </script>
 
 <template>
-	<view id="native-hmr-probe" class="hbuilderx-app-native-hmr-probe flex h-[41px] w-[173px] items-center justify-center bg-[#0e7490]"><text class="text-[18px] leading-[26px] text-white">issue-1125-vapor-leading-26px</text></view>
 		<view class="issue-1125-vapor-probe flex w-full flex-col bg-[#102938] p-[12px]">
 		<text id="issue-1125-vapor-tailwind" class="w-[220px] leading-[26px] text-[14px] text-[#f7fbff]">issue-1125 Vapor Tailwind line 1
 issue-1125 Vapor Tailwind line 2</text>
@@ -15,6 +15,7 @@ issue-1125 Vapor native line 2</text>
 		<text id="issue-1125-vapor-local-merge" class="issue-1125-local-merge mt-[8px] w-[220px] leading-[26px] text-[14px] text-[#f7fbff]">issue-1125 Vapor local and generated merge</text>
 		<text class="mt-[8px] text-[12px] text-[#f7fbff]">{{ probeText }}</text>
 	</view>
+  <Issue1325Styles />
 </template>
 
 <style>

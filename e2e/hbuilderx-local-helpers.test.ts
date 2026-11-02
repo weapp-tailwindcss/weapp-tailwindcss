@@ -2,6 +2,8 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'pathe'
 import { hasScreenshotContentChanged, parseHexColorFromClass, shouldRestoreAndroidRuntime } from './hbuilderx-local/android-runtime'
+import { rewriteAppMarker } from './hbuilderx-local/app-marker'
+import { createIssue1325IosCase } from './hbuilderx-local/issue-1325'
 import { appendHmrSourceMutation, createHmrOutputSnapshot, createHmrSourceRestore, haveHmrOutputsChanged } from './hbuilderx-local/source-mutations'
 import { collectMiniProgramStyleFiles } from './hbuilderx-local/styles'
 
@@ -84,6 +86,43 @@ describe('HBuilderX local helpers', () => {
       expect(await haveHmrOutputsChanged(snapshot)).toBe(false)
       await fs.utimes(files[1]!, refreshedTime, refreshedTime)
       expect(await haveHmrOutputsChanged(snapshot)).toBe(true)
+    }
+    finally {
+      await fs.rm(root, { force: true, recursive: true })
+    }
+  })
+
+  it('Vapor 作者样式的连续变更与本轮 marker 在同一子组件保存中交付', async () => {
+    const item = createIssue1325IosCase([])
+    expect(item.updateMode).toBe('native-reload')
+    expect(item.hmrSteps!.map(step => step.name)).toEqual(['add-author-style', 'replace-author-style', 'delete-author-style', 'restore-author-style'])
+    expect(item.runtimeNodes).toEqual(['page', 'none', 'plain', 'scoped', 'multiple', 'native'].map(name => ({ id: `issue-1325-${name}`, width: 120, height: 32 })))
+    const root = await fs.mkdtemp(path.resolve(os.tmpdir(), 'vapor-author-style-'))
+    const file = path.resolve(root, item.sourceFile)
+    try {
+      await fs.mkdir(path.dirname(file), { recursive: true })
+      await fs.writeFile(file, await fs.readFile(path.resolve(item.projectDir, item.sourceFile), 'utf8'))
+      const saves: string[] = []
+      for (const [index, step] of item.hmrSteps!.entries()) {
+        expect(step.sourceMutation!.file).toBe(item.sourceFile)
+        await appendHmrSourceMutation(root, step.sourceMutation!, async (target, source) => {
+          const next = rewriteAppMarker(source, [item.markerAnchor], {
+            className: step.markerClass,
+            text: step.markerText,
+            structureToken: `save-${index}`,
+          })
+          saves.push(next)
+          await fs.writeFile(target, next)
+        })
+        const saved = await fs.readFile(file, 'utf8')
+        expect(saved).toContain(`data-wt-runtime-token="save-${index}"`)
+        expect(saved.match(/id="native-hmr-probe"/g)).toHaveLength(1)
+        expect(saved.match(/<style>/g)?.length ?? 0).toBe(index === 2 ? 0 : 1)
+      }
+      expect(saves).toHaveLength(4)
+      expect(saves[1]).toContain('#334155')
+      expect(saves[2]).not.toContain('#334155')
+      expect(saves[3]).toContain('#111827')
     }
     finally {
       await fs.rm(root, { force: true, recursive: true })

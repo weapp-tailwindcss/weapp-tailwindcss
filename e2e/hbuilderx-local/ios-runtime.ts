@@ -7,7 +7,7 @@ import { setTimeout } from 'node:timers/promises'
 import { PNG } from 'pngjs'
 import { countMarkerPixelChanges, locateMarkerColor } from '../../scripts/demo-visual-e2e-report/app-marker-visual'
 import { parseHexColorFromClass } from './android-runtime'
-import { hasRuntimeStructureMarker } from './runtime-structure'
+import { hasRuntimeStructureMarker, hasRuntimeStructureNodes } from './runtime-structure'
 
 /** 只使用启动时绑定的设备，异步截图让生命周期日志在取证期间继续到达。 */
 export async function captureIosScreenshot(screenshot: string, deviceId: string | undefined, timeoutMs = 30_000) {
@@ -116,6 +116,7 @@ export async function waitForIosRuntimeEvidence(options: {
     options.ensureRunning()
     const structureReady = structure && structure.ordinal > ordinalFloor
       && hasRuntimeStructureMarker(structure.sample, expectation.runId, expectation.markerText, expectation.token)
+      && hasRuntimeStructureNodes(structure.sample, expectation.nodes)
     const binding = {
       runId: expectation.runId,
       step: expectation.step,

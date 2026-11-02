@@ -230,6 +230,18 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       return result.css
     },
   })
+  async function waitForSfcTransform(id: string) {
+    const file = cleanUrl(id)
+    let pending = pendingSfcTransforms.get(file)
+    while (pending) {
+      await pending
+      const current = pendingSfcTransforms.get(file)
+      if (current === pending) {
+        return
+      }
+      pending = current
+    }
+  }
   const cssPrePlugin: Plugin = {
     name: 'weapp-tailwindcss:uni-app-x:css:pre',
     enforce: 'pre',
@@ -241,7 +253,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         if (!query.vue || query.type !== 'style' || !UVUE_NVUE_RE.test(filename)) {
           return
         }
-        await pendingSfcTransforms.get(cleanUrl(filename))
+        await waitForSfcTransform(filename)
         return sfcStyleSources.load(filename, query.index ?? 0)
       },
     },
@@ -252,14 +264,14 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       await runtimeState.readyPromise
       const { filename, query } = parseVueRequest(id)
       if (query.vue && query.type === 'style') {
-        await pendingSfcTransforms.get(cleanUrl(filename))
+        await waitForSfcTransform(filename)
       }
-      const generatedSource = sfcStyleSources.getGenerated(filename, query.index ?? 0)
-      const resolvedSource = resolveUniAppXStyleSource(code, query, generatedSource)
+      const styleSource = sfcStyleSources.getOverride(filename, query.index ?? 0)
+      const resolvedSource = resolveUniAppXStyleSource(code, query, styleSource)
       if (resolvedSource.skip) {
         return
       }
-      const styleCode = query.vue && query.type === 'style' && generatedSource === undefined && !sfcStyleSources.hasGenerated(filename)
+      const styleCode = query.vue && query.type === 'style' && sfcStyleSources.shouldAppendLocalStyle(filename, query.index ?? 0)
         ? webLocalStyle.appendToStyle(resolvedSource.code, id)
         : resolvedSource.code
       // Vite 热更新会绕过 SFC 主模块，直接把原始样式交给预处理器；先移除
@@ -292,26 +304,29 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
 
   const cssPlugins = [cssPlugin, cssPrePlugin]
 
-  async function transformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }) {
-    sfcStyleSources.rememberSource(id, code)
-    if (isWebGeneratorTarget()) {
+  async function transformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }, authoritative = true, isCurrent = () => true) {
+    if (authoritative && isWebGeneratorTarget()) {
       for (const style of extractSfcStyleBlocks(code)) {
         webCssEntryDiagnostics?.observeSourceImports(style.source, id)
       }
     }
-    if (isNativeAppBuildTarget(id)) {
+    if (authoritative && isNativeAppBuildTarget(id)) {
       nativeLocalStyleModuleIds.add(id)
       nativeLocalStyleModuleIds.add(cleanUrl(id))
     }
-    harmonyApply.rememberSource(code, id, true)
+    if (authoritative) {
+      harmonyApply.rememberSource(code, id, true)
+    }
     const enableComponentLocalStyle = shouldEnableComponentLocalStyle()
     const enablePageLocalStyle = shouldEnablePageLocalStyleForFile(id)
-    const moduleGraphCandidates = await registerModuleGraphCandidates?.(id, code)
+    const moduleGraphCandidates = authoritative ? await registerModuleGraphCandidates?.(id, code) : undefined
     const runtimeSet = await ensureRuntimeClassSet()
     const currentRuntimeSet: Set<string> = moduleGraphCandidates?.size
       ? new Set([...runtimeSet, ...moduleGraphCandidates])
       : new Set(runtimeSet)
-    nativeHmrReloader.remember(currentRuntimeSet)
+    if (authoritative && isCurrent()) {
+      nativeHmrReloader.remember(currentRuntimeSet)
+    }
     const transformUVue = await loadTransformUVue()
     const transformOptions = omitUndefined({
       componentMatcher: resolvedUniAppXOptions.componentLocalStyles.componentMatcher,
@@ -327,8 +342,10 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
       ...(isWebGeneratorTarget()
         ? {
             onWebLocalStyleRules: (rules: string) => {
-              webLocalStyle.remember(id, rules)
-              webCssEntryDiagnostics?.requestCheck()
+              if (isCurrent()) {
+                webLocalStyle.remember(id, rules)
+                webCssEntryDiagnostics?.requestCheck()
+              }
             },
           }
         : {}),
@@ -336,8 +353,7 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     const result = Object.keys(transformOptions).length > 0
       ? transformUVue(code, id, jsHandler, currentRuntimeSet, transformOptions)
       : transformUVue(code, id, jsHandler, currentRuntimeSet)
-    sfcStyleSources.rememberGenerated(id, isWebGeneratorTarget() ? result?.code ?? '' : '')
-    if (!result?.code) {
+    if (!authoritative || !isCurrent() || !result?.code) {
       return result
     }
     harmonyApply.rememberSource(result.code, id)
@@ -347,7 +363,13 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
 
   function runTransformSfc(code: string, id: string, context: { addWatchFile?: (id: string) => void }) {
     const file = cleanUrl(id)
-    const pending = transformSfc(code, id, context)
+    const pending: ReturnType<typeof transformSfc> = transformSfc(code, id, context, true, () => pendingSfcTransforms.get(file) === pending).then((result) => {
+      // 只发布最新完整 SFC 的最终结果；旧异步事务不得回滚当前样式快照。
+      if (pendingSfcTransforms.get(file) === pending) {
+        sfcStyleSources.remember(file, code, result?.code ?? code)
+      }
+      return result
+    })
     pendingSfcTransforms.set(file, pending)
     const cleanup = () => {
       if (pendingSfcTransforms.get(file) === pending) {
@@ -373,14 +395,16 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
         if (!isEnabled()) {
           return
         }
-        const { query } = parseVueRequest(id)
+        const { filename, query } = parseVueRequest(id)
         if (!UVUE_NVUE_QUERY_RE.test(id) || (query.vue && query.type === 'style')) {
           return
         }
-        // Web 子模块已经由完整 SFC 编译得到，不能再次登记为 SFC、覆盖样式来源
-        // 或替换正在等待的主模块事务；原生模板子请求仍由原生转换链处理。
-        if (isWebGeneratorTarget() && query.vue && query.type) {
-          return
+        if (query.vue && query.type) {
+          if (isWebGeneratorTarget()) {
+            return
+          }
+          // 原生子请求保留转换，但共享主模块身份，不发布完整 SFC 的权威状态。
+          return transformSfc(code, filename, this, false)
         }
         return runTransformSfc(code, id, this)
       },

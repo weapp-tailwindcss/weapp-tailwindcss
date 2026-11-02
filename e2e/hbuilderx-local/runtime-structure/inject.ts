@@ -50,7 +50,7 @@ function extendOptions(body: string, additions: { setup?: string, bridge?: strin
 }
 
 /** 仅由 App runner 在本轮临时源码中调用，原文件由项目恢复事务负责。 */
-export function injectRuntimeStructureProbe(source: string, runId: string, adapter: RuntimeStructureAdapter) {
+export function injectRuntimeStructureProbe(source: string, runId: string, adapter: RuntimeStructureAdapter, nodeIds: string[] = []) {
   if (!/^[a-z\d-]+$/i.test(runId)) {
     throw new Error('运行时结构探针身份只允许字母、数字与连字符')
   }
@@ -62,9 +62,9 @@ export function injectRuntimeStructureProbe(source: string, runId: string, adapt
   const setup = descriptor.scriptSetup
   const script = normal ?? setup
   if (adapter === 'uni-app-x-element') {
-    const helper = createUniAppXElementProbe(runId)
+    const helper = createUniAppXElementProbe(runId, nodeIds)
     if (!script) {
-      return `${source}\n<script lang="uts">${helper}\nexport default { setup() { __wtInstallRuntimeStructure() } }</script>\n`
+      return `${source}\n<script setup lang="uts">${helper}\n__wtInstallRuntimeStructure()\n</script>\n`
     }
     const body = normal ? extendOptions(script.content, { setup: '__wtInstallRuntimeStructure()' }) : `${script.content}\n__wtInstallRuntimeStructure()\n`
     return source.slice(0, script.loc.start.offset) + helper + body + source.slice(script.loc.end.offset)

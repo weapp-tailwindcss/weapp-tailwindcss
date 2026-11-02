@@ -5,7 +5,11 @@
 			"style": {
 				"navigationBarTitleText": "uni-app x"
 			}
-		}
+		},
+    {
+      "path": "pages/issue-1325/index",
+      "style": { "navigationBarTitleText": "Issue 1325 样式矩阵" }
+    }
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

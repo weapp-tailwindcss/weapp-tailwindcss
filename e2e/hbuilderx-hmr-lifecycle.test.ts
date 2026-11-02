@@ -25,13 +25,14 @@ describe('原生 HMR 生命周期验收', () => {
       child.stderr.destroy()
     }
   })
-  it('仅普通 uni-app 与 Android VDOM 原生用例显式启用热重载', () => {
+  it('仅普通 uni-app、Android VDOM 与 Issue 1325 Vapor iOS 显式启用原生重载', () => {
     expect(uniAppAppCases.length).toBeGreaterThan(0)
     expect(uniAppAppCases.every(item => item.updateMode === 'native-reload')).toBe(true)
     expect(uniAppXAppCases.filter(item => item.updateMode === 'native-reload').map(item => [item.name, item.platform])).toEqual([
       ['uni-app-x-vdom-tailwindcss-v4 android', 'app-android'],
+      ['uni-app-x-vapor-tailwindcss-v4 ios vapor native-reload', 'app-ios'],
     ])
-    expect(uniAppXAppCases.filter(item => item.platform !== 'app-android').every(item => item.updateMode === undefined)).toBe(true)
+    expect(uniAppXAppCases.filter(item => item.platform === 'app-harmony' || (item.platform === 'app-ios' && item.renderMode !== 'vapor')).every(item => item.updateMode === undefined)).toBe(true)
   })
 
   it.each(['app-android', 'app-ios'] as const)('%s 原生热重载记录本轮重启，仍拒绝更新失败和重装', async (platform) => {

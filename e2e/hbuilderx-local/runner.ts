@@ -420,7 +420,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     ? path.resolve(process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT'], item.name.replace(/[^\w-]+/g, '-'))
     : path.resolve(os.tmpdir(), 'weapp-tailwindcss-hbuilderx-runtime', `${process.pid}-${item.name.replace(/[^\w-]+/g, '-')}`)
   const domProbe = item.platform === 'app-harmony' && item.renderMode === 'vapor' ? createHarmonyDomProbe() : undefined
-  const iosProbe = item.platform === 'app-ios' ? createRuntimeStructureProbe(item.sourceFile) : undefined
+  const iosProbe = item.platform === 'app-ios' ? createRuntimeStructureProbe(item.sourceFile, item.runtimeNodes?.map(node => node.id)) : undefined
   let iosObserver: ReturnType<NonNullable<typeof iosProbe>['observe']> | undefined
   let iosToken = iosProbe?.nextToken()
   let logs: string[] = []
@@ -559,7 +559,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
         deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
         ensureRunning: ensureLaunchRunning,
         markerClass: item.markerClass,
-        structure: { runId: iosProbe!.runId, step: 'initial', markerText: item.markerText, token: iosToken!, read: () => iosObserver?.read() },
+        structure: { runId: iosProbe!.runId, step: 'initial', markerText: item.markerText, token: iosToken!, nodes: item.runtimeNodes, read: () => iosObserver?.read() },
         screenshot: path.resolve(runtimeEvidenceRoot, 'initial.png'),
         timeoutMs: hbuilderxAppTimeoutMs,
       })
@@ -573,12 +573,23 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
       hmrLifecycle = observeHmrStep(child, item.platform, item.updateMode)
       harmonyFailureEvidence = initialHarmony ? { ...domOptions, deviceId: harmonyDeviceId, directory: path.resolve(runtimeEvidenceRoot, step.name), marker: step.markerText } : undefined
       process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} start\n`)
+      iosToken = iosProbe?.nextToken()
+      const marker = {
+        className: step.markerClass,
+        text: step.markerText,
+        structureToken: iosToken,
+        ...(step.markerTextClass ? { textClassName: step.markerTextClass } : {}),
+      }
+      const mutationIncludesMarker = step.sourceMutation && path.resolve(projectRoot, step.sourceMutation.file) === sourceFile
       if (step.sourceMutation) {
         const shouldWaitForOutputRefresh = step.sourceMutation.expectOutputRefresh !== false
         const outputSnapshot = shouldWaitForOutputRefresh
           ? await createHmrOutputSnapshot(resolveAppTransformedFiles(projectRoot, hmrOutputRoot, item))
           : undefined
-        await appendHmrSourceMutation(projectRoot, step.sourceMutation)
+        // 同一 SFC 的样式与 token 一次保存，避免第二轮父模块构建掩盖子组件更新。
+        await appendHmrSourceMutation(projectRoot, step.sourceMutation, mutationIncludesMarker
+          ? async (target, source) => fs.writeFile(target, rewriteAppMarker(source, resolveAppMarkerAnchors(item), marker), 'utf8')
+          : undefined)
         if (outputSnapshot) {
           await waitForAppTransformedOutputsRefresh(outputSnapshot, ensureLaunchRunning, () => [
             `step=${step.name}:source-mutation`,
@@ -587,13 +598,9 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
           ].join('\n'))
         }
       }
-      iosToken = iosProbe?.nextToken()
-      await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), {
-        className: step.markerClass,
-        text: step.markerText,
-        structureToken: iosToken,
-        ...(step.markerTextClass ? { textClassName: step.markerTextClass } : {}),
-      })
+      if (!mutationIncludesMarker) {
+        await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), marker)
+      }
       hmrOutputRoot = await waitForAppTransformedContent(item, step.transformedContains, hbuilderxAppTimeoutMs, ensureLaunchRunning, async () => {
         const source = await readUtf8(sourceFile)
         return [
@@ -611,7 +618,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
               hmrLifecycle?.assertNoFallback()
             },
             markerClass: step.markerClass,
-            structure: { runId: iosProbe!.runId, step: step.name, markerText: step.markerText, token: iosToken!, transfer, read: () => iosObserver?.read() },
+            structure: { runId: iosProbe!.runId, step: step.name, markerText: step.markerText, token: iosToken!, transfer, nodes: item.runtimeNodes, read: () => iosObserver?.read() },
             previous: { screenshot: previousRuntimeScreenshot!, markerClass: previousRuntimeMarkerClass },
             screenshot: path.resolve(runtimeEvidenceRoot, `${step.name}.png`),
             timeoutMs: remainingMs,

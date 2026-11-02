@@ -391,6 +391,7 @@ export function transformUVue(
     }
 
     const scopedStyle = [...descriptor.styles].reverse().find(style => STYLE_SCOPED_RE.test(style.attrs)
+      && !/(?:^|\s)src\s*=/.test(style.attrs)
       && (!options.onWebLocalStyleRules || !isUniAppXStyleSourceEmpty(style.content)))
     if (localStyleCollector && options.onWebLocalStyleRules && descriptor.template) {
       // 所有 Web 载体都需要回放缓存；HMR 可能绕过主模块直接重编译样式请求。

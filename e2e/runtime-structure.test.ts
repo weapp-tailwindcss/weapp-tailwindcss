@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import { ChildProcess } from 'node:child_process'
 import { PassThrough } from 'node:stream'
 import { describe, expect, it } from 'vitest'
-import { createRuntimeStructureProbe, hasRuntimeStructureMarker, observeRuntimeStructure, readRuntimeStructureSample } from './hbuilderx-local/runtime-structure'
+import { createRuntimeStructureProbe, hasRuntimeStructureMarker, hasRuntimeStructureNodes, observeRuntimeStructure, readRuntimeStructureSample } from './hbuilderx-local/runtime-structure'
 
 function sample(): RuntimeStructureSample {
   const marker = { id: 'native-hmr-probe', tagName: 'VIEW', text: '本轮 } "文字', rect: { left: 0, top: 64, width: 173, height: 41 } }
@@ -12,6 +12,20 @@ function sample(): RuntimeStructureSample {
 const line = (value: unknown, runId = 'current-run') => `12:00 WT_RUNTIME_STRUCTURE_${runId}=${JSON.stringify(value)} at C:\\项目\\page.uvue:12\n`
 
 describe('独立运行时结构传输', () => {
+  it('要求样式矩阵的每个真实节点存在、唯一且具有预期尺寸', () => {
+    const value = sample()
+    const node = { ...value.marker, id: 'issue-1325-none', rect: { left: 0, top: 120, width: 120, height: 32 } }
+    const expected = [{ id: node.id, width: 120, height: 32 }]
+    expect(hasRuntimeStructureNodes(value, expected)).toBe(false)
+    value.nodes.push(node)
+    expect(hasRuntimeStructureNodes(value, expected)).toBe(true)
+    node.rect.width = 0
+    expect(hasRuntimeStructureNodes(value, expected)).toBe(false)
+    node.rect.width = 120
+    value.nodes.push(node)
+    expect(hasRuntimeStructureNodes(value, expected)).toBe(false)
+  })
+
   it('绑定当前run，支持文字内JSON符号与日志路径后缀', () => {
     expect(readRuntimeStructureSample(line(sample()), 'current-run')).toEqual(sample())
     expect(readRuntimeStructureSample(line(sample(), 'old-run'), 'current-run')).toBeUndefined()

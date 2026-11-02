@@ -31,12 +31,19 @@ export interface RuntimeStructureReceipt {
   receivedAt: string
 }
 
+export interface RuntimeStructureNodeExpectation {
+  id: string
+  width: number
+  height: number
+}
+
 export interface RuntimeStructureExpectation {
   runId: string
   step: string
   markerText: string
   token: string
   transfer?: string
+  nodes?: RuntimeStructureNodeExpectation[] | undefined
   read: () => RuntimeStructureReceipt | undefined
 }
 
@@ -124,6 +131,15 @@ export function hasRuntimeStructureMarker(sample: RuntimeStructureSample | undef
       && ['left', 'top', 'width', 'height'].every(key => node.rect[key as keyof typeof node.rect] === sample.marker.rect[key as keyof typeof node.rect]))
 }
 
+/** 按真实节点身份验收整组布局，缺失或重复节点均不能通过。 */
+export function hasRuntimeStructureNodes(sample: RuntimeStructureSample, expected: RuntimeStructureNodeExpectation[] = []) {
+  return expected.every((item) => {
+    const nodes = sample.nodes.filter(node => node.id === item.id)
+    return nodes.length === 1 && Math.abs(nodes[0]!.rect.width - item.width) <= 1
+      && Math.abs(nodes[0]!.rect.height - item.height) <= 1
+  })
+}
+
 /** 接收序号由宿主递增；reload 重建模块时，设备自己的计数可以重新开始。 */
 export function observeRuntimeStructure(child: Pick<ChildProcess, 'stdout' | 'stderr'>, runId: string, adapter: RuntimeStructureAdapter) {
   let latest: RuntimeStructureReceipt | undefined
@@ -164,13 +180,13 @@ export function observeRuntimeStructure(child: Pick<ChildProcess, 'stdout' | 'st
   }
 }
 
-export function createRuntimeStructureProbe(sourceFile: string) {
+export function createRuntimeStructureProbe(sourceFile: string, nodeIds: string[] = []) {
   const runId = randomUUID()
   const adapter = /\.uvue$/i.test(sourceFile) ? 'uni-app-x-element' : 'uni-app-renderjs'
   return {
     runId,
     nextToken: () => randomUUID(),
-    inject: (source: string) => injectRuntimeStructureProbe(source, runId, adapter),
+    inject: (source: string) => injectRuntimeStructureProbe(source, runId, adapter, nodeIds),
     observe: (child: Pick<ChildProcess, 'stdout' | 'stderr'>) => observeRuntimeStructure(child, runId, adapter),
   }
 }
