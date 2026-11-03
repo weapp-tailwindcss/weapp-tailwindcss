@@ -1,14 +1,15 @@
 import type { IStyleHandlerOptions, StyleHandler } from '@weapp-tailwindcss/postcss/types'
 import type { ResolvedConfig } from 'vite'
+import type { ViteSfcStyleSnapshot } from '../css-memory/sfc-snapshot'
 import { hasBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
-import { isSfcStyleSourceFile, resolveSfcStyleRequestFromKnownSource } from '../generate-bundle/sfc-style-source'
+import { isSfcStyleSourceFile, resolveSfcStyleRequestFromBlocks } from '../generate-bundle/sfc-style-source'
 import { cleanUrl, isCSSRequest } from '../utils'
 import { wrapViteCssPostOutput } from '../watch-css-output'
 import { wrapViteCssPostTransform } from '../watch-css-post'
 
 interface FrameworkWatchCssAdapterOptions {
   shouldAdapt: () => boolean
-  getKnownSfcSource: (file: string) => string | undefined
+  getKnownSfcStyleSnapshot: (file: string) => ViteSfcStyleSnapshot | undefined
   getCssHandlerOptions: (file: string) => Partial<IStyleHandlerOptions>
   styleHandler: StyleHandler
   debug: (format: string, ...args: unknown[]) => void
@@ -30,8 +31,10 @@ export function createFrameworkWatchCssCacheAdapter(options: FrameworkWatchCssAd
         return css
       }
       const file = cleanUrl(id)
-      const styleRequest = isSfcStyleSourceFile(file)
-        ? resolveSfcStyleRequestFromKnownSource(file, options.getKnownSfcSource(file), css, id)
+      const isSfc = isSfcStyleSourceFile(file)
+      const sfcSnapshot = isSfc ? options.getKnownSfcStyleSnapshot(file) : undefined
+      const styleRequest = isSfc
+        ? resolveSfcStyleRequestFromBlocks(file, sfcSnapshot?.styles ?? [], css, id)
         : id
       const transformed = (await options.styleHandler(css, options.getCssHandlerOptions(styleRequest))).css
       options.debug('adapt css before uni-app watch cache: %s', id)

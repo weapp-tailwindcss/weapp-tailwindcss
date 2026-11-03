@@ -1,0 +1,120 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`保存本轮SFC与style请求的静态基线 1`] = `
+[
+  {
+    "requests": [
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=0&inline&lang.css",
+        "result": {
+          "code": "
+.weapp-tw-border {
+    border-width: 0
+}
+",
+          "map": null,
+        },
+      },
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=1&inline&lang.css",
+        "result": {
+          "code": ".author { color: blue; }",
+          "map": null,
+        },
+      },
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=2&inline&lang.css",
+        "result": {
+          "code": "
+/*! weapp-tailwindcss local-utility */
+.wtu-1dqzcsm-0 {
+  @apply h-8;
+}
+",
+          "map": null,
+        },
+      },
+    ],
+    "source": "<script setup lang="uts">
+const snippet = '<style>.example { color: red; }</style>';
+</script>
+<template><view class="h-8"><text>{{snippet}}</text></view></template>
+<style>.author { color: blue; }</style>",
+    "transformed": "<style>
+.weapp-tw-border {
+    border-width: 0
+}
+</style>
+<script setup lang="uts">
+const snippet = '<style>.example { color: red; }</style>';
+</script>
+<template><view class="weapp-tw-border wtu-1dqzcsm-0"><text class="weapp-tw-border">{{snippet}}</text></view></template>
+<style>.author { color: blue; }</style>
+<style scoped>
+/*! weapp-tailwindcss local-utility */
+.wtu-1dqzcsm-0 {
+  @apply h-8;
+}
+</style>
+",
+  },
+  {
+    "requests": [
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=0&inline&lang.css",
+        "result": {
+          "code": "
+.weapp-tw-border {
+    border-width: 0
+}
+",
+          "map": null,
+        },
+      },
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=1&inline&lang.css",
+        "result": {
+          "code": ".author { color: blue; }",
+          "map": null,
+        },
+      },
+      {
+        "request": "/project/Probe.uvue?vue&type=style&index=2&inline&lang.css",
+        "result": {
+          "code": "
+/*! weapp-tailwindcss local-utility */
+.wtu-1dqzcsm-0 {
+  @apply h-8;
+}
+",
+          "map": null,
+        },
+      },
+    ],
+    "source": "<script setup lang="uts">
+/** 说明见文件末尾 <style>。 */
+function label(): string { return 'author'; }
+</script>
+<template><view class="h-8"><text>{{label()}}</text></view></template>
+<style>.author { color: blue; }</style>",
+    "transformed": "<style>
+.weapp-tw-border {
+    border-width: 0
+}
+</style>
+<script setup lang="uts">
+/** 说明见文件末尾 <style>。 */
+function label(): string { return 'author'; }
+</script>
+<template><view class="weapp-tw-border wtu-1dqzcsm-0"><text class="weapp-tw-border">{{label()}}</text></view></template>
+<style>.author { color: blue; }</style>
+<style scoped>
+/*! weapp-tailwindcss local-utility */
+.wtu-1dqzcsm-0 {
+  @apply h-8;
+}
+</style>
+",
+  },
+]
+`;

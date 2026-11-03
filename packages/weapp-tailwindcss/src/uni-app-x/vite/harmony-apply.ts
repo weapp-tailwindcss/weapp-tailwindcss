@@ -35,49 +35,87 @@ function createStableHash(input: string) {
 }
 
 export function createUniAppXHarmonyApplyExpander(options: CreateUniAppXHarmonyApplyExpanderOptions) {
-  const referenceBySourceId = new Map<string, Set<string>>()
-  const styleSources = new Set<string>()
-  const utilities = new Set<string>()
+  interface Snapshot { sources: Set<string>, references: Set<string>, utilities: Set<string> }
+  interface SourceState { complete?: Snapshot, requests: Map<string, Snapshot> }
+  const sourceStates = new Map<string, SourceState>()
+  const sourceKey = (id: string) => normalizePath(cleanUrl(id))
+
+  function createSnapshot(codes: Iterable<string>, id: string): Snapshot {
+    const sources = new Set<string>()
+    const references = new Set<string>()
+    const utilities = new Set<string>()
+    for (const code of codes) {
+      for (const source of collectUniAppXHarmonyApplyStyleSourcesFromSource(code, id)) {
+        sources.add(source)
+        for (const reference of collectCssReferenceDirectives(source)) {
+          references.add(reference)
+        }
+        for (const utility of collectUniAppXHarmonyApplyUtilitiesFromSources([source])) {
+          utilities.add(utility)
+        }
+      }
+    }
+    return { sources, references, utilities }
+  }
+
+  function rememberSfc(source: string, output: string, id: string) {
+    sourceStates.set(sourceKey(id), { complete: createSnapshot([source, output], id), requests: new Map() })
+  }
 
   function rememberSource(code: string, id: string, authoritative = false) {
-    const sources = collectUniAppXHarmonyApplyStyleSourcesFromSource(code, id)
-    const sourceKey = normalizePath(cleanUrl(id))
-    const references = authoritative
-      ? new Set<string>()
-      : new Set(referenceBySourceId.get(sourceKey))
-    for (const source of sources) {
-      styleSources.add(source)
-      for (const reference of collectCssReferenceDirectives(source)) {
-        references.add(reference)
-      }
-      for (const utility of collectUniAppXHarmonyApplyUtilitiesFromSources([source])) {
-        utilities.add(utility)
-      }
+    if (authoritative) {
+      rememberSfc(code, code, id)
+      return
     }
-    if (references.size > 0) {
-      referenceBySourceId.set(sourceKey, references)
-    }
-    else if (authoritative) {
-      referenceBySourceId.delete(sourceKey)
+    const key = sourceKey(id)
+    const state = sourceStates.get(key) ?? { requests: new Map<string, Snapshot>() }
+    // 子请求只提供无完整 SFC 时的来源，不能重建已删除的权威规则。
+    if (!state.complete) {
+      state.requests.set(normalizePath(id), createSnapshot([code], id))
+      sourceStates.set(key, state)
     }
   }
 
-  function prepareStyles(code: string, id: string) {
+  function getSources(moduleIds?: Iterable<string>) {
+    const included = moduleIds ? new Set([...moduleIds].map(sourceKey)) : undefined
+    const sources = new Set<string>()
+    const utilities = new Set<string>()
+    for (const [id, state] of sourceStates) {
+      if (included && !included.has(id)) {
+        continue
+      }
+      for (const snapshot of state.complete ? [state.complete] : state.requests.values()) {
+        for (const source of snapshot.sources) {
+          sources.add(source)
+        }
+        for (const utility of snapshot.utilities) {
+          utilities.add(utility)
+        }
+      }
+    }
+    return { sources, utilities, hasSourceSnapshots: sourceStates.size > 0 }
+  }
+
+  function prepareStyles(code: string, id: string, authorSource?: string) {
     if (!code.includes('@apply') || code.includes('@reference')) {
       return code
     }
-    const references = referenceBySourceId.get(normalizePath(cleanUrl(id)))
-    if (references?.size !== 1) {
+    const state = sourceStates.get(sourceKey(id))
+    const snapshots = authorSource !== undefined
+      ? [createSnapshot([authorSource], id)]
+      : state?.complete ? [state.complete] : [...state?.requests.values() ?? []]
+    const references = new Set(snapshots.flatMap(snapshot => [...snapshot.references]))
+    if (references.size !== 1) {
       return code
     }
     return `${references.values().next().value}\n${code}`
   }
 
-  async function expandStyles(code: string, id: string, hookContext: HarmonyApplyHookContext) {
+  async function expandStyles(code: string, id: string, hookContext: HarmonyApplyHookContext, authorSource?: string) {
     if (!options.isHarmonyBuildTarget() || !code.includes('@apply')) {
       return code
     }
-    const sources = collectUniAppXHarmonyApplyStyleSourcesFromSource(prepareStyles(code, id), id)
+    const sources = collectUniAppXHarmonyApplyStyleSourcesFromSource(prepareStyles(code, id, authorSource), id)
     const sourceUtilities = collectUniAppXHarmonyApplyUtilitiesFromSources(sources)
     if (sources.length === 0 || sourceUtilities.size === 0) {
       return code
@@ -107,7 +145,11 @@ export function createUniAppXHarmonyApplyExpander(options: CreateUniAppXHarmonyA
     expandStyles,
     prepareStyles,
     rememberSource,
-    styleSources,
-    utilities,
+    rememberSfc,
+    getSources,
+    forgetSource(id: string) {
+      // 空权威快照阻止晚到的旧 style 子请求重新发布该文件。
+      rememberSfc('', '', id)
+    },
   }
 }

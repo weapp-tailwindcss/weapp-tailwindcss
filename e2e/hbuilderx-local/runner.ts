@@ -1,5 +1,6 @@
 import type { CommandExit, SpawnedHBuilderXCommand } from '../../packages/hbuilderx-runner/src'
 import type { AppCase, WebCase } from './cases'
+import type { SourceOnlyRuntime } from './source-only'
 import type { AttachedWebServer } from './web/attached'
 
 import { createHash } from 'node:crypto'
@@ -41,6 +42,7 @@ import {
 import { findMissingRuntimeLogs, resolveAppRuntimeLogContract } from './render-mode'
 import { createRuntimeStructureProbe } from './runtime-structure'
 import { appendHmrSourceMutation, createHmrOutputSnapshot, haveHmrOutputsChanged } from './source-mutations'
+import { createSourceOnlyRuntime, resolveSourceOnlyFiles } from './source-only'
 import { runWebHmr } from './web'
 
 const repoRoot = path.resolve(__dirname, '../..')
@@ -395,8 +397,16 @@ async function writeAppMarker(
 
 export { compileMiniProgramWithHBuilderX } from './mini-compile'
 
-export async function verifyAppHmrWithHBuilderX(item: AppCase) {
+export interface AppRuntimeHooks {
+  sourceFiles: string[]
+  afterInitialRuntime: (runtime: SourceOnlyRuntime<Awaited<ReturnType<typeof waitForIosRuntimeEvidence>>>) => Promise<void>
+}
+
+export async function verifyAppHmrWithHBuilderX(item: AppCase, hooks?: AppRuntimeHooks) {
   item = bindAppTarget(item)
+  if (hooks && item.platform !== 'app-ios') {
+    throw new Error('独立外部来源的运行态入口当前仅支持 iOS')
+  }
   let androidEnv: Record<string, string> | undefined
   const launchArgs = [...(item.launchArgs ?? [])]
   if (item.platform === 'app-android') {
@@ -433,7 +443,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     projectRoot,
     platform: item.platform,
     host: hbuilderx.resolution,
-    files: [sourceFile, ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : [])].map(file => ({ file })),
+    files: [sourceFile, ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []), ...resolveSourceOnlyFiles(projectRoot, sourceFile, hooks?.sourceFiles ?? [])].map(file => ({ file })),
   })
   let harmonyFailureEvidence: Parameters<typeof captureHarmonyRuntimeEvidence>[0] | undefined
   let hmrLifecycle: ReturnType<typeof observeHmrStep> | undefined
@@ -565,6 +575,38 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
       })
       previousRuntimeScreenshot = evidence.screenshot
       process.stdout.write(`${JSON.stringify({ runtimeEvidence: evidence })}\n`)
+    }
+    if (hooks) {
+      const sourceOnly = await createSourceOnlyRuntime<Awaited<ReturnType<typeof waitForIosRuntimeEvidence>>>({
+        projectRoot,
+        sourceFile,
+        outputRoot: initialOutputRoot,
+        sourceFiles: hooks.sourceFiles,
+        timeoutMs: hbuilderxAppTimeoutMs,
+        ensureRunning: ensureLaunchRunning,
+        begin: () => {
+          hmrLifecycle?.assertNoFallback()
+          hmrLifecycle?.dispose()
+          hmrLifecycle = observeHmrStep(child, item.platform, item.updateMode)
+          return hmrLifecycle
+        },
+        capture: (name, attempt, remainingMs, transfer) => waitForIosRuntimeEvidence({
+          deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
+          ensureRunning: () => {
+            ensureLaunchRunning()
+            hmrLifecycle?.assertNoFallback()
+          },
+          markerClass: item.markerClass,
+          structure: { runId: iosProbe!.runId, step: name, markerText: item.markerText, token: iosToken!, transfer, nodes: item.runtimeNodes, read: () => iosObserver?.read() },
+          screenshot: path.resolve(runtimeEvidenceRoot, 'source-only', name.replace(/[^\w-]+/g, '-'), `attempt-${attempt}.png`),
+          timeoutMs: remainingMs,
+        }),
+        publish: (name, evidence, lifecycle, products) => {
+          process.stdout.write(`${JSON.stringify({ step: name, sourceOnly: true, runtimeEvidence: evidence, nativeProducts: products })}\n`)
+          process.stdout.write(`${JSON.stringify({ step: name, sourceOnly: true, updateLifecycle: lifecycle })}\n`)
+        },
+      })
+      await runWithCleanup(() => hooks.afterInitialRuntime(sourceOnly.runtime), () => sourceOnly.finish())
     }
     let hmrOutputRoot = initialOutputRoot
     for (const step of resolveAppHmrSteps(item)) {

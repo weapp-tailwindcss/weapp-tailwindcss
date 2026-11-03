@@ -14,33 +14,39 @@ interface HmrOutputSignature {
 
 export type HmrOutputSnapshot = Map<string, HmrOutputSignature>
 
-export async function appendHmrSourceMutation(projectRoot: string, mutation: HmrSourceMutation, writeSource = async (target: string, content: string) => fs.writeFile(target, content, 'utf8')) {
-  const file = path.resolve(projectRoot, mutation.file)
-  const source = await readUtf8(file)
-  const separator = source.endsWith('\n') ? '' : '\n'
-  let nextSource: string | undefined
+/** 先合成完整源码，再由调用方将变更与本轮 marker 一次保存。 */
+export function applyHmrSourceMutation(source: string, mutation: HmrSourceMutation) {
+  let nextSource = source
+  let replacementApplied = false
   if (mutation.replace) {
     if (source.includes(mutation.replace.from)) {
       nextSource = source.replace(mutation.replace.from, mutation.replace.to)
+      replacementApplied = true
     }
-    else if (source.includes(mutation.replace.to)) {
-      // HMR 测试可能在上次中断后留下目标状态，重复执行时保持幂等。
-      return file
-    }
-    else {
+    else if (!source.includes(mutation.replace.to)) {
       throw new Error(`HMR 源码变更找不到替换目标：${mutation.file}`)
     }
   }
-  else if (typeof mutation.append === 'string') {
-    nextSource = `${source}${separator}${mutation.append.trimEnd()}\n`
+  if (typeof mutation.append === 'string') {
+    const appended = `${mutation.append.trimEnd()}\n`
+    // 中断后重试整组变更时，保留已经交付的追加块，marker 仍可继续保存。
+    if (!mutation.replace || replacementApplied || !nextSource.endsWith(appended)) {
+      nextSource = `${nextSource}${nextSource.endsWith('\n') ? '' : '\n'}${appended}`
+    }
   }
-  else if (mutation.touch) {
-    nextSource = `${source}${separator}\n`
+  else if (!mutation.replace && mutation.touch) {
+    nextSource = `${source}${source.endsWith('\n') ? '' : '\n'}\n`
   }
-  if (nextSource === undefined) {
+  else if (!mutation.replace) {
     throw new Error(`HMR 源码变更缺少 append、replace 或 touch：${mutation.file}`)
   }
-  await writeSource(file, nextSource)
+  return nextSource
+}
+
+export async function appendHmrSourceMutation(projectRoot: string, mutation: HmrSourceMutation, writeSource = async (target: string, content: string) => fs.writeFile(target, content, 'utf8')) {
+  const file = path.resolve(projectRoot, mutation.file)
+  const source = await readUtf8(file)
+  await writeSource(file, applyHmrSourceMutation(source, mutation))
   return file
 }
 

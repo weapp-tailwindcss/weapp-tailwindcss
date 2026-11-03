@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import ts from 'typescript'
 import { diagnosticSymbol, mpxProject, weappViteInputProject } from './constants.mjs'
+import { instrumentInvalidationSource, invalidationTargets } from './invalidation-instrumentation.mjs'
 import { instrumentMpxSource, mpxTargets } from './mpx-instrumentation.mjs'
 import { guardDiagnosticObserver } from './observer-guard.mjs'
 import { generationTargets, instrumentOperationSource } from './operation-instrumentation.mjs'
@@ -106,6 +107,7 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
   if (uniInputs) {
     selected.find(target => target.kind === 'compilation').uniInputs = true
     selected.push(...uniInputTargets.map(([kind, relative]) => ({ kind: `uni-${kind}`, relative })))
+    selected.push(...invalidationTargets.map(([kind, relative]) => ({ kind: `invalidation-${kind}`, relative })))
   }
   const absentCapabilities = []
   for (const target of selected) {
@@ -121,11 +123,13 @@ export async function prepareAllocationRoot(root, sourceRoot, evidenceDirectory,
       }
       throw error
     }
-    const transformed = target.kind.startsWith('uni-')
-      ? instrumentUniInputSource(source, target.kind.slice(4), target.relative)
-      : target.kind === 'vite-tail-css'
-        ? instrumentViteTailSource(source, 'css', target.relative)
-        : target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
+    const transformed = target.kind.startsWith('invalidation-')
+      ? instrumentInvalidationSource(source, target.kind.slice(13), target.relative)
+      : target.kind.startsWith('uni-')
+        ? instrumentUniInputSource(source, target.kind.slice(4), target.relative)
+        : target.kind === 'vite-tail-css'
+          ? instrumentViteTailSource(source, 'css', target.relative)
+          : target.name ? instrumentDiagnosticSource(source, target) : (project === mpxProject ? instrumentMpxSource : instrumentOperationSource)(source, target.kind, target.relative)
     prepared.push({ target, file, original: source, ...transformed })
   }
   // 所有锚点均验证成功后再写入副本，不容许半套观测协议启动。

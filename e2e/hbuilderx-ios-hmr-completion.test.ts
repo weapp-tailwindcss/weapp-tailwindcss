@@ -66,7 +66,7 @@ describe.each(['hmr', 'native-reload'] as const)('iOS 本轮更新完成契约�
       release()
       await completed
       expect(observer.snapshot()).toMatchObject({ state: 'updated', runtimeVerified: true })
-      expect(runtime.mock.calls[0]).toEqual([expect.any(Number), expect.stringMatching(/^\d+:\d+:\d+$/)])
+      expect(runtime.mock.calls[0]).toEqual([expect.any(Number), expect.stringMatching(/^ios-update:\d+:\d+:\d+:\d+:\d+$/)])
     }
     finally { observer.dispose() }
   })

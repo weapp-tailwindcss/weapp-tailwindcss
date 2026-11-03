@@ -189,13 +189,18 @@ it('真实 Vite 与浏览器执行连接模式，保存和刷新后校验样式�
   const spy = vi.spyOn(console, 'log').mockImplementation((value) => {
     logs.push(String(value))
   })
-  const vite = await createViteServer({ root, configFile: false, server: { host: '127.0.0.1', port: 0 }, plugins: [issue1144IdentityPlugin(root)] })
+  // 验收器单测使用轮询，避免临时目录的宿主文件监听漏事件。
+  const vite = await createViteServer({ root, configFile: false, server: { host: '127.0.0.1', port: 0, watch: { usePolling: true, interval: 25 } }, plugins: [issue1144IdentityPlugin(root)] })
   cleanups.push(() => vite.close())
   await vite.listen()
   server.baseUrl = `http://127.0.0.1:${(vite.httpServer!.address() as AddressInfo).port}/`
   const transaction = await SourceTransaction.create(journal, root, [html])
   server.assertOwned = () => transaction.assertOwned()
-  server.writeSource = (file, content) => transaction.write(file, content)
+  const saves: string[] = []
+  server.writeSource = async (file, content) => {
+    saves.push(content)
+    await transaction.write(file, content)
+  }
   server.instanceId = (await checkAttachedIdentity(server, root, '/__issue1144_identity')).instanceId
   // 这里只验证验收器；合成日志不能作为真实 HBuilderX 验收证据。
   const prefix = '编译器版本：5.25（uni-app x）VDOM模式\n'
@@ -204,17 +209,27 @@ it('真实 Vite 与浏览器执行连接模式，保存和刷新后校验样式�
     logs.push(String(value))
     pending = pending.then(() => writeFile(server.logFile, prefix + logs.join('\n')))
   })
+  await writeFile(server.logFile, prefix + logs.join('\n'))
   const result = await runWebHmr(root, html, [], '/style.css?direct', '/style.css?direct', ['display: block'], [{ selector: 'view', styles: { width: '10px' } }], [], [{
     markerClass: 'probe',
     markerText: 'updated',
     cssContains: ['display: block'],
-    runtimeStyles: [{ selector: 'view', styles: { width: '20px' } }],
+    runtimeStyles: [{ selector: 'view', styles: { width: '20px', height: '30px' } }],
     reload: true,
-    sourceMutation: { file: 'index.html', replace: { from: 'width: 10px', to: 'width: 20px' } },
+    sourceMutation: { file: 'index.html', replace: { from: 'width: 10px', to: 'width: 20px' }, append: '<style>view { height: 30px; }</style>' },
+  }, {
+    markerClass: 'probe',
+    markerText: 'appended',
+    cssContains: ['display: block'],
+    runtimeStyles: [{ selector: 'view', styles: { width: '20px', height: '40px' } }],
+    sourceMutation: { file: 'index.html', append: '<style>view { height: 40px; }</style>', cssContains: ['display: block'] },
   }], true, ['initial'], '/__issue1144_identity', server)
   await pending
   expect(result.pageErrors).toEqual([])
-  expect(result.hmrCss).toHaveLength(1)
+  expect(result.hmrCss).toHaveLength(3)
+  expect(saves).toHaveLength(2)
+  expect(saves[0]).toContain('<style>view { height: 30px; }</style>')
+  expect(saves[1]).toContain('<style>view { height: 40px; }</style>')
   expect(vite.httpServer!.listening).toBe(true)
   expect(JSON.parse(await readFile(path.join(server.artifactRoot, 'save-1.json'), 'utf8')).styles[0].width).toBe('20px')
   await transaction.restore()

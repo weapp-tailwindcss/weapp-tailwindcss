@@ -274,6 +274,76 @@ it('停止期间最后到达的 HMR 失败仍使验收失败并释放日志监�
   expect(await readFile(source, 'utf8')).toBe(originalSource)
 })
 
+it('首屏扩展失败由原 runner 停止会话后恢复父 SFC 与已登记外部样式', async () => {
+  const css = path.join(item.projectDir, 'external.css')
+  await writeFile(css, '.original{}')
+  const failure = new Error('external verification failed')
+  await expect(verifyAppHmrWithHBuilderX({ ...item, hmrSteps: [] }, {
+    sourceFiles: ['external.css'],
+    afterInitialRuntime: async () => {
+      await writeFile(css, '.changed{}')
+      throw failure
+    },
+  })).rejects.toBe(failure)
+  expect(state.stop).toHaveBeenCalledExactlyOnceWith('SIGINT')
+  expect(projectCloseCalls()).toHaveLength(1)
+  expect(await readFile(source, 'utf8')).toBe(originalSource)
+  expect(await readFile(css, 'utf8')).toBe('.original{}')
+})
+
+it('外部来源更新沿用原运行时与停止清理，不再次保存父 marker', async () => {
+  const css = path.join(item.projectDir, 'external.css')
+  await writeFile(css, '.original{}')
+  await verifyAppHmrWithHBuilderX({ ...item, hmrSteps: [] }, {
+    sourceFiles: ['external.css'],
+    afterInitialRuntime: async (runtime) => {
+      const parent = await readFile(source)
+      await runtime.updateSourceOnly({
+        name: 'external-replace',
+        file: 'external.css',
+        source: '.changed{}',
+        verifyRuntime: async () => {
+          // 模拟独立来源编译完成，不能由父 marker 的第二次保存产生新产物。
+          await writeFile(path.join(item.projectDir, 'dist', 'app.js'), 'compiled external update')
+          return true
+        },
+      })
+      expect(await readFile(source)).toEqual(parent)
+      expect(await readFile(css, 'utf8')).toBe('.changed{}')
+    },
+  })
+  expect(state.stop).toHaveBeenCalledExactlyOnceWith('SIGINT')
+  expect(projectCloseCalls()).toHaveLength(1)
+  expect(await readFile(source, 'utf8')).toBe(originalSource)
+  expect(await readFile(css, 'utf8')).toBe('.original{}')
+})
+
+it('独立来源运行态入口不隐式扩展到未经实现的平台', async () => {
+  await expect(verifyAppHmrWithHBuilderX({ ...item, platform: 'app-harmony' }, {
+    sourceFiles: [],
+    afterInitialRuntime: async () => {},
+  })).rejects.toThrow('当前仅支持 iOS')
+  expect(state.spawn).not.toHaveBeenCalled()
+  expect(await readFile(source, 'utf8')).toBe(originalSource)
+})
+
+it('首屏扩展失败且原生停止未知时仍冻结父 SFC 与外部样式', async () => {
+  const css = path.join(item.projectDir, 'external.css')
+  await writeFile(css, '.original{}')
+  state.stop.mockRejectedValue(new Error('owned process did not stop'))
+  const error = await verifyAppHmrWithHBuilderX({ ...item, hmrSteps: [] }, {
+    sourceFiles: ['external.css'],
+    afterInitialRuntime: async () => {
+      await writeFile(css, '.changed{}')
+      throw new Error('external failed')
+    },
+  }).catch(error => error)
+  expect(findNativeCleanupBlock(error)).toBeDefined()
+  expect(projectCloseCalls()).toHaveLength(0)
+  expect(await readFile(source, 'utf8')).toContain('initial')
+  expect(await readFile(css, 'utf8')).toBe('.changed{}')
+})
+
 it.each(['absolute', 'relative'])('Alpha 5.31 Harmony 使用 %s 输入的真实根，不打开或关闭用户同名项目', async (input) => {
   state.version = '5.31.2026093020-alpha'
   const projectLink = path.join(root, '中文 worktree (link)')

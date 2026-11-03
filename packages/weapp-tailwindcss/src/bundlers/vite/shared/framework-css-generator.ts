@@ -29,7 +29,7 @@ import { createBundlerGeneratedCssEndMarker, createBundlerGeneratedCssMarker } f
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveViteCssPipelineOutputFile } from '../generate-bundle'
 import { compiledCssSourceScopeId, createCompiledCssSourceHash } from '../generate-bundle/compiled-css-source'
-import { extractSfcStyleBlocks, isSfcStyleSourceFile, resolveSfcStyleRequestFromKnownSource } from '../generate-bundle/sfc-style-source'
+import { isSfcStyleSourceFile, resolveSfcStyleRequestFromBlocks } from '../generate-bundle/sfc-style-source'
 import { removeScopedTailwindPreflightCss } from '../processed-css-assets'
 import { parseVueRequest } from '../query'
 import { resolveViteServeRootMiniProgramImportShell } from '../serve-root-import-shell'
@@ -95,7 +95,8 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     }
     const resolvedConfig = getResolvedConfig()
     const file = cleanUrl(id)
-    const inferredSfcStyleRequest = isSfcStyleSourceFile(file) ? resolveSfcStyleRequestFromKnownSource(file, cssMemory.getKnownSfcSource(file), code, id) : file
+    const sfcSnapshot = isSfcStyleSourceFile(file) ? cssMemory.getKnownSfcStyleSnapshot(file) : undefined
+    const inferredSfcStyleRequest = sfcSnapshot ? resolveSfcStyleRequestFromBlocks(file, sfcSnapshot.styles, code, id) : file
     const requestFile = isCSSRequest(id) ? inferredSfcStyleRequest === file ? resolveViteCssPipelineRequestFile(id) : inferredSfcStyleRequest : inferredSfcStyleRequest
     if (!isCSSRequest(requestFile) || opts.htmlMatcher(file) || isHTMLRequest(file)) {
       return void 0
@@ -114,10 +115,9 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
       ? { id: moduleScopeId, kind: 'component' as const }
       : undefined
     const sourceRevision = getCompilationScopeDependencyRevision(runtimeState, moduleScopeId)
-    const knownSfcSource = isSfcStyleSourceFile(file) ? cssMemory.getKnownSfcSource(file) : undefined
-    const authorSource = knownSfcSource == null
+    const authorSource = sfcSnapshot == null
       ? cssMemory.getKnownCssSource(requestFile) ?? code
-      : extractSfcStyleBlocks(knownSfcSource).find(style => style.index === (parseVueRequest(requestFile).query.index ?? 0))?.source ?? code
+      : sfcSnapshot.styles.find(style => style.index === (parseVueRequest(requestFile).query.index ?? 0))?.source ?? code
     let compiledSourceHash: string | undefined
     const createGeneratedMarker = () => createBundlerGeneratedCssMarker('vite', markerFile, compiledSourceHash)
     const generatorTransformCode = currentGeneratorBranch.isWeb ? generatorCode : normalizeMiniProgramGeneratorCssSource(generatorCode, outputFile)

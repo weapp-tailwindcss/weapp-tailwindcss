@@ -10,7 +10,7 @@ function createFrameworkHmrRuntimeSignature(file: string, source: string | undef
   }
   const cleanFile = cleanUrl(file)
   const sources = isSfcStyleSourceFile(cleanFile)
-    ? extractSfcStyleSources(source).filter(styleSource => WEB_HMR_RUNTIME_AFFECTING_DIRECTIVE_RE.test(styleSource))
+    ? extractSfcStyleSources(source, file).filter(styleSource => WEB_HMR_RUNTIME_AFFECTING_DIRECTIVE_RE.test(styleSource))
     : [source]
   return sources
     .map(styleSource => createRuntimeAffectingSourceSignature(styleSource, 'css'))

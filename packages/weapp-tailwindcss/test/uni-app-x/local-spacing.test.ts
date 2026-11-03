@@ -48,10 +48,12 @@ describe('uni-app x local structural utilities', () => {
 
     for (const utilities of ['space-y-2.5 space-x-3 text-[23px]', 'space-y-4 space-x-5 text-[23px]']) {
       const sfc = await transform(sfcPlugin, `<template><view class="${utilities}"><view /><view /></view></template>`, id)
-      const authorCss = extractSfcStyleBlocks(sfc.code).map(style => style.source).join('\n')
+      const authorCss = extractSfcStyleBlocks(sfc.code, 'Probe.uvue').map(style => style.source).join('\n')
       const aliases = new Map<string, string>()
       postcss.parse(authorCss).walkRules((rule) => {
-        rule.walkAtRules('apply', apply => { aliases.set(apply.params, rule.selector.match(/wtu-[\w-]+/)![0]) })
+        rule.walkAtRules('apply', (apply) => {
+          aliases.set(apply.params, rule.selector.match(/wtu-[\w-]+/)![0])
+        })
       })
       const result = await transform(cssPlugin, authorCss, `${id}?vue&type=style&index=0&lang.css`)
       const root = postcss.parse(result.code)
@@ -62,7 +64,9 @@ describe('uni-app x local structural utilities', () => {
         const declarations: string[] = []
         root.walkRules((rule) => {
           if (rule.selector.includes(`.${alias}`)) {
-            rule.walkDecls(decl => { declarations.push(decl.prop) })
+            rule.walkDecls((decl) => {
+              declarations.push(decl.prop)
+            })
           }
         })
         const expected = utility.startsWith('space-y')

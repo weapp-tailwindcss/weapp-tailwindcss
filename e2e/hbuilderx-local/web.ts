@@ -177,14 +177,17 @@ export async function runWebHmr(
     const hmrCss: string[] = []
     for (const [index, step] of hmrSteps.entries()) {
       await session.ensureRunning()
-      const sameFileReplace = step.sourceMutation?.replace && sameSourceFile(projectRoot, step.sourceMutation.file, sourceFile)
-      if (step.sourceMutation && !sameFileReplace) {
+      const sameFileMutation = step.sourceMutation && sameSourceFile(projectRoot, step.sourceMutation.file, sourceFile)
+      if (step.sourceMutation && !sameFileMutation) {
         await appendHmrSourceMutation(projectRoot, step.sourceMutation, attached?.writeSource)
         if (step.sourceMutation.cssContains?.length) {
           hmrCss.push(await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.sourceMutation.cssContains, session, logs))
         }
       }
-      await rewriteHmrMarker(sourceFile, markerAnchors, hmrSteps, index, sameFileReplace ? step.sourceMutation?.replace : undefined, attached?.writeSource)
+      await rewriteHmrMarker(sourceFile, markerAnchors, hmrSteps, index, sameFileMutation ? step.sourceMutation : undefined, attached?.writeSource)
+      if (sameFileMutation && step.sourceMutation?.cssContains?.length) {
+        hmrCss.push(await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.sourceMutation.cssContains, session, logs))
+      }
       await waitForHmrMarker(page, step.markerText)
       await waitForRuntimeStyles(page, [
         ...(persistentRuntimeStyles ?? []),
