@@ -6,7 +6,13 @@ export class WechatEnvironmentError extends Error {
   }
 }
 
-/** 只保留白名单业务码和响应形状，不把服务错误正文当成认证结论或写入日志。 */
+/** 仅识别官方服务已确认的认证错误格式，不回显正文或把任意 code 10 当成认证异常。 */
+function projectAuthenticationRejected(status: number, object: Record<string, unknown> | undefined) {
+  return status === 500 && object?.code === 10 && typeof object.message === 'string'
+    && /^Error: 错误 Error: 需要重新登录, \[\d{8} \d{2}:\d{2}:\d{2}\] \(code 10\)(?:\r?\n|$)/.test(object.message)
+}
+
+/** 只保留白名单业务码、已确认的安全分类和响应形状，正文与堆栈不进入日志。 */
 export function wechatResponseDetail(status: number, result: unknown): string {
   const object = result && typeof result === 'object' && !Array.isArray(result)
     ? result as Record<string, unknown>
@@ -19,7 +25,9 @@ export function wechatResponseDetail(status: number, result: unknown): string {
   const shape = object ? '对象' : Array.isArray(result) ? '数组' : result === null ? 'null' : typeof result
   const category = status === 401 || status === 403
     ? '认证或服务授权未确认'
-    : '服务或项目操作未完成，不能据此判定认证失败'
+    : projectAuthenticationRejected(status, object)
+      ? '项目接口返回需要重新登录类认证错误；这不代表 IDE 未登录，请保留当前会话并核对项目认证'
+      : '服务或项目操作未完成，不能据此判定认证失败'
   return `${category}；响应类型=${shape}${safeCode === undefined ? '' : `；业务码=${safeCode}`}`
 }
 

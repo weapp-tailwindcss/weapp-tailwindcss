@@ -6,6 +6,34 @@ import { wechatResponseDetail } from '../scripts/wechat/errors'
 import { assertWechatLogin, wechatRequest } from '../scripts/wechat/service'
 
 describe('微信服务失败的安全诊断', () => {
+  const loginRequiredMessage = 'Error: 错误 Error: 需要重新登录, [20261001 01:02:03] (code 10)'
+
+  it.each(['', '\nError: private-ticket\n    at private-stack', '\r\nError: private-ticket'])('识别官方包装的项目认证错误，不回显正文：%j', (suffix) => {
+    const detail = wechatResponseDetail(500, { code: 10, message: `${loginRequiredMessage}${suffix}` })
+    expect(detail).toContain('项目接口返回需要重新登录类认证错误')
+    expect(detail).toContain('这不代表 IDE 未登录')
+    expect(detail).not.toMatch(/private-ticket|private-stack|20261001|01:02:03/)
+  })
+
+  it.each([
+    [500, '10', loginRequiredMessage],
+    [500, 11, loginRequiredMessage],
+    [200, 10, loginRequiredMessage],
+    [500, 10, `日志：${loginRequiredMessage}`],
+    [500, 10, `${loginRequiredMessage} private-ticket`],
+    [500, 10, `Error: unrelated\n    at ${loginRequiredMessage}`],
+    [500, 10, { nested: loginRequiredMessage }],
+    [500, 10, undefined],
+  ])('不把相似正文或其他业务码当成项目认证错误', (status, code, message) => {
+    const detail = wechatResponseDetail(status as number, { code, message })
+    expect(detail).toContain('不能据此判定认证失败')
+    expect(detail).not.toMatch(/项目接口返回需要重新登录类认证错误|private-ticket|20261001/)
+  })
+
+  it('HTTP 认证状态优先于包装正文分类', () => {
+    expect(wechatResponseDetail(401, { code: 10, message: loginRequiredMessage })).toContain('认证或服务授权未确认')
+  })
+
   it.each([
     [401, {}, '认证或服务授权未确认'],
     [403, {}, '认证或服务授权未确认'],
@@ -53,6 +81,19 @@ describe('微信服务失败的安全诊断', () => {
     expect(error.message).toContain('业务码=PROJECT_PATH_NOT_FOUND')
     expect(error.message).toContain('不能据此判定认证失败')
     expect(error.message).not.toContain('sensitive-ticket')
+    await expect(wechatRequest(port, { kind: 'close', project })).rejects.toThrow('停止后续')
+    await expect(assertWechatLogin(port)).rejects.toThrow('停止后续')
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('登录查询通过后项目认证仍可失败，准确提示并停止后续请求', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('{"login":true}'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 10, message: `${loginRequiredMessage}\nError: private-ticket\n    at private-stack` }), { status: 500 }))
+    const port = 32184
+    const project = path.join(directory, 'owned-project')
+    await assertWechatLogin(port)
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 32185 })).rejects.toThrow('项目接口返回需要重新登录类认证错误')
     await expect(wechatRequest(port, { kind: 'close', project })).rejects.toThrow('停止后续')
     await expect(assertWechatLogin(port)).rejects.toThrow('停止后续')
     expect(fetch).toHaveBeenCalledTimes(2)
