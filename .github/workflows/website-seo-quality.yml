@@ -137,6 +137,10 @@ jobs:
         if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website seo:quality:strict
 
+      - name: Verify committed GEO indexes before generation
+        if: needs.detect-website-changes.outputs.website == 'true'
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/seo-geo.test.mjs scripts/write-stable-json.test.mjs --update=none
+
       - name: Build website
         if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website build
