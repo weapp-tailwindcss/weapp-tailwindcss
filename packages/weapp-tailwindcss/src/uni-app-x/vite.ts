@@ -17,6 +17,7 @@ import { resolveUniAppXBorderPreflightOptions } from './border-preflight'
 import { resolveUniAppXOptions } from './options'
 import { resolveUniAppXStyleIsolationEnabled } from './style-isolation'
 import { retainUniAppXAuthorApplyCss } from './vite/author-apply'
+import { createUniAppXCompilerPreflightPlugin } from './vite/compiler-preflight'
 import { createUniAppXHarmonyApplyExpander } from './vite/harmony-apply'
 import { createUniAppXNativeHmrReloader } from './vite/native-hmr'
 import { createUniAppXNativeBuildTargetResolver } from './vite/native-target'
@@ -434,10 +435,15 @@ export function createUniAppXPlugins(options: CreateUniAppXPluginsOptions): Plug
     componentMatcher: resolvedUniAppXOptions.componentLocalStyles.componentMatcher,
     shouldEnableComponentLocalStyle,
   })
+  const hasBorderPreflight = Boolean(resolveUniAppXBorderPreflightOptions(options, false).borderPreflight)
 
   return [
     ...cssPlugins,
     nvuePlugin,
+    createUniAppXCompilerPreflightPlugin({
+      isEnabled: () => hasBorderPreflight && isEnabled() && isNativeAppBuildTarget() && !isWebGeneratorTarget(),
+      range: options.cssPreflightRange,
+    }),
     stylePlaceholderPlugin,
   ]
 }
