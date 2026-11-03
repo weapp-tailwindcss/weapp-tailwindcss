@@ -24,6 +24,8 @@ pnpm e2e:preflight prepare
 
 微信探针项目只在 prepare 创建一次，真实交互与项目收尾均成功后封存本轮源码、编译配置与目录身份。verify 复用该项目并重新验收，live 只校验文件、来源绑定与服务登录；两阶段均不重写或修复探针文件，避免文件保存触发额外编译。缺失、篡改或来自其他 run 的项目立即阻断，须重新 prepare。IDE 可以补齐首次编译配置，后续编辑器元数据及普通私有配置仍可合法变化；私有配置不得改变 AppID、编译类型或源码根目录。
 
+`isLogin: true` 与项目接口认证是两项检查。已核实的 IDE 版本会将未登录、请求签名无效、需要重新认证等远端错误统一映射为“需要重新登录”，再包装为 HTTP 500/code 10；不能据此认定用户没登录，或要求反复登录、重启。先核对请求绑定的实例和项目，记录安全分类，保留当前账号及其他任务窗口；认证异常后仍停止项目请求。完整首行签名以外的 code 10 保持通用分类，不回显错误正文。证据与回归见[微信登录查询与项目接口认证](../docs/engineering/lessons/wechat-project-authentication.md)。
+
 所有 E2E 禁止退出登录、切换账号、读取/替换/刷新登录票据、清 session/all 缓存、删除用户配置或终止共享 IDE。允许编译缓存操作但不降级为全量清理。打开项目时记录原 HTTP 端口，清理只断开自己的连接并关闭原服务上的本轮项目；认证或服务失败后不再发项目请求，保留未清理现场并报告。服务端自然过期或撤销票据仍可能令 IDE 自行退出，测试不得伪造/恢复这些凭据；用户恢复后重新 prepare。根因与证据见[微信登录态保护复盘](../docs/engineering/lessons/wechat-login-preservation.md)。
 
 第三方工具中转同样受限：HBuilderX `launch mp-weixin --compile false` 会自动调用微信 CLI，启动前还会清理本地存储，禁止使用。独立脚本默认直接运行所选 HBuilderX 安装的同套 Node 与 uni 编译器持续 watch，再由 `scripts/wechat` 连接已有 IDE；安装身份缺失或歧义直接失败。只有显式 `HBUILDERX_COMPILE_ONLY=1` 才进入静态编译，一次性编译不能替代 watch/HMR 验收。环境合同与验收边界见[HBuilderX 微信 watch 复盘](../docs/engineering/lessons/hbuilderx-wechat-watch-session.md)。
