@@ -123,3 +123,59 @@ it.runIf(process.platform !== 'win32')('真实根进程先 close 后，仍确认
     await closed
   }
 }, 10_000)
+
+it.runIf(process.platform !== 'win32')('命令自然 close 后仍清理本轮无 stdio 后代，再向调用方返回成功', async () => {
+  const root = await directory()
+  const identityFile = path.join(root, 'natural-worker.json')
+  const worker = `const fs=require('node:fs'); process.on('SIGTERM',()=>{}); fs.writeFileSync(process.argv[1],JSON.stringify({pid:process.pid,parent:process.ppid})); setInterval(()=>{},1000);`
+  const source = `const fs=require('node:fs'); const {spawn}=require('node:child_process'); spawn(process.execPath,['-e',process.argv[1],process.argv[2]],{stdio:'ignore'}); const timer=setInterval(()=>{if(fs.existsSync(process.argv[2])){clearInterval(timer);process.exit(0)}},5);`
+  let identity: { pid: number, parent: number } | undefined
+  let groupGone = false
+  const cleanup = async () => {
+    if (groupGone) {
+      return
+    }
+    identity ??= JSON.parse(await readFile(identityFile, 'utf8'))
+    try {
+      process.kill(-identity!.parent, 'SIGKILL')
+      let gone = false
+      for (let attempt = 0; attempt < 100 && !gone; attempt++) {
+        await delay(10)
+        try {
+          process.kill(-identity!.parent, 0)
+        }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ESRCH') {
+            throw error
+          }
+          gone = true
+        }
+      }
+      if (!gone) {
+        throw new Error('自然退出回归的自有进程组未清理')
+      }
+    }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ESRCH') {
+        throw error
+      }
+    }
+  }
+  try {
+    await runNativeStartupCommand(process.execPath, ['-e', source, worker, identityFile], { cwd: root, signal: new AbortController().signal })
+    identity = JSON.parse(await readFile(identityFile, 'utf8'))
+    let groupError: unknown
+    try {
+      process.kill(-identity!.parent, 0)
+    }
+    catch (error) {
+      groupError = error
+    }
+    expect(groupError).toMatchObject({ code: 'ESRCH' })
+    groupGone = true
+    expect(() => process.kill(identity!.pid, 0)).toThrow()
+  }
+  finally {
+    await cleanup()
+  }
+}, 10_000)

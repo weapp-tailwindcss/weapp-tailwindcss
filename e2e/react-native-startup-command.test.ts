@@ -27,6 +27,9 @@ function child(pid = 12345) {
 
 function setup(target: NodeJS.Platform = 'linux') {
   Object.defineProperty(process, 'platform', { value: target })
+  vi.spyOn(process, 'kill').mockImplementation(() => {
+    throw Object.assign(new Error('no owned group'), { code: 'ESRCH' })
+  })
   const command = child()
   vi.mocked(spawn).mockReturnValue(command as unknown as ChildProcess)
   const controller = new AbortController()

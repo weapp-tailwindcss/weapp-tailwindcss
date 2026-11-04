@@ -172,6 +172,8 @@ function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnTy
   const cancel = () => { void stopNativeProcess(child).catch(() => undefined) }
   iosStartup?.signal.addEventListener('abort', cancel, { once: true })
   const settled = () => {
+    // POSIX 根自然退出时立即收回组内后代，不能等下一阶段再凭数字 PID 追认。
+    if (process.platform !== 'win32') { void stopNativeProcess(child).catch(() => undefined) }
     nativeProcesses.delete(child)
     iosStartup?.signal.removeEventListener('abort', cancel)
   }
@@ -534,11 +536,11 @@ async function main() {
     const startupDeadline = iosStartup?.deadline ?? Date.now() + 1_800_000
     const activeRun = run = (await startupStage('native-command-spawn', async () => ({ child: startExpo(runArgs, platform === 'ios' ? { ...env, RN_IOS_STARTUP_DEADLINE_MS: String(startupDeadline) } : env, logFile!) }))).child
     if (iosLaunchPublication) {
-      const launch = activeRun.then((result) => {
+      const launch = activeRun.then(result => runWithCleanup(async () => {
         if (result.failed || result.exitCode !== 0) {
           throw new Error(`iOS 原生启动失败：${result.shortMessage}; see ${path.join(artifacts, 'expo-run.log')}`, { cause: result })
         }
-      })
+      }, () => stopNativeProcess(activeRun)))
       const verified = awaitIosApplicationEnvironment(launch, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), { encoding: 'utf8', signal: iosStartup?.signal }), device, 'com.weapptailwindcss.rncompat', iosStartup?.signal)
       iosLaunchPublication.bind(verified)
     }

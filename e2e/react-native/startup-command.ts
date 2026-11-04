@@ -209,6 +209,11 @@ export async function runNativeStartupCommand(file: string, args: string[], opti
   }
   try {
     const exit = await closed
+    if (!stopping && platform !== 'win32' && spawnFailure === undefined) {
+      // 根自然 close 不代表组内后代退出；返回成功前也要确认本轮组消失。
+      stopping = stopOwnedTree(child, platform)
+      options.onCleanup?.(stopping)
+    }
     let cleanupFailure: unknown
     try {
       await stopping
@@ -217,7 +222,8 @@ export async function runNativeStartupCommand(file: string, args: string[], opti
       cleanupFailure = error
     }
     if (cleanupFailure !== undefined) {
-      throw Object.assign(new AggregateError([options.signal.reason, cleanupFailure], '原生启动命令取消及进程树清理失败'), { cause: options.signal.reason })
+      const primary = options.signal.aborted ? options.signal.reason : cleanupFailure
+      throw Object.assign(new AggregateError([...new Set([primary, cleanupFailure])], '原生启动命令及进程树清理失败'), { cause: primary })
     }
     options.signal.throwIfAborted()
     if (spawnFailure !== undefined) {

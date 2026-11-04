@@ -267,6 +267,12 @@ Metro 取消以及最终就绪写盘期间取消、到期的三项回归先在�
 
 显式 Node 24.22.1 下，原 iOS 前置清单二十八文件 396 项通过；随后资源与进程组补充回归的九文件 118 项通过，CSS 与 workflow 三文件 104 项通过。ESLint、actionlint、AGENTS、架构及 `pnpm change status` 通过。`tsc -p e2e/tsconfig.json --noEmit --incremental false --pretty false` 报出大量既有错误（包括 ES2021 lib 与现有代码的 ErrorOptions/Array.at 不一致），未调整全仓类型配置；另用相同严格选项与 Git HEAD 源码逐项对照当前修改文件，修正新增诊断，既有错误单独保留。
 
+### 自然退出也必须收回本轮进程组
+
+最终审查发现，启动命令只在取消时收回进程组；根自然 close 后，原入口从 owned 集合删除它，遗留的无 stdio 后代仍可能存活。真实 Node 回归先在 `5a3a4c71` 失败：根返回零，但本轮进程组仍存在。修复在 POSIX 根 close 时立即收回当前组并等待确认；simctl/static 命令同样先确认组消失，再交付结果。Expo 的真实启动完成门禁还等待该清理，不能由零退出先解锁 context。Windows 保持在根仍存活时执行精准 taskkill，未对已退出的 Windows 数字 PID 追加追杀。
+
+该自然退出用例与真实同步死循环、先取消后根 close、static 子进程和命令 mock 两文件十九项通过。原件与预算保持不变；这一补充会形成新的准确 head，`5a3a4c71` 的检查不得代替后续提交。
+
 ## 适用边界
 
 本轮修改采集器与评估器，不改 demo、生成样式、组件夹具或 `RN_FIXTURE_HASH` 输入，不重写 static 基线。没有本地原生设备验收，不用定向单测或原件离线重放宣称当前源码已通过 hosted iOS。后续仍失败时应读取新采样和准确阶段原件，不继续相同 head 的盲重跑。
