@@ -75,6 +75,48 @@ it('一轮仅首个慢截图采一次，先核对原子进程身份再采栈和�
   expect(vi.getTimerCount()).toBe(0)
 })
 
+it('Apple simctl 的自有 Bash 启动进程也可采样，仍要求相同 PID 和父进程', async () => {
+  const context = fixture()
+  const identity = { ...await context.identity(), executable: path.join(path.sep, 'bin', 'bash') }
+  context.identity.mockResolvedValue(identity).mockClear()
+  const first = context.observe()
+  first.child.emit('spawn')
+  await vi.advanceTimersByTimeAsync(4_000)
+  first.stop()
+  await context.owner.drain()
+  expect(context.records[0]).toMatchObject({ status: 'complete', identity })
+  expect(context.sample).toHaveBeenCalledTimes(1)
+})
+
+it.each(['identity-rejected', 'lookup-failed', 'canceled'] as const)('%s 不提前消耗唯一真实采样额度', async (mode) => {
+  const context = fixture()
+  const identity = await context.identity()
+  const lookup = deferred<typeof identity>()
+  context.identity.mockClear().mockReturnValueOnce(lookup.promise)
+  const first = context.observe()
+  first.child.emit('spawn')
+  await vi.advanceTimersByTimeAsync(4_000)
+  if (mode === 'lookup-failed') {
+    lookup.reject(new Error('identity lookup failed'))
+  }
+  else {
+    if (mode === 'canceled') {
+      first.stop()
+    }
+    lookup.resolve({ ...identity, ...(mode === 'identity-rejected' ? { parentPid: process.pid + 1 } : {}) })
+  }
+  await context.owner.drain()
+  first.stop()
+  expect(context.sample).not.toHaveBeenCalled()
+  const second = context.observe()
+  second.child.emit('spawn')
+  await vi.advanceTimersByTimeAsync(4_000)
+  second.stop()
+  await context.owner.drain()
+  expect(context.records[1]).toMatchObject({ status: 'complete', identity })
+  expect(context.sample).toHaveBeenCalledExactlyOnceWith(42, expect.any(AbortSignal), path.join(context.directory, 'ios-screenshot-2.sample.txt'))
+})
+
 it.each(['linux', 'win32'] as const)('%s 不执行 macOS 进程查询或采样', async (platform) => {
   const context = fixture()
   const owner = createIosScreenshotSampleOwner(context.directory, { platform, identity: context.identity, sample: context.sample })

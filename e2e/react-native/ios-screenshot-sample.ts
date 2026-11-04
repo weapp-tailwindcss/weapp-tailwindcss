@@ -29,9 +29,10 @@ interface SampleOptions {
   sample?: typeof sampleNativeProcess
 }
 
-/** 一轮最多观察一个慢截图；采集与截图分别收尾，诊断不能延长截图的成功路径。 */
+/** 一轮最多采样一个已确认归属的慢截图；身份查询失败不消耗实际采样额度。 */
 export function createIosScreenshotSampleOwner(directory: string, options: SampleOptions = {}) {
   let claimed = false
+  let inspecting = false
   const pending = new Map<Promise<void>, { controller: AbortController, record: IosScreenshotSample }>()
   return {
     observe(child: ChildProcess, index: number, elapsed: () => number, save: (sample: IosScreenshotSample) => void) {
@@ -57,10 +58,9 @@ export function createIosScreenshotSampleOwner(directory: string, options: Sampl
       child.once('close', stop)
       child.once('error', stop)
       const timer = setTimeout(() => {
-        if (claimed || !live()) {
+        if (claimed || inspecting || !live()) {
           return
         }
-        claimed = true
         const record: IosScreenshotSample = { thresholdMs: IOS_SCREENSHOT_SAMPLE_AFTER_MS, pid: spawnedPid!, startedAtMs: elapsed(), status: 'pending' }
         try {
           record.resourcesAtThreshold = captureNativeHostResources()
@@ -74,6 +74,7 @@ export function createIosScreenshotSampleOwner(directory: string, options: Sampl
           record.settledAtMs = elapsed()
           return
         }
+        inspecting = true
         const work = (async () => {
           try {
             const identity = await (options.identity ?? readNativeProcessIdentity)(spawnedPid!, controller.signal)
@@ -84,10 +85,12 @@ export function createIosScreenshotSampleOwner(directory: string, options: Sampl
               return
             }
             if (identity.pid !== spawnedPid || identity.parentPid !== process.pid || !identity.startedAt
-              || !['xcrun', 'simctl'].includes(path.basename(identity.executable))) {
+              || !['xcrun', 'simctl', 'bash'].includes(path.basename(identity.executable))) {
               record.status = 'identity-rejected'
               return
             }
+            // Apple 的 simctl 可以先由 Bash 初始化再 exec；仍只采自有、存活且身份一致的 PID。
+            claimed = true
             const file = path.join(directory, `ios-screenshot-${index}.sample.txt`)
             record.result = await (options.sample ?? sampleNativeProcess)(spawnedPid!, controller.signal, file)
             if (record.status !== 'cleanup-timeout') {
@@ -102,7 +105,10 @@ export function createIosScreenshotSampleOwner(directory: string, options: Sampl
               record.status = controller.signal.aborted ? 'canceled' : 'failed'
             }
           }
-          finally { record.settledAtMs = elapsed() }
+          finally {
+            inspecting = false
+            record.settledAtMs = elapsed()
+          }
         })()
         pending.set(work, { controller, record })
         void work.then(() => pending.delete(work))

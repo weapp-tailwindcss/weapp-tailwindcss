@@ -25,10 +25,13 @@ function solidTargetColor(image: PNG, rect: NativePairEvidence['target'], ratio:
     return false
   }
   let matched = 0
+  const [red, green, blue] = rgb as [number, number, number]
   for (let y = top; y < bottom; y++) {
     for (let x = left; x < right; x++) {
       const offset = (y * image.width + x) * 4
-      if (rgb.every((channel, index) => Math.abs(image.data[offset + index]! - channel) <= 2)
+      if (Math.abs(image.data[offset]! - red) <= 2
+        && Math.abs(image.data[offset + 1]! - green) <= 2
+        && Math.abs(image.data[offset + 2]! - blue) <= 2
         && image.data[offset + 3] === 255) {
         matched++
       }
@@ -69,21 +72,36 @@ export function assessNativePair(image: PNG, pair: NativePairEvidence) {
   let mismatches = 0
   let difference = 0
   let controlPixels = 0
+  const [probeOrigin, referenceOrigin, controlOrigin] = origins as [{ x: number, y: number }, { x: number, y: number }, { x: number, y: number }]
+  const data = image.data
   for (let y = 0; y < height; y++) {
+    let probeOffset = ((probeOrigin.y + y) * image.width + probeOrigin.x) * 4
+    let referenceOffset = ((referenceOrigin.y + y) * image.width + referenceOrigin.x) * 4
+    let controlOffset = ((controlOrigin.y + y) * image.width + controlOrigin.x) * 4
     for (let x = 0; x < width; x++) {
-      const offsets = origins.map(origin => ((origin.y + y) * image.width + origin.x + x) * 4)
-      const deltas = [0, 1, 2].map(channel => Math.abs(image.data[offsets[0]! + channel]! - image.data[offsets[1]! + channel]!))
-      if ([0, 1, 2].some(channel => Math.abs(image.data[offsets[1]! + channel]! - image.data[offsets[2]! + channel]!) > 2)) {
+      // 所有像素与 RGB 通道仍逐个比较；只消除每像素的临时数组和回调分配。
+      const red = data[referenceOffset]!
+      const green = data[referenceOffset + 1]!
+      const blue = data[referenceOffset + 2]!
+      const redDelta = Math.abs(data[probeOffset]! - red)
+      const greenDelta = Math.abs(data[probeOffset + 1]! - green)
+      const blueDelta = Math.abs(data[probeOffset + 2]! - blue)
+      if (Math.abs(red - data[controlOffset]!) > 2
+        || Math.abs(green - data[controlOffset + 1]!) > 2
+        || Math.abs(blue - data[controlOffset + 2]!) > 2) {
         controlPixels++
       }
-      const foreground = [0, 1, 2].some(channel => Math.abs(image.data[offsets[1]! + channel]! - [226, 232, 240][channel]!) > 10)
-      if (foreground || deltas.some(delta => delta > 10)) {
+      const foreground = Math.abs(red - 226) > 10 || Math.abs(green - 232) > 10 || Math.abs(blue - 240) > 10
+      if (foreground || redDelta > 10 || greenDelta > 10 || blueDelta > 10) {
         active++
-        difference += deltas.reduce((sum, delta) => sum + delta, 0) / 3
-        if (deltas.some(delta => delta > 24)) {
+        difference += (redDelta + greenDelta + blueDelta) / 3
+        if (redDelta > 24 || greenDelta > 24 || blueDelta > 24) {
           mismatches++
         }
       }
+      probeOffset += 4
+      referenceOffset += 4
+      controlOffset += 4
     }
   }
   const mismatchRatio = active ? mismatches / active : 1
