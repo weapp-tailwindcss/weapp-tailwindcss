@@ -152,8 +152,10 @@ jobs:
     needs: scope
     if: needs.scope.outputs.core == 'true'
     name: Expo iOS 18.5
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 50
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@v6
         with:
@@ -165,6 +167,8 @@ jobs:
           check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+      - name: Verify selected Xcode
+        run: xcodebuild -version
       - run: brew install cocoapods
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS launch reconciliation

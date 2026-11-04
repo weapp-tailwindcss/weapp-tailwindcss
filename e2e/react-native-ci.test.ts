@@ -7,6 +7,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
 import YAML from 'yaml'
+import { NATIVE_CAPTURE_DRAIN_TIMEOUT, NATIVE_CAPTURE_TIMEOUT } from './react-native/capture-budget'
 import { createExpoNativeEnvironment } from './react-native/native-environment'
 import { stopOwnedProcess } from './react-native/process'
 
@@ -45,6 +46,22 @@ it('Expo Web 三个引擎分别执行语义验收并保存独立证据', async (
   expect(workflow.jobs.android.needs).toEqual(['scope', 'web'])
   expect(workflow.jobs.android.if).toContain('always() && !cancelled()')
   expect(workflow.jobs.ios.needs).toBe('scope')
+})
+
+it('iOS 固定标准 Intel 主机和 Xcode，保留 18.5 模拟器与完整采集门禁', async () => {
+  const workflow = YAML.parse(await readFile(workflowPath, 'utf8'))
+  const ios = workflow.jobs.ios
+  expect(ios['runs-on']).toBe('macos-15-intel')
+  expect(ios.env.DEVELOPER_DIR).toBe('/Applications/Xcode_16.4.app/Contents/Developer')
+  expect(ios.needs).toBe('scope')
+  expect(ios.if).toBe('needs.scope.outputs.core == \'true\'')
+  expect(ios.steps.some((step: { run?: string }) => step.run === 'xcodebuild -version')).toBe(true)
+  const boot = ios.steps.find((step: { name?: string }) => step.name === 'Boot iOS simulator')
+  expect(boot.run).toContain('\'iPhone 16 Pro\' \'com.apple.CoreSimulator.SimRuntime.iOS-18-5\'')
+  expect(ios.steps.some((step: { run?: string }) => step.run === 'pnpm e2e:react-native:ios')).toBe(true)
+  expect(ios.steps.every((step: Record<string, unknown>) => !step['continue-on-error'])).toBe(true)
+  expect(NATIVE_CAPTURE_TIMEOUT).toBe(10_000)
+  expect(NATIVE_CAPTURE_DRAIN_TIMEOUT).toBe(5_000)
 })
 
 it.skipIf(process.platform === 'win32')('终止后进程组已无可发送信号的成员时结束清理', async () => {

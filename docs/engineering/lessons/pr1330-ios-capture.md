@@ -6,6 +6,7 @@ regressions:
   - e2e/react-native-ios-screenshot-sample.test.ts
   - e2e/react-native-pair-pixels.test.ts
   - e2e/react-native-artifact-evidence.test.ts
+  - e2e/react-native-ci.test.ts
 verification:
   - claim: 首次 iOS 在 TSX HMR 第二帧耗尽原十秒采集预算
     kind: ci
@@ -37,6 +38,18 @@ verification:
     sha: 5ad094d94539692e82362a5d7877221f8d03e339
     environment: ubuntu-latest，Node 22.23.4，相同 merge checkout、基线及每侧三轮采样；保留首次失败
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41776793092/job/126447585841
+  - claim: 采样修复后完整三阶段及双帧原件通过，但不能证明宿主延迟根因已消除
+    kind: native
+    status: passed
+    sha: 1d9d9f06a0590589ddf4540dae9461862313ca70
+    environment: macos-15 hosted arm64，Node 24.22.2，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41796391159/job/126461609328
+  - claim: 相同 RN 实现在后续提交再次因宿主操作耗尽双帧十秒预算
+    kind: native
+    status: failed
+    sha: 570afa4eaeaeafccf5479bbf54700dd7290257b8
+    environment: macos-15-arm64，3 核 7GiB，Node 24.22.2，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41802204075/job/126480737536
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -68,6 +81,18 @@ verification:
 Node 24.22.1 下对同一张 1206×2622 原件及 480×384 比较区，旧实现 CPU profile 的评估主函数占约 78.8%、GC 占约 8.4%。同进程交替测量、预热五次后各测三十次，评估中位数约 8.35→1.15ms，P95 约 10.10→1.40ms。该结果只证明局部开销减少，不能证明 simctl 延迟根因已消除；准确新 head 的远端运行仍需单独验收。
 
 Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+7.29%；同提交有限复测为 1298.65→1284.33MB，-1.10%，原 5%/64MB 门槛通过。未执行反向确认，结论限于首次退化未复现，不声明 GC 根因或性能改善，也未修改产品性能门槛。
+
+### 后续宿主延迟与明确的主机合同
+
+修复提交 `1d9d9f06a` 的 hosted iOS 已完成 baseline、TSX HMR、CSS HMR：264 份原始帧检查全部通过，270 次截图全部成功，中位数约 583ms、P95 977ms、最大 2721ms。后续 `570afa4ea` 只改 PostCSS 和复盘，相同 RN 实现却在 CSS HMR 的 `flex-direction/default` 再次失败，因此前一轮成功不能作为延迟根因已解决的结论。
+
+新失败原件为 artifact `13309747523`。首帧开始前已消耗约 2643ms，源码对应 pair JSON 的异步写入阶段；首次截图约 3667ms，解码约 199ms，评估仅 6.48ms，三个检查点全部通过。第二帧开始于约 6617ms，截图约 3327ms 后被原十秒外层预算取消。缺少写入细分指标，不能确定前奏来自磁盘、线程池还是调度。190 次成功截图中位数约 1537ms、P95 2834ms、最大 7437ms，说明本轮整体宿主操作更慢。
+
+唯一采样在失败约七分钟前，未与失败 pair 竞争。采样确认所属 Bash 进程随后变为同 PID/PPID 的真实 simctl；截图结束时取消符号处理，没有可用栈文件。进程快照有 693 个进程、200 个 runnable 状态，其中 192 个为模拟器直接子进程；仅能记录这一时刻，不能由此证明具体服务或 OOM。没有主机 swap 或 memory-pressure 证据。
+
+运行日志显示通用 `macos-15` 实际解析为 `macos-15-arm64`。根据 [GitHub 标准 public runner 规格](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories)，该主机为 3 核、7GB；显式 `macos-15-intel` 为免费标准 4 核、14GB。将 iOS 主机标签明确固定为 Intel，并通过 `DEVELOPER_DIR` 固定 Xcode 16.4。[官方 Intel 镜像清单](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md)仍提供 iOS 18.5 与 iPhone 16 Pro。架构校验继续按实际宿主检查 arm64/x86_64，不伪装 ABI，不选择付费 larger runner。
+
+新增 workflow 合同先在原标签上失败，修复后验证主机、选中 Xcode、原 18.5 设备、完整入口和 10s/5s 预算。主机方案仍需准确提交的 hosted 验收，不能预先宣称 Intel 一定消除所有截图迟滞。未更改支持集、PNG、像素门槛或双帧要求。
 
 ## 适用边界
 
