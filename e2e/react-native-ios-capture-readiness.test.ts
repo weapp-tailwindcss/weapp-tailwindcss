@@ -11,6 +11,16 @@ import { headers, pair, withReporter } from './react-native/reporter-fixture'
 let directory: string
 beforeEach(async () => {
   directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-ios-readiness-'))
+  await fs.mkdir(path.join(directory, 'ios-capture-startup'))
+  await fs.writeFile(path.join(directory, 'ios-capture-startup', 'context-requested.json'), JSON.stringify({
+    version: 1,
+    evidence: 'diagnostic-only',
+    kind: 'authenticated-context-request',
+    runId: 'owned-run',
+    invocationId: 'owned-invocation',
+    device: 'owned-device',
+    bundleId: 'com.weapptailwindcss.rncompat',
+  }))
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -38,6 +48,25 @@ function png(width = 16) {
 async function diagnostic() {
   return JSON.parse(await fs.readFile(path.join(directory, 'ios-capture-startup', 'readiness.json'), 'utf8'))
 }
+
+it('应用仍在打包且未请求认证 context 时不能提前探测截图吞吐', async () => {
+  const file = path.join(directory, 'ios-capture-startup', 'context-requested.json')
+  const request = await fs.readFile(file)
+  await fs.rm(file)
+  let requested = false
+  let capturedBeforeRequest = false
+  const capture = vi.fn(async (filename: string) => {
+    capturedBeforeRequest ||= !requested
+    await fs.writeFile(filename, png())
+  })
+  const work = awaitIosCaptureReadiness(options(capture))
+  await new Promise(resolve => setTimeout(resolve, 100))
+  requested = true
+  await fs.writeFile(file, request)
+  await work
+  expect(capturedBeforeRequest).toBe(false)
+  expect(capture).toHaveBeenCalledTimes(2)
+})
 
 it('冷截图加同步解码越过10s时只重试就绪探测，后续必须在完整窗口内连续完成双帧', async () => {
   let elapsed = 0

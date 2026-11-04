@@ -39,6 +39,7 @@ import { createIosScreenshotDiagnostics } from './ios-screenshot'
 import { launchIosRuntime } from './ios-runtime'
 import { awaitIosApplicationEnvironment } from './ios-architecture'
 import { createIosLaunchPublication } from './ios-launch-publication'
+import { createIosContextRequestPublisher } from './ios-context-request'
 import { readRuntimePublication } from './installation-evidence'
 import { prepareMetroHttpObservation } from './http-observation'
 import type { HmrObservationSnapshot } from '../../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
@@ -74,6 +75,7 @@ const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 const clientToken = randomUUID()
 const iosLaunchPublication = platform === 'ios' ? createIosLaunchPublication(signal => readRuntimePublication(exampleRoot, signal)) : undefined
+let iosContextRequest: ReturnType<typeof createIosContextRequestPublisher> | undefined
 let semanticDevice = ''
 const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair, cancelSignal) => {
   if (platform === 'android') {
@@ -87,7 +89,12 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   diagnostic: createNativeDiagnosticWriter(artifacts),
   revision: 'rn-hmr-baseline-10b981',
   platform,
-  publication: signal => iosLaunchPublication ? iosLaunchPublication.read(signal) : readRuntimePublication(exampleRoot, signal),
+  publication: async (signal) => {
+    if (!iosLaunchPublication) { return readRuntimePublication(exampleRoot, signal) }
+    if (!iosContextRequest) { throw new Error('iOS context request owner is not initialized') }
+    await iosContextRequest.publish(signal)
+    return iosLaunchPublication.read(signal)
+  },
   complete: async (envelope, signal) => {
     await archiveHmrSnapshot(artifacts, envelope.report, envelope.hmrObservation)
     signal.throwIfAborted()
@@ -417,6 +424,14 @@ async function main() {
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
     httpObservation = await prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions())
     const session = JSON.parse(await fs.readFile(path.join(artifacts, 'runtime-session.json'), 'utf8'))
+    if (iosLaunchPublication) {
+      iosContextRequest = createIosContextRequestPublisher(path.join(artifacts, 'ios-capture-startup'), {
+        runId: session.runId,
+        invocationId: session.invocationId,
+        device,
+        bundleId: 'com.weapptailwindcss.rncompat',
+      })
+    }
     const hmrEnvironment = await prepareMetroHmrObservation(repoRoot, artifacts, { runId: session.runId, invocationId: session.invocationId })
     const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment, ...hmrEnvironment }, metroLogFile)
     await waitForMetro(activeMetro)
@@ -515,6 +530,7 @@ async function main() {
     await attempt(() => stopAndroidDialogGuard?.())
     semanticReporter.stop()
     await attempt(() => semanticReporter.drain())
+    await attempt(() => iosContextRequest?.drain())
     if (!semanticReporter.capturePending()) {
       if (!completed && metro) {
         await attempt(() => captureFailureDiagnostics({
@@ -541,6 +557,9 @@ async function main() {
 }
 
 await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, {
-  capturePending: () => semanticReporter.capturePending(),
-  drain: () => runWithCleanup(() => semanticReporter.drain(), () => iosScreenshots?.flush()),
+  capturePending: () => semanticReporter.capturePending() || Boolean(iosContextRequest?.pending()),
+  drain: () => runWithCleanup(
+    () => runWithCleanup(() => semanticReporter.drain(), () => iosContextRequest?.drain()),
+    () => iosScreenshots?.flush(),
+  ),
 }, restoreAfterCapture)))

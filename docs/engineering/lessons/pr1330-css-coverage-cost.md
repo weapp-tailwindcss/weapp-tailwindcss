@@ -44,6 +44,18 @@ regressions:
 - 本轮 PostCSS 全包通过 2200 项，3 项既有条件跳过；Vite 受影响子集通过 7 文件、86 项。PostCSS 构建及架构边界检查通过。真实框架验证见下一项，新 head 正式基准仍待验证，不能用局部实验代替。
 - 固定候选 `5b1fb9fa19f2f9528a97a91f1d49af1497ce728b` 对 main `20958acde2e7e4373e8fc5f5532ca15826e50013` 的真实 Taro Vite 微信目标三轮构建、三轮 HMR，在 macOS、Node 24.22.1 上通过原 guard，errors、observations 和 violations 均为 0。两版独立 frozen install、36 包强制重建、0 缓存；最初低于 engines 的 Node 22 准备及其 Turbo 缓存未进入计时。构建中位 11490.51→11202.48ms，峰值 RSS 1975.83→1911.86MB；HMR plugin 稳态 711→707ms，HMR 峰值/稳态 RSS 分别增加 3.29%/3.27%，没有超出原门槛。rootCss 构建三轮从 64.69/61.30/64.80ms 降到 54.26/51.32/56.23ms。最终 40 份 CSS、WXML、JS 等产物无需归一化即逐字节相同，无残留 benchmark marker；测量前后 50/51 个源码 blob 分别匹配固定 base/current。该结果不包含后续类型与 runner 调整，也不代替 Linux、Node 22.23.4 正式 CI。
 
+## Weapp Vite 的正反失败与后续有限复验
+
+`71cc3f1b14888a2a317b7ace3e86a127c3b95060` 的[正式 Weapp Vite 检查](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41894194687/job/126799786161)再次失败。正向峰值/稳态 RSS 为 941.19→1037.15MB、882.13→996.10MB，反向为 909.94→1079.69MB、902.14→1079.69MB；原门槛真实命中。Mpx 的[同轮检查](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41894194687/job/126799785943)仅 buildPluginMedian 超限，931→1022ms、增加 9.77%，不把它归于没有时间锚点支持的 GC。
+
+本地使用准确 main `20958acde2e7e4373e8fc5f5532ca15826e50013` 与 `71cc3f1b1` 的独立 frozen install、36 包强制构建，在 macOS、显式 Node 24.22.1 下运行原 `pnpm bench:ci -- --guard` 单项目三轮构建和三轮 HMR，正反内存均失败。峰值分别增加 166.59MB、96.58MB，稳态分别增加 143.89MB、87.86MB。没有先以重跑覆盖这组失败。
+
+静态身份核验未发现复制污染：base/current 的相关源码、配置和锁文件分别逐个匹配对应 Git blob，生产变化仍限于既有七个文件。Weapp Vite 内置集成实际走 core/generator，主包这两个入口及八个递归相对模块在两版逐字节相同。PostCSS 共享 transform 的 24 条 import 也相同，tokenizer 没有新增或加载第二份；新增顶层 Map 只有 27 项。无 GC 的入口计数探针确认变更的四个 scoped coverage 函数在三轮 HMR 中均为零调用，不能把内存差直接归为这些函数运行时分配。
+
+进一步的诊断分别保留 A/A、整包 PostCSS dist 消融及模块加载/自然 memoryUsage 数值。A/A 的两个全新 watcher 使用同一个 base 根目录，峰值差约 15.31MB；消融及原包在插桩条件下都没有持续差异。加载观察会同步读盘、hash 和写日志，可能改变时序，不能替代正式预算，也不能证明首次失败只是噪声；磁盘 SHA 记录也不等于其它 loader 处理后的执行字节。所有临时 dist 修改均在 finally 逐字节恢复并校验。
+
+定位后仅做一次无插桩有限复验：复用已核对且隔离的 prepared 根目录及依赖，准确源码仍为 `20958→71cc`，不重建或借用依赖。使用原 run-matrix 的三轮构建、三轮 HMR，以及原 assertBenchmarkMatrixRows、buildSummary、evaluatePerformanceGuard 和条件反序确认逻辑，未设置 NODE_OPTIONS、inspector 或请求 GC，全部 errors/violations 为零。峰值 946.11→956.86MB，增加 10.75MB；稳态 943.20→956.17MB，增加 12.97MB，未触发反序确认。该结果只表示这次 macOS / Node 24.22.1 复验未再现差异；首次 Linux / Node 22.23.4 的正反失败成因仍未证明。iOS 修复的新 head 必须独立通过原正式 Benchmark，不能以本地通过替换旧失败，也未修改性能阈值或加入未经证明的生产补丁。
+
 ## 适用边界
 
 本次改变覆盖证明的存储和复用成本，未修改 demo、样式输出预期或性能阈值。现有字符串、声明顺序、条件祖先及可变 AST 回归必须保持。是否消除真实 HMR RSS 回归，以修复提交的正式基准和完整 CI 为准。

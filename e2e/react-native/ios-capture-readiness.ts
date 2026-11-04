@@ -6,6 +6,7 @@ import { PNG } from 'pngjs'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { captureNativeHostResources } from '../native-command/host'
 import { NATIVE_CAPTURE_TIMEOUT } from './capture-budget'
+import { awaitIosContextRequest } from './ios-context-request'
 
 interface ReadinessFrame {
   name: string
@@ -62,6 +63,8 @@ export async function awaitIosCaptureReadiness(options: {
   await fs.mkdir(directory, { recursive: true })
   return runWithCleanup(async () => {
     try {
+      // launch 返回时 Metro 可能还在打包；先等待本轮已认证应用请求，再测量采集吞吐。
+      await awaitIosContextRequest(directory, { runId, invocationId, device, bundleId }, signal, checkStartup)
       while (true) {
         checkStartup()
         const window = new AbortController()

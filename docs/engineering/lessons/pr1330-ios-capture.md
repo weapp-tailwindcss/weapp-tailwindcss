@@ -11,6 +11,7 @@ regressions:
   - e2e/react-native-ios-architecture.test.ts
   - e2e/react-native-launch-wait.test.ts
   - e2e/react-native-ios-capture-readiness.test.ts
+  - e2e/react-native-ios-context-request.test.ts
   - e2e/react-native-failure-capture.test.ts
   - e2e/react-native-metro-evidence.test.ts
 verification:
@@ -114,14 +115,32 @@ verification:
     kind: unit
     status: failed
     sha: 3b4864a47aa4d23a8f302e2f135ea7d2ccaae604
-    environment: macOS arm64，Node 24.22.1，基于该提交的未提交工作树，回归先于对应边界修复；未操作设备
+    environment: macOS arm64，Node 24.18.0（低于 engines，仅保留负向复现），基于该提交的未提交工作树，回归先于对应边界修复；未操作设备
     command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-failure-capture.test.ts e2e/react-native-ios-capture-readiness.test.ts --update=none --coverage.enabled=false
-  - claim: 启动就绪、失败诊断及受影响证据链二十五文件三百五十九项通过
+  - claim: 明确切换合规 Node 后复验启动就绪、失败诊断及受影响证据链二十五文件三百五十九项通过
     kind: unit
     status: passed
-    sha: 3b4864a47aa4d23a8f302e2f135ea7d2ccaae604
-    environment: macOS arm64，Node 24.22.1，基于该提交的未提交修复工作树；仅定向单测，未操作设备
+    sha: 71cc3f1b14888a2a317b7ace3e86a127c3b95060
+    environment: macOS arm64，显式 Node 24.22.1，准确已提交源码的后续复验；仅定向单测，未操作设备
     command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-build-scratch.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts e2e/react-native-ci.test.ts e2e/react-native-evidence-protocol.test.ts --update=none --coverage.enabled=false
+  - claim: 就绪探测通过后首个正式截图仍超过原十秒预算，探测时 Metro 尚未完成打包
+    kind: native
+    status: failed
+    sha: 71cc3f1b14888a2a317b7ace3e86a127c3b95060
+    environment: macos-15-intel，4 核 14GiB，Node 24.22.2，Xcode 26.3，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41894194692/job/126799625308
+  - claim: 没有真实 context 请求时旧实现会提前开始截图探测
+    kind: unit
+    status: failed
+    sha: 71cc3f1b14888a2a317b7ace3e86a127c3b95060
+    environment: macOS arm64，显式 Node 24.22.1，基于该提交仅加入未提交负向回归
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-capture-readiness.test.ts --update=none --coverage.enabled=false -t '应用仍在打包'
+  - claim: context 事件和受影响启动、取消及证据链二十六文件三百七十六项通过
+    kind: unit
+    status: passed
+    sha: 71cc3f1b14888a2a317b7ace3e86a127c3b95060
+    environment: macOS arm64，显式 Node 24.22.1，基于该提交的未提交 context 生命周期修复；未操作设备
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-build-scratch.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-ios-context-request.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts e2e/react-native-ci.test.ts e2e/react-native-evidence-protocol.test.ts --update=none --coverage.enabled=false
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -221,6 +240,20 @@ Expo 入口在 13:56:04 打印，超时后 runner 仍清理 xcodebuild、ibtoold
 首错已正常传播，但 Metro failure snapshot 与备用 `failure.png` 开始相隔约 8 分 52 秒；该路径仍有无超时的设备日志采集和写盘。缺少逐命令计时，不能把全部间隔归于某一条命令，也不能称 Node 永久挂死。本轮将失败诊断提取为单一三十秒 owner，Metro 文件、设备日志和备用截图共用取消与单调截止检查，不能在慢日志后再领取完整预算。日志输出由 execa 直接写入文件并等待关闭，取消后保留部分 stdout/stderr；Android dump 与读取分别检查同一个截止时间。最后的诊断 JSON 属于持久化收尾，不声称文件系统本身受严格墙钟三十秒封顶。原错误、诊断错误和后续会话清理错误仍由既有聚合链保留。
 
 Metro 取消以及最终就绪写盘期间取消、到期的三项回归先在原边界失败；修正后与真实子进程取消、部分日志保留、启动发布、ABI、截图 drain 和三阶段证据回放合计二十五文件 359 项全部通过。ESLint、actionlint、AGENTS、架构检查及 release status 通过。workflow 和持久兼容测试入口已纳入新回归。该工作树尚未获得新提交的 hosted iOS 结果，不能将本地单测或旧提交成功视为当前原生验收通过。
+
+### 就绪探测必须晚于应用的真实 context 请求
+
+`71cc3f1b1` 的 hosted iOS 再次失败，artifact `13358436016` 的 ZIP SHA256 为 `4699ac2219e508549ec9235bd1236f201368fb6aaed0648ba34f2dfe5ad191aa`。三轮探测的最后一轮在约 4.404s、9.792s 完成两帧解码，但原 PNG 仍显示 “Bundling 39%”；Metro 响应尚未结束。正式首对发生于约 73 秒后，第一条 simctl 在原十秒内未产出有效 PNG，文件为零字节。探测不是当前可用吞吐的证明，更不是正式语义通过。
+
+确定的生命周期缺陷是把原生 launch 返回当作 JavaScript 已运行。修正后，宿主只在本轮 capability 认证通过的 `/context` 请求中发布一次启动事件，事件绑定 version、runId、invocationId、device 与 bundleId。CLI 在原 owner 和原三十分钟绝对截止时间内等待该事件，再开始既有双帧探测；只有 ENOENT 可轮询，损坏事件或身份不符立即失败。事件通过临时文件和 rename 原子发布，避免读取半份 JSON，不向客户端提前授予 context，也不新增报告或截图预算。
+
+单个 HTTP 请求断开不取消共享任务。事件写入由 reporter 的任务 owner 取消，独立追踪真实完成；写入或 rename 期间取消会清理本 publisher 已提交但未接受的事件。drain 沿用既有五秒上限并保留期限失败；在途状态在真实收尾前保持，最终归档门禁不能复制或删除仍在写入的目录。后续 HMR 请求复用首次事件，不覆盖其来源。新增回归先证明旧实现会在没有 context 请求时提前截图，再验证认证、并发、身份、断开请求、原截止时间、写入取消与超时后保留目录。
+
+现场 load average 约 168、空闲内存约 29MB，未发现活跃原生编译进程；spawn 约 443ms 不能解释完整十秒。没有足够采样将剩余耗时归于 PNG 编码、IOSurface、磁盘或 swap。本轮只修正已证明的探测时点，仍须由新 head 的真实 iOS 验收确认效果。上一修复的失败诊断已在本轮三十秒 owner 内取消并结束，未重现原来的八分五十二秒悬挂。
+
+本轮二十六文件 376 项定向回归在显式 Node 24.22.1 下通过；新 head 的 hosted iOS 仍待验收。
+
+历史环境记录同时纠正：三项负向边界复现和最初 359 项运行实际使用默认 Node 24.18.0；发现后明确指定 Node 24.22.1，并在准确 `71cc3f1b1` 上重新通过 359 项、ESLint、AGENTS、架构和 release status。低于 engines 的首次运行不能作为合规验收。
 
 ## 适用边界
 
