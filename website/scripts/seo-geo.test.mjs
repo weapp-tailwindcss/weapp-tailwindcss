@@ -80,6 +80,17 @@ describe('website SEO and GEO contracts', () => {
     expect(primary.documents.some(item => item.source.includes('/history/'))).toBe(false)
   })
 
+  it.each([
+    ['en', 'primary', ['en', 'llms-index.json']],
+    ['en', 'full', ['en', 'llms-index-full.json']],
+    ['zh-cn', 'primary', ['llms-index.json']],
+    ['zh-cn', 'full', ['llms-index-full.json']],
+  ])('已提交的 %s / %s GEO 索引与当前文档保持一致', (locale, tier, segments) => {
+    const baseline = JSON.parse(fs.readFileSync(path.join(websiteRoot, 'static', ...segments), 'utf8'))
+    const current = createGeoIndexPayload(locale, tier, baseline.generatedAt)
+    expect(baseline, '请运行 pnpm --filter @weapp-tailwindcss/website geo:index 并提交生成的索引').toEqual(current)
+  })
+
   it('keeps English keyword normalization free of Chinese fallback values', () => {
     const keywords = resolveKeywords({
       existingKeywords: ['配置项', 'existing keyword'],
