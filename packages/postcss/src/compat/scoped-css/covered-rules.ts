@@ -3,7 +3,7 @@ import postcss from 'postcss'
 import { removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import { collectRootScopedComparableCssCoverage, isRuleCoveredByRootCss } from './coverage'
-import { createComparableNodeKey } from './signature'
+import { createCoverageSignatures } from './signature'
 
 export function removeCssRulesCoveredBySources(
   css: string,
@@ -19,6 +19,7 @@ export function removeCssRulesCoveredBySources(
     return css
   }
   try {
+    const signatures = createCoverageSignatures()
     const root = postcss.parse(css)
     let changed = false
     root.walkRules((rule) => {
@@ -26,8 +27,8 @@ export function removeCssRulesCoveredBySources(
         return
       }
       if (
-        !coverage.normalizedRuleCss.has(createComparableNodeKey(rule))
-        && (options.exactOnly === true || !isRuleCoveredByRootCss(rule, coverage))
+        !(coverage.normalizedRuleCss.size > 0 && coverage.normalizedRuleCss.has(signatures.node(rule)))
+        && (options.exactOnly === true || !isRuleCoveredByRootCss(rule, coverage, signatures))
       ) {
         return
       }

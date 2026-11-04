@@ -6,18 +6,18 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { describe, expect, it } from 'vitest'
 import { parseAllDocuments } from 'yaml'
-import manifest from '../packages/weapp-tailwindcss/package.json'
-import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER, trackedTemplateManifests } from './templateContract'
+import { isTemplateVersionCompatible, readTemplateDependencyContract, TEMPLATE_PACKAGE_MANAGER, trackedTemplateManifests } from './templateContract'
 
-const major = Number(manifest.version.split('.')[0])
+const stableVersion = '5.6.3'
+const major = 5
 
 describe('模板稳定版兼容范围', () => {
-  it.each([`^${major}.0.0`, `^${manifest.version}`, manifest.version])('接受兼容范围 %s', (range) => {
-    expect(isTemplateVersionCompatible(range)).toBe(true)
+  it.each([`^${major}.0.0`, `^${stableVersion}`, stableVersion])('接受兼容范围 %s', (range) => {
+    expect(isTemplateVersionCompatible(range, stableVersion)).toBe(true)
   })
 
   it.each([`>=${major + 1}.0.0`, `<${major}.0.0`, 'invalid', 'workspace:*', undefined, null])('拒绝不兼容或无效范围 %s', (range) => {
-    expect(isTemplateVersionCompatible(range)).toBe(false)
+    expect(isTemplateVersionCompatible(range, stableVersion)).toBe(false)
   })
 })
 
@@ -31,6 +31,7 @@ it('所有模板的 manifest 和独立工具链锁文件使用仓库 pnpm 版本
     const name = path.basename(root)
     const manifest = JSON.parse(await readFile(file, 'utf8'))
     expect(manifest.packageManager, name).toBe(TEMPLATE_PACKAGE_MANAGER)
+    await expect(readTemplateDependencyContract(root), name).resolves.toMatchObject({ range: expect.any(String), version: expect.any(String) })
     const documents = parseAllDocuments(await readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))
     expect(documents.flatMap(document => document.errors), name).toEqual([])
     const toolchain = documents.map(document => document.toJS()).find(document => document.importers?.['.']?.packageManagerDependencies)

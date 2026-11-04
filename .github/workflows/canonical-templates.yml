@@ -48,8 +48,6 @@ jobs:
         run: pnpm build:ci
 
       - name: Run canonical template builds
-        env:
-          E2E_CANONICAL_TEMPLATE_USE_LOCAL: '1'
         run: pnpm e2e:canonical-templates
 
       - name: Check generated support matrix

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfigs } from './template-ide/config'
-import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
+import { readTemplateDependencyContract, TEMPLATE_PACKAGE_MANAGER, verifyInstalledTemplateDependency } from './templateContract'
 
 const repoRoot = path.resolve(__dirname, '..')
 const templatesRoot = path.resolve(repoRoot, 'templates')
@@ -92,7 +92,7 @@ describe('canonical template build smoke', () => {
     const deps = { ...pkg.dependencies, ...pkg.devDependencies }
     expect(pkg.packageManager, `${item.name} should pin pnpm`).toBe(TEMPLATE_PACKAGE_MANAGER)
     expect(deps.tailwindcss, `${item.name} should use Tailwind CSS v4`).toMatch(/^\^4\./)
-    expect(isTemplateVersionCompatible(deps['weapp-tailwindcss']), `${item.name} should accept the current stable version`).toBe(true)
+    const dependencyContract = await readTemplateDependencyContract(root)
     expect(deps['@tailwindcss/postcss'], `${item.name} must not register the official PostCSS generator`).toBeUndefined()
     expect(deps['@tailwindcss/vite'], `${item.name} must not register the official Vite generator`).toBeUndefined()
     const cssEntry = await fs.readFile(path.resolve(root, item.cssEntry), 'utf8')
@@ -102,12 +102,10 @@ describe('canonical template build smoke', () => {
     if (process.env['E2E_CANONICAL_TEMPLATE_SKIP_INSTALL'] !== '1') {
       await runPnpm(root, ['install', '--frozen-lockfile'])
     }
+    await verifyInstalledTemplateDependency(root, dependencyContract)
     const family = templateLintFamilies.get(item.template)
     if (family) {
       await verifyFrameworkEslint(root, family)
-    }
-    if (process.env['E2E_CANONICAL_TEMPLATE_USE_LOCAL'] === '1' && item.kind === 'web') {
-      await runPnpm(root, ['link', path.resolve(repoRoot, 'packages/weapp-tailwindcss')])
     }
     if (process.env['E2E_CANONICAL_TEMPLATE_SKIP_BUILD'] === '1') {
       return

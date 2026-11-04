@@ -150,15 +150,15 @@ async function insertHBuilderXWebMarker(projectRoot: string, sourceFile: string,
     ...item.hmrSteps.flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
   ])
   const mutation = item.hmrSteps[stepIndex]?.sourceMutation
-  const sameFileReplace = mutation?.replace && sameSourceFile(projectRoot, mutation.file, sourceFile)
+  const sameFileMutation = mutation && sameSourceFile(projectRoot, mutation.file, sourceFile)
   const writeSource = async (file: string, source: string) => {
     await writeFilePreserveEol(file, source, await fs.readFile(file, 'utf8'))
   }
   try {
-    if (mutation && !sameFileReplace) {
+    if (mutation && !sameFileMutation) {
       await appendHmrSourceMutation(projectRoot, mutation, writeSource)
     }
-    await rewriteHmrMarker(sourceFile, anchors, item.hmrSteps, stepIndex, sameFileReplace ? mutation?.replace : undefined, writeSource)
+    await rewriteHmrMarker(sourceFile, anchors, item.hmrSteps, stepIndex, sameFileMutation ? mutation : undefined, writeSource)
     return restore
   }
   catch (error) {
