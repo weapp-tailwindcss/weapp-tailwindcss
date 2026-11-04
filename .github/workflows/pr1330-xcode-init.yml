@@ -1,0 +1,39 @@
+name: PR 1330 Xcode initialization evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - name: Capture selected shim and installed component
+        run: |
+          mkdir -p "$RUNNER_TEMP/xcode-init"
+          xcodebuild -version > "$RUNNER_TEMP/xcode-init/xcode-version.txt"
+          xcrun --find simctl > "$RUNNER_TEMP/xcode-init/simctl-path.txt"
+          tool="$(cat "$RUNNER_TEMP/xcode-init/simctl-path.txt")"
+          file "$tool" > "$RUNNER_TEMP/xcode-init/simctl-file.txt"
+          shasum -a 256 "$tool" > "$RUNNER_TEMP/xcode-init/simctl-sha256.txt"
+          if head -c 2 "$tool" | /usr/bin/grep -q '#!'; then
+            cp "$tool" "$RUNNER_TEMP/xcode-init/simctl-shim.txt"
+          fi
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist > "$RUNNER_TEMP/xcode-init/component-before.txt"
+      - name: Initialize selected Xcode using the official first-launch command
+        run: |
+          sudo env DEVELOPER_DIR="$DEVELOPER_DIR" "$DEVELOPER_DIR/usr/bin/xcodebuild" -runFirstLaunch 2>&1 | tee "$RUNNER_TEMP/xcode-init/first-launch.txt"
+          "$DEVELOPER_DIR/usr/bin/xcodebuild" -checkFirstLaunchStatus
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist > "$RUNNER_TEMP/xcode-init/component-after.txt"
+      - name: Measure two completed read-only simctl invocations
+        run: |
+          /usr/bin/time -p xcrun simctl list devices --json > "$RUNNER_TEMP/xcode-init/devices-1.json" 2> "$RUNNER_TEMP/xcode-init/timing-1.txt"
+          /usr/bin/time -p xcrun simctl list devices --json > "$RUNNER_TEMP/xcode-init/devices-2.json" 2> "$RUNNER_TEMP/xcode-init/timing-2.txt"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pr1330-xcode-init-${{ github.run_id }}
+          path: ${{ runner.temp }}/xcode-init/**
+          if-no-files-found: error
