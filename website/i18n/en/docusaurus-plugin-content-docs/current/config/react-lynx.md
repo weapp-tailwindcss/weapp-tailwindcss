@@ -24,8 +24,8 @@ All `@property` registrations, descriptors, and variable dependencies are preser
 
 ## Support baseline
 
-- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `^22.18.0 || >=24.11.0`
-- Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
+- [Published adapter versions](https://www.npmjs.com/package/@weapp-tailwindcss/lynx); adapter Node.js `^22.18.0 || >=24.11.0`
+- [Published core versions](https://www.npmjs.com/package/weapp-tailwindcss); dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
 - The repository fixture pins Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`

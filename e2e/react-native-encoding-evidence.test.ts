@@ -1,12 +1,13 @@
 import type { ReactNativeReport } from './react-native/catalog'
 import { createHash } from 'node:crypto'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { nativeBuildFixtures } from '../examples/react-native-expo/src/compatibility/protocol'
+import { getManifestPathsForProjectRoot } from '../packages/react-native/src/metro'
 import { RN_FIXTURE_HASH } from './react-native/catalog'
-import { validateNativeEncodingArtifacts } from './react-native/encoding-evidence'
+import { captureNativeEncoding, validateNativeEncodingArtifacts } from './react-native/encoding-evidence'
 import { writeEncodingFixture } from './react-native/encoding-fixture'
 
 const directories: string[] = []
@@ -64,6 +65,34 @@ describe('构建指令编码需要独立 oracle 与本轮实际 manifest', () =>
   it('五例完整编码与稳定发布 manifest 一致才接受', async () => {
     const { directory, report } = await fixture()
     expect(await validateNativeEncodingArtifacts(report, directory)).toHaveLength(6)
+  })
+
+  it('归档 Metro 本轮替换的 static 模块，不能回读已提交的旧版本模块', async () => {
+    const { directory, report, source, ready, output } = await fixture()
+    const paths = getManifestPathsForProjectRoot(directory)
+    const staticFile = path.join(directory, 'runtime-static.json')
+    const staticSource = await readFile(path.join(output, 'static-evidence.json'), 'utf8')
+    const input = JSON.parse(staticSource)
+    report.versions = { compiler: '999.0.1', tailwindcss: '4.3.2', expo: '54.0.38', reactNative: '0.81.5' }
+    input.report = { versions: report.versions }
+    const runtimeSource = `${JSON.stringify(input)}\n`
+    await writeFile(staticFile, runtimeSource)
+    await writeFile(path.join(directory, 'tailwind-input.cjs'), input.generation.runtimeInput.config.source)
+    await mkdir(path.dirname(paths.manifestPath), { recursive: true })
+    try {
+      await writeFile(paths.manifestPath, source, { flag: 'wx' })
+      await writeFile(paths.manifestReadyPath, ready, { flag: 'wx' })
+      const captured = path.join(directory, 'captured')
+      await captureNativeEncoding(directory, captured, report, staticFile)
+      expect(await readFile(path.join(captured, 'encoding', 'static-evidence.json'), 'utf8')).toBe(runtimeSource)
+      const snapshot = JSON.parse(await readFile(path.join(captured, 'encoding', 'snapshot.json'), 'utf8'))
+      expect(snapshot.files['static-evidence.json']).toMatchObject({ source: staticFile, sha256: createHash('sha256').update(runtimeSource).digest('hex') })
+      report.versions.compiler = '999.0.2'
+      await expect(validateNativeEncodingArtifacts(report, captured)).rejects.toThrow('实际 static 模块')
+    }
+    finally {
+      await Promise.all([paths.manifestPath, paths.manifestReadyPath].map(file => rm(file, { force: true })))
+    }
   })
 
   it.each(Object.keys(nativeBuildFixtures))('encoded=true 不能掩盖 %s 的空编码样式', async (id) => {

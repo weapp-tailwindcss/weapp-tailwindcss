@@ -8430,7 +8430,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 53689,
+      "bytes": 53705,
       "selectors": [
         "._ebg-_bgray_B",
         ".after_c_econtent-_b_agood_work_e_a_B:after",
@@ -8524,7 +8524,7 @@
         ".h-16",
         ".h-20",
         ".h-_b45px_B",
-        ".hello-world-shell",
+        ".hello-world-shell.data-v-04bcf89b",
         ".i-_bmdi--github-circle_B",
         ".i-_bmdi--home_B",
         ".i-_bmdi--star_B",

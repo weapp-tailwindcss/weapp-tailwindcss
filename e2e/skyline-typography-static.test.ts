@@ -5,6 +5,7 @@ import { postcss } from '@weapp-tailwindcss/postcss'
 import { execa } from 'execa'
 import { expect, it } from 'vitest'
 import { typographyComponents } from './skyline-typography/contract'
+import { normalizeUniComponentIds } from './skyline-typography/snapshot'
 
 it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初始化', async () => {
   const root = fileURLToPath(new URL('../demo/uni-app-vite-tailwindcss-v4', import.meta.url))
@@ -28,7 +29,7 @@ it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初
     expect(wxml).toContain('skyline-typography-probe')
     const css = await read(`${route}.wxss`)
     expect(css).toContain('.typography-page')
-    pages.push({ route, config, wxml })
+    pages.push({ route, config, wxml: normalizeUniComponentIds(wxml, path.join(input, 'pages', 'skyline-typography', `${renderer}.vue`), 1) })
   }
   const componentWxml = await read('components/SkylineTypographyProbe.wxml')
   for (const id of ['probe-original', 'probe-utility', 'probe-reference', 'probe-child', 'probe-child-small', 'probe-child-weight', 'probe-weight', 'probe-inline', 'probe-theme', 'probe-theme-variable', 'probe-author-empty']) {
@@ -79,7 +80,10 @@ it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初
       expect(source).toContain('<style src=')
       expect(css.toString()).toContain('.external-fixture')
     }
-    components.push({ name, config, wxml, localResets })
+    const snapshotWxml = name === 'SkylineTypographyProbe' || name === 'SkylineTypographyNoStyle'
+      ? normalizeUniComponentIds(wxml, path.join(input, 'components', `${name}.vue`), name === 'SkylineTypographyProbe' ? 2 : 1)
+      : wxml
+    components.push({ name, config, wxml: snapshotWxml, localResets })
   }
   const stylesheets = (await readdir(output, { recursive: true }))
     .filter(name => name.endsWith('.wxss'))
@@ -110,6 +114,7 @@ it('uni-app Skyline 真实构建保留变量链并为各类组件输出本地初
     reservedDefinitions.push(decl.toString())
   })
   expect(reservedDefinitions).toEqual([])
-  await expect(`${JSON.stringify({ pages, componentWxml, components, typography, resets }, null, 2)}\n`)
+  const snapshotComponentWxml = normalizeUniComponentIds(componentWxml, path.join(input, 'components', 'SkylineTypographyProbe.vue'), 2)
+  await expect(`${JSON.stringify({ pages, componentWxml: snapshotComponentWxml, components, typography, resets }, null, 2)}\n`)
     .toMatchFileSnapshot('__snapshots__/skyline-typography/uni-app.json')
 }, 150_000)

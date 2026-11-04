@@ -24,8 +24,8 @@ keywords:
 
 ## 支持基线
 
-- `@weapp-tailwindcss/lynx` `0.4.4`；适配器 Node.js `^22.18.0 || >=24.11.0`
-- 核心 `weapp-tailwindcss` `5.6.3`；依赖链 Node.js `^22.18.0 || >=24.11.0`
+- [适配器发布版本](https://www.npmjs.com/package/@weapp-tailwindcss/lynx)；适配器 Node.js `^22.18.0 || >=24.11.0`
+- [核心发布版本](https://www.npmjs.com/package/weapp-tailwindcss)；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
 - 仓库示例固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`

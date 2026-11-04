@@ -16,7 +16,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 ## Versions and runtime requirements
 
-The current adapter version is `0.4.4`. The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
+See the package metadata for published versions of [the adapter](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) and [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss). The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
 The repository fixture pins `@lynx-js/rspeedy` `0.18.3`, `@lynx-js/react-rsbuild-plugin` `0.22.0`, `@lynx-js/react` `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 

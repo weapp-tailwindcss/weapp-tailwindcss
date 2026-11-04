@@ -1,6 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativePhase } from './phase-evidence'
+import { prepareRuntimeStaticEvidence } from './runtime-static'
 import { EnvironmentBlockedError, environmentFailure } from '../tailwind-capabilities/environment-block'
 import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
@@ -408,6 +409,7 @@ async function main() {
     await androidEnvironment?.restore()
   })
   await runWithCleanup(async () => {
+    const staticInput = await prepareRuntimeStaticEvidence(artifacts)
     const port = await reporter.ready
     const reportUrl = `http://${runtimeHost}:${port}`
     androidEnvironment = platform === 'android'
@@ -424,6 +426,7 @@ async function main() {
     const androidHome = toolchain?.sdk
     const env: NodeJS.ProcessEnv = {
       ...createExpoNativeEnvironment(runtimeHost, reportUrl, clientToken),
+      ...staticInput.environment,
       ...(javaHome ? { JAVA_HOME: javaHome } : {}),
       ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
     }
@@ -458,7 +461,7 @@ async function main() {
     semanticReporter.assertReceipts(baselineReport)
     validateReactNativeReport(baselineReport, platform, { runId, revision: 'rn-hmr-baseline-10b981' })
     await validateNativeArtifacts(baselineReport, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, baselineReport)
+    await captureNativePhase(exampleRoot, artifacts, baselineReport, staticInput.file)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-baseline') }
     const beforeScreenshot = await captureVerified('runtime-before.png', device, baseline)
 
@@ -472,7 +475,7 @@ async function main() {
     semanticReporter.assertReceipts(hmrReport)
     validateReactNativeReport(hmrReport, platform, { runId, revision: 'rn-hmr-updated-10b981' })
     await validateNativeArtifacts(hmrReport, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, hmrReport)
+    await captureNativePhase(exampleRoot, artifacts, hmrReport, staticInput.file)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterTsxScreenshot = await captureVerified('runtime-tsx-after.png', device, hmr)
     const updatedCss = originalCss.replace('#10b981', '#f59e0b')
@@ -486,7 +489,7 @@ async function main() {
     semanticReporter.assertReceipts(cssHmrReport)
     validateReactNativeReport(cssHmrReport, platform, { runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(cssHmrReport, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, cssHmrReport)
+    await captureNativePhase(exampleRoot, artifacts, cssHmrReport, staticInput.file)
     await validateNativeHmrObservations(artifacts, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterScreenshot = await captureVerified('runtime-after.png', device, cssHmr)

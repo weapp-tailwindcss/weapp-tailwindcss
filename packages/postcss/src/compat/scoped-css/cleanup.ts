@@ -6,7 +6,8 @@ import { hasNonCommentCss } from '../processed-css/cleanup'
 import { containsSkylineTypographyReset, isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import { isTailwindRuntimePropertyRule } from '../uni-app-x-author-apply'
 import { collectRootScopedComparableCssCoverage, createAtRuleCoverageKey, isRuleCoveredByRootCss } from './coverage'
-import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule, normalizeCssSignatureValue } from './predicates'
+import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule } from './predicates'
+import { createComparableNodeKey } from './signature'
 
 function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[], preserveRuntimeProperties = false, preserveSkylineTypography = false) {
   if (!hasVueScopedAttr(css)) {
@@ -101,7 +102,7 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
         return
       }
       if (
-        coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
+        coverage.normalizedRuleCss.has(createComparableNodeKey(rule))
         || (
           hasScopedCss
           && (

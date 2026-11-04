@@ -95,7 +95,7 @@ export async function validateNativeHmrObservations(directory: string, platform:
     || paths.resolve(receipt.originModulePath) !== paths.resolve(receipt.utilitiesPath)) {
     throw new Error('HMR resolver 文件系统来源不符')
   }
-  const names = ['observer-wrapper.cjs', 'observer-recorder.cjs', 'observer-resolver.cjs', 'observer-metro-config.js']
+  const names = hmrObserverSourceIdentity.map(entry => entry.name)
   if (!isDeepStrictEqual(receipt.observers, hmrObserverSourceIdentity)) {
     throw new Error('HMR 观察器缺少原始源码')
   }

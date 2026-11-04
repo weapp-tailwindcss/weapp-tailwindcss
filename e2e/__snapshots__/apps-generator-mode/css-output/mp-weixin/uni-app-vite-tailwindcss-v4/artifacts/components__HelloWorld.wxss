@@ -1,5 +1,5 @@
  /*! tokens: hello-world-shell <= src/components/HelloWorld.vue */
-.hello-world-shell {
+.hello-world-shell.data-v-04bcf89b {
   display: flex;
   align-items: center;
   gap: calc(var(--spacing, 0.25rem) * 2);

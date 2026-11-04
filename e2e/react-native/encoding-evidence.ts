@@ -17,11 +17,11 @@ import { validateStaticGenerationInput } from './static-input-evidence'
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 
 /** 在恢复源码前归档 Metro 实际发布的 manifest，绑定本轮宿主运行和页面修订。 */
-export async function captureNativeEncoding(projectRoot: string, directory: string, report: ReactNativeReport) {
+export async function captureNativeEncoding(projectRoot: string, directory: string, report: ReactNativeReport, staticInputFile = path.resolve(projectRoot, 'src/compatibility/static-evidence.json')) {
   const output = path.join(directory, 'encoding')
   await mkdir(output, { recursive: true })
   await captureMetroEvidence(projectRoot, output, {
-    'static-evidence.json': path.resolve(projectRoot, 'src/compatibility/static-evidence.json'),
+    'static-evidence.json': staticInputFile,
     'tailwind-input.cjs': path.resolve(projectRoot, 'tailwind-input.cjs'),
   })
   const manifest = await readFile(path.join(output, 'manifest.json'), 'utf8')
@@ -52,6 +52,7 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
   const runtimeInput = await readFile(path.join(output, 'tailwind-input.cjs'), 'utf8')
   const input = JSON.parse(staticInput)
   if (report.fixtureHash !== RN_FIXTURE_HASH || input.fixtureHash !== report.fixtureHash
+    || !isDeepStrictEqual(input.report?.versions, report.versions)
     || context.staticInputSha256 !== hash(staticInput) || context.runtimeInputSha256 !== hash(runtimeInput)
     || snapshot.files?.['static-evidence.json']?.sha256 !== hash(staticInput)
     || snapshot.files?.['tailwind-input.cjs']?.sha256 !== hash(runtimeInput)

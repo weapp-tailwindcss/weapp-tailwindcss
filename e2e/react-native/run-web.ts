@@ -1,6 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativePhase } from './phase-evidence'
+import { prepareRuntimeStaticEvidence } from './runtime-static'
 import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
 import { createHash, randomUUID } from 'node:crypto'
@@ -137,6 +138,7 @@ async function main() {
     if (cssChanged) { await fs.writeFile(cssFile, originalCss, 'utf8') }
   })
   await runWithCleanup(async () => {
+    const staticInput = await prepareRuntimeStaticEvidence(artifacts)
     const reporterPort = await reporter.ready
     const expoPort = await allocateExpoWebPort()
     const expoOrigin = `http://127.0.0.1:${expoPort}`
@@ -146,6 +148,7 @@ async function main() {
       detached: process.platform !== 'win32',
       env: {
         ...process.env,
+        ...staticInput.environment,
         // CI=true 会关闭 Metro watch；stdio 管道已确保端口冲突不会交互切换。
         CI: '0',
         EXPO_PUBLIC_RN_REPORT_URL: `http://127.0.0.1:${reporterPort}`,
@@ -186,7 +189,7 @@ async function main() {
     semanticReporter.assertReceipts(baselineReport)
     validateReactNativeReport(baselineReport, 'web', { runId, revision: 'rn-hmr-baseline-10b981' })
     await validateNativeArtifacts(baselineReport, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, baselineReport)
+    await captureNativePhase(exampleRoot, artifacts, baselineReport, staticInput.file)
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-before.png'), fullPage: true })
 
     const updatedMarker = originalMarker.replace('rn-hmr-baseline', 'rn-hmr-updated').replace('bg-emerald-500', 'bg-rose-500')
@@ -198,7 +201,7 @@ async function main() {
     semanticReporter.assertReceipts(tsxHmr.report)
     validateReactNativeReport(enrich(tsxHmr.report), 'web', { runId, revision: 'rn-hmr-updated-10b981' })
     await validateNativeArtifacts(tsxHmr.report, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, enrich(tsxHmr.report))
+    await captureNativePhase(exampleRoot, artifacts, enrich(tsxHmr.report), staticInput.file)
     await page.getByText('rn-hmr-updated').waitFor()
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-tsx-after.png'), fullPage: true })
 
@@ -213,7 +216,7 @@ async function main() {
     semanticReporter.assertReceipts(cssHmrReport)
     validateReactNativeReport(cssHmrReport, 'web', { runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(cssHmrReport, artifacts)
-    await captureNativePhase(exampleRoot, artifacts, cssHmrReport)
+    await captureNativePhase(exampleRoot, artifacts, cssHmrReport, staticInput.file)
     await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-testid="tw-rn-css-hmr"]')!).backgroundColor === 'rgb(245, 158, 11)')
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-after.png'), fullPage: true })
 
