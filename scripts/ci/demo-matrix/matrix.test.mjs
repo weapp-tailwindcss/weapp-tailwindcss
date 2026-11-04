@@ -47,7 +47,7 @@ describe('portable demo matrix', () => {
   it('covers every demo and every portable target without duplicate cases', () => {
     checkCatalog()
     const jobs = matrix().include
-    for (const os of ['ubuntu-latest', 'windows-latest', 'macos-latest']) {
+    for (const os of ['ubuntu-latest', 'windows-latest', 'macos-15']) {
       expect(jobs.filter(job => job.os === os && job.node === 24).flatMap(job => job.cases).sort()).toEqual(cases.map(item => item.id).sort())
     }
     expect(jobs.every(job => job.cases.length > 0 && job.cases.length <= 4)).toBe(true)
@@ -78,7 +78,7 @@ describe('portable demo matrix', () => {
     const root = await mkdtemp(path.join(tmpdir(), 'demo-matrix-gate-'))
     const head = 'a'.repeat(40)
     const merge = 'b'.repeat(40)
-    const platforms = { 'windows-latest': 'win32', 'macos-latest': 'darwin', 'ubuntu-latest': 'linux' }
+    const platforms = { 'windows-latest': 'win32', 'macos-15': 'darwin', 'ubuntu-latest': 'linux' }
     try {
       for (const [index, job] of matrix().include.entries()) {
         const report = {

@@ -190,11 +190,11 @@ jobs:
             runner_label: linux
             case_name: uni-app-vite-tailwindcss-v4
             web_only: '1'
-          - os: macos-latest
+          - os: macos-15
             runner_label: macos
             case_name: uni-app-vite-tailwindcss-v4
             web_only: '1'
-          - os: macos-latest
+          - os: macos-15
             runner_label: macos
             case_name: uni-app-vite-tailwindcss-v4:mp-weixin
             web_only: '0'
@@ -243,7 +243,7 @@ jobs:
         include:
           - os: ubuntu-latest
             runner_label: linux
-          - os: macos-latest
+          - os: macos-15
             runner_label: macos
           - os: windows-latest
             runner_label: windows
@@ -278,7 +278,7 @@ jobs:
             node: 24
           - os: ubuntu-latest
             node: 24
-          - os: macos-latest
+          - os: macos-15
             node: 24
     steps:
       - uses: actions/checkout@v6

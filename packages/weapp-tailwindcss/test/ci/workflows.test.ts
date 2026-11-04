@@ -111,6 +111,22 @@ function matrixCaseNames(rows: Array<Record<string, unknown>>) {
 }
 
 describe('ci workflows', () => {
+  it('PR 的 macOS 门禁固定受支持的 ARM 镜像，保留原生双架构', () => {
+    const { workflow } = readWorkflow('pr-gate.yml')
+    for (const name of ['platform-watch', 'platform-dev', 'windows-utilities']) {
+      const rows = workflow.jobs[name].strategy.matrix.include
+      const macosRows = rows.filter((row: Record<string, unknown>) => String(row.os).startsWith('macos-'))
+      expect(macosRows.length).toBeGreaterThan(0)
+      expect(macosRows.every((row: Record<string, unknown>) => row.os === 'macos-15')).toBe(true)
+    }
+    const native = readWorkflow('native.yml').workflow.jobs.native
+    expect(native.strategy.matrix.include).toEqual(expect.arrayContaining([
+      { runner: 'macos-15', target: 'aarch64-apple-darwin', suffix: 'darwin-arm64' },
+      { runner: 'macos-15-intel', target: 'x86_64-apple-darwin', suffix: 'darwin-x64' },
+    ]))
+    expect(native.strategy.matrix.include).toHaveLength(8)
+  })
+
   it('defines a stable PR gate with cross-platform smoke coverage', () => {
     const { workflow, source } = readWorkflow('pr-gate.yml')
     const platformJob = workflow.jobs['platform-watch']

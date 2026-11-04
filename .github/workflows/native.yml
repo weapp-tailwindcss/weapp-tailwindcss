@@ -26,7 +26,7 @@ jobs:
       max-parallel: 4
       matrix:
         include:
-          - runner: macos-latest
+          - runner: macos-15
             target: aarch64-apple-darwin
             suffix: darwin-arm64
           - runner: macos-15-intel

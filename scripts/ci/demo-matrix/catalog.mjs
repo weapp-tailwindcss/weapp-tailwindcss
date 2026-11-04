@@ -140,7 +140,7 @@ export function matrix() {
   const include = []
   for (const demo of demos) {
     for (const node of [24, 22]) {
-      for (const os of ['windows-latest', 'macos-latest', 'ubuntu-latest']) {
+      for (const os of ['windows-latest', 'macos-15', 'ubuntu-latest']) {
         const selected = cases.filter(item => item.name === demo.name && (node === 24 || (demo.node22 && item.target === demo.targets[0])))
         for (let offset = 0; offset < selected.length; offset += 4) {
           include.push({ os, node, shard: `${demo.name.replaceAll('/', '-')}-${offset / 4}`, cases: selected.slice(offset, offset + 4).map(item => item.id) })

@@ -8,7 +8,7 @@ import { repositoryPackageManager } from '../version-contract.mjs'
 import { cases, coverage, matrix, requiredPhases } from './catalog.mjs'
 import { assertTaroProductionEvidence, hasTaroProductionContract } from './taro-production-contract.mjs'
 
-const platforms = { 'ubuntu-latest': 'linux', 'windows-latest': 'win32', 'macos-latest': 'darwin' }
+const platforms = { 'ubuntu-latest': 'linux', 'windows-latest': 'win32', 'macos-15': 'darwin' }
 
 export function verifyReports(reports, expectedMatrix, sha, packageManager = repositoryPackageManager) {
   const expected = new Set(expectedMatrix.include.flatMap(job => job.cases.map(id => `${platforms[job.os]}:${job.node}:${id}`)))
