@@ -16,7 +16,7 @@ regressions:
 
 准确基线的 [Native darwin-arm64](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41849290271/job/126641256923)、CSS compatibility、Environment package、Platform watch 和 Platform utilities 共七个任务因 hosted runner 获取失败被取消。API 原件显示 runner_id 为 0、steps 为空、日志返回 404；annotation 明确报告多次尝试仍未取得 hosted runner，并指出 macOS ARM 容量不足。它们没有执行 checkout，不能当成产品测试失败，也不能记为通过。
 
-[PR Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41849289992) 的 Portable 矩阵随后剩余 134 项：macOS 52 项排队，Linux 41 项排队，Windows 40 项排队、1 项运行。矩阵并发上限为 12，当时 11 个待分配的 macOS 任务与 1 个 Windows 任务占用名额。这支持跨系统队列受 macOS 获取瓶颈影响的判断；没有证据认定 Linux 和 Windows 也存在容量故障。
+[PR Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41849289992) 的 Portable 矩阵随后剩余 134 项：macOS 52 项排队，Linux 41 项排队，Windows 40 项排队、1 项运行。当时 11 个 macOS 任务已有 runner_id=0，1 个 Windows 任务运行，与 12 并发上限一致，支持获取瓶颈占槽的解释；这不是调度器内部槽位的直接观测，也没有证据认定 Linux 和 Windows 存在容量故障。后续六个 Portable macOS 任务也在未执行步骤时被取消，已保存同类原件，累计十三个容量取消。
 
 ## 根因与纠正
 
