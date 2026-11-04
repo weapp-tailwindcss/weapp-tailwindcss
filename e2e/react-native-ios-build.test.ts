@@ -150,6 +150,15 @@ it('真实普通子进程失败保留 stdout、stderr 与退出码', async () =>
   await expect(executeIosCommand(process.execPath, ['-e', 'console.log("output"); console.error("failure"); process.exitCode=3'], current.options.project)).rejects.toMatchObject({ exitCode: 3, stdout: 'output', stderr: 'failure' })
 })
 
+it('报告 owner 取消时等待真实恢复命令退出，保留原取消原因', async () => {
+  const current = await fixture()
+  const owner = new AbortController()
+  const reason = new Error('launch fence failed during recovery')
+  const command = executeIosCommand(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], current.options.project, false, owner.signal)
+  owner.abort(reason)
+  await expect(command).rejects.toBe(reason)
+})
+
 it.each(['RNApp', 'RNApp.debug.dylib', 'Info.plist'])('旧安装文件 %s 不得启动', async (file) => {
   const current = await fixture()
   await writeFile(path.join(current.container, file), 'old build')

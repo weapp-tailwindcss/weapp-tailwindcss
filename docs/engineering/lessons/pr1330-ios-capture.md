@@ -7,6 +7,9 @@ regressions:
   - e2e/react-native-pair-pixels.test.ts
   - e2e/react-native-artifact-evidence.test.ts
   - e2e/react-native-ci.test.ts
+  - e2e/react-native-ios-launch-publication.test.ts
+  - e2e/react-native-ios-architecture.test.ts
+  - e2e/react-native-launch-wait.test.ts
 verification:
   - claim: 首次 iOS 在 TSX HMR 第二帧耗尽原十秒采集预算
     kind: ci
@@ -80,6 +83,24 @@ verification:
     sha: 0dcf25e99d47100f5511641ffea39d5f09d878a3
     environment: macos-15-intel 镜像 20260824.0482.1，Xcode 26.3/17C529，CoreSimulator 1051.17.8；只读清单，不运行原生语义验收
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41829463678
+  - claim: 对齐工具链后构建安装启动成功，首帧仍耗尽原双帧预算
+    kind: native
+    status: failed
+    sha: 5460437eeb7ddcd7eb149e987c48e2826f92fd7a
+    environment: macos-15-intel，Xcode 26.3/17C529，CoreSimulator 1051.17.8，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41830744232/job/126577283213
+  - claim: 绕过启动等待时四项 HTTP 回归失败，修复后相关七文件一百五十项通过
+    kind: unit
+    status: passed
+    sha: 5460437eeb7ddcd7eb149e987c48e2826f92fd7a
+    environment: macOS arm64，Node 24.22.1，基于该提交的未提交启动边界修复，未操作设备
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-launch.test.ts --update=none --coverage.enabled=false
+  - claim: 内存诊断超时取消，采样未见 swap 活动，不能定位截图阶段
+    kind: ci
+    status: failed
+    sha: 1b7cdcd5c25f9df003a57534478b1be8729e8cb9
+    environment: macos-15-intel，基于 5460437e 的临时只读内存监控，50 分钟 job 上限
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41839269270
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -149,6 +170,24 @@ Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+
 将 RN workflow 的完整工具链改选 `/Applications/Xcode_26.3.app/Contents/Developer`，保留 Apple 包装脚本及 iOS 18.5/iPhone 16 Pro。启动设备前核对 first-launch 状态、所选工具路径与准确 CoreSimulator `1051.17.8`，镜像组件再次漂移时立即阻断，避免把初始化成本带入语义采集预算。[Apple 支持表](https://developer.apple.com/support/xcode/)列明 26.3 支持本镜像 macOS 15.7.9 和 iOS 18.5 Simulator；[Expo SDK 54 的官方构建镜像](https://github.com/expo/expo/blob/c8e39590d7dd6d408a8d0f04b6eae3691f674c54/docs/pages/build-reference/infrastructure.mdx#L522)已默认使用 26 系列。SDK 升为 26.2 的编译、链接和渲染差异仍需准确提交完整原生验收，不能由诊断成功代替。
 
 新合同在旧 16.4 配置上失败，修复后与 iOS 构建、运行、截图四文件共 80 项通过。没有修改采样器、原命令完成判断、支持集、PNG、双帧要求或 10s/5s 预算，也没有增加预热截图、固定等待或直接绕过 Apple 脚本。
+
+### 对齐工具链后的失败与独立启动边界
+
+候选 `5460437e` 的完整 RN workflow 中 Web 和 Android 全部通过；iOS 的 Xcode 26.3/17C529、CoreSimulator 1051.17.8 预检通过，SDK 26.2 的编译、安装和直接启动也成功。本轮实际应用为 x86_64、deployment target 15.1；构建临时目录已清理。随后基线 `layout-aspect/default` 第一帧截图耗时约 8627ms，解码约 1185ms，在 pair 约 9865ms 时完成三个语义检查，未留出第二帧预算，原门禁保持失败。
+
+artifact `13325523509` 的 ZIP SHA256 为 `de6c90ba52764603196b364688417fa8a652aac09c4b3dc7538088ec3514b645`。采样已进入实际 CoreSimulator Mach-O，没有发现此前的 xcodebuild 初始化子进程；只能说明错配路径已去除，不能据此宣称截图迟滞消失。数分钟后的诊断截图更快，时刻与状态不同，不能当作预热修复证据。RSS 求和含共享页，低 free、load 和累计 page fault 也不能独立证明 swap 或 OOM。
+
+另一个代码审查确认的问题是启动与采集的边界：`requireLaunchCompletion` 只约束最终报告返回，`/context` 原先只等待 Metro publication。应用启动后，CLI 仍需写入 launch 回执、删除 scratch、关闭输出，此时客户端已可能获得 context 并请求第一对截图。此缺口允许重叠，但不是上述失败的已证实原因；本轮失败时 scratch 已在采集前清理。
+
+iOS 现在从开始就使用 pending 的启动门禁。真实 CLI Promise 完整结束且 `failed/exitCode` 合格后，仍在原 1800 秒预算内核对本轮 `removed`、设备、bundle ID 和 installed-app 单 slice ABI；通过后才读取当前 publication。`/context` 的等待不占用十秒截图预算，未授予 publication 的直接 `/case` 请求继续返回 409。主路径同时观察启动和报告，不以报告反过来解锁 context，避免循环等待；首个请求之前的启动拒绝也立即被观察并保留原错误。
+
+每个 context 等待随 owner 取消，取消不会改写 CLI 的真实结果；迟到成功或失败都不能重新授予 context。HTTP 回归覆盖未绑定、未完成、提前失败和关闭后的两种迟到结果，绕过等待时四项均失败，修复后与 ABI、构建、启动、报告及预算回归七文件共 150 项通过。真实构建回执的 `active` scratch 仍阻断，只有有效 `removed` 回执能发布。Android/Web 继续消费原 publication 路径，后续 HMR 仍逐阶段检查 publication。这一修复仍需准确新 head 的 hosted 验收。
+
+复查又发现 `Promise.all` 先失败并不会停止另一个报告等待器。启动校验失败后，现在先取消并等待报告任务结束再进入主清理；循环在异步读取、恢复操作前后检查 signal，轮询 timer 和已开始的 iOS 恢复命令均支持取消。真实 peer 收尾错误与首错一起保留，正常取消不覆盖首错；CLI 包装保留原结果作为 cause。补充四项 peer 等待回归及真实命令取消回归后，按 workflow 原生预检入口执行十九文件 302 项全部通过；ESLint、actionlint、AGENTS 与 diff 检查通过。
+
+临时内存诊断 `41839269270` 在 50 分钟 job 上限取消，没有完成原生证据发布。artifact `13331187910` 只有内存 NDJSON，ZIP SHA256 为 `37c5ca1a72c86e40308ebd7ee4daeb46960a3df5a7c0b864c3ac11690c775331`。13:55:50.734–14:24:38.371 的 116 组有效样本中，348 次查询均零退出：swap 总量及使用量始终为零，Swapins、Swapouts 和 throttled 增量均为零，`memory_pressure -Q` 为 78–82%，压缩器物理占用峰值约 199.38MiB。pageins 不能算作 swap，RSS 求和也不能算物理内存占用。本轮没有支持 swap thrash 或 OOM 的证据。
+
+Expo 入口在 13:56:04 打印，超时后 runner 仍清理 xcodebuild、ibtoold 和 Node worker；没有本轮构建日志、最终 receipt 或截图，不能确定最后构建阶段，更不能把上述内存数据与未取到的截图时刻关联。运行证据先写临时目录，受控结束才发布到工作区，强制取消可绕过该发布；缺少发布原件不能推断 runner 未执行，也不能证明原生 cleanup 通过。没有据此实施未经证实的内存调参或生命周期重排。
 
 ## 适用边界
 

@@ -12,6 +12,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import os from 'node:os'
+import { setTimeout as delay } from 'node:timers/promises'
 import { execa } from 'execa'
 import { PNG } from 'pngjs'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
@@ -24,7 +25,7 @@ import { getHttpText } from './native-http'
 import { captureMetroEvidence } from './metro-evidence'
 import { createExpoNativeEnvironment, withNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
-import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
+import { awaitNativeExitCompletion, awaitNativeReportWithLaunch, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
 import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
@@ -37,6 +38,7 @@ import { executeIosCommand } from './ios-command'
 import { createIosScreenshotDiagnostics } from './ios-screenshot'
 import { launchIosRuntime } from './ios-runtime'
 import { awaitIosApplicationEnvironment } from './ios-architecture'
+import { createIosLaunchPublication } from './ios-launch-publication'
 import { readRuntimePublication } from './installation-evidence'
 import { prepareMetroHttpObservation } from './http-observation'
 import type { HmrObservationSnapshot } from '../../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
@@ -46,8 +48,9 @@ interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: React
 type NativeProcess = ReturnType<typeof startExpo>
 
 interface ReportWaitOptions {
+  signal?: AbortSignal
   cssHmrColor?: string
-  recover?: () => Promise<void>
+  recover?: (signal?: AbortSignal) => Promise<void>
   reportTimeout?: number
   startupTimeout?: number
   reconcileLaunch?: (() => Promise<void>) | undefined
@@ -70,6 +73,7 @@ const metroLogPath = path.resolve(artifacts, 'metro.log')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 const clientToken = randomUUID()
+const iosLaunchPublication = platform === 'ios' ? createIosLaunchPublication(signal => readRuntimePublication(exampleRoot, signal)) : undefined
 let semanticDevice = ''
 const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair, cancelSignal) => {
   if (platform === 'android') {
@@ -83,7 +87,7 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   diagnostic: createNativeDiagnosticWriter(artifacts),
   revision: 'rn-hmr-baseline-10b981',
   platform,
-  publication: signal => readRuntimePublication(exampleRoot, signal),
+  publication: signal => iosLaunchPublication ? iosLaunchPublication.read(signal) : readRuntimePublication(exampleRoot, signal),
   complete: async (envelope, signal) => {
     await archiveHmrSnapshot(artifacts, envelope.report, envelope.hmrObservation)
     signal.throwIfAborted()
@@ -137,6 +141,7 @@ async function waitForMetro(metro: NativeProcess, timeout = 120_000) {
 
 async function waitForReportOrExit(marker: string, run: NativeProcess, metro: NativeProcess, options: ReportWaitOptions = {}) {
   const {
+    signal,
     cssHmrColor,
     recover,
     reportTimeout = 240_000,
@@ -150,6 +155,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
   let recovered = false
   let captureStarted = semanticReporter.captureElapsed()
   while (true) {
+    signal?.throwIfAborted()
     semanticReporter.assertReady()
     const now = Date.now()
     const envelope = reports.find(item => item.hmrMarker === marker && (!cssHmrColor || item.cssHmrColor === cssHmrColor))
@@ -157,13 +163,16 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
     if (typeof run.exitCode === 'number' && run.exitCode !== 0) {
       if (!reconcileLaunch) {
         const detail = await fs.readFile(path.resolve(artifacts, 'expo-run.log'), 'utf8')
+        signal?.throwIfAborted()
         const reason = environmentFailure(detail)
         if (reason) { throw new EnvironmentBlockedError(`${platform} 环境故障：${reason}`) }
         throw new TypeError(`native run:${platform} exited with code ${run.exitCode}; see ${path.resolve(artifacts, 'expo-run.log')}`)
       }
       // 等待 Expo 输出流结束后核对首个错误；HMR 使用同一已核对的启动结果。
       await awaitNativeExitCompletion(run, startupTimeout - (Date.now() - started))
+      signal?.throwIfAborted()
       await reconcileLaunch()
+      signal?.throwIfAborted()
       launchReconciled = true
     }
     if (envelope && canAcceptNativeReport(run.exitCode, launchReconciled, requireLaunchCompletion)) { return envelope }
@@ -174,6 +183,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
     if (recover && runCompletedAt && !recovered && !launchReconciled) {
       if (!bundleCompletedAt) {
         const metroLog = await fs.readFile(metroLogPath, 'utf8').catch(() => '')
+        signal?.throwIfAborted()
         if (metroLog.includes(`${platform === 'ios' ? 'iOS' : 'Android'} Bundled`)) { bundleCompletedAt = now }
       }
       const state = evaluateNativeWait({
@@ -188,7 +198,9 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
         hostCaptureElapsed: semanticReporter.captureElapsed() - captureStarted,
       })
       if (state.shouldRecover) {
-        await recover()
+        signal?.throwIfAborted()
+        await recover(signal)
+        signal?.throwIfAborted()
         recovered = true
         runCompletedAt = Date.now()
         captureStarted = semanticReporter.captureElapsed()
@@ -209,7 +221,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
     if (state.timedOut) {
       throw new Error(`Timed out waiting for ${platform} ${state.phase} marker=${marker} css=${cssHmrColor ?? 'any'}`)
     }
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await delay(500, undefined, { signal })
   }
 }
 
@@ -294,7 +306,8 @@ async function captureFailureDiagnostics(device: string, logcatSince?: string) {
   catch { /* 设备未启动时没有可用截图。 */ }
 }
 
-async function relaunchRuntime(device: string, metroHost: string) {
+async function relaunchRuntime(device: string, metroHost: string, cancelSignal?: AbortSignal) {
+  cancelSignal?.throwIfAborted()
   const appId = 'com.weapptailwindcss.rncompat'
   const url = `${appId}://expo-development-client/?url=${encodeURIComponent(`http://${metroHost}:8081`)}`
   if (platform === 'android') {
@@ -303,7 +316,8 @@ async function relaunchRuntime(device: string, metroHost: string) {
     await execa('adb', ['-s', device, 'shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', url], { reject: false })
     return
   }
-  const launch = await launchIosRuntime({ device, bundleId: appId, metroUrl: `http://${metroHost}:8081`, project: exampleRoot }, executeIosCommand)
+  const launch = await launchIosRuntime({ device, bundleId: appId, metroUrl: `http://${metroHost}:8081`, project: exampleRoot }, (file, args, cwd, stream) => executeIosCommand(file, args, cwd, stream, cancelSignal))
+  cancelSignal?.throwIfAborted()
   await fs.writeFile(path.join(artifacts, 'ios-runtime-relaunch.json'), `${JSON.stringify(launch, null, 2)}\n`)
 }
 
@@ -444,18 +458,28 @@ async function main() {
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))
     }
-    run = startExpo(runArgs, env, logFile)
+    const activeRun = run = startExpo(runArgs, env, logFile)
+    if (iosLaunchPublication) {
+      const launch = activeRun.then((result) => {
+        if (result.failed || result.exitCode !== 0) {
+          throw new Error(`iOS 原生启动失败：${result.shortMessage}; see ${path.join(artifacts, 'expo-run.log')}`, { cause: result })
+        }
+      })
+      const verified = awaitIosApplicationEnvironment(launch, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), 'utf8'), device, 'com.weapptailwindcss.rncompat')
+      iosLaunchPublication.bind(awaitNativeExitCompletion(verified, 1_800_000))
+    }
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
-    const baselineRequest = waitForReportOrExit('rn-hmr-baseline', run, activeMetro, {
+    const waitBaseline = (signal?: AbortSignal) => waitForReportOrExit('rn-hmr-baseline', activeRun, activeMetro, {
+      signal,
       cssHmrColor: '#10b981',
-      recover: () => relaunchRuntime(device, runtimeHost),
+      recover: signal => relaunchRuntime(device, runtimeHost, signal),
       reportTimeout: 300_000,
       startupTimeout: 1_800_000,
       requireLaunchCompletion: true,
     })
-    const baseline = platform === 'ios'
-      ? await awaitIosApplicationEnvironment(baselineRequest, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), 'utf8'), device, 'com.weapptailwindcss.rncompat')
-      : await baselineRequest
+    const baseline = iosLaunchPublication
+      ? await awaitNativeReportWithLaunch(iosLaunchPublication.ready, waitBaseline)
+      : await waitBaseline()
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(baselineReport, null, 2)}\n`, 'utf8')
     semanticReporter.assertReceipts(baselineReport)
