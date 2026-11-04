@@ -10,6 +10,9 @@ regressions:
   - e2e/react-native-ios-launch-publication.test.ts
   - e2e/react-native-ios-architecture.test.ts
   - e2e/react-native-launch-wait.test.ts
+  - e2e/react-native-ios-capture-readiness.test.ts
+  - e2e/react-native-failure-capture.test.ts
+  - e2e/react-native-metro-evidence.test.ts
 verification:
   - claim: 首次 iOS 在 TSX HMR 第二帧耗尽原十秒采集预算
     kind: ci
@@ -101,6 +104,24 @@ verification:
     sha: 1b7cdcd5c25f9df003a57534478b1be8729e8cb9
     environment: macos-15-intel，基于 5460437e 的临时只读内存监控，50 分钟 job 上限
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41839269270
+  - claim: 后续相同 RN 实现的基线首帧截图和解码超过十秒，失败诊断又延迟收尾
+    kind: native
+    status: failed
+    sha: 3b4864a47aa4d23a8f302e2f135ea7d2ccaae604
+    environment: macos-15-intel，4 核 14GiB，Xcode 26.3，iOS 18.5，attempt 2；job 最终取消，保留首次双帧失败
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41863470874/job/126736098909
+  - claim: Metro 取消与就绪结果持久化期间停止启动的三项回归在原边界失败
+    kind: unit
+    status: failed
+    sha: 3b4864a47aa4d23a8f302e2f135ea7d2ccaae604
+    environment: macOS arm64，Node 24.22.1，基于该提交的未提交工作树，回归先于对应边界修复；未操作设备
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-failure-capture.test.ts e2e/react-native-ios-capture-readiness.test.ts --update=none --coverage.enabled=false
+  - claim: 启动就绪、失败诊断及受影响证据链二十五文件三百五十九项通过
+    kind: unit
+    status: passed
+    sha: 3b4864a47aa4d23a8f302e2f135ea7d2ccaae604
+    environment: macOS arm64，Node 24.22.1，基于该提交的未提交修复工作树；仅定向单测，未操作设备
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-build-scratch.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts e2e/react-native-ci.test.ts e2e/react-native-evidence-protocol.test.ts --update=none --coverage.enabled=false
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -188,6 +209,18 @@ iOS 现在从开始就使用 pending 的启动门禁。真实 CLI Promise 完整
 临时内存诊断 `41839269270` 在 50 分钟 job 上限取消，没有完成原生证据发布。artifact `13331187910` 只有内存 NDJSON，ZIP SHA256 为 `37c5ca1a72c86e40308ebd7ee4daeb46960a3df5a7c0b864c3ac11690c775331`。13:55:50.734–14:24:38.371 的 116 组有效样本中，348 次查询均零退出：swap 总量及使用量始终为零，Swapins、Swapouts 和 throttled 增量均为零，`memory_pressure -Q` 为 78–82%，压缩器物理占用峰值约 199.38MiB。pageins 不能算作 swap，RSS 求和也不能算物理内存占用。本轮没有支持 swap thrash 或 OOM 的证据。
 
 Expo 入口在 13:56:04 打印，超时后 runner 仍清理 xcodebuild、ibtoold 和 Node worker；没有本轮构建日志、最终 receipt 或截图，不能确定最后构建阶段，更不能把上述内存数据与未取到的截图时刻关联。运行证据先写临时目录，受控结束才发布到工作区，强制取消可绕过该发布；缺少发布原件不能推断 runner 未执行，也不能证明原生 cleanup 通过。没有据此实施未经证实的内存调参或生命周期重排。
+
+### 首帧吞吐与失败诊断的生命周期
+
+`3b4864a47` 的 attempt 2 已完成构建、安装、启动与 scratch 清理，但在 baseline 的 `layout-aspect/default` 首对失败。artifact `13351827126` 的 ZIP SHA256 为 `23a7d27e4036b3402cc8feff11d1f4f72deed091caab0f517ff6b0dfd18e904c`，与 API 摘要一致。唯一首帧的大小、SHA256 和 x86_64 身份均匹配；独立重算 geometry、pixel、control 三项全部通过。截图命令约 9095ms、读取约 13.6ms、同步解码约 2395ms、评估约 148ms，首帧评估完成于约 11682ms，不能以单帧通过替代原十秒连续双帧门禁。
+
+现场为 4 核，load average 约 189、空闲内存约 45MB；没有全局 swap 或 memory-pressure 原件，不能认定 OOM。现场无 xcodebuild、clang 或 Swift 编译进程，没有据此拆分 iOS 编译与运行 job。此前成功运行与该提交的 RN 实现完全相同，旧首对只需约 2495ms；九分钟后备用截图约 2175ms，但负载也已降至约 51，因此不能由此证明一次固定预热就能解决问题。
+
+启动 CLI 现要求截图、读取、完整 PNG 解码在十秒窗口内连续完成两帧，完成后才退出零并允许父进程发布 context。探测位于构建、启动和 scratch 收尾之后，使用同一进程及原启动截止时间；窗口耗尽才可在剩余预算内再探测，设备、身份或 PNG 错误立即失败，不刷新三十分钟预算，不提前启动五分钟报告或三分钟恢复计时。每次取消均等待真实命令完成，不能用 `Promise.race` 留下后台采集。探测原件与宿主资源写入独立的 `ios-capture-startup` 目录并标记 `diagnostic-only`，不生成 case receipt、不覆盖父截图诊断、不占用或替代真实语义双帧预算。最终诊断写入期间若 owner 取消或到期，仍拒绝就绪并保留失败记录；CLI 在返回前再次核对原 owner 与绝对截止时间。
+
+首错已正常传播，但 Metro failure snapshot 与备用 `failure.png` 开始相隔约 8 分 52 秒；该路径仍有无超时的设备日志采集和写盘。缺少逐命令计时，不能把全部间隔归于某一条命令，也不能称 Node 永久挂死。本轮将失败诊断提取为单一三十秒 owner，Metro 文件、设备日志和备用截图共用取消与单调截止检查，不能在慢日志后再领取完整预算。日志输出由 execa 直接写入文件并等待关闭，取消后保留部分 stdout/stderr；Android dump 与读取分别检查同一个截止时间。最后的诊断 JSON 属于持久化收尾，不声称文件系统本身受严格墙钟三十秒封顶。原错误、诊断错误和后续会话清理错误仍由既有聚合链保留。
+
+Metro 取消以及最终就绪写盘期间取消、到期的三项回归先在原边界失败；修正后与真实子进程取消、部分日志保留、启动发布、ABI、截图 drain 和三阶段证据回放合计二十五文件 359 项全部通过。ESLint、actionlint、AGENTS、架构检查及 release status 通过。workflow 和持久兼容测试入口已纳入新回归。该工作树尚未获得新提交的 hosted iOS 结果，不能将本地单测或旧提交成功视为当前原生验收通过。
 
 ## 适用边界
 

@@ -22,7 +22,7 @@ import { androidExpoDevice } from './android-device'
 import { createAndroidEnvironment } from './android-environment'
 import { androidPairCoordinates, androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
-import { captureMetroEvidence } from './metro-evidence'
+import { captureFailureDiagnostics } from './failure-capture'
 import { createExpoNativeEnvironment, withNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, awaitNativeReportWithLaunch, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
@@ -274,38 +274,6 @@ async function captureVerified(name: string, device: string, envelope: ReportEnv
   }
 }
 
-async function captureFailureDiagnostics(device: string, logcatSince?: string) {
-  await captureMetroEvidence(exampleRoot, path.join(artifacts, 'metro-failure'), { 'global.css': cssFile, 'hmr-marker.ts': markerFile })
-    .catch(error => process.stderr.write(`Failed to preserve Metro compilation evidence: ${String(error)}\n`))
-  if (platform === 'android') {
-    const logcat = await execa('adb', ['-s', device, 'logcat', '-d', '-v', 'threadtime', ...(logcatSince ? ['-T', logcatSince] : [])], { reject: false })
-    await fs.writeFile(path.resolve(artifacts, 'logcat.txt'), logcat.stdout, 'utf8')
-    const dumpResult = await execa('adb', ['-s', device, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'], { reject: false })
-    if (dumpResult.exitCode === 0) {
-      const window = await execa('adb', ['-s', device, 'exec-out', 'cat', '/sdcard/window.xml'], { reject: false })
-      await fs.writeFile(path.resolve(artifacts, 'window-failure.xml'), window.stdout, 'utf8')
-    }
-  }
-  else {
-    const simulatorLog = await execa('xcrun', [
-      'simctl',
-      'spawn',
-      device,
-      'log',
-      'show',
-      '--style',
-      'compact',
-      '--last',
-      '30m',
-      '--predicate',
-      'process == "weapptailwindcssRN" OR subsystem BEGINSWITH "com.facebook.react" OR eventMessage CONTAINS "com.weapptailwindcss.rncompat"',
-    ], { reject: false })
-    await fs.writeFile(path.resolve(artifacts, 'simulator.log'), `${simulatorLog.stdout}\n${simulatorLog.stderr}`, 'utf8')
-  }
-  try { await capture('failure.png', device) }
-  catch { /* 设备未启动时没有可用截图。 */ }
-}
-
 async function relaunchRuntime(device: string, metroHost: string, cancelSignal?: AbortSignal) {
   cancelSignal?.throwIfAborted()
   const appId = 'com.weapptailwindcss.rncompat'
@@ -458,7 +426,8 @@ async function main() {
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))
     }
-    const activeRun = run = startExpo(runArgs, env, logFile)
+    const startupDeadline = Date.now() + 1_800_000
+    const activeRun = run = startExpo(runArgs, platform === 'ios' ? { ...env, RN_IOS_STARTUP_DEADLINE_MS: String(startupDeadline) } : env, logFile)
     if (iosLaunchPublication) {
       const launch = activeRun.then((result) => {
         if (result.failed || result.exitCode !== 0) {
@@ -466,7 +435,7 @@ async function main() {
         }
       })
       const verified = awaitIosApplicationEnvironment(launch, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), 'utf8'), device, 'com.weapptailwindcss.rncompat')
-      iosLaunchPublication.bind(awaitNativeExitCompletion(verified, 1_800_000))
+      iosLaunchPublication.bind(awaitNativeExitCompletion(verified, startupDeadline - Date.now()))
     }
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
     const waitBaseline = (signal?: AbortSignal) => waitForReportOrExit('rn-hmr-baseline', activeRun, activeMetro, {
@@ -547,7 +516,17 @@ async function main() {
     semanticReporter.stop()
     await attempt(() => semanticReporter.drain())
     if (!semanticReporter.capturePending()) {
-      if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
+      if (!completed && metro) {
+        await attempt(() => captureFailureDiagnostics({
+          platform,
+          device,
+          artifacts,
+          projectRoot: exampleRoot,
+          inputs: { 'global.css': cssFile, 'hmr-marker.ts': markerFile },
+          logcatSince: androidEnvironment?.receipt.logcat.since,
+          capture,
+        }))
+      }
     }
     await attempt(() => stopOwnedProcess(run))
     await attempt(() => run?.catch(() => undefined))
