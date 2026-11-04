@@ -12,7 +12,7 @@ import { createCompilerContext } from '@/context'
 type RawSourceMap = ReturnType<NonNullable<postcss.Result['map']>['toJSON']>
 
 function invoke(context: object, source: string | Buffer, map?: object, meta?: object) {
-  return new Promise<{ css: string | Buffer, map?: RawSourceMap, meta?: any }>((resolve, reject) => {
+  return new Promise<{ css: string | Buffer, map?: RawSourceMap | string, meta?: any }>((resolve, reject) => {
     const callback = vi.fn((error, css, resultMap, resultMeta) => error ? reject(error) : resolve({ css, map: resultMap, meta: resultMeta }))
     loader.call({ ...context, async: () => callback } as any, source, map as any, meta)
   })
@@ -42,8 +42,38 @@ describe('Webpack Web rpx 收尾的数据边界', () => {
       expect(output.meta.ast.root).not.toBe(meta.ast.root)
       expect(meta.ast.root.toString()).toBe('.a{padding:16rpx}')
       expect(output.meta.custom).toBe(meta.custom)
-      expect(output.map?.sources).toEqual(['input.css'])
-      expect(output.map?.sourcesContent).toEqual(['.a{padding:16rpx}'])
+      expect(typeof output.map).toBe('string')
+      const map = JSON.parse(output.map as string)
+      expect(map.sources).toEqual(['input.css'])
+      expect(map.sourcesContent).toEqual(['.a{padding:16rpx}'])
+      expect(map.version).toBe(3)
+    }
+    finally {
+      await disposeCompilerOwner(runtimeState)
+    }
+  })
+
+  it.each([false, true])('没有前置 map 时按 Webpack 配置生成映射：%s', async (sourceMap) => {
+    vi.stubEnv('TARO_ENV', 'h5')
+    const compilerOptions = createCompilerContext({ generator: { target: 'web' }, rem2rpx: false, px2rpx: true })
+    const runtimeState = { tailwindRuntime: compilerOptions.tailwindRuntime }
+    try {
+      const output = await invoke({
+        resourcePath: path.resolve('input.css'),
+        sourceMap,
+        getOptions: () => ({ tailwindcssImportRewrite: { pkgDir: '', compilerOptions, runtimeState } }),
+      }, '.a{padding:16rpx}')
+      expect(output.css).toBe('.a{padding:0.5rem}')
+      if (sourceMap) {
+        expect(typeof output.map).toBe('string')
+        const map = JSON.parse(output.map as string)
+        expect(map.version).toBe(3)
+        expect(map.sources).toEqual(['input.css'])
+        expect(map.sourcesContent).toEqual(['.a{padding:16rpx}'])
+      }
+      else {
+        expect(output.map).toBeUndefined()
+      }
     }
     finally {
       await disposeCompilerOwner(runtimeState)

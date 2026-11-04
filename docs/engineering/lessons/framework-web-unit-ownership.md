@@ -31,7 +31,11 @@ Vite 在实际 PostCSS 配置末尾安装带内部 Symbol 标识的 OnceExit 收
 
 Webpack 的字符串、source map 和 metadata 必须同步：postcss-loader 会返回 `meta.ast.root`，css-loader 优先采用该 AST。只更新字符串而透传旧 AST，会让无单位插件场景重新输出旧 rpx。无变化时保持原数据身份，转换后同步新 AST 并保留其他 metadata。
 
+PR #1330 的完整严格类型检查进一步暴露两个已存在于 main 相同源码与依赖基线的接口矛盾：可选来源追踪开关不能显式传入 undefined；PostCSS 的 source-map-js 类型把 version 声明为字符串、file 声明为可选，而 Webpack 对象映射要求数值 version 和必填 file。收尾 loader 改为返回双方明确支持的 JSON 映射字符串，保留真实字段，不补造文件名或强制断言。没有前置映射时省略 prev，保留 PostCSS 自动发现来源注释的行为；未转换分支仍透传原对象。补充无前置映射的开启/关闭场景，原有映射继续校验来源内容、版本和新 AST。Generic Web hooks 在接口组装处按 `=== true` 归一来源追踪开关，保持原判定语义。
+
 ## 验证
+
+PR #1330 的类型接口补充在 `5b1fb9fa19f2f9528a97a91f1d49af1497ce728b` 加未提交修复的 macOS、Node 24.22.1 worktree 验证：`CI=1 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false` 通过；定向 `webpack-web-rpx-finalizer`、`generic-web-production-fast-path.unit` 和真实 `webpack-web-cascade.integration` 三文件 27 项通过，包构建通过。未修改 demo 或 static 基线，不把本轮定向验证记为完整设备验收。
 
 本地 macOS、Node 24.22.1，验证源码为 `24cac70bb584373121d0981a05b3c546a5c4c677` 上的未提交修复。
 
