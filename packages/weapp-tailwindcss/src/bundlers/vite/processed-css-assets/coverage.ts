@@ -20,7 +20,7 @@ export function prepareImportedCssCoverage(importedCssSources: string[]) {
     return undefined
   }
   return {
-    coverage: collectRootScopedComparableCssCoverage(sources),
+    coverage: collectRootScopedComparableCssCoverage(sources, { exactOnly: true }),
     sources,
   }
 }
@@ -105,7 +105,7 @@ export function removeCssCoveredByRootStyleAssets(
       || rootSources.length !== previousRootSources.length
       || rootSources.some((source, index) => source !== previousRootSources?.[index])) {
       previousRootSources = rootSources
-      rootCoverage = collectRootScopedComparableCssCoverage(rootSources)
+      rootCoverage = collectRootScopedComparableCssCoverage(rootSources, { exactOnly: !hasScopedCss })
     }
     const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage, { preserveSkylineTypography: options.preserveSkylineTypography === true })
     if (nextCss === rawSource) {

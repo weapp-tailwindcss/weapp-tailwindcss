@@ -92,7 +92,7 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
   ) {
     return css
   }
-  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(rootSources)
+  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(rootSources, { exactOnly: !hasScopedCss })
   const signatures = createRootCssCoverageSignatures(coverage)
   let nextCss = css
   try {

@@ -4,6 +4,15 @@ import { createCoverageSignatures } from './signature'
 
 const coverageSignatures = new WeakMap<ComparableCssCoverage, CoverageSignatures>()
 
+export interface ComparableCssCoverage {
+  rules: Set<string>
+  atRules: Set<string>
+  declarationsBySelector: Map<string, Set<string>>
+  orderedDeclarationsBySelector: Map<string, string[]>
+  propertiesBySelector: Map<string, Map<string, Set<string>>>
+  normalizedRuleCss: Set<string>
+}
+
 /** 覆盖索引只保留根值；每次目标清理取得独立上下文，不缓存目标 AST 或新值。 */
 export function createRootCssCoverageSignatures(coverage: ComparableCssCoverage) {
   return coverageSignatures.get(coverage)?.fork() ?? createCoverageSignatures()
@@ -19,19 +28,20 @@ function createDeclarationKeys(rule: postcss.Rule, signatures: CoverageSignature
     .map(signatures.declaration)
 }
 
-export function collectRootScopedComparableCssCoverage(cssSources: string[]) {
-  const signatures = createCoverageSignatures()
+function collectCompleteCssCoverage(cssSources: string[], signatures: CoverageSignatures, preparedRules?: Set<string>): ComparableCssCoverage {
   const rules = new Set<string>()
   const atRules = new Set<string>()
   const declarationsBySelector = new Map<string, Set<string>>()
   const orderedDeclarationsBySelector = new Map<string, string[]>()
   const propertiesBySelector = new Map<string, Map<string, Set<string>>>()
-  const normalizedRuleCss = new Set<string>()
+  const normalizedRuleCss = preparedRules ?? new Set<string>()
   for (const source of cssSources) {
     try {
       const root = postcss.parse(source)
       root.walkRules((rule) => {
-        normalizedRuleCss.add(signatures.node(rule))
+        if (!preparedRules) {
+          normalizedRuleCss.add(signatures.node(rule))
+        }
         if (rule.nodes.some(node => node.type !== 'decl' && node.type !== 'comment')) {
           return
         }
@@ -67,12 +77,47 @@ export function collectRootScopedComparableCssCoverage(cssSources: string[]) {
     catch {
     }
   }
-  const coverage = { rules, atRules, declarationsBySelector, orderedDeclarationsBySelector, propertiesBySelector, normalizedRuleCss }
+  return { rules, atRules, declarationsBySelector, orderedDeclarationsBySelector, propertiesBySelector, normalizedRuleCss }
+}
+
+/** 整条规则比较无需预建声明索引；后续需要部分覆盖证明时仍按原始输入补齐。 */
+export function collectRootScopedComparableCssCoverage(cssSources: string[], options?: { exactOnly?: boolean }): ComparableCssCoverage {
+  const signatures = createCoverageSignatures()
+  let coverage: ComparableCssCoverage
+  if (options?.exactOnly) {
+    let sources: string[] | undefined = cssSources.slice()
+    const normalizedRuleCss = new Set<string>()
+    for (const source of sources) {
+      try {
+        postcss.parse(source).walkRules((rule) => {
+          normalizedRuleCss.add(signatures.node(rule))
+        })
+      }
+      catch {}
+    }
+    let complete: ComparableCssCoverage | undefined
+    const readComplete = () => {
+      if (!complete) {
+        complete = collectCompleteCssCoverage(sources!, signatures, normalizedRuleCss)
+        sources = undefined
+      }
+      return complete
+    }
+    coverage = {
+      get rules() { return readComplete().rules },
+      get atRules() { return readComplete().atRules },
+      get declarationsBySelector() { return readComplete().declarationsBySelector },
+      get orderedDeclarationsBySelector() { return readComplete().orderedDeclarationsBySelector },
+      get propertiesBySelector() { return readComplete().propertiesBySelector },
+      normalizedRuleCss,
+    }
+  }
+  else {
+    coverage = collectCompleteCssCoverage(cssSources, signatures)
+  }
   coverageSignatures.set(coverage, signatures)
   return coverage
 }
-
-export type ComparableCssCoverage = ReturnType<typeof collectRootScopedComparableCssCoverage>
 
 export function isRuleCoveredByRootCss(rule: postcss.Rule, coverage: ReturnType<typeof collectRootScopedComparableCssCoverage>, signatures = createRootCssCoverageSignatures(coverage)) {
   if (coverage.rules.size === 0 && coverage.orderedDeclarationsBySelector.size === 0) {

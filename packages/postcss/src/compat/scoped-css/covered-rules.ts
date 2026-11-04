@@ -13,8 +13,8 @@ export function removeCssRulesCoveredBySources(
   if (sources.length === 0 || css.trim().length === 0) {
     return css
   }
-  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(sources)
-  if (coverage.rules.size === 0 && coverage.declarationsBySelector.size === 0 && coverage.normalizedRuleCss.size === 0) {
+  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(sources, { exactOnly: options.exactOnly === true })
+  if (coverage.normalizedRuleCss.size === 0 && (options.exactOnly === true || (coverage.rules.size === 0 && coverage.declarationsBySelector.size === 0))) {
     return css
   }
   try {

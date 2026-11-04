@@ -59,6 +59,30 @@ describe('根样式覆盖索引的批次复用', () => {
     expect((bundle['components/second.ttss'] as OutputAsset).source).toBe('.shared{color:red}.second{display:block}')
   })
 
+  it.each([false, true])('混合 scoped 与普通资产按需补齐同一索引，scoped 优先：%s', (scopedFirst) => {
+    const rootCss = '.shared{display:block;color:red}'
+    const plain = asset('components/plain.acss', `${rootCss}.plain{color:blue}`)
+    const scoped = asset('components/scoped.ttss', '.shared[data-v-abc]{color:red}.card[data-v-abc]{color:blue}')
+    const another = asset('components/another.ttss', '.shared[data-v-def]{display:block}.another[data-v-def]{color:green}')
+    const bundle: OutputBundle = { 'theme.acss': asset('theme.acss', rootCss) }
+    for (const output of scopedFirst ? [scoped, plain, another] : [plain, scoped, another]) {
+      bundle[output.fileName] = output
+    }
+    const parse = vi.spyOn(postcss, 'parse')
+    const rootParseCounts: number[] = []
+
+    expect(removeCssCoveredByRootStyleAssets(bundle, {
+      cssMatcher,
+      onUpdate() {
+        rootParseCounts.push(parse.mock.calls.filter(([source]) => source === rootCss).length)
+      },
+    })).toBe(3)
+    expect(plain.source).toBe('.plain{color:blue}')
+    expect(scoped.source).toBe('.card[data-v-abc]{color:blue}')
+    expect(another.source).toBe('.another[data-v-def]{color:green}')
+    expect(rootParseCounts).toEqual(scopedFirst ? [1, 1, 1] : [1, 2, 2])
+  })
+
   it('连续构建不复用旧根样式，也不移除独立分包的样式', () => {
     const root = asset('theme.ttss', '.shared{color:red}')
     const leaf = asset('components/card.ttss', '.shared{color:red}.card{display:flex}')

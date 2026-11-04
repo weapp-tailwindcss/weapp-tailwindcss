@@ -6,6 +6,8 @@ regressions:
   - packages/postcss/test/scoped-css-signature-storage.test.ts
   - packages/postcss/test/scoped-css-string-coverage.test.ts
   - packages/postcss/test/scoped-css-signature-lifecycle.test.ts
+  - packages/postcss/test/scoped-css-demand-coverage.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-root-coverage-reuse.test.ts
 ---
 
 # PR #1330 的 CSS 覆盖签名分配
@@ -24,6 +26,12 @@ regressions:
 
 尝试过的多层声明缓存、规则 tuple 编码与完整递归字符串编码没有稳定降低保留内存，未采用。
 
+`95383ff6dacfca22dd11f30740e275bb2e765cc9` 的[正式基准](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41849289741)仍有两项失败。Taro Vite 构建峰值 RSS 中位数为 1610.30→1735.32MB，增加 125.03MB、7.76%；稳态 RSS 下降 0.63%，不能把峰值结论外推到整轮内存。Taro Webpack 的 HMR plugin 稳态门禁为 1521→1623ms，增加 102ms、6.71%。原有 5%、64MB、10ms 和多数样本门槛保持不变。
+
+针对 Vite 再测发现，整条规则去重也会提前建立声明集合、声明顺序、属性值及条件索引，消费者却只读取规则签名。调整为由调用方明确选择 `exactOnly`：先建立整条规则签名，需要部分覆盖证明时，再用采集时保存的不可变源码补齐一次。普通采集仍立即建立完整索引；新模式不保留 AST，补齐后释放源码数组快照。Vite 同批次先遇到普通样式再遇到 scoped 样式时也能补齐，不因资产顺序漏掉覆盖证明。
+
+此优化不经过 Webpack 的 HMR 调用路径。独立依赖、固定源码的本地三轮 Webpack 对照未复现正式失败：稳态 plugin 807→801ms，原门禁通过。demo、适配器、引擎、锁文件和基准入口的 Git 对象均相同；这支持继续核对执行波动，尚不能证明 CI 失败只是噪声。对照的 current 第二轮构建与一次约 551ms 的定向单测重叠，HMR 采样无重叠，因此不以该构建耗时作因果结论。
+
 ## 验证
 
 - macOS、Node 24.22.1，真实 8 份 Uni static CSS，总约 53KB。50 次相同流程的 heap sampling 中，原实现累计采样分配 670.9MB，紧凑值加只读根缓存为 435.9MB；中位耗时 6.40→3.79ms。另一个 29KB CSS 的 30 份覆盖索引保留对象测量为 18.01→13.61MB。两者是局部实验，不能直接换算进程 RSS。
@@ -31,6 +39,9 @@ regressions:
 - 包级命令 `pnpm --filter @weapp-tailwindcss/postcss test --update=none --coverage.enabled=false` 在包含本次未提交修复的 worktree 通过 2190 项，3 项既有条件跳过；未执行本地全端设备验收。构建和当前新 head 的远端验收另外核对。
 - [自然 GC 诊断](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41800195636)保持原预算。正向 RSS 上升，反向峰值差异变为 -0.38%，轮末 heap 大小也反转；两轮 current 均多约 34–36 次 minor GC。这说明相位会影响观察结果，也支持存在分配压力，但没有调用栈证据将全部 RSS 差异归因于覆盖签名。诊断通过不替代正式失败。
 - 首次诊断 dispatch 错带仅供 weapp-vite input-only 使用的 `current_ref`，在 matrix 输入验证失败，未执行 Uni；修正后才得到上述诊断。配置失败记录保留于 [原 run](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41799786635)。
+- 以 `95383ff6dacfca22dd11f30740e275bb2e765cc9` 加本次未提交改动为候选，在 macOS、Node 24.22.1 上对真实 Taro Vite static CSS（根 409353B，目标 2706B / 6236B）做 3 次预热、9 次交替采样，显式 GC 后的索引保留堆中位数为 6350112→1316616B，采集耗时为 40.59→22.94ms。三种模式（旧完整、候选默认完整、候选按需）的目标清理输出哈希一致；源码在测量前后及采样期间指纹一致。该实验只证明索引局部成本下降，不能换算整构建 RSS，也不解释 Webpack 的 HMR 失败。
+- 新增按需索引回归覆盖一次补齐、外部数组改写、复制兼容，以及声明顺序、优先级、条件和字符串解码。临时强制恢复立即建全索引后，10 项中的 2 项延后分配断言失败；还原候选后通过。Vite 集成覆盖两种资产顺序，确认普通资产只用规则索引，首次 scoped 资产补齐一次，后续不再解析根样式。
+- 本轮 PostCSS 全包通过 2200 项，3 项既有条件跳过；Vite 受影响子集通过 7 文件、86 项。PostCSS 构建及架构边界检查通过。候选真实框架构建/HMR 与新 head 正式基准仍待验证，不能用局部实验代替。
 
 ## 适用边界
 
