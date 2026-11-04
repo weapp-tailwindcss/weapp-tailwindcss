@@ -1,213 +1,10 @@
-name: React Native Compatibility
-
+name: PR 1330 iOS memory evidence
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - 'packages/react-native/**'
-      - 'packages/engine/**'
-      - 'packages/postcss/**'
-      - 'packages/weapp-tailwindcss/src/generator/**'
-      - 'examples/react-native-expo/**'
-      - 'e2e/react-native/**'
-      - 'e2e/react-native-*.test.ts'
-      - 'e2e/playwright-image*.test.ts'
-      - scripts/ci/verify-playwright-image.mjs
-      - .github/actions/setup-process-tools/action.yml
-      - 'tools/tailwindcss-test-catalog/**'
-      - 'e2e/tailwind-capabilities/**'
-      - package.json
-      - pnpm-lock.yaml
-      - .github/workflows/react-native-compatibility.yml
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      full_verification:
-        description: 审批后完整执行版本 PR 验收，默认保留自动范围
-        type: boolean
-        required: false
-        default: false
-
-concurrency:
-  group: react-native-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
-
 jobs:
-  scope:
-    uses: ./.github/workflows/ci-scope.yml
-    with:
-      full_verification: ${{ inputs.full_verification || false }}
-
-  web:
-    needs: scope
-    if: needs.scope.outputs.core == 'true'
-    name: Expo Web compatibility (${{ matrix.browser }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
-      options: --init --ipc=host
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-    env:
-      HOME: /root
-      RN_WEB_BROWSER: ${{ matrix.browser }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-      - name: Trust container workspace
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
-      - run: pnpm --filter @weapp-tailwindcss/react-native typecheck
-      - run: pnpm --filter @weapp-tailwindcss/react-native test --update=none
-      - uses: ./.github/actions/setup-process-tools
-        timeout-minutes: 2
-      - name: Verify preinstalled Playwright browser
-        run: node scripts/ci/verify-playwright-image.mjs ${{ matrix.browser }}
-      - run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ci.test.ts --update=none
-      - run: pnpm e2e:react-native-compatibility
-      - run: pnpm e2e:react-native:web
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: react-native-web-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: e2e/.artifacts/react-native-web-${{ matrix.browser }}/**
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 14
-
-  android-build:
-    needs: scope
-    if: needs.scope.outputs.core == 'true'
-    name: Build Expo Android debug APK
-    runs-on: ubuntu-latest
-    timeout-minutes: 50
-    outputs:
-      apk_id: ${{ steps.apk.outputs.artifact-id }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
-      - name: Build Android debug APK
-        run: |
-          pnpm --filter @weapp-tailwindcss/example-react-native-expo exec expo prebuild --platform android --no-install
-          cd examples/react-native-expo/android
-          ./gradlew app:assembleDebug -PreactNativeArchitectures=x86_64
-      - name: Record APK integrity and source identity
-        working-directory: examples/react-native-expo/android/app/build/outputs/apk/debug
-        run: |
-          sha256sum app-debug.apk > app-debug.apk.sha256
-          git rev-parse HEAD > source-head.txt
-      - uses: actions/upload-artifact@v7
-        id: apk
-        with:
-          name: react-native-android-apk-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            examples/react-native-expo/android/app/build/outputs/apk/debug/app-debug.apk
-            examples/react-native-expo/android/app/build/outputs/apk/debug/app-debug.apk.sha256
-            examples/react-native-expo/android/app/build/outputs/apk/debug/source-head.txt
-          if-no-files-found: error
-          retention-days: 14
-
-  android:
-    needs: [scope, web, android-build]
-    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && needs.android-build.result == 'success'
-    name: Expo Android 11 / API 30
-    runs-on: ubuntu-latest
-    timeout-minutes: 50
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
-      - run: pnpm --filter @weapp-tailwindcss/example-react-native-expo exec expo prebuild --platform android --no-install
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          artifact-ids: ${{ needs.android-build.outputs.apk_id }}
-          merge-multiple: true
-          path: ${{ runner.temp }}/react-native-android-apk
-      - name: Verify APK integrity and source identity
-        working-directory: ${{ runner.temp }}/react-native-android-apk
-        run: |
-          test "$(cat source-head.txt)" = "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
-          sha256sum --check app-debug.apk.sha256
-      - name: Enable hardware acceleration for the current runner
-        shell: bash
-        run: |
-          sudo setfacl -m "u:$(id -un):rw" /dev/kvm
-          test -r /dev/kvm && test -w /dev/kvm
-      - uses: reactivecircus/android-emulator-runner@v2
-        with:
-          disable-linux-hw-accel: false
-          pre-emulator-launch-script: '"$ANDROID_HOME/emulator/emulator" -accel-check'
-          api-level: 30
-          arch: x86_64
-          profile: pixel_2
-          cores: 2
-          ram-size: 4096M
-          heap-size: 512M
-          disk-size: 6G
-          disable-animations: true
-          disable-spellchecker: true
-          script: |
-            df -h .
-            adb -s emulator-5554 shell df -h /data
-            RN_ANDROID_DEVICE_ID=emulator-5554 RN_ANDROID_BINARY="${{ runner.temp }}/react-native-android-apk/app-debug.apk" pnpm e2e:react-native:android
-            adb -s emulator-5554 shell df -h /data
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: react-native-android-${{ github.run_id }}
-          path: e2e/.artifacts/react-native-android/**
-          if-no-files-found: warn
-          include-hidden-files: true
-          retention-days: 14
-
   ios:
-    needs: scope
-    if: needs.scope.outputs.core == 'true'
     name: Expo iOS 18.5
     runs-on: macos-15-intel
     timeout-minutes: 50
@@ -216,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -250,12 +47,76 @@ jobs:
       - name: Run Expo iOS compatibility
         env:
           RN_IOS_HOST: 127.0.0.1
-        run: pnpm e2e:react-native:ios
+        shell: bash
+        run: |
+          node <<'JS'
+          const { spawn } = require('node:child_process')
+          const { appendFile } = require('node:fs/promises')
+          const path = require('node:path')
+          const destination = path.join(process.env.RUNNER_TEMP, 'pr1330-memory.ndjson')
+          const controller = new AbortController()
+          const queries = [
+            ['swap', '/usr/sbin/sysctl', ['vm.swapusage']],
+            ['pages', '/usr/bin/vm_stat', []],
+            ['pressure', '/usr/bin/memory_pressure', ['-Q']],
+          ]
+          async function query(file, args, signal) {
+            return new Promise((resolve) => {
+              const child = spawn(file, args, { signal, killSignal: 'SIGKILL', timeout: 5000 })
+              let stdout = ''
+              let stderr = ''
+              child.stdout.on('data', data => { stdout = (stdout + data).slice(-65536) })
+              child.stderr.on('data', data => { stderr = (stderr + data).slice(-65536) })
+              child.once('error', error => resolve({ error: String(error), stdout, stderr }))
+              child.once('close', (code, exitSignal) => resolve({ code, signal: exitSignal, stdout, stderr }))
+            })
+          }
+          async function snapshot(signal) {
+            const at = new Date().toISOString()
+            const results = await Promise.all(queries.map(async ([name, file, args]) => [name, await query(file, args, signal)]))
+            await appendFile(destination, JSON.stringify({ at, completedAt: new Date().toISOString(), ...Object.fromEntries(results) }) + '\n')
+          }
+          async function main() {
+            await snapshot(controller.signal)
+            let pending
+            const timer = setInterval(() => {
+              if (!pending) {
+                pending = snapshot(controller.signal).catch(error => process.stderr.write(String(error) + '\n')).finally(() => { pending = undefined })
+              }
+            }, 15000)
+            const child = spawn('pnpm', ['e2e:react-native:ios'], { stdio: 'inherit' })
+            const stop = () => {
+              clearInterval(timer)
+              controller.abort()
+              child.kill('SIGTERM')
+            }
+            process.once('SIGTERM', stop)
+            process.once('SIGINT', stop)
+            try {
+              const result = await new Promise((resolve, reject) => {
+                child.once('error', reject)
+                child.once('exit', (code, signal) => resolve({ code, signal }))
+              })
+              process.exitCode = result.code === null ? 1 : result.code
+            }
+            finally {
+              clearInterval(timer)
+              controller.abort()
+              await pending
+              await snapshot(new AbortController().signal)
+              process.off('SIGTERM', stop)
+              process.off('SIGINT', stop)
+            }
+          }
+          main().catch(error => { process.stderr.write(String(error) + '\n'); process.exitCode = 1 })
+          JS
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: react-native-ios-${{ github.run_id }}
-          path: e2e/.artifacts/react-native-ios/**
+          path: |
+            e2e/.artifacts/react-native-ios/**
+            ${{ runner.temp }}/pr1330-memory.ndjson
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
