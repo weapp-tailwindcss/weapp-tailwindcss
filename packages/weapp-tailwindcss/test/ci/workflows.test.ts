@@ -321,12 +321,25 @@ describe('ci workflows', () => {
     const { workflow } = readWorkflow('react-native-compatibility.yml')
     const iosSteps: Array<Record<string, unknown>> = workflow.jobs.ios.steps
     const runStep = iosSteps.find(step => step.name === 'Run Expo iOS compatibility')
+    const buildIndex = iosSteps.findIndex(step => step.run === 'pnpm turbo run build --filter=@weapp-tailwindcss/react-native...')
+    const verificationIndex = iosSteps.findIndex(step => step.name === 'Verify iOS launch reconciliation')
+    expect(buildIndex).toBeGreaterThan(-1)
+    expect(buildIndex).toBeLessThan(verificationIndex)
 
     expect(runStep).toMatchObject({
-      env: { RN_IOS_HOST: '127.0.0.1' },
+      id: 'native_runtime',
+      env: {
+        RN_IOS_HOST: '127.0.0.1',
+        RN_RUNTIME_ARTIFACT_ROOT: '${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}',
+      },
       run: 'pnpm e2e:react-native:ios',
     })
     expect(readText('e2e/react-native/run-native.ts')).toContain("runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'")
+    expect(workflow.jobs.ios['timeout-minutes']).toBe(50)
+    expect(iosSteps.find(step => step.name === 'Upload interrupted iOS startup diagnostics')).toMatchObject({
+      if: "always() && steps.native_runtime.outcome != 'success'",
+      with: { path: '${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}/**' },
+    })
   })
 
   it('keeps the core CI quality gate on package changes', () => {

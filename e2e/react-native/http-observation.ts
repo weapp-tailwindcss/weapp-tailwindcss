@@ -9,12 +9,12 @@ const require = createRequire(import.meta.url)
 const { validateMetroHttpArchive } = require('./http-archive.cjs')
 
 /** 单独归档宿主响应调用快照，不改阶段协议或设备交付声明。 */
-export async function prepareMetroHttpObservation(repoRoot: string, artifacts: string, versions: Record<string, string>) {
-  const session = JSON.parse(await readFile(path.join(artifacts, 'runtime-session.json'), 'utf8'))
-  const [commit, status] = await Promise.all([
-    execa('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }),
-    execa('git', ['status', '--porcelain'], { cwd: repoRoot }),
-  ])
+export async function prepareMetroHttpObservation(repoRoot: string, artifacts: string, versions: Record<string, string>, signal?: AbortSignal) {
+  signal?.throwIfAborted()
+  const session = JSON.parse(await readFile(path.join(artifacts, 'runtime-session.json'), { encoding: 'utf8', signal }))
+  const commandOptions = { cwd: repoRoot, timeout: 1_800_000, ...(signal ? { cancelSignal: signal, forceKillAfterDelay: 1_000 } : {}) }
+  const commit = await execa('git', ['rev-parse', 'HEAD'], commandOptions)
+  const status = await execa('git', ['status', '--porcelain'], commandOptions)
   const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
   const observer = await Promise.all(['http-archive.cjs', 'http-archive-validation.cjs'].map(async name => ({ name, sha256: hash(await readFile(path.join(import.meta.dirname, name))) })))
   let resolver = createRequire(path.join(repoRoot, 'examples', 'react-native-expo', 'package.json'))
@@ -38,6 +38,7 @@ export async function prepareMetroHttpObservation(repoRoot: string, artifacts: s
   }
   const directory = path.join(artifacts, 'http-observation')
   const token = randomUUID()
+  signal?.throwIfAborted()
   return {
     environment: { RN_METRO_HTTP_ARCHIVE: JSON.stringify({ directory, identity, token }) },
     async drain() {

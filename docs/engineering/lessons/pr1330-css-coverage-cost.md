@@ -56,6 +56,18 @@ regressions:
 
 定位后仅做一次无插桩有限复验：复用已核对且隔离的 prepared 根目录及依赖，准确源码仍为 `20958→71cc`，不重建或借用依赖。使用原 run-matrix 的三轮构建、三轮 HMR，以及原 assertBenchmarkMatrixRows、buildSummary、evaluatePerformanceGuard 和条件反序确认逻辑，未设置 NODE_OPTIONS、inspector 或请求 GC，全部 errors/violations 为零。峰值 946.11→956.86MB，增加 10.75MB；稳态 943.20→956.17MB，增加 12.97MB，未触发反序确认。该结果只表示这次 macOS / Node 24.22.1 复验未再现差异；首次 Linux / Node 22.23.4 的正反失败成因仍未证明。iOS 修复的新 head 必须独立通过原正式 Benchmark，不能以本地通过替换旧失败，也未修改性能阈值或加入未经证明的生产补丁。
 
+## Uni 混合资产批次的重复根解析
+
+`19deb9de09fcd6b19cc0ca397bb5fe42f4d557c7` 的[正式 Benchmark](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41905362530)只剩 Uni 与汇总失败；正向峰值/稳态 RSS 约增加 98/94MB，内置反向仍增加约 105/91MB。第三轮主 Node 的差异主要在 heapUsed/heapTotal，external 与 ArrayBuffer 仅约增加 1MB。首次失败保留，不以其它分片通过或诊断结果替代。
+
+同 SHA 的[自然 GC 诊断](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41911610751)首次仍增加约 174–177MB，反向 current 多两次 major GC 后方向翻转，未被反序确认。它说明相位影响观察，但不能证明正式回归只有 GC 原因。此前一次 allocation 诊断被已有的隐式强制 GC 校验拒绝，未产生采样，不能作为证据。
+
+无 inspector、无强制 GC 的真实 Uni 入口计数发现，七个 `exactOnly` 索引最终全部需要完整覆盖证明，current 根解析十八次，而 base 十一次。先普通、后 scoped 的批次重复解析根，原 exact 加 upgrade 的局部分配约 4.4MB，直接 full 约 3.3MB；这几 MB 不能解释全部正式 RSS 差异。进口清理的九十四次调用来源均为空，未据此引入其它缓存补丁。
+
+修复在同一 bundle 批次预先核对实际可消费的 scoped 资产，存在时直接建完整根索引；纯普通资产保留 exact 模式。主循环仍重新读取当前 source，回调修改目标或根来源后正常失效、重建或延迟补齐。混合两种顺序的一次解析断言先在旧实现失败，并覆盖被排除的 scoped 资产及回调改变后续资产。
+
+macOS、Node 22.23.4、准确 main `20958acde2e7e4373e8fc5f5532ca15826e50013` 与候选隔离副本，以原三轮构建、三轮 HMR 和 guard 验证通过：构建中位 4075.53→4123.10ms，HMR plugin 稳态 85→91ms，峰值 1235.86→1183.91MB，稳态 1227.58→1175.83MB。两版独立依赖，候选仅替换已核验的生产文件；计数探针与临时 dist 在 finally 恢复并逐字节核对。该本地结果不代替新 head 的正式预算，也不构成全部 RSS 差异的因果解释。
+
 ## 适用边界
 
 本次改变覆盖证明的存储和复用成本，未修改 demo、样式输出预期或性能阈值。现有字符串、声明顺序、条件祖先及可变 AST 回归必须保持。是否消除真实 HMR RSS 回归，以修复提交的正式基准和完整 CI 为准。

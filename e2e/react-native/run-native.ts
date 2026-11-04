@@ -1,7 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativePhase } from './phase-evidence'
-import { prepareRuntimeStaticEvidence } from './runtime-static'
+import { prepareRuntimeStaticEvidence, readPreparedRuntimeStaticEvidence } from './runtime-static'
 import { EnvironmentBlockedError, environmentFailure } from '../tailwind-capabilities/environment-block'
 import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
@@ -12,6 +12,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import os from 'node:os'
+import { fileURLToPath } from 'node:url'
 import { setTimeout as delay } from 'node:timers/promises'
 import { execa } from 'execa'
 import { PNG } from 'pngjs'
@@ -26,12 +27,15 @@ import { captureFailureDiagnostics } from './failure-capture'
 import { createExpoNativeEnvironment, withNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, awaitNativeReportWithLaunch, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
-import { stopOwnedProcess } from './process'
+import { runNativeStartupCommand, terminateNativeStartupProcess } from './startup-command'
+import { createNativeStartupOwner } from './startup-owner'
+import { createNativeStartupProgress } from './startup-progress'
+import { awaitNativeStartupResource } from './startup-resource'
 import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
-import { closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
+import { awaitCaptureCleanup, closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
 import { createNativeDiagnosticWriter } from './failure-diagnostics'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
@@ -64,8 +68,40 @@ if (platform !== 'android' && platform !== 'ios') { throw new Error('Usage: tsx 
 const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
 const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
-const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`), runtimeArtifactIdentity('react-native', `react-native-${platform}`, runId))
+const sessionIdentity = runtimeArtifactIdentity('react-native', `react-native-${platform}`, runId)
+let startupProgress: ReturnType<typeof createNativeStartupProgress> | undefined
+const iosStartup = platform === 'ios'
+  ? createNativeStartupOwner({
+      onStage: async (stage, status, detail) => {
+        if (startupProgress) { await startupProgress(stage, status, detail) }
+        else { process.stdout.write(`[react-native-startup] ${JSON.stringify({ ...sessionIdentity, stage, status, deadline: detail.deadline, at: new Date().toISOString() })}\n`) }
+      },
+    })
+  : undefined
+
+function startupStage<T>(stage: string, operation: (signal?: AbortSignal) => Promise<T>) {
+  return iosStartup ? iosStartup.run(stage, operation) : operation()
+}
+
+async function initializeRuntimeArtifacts() {
+  try {
+    return await startupStage('artifact-session', () => createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`), sessionIdentity, process.env['RN_RUNTIME_ARTIFACT_ROOT'] ?? os.tmpdir()))
+  }
+  catch (error) {
+    try {
+      return await runWithCleanup<never>(async () => { throw error }, () => iosStartup?.drain())
+    }
+    finally { iosStartup?.release() }
+  }
+}
+
+const artifactSession = await initializeRuntimeArtifacts()
 const artifacts = artifactSession.directory
+startupProgress = createNativeStartupProgress(artifacts, sessionIdentity)
+const nativeProcesses = new Set<NativeProcess>()
+const nativeStops = new Map<NativeProcess, Promise<void>>()
+const nativeCleanup = new Set<Promise<void>>()
+let nativeCleanupFailure: unknown
 const iosScreenshots = platform === 'ios' ? createIosScreenshotDiagnostics(artifacts, runId) : undefined
 const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
@@ -123,7 +159,8 @@ function startReporter(host: string) {
 }
 
 function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnType<typeof fs.open>>) {
-  return execa('pnpm', args, {
+  iosStartup?.signal.throwIfAborted()
+  const child = execa('pnpm', args, {
     cwd: repoRoot,
     detached: process.platform !== 'win32',
     env,
@@ -131,17 +168,58 @@ function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnTy
     stderr: log.createWriteStream(),
     reject: false,
   })
+  nativeProcesses.add(child)
+  const cancel = () => { void stopNativeProcess(child).catch(() => undefined) }
+  iosStartup?.signal.addEventListener('abort', cancel, { once: true })
+  const settled = () => {
+    nativeProcesses.delete(child)
+    iosStartup?.signal.removeEventListener('abort', cancel)
+  }
+  void child.then(settled, settled)
+  if (iosStartup?.signal.aborted) { cancel() }
+  return child
 }
 
-async function waitForMetro(metro: NativeProcess, timeout = 120_000) {
+function stopNativeProcess(child: NativeProcess | undefined) {
+  if (!child) { return Promise.resolve() }
+  const previous = nativeStops.get(child)
+  if (previous) { return previous }
+  if (!nativeProcesses.has(child)) { return Promise.resolve() }
+  const stopping = (async () => {
+    await terminateNativeStartupProcess(child)
+    await child.catch(() => undefined)
+  })()
+  nativeStops.set(child, stopping)
+  registerNativeCleanup(stopping)
+  return stopping
+}
+
+function registerNativeCleanup(stopping: Promise<void>) {
+  nativeCleanup.add(stopping)
+  void stopping.then(() => nativeCleanup.delete(stopping), (error) => {
+    // 未确认终止的进程可能继续写原件；失败时保留所有权并阻断移动目录。
+    nativeCleanupFailure ??= error
+  })
+}
+
+async function closeNativeProcess(child: NativeProcess | undefined) {
+  try { await awaitCaptureCleanup(stopNativeProcess(child), 'Native process') }
+  catch (error) {
+    nativeCleanupFailure ??= error
+    throw error
+  }
+}
+
+async function waitForMetro(metro: NativeProcess, timeout = 120_000, signal?: AbortSignal) {
   const started = Date.now()
   while (Date.now() - started < timeout) {
+    signal?.throwIfAborted()
     if (typeof metro.exitCode === 'number') { throw new TypeError(`Metro exited with code ${metro.exitCode}; see ${path.resolve(artifacts, 'metro.log')}`) }
     try {
-      if ((await getHttpText('http://127.0.0.1:8081/status')).includes('packager-status:running')) { return }
+      if ((await getHttpText('http://127.0.0.1:8081/status', Math.min(2_000, timeout - (Date.now() - started)), signal)).includes('packager-status:running')) { return }
     }
-    catch {}
-    await new Promise(resolve => setTimeout(resolve, 500))
+    catch { signal?.throwIfAborted() }
+    await delay(Math.max(0, Math.min(500, timeout - (Date.now() - started))), undefined, { signal })
   }
   throw new Error('Timed out waiting for Metro on port 8081')
 }
@@ -336,7 +414,7 @@ function startAndroidDialogGuard(device: string) {
   return () => clearInterval(timer)
 }
 
-async function collectNativeEnvironment(device: string): Promise<Partial<ReactNativeReport['environment']>> {
+async function collectNativeEnvironment(device: string, signal?: AbortSignal): Promise<Partial<ReactNativeReport['environment']>> {
   if (platform === 'android') {
     const [model, abi, release, sdk] = await Promise.all([
       execa('adb', ['-s', device, 'shell', 'getprop', 'ro.product.model']),
@@ -350,13 +428,12 @@ async function collectNativeEnvironment(device: string): Promise<Partial<ReactNa
       abi: abi.stdout.trim(),
     }
   }
-  const [devices, modelIdentifier] = await Promise.all([
-    execa('xcrun', ['simctl', 'list', 'devices', 'available', '-j']),
-    execa('xcrun', ['simctl', 'getenv', device, 'SIMULATOR_MODEL_IDENTIFIER'], { reject: false }),
-  ])
-  const parsed = JSON.parse(devices.stdout) as { devices: Record<string, Array<{ name: string, udid: string }>> }
+  if (!signal) { throw new Error('iOS environment probe requires the startup owner') }
+  const devices = await runNativeStartupCommand('xcrun', ['simctl', 'list', 'devices', 'available', '-j'], { cwd: repoRoot, signal, onCleanup: registerNativeCleanup })
+  const modelIdentifier = await runNativeStartupCommand('xcrun', ['simctl', 'getenv', device, 'SIMULATOR_MODEL_IDENTIFIER'], { cwd: repoRoot, signal, reject: false, onCleanup: registerNativeCleanup })
+  const parsed = JSON.parse(devices) as { devices: Record<string, Array<{ name: string, udid: string }>> }
   const simulator = Object.values(parsed.devices).flat().find(item => item.udid === device)
-  const model = modelIdentifier.stdout.trim()
+  const model = modelIdentifier.trim()
   return {
     deviceName: `${simulator?.name ?? 'iOS Simulator'}${model ? ` (${model})` : ''}`,
   }
@@ -367,17 +444,19 @@ let restoreAfterCapture = async () => {}
 async function main() {
   const toolchain = platform === 'android' ? await reactNativeAndroidToolchain() : undefined
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
-  const originalMarker = await fs.readFile(markerFile, 'utf8')
-  const originalCss = await fs.readFile(cssFile, 'utf8')
+  const [originalMarker, originalCss] = await startupStage('original-inputs', async signal => [
+    await fs.readFile(markerFile, { encoding: 'utf8', signal }),
+    await fs.readFile(cssFile, { encoding: 'utf8', signal }),
+  ] as const)
   const runtimeHost = platform === 'ios' ? iosHostAddress() : '127.0.0.1'
   const device = platform === 'android'
     ? process.env['RN_ANDROID_DEVICE_ID'] ?? 'emulator-5554'
-    : process.env['RN_IOS_DEVICE_ID'] ?? (await execa('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'])).stdout.match(/"udid"\s*:\s*"([^"]+)"/)?.[1] ?? ''
+    : process.env['RN_IOS_DEVICE_ID'] ?? (await startupStage('device-discovery', signal => runNativeStartupCommand('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'], { cwd: repoRoot, signal: signal!, onCleanup: registerNativeCleanup }))).match(/"udid"\s*:\s*"([^"]+)"/)?.[1] ?? ''
   if (!device) { throw new TypeError(`No booted ${platform} simulator was found`) }
   semanticDevice = device
   const expoDevice = platform === 'android' ? await androidExpoDevice(device) : device
-  const nativeEnvironment = await collectNativeEnvironment(device)
-  const reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
+  const nativeEnvironment = await startupStage('native-environment', signal => collectNativeEnvironment(device, signal))
+  let reporter: ReturnType<typeof startReporter> | undefined
   let androidEnvironment: ReturnType<typeof createAndroidEnvironment> | undefined
   let stopAndroidDialogGuard: (() => void) | undefined
   let logFile: Awaited<ReturnType<typeof fs.open>> | undefined
@@ -398,8 +477,16 @@ async function main() {
     await androidEnvironment?.restore()
   })
   await runWithCleanup(async () => {
-    const staticInput = await prepareRuntimeStaticEvidence(artifacts)
-    const port = await reporter.ready
+    const staticInput = await startupStage('runtime-static', async (signal) => {
+      if (platform !== 'ios') { return prepareRuntimeStaticEvidence(artifacts) }
+      await runNativeStartupCommand(process.execPath, ['--import', import.meta.resolve('tsx'), fileURLToPath(new URL('./runtime-static-cli.ts', import.meta.url)), artifacts, sessionIdentity.runId, sessionIdentity.invocationId], { cwd: repoRoot, signal: signal!, stdout: 'inherit', onCleanup: registerNativeCleanup })
+      return readPreparedRuntimeStaticEvidence(artifacts, signal)
+    })
+    const port = await startupStage('reporter-ready', async (signal) => {
+      reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
+      const current = reporter
+      return awaitNativeStartupResource(() => current.ready, signal, () => current.close())
+    })
     const reportUrl = `http://${runtimeHost}:${port}`
     androidEnvironment = platform === 'android'
       ? createAndroidEnvironment({ device, ports: [port, 8081], artifacts })
@@ -409,8 +496,11 @@ async function main() {
       await execa('adb', ['-s', device, 'shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS'], { reject: false })
       stopAndroidDialogGuard = startAndroidDialogGuard(device)
     }
-    logFile = await fs.open(path.resolve(artifacts, 'expo-run.log'), 'w')
-    metroLogFile = await fs.open(metroLogPath, 'w')
+    await startupStage('native-logs-open', async (signal) => {
+      const open = (file: string) => awaitNativeStartupResource(() => fs.open(file, 'w'), signal, handle => handle.close())
+      logFile = await open(path.resolve(artifacts, 'expo-run.log'))
+      metroLogFile = await open(metroLogPath)
+    })
     const javaHome = toolchain?.javaHome
     const androidHome = toolchain?.sdk
     const env: NodeJS.ProcessEnv = {
@@ -422,8 +512,8 @@ async function main() {
     if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
     // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 虚拟网卡地址导致 Metro 连接失败。
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
-    httpObservation = await prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions())
-    const session = JSON.parse(await fs.readFile(path.join(artifacts, 'runtime-session.json'), 'utf8'))
+    httpObservation = await startupStage('metro-http-observation', signal => prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions(), signal))
+    const session = await startupStage('runtime-session-read', async signal => JSON.parse(await fs.readFile(path.join(artifacts, 'runtime-session.json'), { encoding: 'utf8', signal })))
     if (iosLaunchPublication) {
       iosContextRequest = createIosContextRequestPublisher(path.join(artifacts, 'ios-capture-startup'), {
         runId: session.runId,
@@ -432,37 +522,40 @@ async function main() {
         bundleId: 'com.weapptailwindcss.rncompat',
       })
     }
-    const hmrEnvironment = await prepareMetroHmrObservation(repoRoot, artifacts, { runId: session.runId, invocationId: session.invocationId })
-    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment, ...hmrEnvironment }, metroLogFile)
-    await waitForMetro(activeMetro)
+    const hmrEnvironment = await startupStage('metro-hmr-observation', () => prepareMetroHmrObservation(repoRoot, artifacts, { runId: session.runId, invocationId: session.invocationId }))
+    const activeMetro = metro = (await startupStage('metro-spawn', async () => ({ child: startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation!.environment, ...hmrEnvironment }, metroLogFile!) }))).child
+    await startupStage('metro-ready', signal => waitForMetro(activeMetro, 120_000, signal))
     const runArgs = platform === 'ios'
       ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `http://${runtimeHost}:8081`, artifacts]
       : ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', 'android', '--no-bundler', '--device', expoDevice]
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))
     }
-    const startupDeadline = Date.now() + 1_800_000
-    const activeRun = run = startExpo(runArgs, platform === 'ios' ? { ...env, RN_IOS_STARTUP_DEADLINE_MS: String(startupDeadline) } : env, logFile)
+    const startupDeadline = iosStartup?.deadline ?? Date.now() + 1_800_000
+    const activeRun = run = (await startupStage('native-command-spawn', async () => ({ child: startExpo(runArgs, platform === 'ios' ? { ...env, RN_IOS_STARTUP_DEADLINE_MS: String(startupDeadline) } : env, logFile!) }))).child
     if (iosLaunchPublication) {
       const launch = activeRun.then((result) => {
         if (result.failed || result.exitCode !== 0) {
           throw new Error(`iOS 原生启动失败：${result.shortMessage}; see ${path.join(artifacts, 'expo-run.log')}`, { cause: result })
         }
       })
-      const verified = awaitIosApplicationEnvironment(launch, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), 'utf8'), device, 'com.weapptailwindcss.rncompat')
-      iosLaunchPublication.bind(awaitNativeExitCompletion(verified, startupDeadline - Date.now()))
+      const verified = awaitIosApplicationEnvironment(launch, nativeEnvironment, () => fs.readFile(path.join(artifacts, 'ios-build.json'), { encoding: 'utf8', signal: iosStartup?.signal }), device, 'com.weapptailwindcss.rncompat', iosStartup?.signal)
+      iosLaunchPublication.bind(verified)
     }
+    const startupReady = iosStartup
+      ? iosStartup.run('native-launch', async () => { await iosLaunchPublication!.ready }).then(() => iosStartup.complete())
+      : iosLaunchPublication?.ready
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
     const waitBaseline = (signal?: AbortSignal) => waitForReportOrExit('rn-hmr-baseline', activeRun, activeMetro, {
       signal,
       cssHmrColor: '#10b981',
       recover: signal => relaunchRuntime(device, runtimeHost, signal),
       reportTimeout: 300_000,
-      startupTimeout: 1_800_000,
+      startupTimeout: Math.max(0, startupDeadline - Date.now()),
       requireLaunchCompletion: true,
     })
     const baseline = iosLaunchPublication
-      ? await awaitNativeReportWithLaunch(iosLaunchPublication.ready, waitBaseline)
+      ? await awaitNativeReportWithLaunch(startupReady!, waitBaseline)
       : await waitBaseline()
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(baselineReport, null, 2)}\n`, 'utf8')
@@ -544,22 +637,42 @@ async function main() {
         }))
       }
     }
-    await attempt(() => stopOwnedProcess(run))
-    await attempt(() => run?.catch(() => undefined))
+    await attempt(() => closeNativeProcess(run))
     if (metro && httpObservation) { await attempt(() => httpObservation.drain()) }
-    await attempt(() => stopOwnedProcess(metro))
-    await attempt(() => metro?.catch(() => undefined))
-    await attempt(() => logFile?.close())
-    await attempt(() => metroLogFile?.close())
-    await attempt(() => reporter.close())
+    await attempt(() => closeNativeProcess(metro))
+    await attempt(async () => {
+      const stopping = [...nativeProcesses].map(child => stopNativeProcess(child))
+      const drained = Promise.allSettled([...stopping, ...nativeCleanup]).then((results) => {
+        const failures = results.filter(result => result.status === 'rejected').map(result => result.reason)
+        if (failures.length) { throw new AggregateError(failures, 'Native owned process cleanup failed') }
+      })
+      try { await awaitCaptureCleanup(drained, 'Native owned processes') }
+      catch (error) {
+        nativeCleanupFailure ??= error
+        throw error
+      }
+    })
+    if (nativeProcesses.size === 0 && nativeCleanup.size === 0) {
+      await attempt(() => logFile?.close())
+      await attempt(() => metroLogFile?.close())
+    }
+    await attempt(() => reporter?.close())
     if (errors.length) { throw new AggregateError(errors, 'React Native 运行收尾失败') }
   })
 }
 
-await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, {
-  capturePending: () => semanticReporter.capturePending() || Boolean(iosContextRequest?.pending()),
-  drain: () => runWithCleanup(
-    () => runWithCleanup(() => semanticReporter.drain(), () => iosContextRequest?.drain()),
-    () => iosScreenshots?.flush(),
-  ),
-}, restoreAfterCapture)))
+try {
+  await runStageProducer('react-native', () => runWithCleanup(main, async () => {
+    iosStartup?.stop()
+    await publishAfterCapture(artifactSession, {
+      capturePending: () => semanticReporter.capturePending() || Boolean(iosContextRequest?.pending()) || Boolean(iosStartup?.pending()) || nativeProcesses.size > 0 || nativeCleanup.size > 0,
+      drain: () => runWithCleanup(
+        () => runWithCleanup(() => semanticReporter.drain(), () => iosContextRequest?.drain()),
+        () => runWithCleanup(async () => { await iosScreenshots?.flush() }, () => runWithCleanup(async () => { await iosStartup?.drain() }, () => {
+          if (nativeCleanupFailure !== undefined) { throw nativeCleanupFailure }
+        })),
+      ),
+    }, restoreAfterCapture)
+  }))
+}
+finally { iosStartup?.release() }

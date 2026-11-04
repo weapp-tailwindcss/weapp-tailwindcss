@@ -238,9 +238,9 @@ jobs:
       - name: Verify preinstalled CocoaPods
         run: pod --version
       - run: pnpm install --frozen-lockfile
-      - name: Verify iOS launch reconciliation
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-ios-context-request.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - name: Verify iOS launch reconciliation
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-startup-owner.test.ts e2e/react-native-startup-command.test.ts e2e/react-native-runtime-static-cli.test.ts e2e/react-native-startup-process.test.ts e2e/react-native-startup-resource.test.ts e2e/react-native-native-http.test.ts e2e/react-native-runtime-static.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-ios-context-request.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
       - name: Boot iOS simulator
         run: |
           udid="$(xcrun simctl create ReactNativeCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
@@ -248,14 +248,25 @@ jobs:
           xcrun simctl boot "$udid"
           xcrun simctl bootstatus "$udid" -b
       - name: Run Expo iOS compatibility
+        id: native_runtime
         env:
           RN_IOS_HOST: 127.0.0.1
+          RN_RUNTIME_ARTIFACT_ROOT: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}
         run: pnpm e2e:react-native:ios
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: react-native-ios-${{ github.run_id }}
           path: e2e/.artifacts/react-native-ios/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14
+      - name: Upload interrupted iOS startup diagnostics
+        if: always() && steps.native_runtime.outcome != 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: react-native-ios-startup-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}/**
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14

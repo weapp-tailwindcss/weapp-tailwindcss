@@ -255,6 +255,18 @@ Metro 取消以及最终就绪写盘期间取消、到期的三项回归先在�
 
 历史环境记录同时纠正：三项负向边界复现和最初 359 项运行实际使用默认 Node 24.18.0；发现后明确指定 Node 24.22.1，并在准确 `71cc3f1b1` 上重新通过 359 项、ESLint、AGENTS、架构和 release status。低于 engines 的首次运行不能作为合规验收。
 
+### 启动准备共用截止时间与中断原件
+
+`19deb9de09fcd6b19cc0ca397bb5fe42f4d557c7` 的[正式 iOS job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41905362956/job/126838842424)在五十分钟上限取消。Expo 步骤开始于 20:37:52Z，20:38:14.858Z 打印 tsx 入口后没有内部阶段记录；没有本轮日志、回执或截图文件可上传，无法判定最后停在准备、构建、启动还是采集。不能据此认定模块死锁、设备故障或某一命令挂起。
+
+代码边界确认：原三十分钟 owner 在环境收集、static 生成与 Metro 准备之后才建立，前置 simctl 没有取消，HTTP 只有 socket inactivity 限制，最终进程等待也可能无界。修复从证据会话创建前建立唯一绝对三十分钟截止时间，环境查询、真实 static 子进程、报告服务、文件准备、Metro 与 native launch 共用它，传给 CLI 的是同一个绝对值。static 同步编译在独立受管 Node 中执行；父进程在真实 close 后重读固定原件并核对基线、摘要和当前依赖，不接受子进程任意返回路径。
+
+控制器区分取消的逻辑拒绝与实际操作终态，五秒排空期限只建立一次，晚到成功不能覆盖超时。取消后终止本轮进程树并等待 close，晚到文件句柄或报告服务在原操作内部关闭；全局 owned 集合防止 spawn 完成但局部变量尚未赋值时丢失清理。真实 ABI 回执读取同样属于启动 owner，取消后不得修改环境或发布 context。Metro HTTP 使用完整响应的绝对两秒预算，持续滴流不能延长等待。截图双帧十秒、截图 drain 五秒及 job 五十分钟均保持原门槛。
+
+阶段事件按 runId、invocationId、序号原子落盘；超时后的 completed 记录删除，failed 仅供诊断。workflow 给临时证据目录绑定 run/attempt，在运行失败或取消后单独上传 diagnostic-only 原件，不把它当作正式报告。正常原生证据仍走原发布与审核入口。真实子进程回归覆盖同步死循环取消、static 生成后的父回读、错误 invocation 拒绝，以及根先 close、无 stdio 后代忽略 TERM 的进程组消失确认；没有本地设备验收，新 head 的原生效果仍须 hosted iOS 确认。
+
+显式 Node 24.22.1 下，原 iOS 前置清单二十八文件 396 项通过；随后资源与进程组补充回归的九文件 118 项通过，CSS 与 workflow 三文件 104 项通过。ESLint、actionlint、AGENTS、架构及 `pnpm change status` 通过。`tsc -p e2e/tsconfig.json --noEmit --incremental false --pretty false` 报出大量既有错误（包括 ES2021 lib 与现有代码的 ErrorOptions/Array.at 不一致），未调整全仓类型配置；另用相同严格选项与 Git HEAD 源码逐项对照当前修改文件，修正新增诊断，既有错误单独保留。
+
 ## 适用边界
 
 本轮修改采集器与评估器，不改 demo、生成样式、组件夹具或 `RN_FIXTURE_HASH` 输入，不重写 static 基线。没有本地原生设备验收，不用定向单测或原件离线重放宣称当前源码已通过 hosted iOS。后续仍失败时应读取新采样和准确阶段原件，不继续相同 head 的盲重跑。

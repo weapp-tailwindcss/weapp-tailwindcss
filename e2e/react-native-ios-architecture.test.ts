@@ -228,3 +228,16 @@ it.each(['removed', 'active'])('context 只在完整 CLI 和有效清理回执�
   }
   expect(readReceipt).toHaveBeenCalledOnce()
 })
+
+it('取消后的真实回执读取不能晚到修改应用 ABI', async () => {
+  const controller = new AbortController()
+  const environment = { abi: 'unchanged' }
+  const reason = new Error('startup deadline')
+  const read = vi.fn(async () => {
+    controller.abort(reason)
+    return '{}'
+  })
+  await expect(awaitIosApplicationEnvironment(Promise.resolve(), environment, read, device, bundleId, controller.signal)).rejects.toBe(reason)
+  expect(environment.abi).toBe('unchanged')
+  expect(read).toHaveBeenCalledOnce()
+})

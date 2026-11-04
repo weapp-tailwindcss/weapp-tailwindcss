@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
@@ -9,7 +9,7 @@ import { runInNewContext } from 'node:vm'
 import { afterAll, beforeAll, expect, it, vi } from 'vitest'
 import { reactNativeVersions } from './react-native/catalog'
 import { exampleRoot } from './react-native/generation-input'
-import { assertRuntimeStaticBaseline, prepareRuntimeStaticEvidence } from './react-native/runtime-static'
+import { assertRuntimeStaticBaseline, prepareRuntimeStaticEvidence, readPreparedRuntimeStaticEvidence } from './react-native/runtime-static'
 
 const require = createRequire(import.meta.url)
 const baselineFile = path.join(exampleRoot, 'src', 'compatibility', 'static-evidence.json')
@@ -41,6 +41,22 @@ it('本轮真实生成绑定当前依赖及摘要，已提交基线保持逐字�
     baselineSha256: createHash('sha256').update(baselineSource).digest('hex'),
     versions: reactNativeVersions(),
   })
+})
+
+it('父进程只从已核验原件派生本轮静态输入环境', async () => {
+  expect(await readPreparedRuntimeStaticEvidence(directory)).toEqual(prepared)
+})
+
+it.each(['version', 'baselineSha256', 'generatedSha256', 'versions'])('子进程回执 %s 损坏不能被父进程接受', async (field) => {
+  const receiptFile = path.join(directory, 'runtime-static-input.json')
+  const original = await readFile(receiptFile)
+  try {
+    const receipt = JSON.parse(original.toString())
+    receipt[field] = field === 'version' ? 2 : field === 'versions' ? {} : '0'.repeat(64)
+    await writeFile(receiptFile, JSON.stringify(receipt))
+    await expect(readPreparedRuntimeStaticEvidence(directory)).rejects.toThrow('子进程原件')
+  }
+  finally { await writeFile(receiptFile, original) }
 })
 
 it('合法发布只改变编译器版本时，重新生成的输入可用且保留新版本', () => {

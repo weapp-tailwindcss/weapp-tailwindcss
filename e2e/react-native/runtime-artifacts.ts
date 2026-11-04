@@ -28,10 +28,16 @@ export async function archiveRuntimeDiagnostics(source: string, destination: str
 }
 
 /** Metro 运行期间不向 workspace 写证据，避免日志和截图触发额外刷新。 */
-export async function createRuntimeArtifacts(destination: string, identity: RuntimeSessionIdentity) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-tailwindcss-rn-evidence-'))
+export async function createRuntimeArtifacts(destination: string, identity: RuntimeSessionIdentity, temporaryRoot = os.tmpdir()) {
+  if (!path.isAbsolute(temporaryRoot)) {
+    throw new Error('运行时诊断临时根目录必须是绝对路径')
+  }
+  await fs.mkdir(temporaryRoot, { recursive: true })
+  const directory = await fs.mkdtemp(path.join(temporaryRoot, 'weapp-tailwindcss-rn-evidence-'))
   try {
-    await fs.writeFile(path.join(directory, 'runtime-session.json'), `${JSON.stringify(identity, null, 2)}\n`, { flag: 'wx' })
+    const temporary = path.join(directory, `${randomUUID()}.tmp`)
+    await fs.writeFile(temporary, `${JSON.stringify(identity, null, 2)}\n`, { flag: 'wx' })
+    await fs.rename(temporary, path.join(directory, 'runtime-session.json'))
   }
   catch (error) {
     return runWithCleanup(() => Promise.reject(error), () => fs.rm(directory, { recursive: true, force: true }))

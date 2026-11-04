@@ -112,9 +112,13 @@ export async function awaitIosApplicationEnvironment<T>(
   readReceipt: () => Promise<string>,
   device: string,
   bundleId: string,
+  signal?: AbortSignal,
 ): Promise<T> {
   const result = await launchCompletion
-  const abi = iosApplicationAbi(await readReceipt(), device, bundleId)
+  signal?.throwIfAborted()
+  const receipt = await readReceipt()
+  signal?.throwIfAborted()
+  const abi = iosApplicationAbi(receipt, device, bundleId)
   environment.abi = abi
   return result
 }
