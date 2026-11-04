@@ -50,6 +50,12 @@ verification:
     sha: 570afa4eaeaeafccf5479bbf54700dd7290257b8
     environment: macos-15-arm64，3 核 7GiB，Node 24.22.2，iOS 18.5
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41802204075/job/126480737536
+  - claim: 明确 Intel 与预装 CocoaPods 合同的候选完整通过三阶段及原件核验
+    kind: native
+    status: passed
+    sha: e14f99f4c34136c3e8b7b3f094d34388b9506158
+    environment: macos-15-intel，4 核 14GiB，Node 24.22.2 x64，Xcode 16.4，iOS 18.5，CocoaPods 1.17.0
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41810042228/job/126507013013
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -95,6 +101,12 @@ Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+
 新增 workflow 合同先在原标签上失败，修复后验证主机、选中 Xcode、原 18.5 设备、完整入口和 10s/5s 预算。主机方案仍需准确提交的 hosted 验收，不能预先宣称 Intel 一定消除所有截图迟滞。未更改支持集、PNG、像素门槛或双帧要求。
 
 候选 `4534f2d67de675fac05666c94e3d3a279dacc6e3` 在临时分支的 [Intel 验证](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41808240617/job/126500847322)确认 macOS 15.7.9、Node 24.22.2 x64、Xcode 16.4（16F6），但在原有 `brew install cocoapods` 准备步骤失败，未进入 Expo。该镜像已通过 Ruby 3.3 提供 CocoaPods 1.17.0；重复 Homebrew 安装又引入 Ruby 4，随后因 `/usr/local/bin/pod` 已有链接而退出。[准确镜像清单](https://github.com/actions/runner-images/blob/macos-15/20260824.0482/images/macos/macos-15-Readme.md)和日志均确认工具已存在。将准备步骤改为 `pod --version` 验证并消费预装工具，不覆盖链接、不改写 Ruby；缺失或失效仍立即阻断。补充回归要求验证预装 pod，并拒绝恢复无条件的重复安装。
+
+候选 `e14f99f4c34136c3e8b7b3f094d34388b9506158` 的[准确提交验证](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41810042228)中 Web、Android、iOS 全部通过。iOS 的 baseline、TSX HMR、CSS HMR 各有 44 份 receipt、88 帧，共 264 帧、792 个检查点全部通过。逐帧哈希、大小、receipt、旁车和入口原件一致；阶段索引引用的 33 份归档也逐份通过哈希、大小和阶段身份校验。artifact `13313223993` 共 29,194,316 字节，其 ZIP SHA256 为 `7821d46925230bde49f3fa673eccb38936e608242e0475ae826cd65de5ed6869`，与上传日志相同。
+
+270 次截图全部成功，中位数约 1260ms、P95 1570ms、最大 4144ms。双帧验收最大约 6130ms，保持原十秒上限；cleanup 为 `pending: false`、`settled`，没有失败采集诊断。实际运行身份为 x86_64、4 核、14GiB、iOS 18.5、Xcode 16.4（16F6）、CocoaPods 1.17.0。该候选在本轮 Intel 环境完整通过，不能据单轮成功保证消除所有宿主延迟，也不能将低空闲内存解释为旧故障的确定根因。合入 PR 后仍以最终提交完整检查为准。
+
+推送临时分支时先遇到 SSH 500，随后公钥认证失败，最终使用已有 GitHub CLI 登录的 HTTPS credential helper 完成推送，没有更改全局 Git 认证。一次未核实推送结果就发起的 dispatch 实际仍指向旧候选 `4534f2d67`，对应 run `41809782183` 已取消，不计入验证。随后先由 API 确认远端为 `e14f99f4`，再触发上述准确提交运行。后续推送必须检查退出状态及远端 SHA，不能以已发起 push 推断 ref 已更新。
 
 ## 适用边界
 
