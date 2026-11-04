@@ -94,6 +94,8 @@ Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+
 
 新增 workflow 合同先在原标签上失败，修复后验证主机、选中 Xcode、原 18.5 设备、完整入口和 10s/5s 预算。主机方案仍需准确提交的 hosted 验收，不能预先宣称 Intel 一定消除所有截图迟滞。未更改支持集、PNG、像素门槛或双帧要求。
 
+候选 `4534f2d67de675fac05666c94e3d3a279dacc6e3` 在临时分支的 [Intel 验证](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41808240617/job/126500847322)确认 macOS 15.7.9、Node 24.22.2 x64、Xcode 16.4（16F6），但在原有 `brew install cocoapods` 准备步骤失败，未进入 Expo。该镜像已通过 Ruby 3.3 提供 CocoaPods 1.17.0；重复 Homebrew 安装又引入 Ruby 4，随后因 `/usr/local/bin/pod` 已有链接而退出。[准确镜像清单](https://github.com/actions/runner-images/blob/macos-15/20260824.0482/images/macos/macos-15-Readme.md)和日志均确认工具已存在。将准备步骤改为 `pod --version` 验证并消费预装工具，不覆盖链接、不改写 Ruby；缺失或失效仍立即阻断。补充回归要求验证预装 pod，并拒绝恢复无条件的重复安装。
+
 ## 适用边界
 
 本轮修改采集器与评估器，不改 demo、生成样式、组件夹具或 `RN_FIXTURE_HASH` 输入，不重写 static 基线。没有本地原生设备验收，不用定向单测或原件离线重放宣称当前源码已通过 hosted iOS。后续仍失败时应读取新采样和准确阶段原件，不继续相同 head 的盲重跑。

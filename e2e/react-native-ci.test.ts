@@ -56,6 +56,8 @@ it('iOS 固定标准 Intel 主机和 Xcode，保留 18.5 模拟器与完整采�
   expect(ios.needs).toBe('scope')
   expect(ios.if).toBe('needs.scope.outputs.core == \'true\'')
   expect(ios.steps.some((step: { run?: string }) => step.run === 'xcodebuild -version')).toBe(true)
+  expect(ios.steps.some((step: { run?: string }) => step.run === 'pod --version')).toBe(true)
+  expect(ios.steps.some((step: { run?: string }) => /brew install cocoapods/.test(step.run ?? ''))).toBe(false)
   const boot = ios.steps.find((step: { name?: string }) => step.name === 'Boot iOS simulator')
   expect(boot.run).toContain('\'iPhone 16 Pro\' \'com.apple.CoreSimulator.SimRuntime.iOS-18-5\'')
   expect(ios.steps.some((step: { run?: string }) => step.run === 'pnpm e2e:react-native:ios')).toBe(true)
