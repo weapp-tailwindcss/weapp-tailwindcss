@@ -48,14 +48,23 @@ it('Expo Web 三个引擎分别执行语义验收并保存独立证据', async (
   expect(workflow.jobs.ios.needs).toBe('scope')
 })
 
-it('iOS 固定标准 Intel 主机和 Xcode，保留 18.5 模拟器与完整采集门禁', async () => {
+it('iOS 固定匹配宿主 CoreSimulator 的 Xcode，保留 18.5 模拟器与完整采集门禁', async () => {
   const workflow = YAML.parse(await readFile(workflowPath, 'utf8'))
   const ios = workflow.jobs.ios
   expect(ios['runs-on']).toBe('macos-15-intel')
-  expect(ios.env.DEVELOPER_DIR).toBe('/Applications/Xcode_16.4.app/Contents/Developer')
+  expect(ios.env.DEVELOPER_DIR).toBe('/Applications/Xcode_26.3.app/Contents/Developer')
   expect(ios.needs).toBe('scope')
   expect(ios.if).toBe('needs.scope.outputs.core == \'true\'')
   expect(ios.steps.some((step: { run?: string }) => step.run === 'xcodebuild -version')).toBe(true)
+  const readinessIndex = ios.steps.findIndex((step: { name?: string }) => step.name === 'Verify CoreSimulator toolchain contract')
+  expect(readinessIndex).toBeGreaterThan(0)
+  expect(readinessIndex).toBeLessThan(ios.steps.findIndex((step: { name?: string }) => step.name === 'Boot iOS simulator'))
+  const readiness = ios.steps[readinessIndex]
+  expect(readiness.run).toContain('xcodebuild -checkFirstLaunchStatus')
+  expect(readiness.run).toContain('xcrun --find simctl')
+  expect(readiness.run).toContain('test "$simctl_path" = "$DEVELOPER_DIR/usr/bin/simctl"')
+  expect(readiness.run).toContain('Print :CFBundleVersion')
+  expect(readiness.run).toContain('test "$component_version" = "1051.17.8"')
   expect(ios.steps.some((step: { run?: string }) => step.run === 'pod --version')).toBe(true)
   expect(ios.steps.some((step: { run?: string }) => /brew install cocoapods/.test(step.run ?? ''))).toBe(false)
   const boot = ios.steps.find((step: { name?: string }) => step.name === 'Boot iOS simulator')

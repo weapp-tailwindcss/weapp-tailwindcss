@@ -212,7 +212,7 @@ jobs:
     runs-on: macos-15-intel
     timeout-minutes: 50
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v6
         with:
@@ -226,6 +226,15 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - name: Verify selected Xcode
         run: xcodebuild -version
+      - name: Verify CoreSimulator toolchain contract
+        run: |
+          xcodebuild -checkFirstLaunchStatus
+          simctl_path="$(xcrun --find simctl)"
+          echo "simctl=$simctl_path"
+          test "$simctl_path" = "$DEVELOPER_DIR/usr/bin/simctl"
+          component_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist)"
+          echo "CoreSimulator=$component_version"
+          test "$component_version" = "1051.17.8"
       - name: Verify preinstalled CocoaPods
         run: pod --version
       - run: pnpm install --frozen-lockfile

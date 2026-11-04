@@ -62,6 +62,24 @@ verification:
     sha: 9c4ce90f4a4675b00bae33d195226aba0e2c4b2b
     environment: macos-15-intel，4 核 14GiB，Node 24.22.2 x64，Xcode 16.4，iOS 18.5
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41815248201/job/126524469573
+  - claim: 后续 Intel 首帧超时，采样确认 Apple 包装脚本正在等待选中 Xcode 的子进程
+    kind: native
+    status: failed
+    sha: b4e97053e37f8d6c5109b3ffe012612083474fdc
+    environment: macos-15-intel，4 核 14GiB，Node 24.22.2 x64，Xcode 16.4，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41820274196/job/126541614433
+  - claim: 准确镜像的 16.4 包装脚本与全局组件版本不等，官方初始化后仍未对齐
+    kind: ci
+    status: passed
+    sha: c75a90a06e59ad03c96a23d9504449b753ab3eb8
+    environment: macos-15-intel 镜像 20260824.0482.1，Xcode 16.4/16F6，CoreSimulator 1051.17.8；临时诊断，不运行原生语义验收
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41828578534
+  - claim: 同镜像只有 Xcode 26.3 的原始包装脚本与全局组件版本匹配
+    kind: ci
+    status: passed
+    sha: 0dcf25e99d47100f5511641ffea39d5f09d878a3
+    environment: macos-15-intel 镜像 20260824.0482.1，Xcode 26.3/17C529，CoreSimulator 1051.17.8；只读清单，不运行原生语义验收
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41829463678
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -117,6 +135,20 @@ Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+
 正式提交 `9c4ce90f4a4675b00bae33d195226aba0e2c4b2b` 的相同 iOS 实现在 Intel 主机再次失败，artifact `13315404713` 保留基线 `layout-aspect/default` 首对原件。首帧从约 23ms 开始，截图约 6477ms、解码 1153ms、评估 50ms，三个语义检查均通过；第二帧约 7873ms 开始，约 2106ms 后被原十秒预算取消。PNG 已落盘不能代替真实命令完成，门禁保留失败并完成 SIGTERM 收尾，未将文件存在视为通过。
 
 本轮实际仍为 x64、4 核、14GiB，现场有 771 个进程，simctl 与采样器均曾处于不可中断等待态；采样取消，没有可用栈。load average 约 100–108、低空闲内存和单次进程 CPU 记录不能证明 swap、OOM 或具体服务为唯一根因。没有完整阶段索引或完成报告，不能沿用候选的 264 帧成功代替本轮验收。候选 ZIP 与本轮失败 ZIP 均已分别核验完整性，失败结果不会覆盖为成功。
+
+### 版本错配的直接证据与工具链对齐
+
+`b4e97053` 的 Intel 首帧命令再次耗尽十秒，未完成解码与评估；artifact `13319423317` 保留完整采样。38 个样本均显示 Bash 的 `__wait4`，同刻精确父子关系为本轮 Node → Apple Bash 包装脚本 → `/Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild`。进程快照不含 argv，不能仅凭可执行名确定子命令参数。构建临时目录在首帧前约 56 秒已清理，现场无构建进程，排除本轮构建清理与截图重叠的解释。
+
+随后两次独立小型诊断只读取镜像工具链、调用官方初始化和列出运行时，不创建或启动设备，不计入产品验收。首次 artifact `13322380272` 保存准确 Xcode 16.4/16F6 的 729 字节 Apple 脚本，SHA256 为 `6dae42329c6cc5c2919065636a235890384c62ce3672edc10497fead2d52bc8b`。脚本要求 `EXPECTED_VERSION="1010.15"`，全局组件实际为 `1051.17.8`；条件使用精确不等，因此会在每次调用重新执行所选 `xcodebuild -runFirstLaunch` 后才 exec 原生 simctl。
+
+显式官方初始化调用完成无输出，后续 `-checkFirstLaunchStatus` 零退出，但前后组件均为 `1051.17.8`。该诊断的 sudo 调用经 tee 管道，未单独记录其退出码，因此不把它写为独立成功证明。镜像[安装脚本](https://github.com/actions/runner-images/blob/f10516542b8f2fef89b652a8d5f5de63aa543b77/images/macos/scripts/build/Install-Xcode.ps1#L33)本已初始化各 Xcode；不能将故障概括为从未执行 first launch，也不能声称再执行一次便能降级全局组件。
+
+第二次 artifact `13321167938` 保存同镜像所有已安装 Xcode 的原始脚本与版本。只有 Xcode 26.3/17C529 要求的 `1051.17.8` 与全局组件匹配；26.2 要求 `1051.17.7`，16.4 要求 `1010.15`，其余版本也不匹配。26.3 脚本 SHA256 为 `8e4ed565409890f1fd518099f98bb6ccac7419605574d802ac7356fd34f63a5b`。iOS 18.5/22F77 已安装可用，但清单查询仍选中 16.4，不能把它描述为 26.3 的真实编译或运行通过。
+
+将 RN workflow 的完整工具链改选 `/Applications/Xcode_26.3.app/Contents/Developer`，保留 Apple 包装脚本及 iOS 18.5/iPhone 16 Pro。启动设备前核对 first-launch 状态、所选工具路径与准确 CoreSimulator `1051.17.8`，镜像组件再次漂移时立即阻断，避免把初始化成本带入语义采集预算。[Apple 支持表](https://developer.apple.com/support/xcode/)列明 26.3 支持本镜像 macOS 15.7.9 和 iOS 18.5 Simulator；[Expo SDK 54 的官方构建镜像](https://github.com/expo/expo/blob/c8e39590d7dd6d408a8d0f04b6eae3691f674c54/docs/pages/build-reference/infrastructure.mdx#L522)已默认使用 26 系列。SDK 升为 26.2 的编译、链接和渲染差异仍需准确提交完整原生验收，不能由诊断成功代替。
+
+新合同在旧 16.4 配置上失败，修复后与 iOS 构建、运行、截图四文件共 80 项通过。没有修改采样器、原命令完成判断、支持集、PNG、双帧要求或 10s/5s 预算，也没有增加预热截图、固定等待或直接绕过 Apple 脚本。
 
 ## 适用边界
 
