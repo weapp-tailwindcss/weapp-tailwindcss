@@ -1,30 +1,40 @@
 import type postcss from 'postcss'
-import { tokenize, TokenType } from '@csstools/css-tokenizer'
+import { tokenizer, TokenType } from '@csstools/css-tokenizer'
 import { normalizeCssSignatureValue } from './predicates'
+
+const tokenCodes = new Map(Object.values(TokenType).map((type, index) => [type, String.fromCharCode(65 + index)]))
 
 /** 字符串按 CSS 语义解码，其它 token 保留身份；选择器清理不能应用到声明内容。 */
 function createCssValueSignature(value: string) {
   let invalid = false
-  const tokens = tokenize({ css: value }, { onParseError: () => {
+  const stream = tokenizer({ css: value }, { onParseError: () => {
     invalid = true
   } })
-  if (invalid) {
-    return ['invalid', value]
+  const chunks = ['v']
+  while (true) {
+    const token = stream.nextToken()
+    if (token[0] === TokenType.EOF) {
+      break
+    }
+    const item = token[0] === TokenType.String ? token[4].value : token[0] === TokenType.Whitespace ? ' ' : token[1]
+    // 类型码和 UTF-16 长度界定每个字段，避免分隔符碰撞及完整 token 数组常驻。
+    chunks.push(tokenCodes.get(token[0])!, `${item.length}:`, item)
   }
-  return tokens.filter(token => token[0] !== TokenType.EOF).map(token => [
-    token[0],
-    token[0] === TokenType.String ? token[4].value : token[0] === TokenType.Whitespace ? ' ' : token[1],
-  ])
+  return invalid ? `i${value}` : chunks.join('')
 }
 
 /** 只缓存本轮不可变的值字符串；容器随清理变化，不能缓存 AST 子树。 */
-export function createCoverageSignatures() {
-  const values = new Map<string, unknown>()
-  function valueSignature(value: string): unknown {
+export function createCoverageSignatures(seed?: ReadonlyMap<string, string>): CoverageSignatures {
+  const values = new Map<string, string>()
+  function valueSignature(value: string): string {
+    const inherited = seed?.get(value)
+    if (inherited !== undefined) {
+      return inherited
+    }
     if (!values.has(value)) {
       values.set(value, createCssValueSignature(value))
     }
-    return values.get(value)
+    return values.get(value)!
   }
 
   function declarationSignature(node: postcss.Declaration) {
@@ -32,6 +42,10 @@ export function createCoverageSignatures() {
   }
 
   return {
+    fork() {
+      // 根值只读共享；目标新增值只写入子上下文，不能随 preparedCoverage 跨调用累积。
+      return createCoverageSignatures(values)
+    },
     declaration(node: postcss.Declaration) {
       return JSON.stringify(declarationSignature(node))
     },
@@ -47,7 +61,12 @@ export function createCoverageSignatures() {
   }
 }
 
-export type CoverageSignatures = ReturnType<typeof createCoverageSignatures>
+export interface CoverageSignatures {
+  fork: () => CoverageSignatures
+  declaration: (node: postcss.Declaration) => string
+  selector: (rule: postcss.Rule, selector: string) => string
+  node: (node: postcss.Rule | postcss.AtRule) => string
+}
 
 function nodeSignature(node: postcss.ChildNode, valueSignature: (value: string) => unknown, declarationSignature: (node: postcss.Declaration) => unknown): unknown {
   if (node.type === 'decl') {

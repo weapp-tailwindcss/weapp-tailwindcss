@@ -2,6 +2,13 @@ import type { CoverageSignatures } from './signature'
 import postcss from 'postcss'
 import { createCoverageSignatures } from './signature'
 
+const coverageSignatures = new WeakMap<ComparableCssCoverage, CoverageSignatures>()
+
+/** 覆盖索引只保留根值；每次目标清理取得独立上下文，不缓存目标 AST 或新值。 */
+export function createRootCssCoverageSignatures(coverage: ComparableCssCoverage) {
+  return coverageSignatures.get(coverage)?.fork() ?? createCoverageSignatures()
+}
+
 function createRuleCoverageKey(selector: string, declarations: string[]) {
   return JSON.stringify([selector, declarations])
 }
@@ -60,12 +67,14 @@ export function collectRootScopedComparableCssCoverage(cssSources: string[]) {
     catch {
     }
   }
-  return { rules, atRules, declarationsBySelector, orderedDeclarationsBySelector, propertiesBySelector, normalizedRuleCss }
+  const coverage = { rules, atRules, declarationsBySelector, orderedDeclarationsBySelector, propertiesBySelector, normalizedRuleCss }
+  coverageSignatures.set(coverage, signatures)
+  return coverage
 }
 
 export type ComparableCssCoverage = ReturnType<typeof collectRootScopedComparableCssCoverage>
 
-export function isRuleCoveredByRootCss(rule: postcss.Rule, coverage: ReturnType<typeof collectRootScopedComparableCssCoverage>, signatures = createCoverageSignatures()) {
+export function isRuleCoveredByRootCss(rule: postcss.Rule, coverage: ReturnType<typeof collectRootScopedComparableCssCoverage>, signatures = createRootCssCoverageSignatures(coverage)) {
   if (coverage.rules.size === 0 && coverage.orderedDeclarationsBySelector.size === 0) {
     return false
   }

@@ -5,9 +5,8 @@ import { removeUnusedMiniProgramContentInit } from '../mini-program-css'
 import { hasNonCommentCss } from '../processed-css/cleanup'
 import { containsSkylineTypographyReset, isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import { isTailwindRuntimePropertyRule } from '../uni-app-x-author-apply'
-import { collectRootScopedComparableCssCoverage, isRuleCoveredByRootCss } from './coverage'
+import { collectRootScopedComparableCssCoverage, createRootCssCoverageSignatures, isRuleCoveredByRootCss } from './coverage'
 import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule } from './predicates'
-import { createCoverageSignatures } from './signature'
 
 function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[], preserveRuntimeProperties = false, preserveSkylineTypography = false) {
   if (!hasVueScopedAttr(css)) {
@@ -15,7 +14,7 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
   }
   const hasScopedTailwindGeneratedCss = /tailwindcss v\d/i.test(css)
   const coverage = collectRootScopedComparableCssCoverage(rootSources)
-  const signatures = createCoverageSignatures()
+  const signatures = createRootCssCoverageSignatures(coverage)
   try {
     const root = postcss.parse(css)
     let changed = false
@@ -94,7 +93,7 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
     return css
   }
   const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(rootSources)
-  const signatures = createCoverageSignatures()
+  const signatures = createRootCssCoverageSignatures(coverage)
   let nextCss = css
   try {
     const root = postcss.parse(css)
