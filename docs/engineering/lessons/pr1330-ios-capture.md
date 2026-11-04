@@ -56,6 +56,12 @@ verification:
     sha: e14f99f4c34136c3e8b7b3f094d34388b9506158
     environment: macos-15-intel，4 核 14GiB，Node 24.22.2 x64，Xcode 16.4，iOS 18.5，CocoaPods 1.17.0
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41810042228/job/126507013013
+  - claim: 正式提交在 Intel 主机基线首对截图超时，候选成功不能证明迟滞根因消除
+    kind: native
+    status: failed
+    sha: 9c4ce90f4a4675b00bae33d195226aba0e2c4b2b
+    environment: macos-15-intel，4 核 14GiB，Node 24.22.2 x64，Xcode 16.4，iOS 18.5
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41815248201/job/126524469573
 ---
 
 # PR 1330 的 iOS 截图与采样额度
@@ -107,6 +113,10 @@ Taro Webpack 首次三组 build peak RSS 的中位数为 1308.46→1403.82MB，+
 270 次截图全部成功，中位数约 1260ms、P95 1570ms、最大 4144ms。双帧验收最大约 6130ms，保持原十秒上限；cleanup 为 `pending: false`、`settled`，没有失败采集诊断。实际运行身份为 x86_64、4 核、14GiB、iOS 18.5、Xcode 16.4（16F6）、CocoaPods 1.17.0。该候选在本轮 Intel 环境完整通过，不能据单轮成功保证消除所有宿主延迟，也不能将低空闲内存解释为旧故障的确定根因。合入 PR 后仍以最终提交完整检查为准。
 
 推送临时分支时先遇到 SSH 500，随后公钥认证失败，最终使用已有 GitHub CLI 登录的 HTTPS credential helper 完成推送，没有更改全局 Git 认证。一次未核实推送结果就发起的 dispatch 实际仍指向旧候选 `4534f2d67`，对应 run `41809782183` 已取消，不计入验证。随后先由 API 确认远端为 `e14f99f4`，再触发上述准确提交运行。后续推送必须检查退出状态及远端 SHA，不能以已发起 push 推断 ref 已更新。
+
+正式提交 `9c4ce90f4a4675b00bae33d195226aba0e2c4b2b` 的相同 iOS 实现在 Intel 主机再次失败，artifact `13315404713` 保留基线 `layout-aspect/default` 首对原件。首帧从约 23ms 开始，截图约 6477ms、解码 1153ms、评估 50ms，三个语义检查均通过；第二帧约 7873ms 开始，约 2106ms 后被原十秒预算取消。PNG 已落盘不能代替真实命令完成，门禁保留失败并完成 SIGTERM 收尾，未将文件存在视为通过。
+
+本轮实际仍为 x64、4 核、14GiB，现场有 771 个进程，simctl 与采样器均曾处于不可中断等待态；采样取消，没有可用栈。load average 约 100–108、低空闲内存和单次进程 CPU 记录不能证明 swap、OOM 或具体服务为唯一根因。没有完整阶段索引或完成报告，不能沿用候选的 264 帧成功代替本轮验收。候选 ZIP 与本轮失败 ZIP 均已分别核验完整性，失败结果不会覆盖为成功。
 
 ## 适用边界
 

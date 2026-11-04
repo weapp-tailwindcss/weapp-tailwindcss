@@ -43,7 +43,7 @@ it('Expo Web 三个引擎分别执行语义验收并保存独立证据', async (
   expect(exports).toContain('reactNativeWebBrowser(process.env.RN_WEB_BROWSER)')
   expect(exports).toMatch(/`react-native-web-\$\{selectedBrowser\.name\}`/)
   expect(exports).toContain('\'static-export-debug\'')
-  expect(workflow.jobs.android.needs).toEqual(['scope', 'web'])
+  expect(workflow.jobs.android.needs).toEqual(['scope', 'web', 'android-build'])
   expect(workflow.jobs.android.if).toContain('always() && !cancelled()')
   expect(workflow.jobs.ios.needs).toBe('scope')
 })
@@ -134,6 +134,54 @@ it('模拟器二进制检查必须在 action 安装工具链之后执行', async
   }
   expect(steps[index].with['disable-linux-hw-accel']).toBe(false)
   expect(steps[index].with['pre-emulator-launch-script']).toContain('-accel-check')
+})
+
+it('Android 编译与模拟器使用独立主机，只消费同轮准确提交的不可变 APK', async () => {
+  const workflow = YAML.parse(await readFile(workflowPath, 'utf8'))
+  const build = workflow.jobs['android-build']
+  const android = workflow.jobs.android
+  const artifactDirectory = `${'$'}{{ runner.temp }}/react-native-android-apk`
+  expect(build).toBeDefined()
+  expect(build.needs).toBe('scope')
+  expect(build.if).toBe('needs.scope.outputs.core == \'true\'')
+  expect(android.if).toContain('needs.android-build.result == \'success\'')
+  const checkout = (job: typeof android) => job.steps.find((step: { uses?: string }) => step.uses?.startsWith('actions/checkout@'))
+  expect(checkout(build).with.ref).toBe(checkout(android).with.ref)
+  expect(build.steps.some((step: { run?: string }) => step.run?.includes('./gradlew app:assembleDebug'))).toBe(true)
+  expect(android.steps.every((step: { run?: string }) => !step.run?.includes('gradlew'))).toBe(true)
+  const upload = build.steps.find((step: { uses?: string }) => step.uses?.startsWith('actions/upload-artifact@'))
+  expect(upload.id).toBe('apk')
+  expect(upload.if).toBeUndefined()
+  expect(upload.with['if-no-files-found']).toBe('error')
+  expect(upload.with.name).toBe(`react-native-android-apk-${'$'}{{ github.run_id }}-${'$'}{{ github.run_attempt }}`)
+  expect(upload.with.path).toContain('app-debug.apk.sha256')
+  expect(upload.with.path).toContain('source-head.txt')
+  expect(build.outputs.apk_id).toBe(`${'$'}{{ steps.apk.outputs.artifact-id }}`)
+  const downloadIndex = android.steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('actions/download-artifact@'))
+  const prebuildIndex = android.steps.findIndex((step: { run?: string }) => step.run === 'pnpm --filter @weapp-tailwindcss/example-react-native-expo exec expo prebuild --platform android --no-install')
+  expect(prebuildIndex).toBeGreaterThan(0)
+  expect(downloadIndex).toBeGreaterThan(prebuildIndex)
+  const download = android.steps[downloadIndex]
+  expect(download.with['artifact-ids']).toBe(`${'$'}{{ needs.android-build.outputs.apk_id }}`)
+  expect(download.with['merge-multiple']).toBe(true)
+  expect(download.with.path).toBe(artifactDirectory)
+  expect(download.with['run-id']).toBeUndefined()
+  const verify = android.steps[downloadIndex + 1]
+  expect(verify['working-directory']).toBe(download.with.path)
+  expect(verify.run).toContain('sha256sum --check app-debug.apk.sha256')
+  expect(verify.run).toContain('git -C "$GITHUB_WORKSPACE" rev-parse HEAD')
+  const step = android.steps.find((step: { uses?: string }) => step.uses?.startsWith('reactivecircus/android-emulator-runner@'))
+  expect(step.with['disk-size']).toBe('6G')
+  expect(step.with['api-level']).toBe(30)
+  expect(step.with.arch).toBe('x86_64')
+  expect(step.with.profile).toBe('pixel_2')
+  expect(step.with['ram-size']).toBe('4096M')
+  expect(step.with['heap-size']).toBe('512M')
+  expect(step.with.script).toContain('pnpm e2e:react-native:android')
+  expect(step.with.script).toContain(`RN_ANDROID_BINARY="${artifactDirectory}/app-debug.apk"`)
+  expect(step.with.script).toContain('adb -s emulator-5554 shell df -h /data')
+  expect(step.with['emulator-boot-timeout']).toBeUndefined()
+  expect(android.steps.every((entry: Record<string, unknown>) => !entry['continue-on-error'])).toBe(true)
 })
 
 it.skipIf(process.platform === 'win32')('启动钩子使用已安装的 SDK 路径，并如实传播加速检查失败', async () => {
