@@ -79,7 +79,10 @@ describe('版本 PR 的审批后完整校验入口', () => {
     }
     expect(workflow('benchmark.yml').jobs['benchmark-shard'].strategy['max-parallel']).toBe(2)
     expect(workflow('benchmark.yml').jobs['synthetic-performance'].if).toContain('!inputs.weekly_demo_cost')
-    expect(workflow('react-native-compatibility.yml').jobs.android.needs).toEqual(['scope', 'web'])
+    const reactNative = workflow('react-native-compatibility.yml')
+    expect(reactNative.jobs['android-build'].needs).toBe('scope')
+    expect(reactNative.jobs.android.needs).toEqual(['scope', 'web', 'android-build'])
+    expect(reactNative.jobs.android.if).toContain('needs.android-build.result == \'success\'')
   })
 
   it('同一手动验收 run 的子工作流与嵌套工作流使用独立 artifact 名称前缀', () => {

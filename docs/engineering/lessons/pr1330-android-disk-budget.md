@@ -4,6 +4,8 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1330
 baseline: 9c4ce90f4a4675b00bae33d195226aba0e2c4b2b
 regressions:
   - e2e/react-native-ci.test.ts
+  - packages/weapp-tailwindcss/test/ci/manual-version-gates.test.ts
+  - packages/weapp-tailwindcss/test/ci/release-trigger-workflow.test.ts
 verification:
   - claim: APK 构建成功后，模拟器因宿主可用磁盘不足而未启动
     kind: native
@@ -17,6 +19,18 @@ verification:
     sha: 9c4ce90f4a4675b00bae33d195226aba0e2c4b2b
     environment: macOS arm64，Node 24.22.1，基于该提交的未提交 workflow 与测试修复，未操作 Android 设备
     command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ci.test.ts e2e/react-native-android-environment.test.ts e2e/react-native-android-window.test.ts e2e/react-native-android-device.test.ts --update=none --coverage.enabled=false
+  - claim: 独立构建的准确 APK 在新主机完成原生验收，磁盘有余量
+    kind: native
+    status: passed
+    sha: b4e97053e37f8d6c5109b3ffe012612083474fdc
+    environment: ubuntu-latest，Node 24.22.2，API 30 default x86_64，6GiB userdata，JDK 17
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/41820274196/job/126544577042
+  - claim: 同步两处既有依赖合同后，完整 CI 合同七十五文件一千零八十五项通过
+    kind: unit
+    status: passed
+    sha: b4e97053e37f8d6c5109b3ffe012612083474fdc
+    environment: macOS arm64，Node 24.22.1，基于该提交的未提交测试和复盘修正；先完成所需包构建
+    command: CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci --update=none --coverage.enabled=false
 ---
 
 # PR 1330 的 Android 模拟器数据盘预算
@@ -44,6 +58,12 @@ Expo 原生脚本尚未执行，因此没有 Android 测试产物。本轮失败
 新增 workflow 回归在旧配置上因独立构建 job 缺失而失败。修复后验证依赖条件、相同 checkout、准确 artifact ID、输入哈希/源码身份、prebuild 先后和实际二进制路径，同时保留设备、内存、完整入口及不容错边界。CI 合同、Android 环境事务、窗口坐标和设备身份四个文件共 41 项通过，actionlint 通过。未改 demo、样式产物或 `RN_FIXTURE_HASH` 输入，不重写 static 基线。
 
 单测与工作流检查不会创建模拟器，不能证明独立主机容量足够。远端原生验证仍需在准确新提交完成真实安装、baseline、TSX HMR、CSS HMR 和原件验收。
+
+提交 `b4e97053e37f8d6c5109b3ffe012612083474fdc` 的 APK 构建和独立 Android 验收均成功。运行 job 按 artifact ID `13317716116` 下载同 run 输入，准确 checkout HEAD 和 APK 哈希校验均通过；模拟器约 26.66 秒启动完成，完整原生流程约 6 分 34 秒。本轮宿主 `df` 可用 80G，`/data` 从测试前约 5.6G 空闲到测试后约 5.5G。此前失败 runner 与本轮 runner 不同，不能把容量差额全部量化归因于拆 job；能确认本轮独立主机容量足够，且原生流程成功。
+
+同一提交的两个 PR 单测分片暴露旧治理合同仍断言 Android 只依赖 `scope`、`web`。首次失败分别保留在 run `41820274185` 的 job `126543771104`、`126543771075`。全面检索后同步两处既有断言，补充独立构建依赖与成功条件，并纠正复盘中“最多两个 Expo job”的旧说明。先在原测试上复现两项失败，再修正测试；这不是移除 Web barrier 或放宽构建失败门禁。
+
+本地首次扩展到 `test/ci` 时忘记先构建发布入口，17 项因缺少 dist 失败，其余 1068 项通过。补执行 `CI=1 pnpm exec turbo run build --filter=weapp-tailwindcss... --filter=@weapp-tailwindcss/cli...`，15 个包任务均成功后，原命令复验 75 文件、1085 项全部通过。没有为缺失产物修改产品或跳过测试。
 
 ## 适用边界
 

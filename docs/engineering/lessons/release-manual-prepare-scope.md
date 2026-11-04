@@ -56,7 +56,7 @@ PR Gate、SEO Quality Gate 和 Quality Gate 汇总要求分类成功；启用的
 普通文档变更沿用已有源码豁免，网站文档仍执行 SEO；CHANGELOG 和 intent 变更不能借文档扩展名绕过版本校验。
 
 分类依赖单独放在私有 `tools/ci-scope`，冻结生产依赖安装只需要 yaml 和 semver；必须同时使用 `--prod --ignore-scripts`，避免安装根开发依赖和执行生命周期。
-native 矩阵 `max-parallel: 4`，benchmark 为 2。Expo web/iOS 并行、Android 在 web 后启动，单次最多两个 Expo job。
+native 矩阵 `max-parallel: 4`，benchmark 为 2。Expo Web 三浏览器、iOS 和 Android APK 构建可并行；Android 验收等待 Web 阶段与 APK 构建结束，并只消费构建成功的同轮不可变产物。
 RN、Lynx、SEO 按 PR/ref 取消旧运行；真实发布与恢复仍串行、不自动取消，OIDC 审计使用独立并发组。
 
 ## 操作
