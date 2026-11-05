@@ -91,7 +91,7 @@ export async function captureFailureDiagnostics(options: {
   projectRoot: string
   inputs: Record<string, string>
   logcatSince?: string
-  capture: (name: string, device: string, signal: AbortSignal) => Promise<string>
+  capture: (name: string, device: string, signal: AbortSignal) => Promise<unknown>
 }) {
   const { platform, device, artifacts, projectRoot, inputs, logcatSince, capture } = options
   await withNativeFailureDiagnostics(path.join(artifacts, 'failure-diagnostics.json'), async (owner) => {

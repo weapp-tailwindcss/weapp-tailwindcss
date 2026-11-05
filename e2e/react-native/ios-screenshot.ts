@@ -22,6 +22,7 @@ interface HostResourceSnapshot {
 
 interface ScreenshotDiagnostic {
   index: number
+  purpose: 'acceptance' | 'diagnostic-only'
   output: string
   device: string
   startedAt: string
@@ -102,119 +103,130 @@ function observeEventLoop(elapsed: () => number, record: ScreenshotDiagnostic) {
   }
 }
 
-/** 复用原命令和 stat；慢截图仅触发一次有界只读采样，最终统一排空并保存诊断。 */
+/** 正式截图只记录被动现场；会暂停目标的主动采样仅允许用于失败诊断。 */
 export function createIosScreenshotDiagnostics(artifacts: string, runId: string, options?: Parameters<typeof createIosScreenshotSampleOwner>[1]) {
   const samples = createIosScreenshotSampleOwner(artifacts, options)
   const records: Array<{ record: ScreenshotDiagnostic, snapshot: () => void }> = []
 
-  return {
-    async capture(output: string, device: string, cancelSignal?: AbortSignal) {
-      const started = performance.now()
-      const elapsed = () => Math.max(0, performance.now() - started)
-      const record: ScreenshotDiagnostic = {
-        index: records.length + 1,
-        output,
-        device,
-        startedAt: new Date(performance.timeOrigin + started).toISOString(),
-        status: 'pending',
-        elapsedMs: 0,
-        hostResources: { source: 'test-runner', started: captureHostResources(elapsed) },
-        eventLoop: { intervalMs: 100, samples: 0, maxDelayMs: 0, meanDelayMs: null, pendingDelayMs: 0, stopped: false },
-      }
-      const eventLoop = observeEventLoop(elapsed, record)
-      records.push({ record, snapshot() {
-        record.elapsedMs = record.settledAtMs ?? elapsed()
-        eventLoop.snapshot()
-      } })
-      let stopSample: (() => void) | undefined
-      let streams: ReturnType<typeof observeIosScreenshotStreams> | undefined
-      const onAbort = () => {
-        stopSample?.()
-        record.cancelled = { atMs: elapsed(), reason: String(cancelSignal?.reason) }
-      }
-      const onAbortResources = () => {
-        record.hostResources.cancelled ??= captureHostResources(elapsed)
-      }
-      cancelSignal?.addEventListener('abort', onAbort, { once: true })
+  async function capture(output: string, device: string, cancelSignal: AbortSignal | undefined, purpose: 'acceptance' | 'diagnostic-only') {
+    const started = performance.now()
+    const elapsed = () => Math.max(0, performance.now() - started)
+    const record: ScreenshotDiagnostic = {
+      index: records.length + 1,
+      purpose,
+      output,
+      device,
+      startedAt: new Date(performance.timeOrigin + started).toISOString(),
+      status: 'pending',
+      elapsedMs: 0,
+      hostResources: { source: 'test-runner', started: captureHostResources(elapsed) },
+      eventLoop: { intervalMs: 100, samples: 0, maxDelayMs: 0, meanDelayMs: null, pendingDelayMs: 0, stopped: false },
+    }
+    const eventLoop = observeEventLoop(elapsed, record)
+    records.push({ record, snapshot() {
+      record.elapsedMs = record.settledAtMs ?? elapsed()
+      eventLoop.snapshot()
+    } })
+    let stopSample: (() => void) | undefined
+    let streams: ReturnType<typeof observeIosScreenshotStreams> | undefined
+    const onAbort = () => {
+      stopSample?.()
+      record.cancelled = { atMs: elapsed(), reason: String(cancelSignal?.reason) }
+    }
+    const onAbortResources = () => {
+      record.hostResources.cancelled ??= captureHostResources(elapsed)
+    }
+    cancelSignal?.addEventListener('abort', onAbort, { once: true })
+    if (cancelSignal?.aborted) {
+      onAbort()
+    }
+    try {
+      const command = execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { ...(cancelSignal ? { cancelSignal } : {}), forceKillAfterDelay: 1_000 })
+      // 资源监听晚于 execa 登记；实际异步取消进度仍以 exit/close/settled 为准。
+      cancelSignal?.addEventListener('abort', onAbortResources, { once: true })
       if (cancelSignal?.aborted) {
-        onAbort()
+        onAbortResources()
       }
-      try {
-        const command = execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { ...(cancelSignal ? { cancelSignal } : {}), forceKillAfterDelay: 1_000 })
-        // 资源监听晚于 execa 登记；实际异步取消进度仍以 exit/close/settled 为准。
-        cancelSignal?.addEventListener('abort', onAbortResources, { once: true })
-        if (cancelSignal?.aborted) {
-          onAbortResources()
-        }
-        streams = observeIosScreenshotStreams(command, elapsed)
-        record.streams = streams.records
+      streams = observeIosScreenshotStreams(command, elapsed)
+      record.streams = streams.records
+      // sample 会周期性暂停目标进程，只能用于不授予正式回执的失败诊断。
+      if (purpose === 'diagnostic-only') {
         stopSample = samples.observe(command, record.index, elapsed, (sample) => {
           record.sample = sample
         })
-        if (cancelSignal?.aborted) {
-          stopSample()
-        }
+      }
+      if (cancelSignal?.aborted) {
+        stopSample?.()
+      }
+      if (command.pid !== undefined) {
+        record.pid = command.pid
+      }
+      command.once('spawn', () => {
+        record.spawnedAtMs = elapsed()
         if (command.pid !== undefined) {
           record.pid = command.pid
         }
-        command.once('spawn', () => {
-          record.spawnedAtMs = elapsed()
-          if (command.pid !== undefined) {
-            record.pid = command.pid
-          }
-        })
-        command.once('exit', (code, signal) => {
-          record.exit = { atMs: elapsed(), code, signal }
-          streams?.snapshot('exited')
-        })
-        command.once('close', (code, signal) => {
-          record.stdioClosed = { atMs: elapsed(), code, signal }
-        })
-        try {
-          await command
-          record.subprocessSettled = { atMs: elapsed(), status: 'succeeded' }
-        }
-        catch (error) {
-          record.subprocessSettled = { atMs: elapsed(), status: 'failed' }
-          throw error
-        }
-        finally { streams.snapshot('settled') }
-        cancelSignal?.throwIfAborted()
-        const statRecord: NonNullable<ScreenshotDiagnostic['stat']> = record.stat = { startedAtMs: elapsed() }
-        try {
-          const stat = await fs.stat(output)
-          statRecord.size = stat.size
-        }
-        catch (error) {
-          statRecord.error = String(error)
-          throw error
-        }
-        finally {
-          statRecord.settledAtMs = elapsed()
-        }
-        if (statRecord.size! < 1024) {
-          throw new Error(`ios screenshot is unexpectedly small: ${statRecord.size}`)
-        }
-        record.status = 'succeeded'
-        return output
+      })
+      command.once('exit', (code, signal) => {
+        record.exit = { atMs: elapsed(), code, signal }
+        streams?.snapshot('exited')
+      })
+      command.once('close', (code, signal) => {
+        record.stdioClosed = { atMs: elapsed(), code, signal }
+      })
+      try {
+        await command
+        record.subprocessSettled = { atMs: elapsed(), status: 'succeeded' }
       }
       catch (error) {
-        record.status = 'failed'
-        record.error = String(error)
+        record.subprocessSettled = { atMs: elapsed(), status: 'failed' }
+        throw error
+      }
+      finally { streams.snapshot('settled') }
+      cancelSignal?.throwIfAborted()
+      const statRecord: NonNullable<ScreenshotDiagnostic['stat']> = record.stat = { startedAtMs: elapsed() }
+      try {
+        const stat = await fs.stat(output)
+        statRecord.size = stat.size
+      }
+      catch (error) {
+        statRecord.error = String(error)
         throw error
       }
       finally {
-        record.settledAtMs = record.elapsedMs = elapsed()
-        eventLoop.stop()
-        stopSample?.()
-        streams?.dispose()
-        cancelSignal?.removeEventListener('abort', onAbort)
-        cancelSignal?.removeEventListener('abort', onAbortResources)
-        if (record.cancelled) {
-          onAbortResources()
-        }
-        record.hostResources.settled = captureHostResources(elapsed)
+        statRecord.settledAtMs = elapsed()
       }
+      if (statRecord.size! < 1024) {
+        throw new Error(`ios screenshot is unexpectedly small: ${statRecord.size}`)
+      }
+      record.status = 'succeeded'
+      return output
+    }
+    catch (error) {
+      record.status = 'failed'
+      record.error = String(error)
+      throw error
+    }
+    finally {
+      record.settledAtMs = record.elapsedMs = elapsed()
+      eventLoop.stop()
+      stopSample?.()
+      streams?.dispose()
+      cancelSignal?.removeEventListener('abort', onAbort)
+      cancelSignal?.removeEventListener('abort', onAbortResources)
+      if (record.cancelled) {
+        onAbortResources()
+      }
+      record.hostResources.settled = captureHostResources(elapsed)
+    }
+  }
+
+  return {
+    capture(output: string, device: string, cancelSignal?: AbortSignal) {
+      return capture(output, device, cancelSignal, 'acceptance')
+    },
+    async captureDiagnostic(output: string, device: string, cancelSignal: AbortSignal) {
+      await capture(output, device, cancelSignal, 'diagnostic-only')
     },
     async flush() {
       let cleanupFailure: unknown

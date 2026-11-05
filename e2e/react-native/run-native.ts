@@ -626,7 +626,7 @@ async function main() {
     semanticReporter.stop()
     await attempt(() => semanticReporter.drain())
     await attempt(() => iosContextRequest?.drain())
-    if (!semanticReporter.capturePending()) {
+    if (!semanticReporter.capturePending() && !iosStartup?.pending() && nativeCleanup.size === 0) {
       if (!completed && metro) {
         await attempt(() => captureFailureDiagnostics({
           platform,
@@ -635,7 +635,9 @@ async function main() {
           projectRoot: exampleRoot,
           inputs: { 'global.css': cssFile, 'hmr-marker.ts': markerFile },
           logcatSince: androidEnvironment?.receipt.logcat.since,
-          capture,
+          capture: (name, device, signal) => platform === 'ios'
+            ? iosScreenshots!.captureDiagnostic(path.resolve(artifacts, name), device, signal)
+            : capture(name, device, signal),
         }))
       }
     }

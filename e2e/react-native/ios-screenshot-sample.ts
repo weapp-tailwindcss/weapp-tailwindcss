@@ -29,7 +29,7 @@ interface SampleOptions {
   sample?: typeof sampleNativeProcess
 }
 
-/** 一轮最多采样一个已确认归属的慢截图；身份查询失败不消耗实际采样额度。 */
+/** 失败诊断一轮最多采样一个自有慢截图；正式采集不得使用会暂停目标的采样器。 */
 export function createIosScreenshotSampleOwner(directory: string, options: SampleOptions = {}) {
   let claimed = false
   let inspecting = false
