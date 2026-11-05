@@ -222,8 +222,8 @@ catalogs:
       specifier: ^1.33.0
       version: 1.33.0
     local-pkg:
-      specifier: ^2.0.0
-      version: 2.0.0
+      specifier: 1.2.1
+      version: 1.2.1
     lru-cache:
       specifier: 11.5.3
       version: 11.5.3
@@ -1135,7 +1135,7 @@ importers:
         version: 1.33.0
       local-pkg:
         specifier: catalog:buildUtilities
-        version: 2.0.0
+        version: 1.2.1
       lodash:
         specifier: ^4.18.1
         version: 4.18.1
@@ -5431,7 +5431,7 @@ importers:
         version: 12.0.0
       local-pkg:
         specifier: catalog:buildUtilities
-        version: 2.0.0
+        version: 1.2.1
       lru-cache:
         specifier: catalog:buildUtilities
         version: 11.5.3
@@ -25310,10 +25310,6 @@ packages:
   local-pkg@1.2.1:
     resolution: {integrity: sha512-++gUqRDEvcnN6Zhqrr+y/CkVEHhlrR96vZn3nZZPYzMcBUyBtTKzB9NadClFIsIVSsu+3i9tfk/erqy9kAmt7Q==}
     engines: {node: '>=14'}
-
-  local-pkg@2.0.0:
-    resolution: {integrity: sha512-xvTNwM27EpU+fkLSpo33Pq/nm8m5zNf0aU/hF4W4ZM9RHQjVZa5KTmmXIzEzVsdI09NOUqj0djHhTv96sUowSQ==}
-    engines: {node: '>=20.19.0'}
 
   localstorage-polyfill@1.0.1:
     resolution: {integrity: sha512-m4iHVZxFH5734oQcPKU08025gIz2+4bjWR9lulP8ZYxEJR0BpA0w32oJmkzh8y3UI9ci7xCBehQDc3oA1X+VHw==}
@@ -60364,12 +60360,6 @@ snapshots:
       mlly: 1.8.2
       pkg-types: 2.4.0
       quansync: 0.2.11
-
-  local-pkg@2.0.0:
-    dependencies:
-      mlly: 1.8.2
-      pkg-types: 2.4.0
-      quansync: 1.0.0
 
   localstorage-polyfill@1.0.1: {}
 

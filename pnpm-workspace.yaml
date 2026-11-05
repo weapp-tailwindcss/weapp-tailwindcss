@@ -93,6 +93,8 @@ update:
     - execa
     - jsdom
     - '@types/jsdom'
+    # 待上游修复声明并完成 ESM/CJS 兼容验证后，再迁移 local-pkg 2.x。
+    - local-pkg
     - pako
     - '@types/pako'
     - '@types/gulp-replace'
@@ -129,7 +131,7 @@ catalogs:
     fast-glob: ^3.3.3
     fs-extra: ^11.4.1
     htmlparser2: ^12.0.0
-    local-pkg: ^2.0.0
+    local-pkg: 1.2.1
     lightningcss: ^1.33.0
     lru-cache: 11.5.3
     magic-string: ^1.4.5
