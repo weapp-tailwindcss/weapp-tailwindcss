@@ -110,7 +110,7 @@
     "postcss": "^8.5.32",
     "postcss-comment": "^2.0.0",
     "postcss-loader": "^8.2.1",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "~6.0.3",
     "vue-template-compiler": "2.6.14",
     "weapp-ide-cli": "^5.4.12",

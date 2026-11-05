@@ -4,6 +4,7 @@ import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
+import { verifyTemplateTailwindModernGuard } from '../scripts/ci/tailwind-modern-guard.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfigs } from './template-ide/config'
 import { readTemplateDependencyContract, TEMPLATE_PACKAGE_MANAGER, verifyInstalledTemplateDependency } from './templateContract'
@@ -103,6 +104,7 @@ describe('canonical template build smoke', () => {
       await runPnpm(root, ['install', '--frozen-lockfile'])
     }
     await verifyInstalledTemplateDependency(root, dependencyContract)
+    await verifyTemplateTailwindModernGuard(root)
     const family = templateLintFamilies.get(item.template)
     if (family) {
       await verifyFrameworkEslint(root, family)

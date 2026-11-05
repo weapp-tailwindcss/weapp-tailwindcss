@@ -5,6 +5,7 @@ packageExtensions:
     dependencies:
       '@devframes/agentic': 1.2.6
 patchedDependencies:
+  '@weapp-tailwindcss/postcss@3.4.3': patches/@weapp-tailwindcss__postcss@3.4.3.patch
 allowBuilds:
   '@swc/core': true
   esbuild: true

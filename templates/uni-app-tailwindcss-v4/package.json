@@ -71,7 +71,7 @@
     "@dcloudio/vite-plugin-uni": "3.0.0-5030320261023001",
     "@vue/runtime-core": "^3.5.44",
     "@vue/tsconfig": "^0.9.1",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "^6.0.3",
     "vite": "5.2.8",
     "vue-tsc": "^2.2.12",

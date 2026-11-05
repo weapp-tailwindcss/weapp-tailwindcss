@@ -318,6 +318,8 @@ jobs:
           overwrite: true
       - name: Check CSS import paths and source generation
         run: pnpm --filter weapp-tailwindcss exec vitest run test/tailwindcss/v4-import-paths.test.ts test/tailwindcss/v4-engine.test.ts
+      - name: Verify utility command ownership and bounded cleanup
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/windows-owned-process.test.ts e2e/windows-utilities-process.test.ts e2e/windows-utilities-fixture.test.ts e2e/windows-utilities-patches.test.ts e2e/windows-utilities-workflow.test.ts --maxWorkers=1 --update=none
       - name: Reproduce published version and verify packed fix
         run: pnpm e2e:windows-utilities
       - name: Upload utility output evidence

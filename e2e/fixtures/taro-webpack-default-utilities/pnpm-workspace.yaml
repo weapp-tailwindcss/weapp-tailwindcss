@@ -13,3 +13,5 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@weapp-tailwindcss/postcss@3.3.2'
   - weapp-tailwindcss@5.5.1
+patchedDependencies:
+  '@weapp-tailwindcss/postcss@3.3.2': patches/@weapp-tailwindcss__postcss@3.3.2.patch

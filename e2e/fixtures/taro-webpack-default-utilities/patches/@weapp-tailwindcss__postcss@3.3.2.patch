@@ -1,0 +1,26 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 5b12ffd4a50aaabe3119d91312028a45574c4ef9..b6a4866382e081189cf594e843af5532194a3fcb 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -523,7 +523,7 @@ function createCssVarNodes(definitions) {
+ const CLAMP_PX = 9999;
+ const INFINITY_CALC_VALUE_REGEXP = /^calc\(\s*infinity\s*\*\s*(?:\d+(?:\.\d*)?|\.\d+)r?px\s*\)$/i;
+ const MODERN_CHECK_WEBKIT_HYPHENS_RE = /-webkit-hyphens\s*:\s*none/;
+-const MODERN_CHECK_MARGIN_TRIM_RE = /margin-trim\s*:\s*inline/;
++const MODERN_CHECK_MARGIN_TRIM_RE = /\(\s*margin-trim\s*:\s*(?:inline|block)\s*\)/;
+ const MODERN_CHECK_MOZ_ORIENT_RE = /-moz-orient\s*:\s*inline/;
+ const MODERN_CHECK_COLOR_RGB_RE = /color\s*:\s*rgb\(\s*from\s+red\s+r\s+g\s+b\s*\)/;
+ const LINEAR_GRADIENT_LAB_RE = /background-image\s*:\s*linear-gradient\(\s*in\s+lab\s*,\s*red\s*,\s*red\s*\)/;
+diff --git a/dist/index.js b/dist/index.js
+index f0ef76bdd484e8f2065a1e75b9a57006ad550023..82a657cd9a2f2802f650f16fe14d419e2a3fc9da 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -507,7 +507,7 @@ function createCssVarNodes(definitions) {
+ const CLAMP_PX = 9999;
+ const INFINITY_CALC_VALUE_REGEXP = /^calc\(\s*infinity\s*\*\s*(?:\d+(?:\.\d*)?|\.\d+)r?px\s*\)$/i;
+ const MODERN_CHECK_WEBKIT_HYPHENS_RE = /-webkit-hyphens\s*:\s*none/;
+-const MODERN_CHECK_MARGIN_TRIM_RE = /margin-trim\s*:\s*inline/;
++const MODERN_CHECK_MARGIN_TRIM_RE = /\(\s*margin-trim\s*:\s*(?:inline|block)\s*\)/;
+ const MODERN_CHECK_MOZ_ORIENT_RE = /-moz-orient\s*:\s*inline/;
+ const MODERN_CHECK_COLOR_RGB_RE = /color\s*:\s*rgb\(\s*from\s+red\s+r\s+g\s+b\s*\)/;
+ const LINEAR_GRADIENT_LAB_RE = /background-image\s*:\s*linear-gradient\(\s*in\s+lab\s*,\s*red\s*,\s*red\s*\)/;

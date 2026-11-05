@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict'
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { execa } from 'execa'
 import { parse, stringify } from 'yaml'
 import { packRuntimeDependencies } from './pack-runtime-dependencies.mjs'
+import { verifyTemplateTailwindModernGuard } from './tailwind-modern-guard.mjs'
 import { assertDependencyVersions, readInstalledDependencyVersions, readPackageJson, repositoryManifest, repositoryPackageManager } from './version-contract.mjs'
+import { copyWindowsUtilitiesFixture, verifyWindowsUtilitiesFixtureIsolation } from './windows-utilities-fixture.mjs'
 import { inspectOutput, verifyOutput } from './windows-utilities-output.mjs'
+import { removeReplacedPostcssGuardPatch } from './windows-utilities-patches.mjs'
+import { createOwnedProcess, runCommandWithProcessTree, settleOwnedProcess, stopProcessTree } from './windows-utilities-process.mjs'
 
 const repo = fileURLToPath(new URL('../../', import.meta.url))
 const fixture = path.join(repo, 'e2e/fixtures/taro-webpack-default-utilities')
@@ -22,34 +24,13 @@ const reports = []
 await mkdir(reportDir, { recursive: true })
 
 async function runPnpm(args, cwd = project) {
-  const result = await execa('pnpm', ['--config.minimum-release-age=1', ...args], { cwd, env: { CI: 'true' }, timeout: 600_000 })
+  const result = await runCommandWithProcessTree('pnpm', ['--config.minimum-release-age=1', ...args], { cwd, env: { CI: 'true' }, timeout: 600_000 })
   return result.stdout
 }
 
-async function stopTree(child) {
-  if (child.exitCode !== null || child.signalCode !== null) {
-    return
-  }
-  if (process.platform === 'win32') {
-    await execa('taskkill', ['/pid', String(child.pid), '/T', '/F'], { reject: false })
-  }
-  else {
-    try {
-      process.kill(-child.pid, 'SIGTERM')
-    }
-    catch (error) {
-      if (error.code !== 'ESRCH') {
-        throw error
-      }
-    }
-  }
-}
-
-async function build(mode, label) {
+async function build(mode, label, cli) {
   await rm(path.join(project, 'dist'), { recursive: true, force: true })
-  const require = createRequire(path.join(project, 'package.json'))
-  const cli = path.join(path.dirname(require.resolve('@tarojs/cli/package.json')), 'bin/taro')
-  const child = execa(process.execPath, [cli, 'build', '--type', 'weapp', ...(mode === 'development' ? ['--watch'] : [])], {
+  const child = createOwnedProcess(process.execPath, [cli, 'build', '--type', 'weapp', ...(mode === 'development' ? ['--watch'] : [])], {
     cwd: project,
     detached: process.platform !== 'win32',
     env: { NODE_ENV: mode, BROWSERSLIST_ENV: mode, TARO_ENV: 'weapp', CI: 'true' },
@@ -69,6 +50,8 @@ async function build(mode, label) {
   child.stdout.on('data', capture)
   child.stderr.on('data', capture)
   let timer
+  let buildFailure
+  let output
   try {
     const completed = child.then((result) => {
       assert.equal(result.exitCode, 0, log)
@@ -78,33 +61,53 @@ async function build(mode, label) {
       timer = setTimeout(() => reject(new Error(`Taro ${mode} timed out\n${log}`)), 240_000)
     })
     await Promise.race([mode === 'development' ? Promise.race([compiled, completed]) : completed, timeout])
-    const output = await inspectOutput(path.join(project, 'dist'))
+    output = await inspectOutput(path.join(project, 'dist'))
     await cp(path.join(project, 'dist'), path.join(reportDir, label, mode), { recursive: true })
-    return output
+  }
+  catch (error) {
+    buildFailure = error
   }
   finally {
     clearTimeout(timer)
-    await stopTree(child)
-    await child
-    await writeFile(path.join(reportDir, `${label}-${mode}.log`), log)
   }
+  const failures = []
+  for (const operation of [() => stopProcessTree(child), () => settleOwnedProcess(child), () => writeFile(path.join(reportDir, `${label}-${mode}.log`), log)]) {
+    try {
+      await operation()
+    }
+    catch (error) {
+      failures.push(error)
+    }
+  }
+  if (failures.length > 0) {
+    const primary = buildFailure ?? failures[0]
+    throw new AggregateError([...new Set([primary, ...failures])], `Taro ${mode} 构建或本轮收尾失败`, { cause: primary })
+  }
+  if (buildFailure) {
+    throw buildFailure
+  }
+  return output
 }
 
 async function verify(label, expectRegression) {
+  const isolation = await verifyWindowsUtilitiesFixtureIsolation(project)
   const versions = await readInstalledDependencyVersions(project, ['weapp-tailwindcss', 'tailwindcss', '@tarojs/cli', 'webpack'])
+  const postcss = await verifyTemplateTailwindModernGuard(project)
   const manifest = await readPackageJson(path.join(project, 'package.json'))
   const { 'weapp-tailwindcss': candidateVersion, ...toolchainVersions } = versions
   assertDependencyVersions(manifest, toolchainVersions)
   if (label === 'candidate') {
     const candidate = await readPackageJson(path.join(repo, 'packages/weapp-tailwindcss/package.json'))
+    const postcssCandidate = await readPackageJson(path.join(repo, 'packages/postcss/package.json'))
     assert.equal(candidateVersion, candidate.version, '候选包版本必须来自当前提交')
+    assert.equal(postcss.version, postcssCandidate.version, '候选样式处理包版本必须来自当前提交')
   }
   else {
     assertDependencyVersions(manifest, { 'weapp-tailwindcss': candidateVersion })
   }
   for (const mode of ['development', 'production']) {
-    const output = await build(mode, label)
-    reports.push({ label, mode, versions, expectRegression, output })
+    const output = await build(mode, label, isolation.cli)
+    reports.push({ label, mode, versions, isolation, expectRegression, output })
     await writeFile(path.join(reportDir, 'report.json'), JSON.stringify({ os: process.platform, node: process.version, reports }, null, 2))
     verifyOutput(output, expectRegression)
     if (!expectRegression) {
@@ -121,7 +124,7 @@ async function verify(label, expectRegression) {
 }
 
 try {
-  await cp(fixture, project, { recursive: true })
+  await copyWindowsUtilitiesFixture(fixture, project)
   const fixtureManifest = await readPackageJson(path.join(project, 'package.json'))
   // 仅临时副本跟随仓库工具链，历史依赖及冻结锁文件仍用于发布版回归。
   fixtureManifest.packageManager = repositoryManifest.packageManager
@@ -138,7 +141,11 @@ try {
   manifest.devDependencies['weapp-tailwindcss'] = candidates['weapp-tailwindcss']
   await writeFile(manifestFile, JSON.stringify(manifest, null, 2))
   const workspaceFile = path.join(project, 'pnpm-workspace.yaml')
-  const workspace = parse(await readFile(workspaceFile, 'utf8'))
+  const postcssCandidate = await readPackageJson(path.join(repo, 'packages/postcss/package.json'))
+  const originalWorkspace = parse(await readFile(workspaceFile, 'utf8'))
+  const workspace = candidates[postcssCandidate.name]
+    ? removeReplacedPostcssGuardPatch(originalWorkspace, postcssCandidate.version)
+    : originalWorkspace
   workspace.overrides = { ...workspace.overrides, ...candidates }
   await writeFile(workspaceFile, stringify(workspace))
   await writeFile(path.join(reportDir, 'candidate-packages.json'), JSON.stringify(candidates, null, 2))
