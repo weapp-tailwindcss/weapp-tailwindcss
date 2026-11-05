@@ -118,8 +118,6 @@ overrides:
   # devframe 与 agentic 使用双向精确 peer，各工具链保留自己的配套版本。
   '@eslint/config-inspector@3.5.0>devframe': 1.2.6
   '@eslint/config-inspector@3.5.0>@devframes/agentic': 1.2.6
-  weapp-vite@7.7.0>@modelcontextprotocol/server: 2.4.0
-  '@weapp-vite/mcp@2.1.0>@modelcontextprotocol/server': 2.4.0
 
 catalogs:
   autoprefixer10:
@@ -374,8 +372,8 @@ catalogs:
   vitePluginVue6:
     '@vitejs/plugin-vue': ^6.0.10
   vitest:
-    '@vitest/coverage-v8': ~5.0.5
-    '@vitest/ui': ~5.0.5
+    '@vitest/coverage-v8': ~5.1.0
+    '@vitest/ui': ~5.1.0
     vitest: ~5.1.0
   vue2:
     vue: ^2.7.16
@@ -410,7 +408,7 @@ catalogs:
   taroLint:
     '@typescript-eslint/eslint-plugin': 8.72.1
     '@typescript-eslint/parser': 8.72.1
-    eslint: 10.14.0
+    eslint: 8.57.1
     eslint-plugin-import: 2.32.0
     eslint-plugin-react-hooks: 4.6.2
 
@@ -419,9 +417,9 @@ packageExtensions:
     dependencies:
       stylelint: 16.10.0
       stylelint-taro-rn: 4.3.1
-  weapp-vite@7.7.0:
+  weapp-vite@7.8.0:
     dependencies:
-      '@devframes/agentic': 1.2.6
+      '@devframes/agentic': 1.3.0
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1':
     dependencies:
       '@babel/core': ^7.26.10
@@ -435,10 +433,10 @@ patchedDependencies:
   '@tarojs/plugin-framework-vue3@4.3.1': patches/@tarojs__plugin-framework-vue3@4.3.1.patch
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1': patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch
   '@tarojs/vite-runner@4.3.1': patches/@tarojs__vite-runner@4.3.1.patch
-  nitropack@2.13.5: patches/nitropack@2.13.5.patch
+  nitropack@2.13.6: patches/nitropack@2.13.6.patch
   webpack@5.91.0: patches/webpack@5.91.0.patch
   webpack@5.112.2: patches/webpack@5.112.2.patch
   rollup@4.65.1: patches/rollup@4.65.1.patch
   '@mpxjs/webpack-plugin@2.11.1': patches/@mpxjs__webpack-plugin@2.11.1.patch
   webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch
-  postcss-preset-env@11.6.1: patches/postcss-preset-env@11.6.1.patch
+  postcss-preset-env@11.6.2: patches/postcss-preset-env@11.6.2.patch

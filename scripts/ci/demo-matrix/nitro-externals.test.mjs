@@ -46,6 +46,20 @@ it.each(resolvedIds)('keeps the Nuxt renderer in the transform graph after resol
   expect(result).toBeNull()
 })
 
+const customMatchers = [
+  ['RegExp', /\/node_modules\/nuxt\/dist\//],
+  ['function', id => id.includes('/node_modules/nuxt/dist/')],
+]
+
+it.each(customMatchers.flatMap(([name, matcher]) => resolvedIds.map(id => [name, id, matcher])))(
+  'normalizes resolved IDs before %s inline matching (%s)',
+  async (_name, id, matcher) => {
+    const plugin = createExternals({ inline: [matcher], trace: false })
+    const result = await plugin.resolveId.call({ resolve: async () => ({ id }) }, 'nuxt/internal/renderer', '/app/entry.mjs', {})
+    expect(result).toBeNull()
+  },
+)
+
 it('continues externalizing valid packages outside the inline boundary', async () => {
   const id = '/workspace/node_modules/vue/server-renderer/index.mjs'
   const plugin = createExternals({ inline: ['nuxt/dist'], trace: false })

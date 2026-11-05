@@ -9,3 +9,5 @@ import { cn } from '@weapp-tailwindcss/cn'
 
 cn('p-4', enabled && 'p-2')
 ```
+
+需要 Node.js 22.12.0 或更高版本；`cn` 0.5.2 起的引擎要求不再包含 Node.js 20。

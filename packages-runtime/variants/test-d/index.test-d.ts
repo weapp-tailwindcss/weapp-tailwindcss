@@ -1,4 +1,4 @@
-import type { VariantProps } from '..'
+import type { TV, TVConfig, TWMConfig, VariantProps } from '..'
 import {
   expectAssignable,
   expectError,
@@ -13,8 +13,10 @@ import {
   tv,
 } from '..'
 
-expectType<string | undefined>(cnBase('px-2', false))
-expectType<string | undefined>(cn('px-2', undefined)())
+expectType<string>(cnBase('px-2', false))
+expectType<string>(cn('px-2', undefined)())
+expectType<string>(cnBase())
+expectType<string>(cn()())
 
 const button = tv({
   base: 'inline-flex',
@@ -126,7 +128,27 @@ const runtime = create({
   },
 })
 
-expectType<string | undefined>(runtime.cn('text-32', 'text-surface-700')())
+expectType<string>(runtime.cn('text-32', 'text-surface-700')())
 
 const runtimeWithOptions = create({ escape: false }, { twMerge: false })
-expectType<string | undefined>(runtimeWithOptions.cn('px-2')())
+expectType<string>(runtimeWithOptions.cn('px-2')())
+
+const customMergeConfig: TWMConfig = {
+  twMerge: classList => classList,
+  twMergeConfig: {
+    extend: {
+      classGroups: {
+        'font-size': [{ text: ['32'] }],
+      },
+    },
+  },
+}
+const customTVConfig: TVConfig = customMergeConfig
+const customTv: TV = tv
+expectType<string>(cn('text-32')(customMergeConfig))
+expectType<string>(customTv({ base: 'text-32' }, customTVConfig)())
+expectType<string>(createTV(customTVConfig)({ base: 'text-32' }, customTVConfig)())
+expectType<string>(create(customTVConfig).cn('text-32')())
+expectType<string>(create({ escape: false }, customTVConfig).tv({ base: 'text-32' })())
+expectError(tv({ slots: { root: 'p-2' }, variants: { size: { sm: { missing: 'p-4' } } } }))
+expectError(tv({ variants: { size: { sm: 'p-2' } }, defaultVariants: { missing: 'sm' } }))

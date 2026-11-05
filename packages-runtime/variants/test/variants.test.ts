@@ -191,10 +191,10 @@ describe('variants runtime', () => {
     expect(button()).toBe('text-_b_hececec_B')
   })
 
-  it('returns nullish aggregates verbatim from cn helpers', () => {
+  it('returns empty strings from empty cn helpers', () => {
     const aggregate = cn()
-    expect(aggregate()).toBeUndefined()
-    expect(cnBase()).toBeUndefined()
+    expect(aggregate()).toBe('')
+    expect(cnBase()).toBe('')
   })
 
   it('aggregates rpx units and hex colors via cn helpers', () => {

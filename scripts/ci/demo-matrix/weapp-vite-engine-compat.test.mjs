@@ -14,9 +14,9 @@ const mappingRequire = createRequire(createRequire(import.meta.url).resolve('@am
 const { originalPositionFor, TraceMap } = mappingRequire('@jridgewell/trace-mapping')
 
 it('uses the same fixed native engine for Vite and its framework', () => {
-  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.7.0')
-  expect(frameworkRequire('rolldown/package.json').version).toBe('1.2.15')
-  expect(viteRequire('rolldown/package.json').version).toBe('1.2.15')
+  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.8.0')
+  expect(frameworkRequire('rolldown/package.json').version).toBe('1.2.16')
+  expect(viteRequire('rolldown/package.json').version).toBe('1.2.16')
   expect(frameworkRequire.resolve('rolldown/experimental')).toBe(viteRequire.resolve('rolldown/experimental'))
 })
 

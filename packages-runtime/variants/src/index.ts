@@ -2,19 +2,24 @@ import type { CreateOptions } from '@weapp-tailwindcss/runtime'
 import type {
   CnOptions,
   CnReturn,
-  TV,
-  TVConfig,
-  TWMConfig,
+  TVCustomConfig as TVConfig,
+  TWMCustomConfig as TWMConfig,
   TWMergeConfig,
+  TwMergeFn,
+  TV as UpstreamTV,
 } from 'tailwind-variants'
 import { create as createMergeRuntime } from '@weapp-tailwindcss/merge'
-import { resolveTransformers } from '@weapp-tailwindcss/runtime'
+import { createRpxLengthTransform, resolveTransformers, wrapRuntimeAggregator } from '@weapp-tailwindcss/runtime'
 import {
-  defaultConfig,
   createTV as tailwindVariantsCreateTV,
   cx as tailwindVariantsCx,
   tv as tailwindVariantsTv,
+  defaultConfig as upstreamDefaultConfig,
 } from 'tailwind-variants'
+
+type TV = UpstreamTV<TVConfig>
+
+const defaultConfig: TVConfig = upstreamDefaultConfig
 
 type TailwindVariantsCn = <T extends CnOptions>(...classes: T) => (config?: TWMConfig) => CnReturn
 
@@ -24,7 +29,7 @@ type TailwindVariantsResult<TComponent extends TailwindVariantsComponent> = Retu
 
 type TailwindVariantsOptions = Parameters<typeof tailwindVariantsTv>[0]
 
-type TailwindVariantsConfig = Parameters<typeof tailwindVariantsTv>[1]
+type TailwindVariantsConfig = TVConfig
 
 function mergeConfigs(...configs: (TVConfig | undefined)[]): TVConfig {
   const baseTwMergeConfig = defaultConfig.twMergeConfig
@@ -119,35 +124,51 @@ function wrapComponent<TComponent extends TailwindVariantsComponent>(
 function createVariantsRuntime(options?: CreateOptions, runtimeConfig?: TVConfig) {
   const transformers = resolveTransformers(options)
   const tailwindMergeRuntime = createMergeRuntime(options)
+  const rpxTransform = createRpxLengthTransform()
+  const customMergeFns = new WeakMap<TwMergeFn, typeof tailwindMergeRuntime.twMerge>()
 
   let cachedConfig: TWMConfig['twMergeConfig']
   let cachedMergeFn = tailwindMergeRuntime.twMerge
 
-  const getMergeFn = (config?: TWMConfig['twMergeConfig']) => {
-    if (!config) {
+  const getMergeFn = (config?: TWMConfig) => {
+    if (typeof config?.twMerge === 'function') {
+      let mergeFn = customMergeFns.get(config.twMerge)
+      if (!mergeFn) {
+        mergeFn = wrapRuntimeAggregator(
+          config.twMerge,
+          transformers,
+          rpxTransform.prepareValue,
+          rpxTransform.restoreValue,
+        )
+        customMergeFns.set(config.twMerge, mergeFn)
+      }
+      return mergeFn
+    }
+
+    const twMergeConfig = config?.twMergeConfig
+    if (!twMergeConfig) {
       return tailwindMergeRuntime.twMerge
     }
 
-    if (config === cachedConfig) {
+    if (twMergeConfig === cachedConfig) {
       return cachedMergeFn
     }
 
-    cachedConfig = config
-    cachedMergeFn = tailwindMergeRuntime.extendTailwindMerge(config)
+    cachedConfig = twMergeConfig
+    cachedMergeFn = tailwindMergeRuntime.extendTailwindMerge(twMergeConfig)
     return cachedMergeFn
   }
 
-  const mergeClassList = (value: CnReturn, config?: TWMConfig) => {
-    if (value == null) {
+  const mergeClassList = (value: CnReturn, config?: TWMConfig): CnReturn => {
+    if (!value) {
       return value
     }
 
-    const shouldMerge = config?.twMerge ?? true
-    if (!shouldMerge) {
+    if (config?.twMerge === false) {
       return transformers.escape(value)
     }
 
-    const mergeFn = getMergeFn(config?.twMergeConfig)
+    const mergeFn = getMergeFn(config)
     return mergeFn(value)
   }
 
@@ -161,10 +182,6 @@ function createVariantsRuntime(options?: CreateOptions, runtimeConfig?: TVConfig
 
   const cnBase = (...classes: Parameters<typeof tailwindVariantsCx>) => {
     const aggregated = tailwindVariantsCx(...classes)
-    if (aggregated == null) {
-      return aggregated
-    }
-
     return transformers.escape(aggregated)
   }
 
@@ -178,7 +195,7 @@ function createVariantsRuntime(options?: CreateOptions, runtimeConfig?: TVConfig
     return wrapComponent(component, mergedConfig, mergeClassList)
   }) as unknown as TV
 
-  const createTVRuntime: typeof tailwindVariantsCreateTV = (configProp?: TVConfig) => {
+  const createTVRuntime = (configProp?: TVConfig): TV => {
     const mergedBaseConfig = resolveConfig(configProp)
     const tailwindCreate = tailwindVariantsCreateTV(disableTailwindMerge(mergedBaseConfig))
 
@@ -191,7 +208,7 @@ function createVariantsRuntime(options?: CreateOptions, runtimeConfig?: TVConfig
           )
         : tailwindCreate(options as TailwindVariantsOptions)) as unknown as TailwindVariantsComponent
       return wrapComponent(component, mergedConfig, mergeClassList)
-    }) as unknown as ReturnType<typeof tailwindVariantsCreateTV>
+    }) as unknown as TV
   }
 
   return {
@@ -207,6 +224,7 @@ function isRuntimeConfig(value: unknown): value is TVConfig {
     && typeof value === 'object'
     && ('twMerge' in value
       || 'twMergeConfig' in value
+      || 'debug' in value
       || 'twMergeAdapter' in value
       || 'responsiveVariants' in value)
 }

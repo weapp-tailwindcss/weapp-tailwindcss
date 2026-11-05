@@ -119,6 +119,20 @@ describe('Oxc 解析传输与回退', () => {
     expect(parse).toHaveBeenNthCalledWith(2, 'entry.js', source, options)
   })
 
+  it('包含模块记录的 raw 结果交由普通 AST 保证完整协议，不标记已预热', () => {
+    const moduleResult = parseSync('entry.js', 'export { value } from "./source"')
+    const parse = vi.fn<OxcParser['parseSync']>()
+      .mockReturnValueOnce(moduleResult)
+      .mockReturnValue(result)
+    useParser({ parseSync: parse, rawTransferSupported: () => true })
+
+    expect(parseOxcSync('entry.js', source, options)).toBe(result)
+    expect(parse).toHaveBeenNthCalledWith(1, 'entry.js', source, { ...options, experimentalRawTransfer: true })
+    expect(parse).toHaveBeenNthCalledWith(2, 'entry.js', source, options)
+    parseOxcSync('entry.js', mediumSource, options)
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, options)
+  })
+
   it.each([false, true])('解析器所有可用路径均抛错时返回 undefined：raw=%s', (rawTransferSupported) => {
     const parse = vi.fn<OxcParser['parseSync']>().mockImplementation(() => {
       throw new Error('parse failed')
@@ -161,6 +175,7 @@ describe('Oxc 解析传输与回退', () => {
     // eslint-disable-next-line no-template-curly-in-string -- 被测源码需要保留模板插值。
     ['entry.js', 'const cls = `😀 w-[10px] ${active ? `h-[20px]` : "m-[30px]"}`'],
     ['entry.js', 'import value from "./source"; export { value }; export * from "./other"'],
+    ['entry.ts', 'import value from "./source"; export { value as default }'],
     ['entry.js', '#!/usr/bin/env node\n// w-[10px]\n/* h-[20px] */ const n = 1n; const re = /foo/g'],
     ['entry.js', 'const broken = "w-[10px]'],
   ])('真实解析器保持 AST、模块、注释与诊断一致：%s %s', (filename, text) => {

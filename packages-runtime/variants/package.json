@@ -60,5 +60,8 @@
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/runtime": "workspace:*",
     "tailwind-variants": "catalog:runtimeVariants"
+  },
+  "devDependencies": {
+    "@weapp-tailwindcss/escape": "workspace:*"
   }
 }

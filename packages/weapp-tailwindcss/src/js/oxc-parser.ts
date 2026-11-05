@@ -38,7 +38,7 @@ function supportsRawTransfer(parser: OxcParser) {
   return supported
 }
 
-/** 按反序列化器的初始化状态选择 raw transfer，不支持或失败时回退到普通 AST。 */
+/** 按反序列化器的初始化状态选择 raw transfer，模块记录、不支持或失败时使用普通 AST。 */
 export function parseOxcSync(
   filename: string,
   sourceText: string,
@@ -61,15 +61,18 @@ export function parseOxcSync(
     try {
       const rawOptions = { ...options, experimentalRawTransfer: true }
       const result = parser.parseSync(filename, sourceText, rawOptions)
-      if (variant !== undefined) {
-        let variants = initializedRawVariants.get(parser)
-        if (!variants) {
-          variants = new Set()
-          initializedRawVariants.set(parser, variants)
+      // Oxc 的 raw 模块记录可能损坏合成导出名；模块源码必须返回普通 AST 的完整结果。
+      if (!result.module.hasModuleSyntax) {
+        if (variant !== undefined) {
+          let variants = initializedRawVariants.get(parser)
+          if (!variants) {
+            variants = new Set()
+            initializedRawVariants.set(parser, variants)
+          }
+          variants.add(variant)
         }
-        variants.add(variant)
+        return result
       }
-      return result
     }
     catch {
       // raw transfer 失败时继续使用兼容性更高的普通 AST。
