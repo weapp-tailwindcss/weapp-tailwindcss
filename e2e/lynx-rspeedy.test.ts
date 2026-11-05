@@ -43,7 +43,7 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
       fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'),
     ])
     expect(bundle.byteLength).toBeGreaterThan(1024)
-    expect(css).toContain('tailwindcss v4.3.3')
+    expect(css).toContain('tailwindcss v4.3.4')
     expect(css).not.toContain('@source')
     expect((JSON.parse(tasm) as { css: { cssMap: object } }).css.cssMap).toBeTruthy()
   }, 300_000)

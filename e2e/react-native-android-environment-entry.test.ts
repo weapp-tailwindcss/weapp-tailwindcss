@@ -58,6 +58,9 @@ vi.mock('./react-native/runtime-artifacts', async importOriginal => ({
   ...await importOriginal<typeof import('./react-native/runtime-artifacts')>(),
   createRuntimeArtifacts: async () => ({ directory: 'mock-evidence', publish: state.publish }),
 }))
+vi.mock('./react-native/runtime-static', () => ({
+  prepareRuntimeStaticEvidence: async () => ({ file: 'mock-static-evidence.json', environment: {} }),
+}))
 vi.mock('./react-native/native-toolchain', () => ({ reactNativeAndroidToolchain: async () => ({}) }))
 vi.mock('./react-native/android-device', () => ({ androidExpoDevice: async () => 'selected-avd' }))
 vi.mock('./react-native/reports', () => ({ validateReactNativeReport: vi.fn() }))

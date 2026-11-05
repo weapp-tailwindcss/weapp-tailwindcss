@@ -5,7 +5,7 @@ export { collectInventory, loadDefaultDesignSystem } from './collect'
 export type * from './types'
 
 export async function loadInventory(): Promise<TailwindInventory> {
-  const stored = JSON.parse(await readFile(new URL('./tailwind-4.3.3.json', import.meta.url), 'utf8')) as Omit<TailwindInventory, 'completions'> & {
+  const stored = JSON.parse(await readFile(new URL('./tailwind-4.3.4.json', import.meta.url), 'utf8')) as Omit<TailwindInventory, 'completions'> & {
     modifierGroups: string[][]
     completions: Array<{ candidate: string, modifierGroup: number }>
   }

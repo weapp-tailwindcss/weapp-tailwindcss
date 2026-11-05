@@ -1,5 +1,6 @@
 import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
 import { postcss } from '../../packages/postcss/src/postcss-runtime'
+import { readSelectorClasses } from '../../packages/postcss/src/utils/css-selector-classes'
 
 export interface NativeGeneratedRule {
   classes: string[]
@@ -22,9 +23,7 @@ export function generatedRules(css: string) {
   })
   const rules: NativeGeneratedRule[] = []
   root.walkRules((rule) => {
-    const classes = [...rule.selector.matchAll(/\.((?:\\.|[^\s.#:[>+~])+)/g)].map(match => match[1]
-      .replace(/\\([0-9a-f]{1,6})\s?/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
-      .replace(/\\(.)/g, '$1'))
+    const classes = readSelectorClasses(rule.selector).map(node => node.value)
     const declarations: ExpectedDeclaration[] = []
     const variables = { ...globalVariables }
     rule.walkDecls((decl) => {

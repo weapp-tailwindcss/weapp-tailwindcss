@@ -6,7 +6,7 @@ import { fixedSizeContract } from '../../../examples/react-lynx/src/compatibilit
 import { overflowContract } from '../../../examples/react-lynx/src/compatibility/overflow-contract'
 import { responsiveContract } from '../../../examples/react-lynx/src/compatibility/responsive-contract'
 import { reviewedLynxContract } from '../../lynx/expectations'
-import registryInventory from '../inventory/tailwind-4.3.3.json' with { type: 'json' }
+import registryInventory from '../inventory/tailwind-4.3.4.json' with { type: 'json' }
 
 export type LynxTarget = 'lynx-ios' | 'lynx-android'
 type LynxRegistry = Record<'utilities' | 'variants', readonly { id: string, witness: string }[]>

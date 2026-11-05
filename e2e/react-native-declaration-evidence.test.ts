@@ -27,6 +27,30 @@ describe('React Native declaration evidence', () => {
     expect(matchGeneratedDeclaration(matched, { property: 'color' })).toBeUndefined()
   })
 
+  it.each([
+    { selector: String.raw`.group-hover\:block:is(:where(.group):hover *)`, candidate: 'group-hover:block', marker: 'group', property: 'display', value: 'block' },
+    { selector: String.raw`:is(:where(.group):hover .group-hover\:block)`, candidate: 'group-hover:block', marker: 'group', property: 'display', value: 'block' },
+    { selector: String.raw`.peer-checked\:opacity-100:is(:where(.peer):checked ~ *)`, candidate: 'peer-checked:opacity-100', marker: 'peer', property: 'opacity', value: '100%' },
+    { selector: String.raw`:is(:where(.peer):checked ~ .peer-checked\:opacity-100)`, candidate: 'peer-checked:opacity-100', marker: 'peer', property: 'opacity', value: '100%' },
+  ])('选择器 AST 精确读取 $selector，祖先 marker 不获得生成身份', ({ selector, candidate, marker, property, value }) => {
+    const rules = generatedRules(`${selector}{${property}:${value}}`)
+    const matched = rules.filter(rule => rule.classes.includes(candidate))
+    expect(matched).toHaveLength(1)
+    expect(matchGeneratedDeclaration(matched, { property, value })).toEqual({ property, value })
+    expect(generatedCandidatePresent(candidate, [candidate], rules)).toBe(true)
+    expect(generatedCandidatePresent(marker, [candidate], rules)).toBe(false)
+    expect(generatedCandidatePresent(candidate, [], rules)).toBe(false)
+  })
+
+  it('属性文本不能冒充作者类，转义标识符仍按精确 class 读取', () => {
+    const rules = generatedRules(String.raw`[data-note=".lynx-reference ignored"]{padding:16px}:is(.\66 lex){display:flex}`)
+    expect(generatedCandidatePresent('lynx-reference', [], rules)).toBe(false)
+    expect(rules[0]!.classes).toEqual([])
+    expect(rules[1]!.classes).toEqual(['flex'])
+    expect(generatedCandidatePresent('flex', [], rules)).toBe(false)
+    expect(generatedCandidatePresent('flex', ['flex'], rules)).toBe(true)
+  })
+
   it('重要标记与百分比语义不能通过去单位文本伪装', () => {
     const rules = generatedRules('.half { opacity: 50%; background-color: #fff !important }')
     expect(matchGeneratedDeclaration(rules, { property: 'opacity', value: '0.5' })).toBeDefined()
