@@ -40,9 +40,13 @@ Android 生命周期单测只隔离 static 生成边界，避免恒定返回文�
 快照按失败文件和项目定向生成，再禁止更新复验。前置快照失败使后续断言未执行而报告的 obsolete 键不能直接删除。
 性能 watcher 仅更新静态 CSS 输出，不修改性能预算。
 
-Lynx 示例的原生矩阵精确固定 Tailwind CSS 4.3.3，但缺少配套 `@tailwindcss/node`，
-引擎实际回退到自身的 4.3.4，造成产物与证据身份不符。为示例补齐同版本编译器，保留这一旧版本兼容场景。
-构建配置、catalog hash 和历史原生报告不变；真实重建的 118 项静态结果完全一致，仅刷新生成时间。
+Lynx 示例的原生矩阵原先精确固定 Tailwind CSS 4.3.3，但缺少配套 `@tailwindcss/node`，
+引擎实际回退到自身的 4.3.4，造成产物与证据身份不符。先验证补齐编译器可以恢复旧矩阵，
+随后按用户明确要求，将示例、宣传页、独立模板和 fixture 中的 Tailwind CSS 4.3.3 依赖全部统一到 4.3.4。
+示例显式声明同版本编译器，真实重建静态证据；原生矩阵需要从准确新 head 的 hosted 双端采集更新。
+历史原生报告不直接改写版本号，仍由正式更新入口严格重读完整 bundle、候选、几何和像素证据后生成新基线。
+第一次补入 4.3.3 编译器后，干净 CI 安装的共享解析使其他未声明编译器的项目也消费了旧版，
+导致单测、RN static 与 Taro generator 回退到旧输出。这轮统一版本同时消除该解析歧义，不能用增量安装的本地成功代替干净 CI。
 新增构建前置的产物 banner 核对及错版、缺失身份回归，阻止未来把回退编译器标记成示例版本。
 独立诊断夹具仍消费当前 4.3.4，其两处选择器形状快照单独更新，编码拒绝状态不变。
 
@@ -58,8 +62,10 @@ Lynx 示例的原生矩阵精确固定 Tailwind CSS 4.3.3，但缺少配套 `@ta
 - 原失败的主包、typography、watcher 与官方输出 parity 共 23 个文件、220 项回归通过；watcher 连续保存并恢复后哈希一致。
 - RN 示例、声明证据、Android 生命周期与静态入口等共 200 项定向回归通过；RN static 的 118 项状态计数不变，无新增失败。
 - Taro static 6 项与 generator 11 项禁止更新复验通过；weapp-vite static 5 项通过，无需更新原基线。
-- `pnpm e2e:lynx:static:update`：118 项真实重建，结果及 catalog hash 与原基线一致。
-- `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-versions.test.ts e2e/lynx-reports.test.ts e2e/lynx-static-evidence.test.ts --update=none --coverage.enabled=false`：4 个文件、123 项通过。
+- `pnpm e2e:lynx:static:update`：曾确认 4.3.3 编译器下 118 项结果及 catalog hash 与原基线一致；统一升级后的新证据单独生成与审查。
+- 4.3.4 static 重建：118 项生成及编码状态均不变，60 项成功编码、58 项保持既有 encoder 拒绝；差异为版本身份、空 fallback 格式和 group/peer 选择器文本。
+- `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-versions.test.ts e2e/lynx-reports.test.ts e2e/lynx-static-evidence.test.ts --update=none --coverage.enabled=false`：统一升级前 4 个文件、123 项通过；升级后以新证据复验。
+- 统一 4.3.4 后同命令 121 项通过，text-flow 与 dark 两项浏览器用例触及既有 30 秒超时；仅重试这两项后 dark 通过、text-flow 仍超时。未延长超时或修改断言，保留为本地耗时阻塞，后续准确 SHA 的 hosted 验收仍需完整执行。
 - 独立 Lynx 诊断夹具的真实双入口与 strict 模式 3 项通过，已审查两处 group 选择器快照差异。
 - `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false` 与 `pnpm --filter @weapp-tailwindcss/react-native typecheck`：通过。
 - 修改的 TypeScript 文件显式 `eslint --no-ignore`、`pnpm agents:check`、`git diff --check` 与 `pnpm release status`：通过。

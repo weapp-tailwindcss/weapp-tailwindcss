@@ -19,9 +19,9 @@
   "devDependencies": {
     "@lynx-js/config-rsbuild-plugin": "0.2.5",
     "@lynx-js/rspeedy": "0.18.3",
-    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/node": "4.3.4",
     "@types/react": "catalog:react19",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.4",
     "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }

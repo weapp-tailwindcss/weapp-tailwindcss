@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff",
-  "generatedAt": "2026-11-05T07:37:30.419Z",
+  "catalogHash": "353ecac8ab077bfaa7c7e2900dfb8ef2c42d887d2de1efe6173a0c5addd51b27",
+  "generatedAt": "2026-11-05T07:53:34.497Z",
   "versions": {
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.4",
     "reactLynx": "0.129.0",
     "reactRsbuildPlugin": "0.22.0",
     "rspeedy": "0.18.3",
@@ -1272,7 +1272,7 @@
         },
         {
           "property": "filter",
-          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+          "value": "var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, )"
         }
       ],
       "bundledDeclarations": [
@@ -1305,7 +1305,7 @@
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
-          "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
+          "value": "var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, )"
         }
       ],
       "bundledDeclarations": [],
@@ -1897,7 +1897,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
+      "reason": "group-hover:block: encoder 删除 selector：:is(:where(.group):hover .group-hover\\:block), :is(:where(.group):hover .group-hover\\:block); peer-checked:opacity-100: encoder 删除 selector：:is(:where(.peer):checked~.peer-checked\\:opacity-100), :is(:where(.peer):checked~.peer-checked\\:opacity-100)",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -1919,14 +1919,14 @@
           "generated": true,
           "bundled": false,
           "failureStage": "encoder",
-          "reason": "encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *)"
+          "reason": "encoder 删除 selector：:is(:where(.group):hover .group-hover\\:block), :is(:where(.group):hover .group-hover\\:block)"
         },
         {
           "className": "peer-checked:opacity-100",
           "generated": true,
           "bundled": false,
           "failureStage": "encoder",
-          "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+          "reason": "encoder 删除 selector：:is(:where(.peer):checked~.peer-checked\\:opacity-100), :is(:where(.peer):checked~.peer-checked\\:opacity-100)"
         }
       ]
     },
@@ -3135,7 +3135,7 @@
       "generatedDeclarations": [
         {
           "property": "font-variant-numeric",
-          "value": "var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)"
+          "value": "var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, )"
         }
       ],
       "bundledDeclarations": [],
@@ -3945,7 +3945,7 @@
       "generatedDeclarations": [
         {
           "property": "filter",
-          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+          "value": "var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, )"
         }
       ],
       "bundledDeclarations": [
@@ -3982,7 +3982,7 @@
       "generatedDeclarations": [
         {
           "property": "filter",
-          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+          "value": "var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, )"
         }
       ],
       "bundledDeclarations": [
@@ -4024,7 +4024,7 @@
       "generatedDeclarations": [
         {
           "property": "filter",
-          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+          "value": "var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, )"
         }
       ],
       "bundledDeclarations": [
@@ -4053,7 +4053,7 @@
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
-          "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
+          "value": "var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, )"
         }
       ],
       "bundledDeclarations": [],
@@ -4164,7 +4164,7 @@
       "generatedDeclarations": [
         {
           "property": "transform",
-          "value": "var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)"
+          "value": "var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, )"
         }
       ],
       "bundledDeclarations": [
@@ -4496,7 +4496,7 @@
         },
         {
           "property": "touch-action",
-          "value": "var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,)"
+          "value": "var(--tw-pan-x, ) var(--tw-pan-y, ) var(--tw-pinch-zoom, )"
         }
       ],
       "bundledDeclarations": [],

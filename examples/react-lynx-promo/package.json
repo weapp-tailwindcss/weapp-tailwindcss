@@ -18,7 +18,7 @@
   "devDependencies": {
     "@lynx-js/rspeedy": "0.18.3",
     "@types/react": "catalog:react19",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.4",
     "typescript": "^5.9.3",
     "vitest": "catalog:vitest"
   }
