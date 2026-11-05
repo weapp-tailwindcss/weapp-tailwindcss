@@ -1,7 +1,7 @@
+import type postcss from 'postcss'
 import { generateCss4 } from '@weapp-tailwindcss/test-helper'
 import autoprefixer from 'autoprefixer'
 import path from 'pathe'
-import type postcss from 'postcss'
 import { createStyleHandler } from '@/index'
 
 async function generateCss(base: string, plugins: readonly postcss.AcceptedPlugin[] = []) {
@@ -84,7 +84,7 @@ describe('issues', () => {
 
   it('https://github.com/sonofmagic/weapp-tailwindcss/issues/909', async () => {
     const code = await generateCss(path.resolve(__dirname, './fixtures/issues/909'))
-    expect(code.css).toContain('transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);')
+    expect(code.css).toContain('transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );')
     const styleHandler = createStyleHandler({
       isMainChunk: true,
     })
@@ -94,6 +94,15 @@ describe('issues', () => {
     expect(css).toContain('transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );')
     expect(css).not.toContain('transform: var(--tw-rotate-x,) var(--tw-rotate-y,)')
     expect(css).toMatchSnapshot()
+  })
+
+  it.each([',', ', '])('keeps issue 909 empty transform fallbacks valid for the upstream separator %j', async (separator) => {
+    const variables = ['rotate-x', 'rotate-y', 'rotate-z', 'skew-x', 'skew-y']
+    const transform = variables.map(name => `var(--tw-${name}${separator})`).join(' ')
+    const styleHandler = createStyleHandler({ isMainChunk: true, majorVersion: 4 })
+    const { css } = await styleHandler(`.rotate { transform: ${transform}; }`)
+    expect(css).toContain('transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );')
+    expect(css).not.toContain('var(--tw-rotate-x,)')
   })
 
   it('https://github.com/sonofmagic/weapp-tailwindcss/issues/928', async () => {
