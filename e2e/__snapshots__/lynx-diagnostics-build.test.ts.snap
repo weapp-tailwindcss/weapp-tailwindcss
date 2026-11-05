@@ -6,7 +6,7 @@ exports[`正式 Rspeedy hook 的业务诊断 > strict=false：实际发出的 bu
     {
       "origin": "encoder-log",
       "property": undefined,
-      "selector": ".group-hover\\:bg-red-500:is(:where(.group):hover *)",
+      "selector": ":is(:where(.group):hover .group-hover\\:bg-red-500)",
       "status": "encoder-rejected",
     },
     {
@@ -98,7 +98,7 @@ exports[`正式 Rspeedy hook 的业务诊断 > strict=true：实际发出的 bun
     {
       "origin": "encoder-log",
       "property": undefined,
-      "selector": ".group-hover\\:bg-red-500:is(:where(.group):hover *)",
+      "selector": ":is(:where(.group):hover .group-hover\\:bg-red-500)",
       "status": "encoder-rejected",
     },
     {

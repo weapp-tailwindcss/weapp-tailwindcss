@@ -9,6 +9,14 @@ interface InstalledPackageManifest {
   version?: string
 }
 
+/** 编译产物必须与证据声明的版本一致，不能把引擎回退版本标记成示例的版本。 */
+export function assertTailwindCompilerVersion(css: string, expectedVersion: string) {
+  const actualVersion = css.match(/\/\*!\s*tailwindcss v([^\s*]+)/)?.[1]
+  if (actualVersion !== expectedVersion) {
+    throw new Error(`Lynx Tailwind 编译器版本不一致：期望 ${expectedVersion}，实际 ${actualVersion ?? '缺少版本 banner'}`)
+  }
+}
+
 function readPackageManifest(directory: string): InstalledPackageManifest | undefined {
   try {
     return JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf8')) as InstalledPackageManifest

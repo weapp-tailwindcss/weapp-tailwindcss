@@ -2,8 +2,9 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
-import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
+import { compatibilityVersions, exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { validateStyleFixtureArtifacts } from './style-fixture-artifacts'
+import { assertTailwindCompilerVersion } from './versions'
 
 const artifactsDir = path.join(repoRoot, 'e2e', '.artifacts', 'lynx-static')
 
@@ -34,6 +35,7 @@ export async function buildCompatibilityBundle() {
     path.join(artifactsDir, 'encoder.log'),
     { ...process.env, DEBUG: 'lynx' },
   )
+  assertTailwindCompilerVersion(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), compatibilityVersions.tailwindcss)
   await Promise.all([
     fs.copyFile(path.join(lynxIntermediateDir, 'main.css'), path.join(artifactsDir, 'main.css')),
     fs.copyFile(path.join(lynxIntermediateDir, 'tasm.json'), path.join(artifactsDir, 'tasm.json')),

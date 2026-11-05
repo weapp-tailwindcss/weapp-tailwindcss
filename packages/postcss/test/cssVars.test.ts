@@ -17,7 +17,7 @@ it('默认兼容签名与当前实际 Tailwind 编译器的全部注册双向一
   const registrations: { prop: string, syntax: string, initialValue?: string }[] = []
   postcss.parse(css).walkAtRules('property', (rule) => {
     expect(rule.parent?.type).toBe('root')
-    const descriptors = new Map(rule.nodes!.map(node => {
+    const descriptors = new Map(rule.nodes!.map((node) => {
       expect(node.type).toBe('decl')
       const decl = node as postcss.Declaration
       return [decl.prop, decl.value]

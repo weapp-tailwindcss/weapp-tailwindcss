@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { compatibilityVersions } from './lynx/catalog'
-import { readCompatibilityVersions, readHostVersions, readInstalledVersion } from './lynx/versions'
+import { assertTailwindCompilerVersion, readCompatibilityVersions, readHostVersions, readInstalledVersion } from './lynx/versions'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -25,6 +25,12 @@ async function writeInstalledPackage(fromDirectory: string, name: string, versio
 }
 
 describe('Lynx 实际版本身份', () => {
+  it('实际编译器的 banner 必须匹配证据版本，拒绝回退版本和缺失身份', () => {
+    expect(() => assertTailwindCompilerVersion('/*! tailwindcss v4.3.3 | MIT License */', '4.3.3')).not.toThrow()
+    expect(() => assertTailwindCompilerVersion('/*! tailwindcss v4.3.4 | MIT License */', '4.3.3')).toThrow(/实际 4.3.4/)
+    expect(() => assertTailwindCompilerVersion('.flex { display: flex }', '4.3.3')).toThrow(/缺少版本 banner/)
+  })
+
   it('读取真正解析到的包版本，不使用依赖范围或历史报告版本', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx versions '))
     directories.push(root)

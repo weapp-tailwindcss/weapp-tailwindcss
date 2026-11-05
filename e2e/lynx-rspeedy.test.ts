@@ -6,7 +6,7 @@ import postcss from 'postcss'
 import { beforeAll, describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
-import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir } from './lynx/catalog'
+import { compatibilityDir, compatibilityVersions, exampleDir, getCatalogHash, lynxIntermediateDir } from './lynx/catalog'
 import { verifyDarkFixture } from './lynx/dark-fixture-browser'
 import { decodeLynxBundle } from './lynx/decoder'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
@@ -43,7 +43,7 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
       fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'),
     ])
     expect(bundle.byteLength).toBeGreaterThan(1024)
-    expect(css).toContain('tailwindcss v4.3.4')
+    expect(css).toContain(`tailwindcss v${compatibilityVersions.tailwindcss}`)
     expect(css).not.toContain('@source')
     expect((JSON.parse(tasm) as { css: { cssMap: object } }).css.cssMap).toBeTruthy()
   }, 300_000)
