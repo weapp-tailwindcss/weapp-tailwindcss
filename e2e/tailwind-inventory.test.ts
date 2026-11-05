@@ -3,9 +3,11 @@ import { arbitrarySyntaxCases, authoringFixtures, catalogIdentity, catalogIdenti
 import { collectInventory, loadDefaultDesignSystem, loadInventory, serializeInventory, validateInventory } from './tailwind-capabilities/inventory'
 
 describe('Tailwind 上游完整能力清单', () => {
-  it('完整比对固定版本全部 registry 和 completion，漂移必须显式登记', async () => {
+  it('共享身份匹配实际安装版本与基线，并完整比对 registry 和 completion', async () => {
     const actual = await collectInventory()
     const expected = await loadInventory()
+    expect(catalogIdentity.tailwindcss).toBe(actual.tailwindcss)
+    expect(catalogIdentity.tailwindcss).toBe(expected.tailwindcss)
     expect(() => validateInventory(actual, expected)).not.toThrow()
     expect(serializeInventory(actual)).toBe(serializeInventory(expected))
     expect(new Set(actual.utilities.map(item => item.id)).size).toBe(actual.utilities.length)

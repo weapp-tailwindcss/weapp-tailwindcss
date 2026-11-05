@@ -1,6 +1,6 @@
 # 剩余 5 类变体的语义验收计划
 
-本文件记录 gold 夹具与独立 browser context 夹具合并后，仍缺少运行时语义证据的 5 个 Tailwind CSS 4.3.3 variant roots。机器可读的逐项计划在 [`remaining-variants.ts`](./remaining-variants.ts)。这些条目在各自登记的引擎仍是 `not-run`，不是已验证能力，也不是 `unsupported` 声明。starting 与 details-content 已迁入独立 lifecycle runner，visited 已迁入独占历史 runner；此处保留需要额外原生环境或隐私证据的缺口。
+本文件记录 gold 夹具与独立 browser context 夹具合并后，仍缺少运行时语义证据的 5 个 Tailwind CSS 4.3.4 variant roots。机器可读的逐项计划在 [`remaining-variants.ts`](./remaining-variants.ts)。这些条目在各自登记的引擎仍是 `not-run`，不是已验证能力，也不是 `unsupported` 声明。starting 与 details-content 已迁入独立 lifecycle runner，visited 已迁入独占历史 runner；此处保留需要额外原生环境或隐私证据的缺口。
 
 判断范围是特定变体在特定引擎的真实行为。生成出选择器或媒体条件只证明生成阶段；模拟接口返回成功只证明调用完成；功能探针返回 true 也不能代替像素和生命周期证据。新增夹具时仍须预先声明独立预期，实际失败不得自动改写支持等级。
 

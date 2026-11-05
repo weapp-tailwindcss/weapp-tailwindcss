@@ -2,7 +2,7 @@
 
 这是仅供仓库测试消费的纯数据包。保留 118 个原有兼容性 case ID、官方功能映射和 361 个去重 parity 候选；运行时不能从静态生成结果推断支持。
 
-根入口导出 `compatibilityCases`、`officialFeatureManifest`、`compatibilityCandidateMap`、`authoringFixtures`、`sourceSyntaxCases`、`arbitrarySyntaxCases` 和 `functionalValueProfiles`。`catalogIdentityPayload` 是包含声明预期、夹具和语法输入的稳定 JSON 字符串；消费方负责 SHA-256 和运行证据。
+根入口导出 `compatibilityCases`、`officialFeatureManifest`、`compatibilityCandidateMap`、`authoringFixtures`、`sourceSyntaxCases`、`arbitrarySyntaxCases` 和 `functionalValueProfiles`。`catalogIdentityPayload` 是包含声明预期、夹具和语法输入的稳定 JSON 字符串；消费方负责 SHA-256 和运行证据。 当前 `catalogIdentity.tailwindcss` 显式固定为已审查的 `4.3.4`，消费方合同测试核对它与实际安装版本、固定 inventory 一致；升级时须同步版本身份和受影响的静态、运行时证据。
 
 `compatibilityCandidateMap` 为历史混合 case 增加候选子身份，不更改原有列表。每个候选必须分别验证；父 case 的声明集合不能视为每个候选都已满足。
 

@@ -4,7 +4,7 @@
 
 ## 独立来源
 
-- 输入来自隔离的官方 Tailwind CSS 4.3.3 默认主题与候选编译结果，不读取产品生成器的结果。
+- 输入来自隔离的官方 Tailwind CSS 4.3.4 默认主题与候选编译结果，不读取产品生成器的结果。
 - display、position、flex 和对齐枚举冻结自 [React Native 0.81 Layout Props](https://reactnative.dev/docs/0.81/layout-props)。例如 position 只有 relative、absolute、static，display 支持 flex、none、contents。
 - 数值和属性映射由本目录人工维护，不导入产品属性表、manifest 或执行状态。默认根字号固定为 16；em、视口单位和宿主字体依赖保留缺口。
 - 黑、白、transparent 与明确十六进制色值按字面量保留。现代颜色函数需要另一份独立颜色 oracle，不调用产品颜色转换器制造预期。
