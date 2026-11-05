@@ -1,147 +1,83 @@
-name: PR1330 ARM toolchain diagnostic-only
+name: PR1330 ARM RN full comparison diagnostic-only
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: pr1330-arm-toolchain-diagnostic-${{ github.run_id }}
+  group: pr1330-arm-full-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  inspect:
-    name: ARM toolchain pairing diagnostic-only
+  ios:
+    name: RN ARM iOS full comparison diagnostic-only
     runs-on: macos-15
-    timeout-minutes: 15
+    timeout-minutes: 50
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
-      SOURCE_HEAD: 2dd2a11a97f72b4cb90f652f2b5753b0d0467e44
     steps:
       - uses: actions/checkout@v6
         with:
           ref: 2dd2a11a97f72b4cb90f652f2b5753b0d0467e44
           persist-credentials: false
-      - name: Inspect ARM toolchain pairing without creating devices
-        env:
-          DIAGNOSTIC_ROOT: ${{ runner.temp }}/pr1330-arm-toolchain-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Verify ARM runner identity
         run: |
-          python3 - <<'PYTHON'
-          import hashlib, json, os, pathlib, platform, plistlib, re, subprocess, time
-          root = pathlib.Path(os.environ['DIAGNOSTIC_ROOT'])
-          root.mkdir(parents=True)
-          receipt = {'diagnosticOnly': True, 'sourceHead': os.environ['SOURCE_HEAD'], 'environment': {key: os.environ.get(key) for key in ['GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA', 'GITHUB_REF', 'RUNNER_ARCH', 'ImageOS', 'ImageVersion', 'DEVELOPER_DIR']}, 'commands': [], 'wrappers': [], 'status': 'pending'}
-          def save():
-              (root / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
-          def command(args, timeout=30):
-              started = time.monotonic()
-              index = len(receipt['commands']) + 1
-              record = {'args': args, 'timeoutSeconds': timeout}
-              receipt['commands'].append(record)
-              save()
-              stdout = root / f'{index:02d}.stdout'
-              stderr = root / f'{index:02d}.stderr'
-              with stdout.open('wb') as out, stderr.open('wb') as err:
-                  child = subprocess.Popen(args, stdout=out, stderr=err, start_new_session=True)
-                  record['pid'] = child.pid
-                  try:
-                      record['exitCode'] = child.wait(timeout=timeout)
-                  except subprocess.TimeoutExpired:
-                      record['timedOut'] = True
-                  finally:
-                      def group_alive():
-                          child.poll()
-                          try:
-                              os.killpg(child.pid, 0)
-                              return True
-                          except ProcessLookupError:
-                              return False
-                          except PermissionError as error:
-                              record.setdefault('groupProbeErrors', []).append(repr(error))
-                              return True
-                      def signal_group(signal):
-                          try:
-                              os.killpg(child.pid, signal)
-                          except ProcessLookupError:
-                              pass
-                          except PermissionError as error:
-                              record.setdefault('groupSignalErrors', []).append({'signal': signal, 'error': repr(error)})
-                      if group_alive():
-                          record['cleanupStartedMs'] = (time.monotonic() - started) * 1000
-                          signal_group(15)
-                          drain = time.monotonic() + 3
-                          while group_alive() and time.monotonic() < drain:
-                              child.poll()
-                              time.sleep(0.05)
-                          if group_alive():
-                              signal_group(9)
-                              drain = time.monotonic() + 2
-                              while group_alive() and time.monotonic() < drain:
-                                  child.poll()
-                                  time.sleep(0.05)
-                      child.poll()
-                      record['rootReaped'] = child.returncode is not None
-                      record['groupGone'] = not group_alive()
-                      record['exitCode'] = child.returncode
-                      record['elapsedMs'] = (time.monotonic() - started) * 1000
-                      record['settled'] = record['rootReaped'] and record['groupGone']
-              record['stdout'] = stdout.name
-              record['stderr'] = stderr.name
-              save()
-              if record.get('timedOut') or not record['settled'] or record['exitCode'] != 0:
-                  raise RuntimeError(f'command failed: {args}')
-              return stdout.read_text()
-          try:
-              receipt['machine'] = platform.machine()
-              receipt['checkoutHead'] = command(['git', 'rev-parse', 'HEAD']).strip()
-              receipt['checkoutTree'] = command(['git', 'rev-parse', 'HEAD^{tree}']).strip()
-              assert receipt['checkoutHead'] == receipt['sourceHead']
-              assert receipt['machine'] == 'arm64' and os.environ['RUNNER_ARCH'] == 'ARM64'
-              command(['sw_vers'])
-              command(['sysctl', '-n', 'hw.ncpu', 'hw.memsize'])
-              command(['xcode-select', '-p'])
-              plist = pathlib.Path('/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist')
-              original = plist.read_bytes()
-              (root / 'CoreSimulator.Info.plist').write_bytes(original)
-              receipt['globalComponentVersion'] = plistlib.loads(original)['CFBundleVersion']
-              selected = pathlib.Path(os.environ['DEVELOPER_DIR']) / 'usr/bin/simctl'
-              for wrapper in sorted(pathlib.Path('/Applications').glob('Xcode*.app/Contents/Developer/usr/bin/simctl')):
-                  contents = wrapper.read_bytes()
-                  name = wrapper.parents[4].name + '.simctl'
-                  (root / name).write_bytes(contents)
-                  match = re.search(rb'EXPECTED_VERSION=["\']([^"\']+)', contents)
-                  receipt['wrappers'].append({'path': str(wrapper), 'realpath': str(wrapper.resolve()), 'sha256': hashlib.sha256(contents).hexdigest(), 'expectedVersion': match.group(1).decode() if match else None, 'artifact': name})
-              save()
-              chosen = next(item for item in receipt['wrappers'] if item['path'] == str(selected))
-              receipt['selectedWrapper'] = chosen
-              receipt['componentMatched'] = chosen['expectedVersion'] == receipt['globalComponentVersion']
-              assert chosen['expectedVersion'] and receipt['componentMatched'], 'CoreSimulator pairing mismatch'
-              command(['xcodebuild', '-version'])
-              command(['xcodebuild', '-checkFirstLaunchStatus'])
-              found = command(['xcrun', '--find', 'simctl']).strip()
-              assert found == str(selected), 'selected simctl path mismatch'
-              command(['file', str(selected)])
-              runtimes = json.loads(command(['xcrun', 'simctl', 'list', 'runtimes', '--json'], 45))
-              devices = json.loads(command(['xcrun', 'simctl', 'list', 'devicetypes', '--json'], 45))
-              receipt['runtime'] = next(item for item in runtimes['runtimes'] if item['identifier'] == 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')
-              assert receipt['runtime']['isAvailable'] and receipt['runtime']['version'] == '18.5' and receipt['runtime']['buildversion'] == '22F77'
-              receipt['deviceType'] = next(item for item in devices['devicetypes'] if item['identifier'] == 'com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro')
-              receipt['status'] = 'passed'
-          except BaseException as error:
-              receipt['status'] = 'failed'
-              receipt['error'] = repr(error)
-              raise
-          finally:
-              save()
-              print(json.dumps(receipt, indent=2))
-          PYTHON
-      - name: Upload diagnostic-only original evidence
+          test "$RUNNER_ARCH" = "ARM64"
+          test "$(uname -m)" = "arm64"
+          sw_vers
+          sysctl -n hw.ncpu hw.memsize
+      - name: Verify selected Xcode
+        run: xcodebuild -version
+      - name: Verify CoreSimulator toolchain contract
+        run: |
+          xcodebuild -checkFirstLaunchStatus
+          simctl_path="$(xcrun --find simctl)"
+          echo "simctl=$simctl_path"
+          test "$simctl_path" = "$DEVELOPER_DIR/usr/bin/simctl"
+          component_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist)"
+          echo "CoreSimulator=$component_version"
+          test "$component_version" = "1051.17.8"
+      - name: Verify preinstalled CocoaPods
+        run: pod --version
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - name: Verify iOS launch reconciliation
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-startup-owner.test.ts e2e/react-native-startup-command.test.ts e2e/react-native-runtime-static-cli.test.ts e2e/react-native-startup-process.test.ts e2e/react-native-startup-resource.test.ts e2e/react-native-native-http.test.ts e2e/react-native-runtime-static.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-ios-context-request.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
+      - name: Boot iOS simulator
+        run: |
+          udid="$(xcrun simctl create ReactNativeCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
+          echo "RN_IOS_DEVICE_ID=$udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+      - name: Run Expo iOS compatibility
+        id: native_runtime
+        env:
+          RN_IOS_HOST: 127.0.0.1
+          RN_RUNTIME_ARTIFACT_ROOT: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}
+        run: pnpm e2e:react-native:ios
+      - uses: actions/upload-artifact@v7
         if: always()
+        with:
+          name: react-native-ios-${{ github.run_id }}
+          path: e2e/.artifacts/react-native-ios/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14
+      - name: Upload interrupted iOS startup diagnostics
+        if: always() && steps.native_runtime.outcome != 'success'
         uses: actions/upload-artifact@v7
         with:
-          name: pr1330-arm-toolchain-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/pr1330-arm-toolchain-${{ github.run_id }}-${{ github.run_attempt }}/**
-          if-no-files-found: error
+          name: react-native-ios-startup-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}/**
+          if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
