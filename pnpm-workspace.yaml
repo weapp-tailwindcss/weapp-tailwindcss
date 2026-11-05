@@ -131,7 +131,7 @@ catalogs:
     fast-glob: ^3.3.3
     fs-extra: ^11.4.1
     htmlparser2: ^12.0.0
-    local-pkg: ^1.2.1
+    local-pkg: ^2.0.0
     lightningcss: ^1.33.0
     lru-cache: 11.5.3
     magic-string: ^1.4.5
@@ -144,16 +144,16 @@ catalogs:
     yaml: ^2.9.1
   compilerUtilities:
     comment-json: ^5.0.0
-    oxc-parser: ^0.156.0
+    oxc-parser: ^0.157.0
     oxc-walker: ^1.1.1
-    semver: ~7.8.5
+    semver: ~7.8.6
   postcssCompat:
     postcss-pxtrans: ^1.1.0
     postcss-rule-unit-converter: ^0.3.0
     postcss-scss: ^4.0.9
     postcss-value-parser: ^4.2.0
   runtimeVariants:
-    tailwind-variants: ^3.3.1
+    tailwind-variants: ^4.0.1
   runtimeLodash:
     lodash.castarray: ^4.4.0
     lodash.isplainobject: ^4.0.6
@@ -198,13 +198,13 @@ catalogs:
     gulp-rename: ^2.1.0
     gulp-typescript: 6.0.0-alpha.1
   csstools:
-    '@csstools/css-color-parser': ^4.2.6
+    '@csstools/css-color-parser': ^4.2.7
     '@csstools/css-parser-algorithms': ^4.0.2
     '@csstools/css-tokenizer': ^4.0.2
   egoistTailwindcssIcons:
     '@egoist/tailwindcss-icons': ^1.9.2
   eslint10:
-    eslint: ^10.13.0
+    eslint: ^10.14.0
   eslintPluginReact:
     eslint-plugin-react: ^7.37.5
   eslintPluginReactHooks:
@@ -213,7 +213,7 @@ catalogs:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
     '@iconify-json/logos': ^1.2.18
-    '@iconify-json/lucide': ^1.2.147
+    '@iconify-json/lucide': ^1.2.151
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
@@ -237,7 +237,7 @@ catalogs:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:
     es-toolkit: ^1.53.0
-    postcss-preset-env: ^11.6.1
+    postcss-preset-env: ^11.6.2
   prettier371:
     prettier: ^3.9.10
   react18:
@@ -253,12 +253,12 @@ catalogs:
   reactRefresh018:
     react-refresh: ^0.18.0
   rsbuild2:
-    '@rsbuild/core': ^2.2.14
+    '@rsbuild/core': ^2.3.1
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
-    sass: ^1.106.1
-    sass-embedded: ^1.106.1
+    sass: ^1.107.1
+    sass-embedded: ^1.107.1
   storybook:
     '@storybook/addon-a11y': ^10.6.5
     '@storybook/react': ^10.6.5
@@ -267,17 +267,17 @@ catalogs:
   stylelint1625:
     stylelint: ^17.16.0
   swc:
-    '@swc/core': ^1.16.20
+    '@swc/core': ^1.16.21
   tailwindMerge:
     tailwind-merge: ^3.7.0
   tailwindMerge2:
     tailwind-merge: ^2.6.1
   tailwindcss4:
-    '@tailwindcss/node': ^4.3.3
-    '@tailwindcss/oxide': ^4.3.3
-    '@tailwindcss/postcss': ^4.3.3
+    '@tailwindcss/node': ^4.3.4
+    '@tailwindcss/oxide': ^4.3.4
+    '@tailwindcss/postcss': ^4.3.4
     '@tailwindcss/vite': ^4.3.3
-    tailwindcss: ^4.3.3
+    tailwindcss: ^4.3.4
   tailwindcssPatch:
     tailwindcss-patch: 10.0.2
   tailwindcssRem:
@@ -344,7 +344,7 @@ catalogs:
   tsx:
     tsx: ^4.23.15
   typesNode2410:
-    '@types/node': ^26.6.5
+    '@types/node': ^26.6.6
   typescript59:
     typescript: ^6.0.3
   typescript59tilde:
@@ -376,7 +376,7 @@ catalogs:
   vitest:
     '@vitest/coverage-v8': ~5.0.5
     '@vitest/ui': ~5.0.5
-    vitest: ~5.0.5
+    vitest: ~5.1.0
   vue2:
     vue: ^2.7.16
   vue3:
@@ -390,15 +390,15 @@ catalogs:
   weappChildren:
     weapp-tailwindcss-children: ^0.1.0
   weappIdeCli:
-    weapp-ide-cli: ^6.3.0
+    weapp-ide-cli: ^6.4.1
   weappVite:
-    weapp-vite: ^7.7.0
+    weapp-vite: ^7.8.0
   webpackTools:
     '@pmmmwh/react-refresh-webpack-plugin': ^0.6.3
     '@types/webpack-env': ^1.18.8
     css-loader: ^7.1.5
     tsconfig-paths-webpack-plugin: ^4.2.0
-    webpack-cli: ^7.2.3
+    webpack-cli: ^7.3.1
     webpack-dev-server: ^5.2.7
   wrangler:
     wrangler: ^4.154.0
@@ -410,7 +410,7 @@ catalogs:
   taroLint:
     '@typescript-eslint/eslint-plugin': 8.72.1
     '@typescript-eslint/parser': 8.72.1
-    eslint: 8.57.1
+    eslint: 10.14.0
     eslint-plugin-import: 2.32.0
     eslint-plugin-react-hooks: 4.6.2
 

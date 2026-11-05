@@ -60,7 +60,7 @@
     "@weapp-tailwindcss/logger": "workspace:*",
     "fast-glob": "catalog:buildUtilities",
     "lightningcss": "catalog:buildUtilities",
-    "semver": "~7.8.5",
+    "semver": "~7.8.6",
     "weapp-tailwindcss": "workspace:*"
   }
 }

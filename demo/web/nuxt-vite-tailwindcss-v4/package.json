@@ -13,7 +13,7 @@
     "prebuild": "node ../../../scripts/ensure-weapp-tailwindcss-built.mjs"
   },
   "dependencies": {
-    "nuxt": "4.6.3",
+    "nuxt": "4.6.4",
     "vue": "catalog:vue3"
   },
   "devDependencies": {
@@ -22,8 +22,8 @@
     "@iconify/tailwind4": "^1.2.3",
     "tailwindcss": "catalog:tailwindcss4",
     "typescript": "catalog:typescript59",
-    "weapp-tailwindcss": "workspace:*",
-    "vite": "catalog:vite8"
+    "vite": "catalog:vite8",
+    "weapp-tailwindcss": "workspace:*"
   },
   "repository": {
     "type": "git",
