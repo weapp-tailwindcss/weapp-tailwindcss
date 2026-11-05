@@ -1,7 +1,7 @@
 {
   "name": "benchmark-tailwindcss4",
   "type": "module",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

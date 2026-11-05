@@ -1,5 +1,12 @@
 # benchmark-runtime-cn-vs-merge
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cn@0.2.0
+
 ## 0.0.1
 
 ### Patch Changes

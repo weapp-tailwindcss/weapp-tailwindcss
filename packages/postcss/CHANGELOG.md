@@ -1,5 +1,230 @@
 # @weapp-tailwindcss/postcss
 
+## 4.0.0
+
+### Major Changes
+
+- 将存在实际 calc 且配置作者列表非空的原包装器管线改为真实作者／平台阶段，作者完整遍历并序列化后才建立平台处理，直接消费最终根和原顺序消息；移除受保护 AST 方法调用。同一计划保留作者与 preset 实例，每次实际执行新建上下文及库内 pre/post，保留原缓存准入和 handler 后处理边界。
+
+  公开 createStylePipeline、handler.getPipeline 及相关类型改为 flat／phased 联合：flat 保留真实插件数组和原生组合；phased 暴露语义节点、内部首 prepare 控制钩子和 Promise 执行器，不伪装为 Processor。调用方应使用 await pipeline.process(input, options, after)，需要原生 plugins 时必须先判断 kind；内部 getPlugins 对 phased 明确拒绝。
+
+  Document 作者从逐子 Root 改为一次整 Document，prepare、旧函数、Result 与序列化次数随之改变；原生对象 Once／OnceExit 仍按子 Root 执行。作者替换根及 whole-Document annotation 行为真实交接，属于破坏性迁移。保留首个原生输入／选项与构造错误时点，后阶段自然拒绝，不隐式等待 pending LazyResult 或失败重跑。
+
+  作者使用独立 map:false 选项外壳，平台使用捕获的原选项活引用，不新增作者 Result.map 的 prev 注入。现有外部作者递归、保护恢复、框架和 compiler finalizer 以及终态映射限制保持，未承诺修复全部 source map 所有权。
+
+### Patch Changes
+
+- 修复开启 `px2rpx` 时 CSS `var()` 回退长度中的 `px` 漏转换问题，嵌套回退值按配置倍率转换，同时保留变量名、变量引用关系、字符串和 URL。可通过 `transformVarFallbacks: false` 恢复跳过整段 `var()` 的旧行为。
+
+  升级到已包含上游修复的 `postcss-pxtrans@1.1.0`、`postcss-rule-unit-converter@0.3.0` 与 `postcss-rem-to-responsive-pixel@7.0.9` 正式版，统一共享转换器依赖，无需额外安装临时依赖补丁。
+
+- 隔离 React Native 的多个 Tailwind 样式入口，避免前缀、主题和配置相互污染；解析原生排版中的主题变量，未解析或循环变量保留明确诊断。按最终字号层叠结果换算相对行高，支持内联字号及静态样式查找；完整保留多层阴影与 spread，避免局部变量污染其它规则。
+
+  在最终 class、important 和内联样式层叠后解析阴影变量，完整组合 ring、inset、颜色与透明度修饰符；保留入口默认值边界和 currentColor 上下文，输出 RN 与 Expo Web 均可消费的颜色格式。新增不依赖 Node 的原生值解析子入口供运行时复用。
+
+  复杂选择器按 AST 精确诊断，避免 group、peer 等规则静默丢失；在最终变量层叠后组合双轴 skew。运行时实例分别维护注册表及元数据，样式工厂更新后刷新缓存；深层数组采用迭代解析并拒绝循环引用，保留近零但非零的阴影透明度。
+
+  重要相对行高或 currentColor 阴影覆盖已结算值时，同步清除被覆盖的重要样式属性，避免缺少字号或颜色上下文时，内联样式组合重新带回旧值；保留其它重要属性及既有层叠优先级。
+
+- 升级依赖并完成配套迁移。
+
+  - `@weapp-tailwindcss/cn` 升级至 `cn@0.5.2`，最低 Node.js 版本调整为 22.12.0。
+  - `@weapp-tailwindcss/variants` 与 UI 消费链迁移至 `tailwind-variants@4.0.1`；空聚合统一返回空字符串，保留 `twMergeConfig` 并支持函数形式的 `twMerge`，同步公开类型和回归。
+  - Tailwind CSS 4 生成链升级至 4.3.4，保留 v3 兼容样例和独立平台转换边界。
+  - PostCSS 更新颜色解析和 preset-env；将 `autoprefixer: false` 的最小声明补丁迁移至 11.6.2。
+  - CLI、init 和主包同步 semver、local-pkg、OXC parser/walker 配套类型；Lynx、React Native、reset、injector、theme-transition 和 wetw 更新对应依赖解析。
+  - Vitest、coverage 与 UI 统一至 5.1.0；Taro 保留其配置要求的 ESLint 8.57.1。
+  - weapp-vite 7.8.0 对齐 devframe/agentic 1.3.0，迁移发行包行为契约；Nuxt 的 Nitro 路径补丁迁移至 2.13.6。
+
+- 更新公开包的直接依赖及配套开发工具链，保留 catalog 和 workspace 关系。React 18 UI 包的类型声明与现有运行时配对；React Native 包的开发构建使用 Babel 7 与 TypeScript 5.9.3，保持 Expo/Metro 既有配套。框架 peer 支持范围保持现有契约。
+
+  ### @weapp-tailwindcss/css-compat
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 `devDependencies` 的 `vite`：`7.2.7` → `7.3.7`。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 `devDependencies` 的 `@lynx-js/rspeedy`：`^0.18.1` → `^0.18.3`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 `dependencies` 的 `autoprefixer`：`^10.6.1` → `^10.6.2`。
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+  - 更新 `devDependencies` 的 `eslint`：`^10.12.0` → `^10.13.0`。
+  - 更新 `devDependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `devDependencies` 的 `@babel/core`：`^8.0.7` → `^7.29.7`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^19.3.0`。
+  - 更新 `devDependencies` 的 `react`：`^19.2.8` → `^19.3.1`。
+  - 更新 `devDependencies` 的 `typescript`：未声明 → `^5.9.3`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 `devDependencies` 的 `@storybook/addon-a11y`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react-vite`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^18.3.31`。
+  - 更新 `devDependencies` 的 `@types/react-dom`：`^19.2.5` → `^18.3.7`。
+  - 更新 `devDependencies` 的 `storybook`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+
+  ### tailwindcss-config
+
+  - 更新 `dependencies` 的 `lilconfig`：`^3.1.3` → `^3.1.4`。
+
+  ### tailwindcss-injector
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+
+  ### weapp-tailwindcss
+
+  - 更新 `dependencies` 的 `@babel/parser`：`^8.0.7` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@vue/compiler-dom`：`^3.5.41` → `^3.5.44`。
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `oxc-parser`：`^0.154.0` → `^0.156.0`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+  - 更新 `devDependencies` 的 `webpack`：`5.105.4` → `5.112.2`。
+
+  ### wetw
+
+  - 更新 `dependencies` 的 `@inquirer/prompts`：`^8.7.3` → `^8.7.5`。
+
+- Web 生成链在真实框架 PostCSS 处理后才执行通用 rpx 兜底，使 Taro H5 等链路遵循自身配置的尺寸基数，避免提前按默认基数转换而导致样式放大与重复。保留显式单位转换只执行一次，并继续覆盖无单位插件、裸 Webpack、完整资产和框架重放场景。
+
+  Webpack Web 收尾转换后通过 loader 支持的 JSON 字符串传递 source map，保留可选输出文件字段、来源内容和数值版本；没有前置映射时省略 prev，不改变自动发现行为。未转换时仍透传原始 map 和 metadata；Generic Web 快路径显式归一可选来源追踪开关。
+
+  区分 Web 模块的生成缓存与真实框架产物，仅在框架处理后登记可重放样式，避免 uni-app App 等改名输出被旧 rpx 规则再次覆盖。
+
+  将 Generic Web 快路径的模块生成状态与最终 CSS 资产登记分离，保留真实 PostCSS 输出、准确更新回调和用户 matcher；独立入口的样式只沿构建图消费，默认不再按根目录位置删除其他 Web 入口的规则，保留框架显式声明的 App WebView 策略。 正确解码二进制 UTF-8 CSS 资产，保留非 ASCII 作者内容。
+
+  普通插件输出的未登记 CSS 资产在常规收尾与 Web 快路径回退时同样按 UTF-8 读取，正确处理 Uint8Array 子视图，避免样式内容变成字节数字或触发小程序 CSS 解析错误。
+
+  将小程序 preflight、主题及 RTL 伪类的内容分类结果与 AST 节点种类判别分开，避免未命中的普通规则或伪类被类型系统错误排除；保留现有 CSS 分类、清理和选择器转换语义。
+
+  补齐 CSS 祖先容器与声明原节点身份契约：遍历准确覆盖 Root 的 Document 父节点，注册语境隔离停在所属 Root，透明十六进制兼容回退继续共用原节点与代理缓存键；保留现有产物、节点身份及异常恢复行为。
+
+  内部子代选择器替换 helper 明确拒绝直接传入的空数组，避免生成含 undefined 的标签；配置层空数组仍保留原有默认 view 策略与缓存克隆隔离。
+
+  UVUE 后处理按 Document 内各 Root 独立消费主题、求值和判定作者样式，避免同名变量或兄弟样式的 SFC/banner 证据互相污染；保留原 Document、Root、节点来源、消息次序和多个输入的 source map。
+
+  补齐作者 PostCSS 配置已有的数组、值映射、模块默认导出、工厂 tuple 和已加载插件类型，保留原归一化与禁用语义；autoprefixer 身份探测在未归一化边界使用真实值守卫，不再用不成立的数组类型隐藏映射分支。
+
+  保留作者首节点删除后的空白对象字段与非 Error 异常诊断的显式 undefined 形状，准确声明原有接收契约，不改变序列化、缓存身份和异常值。
+
+  空块清理与未解析作者变量 fallback 拆分明确接收 Root 或 Document，保留原有共同容器遍历、删除计数、变量表及节点来源，不因类型修正展平多文档。
+
+  Root 结果缓存把 Input.document 的完整来源文档纳入快照与匹配，避免相同 CSS 和文件名下复用旧文档的序列化结果；保留等价来源的缓存命中、逐 Input 重新绑定和输出树隔离。
+
+  选择器类型守卫通过 postcss-selector-parser 的真实 CommonJS 默认导出对象消费，避免 ESM 产物在 Node 中加载时因动态挂载的命名导出无法识别而失败；保留相同守卫、AST 算法和外部依赖边界。
+
+  PostCSS 处理选项包含回调、访问器或不透明实例时，逐次读取本轮配置并执行真实处理，不以函数身份或不完整数据指纹复用旧 CSS、映射及配置快照；保留默认数据配置的结果缓存、来源绑定和处理器复用。
+
+  动态 px2rpx 设计稿的派生倍率在每次处理内重新建立，避免复用同一 Input、Root 或公开管线时沿用旧倍率；保留本轮按 Input 缓存、默认静态配置的结果命中、原始来源与真实回调异常，不预执行回调推导缓存键。
+
+  preset-env 的 insertBefore/insertAfter 扩展逐次执行，避免完整结果缓存或空 CSS 特征裁剪跳过用户插件；配置和处理器缓存补充实际插入实例及插件包子项身份，访问器配置保守旁路缓存，保留原 preset 顺序、默认数据配置命中、同实例复用及原位标量配置失效。
+
+  CSS 引用自动加载的外部 source map 时逐次交给 PostCSS 发现，避免同一路径文件更新、新建或删除后返回旧来源映射；保留默认、inline 和显式 prev 的确定性结果命中、处理器复用及上游路径权限策略。
+
+  uni-app x 基础兼容重建样式结果时显式保留已有依赖消息与警告，避免 WebView/UVUE 后处理丢失平台消息；保留消息顺序、警告及已移除节点的来源身份，同时继续生成本轮 CSS 和映射。
+
+- 修复 Lynx 动态颜色变量的级联安全分析，保留存在覆盖、条件或别名依赖的 var()，同时安全静态化稳定颜色。
+
+- 按 CSS token 身份分析自定义属性和注册指令，保留转义覆盖、元素相关 attr()、空声明冲突及未证明稳定的完整依赖链，避免跨元素或过早删除定义改变主题语义。
+  静态百分比颜色权重复用完整依赖分析并乘以原色透明度，仅在小程序生成链降低可完全证明的颜色能力分支；增量缓存记录静态兼容上下文，局部覆盖撤销资格后重新转换已有样式，不依赖是否启用 calc。
+  样式结果缓存先按完整原始输入、配置及当前来源快照判断命中，避免命中后仍重复执行颜色资格分析；作者插件仍逐轮执行。新合成来源或携带消息的根节点结果不进入缓存，防止后续调用沿用旧输入或警告节点。来源追踪只缓存完整选择器的不可变类名解析结果，并同时限制条目数与字符总量，每轮继续查询当前来源映射，不保留旧资产的路径或可变语法树。
+  主题资格分析先排除不含目标函数的普通值，直接颜色和数学函数不再逐项构造变量及关键字语法树；转义、注释、元素相关函数和完整变量依赖继续走原有 token 解析，保留动态覆盖及循环的安全边界。
+  现代颜色兼容分析直接复用已有函数节点分类，普通非颜色声明不再创建颜色语法树；未修改的输入复用当前节点检验，转换器生成的新文本仍重新解析，避免动态透明度 fallback 中的现代子函数被不透明替换节点隐藏。
+  全部注册、描述符和变量依赖保持原文，前缀不推断作者归属；默认值兼容仅匹配真实编译器合同中的完整签名，条件或冲突注册否决默认合成，保留层时使用最低优先级层且重复处理幂等。通用 calc 插件提供声明过滤回调，使调用方明确保护注册描述符，不将无效初值改成有效注册。
+  legacy layer 内核保留注册子树的原子边界，禁止把其中无效嵌套描述符提升成有效注册；默认兼容块保留 import 的合法顺序，不压过作者已有的级联层。
+  保留公开变量名上的显式 initial，避免破坏阻断继承和 use-site fallback；渐变位置仅在当前完整消费图能够证明用途时兼容，转义身份、别名、注册描述符、style 查询、循环及不完整 chunk 均参与判断。多类渐变共用空位置时保留原 token，不按局部规则推测最终级联，也不引入与 CSSOM 更新失联的镜像变量。
+  Webpack/Rspack 在本轮 CSS 导入合并后、压缩和 Lynx 编码前重新核对完整渐变消费图，通过构建器资产 API 与精确编辑保留来源映射；兼容处理计入真实 HMR 耗时并在结束回调之前完成。
+  对只包含变量声明的 `:root, :host` 根组，在完成依赖分析后保留 Lynx encoder 支持的根分支，避免动态主题的初始定义被整组丢弃。
+
+  Lynx 诊断通过构建图的实际已发出模板和固定解码器核对声明，分别保留编码日志、静默删除与无法确证的结果；严格模式只拒绝确证被删除的业务样式。解码器资源与许可证随发布包交付，来源位置绑定本轮输入及 source map；同时对齐 Node 必装依赖链、构建插件要求和中英文支持边界。
+  核心入口复用 PostCSS 的只读规则证据接口，保持原生适配包的依赖边界；诊断补充可审计的版本来源、拒绝原因和保守建议。
+
+- 修复 React Native 默认 spacing 简写中 calc() 被空格拆分的问题，完整保留四边数值并拒绝超过四项的非法简写。按 React Native 0.81 布局 API 校验 display、position 与 flex 对齐关键字，保留 contents，对 fixed、sticky 和浏览器独有布局值明确诊断。原生平台变体与浏览器状态或响应式条件复合时不再丢弃条件并无条件套用基础样式；派生规则使用独立 StyleSheet ID，避免覆盖基础规则的运行时条件。
+
+- 按 CSS Alignment 的完整值组展开 `place-content`、`place-items` 和 `place-self`，保留 `safe center`、基线位置及双值对齐的语义；内容基线省略第二值时正确回退为 `start`。无法静态解析的变量或无效简写保留原声明，避免生成错误长写或丢失输入，并继续尊重 preset-env 的功能与保留配置。
+
+- 组件样式与根样式的覆盖去重按 CSS token 比较声明：将引号和十六进制转义形式不同、解码后相同的字符串视为相同内容，清除已由根样式提供的重复 utility；保留真实空格、反斜杠和其它不同字符串。
+
+  声明比较不再应用选择器的 scoped 标记清理。覆盖证明保留声明顺序、优先级和条件祖先；存在冲突声明时不使用无序合并证明，避免误删组件自身样式。
+
+  覆盖签名使用流式 token 和带类型、长度边界的紧凑值编码，减少中间数组及类型名重复存储。根覆盖索引中的不可变值可供目标清理只读复用；目标独有值留在各自处理上下文，不向长期复用的索引累积。空覆盖索引直接拒绝证明；容器与祖先仍每次按当前 AST 重新计算，不缓存可变子树。
+
+  Vite 纯普通样式批次只建立规则索引，避免预建声明、属性和条件索引。同批次存在可消费的 scoped 样式时，直接建立完整索引，避免先建规则索引再重复解析根样式；回调引起的来源变化仍重新核对，后续才变成 scoped 的资产按不可变源码快照补齐。默认公开采集行为保持不变。
+
+- 在原始选择器树上先完成平台分支裁剪，再执行原有转义、间距替换和 `:where` 展开，修复展开克隆遗留嵌套 RTL 与不支持伪类的问题。跳过已脱离当前树的后代，保留有效兄弟分支、单分支原始转义、展开顺序和 uni-app x 原有多分支拒绝资格。
+
+  同步 Rust 选择器内核及原生平台包固定版本组，保持真实 ABI 与 JavaScript 回退路径的裁剪结果一致；不改变原生加载优先级、支持范围或声明归一规则。
+
+- 增加默认关闭的 `cssOptions.skyline`，按微信小程序目标启用 Tailwind CSS 4 字体变量重置兼容。将 `--tw-leading`、`--tw-font-weight` 的纯 `initial` 与插件生成的对应默认值改为引用未定义的内部保留变量，保留消费端嵌套变量、有效 setter 和作者空值。
+
+  为 uni-app Vite 组件本地样式提供独立运行时初始化，并在关闭视觉 preflight、执行根样式覆盖去重时保留该初始化。检查保留变量的声明和注册冲突，拒绝显式保留 `@property` 的不兼容配置；同步说明主题变量移除和作者空值恢复的独立运行时问题。
+
+  局部样式产物按作者输入、样式请求和编译依赖版本验证后再复用；多样式块分别登记来源，并在组件主模块更新时撤销已删除的样式，保留独立主题、scoped 及条件语义。关闭 Skyline 时不提前读取 Webpack 样式资产，也不改变既有平台和 calc 默认值。
+
+- 兼容 Tailwind CSS 4.3.4 使用 `margin-trim: block` 的变量初始化探针，继续支持旧版 `inline`，确保小程序中的默认变量不受浏览器能力检查限制。探针识别仍要求四项条件同时存在，并完整匹配属性和值，避免展开 `inline-start` 等其他条件或同名后缀的自定义属性分支。
+
+- 保留 Tailwind v4 变量 fallback 拆分时函数、参数与逗号的解析来源；新增逗号使用本阶段输入中的零宽锚点，正确处理尾空白、未闭合函数和 UTF-16 位置。保持已有序列化结果、注释与显式 fallback 行为。
+
+- Web 生成器在计算表达式后执行显式单位规则，使任意值工具类直接得到约定的 Web 单位。Vite 的跨资产计算阶段继续延迟单位处理，避免同单位缩放与组合转换被重复执行；完整生成、增量生成和缓存复用共用相同约束。
+
+- Webpack 的 Web 样式在生产压缩前完成生成，已通过框架 CSS loader 的资产保留实际转换结果，不再插回转换前的注册表内容，避免基础样式晚于深色变体并覆盖其效果。清理生成样式时逐项处理混有业务规则的条件容器，保留业务规则及独立嵌套层的归属。
+
+  清理内部元数据时在框架提供的 Source 上精确删除标记，保留已有 source map；相同 CSS 的再次编译也使用本轮框架映射，不从文本缓存复用旧 Source。
+
+  显式开启 `cssSourceTrace` 时在框架资产上精确插入来源注释并保留映射，使用 Taro 默认生产压缩器保留的重要注释；来源回溯、重复标注和清理兼容历史及压缩格式，不在压缩后回填原始样式。压缩器显式删除所有注释的配置仍由用户控制。
+
+  仅在颜色、权重和插值方法可证明等价时降级透明混色，原色透明度与百分比权重相乘；动态颜色、未知变量 fallback、currentColor、动态权重和无效表达式保持原语义。渐变消费分析识别已知厂商前缀，避免漏掉明确方向的降级，同时保留旧前缀空方向的差异。
+
+  来源追踪按真实选择器 token 覆盖任意值与转义；规则删除时清除所属追踪，声明合并时同步迁移来源，避免注释错误归属后续注册或初始化规则，并保留作者说明。
+
+  Web 构建片段保留注册证据，在框架完成合并、重放和注入后统一生成注册默认值，避免尾部默认值覆盖反向间距与分隔线等零 specificity utility。完整资产共同否决冲突或条件注册，作者 reset 保持原位；watch 从原始资产重新分析，Webpack 插入保留原始字节位置和 source map，兼容 BOM、中文及 emoji。
+
+  最终默认值沿用资产已有的独立 backdrop 前缀，并识别框架转换后的等价零长度，避免 ring 初值遗漏；未知语法、动态表达式、非零初值及条件注册继续否决合成。结构转换仅保护嵌套注册的原始语境，同层普通样式仍正常转换，注册内部的非法子规则不会被提升为有效注册。
+
+  小程序已处理 CSS 的颜色、平台清理、交互选择器和 legacy layer 消费在成功解析路径共用一次 AST，保留完整变量资格分析和编辑中不完整输入的原回退顺序。已有公开平台清理入口保留原处理范围；仅在渐变降级实际消费时构造规范化颜色上下文，避免在反复构建中重复生成随即丢弃的结果。
+
+  候选来源变化与编译依赖变化分别失效：仅命中来源 glob 的文件变化保留 Tailwind 编译会话，仍重扫候选并拒绝复用旧输出；精确依赖、显式入口和来源配置变化继续重建。生成期间的新失效不会被迟到结果覆盖，文件创建、删除和候选清空与全新编译结果一致。样式结果缓存同时计入输入来源快照与输出 AST 的节点规模，保留原容量预算，避免文本输入的大树绕过容量约束。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/css-compat@0.1.3
+  - @weapp-tailwindcss/engine@0.1.7
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.0
+  - @weapp-tailwindcss/native-darwin-x64@5.7.0
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.0
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.0
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.0
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.0
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.0
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.0
+  - @weapp-tailwindcss/postcss-calc@1.0.12
+  - tailwindcss-config@2.0.7
+
 ## 3.4.3
 
 ### Patch Changes
