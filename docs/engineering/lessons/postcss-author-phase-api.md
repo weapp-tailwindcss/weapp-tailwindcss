@@ -24,7 +24,15 @@ phased 的同一实际 recipe 同时提供语义节点与执行。内部首 prep
 
 公开联合类型和整 Document 行为登记独立中文 major intent。flat 保留真实插件数组／node.plugin；phased 只能使用 Promise 入口。首个原生 process 的同步构造错误保持，后阶段自然 reject，无同步失败后重试。after 仍是平台原生尾列表。handler 只改核心执行分流，外部作者递归、缓存准入、保护恢复、克隆、框架及 compiler 终结保持。
 
+### 发布范围复核（2026-11-05）
+
+main 基线 `a476343f271d9cef4f076ba59b980f6236ed1860` 的原 intent 同时将 PostCSS 与主包列为 major。复核后保留 PostCSS major，将主包拆为独立 minor intent：主包文档化的插件集成、配置与 Core API 没有因本次管线迁移要求用户调整，内部依赖的 major 不自动决定主包版本级别。普通第三方 `postcssOptions.plugins` 继续先执行作者插件，再清空插件列表递归处理平台，不经过本次迁移的内部 pure 作者包装器。
+
+此前仅凭 Webpack 实例的公开类型可以访问 `options.styleHandler.getPipeline()`，便认定主包必须 major，混淆了常规用户接入与低层扩展的发布范围。该路径也没有明确的不稳定声明，不能据此声称所有旧类型调用都兼容；主包 intent 单独保留 `pipeline.process()` 与 `kind` 收窄的迁移提示。本次只调整发布元数据与说明，没有为旧管线字段新增兼容层。
+
 ## 验证
+
+2026-11-05 的发布范围复核仅修改 intent 与本文：`CI=1 pnpm release status` 确认主包、CLI 和八个原生包计划为 `5.7.0`，PostCSS 单独为 `4.0.0`；`CI=1 pnpm agents:check` 与 `git diff --check` 通过。本轮未重跑产品测试或本地全端验收，不将下述历史回归记录算作本轮新执行。
 
 当前为基线加本地未提交改动，使用本 worktree 独立依赖。三文件30项产品回归通过，覆盖真实 preset、消息／Root／Input／opts、保留构造成员、四轮运行状态、Document、Result／LazyResult、有效空 Processor、原错误及实际 handler 核心缓存。原 tools noEmit 已从两错变为零错；新测试使用继承相同严格选项的夹具也为零错。包内普通构建自带 noCheck，不能作为严格验收。
 

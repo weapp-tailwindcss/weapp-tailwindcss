@@ -1,6 +1,5 @@
 ---
 "@weapp-tailwindcss/postcss": major
-"weapp-tailwindcss": major
 ---
 
 将存在实际 calc 且配置作者列表非空的原包装器管线改为真实作者／平台阶段，作者完整遍历并序列化后才建立平台处理，直接消费最终根和原顺序消息；移除受保护 AST 方法调用。同一计划保留作者与 preset 实例，每次实际执行新建上下文及库内 pre/post，保留原缓存准入和 handler 后处理边界。
