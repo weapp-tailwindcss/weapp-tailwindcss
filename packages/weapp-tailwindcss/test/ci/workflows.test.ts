@@ -307,6 +307,7 @@ describe('ci workflows', () => {
       'execa',
       'jsdom',
       '@types/jsdom',
+      'local-pkg',
       'pako',
       '@types/pako',
       '@types/gulp-replace',
