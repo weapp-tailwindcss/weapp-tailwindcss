@@ -11,6 +11,28 @@ const baselineLabel = path.relative(repoRoot, baselinePath)
 const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'))
 
 describe('Lynx 文档与已提交基线的事实合同', () => {
+  it('只升自有包发布版本不改变兼容合同，文档从包元数据查询版本', () => {
+    const ownManifests = ['packages/lynx/package.json', 'packages/weapp-tailwindcss/package.json'].map(file => path.join(repoRoot, file))
+    const findings = collectLynxContractFindings({ readFile: (file) => {
+      const source = fs.readFileSync(file, 'utf8')
+      if (!ownManifests.includes(file)) {
+        return source
+      }
+      const manifest = JSON.parse(source)
+      manifest.version = semver.inc(manifest.version, 'major')
+      return JSON.stringify(manifest)
+    } })
+    expect(findings).toEqual([])
+  })
+
+  it('文档仍须提供两个包的权威版本入口', () => {
+    const findings = collectLynxContractFindings({ readFile: (file) => {
+      const source = fs.readFileSync(file, 'utf8')
+      return file.endsWith('.md') ? source.replaceAll('https://www.npmjs.com/package/@weapp-tailwindcss/lynx', 'https://example.invalid/lynx') : source
+    } })
+    expect(findings.filter(item => item.includes('缺少事实 “https://www.npmjs.com/package/@weapp-tailwindcss/lynx”'))).toHaveLength(6)
+  })
+
   it.each(['optional-core', 'builder-metadata', 'tailwind-version'])('拒绝 metadata 与当前文档漂移：%s', (mutation) => {
     const findings = collectLynxContractFindings({ readFile: (file) => {
       const source = fs.readFileSync(file, 'utf8')

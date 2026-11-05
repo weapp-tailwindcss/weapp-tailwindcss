@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { PassThrough } from 'node:stream'
 import { execa } from 'execa'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -22,12 +23,12 @@ afterEach(async () => {
   }
 })
 
-async function fixture() {
+async function fixture(options?: Parameters<typeof createIosScreenshotDiagnostics>[2]) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'ios-screenshot-diagnostics-'))
   directories.push(directory)
   const output = path.join(directory, 'frame-1.png')
   await fs.writeFile(output, new Uint8Array(2048))
-  const diagnostics = createIosScreenshotDiagnostics(directory, 'unit-run')
+  const diagnostics = createIosScreenshotDiagnostics(directory, 'unit-run', options)
   const read = async () => JSON.parse(await fs.readFile(path.join(directory, 'ios-screenshots.json'), 'utf8'))
   const streams = { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough() }
   const events = Object.assign(new EventEmitter(), { pid: 42, ...streams })
@@ -41,6 +42,30 @@ async function fixture() {
   vi.mocked(execa).mockReset().mockReturnValue(command)
   return { directory, output, diagnostics, read, events, streams, resolve, reject }
 }
+
+it.each(['acceptance', 'diagnostic-only'] as const)('%s 截图只允许失败诊断主动采样，原命令仍真实执行', async (purpose) => {
+  const identity = vi.fn(async () => ({ pid: 42, parentPid: process.pid, startedAt: 'Wed Nov 4 23:50:40 2026', executable: path.join(path.sep, 'Xcode', 'simctl') }))
+  const sample = vi.fn(async () => ({ status: 'complete' }))
+  const context = await fixture({ platform: 'darwin', identity, sample })
+  Object.assign(context.events, { exitCode: null, signalCode: null })
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
+  const owner = new AbortController()
+  const captured = purpose === 'diagnostic-only'
+    ? context.diagnostics.captureDiagnostic(context.output, 'bound-device', owner.signal)
+    : context.diagnostics.capture(context.output, 'bound-device', owner.signal)
+  context.events.emit('spawn')
+  await vi.advanceTimersByTimeAsync(5_000)
+  context.events.emit('exit', 0, null)
+  context.events.emit('close', 0, null)
+  context.resolve()
+  await expect(captured).resolves.toBe(purpose === 'diagnostic-only' ? undefined : context.output)
+  await context.diagnostics.flush()
+  expect(identity).toHaveBeenCalledTimes(purpose === 'diagnostic-only' ? 1 : 0)
+  expect(sample).toHaveBeenCalledTimes(purpose === 'diagnostic-only' ? 1 : 0)
+  expect(execa).toHaveBeenCalledTimes(1)
+  expect((await context.read()).records[0]).toMatchObject({ purpose, status: 'succeeded', settledAtMs: 5_000, eventLoop: { stopped: true } })
+  expect(vi.getTimerCount()).toBe(0)
+})
 
 it('原命令与一次 stat 保持不变；成功路径只记内存，最终排空时才写诊断', async () => {
   const context = await fixture()

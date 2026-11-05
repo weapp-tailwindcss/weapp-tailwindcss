@@ -56,3 +56,24 @@ export async function awaitNativeExitCompletion(completion: PromiseLike<unknown>
     clearTimeout(timer)
   }
 }
+
+/** 任一启动门禁失败时先取消并排空报告等待，避免它在收尾期间再次恢复应用。 */
+export async function awaitNativeReportWithLaunch<T>(launch: Promise<void>, wait: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const owner = new AbortController()
+  const report = wait(owner.signal)
+  try {
+    return (await Promise.all([launch, report]))[1]
+  }
+  catch (error) {
+    owner.abort(error)
+    try {
+      await report
+    }
+    catch (peer) {
+      if (peer !== error && peer !== owner.signal.reason && !(peer instanceof Error && peer.name === 'AbortError' && peer.cause === owner.signal.reason)) {
+        throw new AggregateError([error, peer], '原生启动与报告等待收尾均失败')
+      }
+    }
+    throw error
+  }
+}

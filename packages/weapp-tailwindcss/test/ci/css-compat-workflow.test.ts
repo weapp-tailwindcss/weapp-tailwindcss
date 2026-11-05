@@ -22,7 +22,7 @@ describe('独立 CSS 兼容内核 CI 契约', () => {
     expect(workflow.env.CI).toBe('1')
     expect(job.strategy['fail-fast']).toBe(false)
     expect(job.strategy.matrix).toEqual({
-      os: ['ubuntu-latest', 'macos-latest', 'windows-latest'],
+      os: ['ubuntu-latest', 'macos-15', 'windows-latest'],
       node: [22, 24],
     })
     expect(job['runs-on']).toBe('${{ matrix.os }}')

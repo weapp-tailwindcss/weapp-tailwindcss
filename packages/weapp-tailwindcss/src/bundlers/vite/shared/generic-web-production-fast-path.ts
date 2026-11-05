@@ -101,7 +101,7 @@ export function createGenericWebProductionBundleHooks(
         command: config?.command,
         allowWebProductionFastPath: options.allowWebProductionFastPath,
         hasGeneratedCss: options.getHasGeneratedCss(),
-        requiresSourceCandidateState: options.requiresSourceCandidateState,
+        requiresSourceCandidateState: options.requiresSourceCandidateState === true,
         isWebGeneratorTarget: options.getIsWebGeneratorTarget(),
         watch: config?.build?.watch,
       })

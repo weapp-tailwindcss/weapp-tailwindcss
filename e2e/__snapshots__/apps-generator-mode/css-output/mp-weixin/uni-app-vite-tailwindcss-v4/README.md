@@ -7,7 +7,7 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/mp-weixin/app.wxss
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 53689 | 214 | false | false | false | true | true | false | true |
+| 53705 | 214 | false | false | false | true | true | false | true |
 
 ## Generator CSS Files
 
@@ -28,7 +28,7 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/mp-weixin/app.wxss
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 23 | 0 | false | false | false | false | false | false | false |
 | `main.wxss` | [artifacts/main.wxss](artifacts/main.wxss) | 29134 | 187 | false | false | false | true | true | false | true |
-| `components/HelloWorld.wxss` | [artifacts/components__HelloWorld.wxss](artifacts/components__HelloWorld.wxss) | 481 | 1 | false | false | false | false | false | false | false |
+| `components/HelloWorld.wxss` | [artifacts/components__HelloWorld.wxss](artifacts/components__HelloWorld.wxss) | 497 | 1 | false | false | false | false | false | false | false |
 | `pages-order/pages/home/home.wxss` | [artifacts/pages-order__pages__home__home.wxss](artifacts/pages-order__pages__home__home.wxss) | 9507 | 51 | false | false | false | false | false | false | true |
 | `pages-order/pages/user/user.wxss` | [artifacts/pages-order__pages__user__user.wxss](artifacts/pages-order__pages__user__user.wxss) | 9507 | 51 | false | false | false | false | false | false | true |
 | `pages/index/index.wxss` | [artifacts/pages__index__index.wxss](artifacts/pages__index__index.wxss) | 1236 | 5 | false | false | false | false | false | false | true |

@@ -12,7 +12,7 @@ import { captureNativePhaseSources, validateNativePhaseSources } from './phase-s
 import { validateReactNativeReport } from './reports'
 
 /** 每阶段只写一次固定目录；根目录的兼容入口允许跟随最新阶段更新。 */
-export async function captureNativePhase(projectRoot: string, directory: string, report: ReactNativeReport) {
+export async function captureNativePhase(projectRoot: string, directory: string, report: ReactNativeReport, staticInputFile?: string) {
   const phase = nativePhaseForRevision(report.revision)
   const indexFile = path.join(directory, phaseIndexName)
   const index = await readFile(indexFile, 'utf8').then(source => JSON.parse(source) as NativePhaseIndex).catch((error) => {
@@ -31,7 +31,7 @@ export async function captureNativePhase(projectRoot: string, directory: string,
   const destination = nativePhaseDirectory(directory, phase)
   await mkdir(destination)
   await writeFile(path.join(destination, 'report.json'), `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' })
-  await captureNativeEncoding(projectRoot, destination, report)
+  await captureNativeEncoding(projectRoot, destination, report, staticInputFile)
   await captureNativePhaseSources(projectRoot, destination)
   if (report.platform === 'web') {
     await writeFile(path.join(destination, 'hmr-observation.json'), JSON.stringify({ schemaVersion: 1, evidence: 'not-applicable', platform: 'web' }), { flag: 'wx' })

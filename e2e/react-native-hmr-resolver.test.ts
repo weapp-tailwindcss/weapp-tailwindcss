@@ -59,6 +59,12 @@ describe('准确 HMR resolver 接线', () => {
     expect(receipt).toMatchObject({ evidence: 'resolver-result', resolvedPath: f.client, clientPackage: { version: 'actual-resolver-version' } })
     expect(receipt.clientSourceSha256).toBe(createHash('sha256').update(readFileSync(f.client)).digest('hex'))
     expect(readFileSync(path.join(f.directory, `${platform}-client-source.js`))).toEqual(readFileSync(f.client))
+    const staticResolver = readFileSync(new URL('./react-native/runtime-static-config.cjs', import.meta.url))
+    expect(receipt.observers.find((entry: { name: string }) => entry.name === 'runtime-static-resolver.cjs')).toMatchObject({
+      sha256: createHash('sha256').update(staticResolver).digest('hex'),
+      byteLength: staticResolver.length,
+    })
+    expect(readFileSync(path.join(f.directory, 'runtime-static-resolver.cjs'))).toEqual(staticResolver)
     config.resolver.resolveRequest({ originModulePath: f.utilitiesPath }, originalAlias, platform)
     expect(resolver.resolveRequest).toHaveBeenCalledTimes(2)
   })

@@ -111,6 +111,22 @@ function matrixCaseNames(rows: Array<Record<string, unknown>>) {
 }
 
 describe('ci workflows', () => {
+  it('PR 的 macOS 门禁固定受支持的 ARM 镜像，保留原生双架构', () => {
+    const { workflow } = readWorkflow('pr-gate.yml')
+    for (const name of ['platform-watch', 'platform-dev', 'windows-utilities']) {
+      const rows = workflow.jobs[name].strategy.matrix.include
+      const macosRows = rows.filter((row: Record<string, unknown>) => String(row.os).startsWith('macos-'))
+      expect(macosRows.length).toBeGreaterThan(0)
+      expect(macosRows.every((row: Record<string, unknown>) => row.os === 'macos-15')).toBe(true)
+    }
+    const native = readWorkflow('native.yml').workflow.jobs.native
+    expect(native.strategy.matrix.include).toEqual(expect.arrayContaining([
+      { runner: 'macos-15', target: 'aarch64-apple-darwin', suffix: 'darwin-arm64' },
+      { runner: 'macos-15-intel', target: 'x86_64-apple-darwin', suffix: 'darwin-x64' },
+    ]))
+    expect(native.strategy.matrix.include).toHaveLength(8)
+  })
+
   it('defines a stable PR gate with cross-platform smoke coverage', () => {
     const { workflow, source } = readWorkflow('pr-gate.yml')
     const platformJob = workflow.jobs['platform-watch']
@@ -305,12 +321,25 @@ describe('ci workflows', () => {
     const { workflow } = readWorkflow('react-native-compatibility.yml')
     const iosSteps: Array<Record<string, unknown>> = workflow.jobs.ios.steps
     const runStep = iosSteps.find(step => step.name === 'Run Expo iOS compatibility')
+    const buildIndex = iosSteps.findIndex(step => step.run === 'pnpm turbo run build --filter=@weapp-tailwindcss/react-native...')
+    const verificationIndex = iosSteps.findIndex(step => step.name === 'Verify iOS launch reconciliation')
+    expect(buildIndex).toBeGreaterThan(-1)
+    expect(buildIndex).toBeLessThan(verificationIndex)
 
     expect(runStep).toMatchObject({
-      env: { RN_IOS_HOST: '127.0.0.1' },
+      id: 'native_runtime',
+      env: {
+        RN_IOS_HOST: '127.0.0.1',
+        RN_RUNTIME_ARTIFACT_ROOT: '${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}',
+      },
       run: 'pnpm e2e:react-native:ios',
     })
     expect(readText('e2e/react-native/run-native.ts')).toContain("runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'")
+    expect(workflow.jobs.ios['timeout-minutes']).toBe(50)
+    expect(iosSteps.find(step => step.name === 'Upload interrupted iOS startup diagnostics')).toMatchObject({
+      if: "always() && steps.native_runtime.outcome != 'success'",
+      with: { path: '${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}/**' },
+    })
   })
 
   it('keeps the core CI quality gate on package changes', () => {

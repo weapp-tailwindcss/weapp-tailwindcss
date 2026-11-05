@@ -3,8 +3,10 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { awaitIosApplicationEnvironment, iosApplicationAbi } from './react-native/ios-architecture'
 import { buildAndLaunchIos } from './react-native/ios-build'
+import { createIosLaunchPublication } from './react-native/ios-launch-publication'
 import { withNativeEnvironment } from './react-native/native-environment'
 import { reportFromStaticEvidence } from './react-native/reports'
 
@@ -195,4 +197,47 @@ it('runner 收到错误应用的回执仍阻断，不能把其它 ABI 写入三�
   await expect(awaitIosApplicationEnvironment(Promise.resolve('ready'), environment, readReceipt, device, bundleId)).rejects.toThrow('ABI')
   expect(readReceipt).toHaveBeenCalledOnce()
   expect(environment.abi).toBe('simulator')
+})
+
+it.each(['removed', 'active'])('context 只在完整 CLI 和有效清理回执后发布：%s', async (status) => {
+  const current = await fixture()
+  await buildAndLaunchIos(current.options, current.execute)
+  const evidence = await current.receipt()
+  evidence.scratch.status = status
+  let close!: () => void
+  const cli = new Promise<void>(resolve => close = resolve)
+  const environment = { abi: 'simulator' }
+  const readReceipt = vi.fn(async () => JSON.stringify(evidence))
+  const readPublication = vi.fn(async () => syntheticRuntimeInstallation().publication)
+  const launch = createIosLaunchPublication(readPublication)
+  launch.bind(awaitIosApplicationEnvironment(cli, environment, readReceipt, device, bundleId))
+  const publication = launch.read(new AbortController().signal)
+  const result = publication.then(value => ({ value }), error => ({ error }))
+  expect(readReceipt).not.toHaveBeenCalled()
+  expect(readPublication).not.toHaveBeenCalled()
+  close()
+  if (status === 'removed') {
+    expect(await result).toEqual({ value: syntheticRuntimeInstallation().publication })
+    expect(environment.abi).toBe('arm64')
+    expect(readPublication).toHaveBeenCalledOnce()
+  }
+  else {
+    expect(await result).toEqual({ error: expect.objectContaining({ message: expect.stringContaining('ABI') }) })
+    expect(environment.abi).toBe('simulator')
+    expect(readPublication).not.toHaveBeenCalled()
+  }
+  expect(readReceipt).toHaveBeenCalledOnce()
+})
+
+it('取消后的真实回执读取不能晚到修改应用 ABI', async () => {
+  const controller = new AbortController()
+  const environment = { abi: 'unchanged' }
+  const reason = new Error('startup deadline')
+  const read = vi.fn(async () => {
+    controller.abort(reason)
+    return '{}'
+  })
+  await expect(awaitIosApplicationEnvironment(Promise.resolve(), environment, read, device, bundleId, controller.signal)).rejects.toBe(reason)
+  expect(environment.abi).toBe('unchanged')
+  expect(read).toHaveBeenCalledOnce()
 })

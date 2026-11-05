@@ -43,13 +43,13 @@ async function fixture() {
   return { output, child, resolve, reject, sample, diagnostics, read }
 }
 
-it('慢截图成功立即返回，不等待已取消的诊断；flush排空后保存迟到状态', async () => {
+it('失败诊断截图成功不返回正式路径，flush 排空采样后保存迟到状态', async () => {
   const context = await fixture()
   let completeSample!: (value: { status: string }) => void
   context.sample.mockReturnValue(new Promise((resolve) => {
     completeSample = resolve
   }))
-  const captured = context.diagnostics.capture(context.output, 'bound-device')
+  const captured = context.diagnostics.captureDiagnostic(context.output, 'bound-device', new AbortController().signal)
   context.child.emit('spawn')
   await vi.advanceTimersByTimeAsync(4_000)
   expect(context.sample).toHaveBeenCalledTimes(1)
@@ -58,7 +58,7 @@ it('慢截图成功立即返回，不等待已取消的诊断；flush排空后�
   context.child.emit('exit', 0, null)
   context.child.emit('close', 0, null)
   context.resolve()
-  await expect(captured).resolves.toBe(context.output)
+  await expect(captured).resolves.toBeUndefined()
   expect(signal.aborted).toBe(true)
   let flushed = false
   const flushing = context.diagnostics.flush().then(() => {
@@ -76,7 +76,7 @@ it('截图原错与采样失败分别保留，诊断失败不覆盖或转换截�
   const context = await fixture()
   context.sample.mockRejectedValue(new Error('sample permission denied'))
   const primary = new Error('screenshot bridge failed')
-  const captured = context.diagnostics.capture(context.output, 'bound-device')
+  const captured = context.diagnostics.captureDiagnostic(context.output, 'bound-device', new AbortController().signal)
   const rejected = expect(captured).rejects.toBe(primary)
   context.child.emit('spawn')
   await vi.advanceTimersByTimeAsync(4_000)
@@ -97,7 +97,7 @@ it('外部取消立即转发到自有诊断，原截图错误不变且清理失�
   }))
   const controller = new AbortController()
   const primary = new Error('original pair deadline')
-  const captured = context.diagnostics.capture(context.output, 'bound-device', controller.signal)
+  const captured = context.diagnostics.captureDiagnostic(context.output, 'bound-device', controller.signal)
   const rejected = expect(captured).rejects.toBe(primary)
   context.child.emit('spawn')
   await vi.advanceTimersByTimeAsync(4_000)

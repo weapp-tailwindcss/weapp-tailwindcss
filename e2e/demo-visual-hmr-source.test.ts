@@ -68,6 +68,34 @@ describe('HBuilderX visual HMR source', () => {
     expect(matchRuntimeStyles({ ...actual, __attributeNames: [] }, assertion)).toBe(false)
   })
 
+  it.each(['append', 'touch'] as const)('preserves a complete same-file %s mutation and rollback', async (kind) => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'visual-hmr-same-file-'))
+    const name = 'uni-app-x-vdom-tailwindcss-v4'
+    const item = webCases.find(item => item.name === name)!
+    const step = item.hmrSteps[0]!
+    const mutation = step.sourceMutation
+    const file = path.resolve(root, item.sourceFile)
+    const original = `<template>\r\n${item.markerAnchor}\r\n</template>\r\n`
+    try {
+      await fs.mkdir(path.dirname(file), { recursive: true })
+      await fs.writeFile(file, original)
+      await fs.writeFile(path.join(root, 'main.css'), '@import "tailwindcss";\r\n')
+      step.sourceMutation = { file: item.sourceFile, [kind]: kind === 'append' ? '\n<!-- same-file appended -->' : true }
+      const config = createUniH5HmrVisualConfig(root, name)!
+      const restore = await config.mutate(root, 0)
+      const updated = await fs.readFile(file, 'utf8')
+      expect(updated).toContain(step.markerText)
+      expect(updated.includes('<!-- same-file appended -->')).toBe(kind === 'append')
+      expect(updated).not.toMatch(/(?<!\r)\n/)
+      await restore()
+      expect(await fs.readFile(file, 'utf8')).toBe(original)
+    }
+    finally {
+      step.sourceMutation = mutation
+      await fs.rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('replaces one live probe across steps and restores the original source', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'visual-hmr-source-'))
     const name = 'uni-app-vite-vue3-hbuilderx-tailwindcss-v4'

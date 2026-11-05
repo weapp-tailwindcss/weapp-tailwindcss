@@ -28,7 +28,7 @@ describe('本地命令生命周期的真实跨平台 CI 门禁', () => {
       { os: 'windows-latest', node: 22 },
       { os: 'windows-latest', node: 24 },
       { os: 'ubuntu-latest', node: 24 },
-      { os: 'macos-latest', node: 24 },
+      { os: 'macos-15', node: 24 },
     ]))
     expect(job.strategy['fail-fast']).toBe(false)
     expect(steps.filter(step => step.uses === './.github/actions/setup-pnpm')).toHaveLength(1)

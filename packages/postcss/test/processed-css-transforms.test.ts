@@ -27,7 +27,7 @@ describe('processed CSS ownership', () => {
     expect(removeCssRulesCoveredBySources(css, sources, {}, coverage)).toBe('.b[data-v-a]{color:red!important}')
     expect(removeCssRulesCoveredBySources(css, sources, { exactOnly: true }, coverage)).toBe(css)
     expect(removeCssRulesCoveredBySources('.a{', sources)).toBe('.a{')
-    expect([...coverage.declarationsBySelector.get('.a')!]).toEqual(['color:red', 'display:flex'])
+    expect(coverage.declarationsBySelector.get('.a')?.size).toBe(2)
   })
 
   it('delegates import identity while retaining platform cleanup and malformed fallbacks', () => {

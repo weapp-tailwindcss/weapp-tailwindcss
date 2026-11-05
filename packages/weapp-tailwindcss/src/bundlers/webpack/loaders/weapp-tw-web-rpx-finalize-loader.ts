@@ -25,16 +25,16 @@ const WebRpxFinalizeLoader: webpack.LoaderDefinitionFunction<WebpackCssImportRew
       }
       const result = await postcss([createWebRpxFinalizerPlugin()]).process(input, {
         from: this.resourcePath,
-        map: sourceMap || this.sourceMap ? { prev: sourceMap, inline: false, annotation: false } : false,
+        map: sourceMap || this.sourceMap ? { ...(sourceMap ? { prev: sourceMap } : {}), inline: false, annotation: false } : false,
       })
       if (result.css === input) {
         return { source, sourceMap, meta }
       }
       // css-loader 优先消费 PostCSS AST，必须与已转换的字符串保持同一版本。
-      const updatedMeta = meta?.ast?.type === 'postcss'
-        ? { ...meta, ast: { ...meta.ast, root: result.root } }
+      const updatedMeta = meta?.['ast']?.type === 'postcss'
+        ? { ...meta, ast: { ...meta['ast'], root: result.root } }
         : meta
-      return { source: result.css, sourceMap: result.map?.toJSON(), meta: updatedMeta }
+      return { source: result.css, sourceMap: result.map?.toString(), meta: updatedMeta }
     }
     return options?.run ? options.run(execute) : execute()
   }).then(result => callback(null, result.source, result.sourceMap, result.meta), error => callback(error))

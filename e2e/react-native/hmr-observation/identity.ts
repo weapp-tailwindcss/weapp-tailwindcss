@@ -6,6 +6,7 @@ export const hmrObserverSourceIdentity = [
   ['observer-wrapper.cjs', new URL('../../../examples/react-native-expo/src/compatibility/hmr-observer-wrapper.cjs', import.meta.url)],
   ['observer-recorder.cjs', new URL('../../../examples/react-native-expo/src/compatibility/hmr-observation.cjs', import.meta.url)],
   ['observer-resolver.cjs', new URL('./config.cjs', import.meta.url)],
+  ['runtime-static-resolver.cjs', new URL('../runtime-static-config.cjs', import.meta.url)],
   ['observer-metro-config.js', new URL('../../../examples/react-native-expo/metro.config.js', import.meta.url)],
 ].map(([name, file]) => {
   const bytes = readFileSync(file as URL)

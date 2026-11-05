@@ -65,6 +65,7 @@ function withMetroHmrObservation(config, environment = process.env) {
     ['observer-wrapper.cjs', wrapper],
     ['observer-recorder.cjs', path.join(path.dirname(wrapper), 'hmr-observation.cjs')],
     ['observer-resolver.cjs', __filename],
+    ['runtime-static-resolver.cjs', path.resolve(__dirname, '..', 'runtime-static-config.cjs')],
     ['observer-metro-config.js', metroConfigPath],
   ].map(([name, file]) => {
     const bytes = readFileSync(file)

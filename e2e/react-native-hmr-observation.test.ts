@@ -1,4 +1,5 @@
 import type { HmrObservationSnapshot } from '../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
+import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -77,7 +78,27 @@ describe('HMR 完成时观察独立重放', () => {
     const root = await fixture()
     const result = await validateNativeHmrObservations(root, 'ios')
     expect(result.phases).toHaveLength(3)
+    expect(result.files).toContain(path.join(root, 'hmr-client', 'runtime-static-resolver.cjs'))
     expect(result).toMatchObject({ initialBundle: 'not-captured', evaluator: 'not-captured', modulePhaseCausality: 'not-captured' })
+  })
+
+  it.each(['missing', 'modified', 'forged-digest'])('拒绝 %s 的本轮 static resolver 原件', async (kind) => {
+    const root = await fixture()
+    const file = path.join(root, 'hmr-client', 'runtime-static-resolver.cjs')
+    if (kind === 'missing') {
+      await rm(file)
+    }
+    else {
+      const source = 'module.exports = { forged: true }'
+      await writeFile(file, source)
+      if (kind === 'forged-digest') {
+        const receiptFile = path.join(root, 'hmr-client', 'ios-resolver.json')
+        const receipt = JSON.parse(await readFile(receiptFile, 'utf8'))
+        Object.assign(receipt.observers.find((entry: { name: string }) => entry.name === 'runtime-static-resolver.cjs'), { sha256: createHash('sha256').update(source).digest('hex'), byteLength: source.length })
+        await writeFile(receiptFile, JSON.stringify(receipt))
+      }
+    }
+    await expect(validateNativeHmrObservations(root, 'ios')).rejects.toThrow()
   })
 
   it.each(['message-prefix', 'runtime-reload', 'resolver-bytes', 'missing-phase', 'installation'])('即使改写摘要也拒绝%s', async (kind) => {

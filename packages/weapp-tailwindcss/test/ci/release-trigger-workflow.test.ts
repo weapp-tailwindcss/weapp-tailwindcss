@@ -28,8 +28,8 @@ describe('main 自动准备与合并发布的触发边界', () => {
   it('合并事件只调度 main 的原工作流，不获取 OIDC 或直接发布', () => {
     const release = workflow('release.yml')
     const dispatch = release.jobs.dispatch
-    expect(dispatch.permissions).toEqual({ contents: 'read', 'pull-requests': 'read', actions: 'write' })
-    expect(dispatch.steps[0].with).toMatchObject({ ref: 'main', 'fetch-depth': 0, 'persist-credentials': false })
+    expect(dispatch.permissions).toEqual({ 'contents': 'read', 'pull-requests': 'read', 'actions': 'write' })
+    expect(dispatch.steps[0].with).toMatchObject({ 'ref': 'main', 'fetch-depth': 0, 'persist-credentials': false })
     expect(dispatch.steps.find((step: any) => step.run).run).toBe('node scripts/ci/release-dispatch.mjs')
     expect(dispatch.env.GH_TOKEN).toBe('${{ github.token }}')
     expect(release.jobs.release.if).toContain('github.event_name != \'pull_request_target\'')
@@ -139,7 +139,10 @@ describe('main 自动准备与合并发布的触发边界', () => {
     for (const name of ['react-native-compatibility.yml', 'lynx-native.yml', 'website-seo-quality.yml']) {
       expect(workflow(name).concurrency['cancel-in-progress']).toBe(true)
     }
-    // web 与 iOS 并行，Android 在 web 后启动，最多同时执行两个 Expo job。
-    expect(workflow('react-native-compatibility.yml').jobs.android.needs).toEqual(['scope', 'web'])
+    // APK 可与 Web、iOS 并行构建，Android 验收只消费构建成功的同轮产物。
+    const reactNative = workflow('react-native-compatibility.yml')
+    expect(reactNative.jobs['android-build'].needs).toBe('scope')
+    expect(reactNative.jobs.android.needs).toEqual(['scope', 'web', 'android-build'])
+    expect(reactNative.jobs.android.if).toContain('needs.android-build.result == \'success\'')
   })
 })

@@ -93,12 +93,14 @@ jobs:
           include-hidden-files: true
           retention-days: 14
 
-  android:
-    needs: [scope, web]
-    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true'
-    name: Expo Android 11 / API 30
+  android-build:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    name: Build Expo Android debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    outputs:
+      apk_id: ${{ steps.apk.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -121,6 +123,56 @@ jobs:
           pnpm --filter @weapp-tailwindcss/example-react-native-expo exec expo prebuild --platform android --no-install
           cd examples/react-native-expo/android
           ./gradlew app:assembleDebug -PreactNativeArchitectures=x86_64
+      - name: Record APK integrity and source identity
+        working-directory: examples/react-native-expo/android/app/build/outputs/apk/debug
+        run: |
+          sha256sum app-debug.apk > app-debug.apk.sha256
+          git rev-parse HEAD > source-head.txt
+      - uses: actions/upload-artifact@v7
+        id: apk
+        with:
+          name: react-native-android-apk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            examples/react-native-expo/android/app/build/outputs/apk/debug/app-debug.apk
+            examples/react-native-expo/android/app/build/outputs/apk/debug/app-debug.apk.sha256
+            examples/react-native-expo/android/app/build/outputs/apk/debug/source-head.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    needs: [scope, web, android-build]
+    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && needs.android-build.result == 'success'
+    name: Expo Android 11 / API 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - run: pnpm --filter @weapp-tailwindcss/example-react-native-expo exec expo prebuild --platform android --no-install
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          artifact-ids: ${{ needs.android-build.outputs.apk_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/react-native-android-apk
+      - name: Verify APK integrity and source identity
+        working-directory: ${{ runner.temp }}/react-native-android-apk
+        run: |
+          test "$(cat source-head.txt)" = "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+          sha256sum --check app-debug.apk.sha256
       - name: Enable hardware acceleration for the current runner
         shell: bash
         run: |
@@ -136,9 +188,14 @@ jobs:
           cores: 2
           ram-size: 4096M
           heap-size: 512M
+          disk-size: 6G
           disable-animations: true
           disable-spellchecker: true
-          script: RN_ANDROID_DEVICE_ID=emulator-5554 RN_ANDROID_BINARY=examples/react-native-expo/android/app/build/outputs/apk/debug/app-debug.apk pnpm e2e:react-native:android
+          script: |
+            df -h .
+            adb -s emulator-5554 shell df -h /data
+            RN_ANDROID_DEVICE_ID=emulator-5554 RN_ANDROID_BINARY="${{ runner.temp }}/react-native-android-apk/app-debug.apk" pnpm e2e:react-native:android
+            adb -s emulator-5554 shell df -h /data
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -154,6 +211,8 @@ jobs:
     name: Expo iOS 18.5
     runs-on: macos-15
     timeout-minutes: 50
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v6
         with:
@@ -165,11 +224,29 @@ jobs:
           check-latest: true
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: brew install cocoapods
+      - name: Verify ARM runner identity
+        run: |
+          test "$RUNNER_ARCH" = "ARM64"
+          test "$(uname -m)" = "arm64"
+          sw_vers
+          sysctl -n hw.ncpu hw.memsize
+      - name: Verify selected Xcode
+        run: xcodebuild -version
+      - name: Verify CoreSimulator toolchain contract
+        run: |
+          xcodebuild -checkFirstLaunchStatus
+          simctl_path="$(xcrun --find simctl)"
+          echo "simctl=$simctl_path"
+          test "$simctl_path" = "$DEVELOPER_DIR/usr/bin/simctl"
+          component_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' /Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/Resources/Info.plist)"
+          echo "CoreSimulator=$component_version"
+          test "$component_version" = "1051.17.8"
+      - name: Verify preinstalled CocoaPods
+        run: pod --version
       - run: pnpm install --frozen-lockfile
-      - name: Verify iOS launch reconciliation
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - name: Verify iOS launch reconciliation
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-ios-build.test.ts e2e/react-native-startup-owner.test.ts e2e/react-native-startup-command.test.ts e2e/react-native-runtime-static-cli.test.ts e2e/react-native-startup-process.test.ts e2e/react-native-startup-resource.test.ts e2e/react-native-native-http.test.ts e2e/react-native-runtime-static.test.ts e2e/react-native-ios-runtime.test.ts e2e/react-native-ios-architecture.test.ts e2e/react-native-ios-launch-publication.test.ts e2e/react-native-ios-capture-readiness.test.ts e2e/react-native-ios-context-request.test.ts e2e/react-native-failure-capture.test.ts e2e/react-native-metro-evidence.test.ts e2e/react-native-ios-screenshot.test.ts e2e/react-native-ios-screenshot-streams.test.ts e2e/react-native-ios-host-resources.test.ts e2e/react-native-ios-screenshot-sample.test.ts e2e/react-native-ios-screenshot-sample-lifecycle.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-launch-wait.test.ts e2e/react-native-runtime-artifacts.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-important-evidence.test.ts e2e/react-native-static-entry-scope.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts --update=none
       - name: Boot iOS simulator
         run: |
           udid="$(xcrun simctl create ReactNativeCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
@@ -177,14 +254,25 @@ jobs:
           xcrun simctl boot "$udid"
           xcrun simctl bootstatus "$udid" -b
       - name: Run Expo iOS compatibility
+        id: native_runtime
         env:
           RN_IOS_HOST: 127.0.0.1
+          RN_RUNTIME_ARTIFACT_ROOT: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}
         run: pnpm e2e:react-native:ios
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: react-native-ios-${{ github.run_id }}
           path: e2e/.artifacts/react-native-ios/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14
+      - name: Upload interrupted iOS startup diagnostics
+        if: always() && steps.native_runtime.outcome != 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: react-native-ios-startup-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/react-native-ios-${{ github.run_id }}-${{ github.run_attempt }}/**
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14

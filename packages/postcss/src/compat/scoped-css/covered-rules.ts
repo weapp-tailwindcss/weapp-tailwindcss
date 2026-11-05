@@ -2,8 +2,7 @@ import type { ComparableCssCoverage } from './coverage'
 import postcss from 'postcss'
 import { removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
-import { collectRootScopedComparableCssCoverage, isRuleCoveredByRootCss } from './coverage'
-import { normalizeCssSignatureValue } from './predicates'
+import { collectRootScopedComparableCssCoverage, createRootCssCoverageSignatures, isRuleCoveredByRootCss } from './coverage'
 
 export function removeCssRulesCoveredBySources(
   css: string,
@@ -14,11 +13,12 @@ export function removeCssRulesCoveredBySources(
   if (sources.length === 0 || css.trim().length === 0) {
     return css
   }
-  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(sources)
-  if (coverage.rules.size === 0 && coverage.declarationsBySelector.size === 0 && coverage.normalizedRuleCss.size === 0) {
+  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(sources, { exactOnly: options.exactOnly === true })
+  if (coverage.normalizedRuleCss.size === 0 && (options.exactOnly === true || (coverage.rules.size === 0 && coverage.declarationsBySelector.size === 0))) {
     return css
   }
   try {
+    const signatures = createRootCssCoverageSignatures(coverage)
     const root = postcss.parse(css)
     let changed = false
     root.walkRules((rule) => {
@@ -26,8 +26,8 @@ export function removeCssRulesCoveredBySources(
         return
       }
       if (
-        !coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
-        && (options.exactOnly === true || !isRuleCoveredByRootCss(rule, coverage))
+        !(coverage.normalizedRuleCss.size > 0 && coverage.normalizedRuleCss.has(signatures.node(rule)))
+        && (options.exactOnly === true || !isRuleCoveredByRootCss(rule, coverage, signatures))
       ) {
         return
       }

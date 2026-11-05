@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
-import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
+import { readTemplateDependencyContract, TEMPLATE_PACKAGE_MANAGER, verifyInstalledTemplateDependency } from './templateContract'
 import { inspectUniAppWebpackAppStyles } from './uni-app-webpack-app-styles'
 
 interface TemplateCase {
@@ -594,7 +594,7 @@ describe('templates build smoke', () => {
     expect(workspace).toContain('- .')
     expect(await fs.readFile(path.resolve(root, '.npmrc'), 'utf8')).toContain('registry=https://registry.npmjs.org/')
 
-    expect(isTemplateVersionCompatible(deps['weapp-tailwindcss'])).toBe(true)
+    await readTemplateDependencyContract(root)
     expect(deps['@tailwindcss/postcss'], `${item.name} should not register the official PostCSS generator`).toBeUndefined()
     expect(deps['@tailwindcss/vite'], `${item.name} should not register the official Vite generator`).toBeUndefined()
     expect(pkg.scripts?.postinstall ?? '', `${item.name} should not patch Tailwind CSS`).not.toMatch(/weapp-tw\s+patch/u)
@@ -619,9 +619,11 @@ describe('templates build smoke', () => {
 
   it.each(templateCases.filter(item => shouldRunCase(item.name)))('$name installs with its own frozen lockfile', async (item) => {
     const root = getTemplateRoot(item.name)
+    const dependencyContract = await readTemplateDependencyContract(root)
     if (process.env['E2E_TEMPLATE_SKIP_INSTALL'] !== '1') {
       await runPnpm(['install', '--frozen-lockfile'], root)
     }
+    await verifyInstalledTemplateDependency(root, dependencyContract)
     const family = templateLintFamilies.get(item.name)
     if (family) {
       await verifyFrameworkEslint(root, family)

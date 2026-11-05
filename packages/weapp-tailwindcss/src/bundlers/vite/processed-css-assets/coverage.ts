@@ -20,7 +20,7 @@ export function prepareImportedCssCoverage(importedCssSources: string[]) {
     return undefined
   }
   return {
-    coverage: collectRootScopedComparableCssCoverage(sources),
+    coverage: collectRootScopedComparableCssCoverage(sources, { exactOnly: true }),
     sources,
   }
 }
@@ -55,57 +55,67 @@ export function removeCssCoveredByRootStyleBundleSources(bundle: OutputBundle, f
   return removeCssCoveredByRootStyleSources(css, collectRootStyleBundleCssSources(bundle, file), undefined, options)
 }
 
-export function removeCssCoveredByRootStyleAssets(
-  bundle: OutputBundle,
-  options: {
-    cssMatcher: (file: string) => boolean
-    debug?: ((format: string, ...args: unknown[]) => void) | undefined
-    includeTailwindGeneratedCssAssets?: boolean | undefined
-    isViteProcessedCssAsset?: CssAssetMarkerMatcher | undefined
-    onUpdate?: ((file: string, original: string, generated: string) => void) | undefined
-    recordCssAssetResult?: CssAssetResultRecorder | undefined
-    subpackageRoots?: Set<string> | undefined
-    preserveSkylineTypography?: boolean | undefined
-  },
-) {
+interface RemoveRootCoveredCssAssetOptions {
+  cssMatcher: (file: string) => boolean
+  debug?: ((format: string, ...args: unknown[]) => void) | undefined
+  includeTailwindGeneratedCssAssets?: boolean | undefined
+  isViteProcessedCssAsset?: CssAssetMarkerMatcher | undefined
+  onUpdate?: ((file: string, original: string, generated: string) => void) | undefined
+  recordCssAssetResult?: CssAssetResultRecorder | undefined
+  subpackageRoots?: Set<string> | undefined
+  preserveSkylineTypography?: boolean | undefined
+}
+
+function resolveRootCoverageAsset(bundleFile: string, output: OutputBundle[string], options: RemoveRootCoveredCssAssetOptions) {
+  if (output.type !== 'asset') {
+    return
+  }
+  const file = getAssetFile(bundleFile, output)
+  const rawSource = readAssetSource(output)
+  const hasScopedCss = hasVueScopedAttr(rawSource)
+  const shouldIncludeTailwindGeneratedCssAsset = options.includeTailwindGeneratedCssAssets === true
+    && /tailwindcss v\d/i.test(rawSource)
+    && isCssOutputFile(file)
+    && !isMiniProgramStyleOutputFile(file)
+  if (
+    !(options.cssMatcher(file) || (hasScopedCss && isCssOutputFile(file)) || shouldIncludeTailwindGeneratedCssAsset)
+    || rawSource.trim().length === 0
+    || isRootStyleOutputFile(file)
+    || (
+      options.isViteProcessedCssAsset?.(output, file) === true
+      && !hasScopedCss
+      && !shouldIncludeTailwindGeneratedCssAsset
+    )
+    || (
+      options.subpackageRoots != null
+      && isSubpackageOutputFile(file, options.subpackageRoots)
+    )
+  ) {
+    return
+  }
+  return { file, rawSource, hasScopedCss }
+}
+
+export function removeCssCoveredByRootStyleAssets(bundle: OutputBundle, options: RemoveRootCoveredCssAssetOptions) {
   let updated = 0
   let previousRootSources: string[] | undefined
   let rootCoverage: ComparableCssCoverage | undefined
-  for (const [bundleFile, output] of Object.entries(bundle)) {
-    if (output.type !== 'asset') {
+  const assets = Object.entries(bundle)
+  // 同批已有 scoped 消费方时一次建全；普通资产先处理不能导致根样式再解析一遍。
+  const needsFullCoverage = assets.some(([file, output]) => resolveRootCoverageAsset(file, output, options)?.hasScopedCss)
+  for (const [bundleFile, output] of assets) {
+    const asset = resolveRootCoverageAsset(bundleFile, output, options)
+    if (!asset || output.type !== 'asset') {
       continue
     }
-    const file = getAssetFile(bundleFile, output)
-    const rawSource = readAssetSource(output)
-    const hasScopedCss = hasVueScopedAttr(rawSource)
-    const hasTailwindGeneratedCss = /tailwindcss v\d/i.test(rawSource)
-    const shouldIncludeTailwindGeneratedCssAsset = options.includeTailwindGeneratedCssAssets === true
-      && hasTailwindGeneratedCss
-      && isCssOutputFile(file)
-      && !isMiniProgramStyleOutputFile(file)
-    if (
-      !(options.cssMatcher(file) || (hasScopedCss && isCssOutputFile(file)) || shouldIncludeTailwindGeneratedCssAsset)
-      || rawSource.trim().length === 0
-      || isRootStyleOutputFile(file)
-      || (
-        options.isViteProcessedCssAsset?.(output, file) === true
-        && !hasScopedCss
-        && !shouldIncludeTailwindGeneratedCssAsset
-      )
-      || (
-        options.subpackageRoots != null
-        && isSubpackageOutputFile(file, options.subpackageRoots)
-      )
-    ) {
-      continue
-    }
+    const { file, rawSource, hasScopedCss } = asset
     const rootSources = collectRootStyleBundleCssSources(bundle, file)
     // 只在本轮产物处理内复用；回调修改根样式时必须重新建立覆盖索引。
     if (!previousRootSources
       || rootSources.length !== previousRootSources.length
       || rootSources.some((source, index) => source !== previousRootSources?.[index])) {
       previousRootSources = rootSources
-      rootCoverage = collectRootScopedComparableCssCoverage(rootSources)
+      rootCoverage = collectRootScopedComparableCssCoverage(rootSources, { exactOnly: !hasScopedCss && !needsFullCoverage })
     }
     const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage, { preserveSkylineTypography: options.preserveSkylineTypography === true })
     if (nextCss === rawSource) {

@@ -5,6 +5,10 @@
   "versionName": "0.0.0",
   "versionCode": "1",
   "mp-weixin": {
-    "appid": "touristappid"
+    "appid": "touristappid",
+    "darkmode": true
+  },
+  "mp-alipay": {
+    "darkmode": true
   }
 }

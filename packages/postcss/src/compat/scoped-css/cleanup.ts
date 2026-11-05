@@ -5,8 +5,8 @@ import { removeUnusedMiniProgramContentInit } from '../mini-program-css'
 import { hasNonCommentCss } from '../processed-css/cleanup'
 import { containsSkylineTypographyReset, isSkylineTypographyResetRule, retainSkylineTypographyResets } from '../tailwindcss-v4/skyline-typography'
 import { isTailwindRuntimePropertyRule } from '../uni-app-x-author-apply'
-import { collectRootScopedComparableCssCoverage, createAtRuleCoverageKey, isRuleCoveredByRootCss } from './coverage'
-import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule, normalizeCssSignatureValue } from './predicates'
+import { collectRootScopedComparableCssCoverage, createRootCssCoverageSignatures, isRuleCoveredByRootCss } from './coverage'
+import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule } from './predicates'
 
 function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[], preserveRuntimeProperties = false, preserveSkylineTypography = false) {
   if (!hasVueScopedAttr(css)) {
@@ -14,6 +14,7 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
   }
   const hasScopedTailwindGeneratedCss = /tailwindcss v\d/i.test(css)
   const coverage = collectRootScopedComparableCssCoverage(rootSources)
+  const signatures = createRootCssCoverageSignatures(coverage)
   try {
     const root = postcss.parse(css)
     let changed = false
@@ -31,7 +32,7 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
         return
       }
       if (
-        isRuleCoveredByRootCss(rule, coverage)
+        isRuleCoveredByRootCss(rule, coverage, signatures)
         || (
           hasScopedTailwindGeneratedCss
           && isLikelyTailwindGlobalRule(rule)
@@ -54,7 +55,7 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
         return
       }
       if (
-        coverage.atRules.has(createAtRuleCoverageKey(atRule))
+        (coverage.atRules.size > 0 && coverage.atRules.has(signatures.node(atRule)))
         || (!preserveRuntimeProperties && isLikelyTailwindPropertyAtRule(atRule))
         || isLikelyTailwindLayerOrderAtRule(atRule)
       ) {
@@ -91,7 +92,8 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
   ) {
     return css
   }
-  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(rootSources)
+  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(rootSources, { exactOnly: !hasScopedCss })
+  const signatures = createRootCssCoverageSignatures(coverage)
   let nextCss = css
   try {
     const root = postcss.parse(css)
@@ -101,11 +103,11 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
         return
       }
       if (
-        coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
+        (coverage.normalizedRuleCss.size > 0 && coverage.normalizedRuleCss.has(signatures.node(rule)))
         || (
           hasScopedCss
           && (
-            isRuleCoveredByRootCss(rule, coverage)
+            isRuleCoveredByRootCss(rule, coverage, signatures)
             || (hasScopedTailwindGeneratedCss && isLikelyTailwindGlobalRule(rule))
             || isUnscopedMiniProgramTailwindPreflightRule(rule)
             || isScopedMiniProgramTailwindContentInitRule(rule)
@@ -128,7 +130,7 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
           return
         }
         if (
-          coverage.atRules.has(createAtRuleCoverageKey(atRule))
+          (coverage.atRules.size > 0 && coverage.atRules.has(signatures.node(atRule)))
           || isLikelyTailwindPropertyAtRule(atRule)
           || isLikelyTailwindLayerOrderAtRule(atRule)
         ) {

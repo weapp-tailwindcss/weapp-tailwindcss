@@ -1,10 +1,59 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { expect, it, vi } from 'vitest'
 import { createNativeCaptureBudget, NATIVE_CAPTURE_DRAIN_TIMEOUT, NATIVE_CAPTURE_TIMEOUT } from './react-native/capture-budget'
 import { publishAfterCapture } from './react-native/capture-cleanup'
 import { createRuntimeArtifacts } from './react-native/runtime-artifacts'
+import { createNativeStartupProgress } from './react-native/startup-progress'
+
+it('任务专属临时根保留中断诊断，正式归档前不写 workspace 或清理其它会话', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-interrupted-'))
+  const temporaryRoot = path.join(root, 'runner-temp', 'current-run')
+  const destination = path.join(root, 'workspace', 'evidence')
+  const identity = { version: 1 as const, runId: 'interrupted', target: 'react-native-ios', producer: 'react-native' as const, invocationId: 'current' }
+  const session = await createRuntimeArtifacts(destination, identity, temporaryRoot)
+  const peer = path.join(temporaryRoot, 'unrelated.txt')
+  const log = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+  try {
+    await fs.writeFile(peer, 'keep')
+    expect(path.dirname(session.directory)).toBe(temporaryRoot)
+    const progress = createNativeStartupProgress(session.directory, identity)
+    await progress('environment', 'started', { deadline: Date.now() + 30_000, signal: new AbortController().signal })
+    const [file] = await fs.readdir(path.join(session.directory, 'startup-progress'))
+    expect(JSON.parse(await fs.readFile(path.join(session.directory, 'startup-progress', file!), 'utf8'))).toMatchObject({ ...identity, stage: 'environment', status: 'started' })
+    await expect(fs.access(destination)).rejects.toMatchObject({ code: 'ENOENT' })
+    await session.publish()
+    expect(await fs.readFile(peer, 'utf8')).toBe('keep')
+    expect(await fs.readdir(path.join(destination, 'startup-progress'))).toEqual([file])
+  }
+  finally {
+    log.mockRestore()
+    await fs.rm(root, { recursive: true, force: true })
+  }
+})
+
+it('过期阶段不能保存完成原件，失败诊断仍能绑定同一次调用', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-progress-expired-'))
+  const controller = new AbortController()
+  const log = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+  const identity = { version: 1 as const, runId: 'expired', target: 'react-native-ios', producer: 'react-native' as const, invocationId: 'same-run' }
+  try {
+    const progress = createNativeStartupProgress(root, identity)
+    const error = new Error('native startup deadline')
+    controller.abort(error)
+    await expect(progress('environment', 'completed', { deadline: Date.now() - 1, signal: controller.signal })).rejects.toBe(error)
+    await expect(fs.access(path.join(root, 'startup-progress'))).rejects.toMatchObject({ code: 'ENOENT' })
+    await progress('environment', 'failed', { deadline: Date.now() - 1, signal: controller.signal, error })
+    const [file] = await fs.readdir(path.join(root, 'startup-progress'))
+    expect(JSON.parse(await fs.readFile(path.join(root, 'startup-progress', file!), 'utf8'))).toMatchObject({ ...identity, status: 'failed', error: String(error) })
+  }
+  finally {
+    log.mockRestore()
+    await fs.rm(root, { recursive: true, force: true })
+  }
+})
 
 it.each(['resolve', 'reject'] as const)('首次清理超时必须随最终归档保留，即使真实操作迟到 %s', async (outcome) => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-cleanup-history-'))
@@ -146,5 +195,25 @@ it('keeps live Metro evidence outside the workspace and publishes the complete s
   finally {
     await fs.rm(workspace, { recursive: true, force: true })
     await fs.rm(session.directory, { recursive: true, force: true })
+  }
+})
+
+it('rename 后取消会移除本次未接受的 completed 事件', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-progress-rename-'))
+  const controller = new AbortController()
+  const identity = { version: 1 as const, runId: 'cancelled-rename', target: 'react-native-ios', producer: 'react-native' as const, invocationId: 'same-run' }
+  const rename = fs.rename.bind(fs)
+  const reason = new Error('cancelled during rename')
+  const injected = vi.spyOn(fs, 'rename').mockImplementationOnce(async (from, to) => {
+    await rename(from, to)
+    controller.abort(reason)
+  })
+  try {
+    await expect(createNativeStartupProgress(root, identity)('environment', 'completed', { deadline: Date.now() + 30_000, signal: controller.signal })).rejects.toBe(reason)
+    expect(await fs.readdir(path.join(root, 'startup-progress'))).toEqual([])
+  }
+  finally {
+    injected.mockRestore()
+    await fs.rm(root, { recursive: true, force: true })
   }
 })

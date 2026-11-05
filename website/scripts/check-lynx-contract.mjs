@@ -166,10 +166,10 @@ export function collectLynxContractFindings({
 
   const sources = new Map(docPaths.map(file => [file, readFile(file)]))
   const commonFacts = [
-    adapter.version,
     adapter.engines.node,
-    core.version,
     core.engines.node,
+    'https://www.npmjs.com/package/@weapp-tailwindcss/lynx',
+    'https://www.npmjs.com/package/weapp-tailwindcss',
     example.devDependencies['@lynx-js/rspeedy'],
     example.dependencies?.['@lynx-js/react-rsbuild-plugin'] ?? example.devDependencies?.['@lynx-js/react-rsbuild-plugin'],
     example.dependencies?.['@lynx-js/react'] ?? example.devDependencies?.['@lynx-js/react'],

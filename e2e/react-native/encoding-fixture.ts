@@ -15,7 +15,7 @@ export async function writeEncodingFixture(directory: string, report: ReactNativ
   const evidence = structuredClone(await (generatedFixture ??= collectStaticEvidence()))
   const manifest = options.manifest ?? evidence.manifest
   const source = JSON.stringify(manifest)
-  const staticInput = JSON.stringify({ schemaVersion: 2, fixtureHash: RN_FIXTURE_HASH, rawCss: evidence.rawCss, manifest: evidence.manifest, generation: evidence.generation })
+  const staticInput = JSON.stringify({ schemaVersion: 2, fixtureHash: RN_FIXTURE_HASH, report: { versions: report.versions }, rawCss: evidence.rawCss, manifest: evidence.manifest, generation: evidence.generation })
   const runtimeInput = evidence.generation.runtimeInput.config.source
   const digest = (value: string) => createHash('sha256').update(value).digest('hex')
   const ready = JSON.stringify({ manifestSha256: digest(source), ...options.publication ?? { revision: 'metro-publication', virtualPath: 'virtual.js' } })

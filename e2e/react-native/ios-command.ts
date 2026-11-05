@@ -8,8 +8,9 @@ export class IosCommandError extends Error {
   }
 }
 
-export async function executeIosCommand(file: string, args: string[], cwd: string, stream = false) {
-  const result = await execa(file, args, { cwd, stdout: stream ? ['pipe', 'inherit'] : 'pipe', stderr: ['pipe', 'inherit'], stdin: 'ignore', timeout: 1_800_000, reject: false })
+export async function executeIosCommand(file: string, args: string[], cwd: string, stream = false, cancelSignal?: AbortSignal) {
+  const result = await execa(file, args, { cwd, stdout: stream ? ['pipe', 'inherit'] : 'pipe', stderr: ['pipe', 'inherit'], stdin: 'ignore', timeout: 1_800_000, ...(cancelSignal ? { cancelSignal, forceKillAfterDelay: 1_000 } : {}), reject: false })
+  cancelSignal?.throwIfAborted()
   if (result.failed) {
     throw new IosCommandError(result.exitCode, result.stdout ?? '', result.stderr ?? '', result.shortMessage)
   }

@@ -23,36 +23,62 @@ export function replaceScopedDarkApplyProbeState(
 }
 
 function collectScopedDarkApplyProbeDeclarations(source: string) {
-  const baseBackgrounds = new Set<string>()
-  const darkBackgrounds = new Set<string>()
-  const displays = new Set<string>()
+  const groups = new Map<string, { baseBackgrounds: Set<string>, darkBackgrounds: Set<string>, displays: Set<string> }>()
+  const backgrounds = new Set<string>()
   const root = postcss.parse(source)
   root.walkRules((rule) => {
-    if (!rule.selector.includes('.hello-scss')) {
-      return
-    }
     let parent = rule.parent
     let isDark = false
+    let canProveState = true
     while (parent) {
-      if (parent.type === 'atrule'
-        && parent.name === 'media'
-        && parent.params.includes('prefers-color-scheme: dark')) {
-        isDark = true
-        break
+      if (parent.type === 'atrule') {
+        if (parent.name.toLowerCase() === 'media'
+          && /^\(\s*prefers-color-scheme\s*:\s*dark\s*\)$/i.test(parent.params)) {
+          isDark = true
+        }
+        else if (parent.name.toLowerCase() !== 'layer') {
+          canProveState = false
+        }
+      }
+      else if (parent.type !== 'root') {
+        canProveState = false
       }
       parent = parent.parent
     }
-    rule.walkDecls((declaration) => {
-      const value = declaration.value.toLowerCase()
-      if (declaration.prop === 'background-color') {
-        (isDark ? darkBackgrounds : baseBackgrounds).add(value)
+    for (const selector of rule.selectors) {
+      // 只观察已展开的探针主体；后代、伪元素与不同作用域不能共同证明一次更新。
+      const match = /^\.hello-scss(?:\.(data-v-[\w-]+)|\[(data-v-[\w-]+)\])$/.exec(selector.trim())
+      if (!match) {
+        continue
       }
-      else if (!isDark && declaration.prop === 'display') {
-        displays.add(value)
+      const identity = match[1] ?? match[2] ?? ''
+      let declarations = groups.get(identity)
+      if (!declarations) {
+        declarations = { baseBackgrounds: new Set(), darkBackgrounds: new Set(), displays: new Set() }
+        groups.set(identity, declarations)
       }
-    })
+      for (const declaration of rule.nodes) {
+        if (declaration.type !== 'decl') {
+          continue
+        }
+        const value = declaration.value.toLowerCase()
+        // 附加条件内的旧色仍可能覆盖新色；它不能证明成功，但必须参与残留检查。
+        if (declaration.prop === 'background-color') {
+          backgrounds.add(value)
+        }
+        if (!canProveState) {
+          continue
+        }
+        if (declaration.prop === 'background-color') {
+          (isDark ? declarations.darkBackgrounds : declarations.baseBackgrounds).add(value)
+        }
+        else if (!isDark && declaration.prop === 'display') {
+          declarations.displays.add(value)
+        }
+      }
+    }
   })
-  return { baseBackgrounds, darkBackgrounds, displays }
+  return { groups: [...groups.values()], backgrounds }
 }
 
 export function hasScopedDarkApplyProbeDisplay(
@@ -60,7 +86,7 @@ export function hasScopedDarkApplyProbeDisplay(
   display: ScopedDarkApplyProbeState['display'],
 ) {
   try {
-    return collectScopedDarkApplyProbeDeclarations(source).displays.has(display)
+    return collectScopedDarkApplyProbeDeclarations(source).groups.some(group => group.displays.size === 1 && group.displays.has(display))
   }
   catch {
     return false
@@ -72,12 +98,12 @@ export function hasScopedDarkApplyProbeStyle(source: string, options: ScopedDark
 }) {
   try {
     const declarations = collectScopedDarkApplyProbeDeclarations(source)
-    return declarations.displays.has(options.display)
-      && declarations.baseBackgrounds.has('#f1f1f1')
-      && declarations.darkBackgrounds.has(options.darkBackground.toLowerCase())
-      && (options.staleDarkBackgrounds ?? []).every(
-        background => !declarations.darkBackgrounds.has(background.toLowerCase()),
-      )
+    return declarations.groups.some(group => group.displays.size === 1 && group.displays.has(options.display)
+      && group.baseBackgrounds.size === 1 && group.baseBackgrounds.has('#f1f1f1')
+      && group.darkBackgrounds.size === 1 && group.darkBackgrounds.has(options.darkBackground.toLowerCase()))
+    && (options.staleDarkBackgrounds ?? []).every(
+      background => !declarations.backgrounds.has(background.toLowerCase()),
+    )
   }
   catch {
     return false
