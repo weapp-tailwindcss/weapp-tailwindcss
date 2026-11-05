@@ -48,13 +48,21 @@ it('Expo Web 三个引擎分别执行语义验收并保存独立证据', async (
   expect(workflow.jobs.ios.needs).toBe('scope')
 })
 
-it('iOS 固定匹配宿主 CoreSimulator 的 Xcode，保留 18.5 模拟器与完整采集门禁', async () => {
+it('iOS 验证 ARM 宿主及匹配的 CoreSimulator，保留 18.5 模拟器与完整采集门禁', async () => {
   const workflow = YAML.parse(await readFile(workflowPath, 'utf8'))
   const ios = workflow.jobs.ios
-  expect(ios['runs-on']).toBe('macos-15-intel')
+  expect(ios['runs-on']).toBe('macos-15')
+  expect(ios['timeout-minutes']).toBe(50)
   expect(ios.env.DEVELOPER_DIR).toBe('/Applications/Xcode_26.3.app/Contents/Developer')
   expect(ios.needs).toBe('scope')
   expect(ios.if).toBe('needs.scope.outputs.core == \'true\'')
+  const runnerIndex = ios.steps.findIndex((step: { name?: string }) => step.name === 'Verify ARM runner identity')
+  expect(runnerIndex).toBeGreaterThan(0)
+  expect(runnerIndex).toBeLessThan(ios.steps.findIndex((step: { name?: string }) => step.name === 'Verify selected Xcode'))
+  expect(ios.steps[runnerIndex].run).toContain('test "$RUNNER_ARCH" = "ARM64"')
+  expect(ios.steps[runnerIndex].run).toContain('test "$(uname -m)" = "arm64"')
+  expect(ios.steps[runnerIndex].run).toContain('sw_vers')
+  expect(ios.steps[runnerIndex].run).toContain('sysctl -n hw.ncpu hw.memsize')
   expect(ios.steps.some((step: { run?: string }) => step.run === 'xcodebuild -version')).toBe(true)
   const readinessIndex = ios.steps.findIndex((step: { name?: string }) => step.name === 'Verify CoreSimulator toolchain contract')
   expect(readinessIndex).toBeGreaterThan(0)
