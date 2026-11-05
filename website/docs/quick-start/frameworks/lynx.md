@@ -32,7 +32,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 发布版本以 [@weapp-tailwindcss/lynx](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) 和 [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss) 的包元数据为准。适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，核心依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
 
-仓库示例与回归矩阵固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
+仓库示例与回归矩阵固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
 
 ## 注册 Rspeedy 插件
 
@@ -112,7 +112,9 @@ pluginLynxTailwindcss({
 
 仓库中的完整示例位于 [`examples/react-lynx`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples/react-lynx)，可以用来对照项目结构和 CSS 入口。你的 Rspeedy 项目应使用自己的开发或构建命令。
 
-示例固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。catalog 使用代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
+示例固定 Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。catalog 使用代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
+
+当前示例使用 Tailwind CSS `4.3.4`；下文已提交的原生报告仍是 `4.3.3` 历史证据，须由新双端原始工件通过严格重放后更新，不能作为新版本验收通过的依据。
 
 静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-10-28T14:07:32.687Z`、`catalogHash` 为 `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。`css-defines` 不能替代运行时结论。
 

@@ -38,7 +38,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 See the package metadata for published versions of [@weapp-tailwindcss/lynx](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) and [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss). The adapter requires Node.js `^22.18.0 || >=24.11.0`; the core dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
 
-The repository fixture and regression matrix pin Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
+The repository fixture and regression matrix pin Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
 
 ## Register the Rspeedy plugin
 
@@ -118,7 +118,9 @@ Reports consume CSS and encoder data from the Rspack/Rspeedy lifecycle, do not s
 
 The complete repository example is available under [`examples/react-lynx`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples/react-lynx) for project structure and CSS entry reference. Your Rspeedy project should use its own development or build command.
 
-`examples/react-lynx` is pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
+`examples/react-lynx` is pinned to Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
+
+The example now uses Tailwind CSS `4.3.4`; the committed native reports below remain historical `4.3.3` evidence until fresh dual-platform artifacts pass strict baseline replay.
 
 The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-10-28T14:07:32.687Z` and `catalogHash` `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
 

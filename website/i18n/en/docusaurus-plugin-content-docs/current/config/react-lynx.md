@@ -28,7 +28,7 @@ All `@property` registrations, descriptors, and variable dependencies are preser
 - [Published core versions](https://www.npmjs.com/package/weapp-tailwindcss); dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- The repository fixture pins Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
+- The repository fixture pins Rspeedy `0.18.3`, ReactLynx plugin `0.22.0`, ReactLynx runtime `0.129.0`, Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
 - ReactLynx + Rspeedy native builds only; Rspeedy Web, non-React Lynx, and React Native are out of scope
 
 ## Minimal configuration
@@ -213,6 +213,8 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 `padding-inline`, complex `:is()` / `:where()`, pseudo-elements, hover, dark, data, supports, media queries, and complex gradients must pass all three layers. Generated Tailwind CSS does not replace encoder and device evidence.
 
 ## Devices and evidence
+
+The example now uses Tailwind CSS `4.3.4`; the committed native reports below remain historical `4.3.3` evidence until fresh dual-platform artifacts pass strict baseline replay.
 
 CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-10-28T14:07:32.687Z` and `catalogHash` `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`. The current baseline comes from CI run `40696344394`, attempt 1, on source `eb486aabb6655aa5377b61af1e4e19014bda2f6e`: iOS run `5b228ab0-969a-469e-9537-805701a8f22d` and Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`. The original ZIPs, artifacts, and reports passed strict validation, archiving, and replay; this CI evidence does not replace complete local dual-platform acceptance.
 

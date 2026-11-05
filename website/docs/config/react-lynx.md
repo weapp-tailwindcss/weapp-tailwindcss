@@ -28,7 +28,7 @@ keywords:
 - [核心发布版本](https://www.npmjs.com/package/weapp-tailwindcss)；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- 仓库示例固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
+- 仓库示例固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
 - 仅支持 ReactLynx + Rspeedy 原生构建，不覆盖 Rspeedy Web、非 React Lynx 或 React Native
 
 ## 最小配置
@@ -212,6 +212,8 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 `padding-inline`、复杂 `:is()` / `:where()`、伪元素、hover、dark、data、supports、媒体查询和复杂渐变都必须走完三层验证。“Tailwind 已生成”不能替代 encoder 和设备证据。
 
 ## 设备与验证证据
+
+当前示例使用 Tailwind CSS `4.3.4`；下文已提交的原生报告仍是 `4.3.3` 历史证据，须由新双端原始工件通过严格重放后更新，不能作为新版本验收通过的依据。
 
 CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-10-28T14:07:32.687Z`，`catalogHash` 为 `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`。当前基线来自源码 `eb486aabb6655aa5377b61af1e4e19014bda2f6e` 的 CI run `40696344394` attempt 1：iOS run `5b228ab0-969a-469e-9537-805701a8f22d`、Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
 
