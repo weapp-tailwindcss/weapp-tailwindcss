@@ -274,7 +274,7 @@ catalogs:
     '@tailwindcss/node': ^4.3.4
     '@tailwindcss/oxide': ^4.3.4
     '@tailwindcss/postcss': ^4.3.4
-    '@tailwindcss/vite': ^4.3.3
+    '@tailwindcss/vite': ^4.3.4
     tailwindcss: ^4.3.4
   tailwindcssPatch:
     tailwindcss-patch: 10.0.2
