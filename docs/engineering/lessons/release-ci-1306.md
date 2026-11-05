@@ -9,6 +9,8 @@ regressions:
   - packages/weapp-tailwindcss/test/v5/web-target-official-parity.test.ts
   - e2e/react-native-declaration-evidence.test.ts
   - e2e/react-native-android-environment-entry.test.ts
+  - e2e/windows-owned-process.test.ts
+  - e2e/windows-utilities-process.test.ts
 ---
 
 # 依赖迁移后的版本 PR 验收恢复
@@ -77,6 +79,30 @@ realpath，再沿实际包解析间接依赖，不能把旧缓存当成新安装
 继续持有管道的问题：POSIX 按本轮进程组有界回收，Windows 通过原子 Job 纳管和原生句柄回收，
 不依赖已退出包装进程的 PID，也不按进程名称批量终止。正常构建和安装共用同一生命周期边界。
 
+首轮受管更新后的 [Version PR CI 42015318923](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42015318923)
+绑定 head `663a570615264015bdbd85555c3b32f89c931dba`、main `71843b51fd7eead8fce5286b0da028fa2a44986d`。
+[Windows Node 22 utilities job 127205962954](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42015318923/job/127205962954)
+在新增的归属回归中实际执行 46 项，40 项通过、6 项失败；原四阶段因前置失败尚未运行，不能记为成功。
+其中 6 项原生 Windows API 用例确实执行，2 项通过、4 项失败。
+同 head 的 [Windows Node 24 job 127205963115](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42015318923/job/127205963115)
+完整日志复核为同样 6 项失败，已与 Node 22 逐项对照。
+
+三项早退出夹具误把 POSIX 的后代存活行为当成 Windows 默认行为。
+[libuv Windows 进程实现](https://github.com/libuv/libuv/blob/v1.x/src/win/process.c) 会将非 detached 子进程
+放入父 Node 持有、带 `KILL_ON_JOB_CLOSE` 的内部 Job；父进程退出时后代先被该 Job 回收，外层自有 Job 已无存活进程。
+修正夹具在 Windows 创建 detached 后代，并等后代写入 ready 标识后才退出包装根。
+回归仍分别覆盖 inherit 和 ignore 输出，严格确认包装根已退出、后代仍存活、外层 supervisor 继续等待，
+最终仅回收本轮 Job，保留无关进程；通用超时回归也先核对该中间状态，未延长原有清理期限。
+生产桥接和 Job supervisor 无需为错误夹具调整生命周期。
+
+另三项失败来自测试边界：Windows 的 `runneradmin` 与 `RUNNER~1` 可以指向同一工作目录，
+因此工作目录比较应先将两端都转成 realpath；不存在的命令经 Windows shell 返回原生命令错误文本，
+应与原 execa 的 stderr 对照，不能强制匹配 POSIX 的 `ENOENT` 文案。
+PATHEXT 夹具原先是普通 cmd 包装，复杂参数经过 `%*` 再解释时连参考 execa 也未执行身份标识；
+改用真实 `node_modules/.bin` cmd-shim 形态，让原 execa 的双重转义边界生效。
+仍要求参考命令实际退出 0、输出身份标识，桥接结果与参考完全一致，未把双方失败当作通过。
+原 6 项 Windows API、Node 22/24 矩阵和发布版/候选包各 dev/prod 四阶段门禁均保留。
+
 ## 验证
 
 各修复在独立 worktree 安装依赖，使用仓库声明支持的 Node 24.22.1 与 pnpm 12.15.0。
@@ -94,6 +120,7 @@ realpath，再沿实际包解析间接依赖，不能把旧缓存当成新安装
 - 新清单身份下的 inventory、Lynx 静态报告及 RN runtime-static 共 4 个文件、114 项回归以 `CI=1 --update=none` 通过。
 - 动态 #1241 依赖契约 6 项、engine 提取辅助回归 7 项，以及 #1166 的 weapp/Web 两个真实安装构建目标通过；未延长原有 120 秒限制。
 - 独立 Windows utilities 消费链在本机私有 pnpm 环境完成发布版、候选包各 dev/prod 四阶段，全部原输出断言通过；真实 Windows API 回归由 Node 22/24 必需矩阵单独执行。
+- Windows 夹具修正后，5 个相关文件以 `--maxWorkers=1 --update=none` 本地复验：40 项通过，6 项真实 Windows API 因本机为 macOS 保持条件跳过；该结果不替代后续准确新 head 的 Windows Node 22/24 完整验证。
 - `pnpm e2e:lynx:static:update`：曾确认 4.3.3 编译器下 118 项结果及 catalog hash 与原基线一致；统一升级后的新证据单独生成与审查。
 - 4.3.4 static 重建：118 项生成及编码状态均不变，60 项成功编码、58 项保持既有 encoder 拒绝；差异为版本身份、空 fallback 格式和 group/peer 选择器文本。
 - `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-versions.test.ts e2e/lynx-reports.test.ts e2e/lynx-static-evidence.test.ts --update=none --coverage.enabled=false`：统一升级前 4 个文件、123 项通过；升级后以新证据复验。

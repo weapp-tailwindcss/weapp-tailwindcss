@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -63,7 +63,8 @@ describe('Windows Job 命令桥接协议', () => {
     const args = ['plain', 'two words', 'say "hello"', 'C:\\folder\\', '%PATH%', '(x)&y', '中文']
     try {
       const result = await worker(process.execPath, ['-e', 'console.log(JSON.stringify({args:process.argv.slice(1),cwd:process.cwd(),env:process.env.WEAPP_OWNED_TEST}));console.error("错误输出")', ...args], { cwd, env: { WEAPP_OWNED_TEST: '环境' } })
-      expect(JSON.parse(result.stdout)).toEqual({ args, cwd: await realpath(cwd), env: '环境' })
+      const received = JSON.parse(result.stdout)
+      expect({ ...received, cwd: await realpath(received.cwd) }).toEqual({ args, cwd: await realpath(cwd), env: '环境' })
       expect(result.stderr).toBe('错误输出')
     }
     finally {
@@ -102,16 +103,18 @@ describe.runIf(process.platform === 'win32')('Windows 原生 Job supervisor', ()
 
   it('通过 PATHEXT 保留原始 cmd 身份与 execa 对复杂参数的解释', async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), 'weapp owned cmd '))
-    const command = path.join(cwd, 'owned wrapper.cmd')
+    const binDirectory = path.join(cwd, 'node_modules', '.bin')
+    await mkdir(binDirectory, { recursive: true })
+    const command = path.join(binDirectory, 'owned-wrapper.cmd')
     await writeFile(command, `@echo off\r\necho owned-cmd-identity\r\n"${process.execPath}" -e "console.log(JSON.stringify(process.argv.slice(1)))" %*\r\n`)
     const args = ['two words', 'say "hello"', 'C:\\folder\\', '%PATH%', '(x)&y', '中文']
-    const options = { cwd, env: { PATH: `${cwd}${path.delimiter}${process.env.PATH}` }, timeout: 15_000, reject: false }
-    const child = createWindowsOwnedProcess('owned wrapper', args, options)
+    const options = { cwd, env: { PATH: `${binDirectory}${path.delimiter}${process.env.PATH}` }, timeout: 15_000, reject: false }
+    const child = createWindowsOwnedProcess('owned-wrapper', args, options)
     try {
-      const reference = await execa('owned wrapper', args, options)
+      const reference = await execa('owned-wrapper', args, options)
       const result = await child
-      expect(reference.stdout).toContain('owned-cmd-identity')
-      // 普通 cmd 的 %* 会再次解释参数；桥接必须与原有 execa 保持一致。
+      expect(reference, '参考 cmd-shim 必须实际运行，不能把解析失败当作桥接成功').toMatchObject({ exitCode: 0, stdout: expect.stringContaining('owned-cmd-identity') })
+      // 使用真实包管理器的 cmd-shim 边界，保留 execa 对 %* 二次解析的转义。
       expect({ exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }).toEqual({ exitCode: reference.exitCode, stdout: reference.stdout, stderr: reference.stderr })
     }
     finally {
@@ -131,9 +134,13 @@ describe.runIf(process.platform === 'win32')('Windows 原生 Job supervisor', ()
   }, 20_000)
 
   it('命令不存在时保留启动失败，并完成本轮 Job 收尾', async () => {
-    const child = createWindowsOwnedProcess('weapp-owned-process-command-does-not-exist', [], { timeout: 15_000 })
+    const command = 'weapp-owned-process-command-does-not-exist'
+    const child = createWindowsOwnedProcess(command, [], { timeout: 15_000 })
     try {
-      await expect(child).rejects.toMatchObject({ exitCode: 1, stderr: expect.stringContaining('ENOENT') })
+      const reference = await execa(command, [], { reject: false })
+      expect(reference.failed).toBe(true)
+      expect(reference.stderr).toContain(command)
+      await expect(child).rejects.toMatchObject({ exitCode: 1, stderr: reference.stderr })
     }
     finally {
       await stopWindowsOwnedProcess(child)
@@ -146,7 +153,8 @@ describe.runIf(process.platform === 'win32')('Windows 原生 Job supervisor', ()
     const parentFile = path.join(cwd, 'parent.pid')
     const exitedFile = path.join(cwd, 'parent-exited')
     const descendantCode = `require('node:fs').writeFileSync(${JSON.stringify(descendantFile)}, String(process.pid));setInterval(()=>{},1000)`
-    const parentCode = `require('node:fs').writeFileSync(${JSON.stringify(parentFile)}, String(process.pid));const child=require('node:child_process').spawn(process.execPath,['-e',${JSON.stringify(descendantCode)}],{stdio:${JSON.stringify(stdio)}});child.unref();child.once('spawn',()=>{require('node:fs').writeFileSync(${JSON.stringify(exitedFile)},'exited');process.exit(7)})`
+    // Windows 的非 detached 子进程会随父 Node 的 libuv Job 结束；夹具必须先构造真实存活的后代。
+    const parentCode = `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(parentFile)}, String(process.pid));const child=require('node:child_process').spawn(process.execPath,['-e',${JSON.stringify(descendantCode)}],{detached:true,stdio:${JSON.stringify(stdio)}});child.unref();const ready=setInterval(()=>{if(fs.existsSync(${JSON.stringify(descendantFile)})){clearInterval(ready);fs.writeFileSync(${JSON.stringify(exitedFile)},'exited');process.exit(7)}},10)`
     const unrelated = execa(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { stdio: 'ignore', reject: false })
     const child = createWindowsOwnedProcess(process.execPath, ['-e', parentCode], { timeout: 20_000 })
     try {
