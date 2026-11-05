@@ -15,10 +15,10 @@ export const dependencyVersions = {
   '@dcloudio/vite-plugin-uni': '3.0.0-5010520260709002',
   'vue': '3.5.42',
   'vite': '5.2.8',
-  'tailwindcss': '4.3.3',
+  'tailwindcss': '4.3.4',
 }
 
-/** 框架依赖保留原始版本；临时工程与仓库使用同一 pnpm，准备失败同样保存证据。 */
+/** 框架依赖保留原始复现版本，Tailwind 使用当前升级版本；临时工程沿用仓库 pnpm，准备失败同样保存证据。 */
 export async function prepareDependencies(temporary: string, artifacts = path.join(temporary, 'preparation')) {
   const reused = process.env['E2E_ISSUE_1241_DEPENDENCIES']
   const root = reused ?? path.join(temporary, 'dependencies')

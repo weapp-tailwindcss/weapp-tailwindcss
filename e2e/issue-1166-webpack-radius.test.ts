@@ -7,6 +7,7 @@ import { execa } from 'execa'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import { expect, it } from 'vitest'
 import webpack from 'webpack'
+import repositoryManifest from '../package.json'
 
 const require = createRequire(import.meta.url)
 const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
@@ -17,11 +18,12 @@ it.each(['weapp', 'web'] as const)('issue #1166: preserves the %s loader handoff
     const manifest = path.join(root, 'package.json')
     await writeFile(manifest, JSON.stringify({
       private: true,
+      packageManager: repositoryManifest.packageManager,
       dependencies: {
         'postcss': '8.5.28',
         'postcss-calc': '8.2.4',
         'postcss-pxtransform': '4.2.1',
-        'tailwindcss': '4.3.3',
+        'tailwindcss': '4.3.4',
       },
     }))
     // 独立消费目录固定真实上游版本，不依赖仓库内安装的计算器。

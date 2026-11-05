@@ -5,7 +5,7 @@ export function createOxideRuntimeDependencyError(cause: unknown) {
     [
       '@weapp-tailwindcss/engine could not load @tailwindcss/oxide, which is required for source candidate scanning.',
       'This dependency should be installed automatically by @weapp-tailwindcss/engine.',
-      'Reinstall dependencies without disabling optional dependencies, or install @tailwindcss/oxide@^4.3.3 manually if your package manager omitted it.',
+      'Reinstall dependencies without disabling optional dependencies, or install @tailwindcss/oxide@^4.3.4 manually if your package manager omitted it.',
     ].join(' '),
     { cause },
   )
