@@ -144,9 +144,9 @@ pnpm e2e:lynx
 
 静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。
 
-当前示例使用 Tailwind CSS `4.3.4`；下文已提交的原生报告仍是 `4.3.3` 历史证据，须由新双端原始工件通过严格重放后更新，不能作为新版本验收通过的依据。
+当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.4`，完整原始工件已通过严格校验、归档及重放。
 
-当前已提交的原生报告基线记录 `verifiedAt: 2026-10-28T14:07:32.687Z`、`catalogHash: 0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+当前已提交的原生报告基线记录 `verifiedAt: 2026-11-05T09:53:21.315Z`、`catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
 
 `--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 

@@ -213,9 +213,9 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 
 ## 设备与验证证据
 
-当前示例使用 Tailwind CSS `4.3.4`；下文已提交的原生报告仍是 `4.3.3` 历史证据，须由新双端原始工件通过严格重放后更新，不能作为新版本验收通过的依据。
+当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.4`，完整原始工件已通过严格校验、归档及重放。
 
-CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-10-28T14:07:32.687Z`，`catalogHash` 为 `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`。当前基线来自源码 `eb486aabb6655aa5377b61af1e4e19014bda2f6e` 的 CI run `40696344394` attempt 1：iOS run `5b228ab0-969a-469e-9537-805701a8f22d`、Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-11-05T09:53:21.315Z`，`catalogHash` 为 `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`。当前基线来自源码 `d057d4b4f2798af2d56ee36414e05736915c8c00` 的 CI run `42003249002` attempt 1：iOS run `a4d7d083-11ea-461a-96f2-5f210a1c96a5`、Android run `07139edc-0502-4799-b537-d35fdd0d0d3a`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
 
 `--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 

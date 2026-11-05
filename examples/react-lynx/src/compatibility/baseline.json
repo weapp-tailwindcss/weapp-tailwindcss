@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff",
-  "verifiedAt": "2026-10-28T14:07:32.687Z",
+  "catalogHash": "9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4",
+  "verifiedAt": "2026-11-05T09:53:21.315Z",
   "versions": {
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.4",
     "reactLynx": "0.129.0",
     "reactRsbuildPlugin": "0.22.0",
     "rspeedy": "0.18.3",
@@ -679,11 +679,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "group-hover:block: encoder 删除 selector：:is(:where(.group):hover .group-hover\\:block), :is(:where(.group):hover .group-hover\\:block); peer-checked:opacity-100: encoder 删除 selector：:is(:where(.peer):checked~.peer-checked\\:opacity-100), :is(:where(.peer):checked~.peer-checked\\:opacity-100)"
       },
       "android": {
         "status": "unsupported",
-        "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "group-hover:block: encoder 删除 selector：:is(:where(.group):hover .group-hover\\:block), :is(:where(.group):hover .group-hover\\:block); peer-checked:opacity-100: encoder 删除 selector：:is(:where(.peer):checked~.peer-checked\\:opacity-100), :is(:where(.peer):checked~.peer-checked\\:opacity-100)"
       }
     },
     {

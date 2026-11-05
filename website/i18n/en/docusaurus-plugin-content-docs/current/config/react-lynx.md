@@ -214,9 +214,9 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 
 ## Devices and evidence
 
-The example now uses Tailwind CSS `4.3.4`; the committed native reports below remain historical `4.3.3` evidence until fresh dual-platform artifacts pass strict baseline replay.
+The example and committed dual-platform baseline use Tailwind CSS `4.3.4`; the complete original artifacts passed strict validation, archiving, and replay.
 
-CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-10-28T14:07:32.687Z` and `catalogHash` `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`. The current baseline comes from CI run `40696344394`, attempt 1, on source `eb486aabb6655aa5377b61af1e4e19014bda2f6e`: iOS run `5b228ab0-969a-469e-9537-805701a8f22d` and Android run `24370c94-7d86-4ad6-ac54-450a97fffa18`. The original ZIPs, artifacts, and reports passed strict validation, archiving, and replay; this CI evidence does not replace complete local dual-platform acceptance.
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-11-05T09:53:21.315Z` and `catalogHash` `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`. The current baseline comes from CI run `42003249002`, attempt 1, on source `d057d4b4f2798af2d56ee36414e05736915c8c00`: iOS run `a4d7d083-11ea-461a-96f2-5f210a1c96a5` and Android run `07139edc-0502-4799-b537-d35fdd0d0d3a`. The original ZIPs, artifacts, and reports passed strict validation, archiving, and replay; this CI evidence does not replace complete local dual-platform acceptance.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 

@@ -113,8 +113,8 @@ pnpm e2e:lynx:update
 
 CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The example now uses Tailwind CSS `4.3.4`; the committed native reports below remain historical `4.3.3` evidence until fresh dual-platform artifacts pass strict baseline replay.
+The example and committed dual-platform baseline use Tailwind CSS `4.3.4`; the complete original artifacts passed strict validation, archiving, and replay.
 
-The committed native baseline records `verifiedAt: 2026-10-28T14:07:32.687Z` and `catalogHash: 0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-11-05T09:53:21.315Z` and `catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.

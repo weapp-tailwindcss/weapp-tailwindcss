@@ -120,9 +120,9 @@ The complete repository example is available under [`examples/react-lynx`](https
 
 `examples/react-lynx` is pinned to Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
-The example now uses Tailwind CSS `4.3.4`; the committed native reports below remain historical `4.3.3` evidence until fresh dual-platform artifacts pass strict baseline replay.
+The example and committed dual-platform baseline use Tailwind CSS `4.3.4`; the complete original artifacts passed strict validation, archiving, and replay.
 
-The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-10-28T14:07:32.687Z` and `catalogHash` `0d8fd0eb7f2f26eaf3c6f97496091ed02e382a98321184932503d61fae1b8fff`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
+The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-11-05T09:53:21.315Z` and `catalogHash` `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not update a native support report or committed baseline.
 

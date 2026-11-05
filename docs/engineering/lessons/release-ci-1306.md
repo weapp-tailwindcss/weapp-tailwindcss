@@ -50,6 +50,33 @@ Lynx 示例的原生矩阵原先精确固定 Tailwind CSS 4.3.3，但缺少配�
 新增构建前置的产物 banner 核对及错版、缺失身份回归，阻止未来把回退编译器标记成示例版本。
 独立诊断夹具仍消费当前 4.3.4，其两处选择器形状快照单独更新，编码拒绝状态不变。
 
+完整版本验收还会比较 Web 能力夹具的全部静态产物，不能只更新普通 main CI 命中的基线。
+共享纯数据清单的版本身份也同步到 4.3.4，消费方回归同时核对实际安装版本和固定 inventory，
+避免清单仍标记旧版本。正式入口重建 49 项能力产物，其中 48 份 CSS 变化、`weapp.wxss` 不变；
+主要差异为版本 banner 和 guard，registry 另有空 fallback 空白，Web 另有三处等价 group/peer 选择器改写。
+fixture hash 变化来自 inventory 中 58 个 registry profile 的声明元数据；主题、preflight 和参考输入本身不变。
+RN 与 Lynx 随之重新生成静态证据，118 项结果均未变化；新 catalog hash 分别为
+`4bfbb441503810f249987d6fda12580e3169a3050069470c5e959aa1fc5cc330` 和
+`9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`。
+旧 hash 下的真实原生报告不能修改标记后复用，新身份必须重新采集完整双端证据。
+
+依赖声明之外，#1241 与 #1166 的测试也会动态创建临时工程并真实安装 Tailwind。
+这两处同步到 4.3.4；#1241 继续保留原框架依赖作为复现边界，#1166 显式沿用根项目的
+`packageManager`，避免离开仓库目录后由 Corepack 选择其他 pnpm 版本。
+引擎缺少 oxide 时的安装提示同步到当前 `^4.3.4` 门槛。协议合成输入和历史报告保留其原始身份。
+
+独立模板继续消费已发布稳定包。其旧 PostCSS guard 通过精确版本的双入口补丁适配 4.3.4，
+不把模板依赖改成 workspace 或候选 tarball；固定缺陷复现包版本的 fixture 单独登记补丁及退出条件。
+四阶段消费验证先复制不含 `node_modules`、`dist` 的源码，再冻结安装并核对实际依赖链与 CLI 的 realpath。
+发布版切换为候选包后，Node 会缓存此前的 `require.resolve` 结果；验证器必须先读取当前直接依赖槽的
+realpath，再沿实际包解析间接依赖，不能把旧缓存当成新安装的身份。
+
+本地安装曾被其他任务执行 pnpm 的 store prune 操作所持有的全局锁阻塞。保留该任务和锁，依据 pnpm 12.15.0 的
+`store_lock.rs`、`secure_temp_lock.rs` 为本轮验证建立完全独立的 store、缓存、状态、配置及运行目录。
+该环境只用于本轮有归属的验证，不改变通用 CI 的锁行为。超时还暴露 pnpm 包装进程退出后原生后代
+继续持有管道的问题：POSIX 按本轮进程组有界回收，Windows 通过原子 Job 纳管和原生句柄回收，
+不依赖已退出包装进程的 PID，也不按进程名称批量终止。正常构建和安装共用同一生命周期边界。
+
 ## 验证
 
 各修复在独立 worktree 安装依赖，使用仓库声明支持的 Node 24.22.1 与 pnpm 12.15.0。
@@ -62,6 +89,11 @@ Lynx 示例的原生矩阵原先精确固定 Tailwind CSS 4.3.3，但缺少配�
 - 原失败的主包、typography、watcher 与官方输出 parity 共 23 个文件、220 项回归通过；watcher 连续保存并恢复后哈希一致。
 - RN 示例、声明证据、Android 生命周期与静态入口等共 200 项定向回归通过；RN static 的 118 项状态计数不变，无新增失败。
 - Taro static 6 项与 generator 11 项禁止更新复验通过；weapp-vite static 5 项通过，无需更新原基线。
+- apps-generator 的全部 20 个构建目标、11 项测试禁止更新复验通过；49 份 Web/App 基线的选择器、报告条目和顺序完整保留。
+- Web 能力基线经正式入口重建后，`fixtureBaseline` 只读核对全部 49 项产物通过；相关 8 个文件、65 项回归通过，独立审查确认差异范围。
+- 新清单身份下的 inventory、Lynx 静态报告及 RN runtime-static 共 4 个文件、114 项回归以 `CI=1 --update=none` 通过。
+- 动态 #1241 依赖契约 6 项、engine 提取辅助回归 7 项，以及 #1166 的 weapp/Web 两个真实安装构建目标通过；未延长原有 120 秒限制。
+- 独立 Windows utilities 消费链在本机私有 pnpm 环境完成发布版、候选包各 dev/prod 四阶段，全部原输出断言通过；真实 Windows API 回归由 Node 22/24 必需矩阵单独执行。
 - `pnpm e2e:lynx:static:update`：曾确认 4.3.3 编译器下 118 项结果及 catalog hash 与原基线一致；统一升级后的新证据单独生成与审查。
 - 4.3.4 static 重建：118 项生成及编码状态均不变，60 项成功编码、58 项保持既有 encoder 拒绝；差异为版本身份、空 fallback 格式和 group/peer 选择器文本。
 - `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-versions.test.ts e2e/lynx-reports.test.ts e2e/lynx-static-evidence.test.ts --update=none --coverage.enabled=false`：统一升级前 4 个文件、123 项通过；升级后以新证据复验。
@@ -71,6 +103,25 @@ Lynx 示例的原生矩阵原先精确固定 Tailwind CSS 4.3.3，但缺少配�
 - 修改的 TypeScript 文件显式 `eslint --no-ignore`、`pnpm agents:check`、`git diff --check` 与 `pnpm release status`：通过。
 
 远端结果另以最终交付记录为准，本节不将排队、等待审批或条件跳过计为完整验收成功。
+
+本轮新清单的原生基线来自源码 `d057d4b4f2798af2d56ee36414e05736915c8c00` 的
+[Lynx 42003249002](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42003249002) attempt 1。
+两个任务均完成真实采集，仅最后与旧 4.3.3 历史记录的严格比较失败；该 run 本身仍保留失败状态。
+下载前核对 API 的源码与 run 身份，下载后核对完整 ZIP 摘要，再严格读取原始目录：
+
+| 平台 | Artifact ID | ZIP SHA-256 |
+| --- | --- | --- |
+| Android | `13404550411` | `b2fb284e21bf4e019d5417c63c3d8268e1864b8a73fbefa79aefb4b57bc9a0fc` |
+| iOS | `13405255109` | `353309da645949c27df0231121a08faad8937182e3f1df19060aa9fcc6ea3233` |
+
+Android runId 为 `07139edc-0502-4799-b537-d35fdd0d0d3a`，iOS 为 `a4d7d083-11ea-461a-96f2-5f210a1c96a5`。
+双端各 118 项状态、failure stage 和 checkpoint 结论均未变化，只有 group/peer 拒绝原因中的选择器文本更新。
+Android 为 54 项支持、64 项既定不支持，iOS 为 53 项支持、65 项既定不支持；两端均无待测候选。
+已检查代表性暗色、透明度、圆角和动画 PNG，并重读全部帧、bundle、几何、候选与 SDK 证据。
+正式 `pnpm e2e:lynx:update` 先完整归档并严格重放，再写入两份报告与示例基线。
+本机受控归档为 `e2e/.artifacts/lynx-baselines/baseline-MChQjb/archive-index.json`，未把原始工件加入 Git；
+其重放入口为 `pnpm exec tsx e2e/lynx/verify-baseline-archive.ts e2e/.artifacts/lynx-baselines/baseline-MChQjb`。
+最终准确 main 和版本 PR head 的完整 CI 仍须重新采集并严格比较新基线，归档不能代替该验收。
 
 ## 适用边界
 
