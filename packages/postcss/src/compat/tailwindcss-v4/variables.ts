@@ -10,7 +10,8 @@ export const INFINITY_CALC_VALUE_REGEXP = /^calc\(\s*infinity\s*\*\s*(\d+(?:\.\d
 
 // 用于 isTailwindcssV4ModernCheck 的正则列表
 export const MODERN_CHECK_WEBKIT_HYPHENS_RE = /-webkit-hyphens\s*:\s*none/
-export const MODERN_CHECK_MARGIN_TRIM_RE = /margin-trim\s*:\s*inline/
+// Tailwind CSS 4.3.4 改用 block；完整匹配探针条件，避免把 inline-start 等值当作初始化分支。
+export const MODERN_CHECK_MARGIN_TRIM_RE = /\(\s*margin-trim\s*:\s*(?:inline|block)\s*\)/
 export const MODERN_CHECK_MOZ_ORIENT_RE = /-moz-orient\s*:\s*inline/
 export const MODERN_CHECK_COLOR_RGB_RE = /color\s*:\s*rgb\(\s*from\s+red\s+r\s+g\s+b\s*\)/
 export const LINEAR_GRADIENT_LAB_RE = /background-image\s*:\s*linear-gradient\(\s*in\s+lab\s*,\s*red\s*,\s*red\s*\)/
