@@ -2009,7 +2009,7 @@ describe('tailwindcss v4 engine', () => {
 
     expect(result.css).toContain('border-style: var(--tw-border-style)')
     expect(result.css).not.toContain('@layer base')
-    expect(result.css).toContain('--tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor)')
+    expect(result.css).toContain('--tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor)')
     expect(result.css).toContain('--tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1))')
     expect(result.css).toContain('border-radius: var(--radius-sm)')
     expect(result.css).toContain('--tw-blur: blur(var(--blur-sm))')

@@ -6,9 +6,22 @@ import { expect, it } from 'vitest'
 import { WeappTailwindcss } from '@/bundlers/vite'
 import { replaceWxml } from '@/wxml/shared'
 
-const utility = 'group-[:nth-of-type(3)_&]:block'
+const variants = [
+  {
+    name: 'group variant without a redundant universal',
+    utility: 'group-[:nth-of-type(3)_&]:block',
+    rawClass: '.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block',
+    selector: ':is(:nth-of-type(3) :where(.group) .group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block)',
+  },
+  {
+    name: 'group variant with an explicit universal',
+    utility: 'group-[:nth-of-type(3)_&_*]:block',
+    rawClass: '.group-\\[\\:nth-of-type\\(3\\)_\\&_\\*\\]\\:block',
+    selector: ':where(.group) :is(view,text) .group-\\[\\:nth-of-type\\(3\\)_\\&_\\*\\]\\:block)',
+  },
+]
 
-it.each(['weapp', 'alipay'])('preserves generated group utility through %s framework PostCSS in a real Vite build', async (platform) => {
+it.each(['weapp', 'alipay'].flatMap(platform => variants.map(variant => ({ ...variant, platform }))))('preserves $name through $platform framework PostCSS in a real Vite build', async ({ platform, utility, rawClass, selector }) => {
   const root = await mkdtemp(path.join(process.cwd(), '.tmp-vite-framework-universal-'))
   const cssFile = path.join(root, 'app.css')
   try {
@@ -52,8 +65,8 @@ it.each(['weapp', 'alipay'])('preserves generated group utility through %s frame
     const js = result.output.filter(item => item.type === 'chunk').map(item => item.code).join('\n')
     const escaped = replaceWxml(utility)
     // 框架收到的是原始 utility 身份与已准备的元素选择器，最终资产再执行类名转译。
-    expect(beforeFramework).toContain('.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block')
-    expect(beforeFramework).toContain(':where(.group) :is(view,text)')
+    expect(beforeFramework).toContain(rawClass)
+    expect(beforeFramework).toContain(selector)
     expect(css).toContain(`.${escaped}`)
     expect(css).toContain('display: block')
     expect(js).toContain(escaped)

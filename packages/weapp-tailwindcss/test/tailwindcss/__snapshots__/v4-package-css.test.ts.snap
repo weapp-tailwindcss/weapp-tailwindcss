@@ -101,7 +101,7 @@ exports[`Tailwind v4 package CSS entry outputs > generates stable index.css outp
     "w-[100px]",
     "hover:bg-red-500",
   ],
-  "css": "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  "css": "/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
@@ -355,7 +355,7 @@ exports[`Tailwind v4 package CSS entry outputs > generates stable preflight.css 
   "classSet": [
     "w-[100px]",
   ],
-  "css": "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  "css": "/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 *, ::after, ::before, ::backdrop, ::file-selector-button {
   box-sizing: border-box;
   margin: 0;
@@ -553,7 +553,7 @@ exports[`Tailwind v4 package CSS entry outputs > generates stable theme.css outp
     "w-[100px]",
     "hover:bg-red-500",
   ],
-  "css": "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  "css": "/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 ",
   "entry": "theme.css",
   "mode": "web",
@@ -635,7 +635,7 @@ exports[`Tailwind v4 package CSS entry outputs > generates stable utilities.css 
   "classSet": [
     "w-[100px]",
   ],
-  "css": "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  "css": "/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 .w-\\[100px\\] {
   width: 100px;
 }

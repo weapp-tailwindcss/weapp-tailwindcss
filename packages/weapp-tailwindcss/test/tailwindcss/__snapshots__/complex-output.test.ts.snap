@@ -34,16 +34,16 @@ exports[`tailwind complex syntax output > generates wxss selectors for complex s
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
 .ring-\\[1\\.7px\\] {
-  --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1.7px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1.7px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
 .\\[--scroll-offset\\:56px\\] {
   --scroll-offset: 56px;
 }
-.group-\\[\\.is-published\\]\\:block:is(:where(.group):is(.is-published) *) {
+:is(:where(.group):is(.is-published) .group-\\[\\.is-published\\]\\:block) {
   display: block;
 }
-.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block:is(:nth-of-type(3) :where(.group) *) {
+:is(:nth-of-type(3) :where(.group) .group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block) {
   display: block;
 }
 .before\\:content-\\[\\'hello_world\\'\\]::before {
@@ -150,7 +150,7 @@ exports[`tailwind complex syntax output > generates wxss selectors for complex s
   inherits: false;
 }
 @layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
       --tw-shadow: 0 0 #0000;
       --tw-shadow-color: initial;
@@ -245,13 +245,10 @@ view,text,::after,::before {
 ._b--scroll-offset_c56px_B {
   --scroll-offset: 56px;
 }
-.group.is-published view.group-_b_dis-published_B_cblock,.group.is-published text.group-_b_dis-published_B_cblock {
+.group.is-published .group-_b_dis-published_B_cblock {
   display: block;
 }
-:nth-of-type(3) .group view.group-_b_cnth-of-type_p3_P__n_B_cblock {
-  display: block;
-}
-:nth-of-type(3) .group text.group-_b_cnth-of-type_p3_P__n_B_cblock {
+:nth-of-type(3) .group .group-_b_cnth-of-type_p3_P__n_B_cblock {
   display: block;
 }
 .before_ccontent-_b_ahello_world_a_B::before {

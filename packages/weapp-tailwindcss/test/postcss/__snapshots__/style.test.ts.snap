@@ -18,7 +18,7 @@ exports[`styleHandler > :hover remove case 1 1`] = `".b{color:red;}"`;
 exports[`styleHandler > :hover remove case 1 revert 1`] = `".b,.a:hover{color:red;}"`;
 
 exports[`styleHandler > add postcss plugins case 0 1`] = `
-"/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+"/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 page,.tw-root,wx-root-portal-content,:host {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
       "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",

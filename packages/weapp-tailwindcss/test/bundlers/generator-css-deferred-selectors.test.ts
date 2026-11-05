@@ -7,14 +7,24 @@ import { generateCssByGenerator } from '@/context/generation'
 import { finalizeDeferredGeneratorCss } from '@/generation/pipeline/deferred-output'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 
-const utility = 'group-[:nth-of-type(3)_&]:block'
-const rawClass = '.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block'
+const groupVariant = {
+  utility: 'group-[:nth-of-type(3)_&]:block',
+  rawClass: '.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block',
+}
+const universalVariant = {
+  utility: 'group-[:nth-of-type(3)_&_*]:block',
+  rawClass: '.group-\\[\\:nth-of-type\\(3\\)_\\&_\\*\\]\\:block',
+}
+const universalCases = [
+  { name: 'legacy custom elements', options: { cssSelectorReplacement: { universal: 'custom-view' } }, selector: ':where(.group) custom-view ' },
+  { name: 'nested selector-list', options: { cssOptions: { cssSelectorReplacement: { universal: 'view,custom-text' } } }, selector: ':where(.group) :is(view,custom-text) ' },
+  { name: 'nested disabled replacement', options: { cssSelectorReplacement: { universal: 'legacy-view' }, cssOptions: { cssSelectorReplacement: { universal: false } } }, selector: ':where(.group) * ' },
+].map(testCase => ({ ...testCase, ...universalVariant, selector: `${testCase.selector}${universalVariant.rawClass})` }))
 
 it.each([
-  { name: 'legacy custom elements', options: { cssSelectorReplacement: { universal: 'custom-view' } }, selector: ':where(.group) custom-view)' },
-  { name: 'nested selector-list', options: { cssOptions: { cssSelectorReplacement: { universal: 'view,custom-text' } } }, selector: ':where(.group) :is(view,custom-text))' },
-  { name: 'nested disabled replacement', options: { cssSelectorReplacement: { universal: 'legacy-view' }, cssOptions: { cssSelectorReplacement: { universal: false } } }, selector: ':where(.group) *)' },
-])('uses $name in full and incremental deferred generation', async ({ options, selector }) => {
+  { name: 'group variant without a redundant universal', options: {}, ...groupVariant, selector: `:is(:nth-of-type(3) :where(.group) ${groupVariant.rawClass})` },
+  ...universalCases,
+])('uses $name in full and incremental deferred generation', async ({ options, selector, utility, rawClass }) => {
   const runtimeState = { tailwindRuntime: { majorVersion: 4 } as any, readyPromise: Promise.resolve() }
   const file = path.resolve('test/fixtures/deferred-group.css')
   const opts = { ...options, generator: { target: 'weapp' } } as UserDefinedOptions as any
