@@ -365,8 +365,8 @@ uni-page-head[uni-page-head-type='default'] ~ uni-page-wrapper {
 }
 .uni-page-head-shadow-yellow::after {
   background-image: url(https://cdn.dcloud.net.cn/img/shadow-yellow.png);
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
-@supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+} /*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
+@supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   *,
   ::before,
   ::after,

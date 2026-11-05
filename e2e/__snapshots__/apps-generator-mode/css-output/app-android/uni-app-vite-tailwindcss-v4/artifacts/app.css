@@ -2374,8 +2374,8 @@ uni-web-view {
   top: 0;
   bottom: 0;
 }
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
-@supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
+@supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   *,
   ::before,
   ::after,
@@ -3553,7 +3553,7 @@ body {
   --default-font-family: var(--font-inter), system-ui;
   --default-mono-font-family: var(--font-plex-mono), monospace;
 }
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
  /*! tokens: before:content-['independent_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-independent/pages/index.vue */
 .before_ccontent-_b_aindependent_subpackage_uni-app-vite-tailwindcss-v4_a_B::before {
   --tw-content: 'independent subpackage uni-app-vite-tailwindcss-v4';
@@ -3569,7 +3569,7 @@ body {
   initial-value: '';
   inherits: false;
 }
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
  /*! tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.vue */
 .bg-independent-subpackage-marker {
   background-color: #dc2626;

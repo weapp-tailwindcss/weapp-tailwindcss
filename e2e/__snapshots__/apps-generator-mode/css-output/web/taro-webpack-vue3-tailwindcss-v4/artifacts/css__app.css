@@ -946,7 +946,7 @@ page {
     -webkit-transform: translate(3.75rem) skew(-20deg);
     transform: translate(3.75rem) skew(-20deg);
   }
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+} /*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 @layer theme {
   :host,
   :root {
@@ -11161,7 +11161,7 @@ page {
   inherits: false;
 }
 @layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
     *,
     ::-webkit-backdrop,
     ::after,
