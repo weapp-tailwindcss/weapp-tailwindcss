@@ -257,8 +257,8 @@ catalogs:
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
-    sass: ^1.108.0
-    sass-embedded: ^1.108.0
+    sass: 1.107.1
+    sass-embedded: 1.107.1
   storybook:
     '@storybook/addon-a11y': ^10.6.6
     '@storybook/react': ^10.6.6
