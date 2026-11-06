@@ -1,5 +1,16 @@
 # tailwindcss-injector
 
+## 1.0.29
+
+### Patch Changes
+
+- 修复公开包 ESM/CJS 条件声明、可调用 CommonJS 类型与发布消费依赖，保留样式入口和原有子路径兼容。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss@4.0.1
+  - @weapp-tailwindcss/shared@2.0.5
+  - tailwindcss-config@2.0.8
+
 ## 1.0.28
 
 ### Patch Changes

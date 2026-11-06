@@ -1,5 +1,28 @@
 # @weapp-tailwindcss/postcss
 
+## 4.0.1
+
+### Patch Changes
+
+- 增加 `cssOptions.colorMixDynamicAlpha`，小程序默认使用 `'rgba'` 动态透明度兼容模式，保留不透明固定底色的完整变量权重与 fallback，贯通 Core 生成、转换及最终清理；可显式选择 `'strict'` 保持严格颜色语义；Web、Lynx、React Native 不应用该模式。
+
+  Refs #1332。
+
+- 修复公开包 ESM/CJS 条件声明、可调用 CommonJS 类型与发布消费依赖，保留样式入口和原有子路径兼容。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.1
+  - @weapp-tailwindcss/native-darwin-x64@5.7.1
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.1
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.1
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.1
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.1
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.1
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.1
+  - @weapp-tailwindcss/postcss-calc@1.0.13
+  - @weapp-tailwindcss/shared@2.0.5
+  - tailwindcss-config@2.0.8
+
 ## 4.0.0
 
 ### Major Changes
