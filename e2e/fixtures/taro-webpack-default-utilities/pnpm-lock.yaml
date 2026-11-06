@@ -98,7 +98,7 @@ importers:
         version: 4.2.1(supports-color@10.2.2)(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
       '@tarojs/webpack5-runner':
         specifier: 4.2.1
-        version: 4.2.1(@babel/core@7.29.7(supports-color@10.2.2))(@swc/core@1.3.96)(@tarojs/runtime@4.2.1)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(html-minifier-terser@6.1.0)(less@3.13.1)(postcss@8.5.28)(sass@1.104.0)(stylus@0.64.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)(uglify-js@3.19.3)(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
+        version: 4.2.1(@babel/core@7.29.7(supports-color@10.2.2))(@swc/core@1.3.96)(@tarojs/runtime@4.2.1)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(html-minifier-terser@6.1.0)(less@4.9.1(supports-color@10.2.2))(postcss@8.5.28)(sass@1.104.0)(stylus@0.64.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)(uglify-js@3.19.3)(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
       '@types/node':
         specifier: ^18
         version: 18.19.76
@@ -133,8 +133,8 @@ importers:
         specifier: ^17.14.1
         version: 17.14.1(supports-color@10.2.2)(typescript@6.0.3)
       tailwindcss:
-        specifier: ^4.3.4
-        version: 4.3.4
+        specifier: ^4.3.5
+        version: 4.3.5
       tsconfig-paths-webpack-plugin:
         specifier: ^4.1.0
         version: 4.2.0
@@ -146,7 +146,7 @@ importers:
         version: 6.1.2(@types/node@18.19.76)
       weapp-tailwindcss:
         specifier: ^5.5.1
-        version: 5.5.1(@oxc-project/types@0.148.0)(jiti@2.7.0)(supports-color@10.2.2)(tailwindcss@4.3.4)
+        version: 5.5.1(@oxc-project/types@0.148.0)(jiti@2.7.0)(supports-color@10.2.2)(tailwindcss@4.3.5)
       webpack:
         specifier: 5.91.0
         version: 5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)
@@ -3528,6 +3528,10 @@ packages:
   copy-anything@2.0.6:
     resolution: {integrity: sha512-1j20GZTsvKNkc4BY3NpMOM8tt///wY3FpIzozTOFO2ffuZcV61nojHXVKIy3WM+7ADCy5FVhdZYHYDdgTU0yJw==}
 
+  copy-anything@3.0.5:
+    resolution: {integrity: sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==}
+    engines: {node: '>=12.13'}
+
   copy-webpack-plugin@12.0.2:
     resolution: {integrity: sha512-SNwdBeHyII+rWvee/bTnAYyO8vfVdcSTud4EIb6jcZ8inLeWucJE0DnxXQBjlQ5zlteuuvooGQy3LIyGxhvlOA==}
     engines: {node: '>= 18.12.0'}
@@ -4810,6 +4814,7 @@ packages:
   image-size@0.5.5:
     resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please migrate to image-size@2.x
     hasBin: true
 
   immutable@5.1.6:
@@ -5058,6 +5063,10 @@ packages:
   is-what@3.14.1:
     resolution: {integrity: sha512-sNxgpk9793nzSs7bA6JQJGeIuRBQhAaNGG77kzYQgMkrID+lS6SlK07K5LaptscDlSaIgH+GPFzf+d75FVxozA==}
 
+  is-what@4.1.16:
+    resolution: {integrity: sha512-ZhMwEosbFJkA0YhFnNDgTM4ZxDRsS6HqTo7qsZM08fehyRYIYa0yHu5R6mgo1n/8MgaPBXiPimPD77baVFYg+A==}
+    engines: {node: '>=12.13'}
+
   is-wsl@2.2.0:
     resolution: {integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==}
     engines: {node: '>=8'}
@@ -5226,6 +5235,11 @@ packages:
   less@3.13.1:
     resolution: {integrity: sha512-SwA1aQXGUvp+P5XdZslUOhhLnClSLIjWvJhmd+Vgib5BFIr9lMNlQwmwUNOjXThF/A0x+MCYYPeWEfeWiLRnTw==}
     engines: {node: '>=6'}
+    hasBin: true
+
+  less@4.9.1:
+    resolution: {integrity: sha512-orp15PfJvvNDIqJdVWzMI9Sjpjp3VTiw3sfvbB+67LlISTEn8uVT2EdYSuyl02BLvaftv6sdk9Umnxmm5rckmg==}
+    engines: {node: '>=18'}
     hasBin: true
 
   levn@0.4.1:
@@ -5426,6 +5440,10 @@ packages:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
     engines: {node: '>=8'}
 
+  make-dir@5.1.0:
+    resolution: {integrity: sha512-IfpFq6UM39dUNiphpA6uDezNx/AvWyhwfICWPR3t1VspkgkMZrL+Rk1RbN1bx+aeNYwOrqGJgEgV3yotk+ZUVw==}
+    engines: {node: '>=18'}
+
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
@@ -5590,6 +5608,16 @@ packages:
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
+
+  needle@2.9.1:
+    resolution: {integrity: sha512-6R9fqJ5Zcmf+uYaFgdIHmLwNldn5HbK8L5ybn7Uz+ylX/rnOsSp1AHcvQSrCaFN+qNM1wpymHqD7mVasEOlHGQ==}
+    engines: {node: '>= 4.4.x'}
+    hasBin: true
+
+  needle@3.5.0:
+    resolution: {integrity: sha512-jaQyPKKk2YokHrEg+vFDYxXIHTCBgiZwSHOoVx/8V3GIBS8/VN6NdVRmg8q1ERtPkMvmOvebsgga4sAj5hls/w==}
+    engines: {node: '>= 4.4.x'}
+    hasBin: true
 
   negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
@@ -5817,6 +5845,10 @@ packages:
   parse-ms@4.0.0:
     resolution: {integrity: sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==}
     engines: {node: '>=18'}
+
+  parse-node-version@1.0.1:
+    resolution: {integrity: sha512-3YHlOa/JgH6Mnpr05jP9eDG254US9ek25LyIxZlDItp2iJtwyaXQb57lBYLdT3MowkUFYEV2XXNAYIPlESvJlA==}
+    engines: {node: '>= 0.10'}
 
   parse5-htmlparser2-tree-adapter@6.0.1:
     resolution: {integrity: sha512-qPuWvbLgvDGilKc5BoicRovlT4MtYT6JfJyBOMDsKoiT+GiuP5qyrPCnR9HcPECIJJmZh5jRndyNThnhhb/vlA==}
@@ -6432,6 +6464,9 @@ packages:
   pretty-time@1.1.0:
     resolution: {integrity: sha512-28iF6xPQrP8Oa6uxE6a1biz+lWeTOAPKggvjB8HAs6nVMKZwf5bG++632Dx614hIWgUPkgivRfG+a8uAXGTIbA==}
     engines: {node: '>=4'}
+
+  probe-image-size@7.5.0:
+    resolution: {integrity: sha512-ietdx4XPgmnzHRZOq1/KtcnsBkL4bRsBe+Szj5Tuq1/KPqDG42OspG1IhJb7vz6Z9pSzhp0J6UPnw6hujJTWoQ==}
 
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
@@ -7145,6 +7180,9 @@ packages:
 
   tailwindcss@4.3.4:
     resolution: {integrity: sha512-PCJZTFFdG+sL3gvnP1Do9o6GbkvH2q0p04xSs3f7cSvmAeK+sttG+/7ncK1fdRwKFfC7n+wDDJaOMBSefkI9ow==}
+
+  tailwindcss@4.3.5:
+    resolution: {integrity: sha512-FcQk9BuffmEHJP2G0XmB2SplU1aLTI7j07Kunk+U74Ny+XiWOtzXz9aujFZ/avntw1e2cOv/3PkgzflQ7gX2vQ==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -9623,7 +9661,7 @@ snapshots:
     dependencies:
       defer-to-connect: 1.1.3
 
-  '@tailwindcss-mangle/engine@0.2.0(tailwindcss@4.3.4)':
+  '@tailwindcss-mangle/engine@0.2.0(tailwindcss@4.3.5)':
     dependencies:
       '@tailwindcss/node': 4.3.4
       '@tailwindcss/oxide': 4.3.4
@@ -9631,7 +9669,7 @@ snapshots:
       pathe: 2.0.3
       postcss: 8.5.28
     optionalDependencies:
-      tailwindcss: 4.3.4
+      tailwindcss: 4.3.5
 
   '@tailwindcss/node@4.3.4':
     dependencies:
@@ -10091,7 +10129,7 @@ snapshots:
       - '@swc/helpers'
       - supports-color
 
-  '@tarojs/webpack5-runner@4.2.1(@babel/core@7.29.7(supports-color@10.2.2))(@swc/core@1.3.96)(@tarojs/runtime@4.2.1)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(html-minifier-terser@6.1.0)(less@3.13.1)(postcss@8.5.28)(sass@1.104.0)(stylus@0.64.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)(uglify-js@3.19.3)(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))':
+  '@tarojs/webpack5-runner@4.2.1(@babel/core@7.29.7(supports-color@10.2.2))(@swc/core@1.3.96)(@tarojs/runtime@4.2.1)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(html-minifier-terser@6.1.0)(less@4.9.1(supports-color@10.2.2))(postcss@8.5.28)(sass@1.104.0)(stylus@0.64.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)(uglify-js@3.19.3)(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@tarojs/helper': 4.2.1(supports-color@10.2.2)
@@ -10144,7 +10182,7 @@ snapshots:
       webpack-virtual-modules: 0.6.2
       webpackbar: 5.0.2(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
     optionalDependencies:
-      less: 3.13.1
+      less: 4.9.1(supports-color@10.2.2)
       sass: 1.104.0
       stylus: 0.64.0(supports-color@10.2.2)
     transitivePeerDependencies:
@@ -10549,12 +10587,12 @@ snapshots:
       postcss-selector-parser: 7.1.5
       postcss-value-parser: 4.2.0
 
-  '@weapp-tailwindcss/postcss@3.3.2(patch_hash=feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81)(jiti@2.7.0)(tailwindcss@4.3.4)(yaml@2.9.0)':
+  '@weapp-tailwindcss/postcss@3.3.2(patch_hash=feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81)(jiti@2.7.0)(tailwindcss@4.3.5)(yaml@2.9.0)':
     dependencies:
       '@csstools/css-color-parser': 4.2.2(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
       '@csstools/css-parser-algorithms': 4.0.0(@csstools/css-tokenizer@4.0.0)
       '@csstools/css-tokenizer': 4.0.0
-      '@tailwindcss-mangle/engine': 0.2.0(tailwindcss@4.3.4)
+      '@tailwindcss-mangle/engine': 0.2.0(tailwindcss@4.3.5)
       '@weapp-core/escape': 8.0.0
       '@weapp-tailwindcss/postcss-calc': 1.0.5(postcss@8.5.28)
       '@weapp-tailwindcss/shared': 2.0.3
@@ -10578,9 +10616,9 @@ snapshots:
       - tsx
       - yaml
 
-  '@weapp-tailwindcss/reset@0.1.4(tailwindcss@4.3.4)':
+  '@weapp-tailwindcss/reset@0.1.4(tailwindcss@4.3.5)':
     dependencies:
-      tailwindcss: 4.3.4
+      tailwindcss: 4.3.5
 
   '@weapp-tailwindcss/runtime@0.1.8':
     dependencies:
@@ -10738,8 +10776,8 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ajv-formats@2.1.1:
-    dependencies:
+  ajv-formats@2.1.1(ajv@8.20.0):
+    optionalDependencies:
       ajv: 8.20.0
 
   ajv-keywords@3.5.2(ajv@6.15.0):
@@ -11392,6 +11430,11 @@ snapshots:
   copy-anything@2.0.6:
     dependencies:
       is-what: 3.14.1
+
+  copy-anything@3.0.5:
+    dependencies:
+      is-what: 4.1.16
+    optional: true
 
   copy-webpack-plugin@12.0.2(webpack@5.91.0(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.28))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)):
     dependencies:
@@ -13371,6 +13414,9 @@ snapshots:
 
   is-what@3.14.1: {}
 
+  is-what@4.1.16:
+    optional: true
+
   is-wsl@2.2.0:
     dependencies:
       is-docker: 2.2.1
@@ -13578,6 +13624,22 @@ snapshots:
       native-request: 1.1.2
       source-map: 0.6.1
 
+  less@4.9.1(supports-color@10.2.2):
+    dependencies:
+      copy-anything: 3.0.5
+      parse-node-version: 1.0.1
+    optionalDependencies:
+      errno: 0.1.8
+      graceful-fs: 4.2.11
+      make-dir: 5.1.0
+      mime: 1.6.0
+      needle: 3.5.0
+      probe-image-size: 7.5.0(supports-color@10.2.2)
+      source-map: 0.6.1
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -13738,6 +13800,9 @@ snapshots:
     dependencies:
       semver: 6.3.1
 
+  make-dir@5.1.0:
+    optional: true
+
   math-intrinsics@1.1.0: {}
 
   mathml-tag-names@4.0.0: {}
@@ -13877,6 +13942,21 @@ snapshots:
     optional: true
 
   natural-compare@1.4.0: {}
+
+  needle@2.9.1(supports-color@10.2.2):
+    dependencies:
+      debug: 3.2.7(supports-color@10.2.2)
+      iconv-lite: 0.4.24
+      sax: 1.6.0
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
+  needle@3.5.0:
+    dependencies:
+      iconv-lite: 0.6.3
+      sax: 1.6.0
+    optional: true
 
   negotiator@0.6.3: {}
 
@@ -14135,6 +14215,9 @@ snapshots:
       lines-and-columns: 1.2.4
 
   parse-ms@4.0.0: {}
+
+  parse-node-version@1.0.1:
+    optional: true
 
   parse5-htmlparser2-tree-adapter@6.0.1:
     dependencies:
@@ -14757,6 +14840,14 @@ snapshots:
 
   pretty-time@1.1.0: {}
 
+  probe-image-size@7.5.0(supports-color@10.2.2):
+    dependencies:
+      lodash.merge: 4.6.2
+      needle: 2.9.1(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
   process-nextick-args@2.0.1: {}
 
   promise-polyfill@7.1.2: {}
@@ -15104,7 +15195,7 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.20.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1(ajv@8.20.0)
       ajv-keywords: 5.1.0(ajv@8.20.0)
 
   scss-bundle@3.1.2:
@@ -15642,6 +15733,8 @@ snapshots:
 
   tailwindcss@4.3.4: {}
 
+  tailwindcss@4.3.5: {}
+
   tapable@2.2.1: {}
 
   tapable@2.3.3: {}
@@ -15976,17 +16069,17 @@ snapshots:
       '@weapp-tailwindcss/shared': 2.0.3
       micromatch: 4.0.8
 
-  weapp-tailwindcss@5.5.1(@oxc-project/types@0.148.0)(jiti@2.7.0)(supports-color@10.2.2)(tailwindcss@4.3.4):
+  weapp-tailwindcss@5.5.1(@oxc-project/types@0.148.0)(jiti@2.7.0)(supports-color@10.2.2)(tailwindcss@4.3.5):
     dependencies:
       '@babel/parser': 8.0.4
       '@babel/traverse': 8.0.4
       '@babel/types': 8.0.4
-      '@tailwindcss-mangle/engine': 0.2.0(tailwindcss@4.3.4)
+      '@tailwindcss-mangle/engine': 0.2.0(tailwindcss@4.3.5)
       '@vue/compiler-dom': 3.5.42
       '@weapp-core/escape': 8.0.0
       '@weapp-tailwindcss/logger': 2.0.3
-      '@weapp-tailwindcss/postcss': 3.3.2(patch_hash=feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81)(jiti@2.7.0)(tailwindcss@4.3.4)(yaml@2.9.0)
-      '@weapp-tailwindcss/reset': 0.1.4(tailwindcss@4.3.4)
+      '@weapp-tailwindcss/postcss': 3.3.2(patch_hash=feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81)(jiti@2.7.0)(tailwindcss@4.3.5)(yaml@2.9.0)
+      '@weapp-tailwindcss/reset': 0.1.4(tailwindcss@4.3.5)
       '@weapp-tailwindcss/shared': 2.0.3
       comment-json: 5.0.0
       debug: 4.4.3(supports-color@10.2.2)
