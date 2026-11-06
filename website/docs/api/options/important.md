@@ -345,6 +345,10 @@ CSS 生成与兼容后处理的微调配置。
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
 与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
 
+`cssOptions.colorMixDynamicAlpha` 可选 `'rgba'`（小程序默认）或 `'strict'`，只提供嵌套配置。小程序默认启用 `'rgba'` 后，可将不透明固定底色、完整 `var()` 权重与 `transparent` 的 mix 转为 legacy `rgba`，保留变量和 fallback。静态百分比仍沿用严格路径；未知或动态底色、半透明底色及非法 mix 不转换。
+
+兼容模式采用 rgba 的 alpha 数字、百分比与钳制语义，不能保证任意变量值与 color-mix 等价。Web、Lynx、React Native 不应用此模式。Core 生成通过请求的 `styleOptions.cssOptions` 配置，转换通过实例或调用覆盖，显式 finalizer 使用自身 options。用法见 [动态透明度兼容模式](/docs/quick-start/frameworks/api#动态透明度兼容模式)。
+
 `cssOptions.skyline`（`boolean`）默认 `false`，用于微信小程序 Skyline 的 Tailwind CSS 4 字体变量初始化兼容，必须放在 `cssOptions` 中。多端项目应仅在微信构建目标开启；H5、其他小程序平台及 uni-app x 原生 App 不启用这项转换。
 
 开启后，插件把 `--tw-leading`、`--tw-font-weight` 的纯 `initial` 重置和插件生成的对应默认值转换为 `var(--weapp-tw-invalid-reset)`，保留消费端的嵌套 `var()`、有效 setter 和作者空值。uni-app Vite 的组件本地 `<style>` 会获得自己的初始化规则，业务样式仍可覆盖；该初始化独立于视觉 preflight，搭配 `cssOptions.cssPreflight: false` 也可使用。

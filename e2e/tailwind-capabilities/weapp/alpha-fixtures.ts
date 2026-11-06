@@ -33,7 +33,27 @@ const limitPhases: WeappPhase[] = [
   composite: { foreground: [0, 165, 234, 255], background: [255, 255, 255, 255], actualAlpha: 1, referenceAlpha: Number(state.alpha), equal: false },
 }))
 
+function compatProbe(id: string, variable: string, fallback = false): WeappProbe {
+  const candidate = fallback ? `bg-[#123456]/[var(${variable},50%)]` : `bg-[#123456]/(${variable})`
+  const phases: WeappPhase[] = [
+    { name: 'before', weight: fallback ? undefined : '25%', alpha: fallback ? 0.5 : 0.25 },
+    { name: 'after', weight: fallback ? '25%' : '50%', alpha: fallback ? 0.25 : 0.5 },
+    { name: 'restored', weight: fallback ? undefined : '25%', alpha: fallback ? 0.5 : 0.25 },
+  ].map(state => ({
+    name: state.name,
+    candidates: [candidate],
+    inline: `${size}${state.weight ? `;${variable}:${state.weight}` : ''}`,
+    reference: `${size};background-color:rgba(18,52,86,${state.alpha})`,
+    expected: { 'background-color': `rgba(18, 52, 86, ${state.alpha})` },
+    witness: { inline: `${state.weight ? `${variable}:${state.weight};` : ''}opacity:var(${variable},50%)`, expected: { opacity: String(state.alpha) } },
+    composite: { foreground: [18, 52, 86, 255], background: [255, 255, 255, 255], actualAlpha: state.alpha, referenceAlpha: state.alpha, equal: true },
+  }))
+  return { id, ...(fallback ? { colorMixDynamicAlpha: 'rgba' as const } : {}), candidates: [candidate], property: 'background-color', expected: phases[0]!.expected['background-color']!, reference: phases[0]!.reference, empty: true, phases }
+}
+
 export const alphaProbes: readonly WeappProbe[] = [
+  compatProbe('alpha-compat-runtime', '--alpha-compat'),
+  compatProbe('alpha-compat-fallback', '--alpha-compat-fallback', true),
   redProbe('alpha-zero', 'bg-alpha-solid/0', '0'),
   redProbe('alpha-quarter', 'bg-alpha-solid/25', '0.25'),
   redProbe('alpha-half', 'bg-alpha-solid/50', '0.5'),
@@ -46,5 +66,5 @@ export const alphaProbes: readonly WeappProbe[] = [
   redProbe('alpha-static-full', 'bg-alpha-solid/(--alpha-weight-full)', '1'),
   redProbe('alpha-static-fraction', 'bg-alpha-solid/(--alpha-weight-fraction)', '0.125'),
   { id: 'alpha-dynamic-class', candidates: ['bg-alpha-solid/25', 'bg-alpha-solid/50'], property: 'background-color', expected: color('0.25'), reference: `${size};background-color:${color('0.25')}`, empty: true, phases: [redPhase('before', 'bg-alpha-solid/25', '0.25'), redPhase('after', 'bg-alpha-solid/50', '0.5'), redPhase('restored', 'bg-alpha-solid/25', '0.25')] },
-  { id: 'runtime-color-weight-limit', candidates: [limit.candidate], property: 'background-color', expected: 'rgb(0, 165, 234)', reference: limitPhases[0]!.reference, empty: true, limit: { id: limit.id, reason: limit.reason }, phases: limitPhases },
+  { id: 'runtime-color-weight-limit', colorMixDynamicAlpha: 'strict', candidates: [limit.candidate], property: 'background-color', expected: 'rgb(0, 165, 234)', reference: limitPhases[0]!.reference, empty: true, limit: { id: limit.id, reason: limit.reason }, phases: limitPhases },
 ]

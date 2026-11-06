@@ -13,6 +13,7 @@ export interface WeappPhase {
 
 export interface WeappProbe {
   id: string
+  colorMixDynamicAlpha?: 'strict' | 'rgba'
   candidates: readonly string[]
   property: string
   expected: string

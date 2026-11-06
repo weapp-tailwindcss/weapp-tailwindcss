@@ -7,15 +7,14 @@ import { closeWechatProject } from '../../scripts/wechat-project-cleanup'
 import { Launcher } from '../../scripts/wechat/automator'
 import { newReport, persistReport } from './context'
 import { EnvironmentBlockedError, findEnvironmentBlock } from './environment-block'
-import { withGeneratorFixture } from './fixture'
 import { digest } from './identity'
 import { loadInventory } from './inventory'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts, writeCapabilityReport } from './report'
-import { weappFixtureCss } from './weapp/alpha-fixtures'
 import { captureWeappProbe } from './weapp/capture'
 import { weappContract } from './weapp/contract'
 import { weappCoverageGaps } from './weapp/coverage'
 import { weappProbes } from './weapp/fixtures'
+import { generateWeappProbeCss } from './weapp/generate'
 import { weappProjectFiles, weappRuntimeFixture } from './weapp/render'
 
 export async function runWeapp(context: RunContext) {
@@ -33,7 +32,7 @@ export async function runWeapp(context: RunContext) {
   await runWithCleanup(async () => {
     try {
       await mkdir(path.join(project, 'pages', 'index'), { recursive: true })
-      const generated = await withGeneratorFixture(context.root, weappFixtureCss, {}, generator => generator.generate({ target: 'weapp', candidates: probes.flatMap(item => [...item.candidates]), scanSources: false }))
+      const generated = await generateWeappProbeCss(context.root, probes)
       const files = weappProjectFiles(generated.css, context.runId, resolveWechatAppId(env))
       const shared: string[] = []
       const owners = probes.map(probe => probe.id)

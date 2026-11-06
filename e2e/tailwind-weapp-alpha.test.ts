@@ -51,3 +51,18 @@ describe('微信动态颜色权重的支持边界', () => {
     expect(weappExpectedStyles(item, 'restored')).toEqual(weappExpectedStyles(item, 'before'))
   })
 })
+
+it.each(['alpha-compat-runtime', 'alpha-compat-fallback'])('rgba 兼容用例 %s 独立验证变量、参考和恢复', (id) => {
+  const item = probe(id)
+  expect(item.colorMixDynamicAlpha).toBe(id === 'alpha-compat-runtime' ? undefined : 'rgba')
+  expect(weappContract(item).expectation).toEqual({ support: 'supported', stage: 'runtime' })
+  expect(weappPhases(item)).toEqual(['before', 'after', 'restored'])
+  for (const phase of weappPhases(item)) {
+    const assertions = weappContract(item).requiredAssertions
+    for (const suffix of ['style/background-color', 'reference/background-color', 'witness/opacity', 'pixel-0', 'reference-pixel-0']) {
+      expect(assertions).toContain(`${phase}/${suffix}`)
+    }
+  }
+  expect(weappExpectedStyles(item, 'restored')).toEqual(weappExpectedStyles(item, 'before'))
+  expect(weappExpectedStyles(item, 'after')).not.toEqual(weappExpectedStyles(item, 'before'))
+})

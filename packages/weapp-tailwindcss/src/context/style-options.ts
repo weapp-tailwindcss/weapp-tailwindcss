@@ -52,6 +52,7 @@ export function resolveStyleOptionsFromContext(
     ? autoCalc ? 'auto' : undefined
     : configuredCalc
   const cssOptions = {
+    colorMixDynamicAlpha: branch.isWeb || branch.isNativeApp ? 'strict' : inputCssOptions?.colorMixDynamicAlpha,
     skyline: branch.isWeb || branch.isNativeApp ? false : inputCssOptions?.skyline,
     cssPreflight: inputCssOptions?.cssPreflight ?? ctx.cssPreflight,
     cssPreflightRange: inputCssOptions?.cssPreflightRange ?? ctx.cssPreflightRange,

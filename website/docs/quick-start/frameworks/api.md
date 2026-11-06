@@ -358,3 +358,43 @@ const ctx = createContext({
 | `weapp-tailwindcss/core` | 自研构建器、批处理脚本、平台适配器 | 调用方显式组织生成、刷新、转换和写回 |
 
 普通项目请先阅读 [Tailwind CSS 4 默认模式参考](/docs/tailwindcss/v4-reference)，再选择对应框架的接入页。
+
+## 动态透明度兼容模式
+
+小程序默认使用 `cssOptions.colorMixDynamicAlpha: 'rgba'` 保留动态透明度，无须额外配置。需要严格保持 `color-mix` 语义时，显式选择 `'strict'`，仅降级可静态证明的百分比。下面展示配置位置：
+
+```ts
+import { createCompiler } from 'weapp-tailwindcss/core'
+
+const cssOptions = { colorMixDynamicAlpha: 'rgba' } as const
+const compiler = createCompiler({ cssOptions })
+try {
+  const generated = await compiler.generate({
+    id: 'alpha',
+    sourceOptions: {
+      base: process.cwd(),
+      css: '@tailwind utilities;.alpha{background-color:color-mix(in srgb,#123456 var(--opacity,50%),transparent)}',
+    },
+    target: 'weapp',
+    candidates: ['w-[37px]'],
+    scanSources: false,
+    styleOptions: { cssOptions },
+  })
+  // 生成由请求 styleOptions 控制；转换继承实例配置，也可按调用覆盖。
+  const transformed = await compiler.transformCss(generated.rawCss, generated.snapshot)
+  await compiler.transformCssRoot(transformed.root, generated.snapshot, { cssOptions })
+  // 显式 finalizer 使用自身配置，不继承实例配置。
+  compiler.finalizeCss('.alpha{color:color-mix(in srgb,#123456 var(--opacity),transparent)}', { cssOptions })
+}
+finally {
+  await compiler.dispose()
+}
+```
+
+兼容输出为 `rgba(18, 52, 86, var(--opacity,50%))`，变量及 fallback 由小程序运行时解释。该选项只提供 `cssOptions` 嵌套配置，没有顶层同名别名。构建插件可通过 `cssOptions: { colorMixDynamicAlpha: 'strict' }` 退出兼容模式。
+
+支持范围为可证明不透明的固定底色、完整 `var()` 权重和 `transparent`。未知或动态主题底色、半透明底色、非法 mix 不转换。已能静态解析的合法百分比仍沿用严格路径；仅降低可识别的 Tailwind 单一颜色能力分支，不展开复杂 `@supports`。
+
+`rgba` 的 alpha 接受数字和百分比，并按 alpha 规则钳制。`color-mix` 的权重语义不同，因此兼容模式不能保证任意变量值等价；例如 `.5` 在 rgba 中表示 50% alpha，原 mix 则要求百分比权重。请为运行时变量提供适合 alpha 的值。Web、Lynx、React Native 不应用此模式。
+
+Refs [#1332](https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1332)。

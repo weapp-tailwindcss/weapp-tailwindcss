@@ -167,6 +167,12 @@ export interface CssOptions {
    * 保留运行时变量与主题 fallback；仅用于小程序，不能与 cssRemoveProperty: false 同时启用。
    */
   skyline?: boolean | undefined
+  /**
+   * 小程序动态 color-mix 权重策略，默认 rgba 将不透明固定底色与完整 var() 权重
+   * 转为 legacy rgba，采用 alpha 语义；strict 只降级可静态证明的百分比。
+   * 仅用于小程序，不保证任意变量值与 color-mix 等价。
+   */
+  colorMixDynamicAlpha?: 'strict' | 'rgba' | undefined
   cssPreflight?: CssPreflightOptions | undefined
   cssPreflightRange?: 'all' | undefined
   cssChildCombinatorReplaceValue?: string | string[] | undefined

@@ -1,6 +1,7 @@
 import type { IStyleHandlerOptions } from '../../../types'
 import { postcss } from '../../../postcss-runtime'
 import { selectorContainsPseudoClass } from '../../../selectorParser/pseudo'
+import { resolveColorMixOptions } from '../../color-mix-options'
 import { removeUnsupportedCascadeLayers, removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
 import { removeUnsupportedMiniProgramAtRulesRoot } from '../../mini-program-css/at-rules'
 import { normalizeMiniProgramColorMix, normalizeMiniProgramColorMixRoot } from '../../mini-program-css/modern-colors'
@@ -132,7 +133,7 @@ function prepareProcessedMiniProgramCss(source: string, options: Partial<IStyleH
     const root = postcss.parse(source)
     // 注册、局部覆盖和条件规则仍在同一棵树中，先证明颜色语义再裁剪。
     if (prepareUserCss && /color-mix\(/i.test(source)) {
-      normalizeMiniProgramColorMixRoot(root)
+      normalizeMiniProgramColorMixRoot(root, resolveColorMixOptions(options))
     }
     removeUnsupportedMiniProgramAtRulesRoot(root)
     const unsupportedPseudoClasses = [
@@ -154,7 +155,7 @@ function prepareProcessedMiniProgramCss(source: string, options: Partial<IStyleH
     // 编辑中的不完整 CSS 保留原字符串修复顺序，不消费半变换的 AST。
   }
   const fallback = removeMiniProgramInteractiveSelectors(
-    removeUnsupportedMiniProgramAtRules(prepareUserCss ? normalizeMiniProgramColorMix(source) : source),
+    removeUnsupportedMiniProgramAtRules(prepareUserCss ? normalizeMiniProgramColorMix(source, resolveColorMixOptions(options)) : source),
     selectors,
   )
   return prepareUserCss ? unwrapMiniProgramCascadeLayers(fallback) : fallback

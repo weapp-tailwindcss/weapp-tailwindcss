@@ -134,5 +134,13 @@ export function resolveGeneratorStyleOptions(
     ...cssHandlerOptions,
     ...preflightStyleOptions,
     ...generatorStyleOptions,
+    cssOptions: {
+      ...resolvedStyleOptions.cssOptions,
+      ...cssHandlerOptions.cssOptions,
+      ...generatorStyleOptions?.cssOptions,
+      colorMixDynamicAlpha: generatorStyleOptions?.cssOptions?.colorMixDynamicAlpha
+        ?? cssHandlerOptions.cssOptions?.colorMixDynamicAlpha
+        ?? resolvedStyleOptions.cssOptions?.colorMixDynamicAlpha,
+    },
   }
 }

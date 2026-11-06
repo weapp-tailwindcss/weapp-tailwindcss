@@ -10284,8 +10284,10 @@ describe('bundlers/shared generator css', () => {
   it('removes preflight style options for scoped Vue style sources', async () => {
     const { resolveGeneratorStyleOptions } = await import('@/generation/generation-helpers')
     const styleOptions = resolveGeneratorStyleOptions({
-      cssPreflight: 'view',
-      cssPreflightRange: 'all',
+      styleOptions: {
+        cssPreflight: 'view',
+        cssPreflightRange: 'all',
+      },
     } as any, {
       postcssOptions: {
         options: {

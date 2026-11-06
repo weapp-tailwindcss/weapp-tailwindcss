@@ -58,3 +58,16 @@ it('审批后的版本 PR 通过完整 PR checks 等待同一三浏览器门禁'
   expect(workflow.jobs['pr-gate'].needs).toContain('pr-checks')
   expect(workflow.jobs['pr-gate'].steps[0].run).toContain('job.result !== "success"')
 })
+
+it('普通 PR 单次执行微信动态透明度与证据回放契约，禁止更新基线', async () => {
+  const workflow = YAML.parse(await readFile(new URL('../.github/workflows/tailwind-capabilities.yml', import.meta.url), 'utf8'))
+  const step = workflow.jobs.web.steps.find((step: { run?: string }) => step.run?.includes('tailwind-weapp-dynamic-alpha-static.test.ts'))
+  expect(step).toBeDefined()
+  expect(step.if).toBe('matrix.engine == \'chromium\'')
+  expect(step.env.CI).toBe('1')
+  expect(step['continue-on-error']).toBeUndefined()
+  for (const file of ['tailwind-weapp-alpha', 'tailwind-weapp-dynamic-alpha-static', 'tailwind-weapp-replay', 'tailwind-weapp-capture', 'tailwind-mini-program-alpha-limit', 'tailwind-capabilities-ci']) {
+    expect(step.run).toContain(`e2e/${file}.test.ts`)
+  }
+  expect(step.run).toContain('--update=none')
+})

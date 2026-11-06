@@ -1,6 +1,7 @@
 import type { IStyleHandlerOptions } from '../../../types'
 import type { GeneratedThemeDeclarationResolver } from './generated-cleanup'
 import { filterExistingCssRules } from '../../../vite-css-rules'
+import { resolveColorMixOptions } from '../../color-mix-options'
 import { removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../../mini-program-css/modern-colors'
 import { removeLocalUtilityMarkers } from '../../uni-app-x/local-utility-order'
@@ -30,14 +31,25 @@ export async function transformGeneratorUserCss(
   if (source.trim().length === 0) {
     return ''
   }
+  const mergedStyleOptions = {
+    ...options.generatorStyleOptions,
+    ...options.cssUserHandlerOptions,
+    cssOptions: {
+      ...options.generatorStyleOptions.cssOptions,
+      ...options.cssUserHandlerOptions.cssOptions,
+      colorMixDynamicAlpha: options.cssUserHandlerOptions.cssOptions?.colorMixDynamicAlpha
+        ?? options.generatorStyleOptions.cssOptions?.colorMixDynamicAlpha,
+    },
+  }
+  const styleOptions = {
+    ...mergedStyleOptions,
+    cssOptions: { ...mergedStyleOptions.cssOptions, ...resolveColorMixOptions(mergedStyleOptions) },
+  }
   if (options.processed) {
     const compiledSource = await options.compileAuthorCssFunctions?.(source) ?? source
     const cleanedSource = options.generatorTarget === 'weapp'
       ? removeTailwindV4GeneratedUserCssArtifacts(
-          prepareProcessedMiniProgramUserCss(compiledSource, {
-            ...options.generatorStyleOptions,
-            ...options.cssUserHandlerOptions,
-          }),
+          prepareProcessedMiniProgramUserCss(compiledSource, styleOptions),
           options.generatedSource,
         )
       : compiledSource
@@ -65,7 +77,7 @@ export async function transformGeneratorUserCss(
   }
   const authorFunctionsSource = removeTailwindApplyAtRules(cleanedSource)
   const compiledSource = await options.compileAuthorCssFunctions?.(authorFunctionsSource) ?? authorFunctionsSource
-  const compatibleSource = options.generatorTarget === 'weapp' ? normalizeMiniProgramColorMix(compiledSource) : compiledSource
+  const compatibleSource = options.generatorTarget === 'weapp' ? normalizeMiniProgramColorMix(compiledSource, styleOptions.cssOptions) : compiledSource
   const sanitizedSource = removeTailwindSourceDirectives(
     stripUnmatchedTailwindSourceMediaCloseFragments(
       stripTailwindSourceMediaFragments(
@@ -100,10 +112,7 @@ export async function transformGeneratorUserCss(
       ].filter(Boolean).join('\n'),
     }, options.generatorStyleOptions.webRpxCompatibility === true)
   }
-  const { css } = await options.styleHandler(userSource, {
-    ...options.generatorStyleOptions,
-    ...options.cssUserHandlerOptions,
-  })
+  const { css } = await options.styleHandler(userSource, styleOptions)
   const transformedCss = removeTailwindV4GeneratedUserCssArtifacts(removeUnsupportedMiniProgramAtRules(stripTailwindBanners(css)), options.generatedSource)
   const bareSelectorUserCss = collectBareSelectorUserCss(userSource, transformedCss)
   const missingBareSelectorUserCss = bareSelectorUserCss.trim().length > 0

@@ -1,6 +1,7 @@
 import type { PluginCreator, Root } from 'postcss'
 import type { IStyleHandlerOptions } from '../types'
 import type { WeappTailwindcssPostcssPluginAdapters, WeappTailwindcssPostcssPluginOptions } from './types'
+import { resolveColorMixOptions } from '../compat/color-mix-options'
 import { transformLynxCssCompat } from '../compat/lynx-css'
 import { finalizeMiniProgramCss } from '../compat/mini-program-css'
 import { assertSkylineTypographyInput, resolveSkylineTypographyCompatibility } from '../compat/tailwindcss-v4/skyline-typography'
@@ -46,7 +47,7 @@ function finalizeGeneratedCss(
     return css
   }
   return finalizeMiniProgramCss(css, {
-    cssOptions: styleOptions?.cssOptions,
+    cssOptions: { ...styleOptions?.cssOptions, ...resolveColorMixOptions(styleOptions) },
     cssRemoveProperty: styleOptions?.cssRemoveProperty,
     platform: styleOptions?.platform,
     atRules: styleOptions?.atRules,
@@ -103,6 +104,12 @@ export function createWeappTailwindcssPostcssPlugin(
         const generatorStyleOptions = {
           ...generatorOptions.styleOptions,
           ...styleOptions,
+          cssOptions: {
+            ...generatorOptions.styleOptions?.cssOptions,
+            ...styleOptions?.cssOptions,
+            colorMixDynamicAlpha: styleOptions?.cssOptions?.colorMixDynamicAlpha
+              ?? generatorOptions.styleOptions?.cssOptions?.colorMixDynamicAlpha,
+          },
         }
         try {
           if (resolveSkylineTypographyCompatibility(generatorStyleOptions, generatorOptions.target !== 'web')) {

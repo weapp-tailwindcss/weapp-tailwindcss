@@ -9,6 +9,7 @@ import { digest } from './identity'
 import { registryStaticFixture } from './registry-web/static'
 import { weappFixtureCss } from './weapp/alpha-fixtures'
 import { weappProbes } from './weapp/fixtures'
+import { generateWeappProbeCss } from './weapp/generate'
 import { weappRenderContract } from './weapp/render'
 import { autofillCss, autofillProbe, renderAutofill } from './web-autofill/fixtures'
 import { contextWebCandidates, contextWebFixtureCss, contextWebProbes } from './web-context/fixtures'
@@ -19,7 +20,7 @@ import { webFixtureCss, webProbes } from './web/probes'
 
 export async function fixtureOutputs(root: string) {
   const web = await withGeneratorFixture(root, webFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: [...new Set(webProbes.flatMap(probe => probe.candidate.match(/\S+/g) ?? []))], scanSources: false }))
-  const weapp = await withGeneratorFixture(root, weappFixtureCss, {}, generator => generator.generate({ target: 'weapp', candidates: [...new Set(weappProbes.flatMap(probe => [...probe.candidates]))], scanSources: false }))
+  const weapp = await generateWeappProbeCss(root, weappProbes)
   const context = await withGeneratorFixture(root, contextWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: contextWebCandidates, scanSources: false }))
   const lifecycle = await withGeneratorFixture(root, lifecycleWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: lifecycleWebCandidates, scanSources: false }))
   const history = await withGeneratorFixture(root, historyCss, {}, generator => generator.generate({ target: 'web', candidates: [historyProbe.candidate], scanSources: false }))

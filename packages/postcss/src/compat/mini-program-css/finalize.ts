@@ -40,7 +40,7 @@ export function finalizeMiniProgramCssRoot(root: postcss.Root, options: Finalize
     assertSkylineTypographyInput(root)
   }
   unwrapTailwindSourceMedia(root)
-  const stableColors = removeUnsupportedModernColorDeclarations(root, options.isTailwindcssV4 === true && options.tailwindcssV4GradientFallback === true)
+  const stableColors = removeUnsupportedModernColorDeclarations(root, options.isTailwindcssV4 === true && options.tailwindcssV4GradientFallback === true, options.cssOptions)
   const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.preserveWebkitProperties).preserveProperties
   const tailwindcssV4DefaultNodes = shouldInjectTailwindcssV4Defaults
     ? createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root), skyline)

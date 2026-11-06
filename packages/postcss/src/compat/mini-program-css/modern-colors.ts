@@ -1,21 +1,22 @@
+import type { CssOptions } from '../../types'
 import postcss from 'postcss'
 import { unwrapTailwindSourceMedia } from './directives'
 import { removeUnsupportedModernColorDeclarations } from './root-cleanups'
 
 /** 原位完成颜色资格分析，供已有 AST 的准备阶段复用。 */
-export function normalizeMiniProgramColorMixRoot(root: postcss.Root) {
+export function normalizeMiniProgramColorMixRoot(root: postcss.Root, options: Pick<CssOptions, 'colorMixDynamicAlpha'> = {}) {
   unwrapTailwindSourceMedia(root)
-  removeUnsupportedModernColorDeclarations(root, false)
+  removeUnsupportedModernColorDeclarations(root, false, options)
 }
 
 /** 在删除注册与条件证据前处理 mix，避免后续阶段把动态主题重新当成常量。 */
-export function normalizeMiniProgramColorMix(css: string) {
+export function normalizeMiniProgramColorMix(css: string, options: Pick<CssOptions, 'colorMixDynamicAlpha'> = {}) {
   if (!/color-mix\(/i.test(css)) {
     return css
   }
   try {
     const root = postcss.parse(css)
-    normalizeMiniProgramColorMixRoot(root)
+    normalizeMiniProgramColorMixRoot(root, options)
     return root.toString()
   }
   catch {

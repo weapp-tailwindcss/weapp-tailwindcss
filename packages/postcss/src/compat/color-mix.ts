@@ -1,4 +1,5 @@
 import type { Node } from 'postcss-value-parser'
+import type { CssOptions } from '../types'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
 import { getCssAtRulePrelude, getCssCustomPropertyName } from '../utils/css-custom-property'
@@ -15,7 +16,7 @@ export interface DynamicColorMixAlphaProtection {
   restore: (css: string) => string
 }
 
-export interface DynamicColorMixAlphaProtectionOptions {
+export interface DynamicColorMixAlphaProtectionOptions extends Pick<CssOptions, 'colorMixDynamicAlpha'> {
   customPropertyValues?: ReadonlyMap<string, string> | undefined
   lowerStaticSupports?: boolean | undefined
 }
@@ -99,6 +100,7 @@ export function protectDynamicVarFallbacks(css: string): DynamicColorMixAlphaPro
 export function normalizeModernColorValue(
   value: string,
   customPropertyValues: ReadonlyMap<string, string> = new Map(),
+  options: Pick<CssOptions, 'colorMixDynamicAlpha'> = {},
 ): ModernColorValueNormalization {
   if (!mayHaveModernColorFunction(value)) {
     return {
@@ -126,7 +128,7 @@ export function normalizeModernColorValue(
       normalized = normalizeStandaloneColorFunction(valueParser.stringify(node))
     }
     else if (name === COLOR_MIX_NAME) {
-      normalized = tryResolveColorMix(node, customPropertyValues)?.value
+      normalized = tryResolveColorMix(node, customPropertyValues, options)?.value
     }
 
     if (!normalized) {
@@ -183,7 +185,7 @@ export function protectDynamicColorMixAlpha(
   }
 
   if (options.lowerStaticSupports) {
-    changed = lowerStaticColorMixSupports(root, customPropertyValues)
+    changed = lowerStaticColorMixSupports(root, customPropertyValues, options)
   }
 
   root.walkDecls((decl) => {
@@ -198,7 +200,7 @@ export function protectDynamicColorMixAlpha(
       if (node.type !== 'function' || node.value.toLowerCase() !== COLOR_MIX_NAME) {
         return
       }
-      const resolved = tryResolveColorMix(node, customPropertyValues)
+      const resolved = tryResolveColorMix(node, customPropertyValues, options)
       if (!resolved) {
         // 保留完整表达式，后续依赖收集仍须能看见变量引用。
         return false

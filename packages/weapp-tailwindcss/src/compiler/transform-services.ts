@@ -1,4 +1,5 @@
 import type { StyleHandler } from '@weapp-tailwindcss/postcss/transform'
+import type { CssOptions } from '@weapp-tailwindcss/postcss/types'
 import type { ITemplateHandlerOptions, JsHandler } from '@/types/compilation'
 
 /** 核心转换操作由实例创建；不包含用户配置、环境或共享缓存。 */
@@ -7,6 +8,7 @@ export interface CompilerTransformServices {
   readonly jsHandler: JsHandler
   readonly templateHandler: (source: string, options?: ITemplateHandlerOptions) => Promise<string>
   readonly skyline?: boolean | undefined
+  readonly colorMixDynamicAlpha?: CssOptions['colorMixDynamicAlpha']
   readonly stylePlatform?: string | undefined
   readonly preserveWebkitProperties?: readonly string[] | undefined
 }

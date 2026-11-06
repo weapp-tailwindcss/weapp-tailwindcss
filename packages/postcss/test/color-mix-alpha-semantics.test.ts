@@ -99,11 +99,11 @@ describe('color-mix 透明度与未知值的语义边界', () => {
     }
   })
 
-  it.each(['-1%', '100.1%', '.5', '50px', 'initial', 'var(--missing)', 'var(--missing,50%)'])('非法或未证明稳定的权重 %s 不能变为有效 rgba', (weight) => {
+  it.each(['-1%', '100.1%', '.5', '50px', 'initial', 'var(--missing)', 'var(--missing,50%)'])('strict 模式的非法或未证明稳定权重 %s 不能变为有效 rgba', (weight) => {
     const mix = 'color-mix(in oklab,red var(--weight),transparent)'
     const css = `:root{--weight:${weight}}.probe{color:${mix};display:block}`
     expect(protectDynamicColorMixAlpha(css).css).toContain(`color:${mix}`)
-    expect(finalizeMiniProgramCss(css)).not.toContain('color:')
+    expect(finalizeMiniProgramCss(css, { cssOptions: { colorMixDynamicAlpha: 'strict' } })).not.toContain('color:')
   })
 
   it('主权重存在也不能删除未知 fallback 的失效依赖', () => {

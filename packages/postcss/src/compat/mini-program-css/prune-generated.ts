@@ -212,7 +212,7 @@ export function pruneMiniProgramGeneratedCssRoot(
   unwrapTailwindSourceMedia(root)
   removeUnsupportedCascadeLayers(root)
   removeSpecificityPlaceholders(root)
-  removeUnsupportedModernColorDeclarations(root, false)
+  removeUnsupportedModernColorDeclarations(root, false, options.cssOptions)
   removeTailwindContainerMaxWidthMediaRules(root)
   removeTailwindContainerWidthRules(root)
 

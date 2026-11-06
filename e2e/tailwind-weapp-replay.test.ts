@@ -2,8 +2,10 @@ import { mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
+import { digest } from './tailwind-capabilities/identity'
 import { validateCapabilityReport, verifyReportArtifacts } from './tailwind-capabilities/report'
 import { weappProbes } from './tailwind-capabilities/weapp/fixtures'
+import { weappRuntimeFixture } from './tailwind-capabilities/weapp/render'
 import { editWeappFixtureImage, resignWeappFixture, weappReplayFixture } from './tailwind-capabilities/weapp/test-fixture'
 
 const directories: string[] = []
@@ -19,7 +21,7 @@ async function fixture(id = 'runtime-color-weight-limit') {
 }
 
 it('合成正向与负向完整协议可重放，合成图不登记为真实运行', async () => {
-  for (const id of ['width-arbitrary', 'alpha-half', 'alpha-dynamic-class', 'runtime-color-weight-limit']) {
+  for (const id of ['width-arbitrary', 'alpha-half', 'alpha-dynamic-class', 'alpha-compat-runtime', 'alpha-compat-fallback', 'runtime-color-weight-limit']) {
     const { directory, report, contract } = await fixture(id)
     validateCapabilityReport(report, [contract], report.identity, report.runId, 'weapp')
     await expect(verifyReportArtifacts(report, directory)).resolves.toBeUndefined()
@@ -125,4 +127,12 @@ it('缺少原始 PNG 回执不能用孤立裁剪图通过', async () => {
   report.artifacts = report.artifacts.filter(item => !item.path.endsWith('.full.png'))
   report.results[0]!.artifacts = report.results[0]!.artifacts.filter(name => !name.endsWith('.full.png'))
   await expect(verifyReportArtifacts(report, directory)).rejects.toThrow()
+})
+
+it('兼容模式不能冒用 strict 夹具身份，重新签名也拒绝', async () => {
+  const { directory, report } = await fixture('alpha-compat-runtime')
+  const probe = weappProbes.find(probe => probe.id === 'alpha-compat-runtime')!
+  report.identity.fixtureHash = digest({ target: 'weapp', fixture: weappRuntimeFixture([{ ...probe, colorMixDynamicAlpha: 'strict' }]) })
+  await resignWeappFixture(report, directory)
+  await expect(verifyReportArtifacts(report, directory)).rejects.toThrow('夹具身份')
 })

@@ -40,6 +40,29 @@ function createAdapters(overrides: Partial<WeappTailwindcssPostcssPluginAdapters
 }
 
 describe('generator postcss plugin factory', () => {
+  it.each([{ platform: 'h5' }, { uniAppX: true, uniAppXCssTarget: 'uvue' as const }])('最终清理尊重实际非小程序目标：%j', async (styleOptions) => {
+    const source = '.alpha{color:color-mix(in srgb,#123456 var(--opacity),transparent)}'
+    const { adapters, generate } = createAdapters()
+    generate.mockResolvedValueOnce({ css: source, rawCss: source, target: 'weapp', classSet: new Set(['alpha']), dependencies: [] })
+    const result = await postcss([createWeappTailwindcssPostcssPlugin(adapters)({
+      styleOptions: { ...styleOptions, cssOptions: { colorMixDynamicAlpha: 'rgba' } },
+      scanSources: false,
+    })]).process('@tailwind utilities;', { from: undefined })
+    expect(result.css).not.toContain('rgba(18, 52, 86, var(--opacity))')
+  })
+  it.each([{}, { rem2rpx: false }])('无关样式配置不能覆盖生成器的显式 strict：%j', async (cssOptions) => {
+    const source = '.alpha{color:color-mix(in srgb,#123456 var(--opacity),transparent)}'
+    const { adapters, generate } = createAdapters()
+    generate.mockResolvedValueOnce({ css: source, rawCss: source, target: 'weapp', classSet: new Set(['alpha']), dependencies: [] })
+    const result = await postcss([createWeappTailwindcssPostcssPlugin(adapters)({
+      generator: { styleOptions: { cssOptions: { colorMixDynamicAlpha: 'strict' } } },
+      styleOptions: { cssOptions },
+      scanSources: false,
+    })]).process('@tailwind utilities;', { from: undefined })
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ styleOptions: expect.objectContaining({ cssOptions: expect.objectContaining({ colorMixDynamicAlpha: 'strict' }) }) }))
+    expect(result.css).not.toContain('rgba(18, 52, 86, var(--opacity))')
+  })
+
   it.each([false, true])('释放生成会话，包括生成失败：%s', async (fails) => {
     const dispose = vi.fn()
     const { adapters, generate } = createAdapters()
