@@ -9,7 +9,10 @@ import { resolveCompilationProfile } from './compilation-profile'
 import { createCompilerTransformServices } from './compiler'
 import { snapshotConfiguration } from './configuration-snapshot'
 
-type LegacyInput<T> = Omit<T, 'profile' | 'compilerTransforms' | 'isConfigurationCurrent' | 'sourceRuntimeState'> & { opts: InternalUserDefinedOptions }
+type LegacyInput<T extends { cssUserHandlerOptions: unknown }> = Omit<T, 'profile' | 'compilerTransforms' | 'isConfigurationCurrent' | 'sourceRuntimeState' | 'cssUserHandlerOptions'> & {
+  opts: InternalUserDefinedOptions
+  cssUserHandlerOptions?: T['cssUserHandlerOptions'] | undefined
+}
 export type GenerateCssByGeneratorOptions = LegacyInput<ResolvedGenerationInput>
 export type TailwindV4GenerationCoreInput = LegacyInput<ResolvedCoreInput>
 export type ValidateCandidatesByGeneratorOptions = LegacyInput<ResolvedValidationInput>
@@ -51,7 +54,7 @@ function resolveInput<T extends LegacyInput<ResolvedGenerationInput> | LegacyInp
     ...('scope' in input ? { scope: snapshotConfiguration(input.scope, snapshots) } : {}),
     ...('compilationChanges' in input ? { compilationChanges: snapshotConfiguration(input.compilationChanges, snapshots) } : {}),
     cssHandlerOptions: snapshotConfiguration(input.cssHandlerOptions, snapshots),
-    cssUserHandlerOptions: snapshotConfiguration(input.cssUserHandlerOptions, snapshots),
+    cssUserHandlerOptions: snapshotConfiguration(input.cssUserHandlerOptions ?? {}, snapshots),
     profile,
     compilerTransforms: createCompilerTransformServices(opts),
     isConfigurationCurrent: isCurrent,

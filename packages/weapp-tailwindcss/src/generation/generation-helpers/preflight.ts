@@ -1,7 +1,7 @@
 import type { CssPreflightOptions, IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { ResolvedCompilationProfile } from '@/compiler/compilation-profile'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
-import { finalizeMiniProgramCss } from '@weapp-tailwindcss/postcss/transform'
+import { finalizeMiniProgramCss, resolvePostcssStyleTarget } from '@weapp-tailwindcss/postcss/transform'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
 
@@ -28,9 +28,17 @@ export function finalizeMiniProgramGeneratorCss(
   if (!isMiniProgramGeneratorTarget(target)) {
     return css
   }
+  const styleOptions = options.styleOptions
+  const styleTarget = resolvePostcssStyleTarget({ ...styleOptions, platform: styleOptions?.cssOptions?.platform ?? styleOptions?.platform })
+  const cssOptions = {
+    ...styleOptions?.cssOptions,
+    colorMixDynamicAlpha: styleTarget === 'generic' || styleTarget === 'mini-program'
+      ? styleOptions?.cssOptions?.colorMixDynamicAlpha
+      : 'strict' as const,
+  }
   if (options.styleOptions && isVueScopedStyleRequest(resolvePostcssRequestOption(options.styleOptions))) {
     return finalizeMiniProgramCss(css, {
-      cssOptions: options.styleOptions?.cssOptions,
+      cssOptions,
       cssRemoveProperty: options.styleOptions?.cssRemoveProperty,
       platform: options.styleOptions?.platform,
       atRules: options.styleOptions?.atRules,
@@ -49,7 +57,7 @@ export function finalizeMiniProgramGeneratorCss(
     && !hasPreflightReset
   const preservePreflight = options.preservePreflight !== false
   return finalizeMiniProgramCss(css, {
-    cssOptions: options.styleOptions?.cssOptions,
+    cssOptions,
     cssRemoveProperty: options.styleOptions?.cssRemoveProperty,
     platform: options.styleOptions?.platform,
     atRules: options.styleOptions?.atRules,

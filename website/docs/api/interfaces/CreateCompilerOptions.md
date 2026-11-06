@@ -363,6 +363,10 @@ CSS 生成与兼容后处理的微调配置。
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
 与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
 
+`cssOptions.colorMixDynamicAlpha` 可选 `'rgba'`（小程序默认）或 `'strict'`，只提供嵌套配置。小程序默认启用 `'rgba'` 后，可将不透明固定底色、完整 `var()` 权重与 `transparent` 的 mix 转为 legacy `rgba`，保留变量和 fallback。静态百分比仍沿用严格路径；未知或动态底色、半透明底色及非法 mix 不转换。
+
+兼容模式采用 rgba 的 alpha 数字、百分比与钳制语义，不能保证任意变量值与 color-mix 等价。Web、Lynx、React Native 不应用此模式。Core 生成通过请求的 `styleOptions.cssOptions` 配置，转换通过实例或调用覆盖，显式 finalizer 使用自身 options。用法见 [动态透明度兼容模式](/docs/quick-start/frameworks/api#动态透明度兼容模式)。
+
 `cssOptions.skyline`（`boolean`）默认 `false`，用于微信小程序 Skyline 的 Tailwind CSS 4 字体变量初始化兼容，仅在微信构建目标显式开启。该开关保留嵌套变量消费和有效 setter，支持 `cssPreflight: false`；保留变量冲突或显式保留 `@property` 的配置会报错。配置、组件本地样式与已知运行时边界见 [Skyline 字体变量回退](/docs/issues/css-vars#skyline-字体变量回退)。
 
 小程序兼容处理默认保留 `-webkit-font-smoothing`，因此不会因本项目的属性删除策略丢失

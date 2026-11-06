@@ -25,7 +25,7 @@ describe('小程序颜色权重的预声明限制', () => {
     expect(limit.runtimeEvidence).toBe('not-run')
     await withGeneratorFixture(root, '@import "tailwindcss" source(none);', {}, async (generator) => {
       const web = await generator.generate({ target: 'web', candidates: [limit.candidate], scanSources: false })
-      const weapp = await generator.generate({ target: 'weapp', candidates: [limit.candidate], scanSources: false })
+      const weapp = await generator.generate({ target: 'weapp', candidates: [limit.candidate], scanSources: false, styleOptions: { cssOptions: { colorMixDynamicAlpha: 'strict' } } })
       const source = 'color-mix(in oklab, var(--color-sky-500) var(--my-alpha-value), transparent)'
       expect(web.classSet.has(limit.candidate)).toBe(true)
       expect(weapp.classSet.has(limit.candidate)).toBe(true)

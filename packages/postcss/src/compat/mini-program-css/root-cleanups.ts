@@ -1,6 +1,9 @@
 import type postcss from 'postcss'
+import type { CssOptions } from '../../types'
 import { isTailwindGeneratedContainerTraceComment, removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { normalizeModernColorValue } from '../color-mix'
+import { resolveMiniProgramColorMixOptions } from '../color-mix/options'
+import { lowerStaticColorMixSupports } from '../color-mix/supports'
 import { collectCustomPropertyValues } from '../web-css-custom-properties'
 import { isDisplayP3MediaRule } from './color-gamut'
 import { isBrowserElementPreflightRule } from './predicates'
@@ -283,12 +286,16 @@ export function removeTailwindContainerWidthRules(
   })
 }
 
-export function removeUnsupportedModernColorDeclarations(root: postcss.Root, collectStableColors = true) {
+export function removeUnsupportedModernColorDeclarations(root: postcss.Root, collectStableColors = true, cssOptions: Pick<CssOptions, 'colorMixDynamicAlpha'> = {}) {
+  const options = resolveMiniProgramColorMixOptions(cssOptions)
   // 必须在注册、条件及局部规则删除前分析，之后不能按最后声明重新推导。
   const { values: customPropertyValues } = collectCustomPropertyValues(root, undefined, MINI_PROGRAM_THEME_SCOPE_SELECTORS)
 
+  if (options.colorMixDynamicAlpha === 'rgba') {
+    lowerStaticColorMixSupports(root, customPropertyValues, options)
+  }
   root.walkDecls((decl) => {
-    const normalized = normalizeModernColorValue(decl.value, customPropertyValues)
+    const normalized = normalizeModernColorValue(decl.value, customPropertyValues, options)
     if (normalized.changed) {
       decl.value = normalized.value
     }
@@ -301,7 +308,7 @@ export function removeUnsupportedModernColorDeclarations(root: postcss.Root, col
     return stableColors
   }
   for (const [property, value] of customPropertyValues) {
-    const normalized = normalizeModernColorValue(value, customPropertyValues)
+    const normalized = normalizeModernColorValue(value, customPropertyValues, options)
     if (!normalized.hasUnsupported) {
       stableColors.set(property, normalized.value)
     }

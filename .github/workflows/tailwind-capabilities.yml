@@ -46,6 +46,11 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --filter=weapp-tailwindcss...
+      - name: 验证微信动态透明度与证据契约
+        if: matrix.engine == 'chromium'
+        env:
+          CI: '1'
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-weapp-alpha.test.ts e2e/tailwind-weapp-dynamic-alpha-static.test.ts e2e/tailwind-weapp-replay.test.ts e2e/tailwind-weapp-capture.test.ts e2e/tailwind-mini-program-alpha-limit.test.ts e2e/tailwind-capabilities-ci.test.ts --update=none
       - name: Install selected browser
         run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
       - name: Verify theme and color semantics in the selected browser

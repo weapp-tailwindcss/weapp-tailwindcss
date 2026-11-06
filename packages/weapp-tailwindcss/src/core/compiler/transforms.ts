@@ -23,22 +23,32 @@ function resolveStyleOptions(options?: Parameters<StyleHandler>[1]): NonNullable
     : options
 }
 
-function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: readonly string[] | undefined, baseSkyline: boolean | undefined, target: CompilerSnapshot['target'], styleHandler: StyleHandler, basePlatform?: string) {
+function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: readonly string[] | undefined, baseSkyline: boolean | undefined, target: CompilerSnapshot['target'], styleHandler: StyleHandler, basePlatform?: string, baseColorMixDynamicAlpha?: CompilerTransformServices['colorMixDynamicAlpha']) {
   const { finalize: _finalize, ...styleOptions } = options ?? {}
   const properties = target === 'web' ? [] : styleOptions.cssOptions?.preserveWebkitProperties ?? baseProperties
   let skyline = target === 'weapp' ? styleOptions.cssOptions?.skyline ?? baseSkyline : false
   // 样式处理和最终清理共享本次调用的配置快照，避免异步阶段读取不同配置。
   const preserveWebkitProperties = properties === undefined ? undefined : [...properties]
-  const resolved = resolveStyleOptions(styleOptions)
+  let colorMixDynamicAlpha = target === 'weapp' ? styleOptions.cssOptions?.colorMixDynamicAlpha ?? baseColorMixDynamicAlpha : 'strict'
+  const resolved = resolveStyleOptions({ ...styleOptions, cssOptions: { ...styleOptions.cssOptions, colorMixDynamicAlpha } })
   let resolvedStyleOptions = preserveWebkitProperties === undefined && skyline === undefined
     ? resolved
     : {
         ...resolved,
         cssOptions: { ...resolved.cssOptions, preserveWebkitProperties, ...(skyline === undefined ? {} : { skyline }) },
       }
+  // 目标只依赖平台配置，查询阶段不应提前创建未探测内容的完整管线。
+  const styleTarget = colorMixDynamicAlpha !== 'strict' || skyline === true
+    ? styleHandler.getTarget?.(resolvedStyleOptions) ?? styleHandler.getPipeline(resolvedStyleOptions).target
+    : undefined
+  if (colorMixDynamicAlpha !== 'strict') {
+    if (styleTarget !== 'generic' && styleTarget !== 'mini-program') {
+      colorMixDynamicAlpha = 'strict'
+      resolvedStyleOptions = { ...resolvedStyleOptions, cssOptions: { ...resolvedStyleOptions.cssOptions, colorMixDynamicAlpha } }
+    }
+  }
   if (skyline === true) {
     // 快照目标不覆盖实际样式目标，复用管线解析合并后的平台及 native 配置。
-    const styleTarget = styleHandler.getPipeline(resolvedStyleOptions).target
     const platform = resolvedStyleOptions.cssOptions?.platform ?? resolvedStyleOptions.platform ?? basePlatform
     if (!resolveSkylineTypographyCompatibility({ ...resolvedStyleOptions, platform }, styleTarget === 'generic' || styleTarget === 'mini-program')) {
       skyline = false
@@ -49,18 +59,19 @@ function resolveCssTransformOptions(options: CompilerCssTransformOptions | undef
     finalize: _finalize,
     preserveWebkitProperties,
     skyline,
+    colorMixDynamicAlpha,
     styleOptions: resolvedStyleOptions,
   }
 }
 
-function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean, preserveWebkitProperties: string[] | undefined, skyline: boolean | undefined) {
+function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean, preserveWebkitProperties: string[] | undefined, skyline: boolean | undefined, colorMixDynamicAlpha: CompilerTransformServices['colorMixDynamicAlpha']) {
   if (!shouldFinalize) {
     return
   }
   if (result.root.type === 'root') {
     finalizeMiniProgramCssRoot(result.root, {
       isTailwindcssV4: snapshot.target === 'weapp',
-      cssOptions: { skyline },
+      cssOptions: { skyline, colorMixDynamicAlpha },
       preserveWebkitProperties,
     })
   }
@@ -82,6 +93,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   let templateHandler: CompilerTransformServices['templateHandler'] | undefined = services.templateHandler
   let preserveWebkitProperties = services.preserveWebkitProperties
   let skyline = services.skyline
+  let colorMixDynamicAlpha = services.colorMixDynamicAlpha
   let stylePlatform = services.stylePlatform
   let cachedTemplateClassSet: Set<string> | undefined
   let cachedTemplateOptions: Parameters<CompilerTransformServices['templateHandler']>[1]
@@ -99,6 +111,7 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
     templateHandler = undefined
     preserveWebkitProperties = undefined
     skyline = undefined
+    colorMixDynamicAlpha = undefined
     stylePlatform = undefined
   }
 
@@ -130,11 +143,11 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCss(css: string, snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCss']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform, colorMixDynamicAlpha)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!(css, resolved.styleOptions).then((result) => {
       const cloned = clonePostcssResult(result)
-      finalizeResultRoot(cloned, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline)
+      finalizeResultRoot(cloned, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline, resolved.colorMixDynamicAlpha)
       return cloned
     }))
   }
@@ -142,10 +155,10 @@ export function createCompilerTransforms({ ensureActive, track, services }: Crea
   function transformCssRoot(root: Parameters<Compiler['transformCssRoot']>[0], snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCssRoot']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform)
+    const resolved = resolveCssTransformOptions(options, preserveWebkitProperties, skyline, snapshot.target, styleHandler!, stylePlatform, colorMixDynamicAlpha)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler!.transformRoot(root, resolved.styleOptions).then((result) => {
-      finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline)
+      finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties, resolved.skyline, resolved.colorMixDynamicAlpha)
       return result
     }))
   }

@@ -1,6 +1,8 @@
 import type { FunctionNode } from 'postcss-value-parser'
+import type { CssOptions } from '../../types'
 import valueParser from 'postcss-value-parser'
 import { resolveCustomPropertyVarValue } from '../web-css-custom-properties'
+import { hasCompleteColorMixFunctions, normalizeDynamicColorMixAlpha } from './dynamic-alpha'
 import {
   normalizeColorFunctionName,
   parseAlphaValue,
@@ -14,7 +16,11 @@ const RECTANGULAR_INTERPOLATION_RE = /^in\s+(?:srgb|srgb-linear|lab|oklab|xyz|xy
 export function tryResolveColorMix(
   node: FunctionNode,
   customPropertyValues: ReadonlyMap<string, string>,
+  options: Pick<CssOptions, 'colorMixDynamicAlpha'> = {},
 ): { value: string, deferred: boolean } | undefined {
+  if (node.unclosed || !hasCompleteColorMixFunctions(node.nodes)) {
+    return undefined
+  }
   const args = splitArguments(node.nodes)
   if (args.length !== 3 || !RECTANGULAR_INTERPOLATION_RE.test(valueParser.stringify(args[0]!).trim())) {
     return undefined
@@ -40,7 +46,10 @@ export function tryResolveColorMix(
 
   const alpha = parseAlphaValue(resolveCustomPropertyVarValue(alphaSource, customPropertyValues))
   if (alpha === undefined) {
-    return undefined
+    const value = options.colorMixDynamicAlpha === 'rgba'
+      ? normalizeDynamicColorMixAlpha(colorSource, alphaNodes, customPropertyValues)
+      : undefined
+    return value ? { value, deferred: false } : undefined
   }
 
   const normalized = normalizeColorFunctionName(colorSource, alpha, customPropertyValues)

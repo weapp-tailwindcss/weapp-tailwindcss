@@ -17,6 +17,7 @@ export function createCompilerTransformServices(context: InternalUserDefinedOpti
     templateHandler: context.templateHandler,
     preserveWebkitProperties: context.cssOptions?.preserveWebkitProperties,
     skyline: styleOptions.cssOptions?.skyline,
+    colorMixDynamicAlpha: context.cssOptions?.colorMixDynamicAlpha,
     stylePlatform: styleOptions.cssOptions?.platform ?? styleOptions.platform,
   }
 }

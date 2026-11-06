@@ -159,6 +159,12 @@ export async function appendLegacyCompatCss(
   const styleOptions = {
     ...cssHandlerOptions,
     ...generatorStyleOptions,
+    cssOptions: {
+      ...cssHandlerOptions.cssOptions,
+      ...generatorStyleOptions?.cssOptions,
+      colorMixDynamicAlpha: generatorStyleOptions?.cssOptions?.colorMixDynamicAlpha
+        ?? cssHandlerOptions.cssOptions?.colorMixDynamicAlpha,
+    },
   }
   const compatCssCacheKey = createLegacyCompatTransformCacheKey(compatSource, styleOptions)
   let compatCss = legacyCompatTransformCache.get(compatCssCacheKey)

@@ -600,9 +600,10 @@ describe('plugin behaviours', () => {
     expect(unchanged.css).toContain('rgb(1, 2, 3)')
   })
 
-  it('preserves dynamic color-mix weights while lowering proven static mixes', async () => {
+  it('strict preserves dynamic color-mix weights while lowering proven static mixes', async () => {
     const styleHandler = createStyleHandler({
       majorVersion: 4,
+      cssOptions: { colorMixDynamicAlpha: 'strict' },
     })
     const source = `
       :root {

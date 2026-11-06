@@ -241,6 +241,13 @@ export interface UserDefinedOptionsGeneralPart {
    * `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
    * 与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties`、`skyline` 都推荐放在这里。
    *
+   * `cssOptions.colorMixDynamicAlpha` 可选 `rgba`（小程序默认）或 `strict`，仅支持嵌套配置。
+   * `rgba` 将不透明固定底色与完整 `var()` 权重、`transparent` 的 mix 转为 legacy rgba，保留变量和 fallback。
+   * 已能静态解析的百分比仍走严格路径；未知或动态底色、半透明底色及非法 mix 不降级。
+   * 兼容模式采用 rgba 的 alpha 数字、百分比与钳制语义，不能保证任意变量值与 color-mix 等价。
+   * Web、Lynx、React Native 不应用此模式；Core 生成通过请求的 `styleOptions.cssOptions` 配置，
+   * 转换通过实例或调用覆盖配置，显式 finalizer 使用自身 options。示例见 [Core API](/docs/quick-start/frameworks/api#动态透明度兼容模式)。
+   *
    * `cssOptions.skyline: true` 启用微信 Skyline 的 Tailwind CSS v4 字体变量初始化兼容，默认关闭；
    * 保留运行时覆盖与主题 fallback，不能与 `cssRemoveProperty: false` 同时启用。
    *

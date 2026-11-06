@@ -15,7 +15,7 @@ export const weappPageScript = 'toggle(){const phaseIndex=this.data.phaseIndex+1
 export const weappRenderContract = { weappWxml, weappPageCss, weappBaseCss, weappPageScript }
 
 export function weappRuntimeFixture(probes: readonly WeappProbe[]) {
-  return { probes, css: weappFixtureCss, render: weappRenderContract }
+  return { probes: probes.map(probe => ({ ...probe, colorMixDynamicAlpha: probe.colorMixDynamicAlpha ?? 'rgba' })), css: weappFixtureCss, render: weappRenderContract }
 }
 
 export function weappProjectFiles(css: string, runId: string, appid: string): Record<string, string> {

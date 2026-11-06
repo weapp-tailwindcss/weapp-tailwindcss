@@ -6,6 +6,7 @@ import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
 import { applyConfiguredCssUnits } from '../../plugins/applyConfiguredCssUnits'
 import { dedupeCoveredCssRules } from '../../vite-css-rules'
 import { protectDynamicColorMixAlpha } from '../color-mix'
+import { resolveColorMixOptions } from '../color-mix-options'
 import { pruneMiniProgramGeneratedCss } from '../mini-program-css'
 import { normalizeMiniProgramColorMix } from '../mini-program-css/modern-colors'
 import { normalizeTailwindcssRpxDeclarations, normalizeTailwindcssWebRpxDeclarations } from '../tailwindcss-rpx'
@@ -47,8 +48,10 @@ export async function transformTailwindV4CssToWeapp(
     ...options?.customPropertyCompatibilityValues ?? [],
     ...options?.customPropertyValues ?? [],
   ])
-  const protectedCss = protectDynamicColorMixAlpha(compatibleCss, { customPropertyValues, lowerStaticSupports: true })
-  const result = await defaultStyleHandler(normalizeMiniProgramColorMix(protectedCss.css), {
+  const colorOptions = resolveColorMixOptions(options)
+  const cssOptions = { ...options?.cssOptions, ...colorOptions }
+  const protectedCss = protectDynamicColorMixAlpha(compatibleCss, { customPropertyValues, lowerStaticSupports: true, ...colorOptions })
+  const result = await defaultStyleHandler(normalizeMiniProgramColorMix(protectedCss.css, cssOptions), {
     cssChildCombinatorReplaceValue: ['view', 'text'],
     cssRemoveActivePseudoClass: true,
     cssRemoveHoverPseudoClass: true,
@@ -56,11 +59,12 @@ export async function transformTailwindV4CssToWeapp(
     isMainChunk: true,
     majorVersion: 4,
     ...options,
+    cssOptions,
   })
   const isUniAppXUvueTarget = options?.uniAppX === true
     && options.uniAppXCssTarget === 'uvue'
   const pruneOptions = {
-    cssOptions: options?.cssOptions,
+    cssOptions,
     ...(isUniAppXUvueTarget ? { preserveContentInit: false } : {}),
     preservePreflight: true,
     preserveConditionalComments: hasCssMacroStyleOptions(options),

@@ -7,13 +7,12 @@ import { PNG } from 'pngjs'
 import { filesystemObservedAt } from '../artifact-clock'
 import { digest } from '../identity'
 import { receipt } from '../report'
-import { weappFixtureCss } from './alpha-fixtures'
 import { compositeGray, nominalCompositeSamples, weappCompositeAssertions } from './compositing'
 import { weappContract, weappRuntimeAssertions } from './contract'
 import { weappMarker } from './marker'
 import { weappStates } from './phases'
 import { weappPhasePixelAssertions } from './pixels'
-import { weappPhaseInput, weappProjectFiles, weappRenderContract } from './render'
+import { weappPhaseInput, weappProjectFiles, weappRuntimeFixture } from './render'
 
 /** 合成图仅用于证据协议反例，不能登记为微信实际运行。 */
 export async function weappReplayFixture(root: string, probe: WeappProbe) {
@@ -21,7 +20,7 @@ export async function weappReplayFixture(root: string, probe: WeappProbe) {
   const css = '.synthetic-protocol-fixture{}'
   const cssHash = digest(css)
   const runId = 'synthetic-weapp-protocol'
-  const fixture = { probes: [probe], css: weappFixtureCss, render: weappRenderContract }
+  const fixture = weappRuntimeFixture([probe])
   const identity = { sourceHash: digest('synthetic-source'), lockfileHash: digest('synthetic-lock'), catalogHash: digest([contract.id]), fixtureHash: digest({ target: 'weapp', fixture }), expectationsHash: digest(contract), versions: { synthetic: 'protocol-only' } }
   const report: CapabilityReport = { schemaVersion: 2, target: 'weapp', runId, observedAt: filesystemObservedAt(root), identity, environment: { provider: 'synthetic-protocol-only', appid: 'wx-test' }, results: [], artifacts: [] }
   const sources = weappProjectFiles(css, runId, 'wx-test')

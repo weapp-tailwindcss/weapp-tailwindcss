@@ -232,7 +232,7 @@ view,text,::after,::before {
   font-size: var(--step-2);
 }
 .text-black_f_b0_d37_B {
-  color: rgba(0, 0, 0, 0.37);
+  color: rgba(0, 0, 0, 0.37)
 }
 .shadow-_b0_35px_60px_-15px_rgba_p0_m0_m0_m0_d3_P_B {
   --tw-shadow: 0 35px 60px -15px var(--tw-shadow-color, rgba(0,0,0,0.3));

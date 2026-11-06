@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "8afd8ce8dfb6e7efa31088050468d6706e0cd72b448d3e7af883144bc2cebade",
+  "fixtureHash": "e3be6b0b6afa0fdabc5e4e97071119e7cd6cf128f597ea65a81c683c36530286",
   "files": {
     "autofill.css": "a5b14ec86567407fa971268dcd55c9d7b5bf7883ee7e71a8ce6c6d9f516bb2ee",
     "web.css": "9899981537647a312b51aeaa06cb655344a020ee639a54b6fa21557fe16052b9",
-    "weapp.wxss": "e96b95aad9e5b146cdbda5180b63613f0f2c35dc12f616e1e49d7669c7875469",
+    "weapp.wxss": "0bf087fffb9ca3d56519d482fee6009c3b9ad0290e5ea274f0b8e47fc8dcdd5b",
     "context.css": "a006fef2a33caadae7c093614106c7498a2a2837d1dd79a9243bc0bdca2d67ba",
     "lifecycle.css": "d9f9d08322812b96e4fb1441b7372449270a456124a15ef1aa50aa7eef96b969",
     "registry.css": "6edc0c2e45b366aa610749617b678a8fe651d72fab8b18e189a09aecb73e804a",

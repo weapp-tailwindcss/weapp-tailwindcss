@@ -1,5 +1,7 @@
 import type { FunctionNode, ParsedValue } from 'postcss-value-parser'
+import { tokenize, TokenType } from '@csstools/css-tokenizer'
 import valueParser from 'postcss-value-parser'
+import { decodeCssIdentifier } from '../../utils/css-custom-property'
 import {
   COLOR_MIX_NAME,
   MODERN_COLOR_FUNCTION_NAMES,
@@ -7,7 +9,12 @@ import {
 } from './constants'
 
 export function isDisplayP3ColorFunction(colorSource: string) {
-  return /^color\(\s*display-p3\b/i.test(colorSource.trim())
+  if (!colorSource.includes('\\')) {
+    return /^color\(\s*display-p3\b/i.test(colorSource.trim())
+  }
+  const tokens = tokenize({ css: colorSource }).filter(token => token[0] !== TokenType.Whitespace && token[0] !== TokenType.Comment)
+  return tokens[0]?.[0] === TokenType.Function && tokens[0][4].value.toLowerCase() === 'color'
+    && tokens[1]?.[0] === TokenType.Ident && tokens[1][4].value.toLowerCase() === 'display-p3'
 }
 
 export function isModernColorSyntaxFunction(colorSource: string) {
@@ -17,7 +24,7 @@ export function isModernColorSyntaxFunction(colorSource: string) {
 }
 
 export function isModernColorSyntaxNode(node: FunctionNode) {
-  const name = node.value.toLowerCase()
+  const name = decodeCssIdentifier(node.value)?.toLowerCase() ?? ''
   if (!MODERN_COLOR_SYNTAX_FUNCTION_NAMES.has(name)) {
     return false
   }
@@ -37,8 +44,44 @@ export function mayHaveModernColorFunction(value: string) {
 }
 
 export function hasUnsupportedModernColorFunction(value: string) {
-  return mayHaveModernColorFunction(value)
-    && hasUnsupportedModernColorNodes(valueParser(value))
+  if (!mayHaveModernColorFunction(value)) {
+    return false
+  }
+  const parsed = valueParser(value)
+  if (value.includes('\\')) {
+    // 转义终止空白可能被 value-parser 拆开，按 token 身份拒绝隐藏的现代颜色。
+    const tokens = tokenize({ css: value }).filter(token => token[0] !== TokenType.Whitespace && token[0] !== TokenType.Comment)
+    if (tokens.some((token, index) => {
+      if (token[0] !== TokenType.Function) {
+        return false
+      }
+      const name = token[4].value.toLowerCase()
+      const next = tokens[index + 1]
+      if (MODERN_COLOR_SYNTAX_FUNCTION_NAMES.has(name)) {
+        let depth = 1
+        let comma = false
+        for (const child of tokens.slice(index + 1)) {
+          if (child[0] === TokenType.Function || child[0] === TokenType.OpenParen) {
+            depth++
+          }
+          else if (child[0] === TokenType.CloseParen && --depth === 0) {
+            break
+          }
+          else if (child[0] === TokenType.Comma && depth === 1) {
+            comma = true
+          }
+        }
+        if (!comma) {
+          return true
+        }
+      }
+      return name === COLOR_MIX_NAME || MODERN_COLOR_FUNCTION_NAMES.has(name)
+        || (name === 'color' && next?.[0] === TokenType.Ident && next[4].value.toLowerCase() === 'display-p3')
+    })) {
+      return true
+    }
+  }
+  return hasUnsupportedModernColorNodes(parsed)
 }
 
 export function hasUnsupportedModernColorNodes(parsed: ParsedValue) {
@@ -48,7 +91,7 @@ export function hasUnsupportedModernColorNodes(parsed: ParsedValue) {
     if (node.type !== 'function') {
       return
     }
-    const name = node.value.toLowerCase()
+    const name = decodeCssIdentifier(node.value)?.toLowerCase() ?? ''
     if (
       name === COLOR_MIX_NAME
       || MODERN_COLOR_FUNCTION_NAMES.has(name)
