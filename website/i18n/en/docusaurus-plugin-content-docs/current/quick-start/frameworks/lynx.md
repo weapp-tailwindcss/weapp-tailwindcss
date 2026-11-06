@@ -124,7 +124,7 @@ The example and committed dual-platform baseline use Tailwind CSS `4.3.5`; the c
 
 The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only.
 
-The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-11-05T09:53:21.315Z` and `catalogHash` `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
+The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-11-06T20:53:50.858Z` and `catalogHash` `92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not update a native support report or committed baseline.
 

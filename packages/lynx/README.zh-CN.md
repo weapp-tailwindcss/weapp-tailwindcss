@@ -148,7 +148,7 @@ pnpm e2e:lynx
 
 历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
-当前已提交的原生报告基线记录 `verifiedAt: 2026-11-05T09:53:21.315Z`、`catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+当前已提交的原生报告基线记录 `verifiedAt: 2026-11-06T20:53:50.858Z`、`catalogHash: 92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
 
 `--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 

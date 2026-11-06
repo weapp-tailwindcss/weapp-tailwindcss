@@ -118,7 +118,7 @@ pluginLynxTailwindcss({
 
 历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
-静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-11-05T09:53:21.315Z`、`catalogHash` 为 `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。`css-defines` 不能替代运行时结论。
+静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-11-06T20:53:50.858Z`、`catalogHash` 为 `92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。`css-defines` 不能替代运行时结论。
 
 `--capture-only` 只在显式指定 bundle 和目标设备后采集截图/视频，不更新 native support report 或已提交基线。
 

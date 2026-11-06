@@ -117,6 +117,6 @@ The example and committed dual-platform baseline use Tailwind CSS `4.3.5`;
 
 The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only. the complete original artifacts passed strict validation, archiving, and replay.
 
-The committed native baseline records `verifiedAt: 2026-11-05T09:53:21.315Z` and `catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-11-06T20:53:50.858Z` and `catalogHash: 92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.
