@@ -230,7 +230,7 @@ view,text,::after,::before {
   background-color: #e90505;
 }
 .bg-blue-500_f50 {
-  background-color: rgba(50, 128, 255, 0.5);
+  background-color: rgba(50, 128, 255, 0.5)
 }
 .bg-gray-100 {
   background-color: var(--color-gray-100);

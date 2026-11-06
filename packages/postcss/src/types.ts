@@ -379,4 +379,6 @@ export interface StyleHandler {
   transformRoot: (root: Root, opt?: Partial<IStyleHandlerOptions>) => Promise<PostcssResult<Root>>
   // getPipeline 允许外部在不同配置下获取预组装的流水线信息
   getPipeline: (opt?: Partial<IStyleHandlerOptions>) => StyleProcessingPipeline
+  /** 只解析样式目标，不构建管线；可选以兼容现有自定义 handler。 */
+  getTarget?: ((opt?: Partial<IStyleHandlerOptions>) => StyleProcessingPipeline['target']) | undefined
 }

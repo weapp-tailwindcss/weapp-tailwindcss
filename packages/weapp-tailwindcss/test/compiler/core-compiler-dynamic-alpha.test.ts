@@ -1,6 +1,7 @@
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { createStyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import { createCompiler } from '@/core/compiler'
+import { createResolvedCompiler } from '@/core/compiler/compiler'
 import { finalizeMiniProgramGeneratorCss } from '@/generation/generation-helpers/preflight'
 import { resolveGeneratorStyleOptions } from '@/generation/generation-helpers/runtime-isolation'
 import { appendLegacyCompatCss } from '@/generation/legacy-compat'
@@ -20,6 +21,30 @@ function request() {
 }
 
 describe('公开 Core 动态透明度兼容配置', () => {
+  it.each([false, true])('目标查询保持惰性并兼容旧 handler，legacy=%s', async (legacy) => {
+    const handler = createStyleHandler({ majorVersion: 4 })
+    const pipeline = vi.spyOn(handler, 'getPipeline')
+    if (legacy) {
+      delete handler.getTarget
+    }
+    const compiler = createResolvedCompiler({
+      transforms: { styleHandler: handler, jsHandler: vi.fn(), templateHandler: async source => source },
+    })
+    try {
+      const snapshot = compiler.createSnapshot({ id: 'target-query', target: 'weapp', classSet: [] })
+      expect((await compiler.transformCss(source, snapshot)).css).toContain(expected)
+      expect((await compiler.transformCssRoot(postcss.parse(source), snapshot)).css).toContain(expected)
+      for (const platform of ['h5', 'mp-weixin']) {
+        const output = await compiler.transformCss(source, snapshot, { cssOptions: { platform } })
+        expect(output.css.includes(expected)).toBe(platform === 'mp-weixin')
+      }
+      expect(pipeline.mock.calls.length).toBe(legacy ? 4 : 0)
+    }
+    finally {
+      await compiler.dispose()
+    }
+  })
+
   it.each([{}, { rem2rpx: false }])('构建器的无关覆盖保留显式 strict：%j', (cssOptions) => {
     const resolved = resolveGeneratorStyleOptions({ styleOptions: { cssOptions: { colorMixDynamicAlpha: 'strict' } } } as Parameters<typeof resolveGeneratorStyleOptions>[0], {}, { cssOptions })
     expect(resolved.cssOptions?.colorMixDynamicAlpha).toBe('strict')

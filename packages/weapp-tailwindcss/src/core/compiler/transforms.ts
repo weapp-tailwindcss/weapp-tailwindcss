@@ -37,8 +37,11 @@ function resolveCssTransformOptions(options: CompilerCssTransformOptions | undef
         ...resolved,
         cssOptions: { ...resolved.cssOptions, preserveWebkitProperties, ...(skyline === undefined ? {} : { skyline }) },
       }
+  // 目标只依赖平台配置，查询阶段不应提前创建未探测内容的完整管线。
+  const styleTarget = colorMixDynamicAlpha !== 'strict' || skyline === true
+    ? styleHandler.getTarget?.(resolvedStyleOptions) ?? styleHandler.getPipeline(resolvedStyleOptions).target
+    : undefined
   if (colorMixDynamicAlpha !== 'strict') {
-    const styleTarget = styleHandler.getPipeline(resolvedStyleOptions).target
     if (styleTarget !== 'generic' && styleTarget !== 'mini-program') {
       colorMixDynamicAlpha = 'strict'
       resolvedStyleOptions = { ...resolvedStyleOptions, cssOptions: { ...resolvedStyleOptions.cssOptions, colorMixDynamicAlpha } }
@@ -46,7 +49,6 @@ function resolveCssTransformOptions(options: CompilerCssTransformOptions | undef
   }
   if (skyline === true) {
     // 快照目标不覆盖实际样式目标，复用管线解析合并后的平台及 native 配置。
-    const styleTarget = styleHandler.getPipeline(resolvedStyleOptions).target
     const platform = resolvedStyleOptions.cssOptions?.platform ?? resolvedStyleOptions.platform ?? basePlatform
     if (!resolveSkylineTypographyCompatibility({ ...resolvedStyleOptions, platform }, styleTarget === 'generic' || styleTarget === 'mini-program')) {
       skyline = false

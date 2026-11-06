@@ -21,7 +21,7 @@ export async function transformGeneratorUserCss(
       webRpxCompatibility?: boolean | undefined
       deferWebRpxConversion?: boolean | undefined
     }
-    cssUserHandlerOptions: IStyleHandlerOptions
+    cssUserHandlerOptions?: IStyleHandlerOptions | undefined
     styleHandler: (css: string, options: IStyleHandlerOptions) => Promise<{ css: string }>
     importFallback: boolean
     generatedSource?: string | GeneratedThemeDeclarationResolver | undefined
@@ -31,13 +31,14 @@ export async function transformGeneratorUserCss(
   if (source.trim().length === 0) {
     return ''
   }
+  const userStyleOptions = options.cssUserHandlerOptions ?? {}
   const mergedStyleOptions = {
     ...options.generatorStyleOptions,
-    ...options.cssUserHandlerOptions,
+    ...userStyleOptions,
     cssOptions: {
       ...options.generatorStyleOptions.cssOptions,
-      ...options.cssUserHandlerOptions.cssOptions,
-      colorMixDynamicAlpha: options.cssUserHandlerOptions.cssOptions?.colorMixDynamicAlpha
+      ...userStyleOptions.cssOptions,
+      colorMixDynamicAlpha: userStyleOptions.cssOptions?.colorMixDynamicAlpha
         ?? options.generatorStyleOptions.cssOptions?.colorMixDynamicAlpha,
     },
   }
@@ -102,12 +103,12 @@ export async function transformGeneratorUserCss(
       ...options.generatorStyleOptions,
       cssCalc: options.generatorStyleOptions.cssOptions?.cssCalc
         ?? options.generatorStyleOptions.cssCalc
-        ?? options.cssUserHandlerOptions.cssOptions?.cssCalc
-        ?? options.cssUserHandlerOptions.cssCalc,
+        ?? userStyleOptions.cssOptions?.cssCalc
+        ?? userStyleOptions.cssCalc,
       customPropertyValues: options.generatorStyleOptions.customPropertyValues
-        ?? options.cssUserHandlerOptions.customPropertyValues,
+        ?? userStyleOptions.customPropertyValues,
       customPropertyContextCss: [
-        options.generatorStyleOptions.customPropertyContextCss ?? options.cssUserHandlerOptions.customPropertyContextCss,
+        options.generatorStyleOptions.customPropertyContextCss ?? userStyleOptions.customPropertyContextCss,
         typeof options.generatedSource === 'string' ? options.generatedSource : undefined,
       ].filter(Boolean).join('\n'),
     }, options.generatorStyleOptions.webRpxCompatibility === true)

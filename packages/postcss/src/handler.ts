@@ -9,7 +9,7 @@ import { LRUCache } from 'lru-cache'
 import postcss from 'postcss'
 import { isAutoprefixerPlugin } from './autoprefixer'
 import { protectDynamicColorMixAlpha, protectDynamicVarFallbacks } from './compat/color-mix'
-import { resolveColorMixOptions } from './compat/color-mix-options'
+import { resolveMiniProgramColorMixOptions } from './compat/color-mix/options'
 import { normalizeCssLineComments } from './compat/line-comments'
 import { removeEmptyBlockAtRules } from './compat/mini-program-css/root-cleanups'
 import { assertSkylineTypographyInput, resolveSkylineTypographyCompatibility } from './compat/tailwindcss-v4/skyline-typography'
@@ -134,7 +134,9 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
           css: normalizedRawSource,
           restore: (value: string) => value,
         }
-    const { colorMixDynamicAlpha } = resolveColorMixOptions(resolvedOptions)
+    const { colorMixDynamicAlpha } = target === 'generic' || target === 'mini-program'
+      ? resolveMiniProgramColorMixOptions(resolvedOptions.cssOptions)
+      : { colorMixDynamicAlpha: 'strict' as const }
     const protectedColorMix = !sourcePrepared && resolvedOptions.majorVersion === 4
       ? protectDynamicColorMixAlpha(protectedVarFallbacks.css, {
           colorMixDynamicAlpha,
@@ -283,6 +285,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const resolvedOptions = resolver.resolve(opt)
     return processorCache.getPipeline(resolvedOptions)
   }
+  handler.getTarget = opt => resolvePostcssStyleTarget(resolver.resolve(opt))
 
   return handler
 }

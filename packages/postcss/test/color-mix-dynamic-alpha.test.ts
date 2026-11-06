@@ -157,6 +157,19 @@ describe('小程序动态 alpha 默认使用 rgba 兼容模式', () => {
     expect(result).toContain(expected('var(--opacity, 50%)'))
   })
 
+  it.each(['weapp', 'web'])('省略作者样式配置时继承生成配置：%s', async (generatorTarget) => {
+    for (const processed of [false, true]) {
+      const result = await transformGeneratorUserCss(css(), {
+        processed,
+        generatorTarget,
+        generatorStyleOptions: { majorVersion: 4, cssOptions },
+        styleHandler: createStyleHandler({ majorVersion: 4 }),
+        importFallback: false,
+      })
+      expect(result).toContain(generatorTarget === 'weapp' ? expected() : 'color-mix(')
+    }
+  })
+
   it.each([false, true])('无关作者配置不能覆盖生成请求的 strict，processed=%s', async (processed) => {
     for (const userCssOptions of [undefined, {}, { rem2rpx: false }]) {
       const result = await transformGeneratorUserCss(css(), {

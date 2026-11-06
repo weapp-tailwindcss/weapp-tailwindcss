@@ -5,7 +5,9 @@ baseline: 8dda6d4d0e75fbe44d96152f498d2b43520286dc
 regressions:
   - packages/postcss/test/color-mix-dynamic-alpha.test.ts
   - packages/postcss/test/color-mix-alpha-semantics.test.ts
+  - packages/postcss/test/handler-target.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-compiler-dynamic-alpha.test.ts
+  - packages/weapp-tailwindcss/test/context/framework-environment.integration.test.ts
   - e2e/tailwind-weapp-alpha.test.ts
   - e2e/tailwind-weapp-dynamic-alpha-static.test.ts
   - e2e/tailwind-weapp-replay.test.ts
@@ -45,6 +47,18 @@ Core 生成使用请求的 `styleOptions.cssOptions`；transform 继承实例或
 
 用户确认默认开启后，新增缺省模式与实际平台隔离回归先红（PostCSS 3 项、Core 2 项）。最终复验为 PostCSS 11 文件 333 项、Core/生成编排 6 文件 220 项、static/契约 9 文件 59 项，共 612 项通过；受影响包重建、主包类型、网站中英文构建、lint、架构与规则检查通过。微信基线按缺省、strict、rgba 三组重新生成后禁止更新复验；运行时 probe 分别覆盖真正省略配置和显式 rgba，历史限制 probe 显式 strict。完整 PostCSS 额外运行退出为 0 但未输出测试汇总，不将其计为已验收范围。
 
+### PR CI 回归与性能纠正
+
+[PR #1333](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1333) 首次提交 `fe63f377e12bd92f69d51e25af07329195ae6449` 的三个单测分片暴露两个问题：旧生成入口允许省略 `cssUserHandlerOptions`，新增嵌套合并提前解引用导致异常；静态颜色能力分支提前降低后，两个快照及对应 Mpx fixture 的最后声明失去可选分号，颜色语义一致。旧请求桥现在把缺省作者配置归一为 `{}`，中立生成核心继续接收完整对象，直接 PostCSS 作者转换入口也明确支持缺省。新增 weapp/Web 缺省回归先失败后通过；两个快照定向更新后禁止更新复验。
+
+[首次远端 Mpx 性能样本](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42177166138/job/127758462365) 的 HMR 插件中位数为 212 → 227ms（+7.08%），超过原有 5% 门槛。同提交本地有限复测也失败：构建插件 416 → 438ms，HMR 稳态 RSS 1830.73 → 2018.05MB。排查发现默认模式的 Core 目标查询会通过 `getPipeline()` 提前构建一条无内容信号的完整管线，真实处理随后再创建另一条带信号的管线。冷查询微基准约 3.65ms，直接目标解析约 0.015ms；64 条额外管线保留约 3.18MB heap，不能据此将全部 RSS 差异归因于该缓存。
+
+通过可选的 `StyleHandler.getTarget()` 复用已有配置解析，目标查询不再创建执行管线；旧自定义 handler 保留 `getPipeline()` 回退。handler 保护颜色时也复用已经解析的实际目标，省去重复归一化。回归验证查询不构建管线、覆盖与原位修改、旧 handler、string/Root 和 Web 隔离。未修改基准输入、门槛或统计规则。
+
+2026-11-06，Node 24.22.1/macOS 下以原基线和本轮未提交修复重新执行相同 Mpx 三次构建、三次 HMR：插件构建中位数 350 → 352ms（+0.57%），HMR 插件 187 → 189ms（+1.07%），性能门禁通过，内存未违规。日志与原始报告分别保留于忽略目录的 `issue-1332-benchmark-local`、`issue-1332-benchmark-optimized`；本地通过不能替代新提交在 Ubuntu/Node 22 上的 CI 复验。
+
+本轮修复后的 PostCSS 定向 13 文件 340 项、Core/生成编排与 CI 失败文件 10 文件 243 项通过；受影响包构建、主包类型、源码 lint、架构和规则检查通过。再次运行 static 生成无新增差异，微信真实运行阻塞范围仍按下文单独保留。
+
 ### 实际命令
 
 下列本地复验使用已安装的 Node 24.22.1，并通过任务进程的 PATH 选择，不改机器全局配置：
@@ -56,6 +70,9 @@ CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-weapp-dynamic
 pnpm turbo run build --filter=weapp-tailwindcss...
 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 pnpm --filter @weapp-tailwindcss/website build
+CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/handler-target.test.ts test/pipeline-phases/cache-handler.test.ts --update=none
+CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/context/framework-environment.integration.test.ts test/bundlers/vite-css-asset-source.test.ts test/tailwindcss/complex-output.test.ts test/postcss/v4.test.ts --update=none
+pnpm perf:guard -- --baseline-ref 8dda6d4d0e75fbe44d96152f498d2b43520286dc --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30 --only demo-mpx-tailwindcss-v4__mp-weixin --result-dir e2e/.artifacts/issue-1332-benchmark-optimized
 ```
 
 ### 环境阻塞与未执行范围
