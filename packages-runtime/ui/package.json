@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/ui",
   "type": "module",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "Cross-platform utility-first UI components for Tailwind CSS. 面向跨端 Tailwind CSS 的 utility-first UI 组件库。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "ISC",
@@ -98,7 +98,9 @@
   },
   "repoctl": {
     "packageCheck": {
-      "runtimeAssets": ["./components"]
+      "runtimeAssets": [
+        "./components"
+      ]
     }
   },
   "scripts": {
@@ -190,12 +192,18 @@
     "tailwindcss": "^3.0.0 || ^4.0.0"
   },
   "peerDependenciesMeta": {
-    "@tarojs/components": { "optional": true },
-    "@types/react": { "optional": true },
+    "@tarojs/components": {
+      "optional": true
+    },
+    "@types/react": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
-    "tailwindcss": { "optional": true }
+    "tailwindcss": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@weapp-tailwindcss/merge": "workspace:*",
