@@ -4,7 +4,7 @@
 https://github.com/icebreaker-template/taro-webpack-tailwindcss-v4
 （2026-09-06 本地复现版本，weapp-tailwindcss 5.5.1 / Tailwind CSS 4.3.3 / Taro 4.2.1）。
 
-当前夹具已将 Tailwind CSS 及 `@tailwindcss/node`、`@tailwindcss/oxide` 的冻结依赖统一升级到 4.3.4。
+当前夹具已将 Tailwind CSS 及 `@tailwindcss/node`、`@tailwindcss/oxide` 的冻结依赖统一升级到 4.3.5。
 保留原发布版核心、Taro、Webpack 与 manifest 中的历史 pnpm 声明，继续覆盖原 Windows 回归；
 独立锁文件由仓库要求的 pnpm 12.15.0 生成，执行脚本仍只在临时副本同步仓库工具链。
 

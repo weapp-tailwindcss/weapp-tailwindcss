@@ -2,7 +2,7 @@
 
 此入口把能力范围、支持预期、生成结果、转换产物和真实运行效果关联起来。只有对应层级的本轮证据才能证明通过。“生成成功”不能证明原生支持，“截图存在”不能证明样式正确。
 
-固定基线是仓库解析的 Tailwind **4.3.4**：1,205 个 utility 条目（890 static、315 functional）、88 个 variant、23,286 个默认补全候选，另有 34 个 kind/root 未出现在默认补全中。任意值域按语法分支、边界和组合覆盖，无法穷举全部字符串。注册表新增、删除或类型变化由合同测试报告差异，升级时显式审查基线。
+固定基线是仓库解析的 Tailwind **4.3.5**：1,205 个 utility 条目（890 static、315 functional）、88 个 variant、23,286 个默认补全候选，另有 34 个 kind/root 未出现在默认补全中。任意值域按语法分支、边界和组合覆盖，无法穷举全部字符串。注册表新增、删除或类型变化由合同测试报告差异，升级时显式审查基线。
 
 ## 支持矩阵及证据边界
 
@@ -46,7 +46,7 @@ pnpm e2e:tailwind --list
 ## 清单和报告
 
 - 共享包：`tools/tailwindcss-test-catalog`，合并旧 118 个兼容案例及 361 个 parity 候选，保留旧 ID 与独立候选子 ID。
-- 注册表：`inventory/tailwind-4.3.4.json`；functional 值域、任意语法和补全遗漏项另行覆盖。4.3.4 保留 1,205 个 utility、88 个 variant 和 23,286 个补全；本轮审查接受 58 个 utility 的空 `var()` fallback 格式变化，以及 `stroke-1/2` 不再作为合法 fraction 见证的上游修正。
+- 注册表：`inventory/tailwind-4.3.5.json`；functional 值域、任意语法和补全遗漏项另行覆盖。4.3.5 保留 1,205 个 utility、88 个 variant 和 23,286 个补全；本轮审查接受 58 个 utility 的空 `var()` fallback 格式变化，以及 `stroke-1/2` 不再作为合法 fraction 见证的上游修正。
 - `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。已审查的 `weapp-keyword-compatibility-v2` 覆盖默认补全中的 848 项，其余 22,438 项仍有转换 oracle 缺口。RN 的 `react-native-literal-mapping-v1` 覆盖 1,599 项（1,511 正向、88 预先声明的拒绝），其余 21,687 项保留缺口；另行覆盖的语法样本单独计数。转换审计不能直接判成运行时支持。
 - `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码，完整参考检查声明、条件和依赖。29 例另有隔离的浏览器语义参考；扫描后的 DOM 消费不等同于执行 JSX/Vue 条件分支。
 - Web 子目录 `framework-source`：18 个真实 React JSX / Vue SFC 案例，执行条件、数组、对象、模板、映射、merge、cva、variants 和动态插值负例；四版源码分别刷新并验证 A→B→A 分支、精确类名、独立宽度、节点和页面身份。候选只由唯一源码扫描，不能由 inline source 补齐。

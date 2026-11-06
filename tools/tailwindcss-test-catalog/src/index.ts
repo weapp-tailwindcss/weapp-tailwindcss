@@ -30,7 +30,7 @@ export const compatibilityCandidateMap = compatibilityCases.map(item => ({
 
 export const catalogIdentity = {
   schemaVersion: 1,
-  tailwindcss: '4.3.4',
+  tailwindcss: '4.3.5',
   compatibilityCases,
   compatibilityCandidateMap,
   officialFeatureManifest,
