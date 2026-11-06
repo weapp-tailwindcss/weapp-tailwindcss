@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
@@ -28,7 +27,10 @@ beforeAll(async () => {
 }, 300_000)
 
 async function buildFixture(strict: boolean, mode: 'development' | 'production' = 'development') {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-diagnostics-result-'))
+  // 临时工程继承示例的真实依赖边界，避免 Windows 原生解析器跨盘遍历 node_modules junction。
+  const temporaryRoot = path.join(example, '.tmp')
+  await fs.mkdir(temporaryRoot, { recursive: true })
+  const directory = await fs.mkdtemp(path.join(temporaryRoot, 'lynx-diagnostics-result-'))
   try {
     const output = path.join(directory, 'result.json')
     // 原生 Rspeedy/Rspack 在独立 Node 进程执行，避免 Vitest 模块拦截改变构建器加载边界。

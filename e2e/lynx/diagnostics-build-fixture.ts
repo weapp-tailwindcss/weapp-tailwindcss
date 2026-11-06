@@ -25,7 +25,6 @@ export async function buildDiagnosticsFixture(directory: string, strict: boolean
   const inputs = new Map<string, CssMapInput>()
   let build: { close: () => Promise<void> } | undefined
   try {
-    await fs.symlink(path.join(example, 'node_modules'), path.join(directory, 'node_modules'), 'junction')
     await fs.writeFile(path.join(directory, 'index.tsx'), `import {root} from '@lynx-js/react'; import './style.css'; root.render(<view className="px-[7.5px] [mask-type:luminance] pl-[7.5px] pr-[7.5px] group theme-probe app-probe"><view className="group-hover:bg-red-500" /></view>);`)
     await fs.writeFile(path.join(directory, 'style.css'), `@import 'tailwindcss' source(none);
 @source inline('px-[7.5px] [mask-type:luminance] pl-[7.5px] pr-[7.5px] group-hover:bg-red-500 p-[13px] gap-[7px]');

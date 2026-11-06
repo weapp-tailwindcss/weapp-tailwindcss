@@ -16,7 +16,7 @@ import { assertResponsiveGuard } from './lynx/responsive-static'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
-import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
+import { textFlowFixtureVariants, verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
 import { assertThemeOverrideRules } from './lynx/theme-overrides-static'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
@@ -234,8 +234,8 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     await verifyStructuralFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
   }, 30_000)
 
-  it('文字流由真实行内上下文和独立手工分行对照验证', async () => {
-    await verifyTextFlowFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
+  it.each(textFlowFixtureVariants)('$font/$scale 的文字流由真实行内上下文和独立手工分行对照验证', async (variant) => {
+    await verifyTextFlowFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), variant)
   }, 30_000)
 
   it('dark 的真实文字夹具只响应媒体颜色模式', async () => {
