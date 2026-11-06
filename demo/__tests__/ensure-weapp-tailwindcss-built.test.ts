@@ -23,9 +23,8 @@ function createPackageFixture(moduleEntry = './dist/index.js') {
   writeFileSync(path.join(packageRoot, 'package.json'), JSON.stringify({
     exports: {
       '.': {
-        types: './dist/index.d.ts',
-        import: moduleEntry,
-        require: './dist/index.cjs',
+        import: { types: './dist/index.d.ts', default: moduleEntry },
+        require: { types: './dist/index.d.cts', default: './dist/index.cjs' },
       },
     },
     main: './dist/index.cjs',
@@ -33,7 +32,7 @@ function createPackageFixture(moduleEntry = './dist/index.js') {
     types: './dist/index.d.ts',
   }))
   writeFileSync(path.join(packageRoot, 'src/index.ts'), 'export const value = 1\n')
-  for (const file of ['dist/index.cjs', moduleEntry.slice(2), 'dist/index.d.ts']) {
+  for (const file of ['dist/index.cjs', moduleEntry.slice(2), 'dist/index.d.ts', 'dist/index.d.cts']) {
     writeFileSync(path.join(packageRoot, file), '')
   }
   return packageRoot
@@ -59,11 +58,13 @@ describe('ensure-weapp-tailwindcss-built', () => {
       'dist/index.mjs',
       'dist/index.cjs',
       'dist/index.d.ts',
+      'dist/index.d.cts',
     ]))
     expect(resolveTargetStamps(reset)).toEqual(expect.arrayContaining([
       'dist/index.js',
       'dist/index.cjs',
       'dist/index.d.ts',
+      'dist/index.d.cts',
     ]))
   })
 
@@ -71,7 +72,8 @@ describe('ensure-weapp-tailwindcss-built', () => {
     const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'packages/weapp-tailwindcss/package.json'), 'utf8'))
     const entryDtsScript = readFileSync(path.join(process.cwd(), 'tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts'), 'utf8')
 
-    expect(packageJson.exports['./vite/web'].types).toBe('./dist/vite/web.d.ts')
+    expect(packageJson.exports['./vite/web'].import.types).toBe('./dist/vite/web.d.ts')
+    expect(packageJson.exports['./vite/web'].require.types).toBe('./dist/vite/web.d.cts')
     expect(entryDtsScript).toContain("'vite/web.d.ts'")
   })
 
@@ -93,6 +95,13 @@ describe('ensure-weapp-tailwindcss-built', () => {
     writeFileSync(outputFile, '')
     utimesSync(outputFile, now, now)
     utimesSync(sourceFile, now + 10, now + 10)
+    expect(shouldBuild({ packageRoot })).toBe(true)
+  })
+
+  it('CJS 声明缺失时也触发重建', () => {
+    const packageRoot = createPackageFixture()
+    expect(collectPackageEntryStamps(packageRoot)).toContain('dist/index.d.cts')
+    unlinkSync(path.join(packageRoot, 'dist/index.d.cts'))
     expect(shouldBuild({ packageRoot })).toBe(true)
   })
 

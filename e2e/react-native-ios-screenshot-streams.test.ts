@@ -7,7 +7,8 @@ import { execa } from 'execa'
 import { expect, it } from 'vitest'
 import { observeIosScreenshotStreams } from './react-native/ios-screenshot-streams'
 
-it('真实根进程退出不能冒充输出流结束；只读观察在后代释放自有 pipe 后结束', async () => {
+// iOS 夹具依赖 POSIX 后代继承并持有父进程 stdio pipe 的语义。
+it.skipIf(process.platform === 'win32')('真实根进程退出不能冒充输出流结束；只读观察在后代释放自有 pipe 后结束', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-owned-stdio-'))
   const ready = path.join(directory, 'ready.json')
   const release = path.join(directory, 'release')

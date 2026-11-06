@@ -23,7 +23,7 @@ describe('typography tsdown config', () => {
     expect(pluginEsm.deps?.resolveDepSubpath).toBe(true)
     expect(pluginCjs.deps?.resolveDepSubpath).toBe(true)
     expect(transformEsm.dts).toBe(true)
-    expect(transformCjs.dts).toBe(false)
+    expect(transformCjs.dts).toBe(true)
   })
 
   it('emits .js/.cjs and only cleans once outside watch mode', () => {
@@ -34,6 +34,8 @@ describe('typography tsdown config', () => {
     expect(configs.slice(1).every(config => config.clean === false)).toBe(true)
     expect(outExtensions?.({ format: 'es' } as never).js).toBe('.js')
     expect(outExtensions?.({ format: 'cjs' } as never).js).toBe('.cjs')
+    expect(outExtensions?.({ format: 'es' } as never).dts).toBe('.d.ts')
+    expect(outExtensions?.({ format: 'cjs' } as never).dts).toBe('.d.cts')
     expect(createTypographyTsdownConfigs({ watch: true }).every(config => config.clean === false)).toBe(true)
   })
 })

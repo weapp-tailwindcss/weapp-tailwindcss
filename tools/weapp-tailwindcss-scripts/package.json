@@ -7,7 +7,7 @@
   "scripts": {
     "build:css": "tsx src/build-css.ts",
     "build:weapp-theme": "tsx src/build-weapp-theme.ts",
-    "build:types": "tsx src/rewrite-dts-aliases.ts && tsx src/create-entry-dts.ts",
+    "build:types": "tsx src/rewrite-dts-aliases.ts && tsx src/create-entry-dts.ts && tsx src/duplicate-cjs-declarations.ts ../../packages/weapp-tailwindcss --default=css-macro --default=postcss-html-transform",
     "ensure-escape-dts": "tsx src/ensure-escape-dts.ts",
     "bench:vite-perf": "tsx src/vite-perf-bench.ts",
     "bench:vite-perf:summary": "tsx src/vite-perf-summary.ts",

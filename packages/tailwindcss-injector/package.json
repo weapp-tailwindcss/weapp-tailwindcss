@@ -17,11 +17,25 @@
   "keywords": [],
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
     "./postcss": {
-      "types": "./dist/postcss.d.ts",
-      "import": "./dist/postcss.js",
-      "require": "./dist/postcss.cjs"
+      "import": {
+        "types": "./dist/postcss.d.ts",
+        "default": "./dist/postcss.js"
+      },
+      "require": {
+        "types": "./dist/postcss.d.cts",
+        "default": "./dist/postcss.cjs"
+      }
     }
   },
   "files": [
@@ -32,7 +46,7 @@
   },
   "scripts": {
     "dev": "tsdown --watch --sourcemap",
-    "build": "tsdown",
+    "build": "tsdown && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts . --only-defaults --default=postcss",
     "test": "vitest run",
     "test:dev": "vitest",
     "release": "pnpm publish",
@@ -42,14 +56,24 @@
   "publishConfig": {
     "exports": {
       ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "default": "./dist/index.cjs"
+        }
       },
       "./postcss": {
-        "types": "./dist/postcss.d.ts",
-        "import": "./dist/postcss.js",
-        "require": "./dist/postcss.cjs"
+        "import": {
+          "types": "./dist/postcss.d.ts",
+          "default": "./dist/postcss.js"
+        },
+        "require": {
+          "types": "./dist/postcss.d.cts",
+          "default": "./dist/postcss.cjs"
+        }
       }
     },
     "main": "./dist/index.cjs",

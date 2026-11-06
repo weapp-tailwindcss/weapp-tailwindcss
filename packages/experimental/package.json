@@ -18,14 +18,24 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./lightningcss": {
-      "types": "./dist/lightningcss/index.d.ts",
-      "import": "./dist/lightningcss/index.mjs",
-      "require": "./dist/lightningcss/index.cjs"
+      "import": {
+        "types": "./dist/lightningcss/index.d.ts",
+        "default": "./dist/lightningcss/index.mjs"
+      },
+      "require": {
+        "types": "./dist/lightningcss/index.d.cts",
+        "default": "./dist/lightningcss/index.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",

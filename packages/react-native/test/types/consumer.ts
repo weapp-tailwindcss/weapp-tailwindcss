@@ -1,5 +1,5 @@
 import type { PluginObject } from '@babel/core'
-import type { ImageProps, TextProps, ViewProps } from 'react-native'
+import type { ImageProps, StyleProp, TextProps, ViewProps } from 'react-native'
 import type { NativeStyleValue } from '../../src/runtime/types'
 import { StyleSheet } from 'react-native'
 import babelPlugin from '../../src/babel'
@@ -24,7 +24,18 @@ const asyncConfig = withWeappTailwindcss(async () => ({ customField: 2 }))
 const asyncCustom: Promise<number> = asyncConfig.then(config => config.customField)
 const cancelledSnapshot = readPublishedSnapshot('manifest.json', undefined, new AbortController().signal)
 
-void [view, text, inherited, image, combined, empty, preserved, plugin, custom, extensions, asyncCustom, cancelledSnapshot]
+// 与仓库已验证的 RN 0.81 StyleProp 双向兼容，包含只读内层数组与注册样式品牌。
+const nativeNested: NativeStyleValue = [{ opacity: 1 }, [false, null] as const, inline]
+const rnNested: StyleProp<Record<string, unknown>> = nativeNested
+const roundTrip: NativeStyleValue = rnNested
+function toReactNative(value: NativeStyleValue): StyleProp<Record<string, unknown>> {
+  return value
+}
+function fromReactNative(value: StyleProp<Record<string, unknown>>): NativeStyleValue {
+  return value
+}
+
+void [view, text, inherited, image, combined, empty, preserved, plugin, custom, extensions, asyncCustom, cancelledSnapshot, roundTrip, toReactNative, fromReactNative]
 
 // 任意数字不是 React Native 注册过的 StyleSheet ID。
 // @ts-expect-error 必须拒绝未经注册的数字样式。

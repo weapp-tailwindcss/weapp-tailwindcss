@@ -22,14 +22,24 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./transform": {
-      "types": "./dist/transform.d.ts",
-      "import": "./dist/transform.js",
-      "require": "./dist/transform.cjs"
+      "import": {
+        "types": "./dist/transform.d.ts",
+        "default": "./dist/transform.js"
+      },
+      "require": {
+        "types": "./dist/transform.d.cts",
+        "default": "./dist/transform.cjs"
+      }
     },
     "./*": "./*"
   },
@@ -52,12 +62,15 @@
   },
   "scripts": {
     "dev": "tsdown --watch --sourcemap",
-    "build": "tsdown && node -e \"require('node:fs').copyFileSync('src/index.d.ts','dist/index.d.ts')\"",
+    "build": "tsdown && node scripts/copy-dts.mjs",
     "test": "vitest run",
     "test:dev": "vitest",
     "tsd": "tsd",
     "release": "pnpm publish",
     "sync": "repo release sync-npmmirror --package @weapp-tailwindcss/typography"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.0.0 || ^4.0.0"
   },
   "dependencies": {
     "htmlparser2": "catalog:buildUtilities",

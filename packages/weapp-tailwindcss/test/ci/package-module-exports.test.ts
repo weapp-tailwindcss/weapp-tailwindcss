@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 interface PackageJson {
   name: string
   type?: string
+  private?: boolean
   main?: string
   module?: string
   devDependencies?: Record<string, string>
@@ -66,10 +67,41 @@ function expectModuleExtensions(exports: Record<string, unknown>) {
     if (typeof conditions.require === 'string') {
       expect(conditions.require).toMatch(/\.cjs$/)
     }
+    if (conditions.import && typeof conditions.import === 'object') {
+      expect((conditions.import as Record<string, unknown>).default).toMatch(/\.js$/)
+    }
+    if (conditions.require && typeof conditions.require === 'object') {
+      expect((conditions.require as Record<string, unknown>).default).toMatch(/\.cjs$/)
+    }
   }
 }
 
 describe('package module metadata', () => {
+  it('为公开双格式入口分别声明 ESM/CJS 类型，发布时保持条件一致', async () => {
+    for (const pkg of (await readWorkspacePackages()).filter(pkg => !pkg.private)) {
+      const exports = pkg.publishConfig?.exports ?? pkg.exports ?? {}
+      for (const [entry, target] of Object.entries(exports)) {
+        if (!target || typeof target !== 'object' || !('import' in target) || !('require' in target)) {
+          continue
+        }
+        const conditions = target as Record<string, Record<string, string>>
+        const label = `${pkg.name}${entry}`
+        expect(conditions, label).not.toHaveProperty('types')
+        expect(Object.keys(conditions.import)[0], label).toBe('types')
+        expect(Object.keys(conditions.require)[0], label).toBe('types')
+        expect(conditions.import.types, label).toMatch(/\.d\.(?:m?ts)$/)
+        expect(conditions.import.default, label).toMatch(/\.(?:m?js)$/)
+        expect(conditions.require.types, label).toMatch(/\.d\.cts$/)
+        expect(conditions.require.default, label).toMatch(/\.cjs$/)
+        if (pkg.publishConfig?.exports && typeof pkg.exports?.[entry] === 'object') {
+          expect(pkg.exports?.[entry], label).toEqual(target)
+        }
+      }
+    }
+    const core = (await readWorkspacePackages()).find(pkg => pkg.name === 'weapp-tailwindcss')!
+    expect(core.exports?.['.']).toHaveProperty('style', './index.css')
+    expect(core.exports?.['./package.json']).toBe('./package.json')
+  })
   it('ignores workspace directories without a package manifest', async () => {
     const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'weapp-tw-workspace-'))
     try {

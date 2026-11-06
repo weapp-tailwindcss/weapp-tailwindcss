@@ -13,44 +13,84 @@
   "sideEffects": true,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./compiler": {
-      "types": "./dist/compiler.d.ts",
-      "import": "./dist/compiler.js",
-      "require": "./dist/compiler.cjs"
+      "import": {
+        "types": "./dist/compiler.d.ts",
+        "default": "./dist/compiler.js"
+      },
+      "require": {
+        "types": "./dist/compiler.d.cts",
+        "default": "./dist/compiler.cjs"
+      }
     },
     "./tailwind": {
-      "types": "./dist/tailwind.d.ts",
-      "import": "./dist/tailwind.js",
-      "require": "./dist/tailwind.cjs"
+      "import": {
+        "types": "./dist/tailwind.d.ts",
+        "default": "./dist/tailwind.js"
+      },
+      "require": {
+        "types": "./dist/tailwind.d.cts",
+        "default": "./dist/tailwind.cjs"
+      }
     },
     "./babel": {
-      "types": "./dist/babel.d.ts",
-      "import": "./dist/babel.js",
-      "require": "./dist/babel.cjs"
+      "import": {
+        "types": "./dist/babel.d.ts",
+        "default": "./dist/babel.js"
+      },
+      "require": {
+        "types": "./dist/babel.d.cts",
+        "default": "./dist/babel.cjs"
+      }
     },
     "./metro": {
-      "types": "./dist/metro.d.ts",
-      "import": "./dist/metro.js",
-      "require": "./dist/metro.cjs"
+      "import": {
+        "types": "./dist/metro.d.ts",
+        "default": "./dist/metro.js"
+      },
+      "require": {
+        "types": "./dist/metro.d.cts",
+        "default": "./dist/metro.cjs"
+      }
     },
     "./runtime": {
-      "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js",
-      "require": "./dist/runtime.cjs"
+      "import": {
+        "types": "./dist/runtime.d.ts",
+        "default": "./dist/runtime.js"
+      },
+      "require": {
+        "types": "./dist/runtime.d.cts",
+        "default": "./dist/runtime.cjs"
+      }
     },
     "./env": {
-      "types": "./dist/env.d.ts",
-      "import": "./dist/env.js",
-      "require": "./dist/env.cjs"
+      "import": {
+        "types": "./dist/env.d.ts",
+        "default": "./dist/env.js"
+      },
+      "require": {
+        "types": "./dist/env.d.cts",
+        "default": "./dist/env.cjs"
+      }
     },
     "./metro-transformer": {
-      "types": "./dist/metro-transformer.d.ts",
-      "import": "./dist/metro-transformer.js",
-      "require": "./dist/metro-transformer.cjs"
+      "import": {
+        "types": "./dist/metro-transformer.d.ts",
+        "default": "./dist/metro-transformer.js"
+      },
+      "require": {
+        "types": "./dist/metro-transformer.d.cts",
+        "default": "./dist/metro-transformer.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -64,7 +104,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts . --only-defaults --default=babel",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.typecheck.json --pretty false",
     "bench": "vitest bench",
@@ -101,6 +141,7 @@
   },
   "dependencies": {
     "@babel/types": "catalog:babel8",
+    "@types/convert-source-map": "^2.0.3",
     "@weapp-tailwindcss/postcss": "workspace:*",
     "weapp-tailwindcss": "workspace:*"
   },

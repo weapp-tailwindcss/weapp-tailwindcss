@@ -141,7 +141,8 @@ it.skipIf(process.platform === 'win32')('真实 CLI 根先 close 后，Web stop 
   expect((await readFile(path.join(directory, 'heartbeat.txt'), 'utf8')).length).toBe(bytes)
 })
 
-it('CLI 根在 stop 前已退出必须报错，不能借受管句柄的 close guard 宣称整棵树已停', async () => {
+// 此夹具依赖 POSIX SIGKILL 后独立 worker 仍存活的语义。
+it.skipIf(process.platform === 'win32')('CLI 根在 stop 前已退出必须报错，不能借受管句柄的 close guard 宣称整棵树已停', async () => {
   const { session, command, workerPid } = await fixture()
   command.child.kill('SIGKILL')
   await command.closed

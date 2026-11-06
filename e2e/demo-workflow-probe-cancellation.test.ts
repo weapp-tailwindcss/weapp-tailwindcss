@@ -91,7 +91,8 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it.each([false, true])('内部探针失败先合作取消，真实 launcher、消费者及独立 Worker 全部退出（清理探针持续失败=%s）', async (persistent) => {
+// 三层夹具使用 POSIX SIGTERM 合作退出和独立进程组，Windows 终止语义由跨平台清理单测覆盖。
+it.runIf(process.platform !== 'win32').each([false, true])('内部探针失败先合作取消，真实 launcher、消费者及独立 Worker 全部退出（清理探针持续失败=%s）', async (persistent) => {
   const root = await mkdtemp(path.join(tmpdir(), 'workflow probe 中文 '))
   const controller = new AbortController()
   const identities = new Map<number, ProcessIdentity>()

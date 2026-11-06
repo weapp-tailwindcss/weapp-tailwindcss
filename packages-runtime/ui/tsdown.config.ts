@@ -28,7 +28,7 @@ export default defineConfig({
   outExtensions({ format }) {
     return {
       js: format === 'es' ? '.js' : '.cjs',
-      dts: '.d.ts',
+      dts: format === 'es' ? '.d.ts' : '.d.cts',
     }
   },
 })

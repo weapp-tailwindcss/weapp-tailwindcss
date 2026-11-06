@@ -85,12 +85,22 @@ const invalid: Px2rpxOptions = { transformVarFallbacks: 'false' };
   const host = ts.createCompilerHost(options)
   const readFile = host.readFile.bind(host)
   const fileExists = host.fileExists.bind(host)
-  host.fileExists = file => file === filename || fileExists(file)
+  const canonical = (file: string) => host.getCanonicalFileName(path.resolve(file))
+  const normalizedFilename = canonical(filename)
+  host.fileExists = file => canonical(file) === normalizedFilename || fileExists(file)
   host.readFile = (file) => {
-    if (file === filename) {
+    if (canonical(file) === normalizedFilename) {
       return source
     }
     return readFile(file)
+  }
+  const variants = [filename, path.relative(process.cwd(), filename), filename.split(path.sep).join('/')]
+  if (process.platform === 'win32') {
+    variants.push(path.win32.normalize(filename), filename.toUpperCase())
+  }
+  for (const file of variants) {
+    expect(host.fileExists(file)).toBe(true)
+    expect(host.readFile(file)).toBe(source)
   }
 
   const program = ts.createProgram([filename], options, host)

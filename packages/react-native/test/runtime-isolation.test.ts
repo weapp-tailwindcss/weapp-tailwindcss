@@ -8,6 +8,20 @@ afterEach(() => {
 })
 
 describe('原生运行时的注册表、缓存与组合元数据归属于实例', () => {
+  it.each([undefined, 42, 'invalid', ['invalid']])('忽略宿主 flatten 返回的非样式对象 %j', (result) => {
+    setStyleSheetFactory(styles => styles, () => result)
+    const runtime = createNativeStyleRuntime(compileNativeStylesheet('.probe { line-height: 1.5; }'))
+    const style = runtime.tw('probe')
+    expect(runtime.composeStyle(style, 1)).toEqual([style, 1])
+  })
+
+  it('宿主 flatten 返回的注册样式参与相对行高计算', () => {
+    setStyleSheetFactory(styles => styles, () => ({ fontSize: 20 }))
+    const runtime = createNativeStyleRuntime(compileNativeStylesheet('.probe { line-height: 1.5; }'))
+    const style = runtime.tw('probe')
+    expect(runtime.composeStyle(style, 1)).toEqual([style, 1, { lineHeight: 30 }])
+  })
+
   it('注册路径的 tw 与静态查询保留普通和 important 的完整级联', () => {
     setStyleSheetFactory(styles => styles)
     const manifest = compileNativeStylesheet('.normal { width: 4px; color: blue; } .strong { color: red !important; }')

@@ -41,7 +41,7 @@ const sharedOptions = {
   outExtensions({ format }: { format: string }) {
     return {
       js: format === 'es' ? '.js' : '.cjs',
-      dts: '.d.ts',
+      dts: format === 'es' ? '.d.ts' : '.d.cts',
     }
   },
 }

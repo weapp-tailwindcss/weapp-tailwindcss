@@ -1,5 +1,10 @@
-import type { StyleProp } from 'react-native'
 import type { NativeManifestPublication, NativePlatform, NativeStyleManifest } from '../types'
+
+// 保持 RN 0.81 的样式结构与注册品牌，避免编译器声明引入设备端全局类型。
+type FalsyStyle = undefined | null | false | ''
+type RegisteredStyle<T> = number & { __registeredStyleBrand: T }
+interface RecursiveStyleArray<T> extends Array<T | ReadonlyArray<T> | RecursiveStyleArray<T>> {}
+type StyleRecord = Record<string, unknown>
 
 export interface NativeStyleEnvironment {
   colorScheme?: 'light' | 'dark' | undefined
@@ -11,7 +16,7 @@ export interface NativeStyleEnvironment {
 }
 
 export type NativeClassValue = string | false | null | undefined | NativeClassValue[] | Record<string, boolean>
-export type NativeStyleValue = StyleProp<Record<string, unknown>>
+export type NativeStyleValue = StyleRecord | RegisteredStyle<StyleRecord> | RecursiveStyleArray<StyleRecord | RegisteredStyle<StyleRecord> | FalsyStyle> | FalsyStyle
 
 export interface NativeStyleRuntime {
   tw: (value: NativeClassValue, environment?: NativeStyleEnvironment) => NativeStyleValue

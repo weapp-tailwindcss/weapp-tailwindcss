@@ -18,19 +18,34 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./extractors": {
-      "types": "./dist/extractors.d.ts",
-      "import": "./dist/extractors.js",
-      "require": "./dist/extractors.cjs"
+      "import": {
+        "types": "./dist/extractors.d.ts",
+        "default": "./dist/extractors.js"
+      },
+      "require": {
+        "types": "./dist/extractors.d.cts",
+        "default": "./dist/extractors.cjs"
+      }
     },
     "./node": {
-      "types": "./dist/node.d.ts",
-      "import": "./dist/node.js",
-      "require": "./dist/node.cjs"
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
@@ -53,6 +68,7 @@
   },
   "publishConfig": {},
   "dependencies": {
+    "@types/set-value": "^4.0.3",
     "defu": "catalog:buildUtilities",
     "get-value": "^4.1.0",
     "pathe": "catalog:buildUtilities",

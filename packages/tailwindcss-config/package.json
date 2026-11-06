@@ -22,9 +22,14 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
@@ -38,8 +43,8 @@
   },
   "scripts": {
     "dev": "tsdown --watch --sourcemap",
-    "build": "tsdown && tsc -p tsconfig.build.json",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build": "tsdown && pnpm build:types",
+    "build:types": "tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts .",
     "test": "vitest run",
     "test:dev": "vitest",
     "release": "pnpm publish",
@@ -49,9 +54,14 @@
   "publishConfig": {
     "exports": {
       ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "default": "./dist/index.cjs"
+        }
       }
     },
     "main": "./dist/index.cjs",
@@ -59,6 +69,9 @@
     "types": "./dist/index.d.ts",
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.0.0 || ^4.0.0"
   },
   "dependencies": {
     "@weapp-tailwindcss/shared": "workspace:*",

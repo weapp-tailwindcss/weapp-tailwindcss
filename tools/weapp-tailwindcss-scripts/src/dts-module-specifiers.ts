@@ -74,12 +74,22 @@ function rewriteRelativeSpecifier(
   filepath: string,
   declarationFiles: ReadonlySet<string> | undefined,
 ) {
+  if (filepath.endsWith('.d.cts') && declarationFiles) {
+    const target = resolve(dirname(filepath), specifier)
+    const cjsTarget = target.replace(/(?:\.d\.ts|\.js)$/, '.d.cts')
+    if (cjsTarget !== target && declarationFiles.has(cjsTarget)) {
+      return toModulePath(filepath, cjsTarget)
+    }
+  }
   if (hasExplicitExtension(specifier)) {
     return specifier
   }
 
   const target = resolve(dirname(filepath), specifier)
-  const declarationFile = resolveDeclarationTarget(target, declarationFiles)
+  const cjsTarget = filepath.endsWith('.d.cts')
+    ? [`${target}.d.cts`, join(target, 'index.d.cts')].find(candidate => declarationFiles?.has(candidate))
+    : undefined
+  const declarationFile = cjsTarget ?? resolveDeclarationTarget(target, declarationFiles)
   if (!declarationFile) {
     return withRuntimeExtension(specifier, filepath)
   }

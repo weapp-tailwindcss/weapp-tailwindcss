@@ -42,94 +42,184 @@
   "exports": {
     ".": {
       "style": "./index.css",
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./escape": {
-      "types": "./dist/escape.d.ts",
-      "import": "./dist/escape.js",
-      "require": "./dist/escape.cjs"
+      "import": {
+        "types": "./dist/escape.d.ts",
+        "default": "./dist/escape.js"
+      },
+      "require": {
+        "types": "./dist/escape.d.cts",
+        "default": "./dist/escape.cjs"
+      }
     },
     "./vite": {
-      "types": "./dist/vite.d.ts",
-      "import": "./dist/vite.js",
-      "require": "./dist/vite.cjs"
+      "import": {
+        "types": "./dist/vite.d.ts",
+        "default": "./dist/vite.js"
+      },
+      "require": {
+        "types": "./dist/vite.d.cts",
+        "default": "./dist/vite.cjs"
+      }
     },
     "./vite/web": {
-      "types": "./dist/vite/web.d.ts",
-      "import": "./dist/vite/web.js",
-      "require": "./dist/vite/web.cjs"
+      "import": {
+        "types": "./dist/vite/web.d.ts",
+        "default": "./dist/vite/web.js"
+      },
+      "require": {
+        "types": "./dist/vite/web.d.cts",
+        "default": "./dist/vite/web.cjs"
+      }
     },
     "./webpack": {
-      "types": "./dist/webpack.d.ts",
-      "import": "./dist/webpack.js",
-      "require": "./dist/webpack.cjs"
+      "import": {
+        "types": "./dist/webpack.d.ts",
+        "default": "./dist/webpack.js"
+      },
+      "require": {
+        "types": "./dist/webpack.d.cts",
+        "default": "./dist/webpack.cjs"
+      }
     },
     "./rspack": {
-      "types": "./dist/rspack.d.ts",
-      "import": "./dist/rspack.js",
-      "require": "./dist/rspack.cjs"
+      "import": {
+        "types": "./dist/rspack.d.ts",
+        "default": "./dist/rspack.js"
+      },
+      "require": {
+        "types": "./dist/rspack.d.cts",
+        "default": "./dist/rspack.cjs"
+      }
     },
     "./core": {
-      "types": "./dist/core.d.ts",
-      "import": "./dist/core.js",
-      "require": "./dist/core.cjs"
+      "import": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.js"
+      },
+      "require": {
+        "types": "./dist/core.d.cts",
+        "default": "./dist/core.cjs"
+      }
     },
     "./gulp": {
-      "types": "./dist/gulp.d.ts",
-      "import": "./dist/gulp.js",
-      "require": "./dist/gulp.cjs"
+      "import": {
+        "types": "./dist/gulp.d.ts",
+        "default": "./dist/gulp.js"
+      },
+      "require": {
+        "types": "./dist/gulp.d.cts",
+        "default": "./dist/gulp.cjs"
+      }
     },
     "./generator": {
-      "types": "./dist/generator.d.ts",
-      "import": "./dist/generator.js",
-      "require": "./dist/generator.cjs"
+      "import": {
+        "types": "./dist/generator.d.ts",
+        "default": "./dist/generator.js"
+      },
+      "require": {
+        "types": "./dist/generator.d.cts",
+        "default": "./dist/generator.cjs"
+      }
     },
     "./postcss": {
-      "types": "./dist/postcss.d.ts",
-      "import": "./dist/postcss.js",
-      "require": "./dist/postcss.cjs"
+      "import": {
+        "types": "./dist/postcss.d.ts",
+        "default": "./dist/postcss.js"
+      },
+      "require": {
+        "types": "./dist/postcss.d.cts",
+        "default": "./dist/postcss.cjs"
+      }
     },
     "./defaults": {
-      "types": "./dist/defaults.d.ts",
-      "import": "./dist/defaults.js",
-      "require": "./dist/defaults.cjs"
+      "import": {
+        "types": "./dist/defaults.d.ts",
+        "default": "./dist/defaults.js"
+      },
+      "require": {
+        "types": "./dist/defaults.d.cts",
+        "default": "./dist/defaults.cjs"
+      }
     },
     "./framework": {
-      "types": "./dist/framework.d.ts",
-      "import": "./dist/framework.js",
-      "require": "./dist/framework.cjs"
+      "import": {
+        "types": "./dist/framework.d.ts",
+        "default": "./dist/framework.js"
+      },
+      "require": {
+        "types": "./dist/framework.d.cts",
+        "default": "./dist/framework.cjs"
+      }
     },
     "./presets": {
-      "types": "./dist/presets.d.ts",
-      "import": "./dist/presets.js",
-      "require": "./dist/presets.cjs"
+      "import": {
+        "types": "./dist/presets.d.ts",
+        "default": "./dist/presets.js"
+      },
+      "require": {
+        "types": "./dist/presets.d.cts",
+        "default": "./dist/presets.cjs"
+      }
     },
     "./reset": {
-      "types": "./dist/reset.d.ts",
-      "import": "./dist/reset.js",
-      "require": "./dist/reset.cjs"
+      "import": {
+        "types": "./dist/reset.d.ts",
+        "default": "./dist/reset.js"
+      },
+      "require": {
+        "types": "./dist/reset.d.cts",
+        "default": "./dist/reset.cjs"
+      }
     },
     "./css-macro/postcss": {
-      "types": "./dist/css-macro/postcss.d.ts",
-      "import": "./dist/css-macro/postcss.js",
-      "require": "./dist/css-macro/postcss.cjs"
+      "import": {
+        "types": "./dist/css-macro/postcss.d.ts",
+        "default": "./dist/css-macro/postcss.js"
+      },
+      "require": {
+        "types": "./dist/css-macro/postcss.d.cts",
+        "default": "./dist/css-macro/postcss.cjs"
+      }
     },
     "./css-macro": {
-      "types": "./dist/css-macro.d.ts",
-      "import": "./dist/css-macro.js",
-      "require": "./dist/css-macro.cjs"
+      "import": {
+        "types": "./dist/css-macro.d.ts",
+        "default": "./dist/css-macro.js"
+      },
+      "require": {
+        "types": "./dist/css-macro.d.cts",
+        "default": "./dist/css-macro.cjs"
+      }
     },
     "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "require": "./dist/types.cjs"
+      "import": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/types.js"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
     },
     "./postcss-html-transform": {
-      "types": "./dist/postcss-html-transform.d.ts",
-      "import": "./dist/postcss-html-transform.js",
-      "require": "./dist/postcss-html-transform.cjs"
+      "import": {
+        "types": "./dist/postcss-html-transform.d.ts",
+        "default": "./dist/postcss-html-transform.js"
+      },
+      "require": {
+        "types": "./dist/postcss-html-transform.d.cts",
+        "default": "./dist/postcss-html-transform.cjs"
+      }
     },
     "./package.json": "./package.json",
     "./index.css": "./index.css",
@@ -175,8 +265,8 @@
   },
   "scripts": {
     "dev": "tsdown --watch --sourcemap",
-    "build": "tsdown && tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/ensure-escape-dts.ts",
-    "build:types": "tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts",
+    "build": "tsdown && tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/ensure-escape-dts.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts . --default=css-macro --default=postcss-html-transform",
+    "build:types": "tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts . --default=css-macro --default=postcss-html-transform",
     "build:tsc": "cross-env NODE_ENV=development tsc --build tsconfig.json",
     "build:css": "pnpm --filter @weapp-tailwindcss/scripts build:css",
     "build:weapp-theme": "pnpm --filter @weapp-tailwindcss/scripts build:weapp-theme",
@@ -258,6 +348,7 @@
     "micromatch": "catalog:buildUtilities",
     "oxc-parser": "catalog:compilerUtilities",
     "oxc-walker": "catalog:compilerUtilities",
+    "rollup": "^4.65.1",
     "semver": "catalog:compilerUtilities",
     "tailwindcss-config": "workspace:*",
     "weapp-style-injector": "workspace:*",

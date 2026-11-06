@@ -10,7 +10,14 @@ describe('package output contract', () => {
     const packageJson = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'))
     const tsdownConfig = fs.readFileSync(path.join(packageRoot, 'tsdown.config.ts'), 'utf8')
 
-    expect(packageJson.publishConfig.exports['.'].import).toBe('./dist/index.js')
+    expect(packageJson.publishConfig.exports['.'].import).toEqual({
+      types: './dist/index.d.ts',
+      default: './dist/index.js',
+    })
+    expect(packageJson.publishConfig.exports['.'].require).toEqual({
+      types: './dist/index.d.cts',
+      default: './dist/index.cjs',
+    })
     expect(packageJson.publishConfig.module).toBe('./dist/index.js')
     expect(tsdownConfig).toContain("format === 'es' ? '.js' : '.cjs'")
   })

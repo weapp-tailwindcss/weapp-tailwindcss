@@ -17,8 +17,10 @@ describe('框架隔离后的发布兼容性', () => {
     const keys = (value: object) => Object.keys(value).filter(key => key !== 'default' && key !== '__esModule').sort()
     expect(keys(esm)).toEqual(keys(cjs))
     const manifest = require('weapp-tailwindcss/package.json')
-    const declaration = manifest.exports[suffix ? `.${suffix}` : '.'].types
-    expect(fs.existsSync(path.resolve(packageRoot, declaration))).toBe(true)
+    const entry = manifest.exports[suffix ? `.${suffix}` : '.']
+    for (const condition of ['import', 'require']) {
+      expect(fs.existsSync(path.resolve(packageRoot, entry[condition].types))).toBe(true)
+    }
   })
 
   it('HBuilderX 的同步 require 链路不要求加载纯 ESM 官方插件，Webpack loader 保持可解析', () => {

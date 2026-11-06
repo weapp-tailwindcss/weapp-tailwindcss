@@ -10,7 +10,7 @@ import { inlineBoxShadowStyle } from './runtime/shadow'
 interface StyleValue { [key: string]: unknown }
 interface StyleMeta { important?: NativeStyleValue, relativeLineHeight?: RelativeLineHeight | undefined, boxShadow?: DeferredBoxShadow | undefined }
 type StyleSheetFactory = (value: Record<string, StyleValue>) => Record<string, NativeStyleValue>
-type StyleSheetFlattener = (value: NativeStyleValue) => StyleValue | undefined
+type StyleSheetFlattener = (value: NativeStyleValue) => unknown
 
 let activeEnvironment: NativeStyleEnvironment = {}
 let styleSheetFactory: StyleSheetFactory | undefined
@@ -18,7 +18,11 @@ let styleSheetFlattener: StyleSheetFlattener | undefined
 let styleSheetRevision = 0
 
 function resolveRegisteredStyle(value: number) {
-  return styleSheetFlattener?.(value as NativeStyleValue)
+  const resolved = styleSheetFlattener?.(value as NativeStyleValue)
+  // 在平台注入边界收窄结果，编译器声明不依赖平台泛型的推断规则。
+  return resolved && typeof resolved === 'object' && !Array.isArray(resolved)
+    ? resolved as StyleValue
+    : undefined
 }
 
 function createStyleSheet(manifest: NativeStyleManifest) {

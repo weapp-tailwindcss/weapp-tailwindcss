@@ -14,8 +14,8 @@ export async function verifyTemplateTailwindModernGuard(root) {
   const exports = manifest.exports['.']
   const packageRoot = path.dirname(manifestFile)
   const modules = [
-    ['ESM', await import(pathToFileURL(path.resolve(packageRoot, exports.import)).href)],
-    ['CJS', coreRequire(path.resolve(packageRoot, exports.require))],
+    ['ESM', await import(pathToFileURL(path.resolve(packageRoot, typeof exports.import === 'string' ? exports.import : exports.import.default)).href)],
+    ['CJS', coreRequire(path.resolve(packageRoot, typeof exports.require === 'string' ? exports.require : exports.require.default))],
   ]
 
   for (const [format, module] of modules) {

@@ -18,55 +18,105 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "require": "./dist/types.cjs"
+      "import": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/types.js"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
     },
     "./html-transform": {
-      "types": "./dist/html-transform.d.ts",
-      "import": "./dist/html-transform.js",
-      "require": "./dist/html-transform.cjs"
+      "import": {
+        "types": "./dist/html-transform.d.ts",
+        "default": "./dist/html-transform.js"
+      },
+      "require": {
+        "types": "./dist/html-transform.d.cts",
+        "default": "./dist/html-transform.cjs"
+      }
     },
     "./css-macro/postcss": {
-      "types": "./dist/css-macro/postcss.d.ts",
-      "import": "./dist/css-macro/postcss.js",
-      "require": "./dist/css-macro/postcss.cjs"
+      "import": {
+        "types": "./dist/css-macro/postcss.d.ts",
+        "default": "./dist/css-macro/postcss.js"
+      },
+      "require": {
+        "types": "./dist/css-macro/postcss.d.cts",
+        "default": "./dist/css-macro/postcss.cjs"
+      }
     },
     "./package.json": "./package.json",
     "./native": {
-      "types": "./dist/native.d.ts",
-      "import": "./dist/native.js",
-      "require": "./dist/native.cjs"
+      "import": {
+        "types": "./dist/native.d.ts",
+        "default": "./dist/native.js"
+      },
+      "require": {
+        "types": "./dist/native.d.cts",
+        "default": "./dist/native.cjs"
+      }
     },
     "./experimental/lightningcss": {
-      "types": "./dist/experimental/lightningcss/index.d.ts",
-      "import": "./dist/experimental/lightningcss/index.js",
-      "require": "./dist/experimental/lightningcss/index.cjs"
+      "import": {
+        "types": "./dist/experimental/lightningcss/index.d.ts",
+        "default": "./dist/experimental/lightningcss/index.js"
+      },
+      "require": {
+        "types": "./dist/experimental/lightningcss/index.d.cts",
+        "default": "./dist/experimental/lightningcss/index.cjs"
+      }
     },
     "./syntax": {
-      "types": "./dist/syntax.d.ts",
-      "import": "./dist/syntax.js",
-      "require": "./dist/syntax.cjs"
+      "import": {
+        "types": "./dist/syntax.d.ts",
+        "default": "./dist/syntax.js"
+      },
+      "require": {
+        "types": "./dist/syntax.d.cts",
+        "default": "./dist/syntax.cjs"
+      }
     },
     "./transform": {
-      "types": "./dist/transform.d.ts",
-      "import": "./dist/transform.js",
-      "require": "./dist/transform.cjs"
+      "import": {
+        "types": "./dist/transform.d.ts",
+        "default": "./dist/transform.js"
+      },
+      "require": {
+        "types": "./dist/transform.d.cts",
+        "default": "./dist/transform.cjs"
+      }
     },
     "./plugin": {
-      "types": "./dist/plugin.d.ts",
-      "import": "./dist/plugin.js",
-      "require": "./dist/plugin.cjs"
+      "import": {
+        "types": "./dist/plugin.d.ts",
+        "default": "./dist/plugin.js"
+      },
+      "require": {
+        "types": "./dist/plugin.d.cts",
+        "default": "./dist/plugin.cjs"
+      }
     },
     "./native-runtime": {
-      "types": "./dist/native-runtime.d.ts",
-      "import": "./dist/native-runtime.js",
-      "require": "./dist/native-runtime.cjs"
+      "import": {
+        "types": "./dist/native-runtime.d.ts",
+        "default": "./dist/native-runtime.js"
+      },
+      "require": {
+        "types": "./dist/native-runtime.d.cts",
+        "default": "./dist/native-runtime.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
@@ -107,8 +157,8 @@
   },
   "scripts": {
     "dev": "tsdown --watch --sourcemap",
-    "build": "tsdown && tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts .",
-    "build:types": "tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts .",
+    "build": "tsdown && pnpm build:types",
+    "build:types": "tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts . && tsx ../../tools/weapp-tailwindcss-scripts/src/duplicate-cjs-declarations.ts . --default=html-transform",
     "build:native": "node native/build.mjs",
     "test": "vitest run",
     "bench": "vitest bench",

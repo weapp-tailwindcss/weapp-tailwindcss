@@ -1,5 +1,3 @@
-import type { LynxCssVariablesPlugin, LynxTemplatePluginApi } from '../packages/lynx/src/css-variables'
-import type { LynxDiagnosticsReport } from '../packages/lynx/src/diagnostics'
 import type { CssMapInput } from '../packages/lynx/src/diagnostics/input'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -7,6 +5,7 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { execa } from 'execa'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -17,117 +16,33 @@ const exampleRequire = createRequire(path.join(example, 'package.json'))
 function packageEntry(name: string, subpath = '.') {
   const file = exampleRequire.resolve(`${name}/package.json`)
   const exports = JSON.parse(readFileSync(file, 'utf8')).exports[subpath]
-  return pathToFileURL(path.resolve(path.dirname(file), exports.import ?? exports.default)).href
+  const entry = exports.import ?? exports.default
+  return pathToFileURL(path.resolve(path.dirname(file), typeof entry === 'string' ? entry : entry.default)).href
 }
 
-let adapter: typeof import('../packages/lynx/src/index')
 let decoder: typeof import('../packages/lynx/src/decoder')
 
 beforeAll(async () => {
   await execa('pnpm', ['--filter', '@weapp-tailwindcss/lynx...', 'build'], { cwd: path.resolve(example, '../..'), env: { CI: '1' } })
-  adapter = await import(packageEntry('@weapp-tailwindcss/lynx'))
   decoder = await import(packageEntry('@weapp-tailwindcss/lynx', './decoder'))
 }, 300_000)
 
 async function buildFixture(strict: boolean, mode: 'development' | 'production' = 'development') {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-diagnostics-'))
-  const reports: LynxDiagnosticsReport[] = []
-  const inputs = new Map<string, CssMapInput>()
-  let build: { close: () => Promise<void> } | undefined
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-diagnostics-result-'))
   try {
-    await fs.symlink(path.join(example, 'node_modules'), path.join(directory, 'node_modules'), 'junction')
-    await fs.writeFile(path.join(directory, 'index.tsx'), `import {root} from '@lynx-js/react'; import './style.css'; root.render(<view className="px-[7.5px] [mask-type:luminance] pl-[7.5px] pr-[7.5px] group theme-probe app-probe"><view className="group-hover:bg-red-500" /></view>);`)
-    await fs.writeFile(path.join(directory, 'style.css'), `@import 'tailwindcss' source(none);
-@source inline('px-[7.5px] [mask-type:luminance] pl-[7.5px] pr-[7.5px] group-hover:bg-red-500 p-[13px] gap-[7px]');
-:root { --color-brand: #f00; --brand-color: oklch(63% .2 40); }
-.theme-dark { --color-brand: #00f; --brand-color: #00f; }
-.theme-probe { background-color: var(--color-brand); }
-.app-probe { color: var(--brand-color); }
-.mixed { --tw-business: 1; mask-type: luminance; width: 10px; }
-.multi, .other { mask-type: luminance; }
-`)
-    if (mode === 'production') {
-      await fs.writeFile(path.join(directory, 'secondary.tsx'), `import {root} from '@lynx-js/react'; import './secondary.css'; root.render(<view className="secondary-control secondary-rejected" />);`)
-      await fs.writeFile(path.join(directory, 'secondary.css'), '.secondary-control { height: 31px; } .secondary-rejected { mask-type: luminance; }')
-    }
-    const [{ createRspeedy }, { pluginReactLynx }, { pluginLynxConfig }] = await Promise.all([
-      import(packageEntry('@lynx-js/rspeedy')),
-      import(packageEntry('@lynx-js/react-rsbuild-plugin')),
-      import(packageEntry('@lynx-js/config-rsbuild-plugin')),
-    ])
-    const inputObserver: ReturnType<typeof adapter.pluginLynxTailwindcss> = {
-      name: 'fixture:independent-encoder-input',
-      setup(api) {
-        api.modifyBundlerChain((chain) => {
-          const exposed = api.useExposed(Symbol.for('LynxTemplatePlugin')) as { LynxTemplatePlugin: LynxTemplatePluginApi }
-          class RecordInput {
-            apply(compiler: Parameters<LynxCssVariablesPlugin['apply']>[0]) {
-              compiler.hooks.thisCompilation.tap('fixture:encoder-input', (compilation) => {
-                const hooks = exposed.LynxTemplatePlugin.getLynxTemplatePluginHooks(compilation)
-                hooks.beforeEmit!.tapPromise('fixture:encoder-input', async (args) => {
-                  const css = args.finalEncodeOptions.css as CssMapInput
-                  inputs.set(args.outputName, structuredClone({ cssMap: css.cssMap, cssSource: css.cssSource }))
-                  return args
-                })
-              })
-            }
-          }
-          chain.plugin('fixture:encoder-input').use(RecordInput, [])
-        })
-      },
-    }
-    const rspeedy = await createRspeedy({
-      cwd: directory,
-      loadEnv: false,
-      rspeedyConfig: {
-        mode,
-        source: { entry: { main: path.join(directory, 'index.tsx'), ...mode === 'production' ? { secondary: path.join(directory, 'secondary.tsx') } : {} } },
-        output: { distPath: { root: path.join(directory, 'dist') }, sourceMap: { css: true } },
-        plugins: [
-          pluginReactLynx({ engineVersion: '3.9' }),
-          pluginLynxConfig({ enableCSSRule: true }),
-          adapter.pluginLynxTailwindcss({ diagnostics: { strict, onReport: report => reports.push(report) } }),
-          inputObserver,
-        ],
-      },
+    const output = path.join(directory, 'result.json')
+    // 原生 Rspeedy/Rspack 在独立 Node 进程执行，避免 Vitest 模块拦截改变构建器加载边界。
+    await execa(process.execPath, ['--import', 'tsx', path.join(import.meta.dirname, 'lynx/diagnostics-build-runner.ts'), String(strict), mode, output, path.join(directory, 'project')], {
+      cwd: path.resolve(example, '../..'),
+      env: { CI: '1' },
+      timeout: 110_000,
     })
-    let failure: unknown
-    try {
-      build = await rspeedy.build()
-    }
-    catch (error) {
-      failure = error
-    }
-    const bundle = new Uint8Array(await fs.readFile(path.join(directory, 'dist', 'main.lynx.bundle')))
-    const decoded = await decoder.decodeLynxBundle(bundle)
-    const artifacts = path.join(import.meta.dirname, '.artifacts', 'lynx-diagnostics', mode, strict ? 'strict' : 'default')
-    await fs.mkdir(artifacts, { recursive: true })
-    await fs.writeFile(path.join(artifacts, 'main.lynx.bundle'), bundle)
-    await fs.writeFile(path.join(artifacts, 'report.json'), JSON.stringify(reports, null, 2))
-    await fs.writeFile(path.join(artifacts, 'decoded.css'), decoded.css.text)
-    await fs.writeFile(path.join(artifacts, 'encoder-inputs.json'), JSON.stringify(Object.fromEntries(inputs), null, 2))
-    // 生产构建不输出 .lynx 调试文件；实际输入由独立模板 hook 归档。
-    if (mode === 'development') {
-      await fs.copyFile(path.join(directory, 'dist', '.lynx', 'main', 'tasm.json'), path.join(artifacts, 'tasm.json'))
-      await fs.copyFile(path.join(directory, 'dist', '.lynx', 'main', 'main.css'), path.join(artifacts, 'input.css'))
-    }
-    const outputs = [{ name: 'main.lynx.bundle', bundle, decoded }]
-    if (mode === 'production') {
-      const secondary = new Uint8Array(await fs.readFile(path.join(directory, 'dist', 'secondary.lynx.bundle')))
-      const secondaryDecoded = await decoder.decodeLynxBundle(secondary)
-      await fs.writeFile(path.join(artifacts, 'secondary.lynx.bundle'), secondary)
-      await fs.writeFile(path.join(artifacts, 'secondary-decoded.css'), secondaryDecoded.css.text)
-      outputs.push({ name: 'secondary.lynx.bundle', bundle: secondary, decoded: secondaryDecoded })
-    }
-    return { reports, failure, bundle, decoded, outputs, inputs }
+    type Result = Awaited<ReturnType<typeof import('./lynx/diagnostics-build-fixture').buildDiagnosticsFixture>>
+    const result = JSON.parse(await fs.readFile(output, 'utf8')) as Omit<Result, 'inputs'> & { inputs: Array<[string, CssMapInput]> }
+    return { ...result, inputs: new Map(result.inputs), bundle: new Uint8Array(result.bundle), outputs: result.outputs.map(entry => ({ ...entry, bundle: new Uint8Array(entry.bundle) })) }
   }
   finally {
-    try {
-      await build?.close()
-    }
-    finally {
-      await fs.rm(directory, { recursive: true, force: true })
-    }
+    await fs.rm(directory, { recursive: true, force: true })
   }
 }
 

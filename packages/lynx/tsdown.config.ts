@@ -16,6 +16,6 @@ export default defineConfig({
   },
   target: 'es2022',
   outExtensions({ format }) {
-    return { js: format === 'es' ? '.js' : '.cjs', dts: '.d.ts' }
+    return { js: format === 'es' ? '.js' : '.cjs', dts: format === 'es' ? '.d.ts' : '.d.cts' }
   },
 })

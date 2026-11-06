@@ -32,7 +32,7 @@ const sharedOptions = {
   outExtensions({ format }) {
     return {
       js: format === 'es' ? '.js' : '.cjs',
-      dts: '.d.ts',
+      dts: format === 'es' ? '.d.ts' : '.d.cts',
     }
   },
 } satisfies Parameters<typeof defineConfig>[0]
@@ -89,7 +89,7 @@ export function createTypographyTsdownConfigs(options: WatchAwareOptions = {}) {
       entry: ['src/transform.ts'],
       format: ['cjs'],
       clean: false,
-      dts: false,
+      dts: true,
     },
   ]
 }

@@ -2,8 +2,8 @@
 import type { PostCssCalcOptions } from '@weapp-tailwindcss/postcss-calc'
 import type { Result as PostcssResult, Root } from 'postcss'
 import type pxtrans from 'postcss-pxtrans'
-import type { UserDefinedOptions as Rem2rpxOptions } from 'postcss-rem-to-responsive-pixel'
-import type { GlobalUnitTransform, UserDefinedOptions as UnitConverterOptions, UnitMap } from 'postcss-rule-unit-converter'
+import type { UserDefinedOptions as Rem2rpxOptions } from 'postcss-rem-to-responsive-pixel' with { 'resolution-mode': 'import' }
+import type { GlobalUnitTransform, UserDefinedOptions as UnitConverterOptions, UnitMap } from 'postcss-rule-unit-converter' with { 'resolution-mode': 'import' }
 import type { WeappAutoprefixerOptions } from './autoprefixer'
 import type { PostcssAppType } from './branches'
 import type { StyleProcessingPipeline } from './pipeline'

@@ -4799,6 +4799,9 @@ importers:
       postcss-selector-parser:
         specifier: catalog:buildUtilities
         version: 7.1.7
+      tailwindcss:
+        specifier: ^3.0.0 || ^4.0.0
+        version: 4.3.4
     devDependencies:
       '@weapp-tailwindcss/test-helper':
         specifier: workspace:*
@@ -4806,6 +4809,9 @@ importers:
 
   packages-runtime/ui:
     dependencies:
+      '@tarojs/components':
+        specifier: '>=3.0.0'
+        version: 4.3.1(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
       '@weapp-tailwindcss/merge':
         specifier: workspace:*
         version: link:../merge
@@ -4824,7 +4830,7 @@ importers:
         version: 10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)
       '@storybook/react-vite':
         specifier: catalog:storybook
-        version: 10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+        version: 10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       '@types/react':
         specifier: ^18.3.31
         version: 18.3.31
@@ -5054,6 +5060,9 @@ importers:
 
   packages/init:
     dependencies:
+      '@types/npm-registry-fetch':
+        specifier: ^8.0.9
+        version: 8.0.9
       '@weapp-tailwindcss/logger':
         specifier: workspace:*
         version: link:../logger
@@ -5259,6 +5268,9 @@ importers:
       '@babel/types':
         specifier: catalog:babel8
         version: 8.0.8
+      '@types/convert-source-map':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@weapp-tailwindcss/postcss':
         specifier: workspace:*
         version: link:../postcss
@@ -5303,6 +5315,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@types/set-value':
+        specifier: ^4.0.3
+        version: 4.0.3
       defu:
         specifier: catalog:buildUtilities
         version: 6.1.7
@@ -5333,6 +5348,9 @@ importers:
       lilconfig:
         specifier: ^3.1.4
         version: 3.1.4
+      tailwindcss:
+        specifier: ^3.0.0 || ^4.0.0
+        version: 4.3.4
 
   packages/tailwindcss-core-plugins-extractor: {}
 
@@ -5374,6 +5392,12 @@ importers:
       micromatch:
         specifier: catalog:buildUtilities
         version: 4.0.8
+      vite:
+        specifier: ^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
+        version: 7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      webpack:
+        specifier: ^5.0.0
+        version: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.16.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
     devDependencies:
       tsx:
         specifier: catalog:tsx
@@ -5447,6 +5471,9 @@ importers:
       oxc-walker:
         specifier: catalog:compilerUtilities
         version: 1.1.1(@oxc-project/types@0.157.0)(oxc-parser@0.157.0)(rolldown@1.2.15)
+      rollup:
+        specifier: ^4.65.1
+        version: 4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf)
       semver:
         specifier: catalog:compilerUtilities
         version: 7.8.6
@@ -45587,14 +45614,6 @@ snapshots:
     optionalDependencies:
       rollup: 3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9)
 
-  '@rollup/pluginutils@5.4.0(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))':
-    dependencies:
-      '@types/estree': 1.0.9
-      estree-walker: 2.0.2
-      picomatch: 4.0.7
-    optionalDependencies:
-      rollup: 4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf)
-
   '@rollup/pluginutils@5.4.0(rollup@4.67.5)':
     dependencies:
       '@types/estree': 1.0.9
@@ -46250,10 +46269,10 @@ snapshots:
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)
 
-  '@storybook/react-vite@10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@storybook/react-vite@10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@joshwooding/vite-plugin-react-docgen-typescript': 0.7.0(typescript@6.0.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
-      '@rollup/pluginutils': 5.4.0(rollup@4.65.1(patch_hash=3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf))
+      '@rollup/pluginutils': 5.4.0(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))
       '@storybook/builder-vite': 10.6.5(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.107.1)(sass@1.107.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       '@storybook/react': 10.6.5(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.5(@types/react@18.3.31)(prettier@3.9.10)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)
       empathic: 2.0.1
@@ -47019,6 +47038,30 @@ snapshots:
       '@tarojs/runtime': 4.3.1
       '@tarojs/shared': 4.3.1
       '@tarojs/taro': 4.3.1(@tarojs/components@4.3.1(@tarojs/helper@4.3.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2))(@tarojs/helper@4.3.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.3.1)(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
+      classnames: 2.5.1
+      hammerjs: 2.0.8
+      hls.js: 1.6.15
+      resolve-pathname: 3.0.0
+      swiper: 11.1.15
+      tslib: 2.8.1
+    optionalDependencies:
+      '@types/react': 18.3.31
+      vue: 3.5.44(typescript@6.0.3)
+    transitivePeerDependencies:
+      - '@tarojs/helper'
+      - html-webpack-plugin
+      - postcss
+      - rollup
+      - webpack
+      - webpack-chain
+      - webpack-dev-server
+
+  '@tarojs/components@4.3.1(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)':
+    dependencies:
+      '@stencil/core': 2.22.3
+      '@tarojs/runtime': 4.3.1
+      '@tarojs/shared': 4.3.1
+      '@tarojs/taro': 4.3.1(@tarojs/components@4.3.1(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2))(@tarojs/shared@4.3.1)(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
       classnames: 2.5.1
       hammerjs: 2.0.8
       hls.js: 1.6.15
@@ -48411,6 +48454,23 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.31
       html-webpack-plugin: 5.6.8(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.2)
+      rollup: 3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9)
+      vue: 3.5.44(typescript@6.0.3)
+      webpack: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.16.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
+      webpack-chain: 6.5.1
+      webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.3.1)(webpack@5.112.2)
+
+  '@tarojs/taro@4.3.1(@tarojs/components@4.3.1(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2))(@tarojs/shared@4.3.1)(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)':
+    dependencies:
+      '@tarojs/api': 4.3.1(@tarojs/runtime@4.3.1)(@tarojs/shared@4.3.1)
+      '@tarojs/components': 4.3.1(@types/react@18.3.31)(html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2))(postcss@8.5.32)(rollup@3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9))(vue@3.5.44(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
+      '@tarojs/runtime': 4.3.1
+      '@tarojs/shared': 4.3.1
+      '@types/postcss-url': 10.0.4
+      postcss: 8.5.32
+    optionalDependencies:
+      '@types/react': 18.3.31
+      html-webpack-plugin: 5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2)
       rollup: 3.30.0(patch_hash=02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9)
       vue: 3.5.44(typescript@6.0.3)
       webpack: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.16.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
@@ -58269,6 +58329,18 @@ snapshots:
     optionalDependencies:
       '@rspack/core': 2.2.9(@swc/helpers@0.5.23)
       webpack: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.16.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
+
+  html-webpack-plugin@5.6.8(@rspack/core@2.3.1(@swc/helpers@0.5.23))(webpack@5.112.2):
+    dependencies:
+      '@types/html-minifier-terser': 6.1.0
+      html-minifier-terser: 6.1.0
+      lodash: 4.18.1
+      pretty-error: 4.0.0
+      tapable: 2.3.3
+    optionalDependencies:
+      '@rspack/core': 2.3.1(@swc/helpers@0.5.23)
+      webpack: 5.112.2(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.16.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)
+    optional: true
 
   htmlparser2@12.0.0:
     dependencies:
