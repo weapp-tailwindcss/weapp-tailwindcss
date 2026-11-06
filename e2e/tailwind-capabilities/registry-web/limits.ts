@@ -14,7 +14,7 @@ export interface RegistryWebLimit {
   mode: 'rejected-syntax' | 'unavailable-computed'
 }
 
-const versions = { chromium: '156.0.8078.4', firefox: '157.0', webkit: '27.2' }
+const versions = { chromium: '158.0.8127.18', firefox: '157.0', webkit: '27.2' }
 const fragmentation = 'https://drafts.csswg.org/css-break-3/#break-between'
 const alignment = 'https://drafts.csswg.org/css-align-3/#propdef-justify-content'
 const masking = 'https://drafts.fxtf.org/css-masking-1/#the-mask-clip'

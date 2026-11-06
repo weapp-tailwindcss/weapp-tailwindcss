@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "catalogHash": "4bfbb441503810f249987d6fda12580e3169a3050069470c5e959aa1fc5cc330",
+  "catalogHash": "70dcbe8f01f6a2d3a77572c21185f3c2687d6360b76408d12995db352d49d8ca",
   "fixtureHash": "d93b6bc7d4d25f1af23d3f759dc28e5844b61afc53f3a7225851740a4a9792b8",
   "cases": [
     {
@@ -2064,15 +2064,15 @@
     "stage": "static",
     "revision": "static",
     "platform": "web",
-    "catalogHash": "4bfbb441503810f249987d6fda12580e3169a3050069470c5e959aa1fc5cc330",
+    "catalogHash": "70dcbe8f01f6a2d3a77572c21185f3c2687d6360b76408d12995db352d49d8ca",
     "fixtureHash": "d93b6bc7d4d25f1af23d3f759dc28e5844b61afc53f3a7225851740a4a9792b8",
     "runId": "static-generation",
-    "verifiedAt": "2026-11-06T18:58:17.502Z",
+    "verifiedAt": "2026-11-06T19:44:10.070Z",
     "versions": {
       "tailwindcss": "4.3.5",
       "expo": "54.0.38",
       "reactNative": "0.81.5",
-      "compiler": "0.3.5"
+      "compiler": "0.3.6"
     },
     "environment": {
       "deviceName": "static-export",
