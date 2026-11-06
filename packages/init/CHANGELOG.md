@@ -1,5 +1,15 @@
 # @weapp-tailwindcss/init
 
+## 2.0.4
+
+### Patch Changes
+
+- 修复公开包 ESM/CJS 条件声明、可调用 CommonJS 类型与发布消费依赖，保留样式入口和原有子路径兼容。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/logger@2.0.5
+  - @weapp-tailwindcss/shared@2.0.5
+
 ## 2.0.3
 
 ### Patch Changes

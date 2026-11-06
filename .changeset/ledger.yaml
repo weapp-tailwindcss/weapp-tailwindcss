@@ -21,6 +21,10 @@
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - native-toolchain-upgrade-20261028
+"@weapp-tailwindcss/cli@5.7.1":
+  dir: packages/cli
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/cn@0.1.1":
   dir: packages-runtime/cn
   intents:
@@ -68,6 +72,10 @@
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
+"@weapp-tailwindcss/debug-uni-app-x@1.0.11":
+  dir: packages/debug-uni-app-x
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/debug-uni-app-x@1.0.5":
   dir: packages/debug-uni-app-x
   intents:
@@ -170,6 +178,10 @@
   dir: packages/experimental
   intents:
     - organization-repository-metadata
+"@weapp-tailwindcss/experimental@0.0.54":
+  dir: packages/experimental
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/hbuilderx-runner@0.1.3":
   dir: packages/hbuilderx-runner
   intents:
@@ -195,6 +207,10 @@
   dir: packages/hbuilderx-runner
   intents:
     - weak-bats-knock
+"@weapp-tailwindcss/hbuilderx-runner@0.1.9":
+  dir: packages/hbuilderx-runner
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/init@1.0.16":
   dir: packages/init
   intents:
@@ -216,6 +232,10 @@
   dir: packages/init
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
+"@weapp-tailwindcss/init@2.0.4":
+  dir: packages/init
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/logger@2.0.3":
   dir: packages/logger
   intents:
@@ -224,6 +244,10 @@
   dir: packages/logger
   intents:
     - organization-repository-metadata
+"@weapp-tailwindcss/logger@2.0.5":
+  dir: packages/logger
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/lynx-promo-video@0.0.0":
   dir: apps/lynx-promo-video
   intents:
@@ -267,6 +291,10 @@
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
     - lynx-evidence-and-theme-boundary
+"@weapp-tailwindcss/lynx@0.5.1":
+  dir: packages/lynx
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -340,6 +368,10 @@
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
     - lynx-evidence-and-theme-boundary
+"@weapp-tailwindcss/postcss-calc@1.0.13":
+  dir: packages/postcss-calc
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -490,6 +522,11 @@
     - variable-fallback-source
     - web-generator-unit-conversion
     - webpack-web-production-cascade
+"@weapp-tailwindcss/postcss@4.0.1":
+  dir: packages/postcss
+  intents:
+    - dynamic-alpha-rgba
+    - tame-monkeys-travel
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -530,6 +567,10 @@
     - native-layout-contract
     - rn-manifest-publication
     - wise-wolves-eat
+"@weapp-tailwindcss/react-native@0.3.6":
+  dir: packages/react-native
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
@@ -542,6 +583,10 @@
   dir: packages/reset
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
+"@weapp-tailwindcss/reset@0.1.7":
+  dir: packages/reset
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/runtime@0.1.10":
   dir: packages-runtime/runtime
   intents:
@@ -568,6 +613,10 @@
   dir: packages/shared
   intents:
     - organization-repository-metadata
+"@weapp-tailwindcss/shared@2.0.5":
+  dir: packages/shared
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/source-scan@0.1.1":
   dir: packages/source-scan
   intents:
@@ -597,6 +646,10 @@
   dir: packages-runtime/typography
   intents:
     - dependency-upgrade-20261028
+"@weapp-tailwindcss/typography@1.0.9":
+  dir: packages-runtime/typography
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/ui@0.0.12":
   dir: packages-runtime/ui
   intents:
@@ -627,6 +680,10 @@
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
+"@weapp-tailwindcss/ui@0.0.21":
+  dir: packages-runtime/ui
+  intents:
+    - tame-monkeys-travel
 "@weapp-tailwindcss/variants@0.2.10":
   dir: packages-runtime/variants
   intents:
@@ -664,6 +721,10 @@ tailwindcss-config@2.0.7:
   dir: packages/tailwindcss-config
   intents:
     - dependency-upgrade-20261028
+tailwindcss-config@2.0.8:
+  dir: packages/tailwindcss-config
+  intents:
+    - tame-monkeys-travel
 tailwindcss-core-plugins-extractor@0.2.2:
   dir: packages/tailwindcss-core-plugins-extractor
   intents:
@@ -672,6 +733,10 @@ tailwindcss-core-plugins-extractor@0.2.3:
   dir: packages/tailwindcss-core-plugins-extractor
   intents:
     - organization-repository-metadata
+tailwindcss-core-plugins-extractor@0.2.4:
+  dir: packages/tailwindcss-core-plugins-extractor
+  intents:
+    - tame-monkeys-travel
 tailwindcss-injector@1.0.17:
   dir: packages/tailwindcss-injector
   intents:
@@ -694,6 +759,10 @@ tailwindcss-injector@1.0.28:
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
+tailwindcss-injector@1.0.29:
+  dir: packages/tailwindcss-injector
+  intents:
+    - tame-monkeys-travel
 theme-transition@2.1.0:
   dir: packages-runtime/theme-transition
   intents:
@@ -731,6 +800,10 @@ weapp-style-injector@1.0.8:
   dir: packages/weapp-style-injector
   intents:
     - framework-compilation-ownership
+weapp-style-injector@1.0.9:
+  dir: packages/weapp-style-injector
+  intents:
+    - tame-monkeys-travel
 weapp-tailwindcss-monorepo@0.0.0:
   dir: ""
   intents:
@@ -953,6 +1026,11 @@ weapp-tailwindcss@5.7.0:
     - web-generator-unit-conversion
     - webpack-loader-confirmed-classes
     - webpack-web-production-cascade
+weapp-tailwindcss@5.7.1:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - dynamic-alpha-rgba
+    - tame-monkeys-travel
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
@@ -961,6 +1039,14 @@ weapp-tw@0.0.4:
   dir: packages/weapp-tw
   intents:
     - organization-repository-metadata
+weapp-tw@0.0.5:
+  dir: packages/weapp-tw
+  intents:
+    - tame-monkeys-travel
+wetw@0.1.10:
+  dir: packages/wetw
+  intents:
+    - tame-monkeys-travel
 wetw@0.1.6:
   dir: packages/wetw
   intents:

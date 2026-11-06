@@ -1,5 +1,12 @@
 # @weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies:
+  - tailwindcss-core-plugins-extractor@0.2.4
+
 ## 0.0.2
 
 ### Patch Changes

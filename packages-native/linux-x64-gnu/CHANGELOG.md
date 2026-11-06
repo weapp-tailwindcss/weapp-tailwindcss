@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-linux-x64-gnu
 
+## 5.7.1
+
 ## 5.7.0
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # weapp-style-injector
 
+## 1.0.9
+
+### Patch Changes
+
+- 修复公开包 ESM/CJS 条件声明、可调用 CommonJS 类型与发布消费依赖，保留样式入口和原有子路径兼容。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/shared@2.0.5
+
 ## 1.0.8
 
 ### Patch Changes
