@@ -44,7 +44,7 @@
     "up:pkg": "pnpm up -rLi"
   },
   "dependencies": {
-    "@babel/runtime": "^7.29.10",
+    "@babel/runtime": "^7.29.13",
     "@tarojs/components": "4.3.1",
     "@tarojs/helper": "4.3.1",
     "@tarojs/plugin-framework-react": "4.3.1",
@@ -69,7 +69,7 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
+    "@babel/core": "^7.29.13",
     "@babel/preset-react": "^7.29.7",
     "@tarojs/cli": "4.3.1",
     "@tarojs/vite-runner": "4.3.1",
@@ -86,12 +86,12 @@
     "postcss": "^8.5.32",
     "react-refresh": "^0.18.0",
     "stylelint": "^16.26.1",
-    "tailwindcss": "^4.3.4",
+    "tailwindcss": "^4.3.5",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
     "vite": "^4.5.14",
     "weapp-ide-cli": "^5.4.12",
-    "weapp-tailwindcss": "^5.6.3"
+    "weapp-tailwindcss": "^5.7.0"
   },
-  "packageManager": "pnpm@12.15.0"
+  "packageManager": "pnpm@12.18.0"
 }

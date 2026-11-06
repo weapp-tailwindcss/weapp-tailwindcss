@@ -86,7 +86,7 @@
     "postcss": "^8.5.28",
     "react-refresh": "^0.18.0",
     "stylelint": "^17.14.1",
-    "tailwindcss": "^4.3.4",
+    "tailwindcss": "^4.3.5",
     "tsconfig-paths-webpack-plugin": "^4.1.0",
     "typescript": "^6.0.3",
     "weapp-ide-cli": "^6.1.2",

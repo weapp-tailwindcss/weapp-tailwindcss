@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 See the package metadata for published versions of [the adapter](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) and [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss). The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
-The repository fixture pins `@lynx-js/rspeedy` `0.18.3`, `@lynx-js/react-rsbuild-plugin` `0.22.0`, `@lynx-js/react` `0.129.0`, Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
+The repository fixture pins `@lynx-js/rspeedy` `0.18.5`, `@lynx-js/react-rsbuild-plugin` `0.22.2`, `@lynx-js/react` `0.129.2`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
 ## Configure
 
@@ -100,7 +100,7 @@ pnpm --filter @weapp-tailwindcss/lynx test
 pnpm e2e:lynx
 ```
 
-`examples/react-lynx` is a multi-page compatibility lab pinned to Tailwind CSS `4.3.4`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
+`examples/react-lynx` is a multi-page compatibility lab pinned to Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
 The static gate parses the real `main.css` with PostCSS, then combines `tasm.json.css.cssMap` with encoder removal logs to record `generated` and `bundled` separately. Native support comes only from committed iOS and Android reports; css-defines is only a version hint.
 
@@ -113,7 +113,9 @@ pnpm e2e:lynx:update
 
 CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The example and committed dual-platform baseline use Tailwind CSS `4.3.4`; the complete original artifacts passed strict validation, archiving, and replay.
+The example and committed dual-platform baseline use Tailwind CSS `4.3.5`;
+
+The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only. the complete original artifacts passed strict validation, archiving, and replay.
 
 The committed native baseline records `verifiedAt: 2026-11-05T09:53:21.315Z` and `catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 

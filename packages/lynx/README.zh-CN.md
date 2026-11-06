@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 已发布版本以[适配器包元数据](https://www.npmjs.com/package/@weapp-tailwindcss/lynx)和 [weapp-tailwindcss 包元数据](https://www.npmjs.com/package/weapp-tailwindcss)为准。适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`；核心依赖链要求 Node.js `^22.18.0 || >=24.11.0`。
 
-仓库示例固定 `@lynx-js/rspeedy` `0.18.3`、`@lynx-js/react-rsbuild-plugin` `0.22.0`、`@lynx-js/react` `0.129.0`、Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
+仓库示例固定 `@lynx-js/rspeedy` `0.18.5`、`@lynx-js/react-rsbuild-plugin` `0.22.2`、`@lynx-js/react` `0.129.2`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
 
 ## 配置
 
@@ -140,11 +140,13 @@ pnpm --filter @weapp-tailwindcss/lynx test
 pnpm e2e:lynx
 ```
 
-仓库中的 `examples/react-lynx` 是多页面兼容性实验室，固定 Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。它以代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
+仓库中的 `examples/react-lynx` 是多页面兼容性实验室，固定 Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。它以代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
 
 静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。
 
-当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.4`，完整原始工件已通过严格校验、归档及重放。
+当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.5`，完整原始工件已通过严格校验、归档及重放。
+
+历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
 当前已提交的原生报告基线记录 `verifiedAt: 2026-11-05T09:53:21.315Z`、`catalogHash: 9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
 

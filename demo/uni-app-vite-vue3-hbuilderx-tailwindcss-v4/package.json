@@ -52,5 +52,5 @@
     "vite": "5.2.8",
     "weapp-tailwindcss": "workspace:*"
   },
-  "packageManager": "pnpm@12.15.0"
+  "packageManager": "pnpm@12.18.0"
 }
