@@ -1,5 +1,98 @@
 # tailwindcss-injector
 
+## 1.0.28
+
+### Patch Changes
+
+- 升级依赖并完成配套迁移。
+
+  - `@weapp-tailwindcss/cn` 升级至 `cn@0.5.2`，最低 Node.js 版本调整为 22.12.0。
+  - `@weapp-tailwindcss/variants` 与 UI 消费链迁移至 `tailwind-variants@4.0.1`；空聚合统一返回空字符串，保留 `twMergeConfig` 并支持函数形式的 `twMerge`，同步公开类型和回归。
+  - Tailwind CSS 4 生成链升级至 4.3.4，保留 v3 兼容样例和独立平台转换边界。
+  - PostCSS 更新颜色解析和 preset-env；将 `autoprefixer: false` 的最小声明补丁迁移至 11.6.2。
+  - CLI、init 和主包同步 semver、local-pkg、OXC parser/walker 配套类型；Lynx、React Native、reset、injector、theme-transition 和 wetw 更新对应依赖解析。
+  - Vitest、coverage 与 UI 统一至 5.1.0；Taro 保留其配置要求的 ESLint 8.57.1。
+  - weapp-vite 7.8.0 对齐 devframe/agentic 1.3.0，迁移发行包行为契约；Nuxt 的 Nitro 路径补丁迁移至 2.13.6。
+
+- 更新公开包的直接依赖及配套开发工具链，保留 catalog 和 workspace 关系。React 18 UI 包的类型声明与现有运行时配对；React Native 包的开发构建使用 Babel 7 与 TypeScript 5.9.3，保持 Expo/Metro 既有配套。框架 peer 支持范围保持现有契约。
+
+  ### @weapp-tailwindcss/css-compat
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 `devDependencies` 的 `vite`：`7.2.7` → `7.3.7`。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 `devDependencies` 的 `@lynx-js/rspeedy`：`^0.18.1` → `^0.18.3`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 `dependencies` 的 `autoprefixer`：`^10.6.1` → `^10.6.2`。
+  - 更新 `dependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+  - 更新 `devDependencies` 的 `eslint`：`^10.12.0` → `^10.13.0`。
+  - 更新 `devDependencies` 的 `postcss`：`^8.5.30` → `^8.5.32`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `devDependencies` 的 `@babel/core`：`^8.0.7` → `^7.29.7`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^19.3.0`。
+  - 更新 `devDependencies` 的 `react`：`^19.2.8` → `^19.3.1`。
+  - 更新 `devDependencies` 的 `typescript`：未声明 → `^5.9.3`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `postcss-selector-parser`：`^7.1.6` → `^7.1.7`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 `devDependencies` 的 `@storybook/addon-a11y`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@storybook/react-vite`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `@types/react`：`^19.2.18` → `^18.3.31`。
+  - 更新 `devDependencies` 的 `@types/react-dom`：`^19.2.5` → `^18.3.7`。
+  - 更新 `devDependencies` 的 `storybook`：`^10.6.2` → `^10.6.5`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+
+  ### tailwindcss-config
+
+  - 更新 `dependencies` 的 `lilconfig`：`^3.1.3` → `^3.1.4`。
+
+  ### tailwindcss-injector
+
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+
+  ### weapp-tailwindcss
+
+  - 更新 `dependencies` 的 `@babel/parser`：`^8.0.7` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@babel/types`：`^8.0.6` → `^8.0.8`。
+  - 更新 `dependencies` 的 `@vue/compiler-dom`：`^3.5.41` → `^3.5.44`。
+  - 更新 `dependencies` 的 `magic-string`：`^1.4.3` → `^1.4.5`。
+  - 更新 `dependencies` 的 `oxc-parser`：`^0.154.0` → `^0.156.0`。
+  - 更新 `devDependencies` 的 `vite`：`^7.3.6` → `^7.3.7`。
+  - 更新 `devDependencies` 的 `webpack`：`5.105.4` → `5.112.2`。
+
+  ### wetw
+
+  - 更新 `dependencies` 的 `@inquirer/prompts`：`^8.7.3` → `^8.7.5`。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss@4.0.0
+  - tailwindcss-config@2.0.7
+
 ## 1.0.27
 
 ### Patch Changes
