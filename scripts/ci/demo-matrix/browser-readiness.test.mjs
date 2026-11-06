@@ -29,12 +29,13 @@ it.each([200, 404])('最后一次异步就绪检查期间切换到 HTTP %i 文�
       },
     }],
   })
-  const launch = chromium.launch.bind(chromium)
+  // 在 Vitest 监听实例方法前固定 Playwright 原型实现，避免 launch 包装器递归。
+  const launch = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(chromium), 'launch').value
   let switched = false
   let replacementStatus
   // 在真实 CDP 结果返回前切换文档，确定性覆盖最后一次 await 的观察空窗。
   const intercepted = vi.spyOn(chromium, 'launch').mockImplementation(async (...args) => {
-    const browser = await launch(...args)
+    const browser = await Reflect.apply(launch, chromium, args)
     const newPage = browser.newPage.bind(browser)
     browser.newPage = async (...args) => {
       const page = await newPage(...args)

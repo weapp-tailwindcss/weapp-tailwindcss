@@ -34,12 +34,14 @@ it.each([
       },
     }],
   })
-  const launch = chromium.launch.bind(chromium)
+  // Playwright 1.65 的 launch 包装器在 Vitest 监听实例方法后可能重定向绑定引用；
+  // 在安装拦截前固定原型实现，避免测试自身递归调用。
+  const launch = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(chromium), 'launch').value
   const launched = []
   const navigationResponses = []
   // 保留真实 Chromium 导航，只注入 CI 已观察到的首次导航中断。
   const intercepted = vi.spyOn(chromium, 'launch').mockImplementation(async (...args) => {
-    const browser = await launch(...args)
+    const browser = await Reflect.apply(launch, chromium, args)
     launched.push(browser)
     const newPage = browser.newPage.bind(browser)
     browser.newPage = async (...args) => {

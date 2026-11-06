@@ -52,12 +52,13 @@ it.each([
     }],
   })
   const hydrationObserved = Promise.withResolvers()
-  const launch = chromium.launch.bind(chromium)
+  // 在 Vitest 监听实例方法前固定 Playwright 原型实现，避免 launch 包装器递归。
+  const launch = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(chromium), 'launch').value
   let page
   let switched = false
   // 只观察真实 DOM 检查；水合由独立门控触发，不依赖计时或模拟 Vue 状态。
   const intercepted = vi.spyOn(chromium, 'launch').mockImplementation(async (...args) => {
-    const browser = await launch(...args)
+    const browser = await Reflect.apply(launch, chromium, args)
     const newPage = browser.newPage.bind(browser)
     browser.newPage = async (...args) => {
       page = await newPage(...args)
