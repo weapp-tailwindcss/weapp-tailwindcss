@@ -93,13 +93,13 @@
   "files": [
     {
       "path": "docs/engineering/dependency-upgrade-20261107.configuration.json",
-      "bytes": 287293,
-      "sha256": "c9b8f99bdaa13f9bcba09d4aa14bc3d615a66e4e8a385effece8dcf57c517089"
+      "bytes": 299315,
+      "sha256": "a16833708f8c05789edff58472edfebb4b7b56175d06992483e8ab6bcf3efef5"
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.inventory.json",
-      "bytes": 3406467,
-      "sha256": "374925587a5f49c4a2a7bbcf38c361161d4bb9943cc9b7d69aad7bfbed6fddfe"
+      "bytes": 3592685,
+      "sha256": "fe514f8a439718e337079099024071e04626f6aec3e9924096f251b4ddc31398"
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.inventory.md",
@@ -113,8 +113,8 @@
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.lock-evidence.json",
-      "bytes": 114433,
-      "sha256": "e59abc62dd60f70c417e6340a46f4737d695cf76194266fa9f851355cbca8ad5"
+      "bytes": 119263,
+      "sha256": "512475362626621b6f3337b11bc19edbea6e993646e7044d581a39f9cec2c413"
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.md",
@@ -128,13 +128,13 @@
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.registry.json",
-      "bytes": 262586,
-      "sha256": "08ae08a2c056e6865ecf43f43bd0b1bbd19a4ca8253ba70757e9a3caa568b021"
+      "bytes": 277311,
+      "sha256": "1a0a096407873e480bbdd156a1f9e13db0e7e51ea87bffb97d9716085a189379"
     },
     {
       "path": "docs/engineering/dependency-upgrade-20261107.risk-evidence.json",
-      "bytes": 1854960,
-      "sha256": "18f5b6ea24f8d6ad27bf3d8c06cab6c40e4d380528736b10443cd2c0f09208bc"
+      "bytes": 1917618,
+      "sha256": "aeba15e24cb946e5c53d89bc06c174da98c7e4818fa9eeebf8cc42399b4e461e"
     }
   ]
 }
