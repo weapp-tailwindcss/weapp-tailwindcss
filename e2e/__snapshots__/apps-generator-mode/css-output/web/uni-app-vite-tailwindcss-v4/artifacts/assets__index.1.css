@@ -339,7 +339,7 @@ uni-page-head[uni-page-head-type='default'] ~ uni-page-wrapper {
 }
 .uni-page-head-shadow-yellow::after {
   background-image: url(https://cdn.dcloud.net.cn/img/shadow-yellow.png);
-} /*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
+} /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
