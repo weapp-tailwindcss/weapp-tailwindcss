@@ -1,0 +1,110 @@
+项目manifest	包名	有效manifest	当前声明数	外部声明数	内部声明数	已升级	已是最新	保留	阻塞	消费者	所属锁	范围说明
+apps/lynx-promo-video/package.json	@weapp-tailwindcss/lynx-promo-video	True	16	16	0	3	11	0	2	@weapp-tailwindcss/lynx-promo-video	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+apps/weapp-tailwindcss-promo-video/package.json	@weapp-tailwindcss/promo-video	True	17	17	0	4	11	0	2	@weapp-tailwindcss/promo-video	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+assets/package.json	weapp-tailwindcss	True	0	0	0	0	0	0	0	weapp-tailwindcss	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+benchmark/app/package.json	benchmark	True	14	13	1	3	5	1	5	benchmark	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+benchmark/performance/package.json	benchmark-performance	True	10	4	6	1	3	6	0	benchmark-performance	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+benchmark/runtime-cn-vs-merge/package.json	benchmark-runtime-cn-vs-merge	True	11	7	4	1	5	4	1	benchmark-runtime-cn-vs-merge	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+benchmark/tailwindcss-plugin-compare/package.json	benchmark-tailwindcss-plugin-compare	True	10	9	1	3	4	1	2	benchmark-tailwindcss-plugin-compare	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+benchmark/tailwindcss4/package.json	benchmark-tailwindcss4	True	8	5	3	2	3	3	0	benchmark-tailwindcss4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/gulp-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/gulp-tailwindcss-v4	True	47	44	3	3	38	4	2	@weapp-tailwindcss-demo/gulp-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/issue-1144-uni-app-x-web/package.json	@weapp-tailwindcss-demo/issue-1144-uni-app-x-web	True	11	10	1	1	1	2	7	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/issue-951-taro-vite-react-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/issue-951-taro-vite-react-tailwindcss-v4	True	80	77	3	2	17	31	30	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/issue-uview-plus-cssentries/package.json	@weapp-tailwindcss-demo/issue-uview-plus-cssentries	True	24	23	1	3	6	2	13	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/mpx-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/mpx-tailwindcss-v4	True	40	37	3	2	16	13	9	Mpx ^2.11.1	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/style-injector-mpx/package.json	@weapp-tailwindcss-demo/style-injector-mpx	True	35	33	2	0	14	11	10	Mpx ^2.11.1	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/style-injector-taro-vite-react/package.json	@weapp-tailwindcss-demo/style-injector-taro-vite-react	True	31	30	1	0	6	14	11	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/style-injector-taro-webpack-react/package.json	@weapp-tailwindcss-demo/style-injector-taro-webpack-react	True	34	33	1	0	8	16	10	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/style-injector-uni-app/package.json	@weapp-tailwindcss-demo/style-injector-uni-app	True	23	22	1	1	6	3	13	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/subpackage-taro-webpack-react-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/subpackage-taro-webpack-react-tailwindcss-v4	True	55	54	1	2	10	24	19	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/subpackage-uni-app-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/subpackage-uni-app-vite-tailwindcss-v4	True	24	23	1	2	5	1	16	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/taro-vite-react-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/taro-vite-react-tailwindcss-v4	True	80	77	3	2	17	31	30	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/taro-vite-vue3-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/taro-vite-vue3-tailwindcss-v4	True	78	75	3	2	13	30	33	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/taro-webpack-react-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/taro-webpack-react-tailwindcss-v4	True	73	70	3	2	17	33	21	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/taro-webpack-vue3-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/taro-webpack-vue3-tailwindcss-v4	True	74	71	3	2	14	32	26	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/uni-app-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4	True	44	40	4	2	8	6	28	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/uni-app-vite-vue3-hbuilderx-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/uni-app-vite-vue3-hbuilderx-tailwindcss-v4	True	20	19	1	2	4	1	13	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/uni-app-x-vapor-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/uni-app-x-vapor-tailwindcss-v4	True	17	15	2	2	5	2	8	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/uni-app-x-vdom-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/uni-app-x-vdom-tailwindcss-v4	True	18	16	2	2	5	3	8	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/weapp-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/weapp-vite-tailwindcss-v4	True	15	11	4	2	8	5	0	@weapp-tailwindcss-demo/weapp-vite-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/nuxt-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-nuxt-vite-tailwindcss-v4	True	9	8	1	1	4	1	3	@weapp-tailwindcss-demo/web-nuxt-vite-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/react-rsbuild-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-react-rsbuild-tailwindcss-v4	True	13	12	1	1	10	1	1	@weapp-tailwindcss-demo/web-react-rsbuild-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/react-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-react-vite-tailwindcss-v4	True	13	12	1	1	8	1	3	@weapp-tailwindcss-demo/web-react-vite-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/react-webpack-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-react-webpack-tailwindcss-v4	True	21	20	1	1	14	1	5	@weapp-tailwindcss-demo/web-react-webpack-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/vue-rsbuild-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-vue-rsbuild-tailwindcss-v4	True	12	11	1	1	6	1	4	@weapp-tailwindcss-demo/web-vue-rsbuild-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/vue-vite-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-vue-vite-tailwindcss-v4	True	12	11	1	1	5	1	5	@weapp-tailwindcss-demo/web-vue-vite-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/vue-vite7-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4	True	10	9	1	1	4	1	4	@weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+demo/web/vue-webpack-tailwindcss-v4/package.json	@weapp-tailwindcss-demo/web-vue-webpack-tailwindcss-v4	True	20	19	1	1	11	1	7	@weapp-tailwindcss-demo/web-vue-webpack-tailwindcss-v4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+e2e/fixtures/taro-webpack-default-utilities/package.json	taro-webpack-tailwindcss-v4	True	46	46	0	0	0	46	0	Taro 4.2.1	e2e/fixtures/taro-webpack-default-utilities/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+e2e/package.json	@weapp-tailwindcss/e2e	True	5	5	0	0	5	0	0	@weapp-tailwindcss/e2e	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+examples/node-api-core/package.json	@weapp-tailwindcss-example/node-api-core	True	5	4	1	0	3	1	1	@weapp-tailwindcss-example/node-api-core	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+examples/react-lynx-promo/package.json	@weapp-tailwindcss/example-react-lynx-promo	True	10	9	1	5	3	1	1	@weapp-tailwindcss/example-react-lynx-promo	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+examples/react-lynx/package.json	@weapp-tailwindcss/example-react-lynx	True	13	11	2	6	4	2	1	@weapp-tailwindcss/example-react-lynx	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+examples/react-native-expo/package.json	@weapp-tailwindcss/example-react-native-expo	True	13	12	1	1	3	1	8	Expo ~54.0.38 / RN 0.81.5	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+examples/tailwindcss-patch-token-style/package.json	@weapp-tailwindcss-example/tailwindcss-patch-token-style	True	6	6	0	1	4	0	1	@weapp-tailwindcss-example/tailwindcss-patch-token-style	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+package.json	weapp-tailwindcss-monorepo	True	162	157	5	18	119	13	12	weapp-tailwindcss-monorepo	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/darwin-arm64/package.json	@weapp-tailwindcss/native-darwin-arm64	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-darwin-arm64	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/darwin-x64/package.json	@weapp-tailwindcss/native-darwin-x64	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-darwin-x64	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/linux-arm64-gnu/package.json	@weapp-tailwindcss/native-linux-arm64-gnu	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-linux-arm64-gnu	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/linux-arm64-musl/package.json	@weapp-tailwindcss/native-linux-arm64-musl	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-linux-arm64-musl	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/linux-x64-gnu/package.json	@weapp-tailwindcss/native-linux-x64-gnu	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-linux-x64-gnu	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/linux-x64-musl/package.json	@weapp-tailwindcss/native-linux-x64-musl	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-linux-x64-musl	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/win32-arm64-msvc/package.json	@weapp-tailwindcss/native-win32-arm64-msvc	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-win32-arm64-msvc	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-native/win32-x64-msvc/package.json	@weapp-tailwindcss/native-win32-x64-msvc	True	0	0	0	0	0	0	0	@weapp-tailwindcss/native-win32-x64-msvc	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/cn/package.json	@weapp-tailwindcss/cn	True	4	2	2	0	2	2	0	@weapp-tailwindcss/cn	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/cva/package.json	@weapp-tailwindcss/cva	True	2	1	1	0	1	1	0	@weapp-tailwindcss/cva	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/merge/package.json	@weapp-tailwindcss/merge	True	4	2	2	0	2	2	0	@weapp-tailwindcss/merge	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/runtime/package.json	@weapp-tailwindcss/runtime	True	2	1	1	0	1	1	0	@weapp-tailwindcss/runtime	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/theme-transition/package.json	theme-transition	True	2	2	0	0	1	1	0	theme-transition	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/typography/package.json	@weapp-tailwindcss/typography	True	8	7	1	0	6	2	0	@weapp-tailwindcss/typography	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/ui/package.json	@weapp-tailwindcss/ui	True	19	16	3	5	1	7	6	@weapp-tailwindcss/ui	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages-runtime/variants/package.json	@weapp-tailwindcss/variants	True	4	1	3	0	1	3	0	@weapp-tailwindcss/variants	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/babel/package.json	@weapp-tailwindcss/babel	True	3	3	0	0	0	0	3	@weapp-tailwindcss/babel	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/build-all/package.json	@weapp-tailwindcss/build-all	True	18	0	18	0	0	18	0	@weapp-tailwindcss/build-all	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/cli/package.json	@weapp-tailwindcss/cli	True	8	5	3	0	4	4	0	@weapp-tailwindcss/cli	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/css-compat/package.json	@weapp-tailwindcss/css-compat	True	5	5	0	0	4	1	0	@weapp-tailwindcss/css-compat	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/debug-uni-app-x/package.json	@weapp-tailwindcss/debug-uni-app-x	True	5	5	0	0	3	1	1	@weapp-tailwindcss/debug-uni-app-x	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/engine/package.json	@weapp-tailwindcss/engine	True	7	6	1	3	2	2	0	@weapp-tailwindcss/engine	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/env/package.json	@weapp-tailwindcss/env	True	0	0	0	0	0	0	0	@weapp-tailwindcss/env	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/escape/package.json	@weapp-tailwindcss/escape	True	1	1	0	0	1	0	0	@weapp-tailwindcss/escape	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/experimental/package.json	@weapp-tailwindcss/experimental	True	3	1	2	0	1	2	0	@weapp-tailwindcss/experimental	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/hbuilderx-runner/package.json	@weapp-tailwindcss/hbuilderx-runner	True	2	2	0	0	2	0	0	@weapp-tailwindcss/hbuilderx-runner	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/init/package.json	@weapp-tailwindcss/init	True	7	5	2	0	5	2	0	@weapp-tailwindcss/init	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/logger/package.json	@weapp-tailwindcss/logger	True	2	2	0	0	2	0	0	@weapp-tailwindcss/logger	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/lynx/package.json	@weapp-tailwindcss/lynx	True	8	7	1	2	2	4	0	@weapp-tailwindcss/lynx	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/minify-preserve/package.json	@weapp-tailwindcss/minify-preserve	True	1	1	0	1	0	0	0	@weapp-tailwindcss/minify-preserve	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/postcss-calc/package.json	@weapp-tailwindcss/postcss-calc	True	12	12	0	0	9	1	2	@weapp-tailwindcss/postcss-calc	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/postcss/package.json	@weapp-tailwindcss/postcss	True	35	20	15	0	19	16	0	@weapp-tailwindcss/postcss	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/react-native/package.json	@weapp-tailwindcss/react-native	True	14	12	2	0	4	7	3	Expo >=54.0.0 / RN >=0.81.0	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/reset/package.json	@weapp-tailwindcss/reset	True	2	1	1	0	0	2	0	@weapp-tailwindcss/reset	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/shared/package.json	@weapp-tailwindcss/shared	True	5	5	0	0	5	0	0	@weapp-tailwindcss/shared	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/source-scan/package.json	@weapp-tailwindcss/source-scan	True	1	1	0	0	1	0	0	@weapp-tailwindcss/source-scan	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/tailwindcss-config/package.json	tailwindcss-config	True	4	3	1	0	2	2	0	tailwindcss-config	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/tailwindcss-core-plugins-extractor/package.json	tailwindcss-core-plugins-extractor	True	0	0	0	0	0	0	0	tailwindcss-core-plugins-extractor	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/tailwindcss-injector/package.json	tailwindcss-injector	True	7	4	3	1	3	3	0	tailwindcss-injector	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/test-helper/package.json	@weapp-tailwindcss/test-helper	True	1	1	0	0	1	0	0	@weapp-tailwindcss/test-helper	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapp-style-injector/package.json	weapp-style-injector	True	5	4	1	0	2	3	0	weapp-style-injector	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapp-tailwindcss/package.json	weapp-tailwindcss	True	44	26	18	0	15	24	5	weapp-tailwindcss	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapp-tailwindcss/test/fixtures/tailwind-v4-app/package.json	tailwind-v4-fixture	True	0	0	0	0	0	0	0	tailwind-v4-fixture	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapp-tailwindcss/test/fixtures/tailwindcss/package.json	tailwindcss	True	39	39	0	0	0	39	0	tailwindcss	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapp-tailwindcss/test/fixtures/vite/src/package.json		False	0	0	0	0	0	0	0	packages/weapp-tailwindcss/test/fixtures/vite/src/package.json	pnpm-lock.yaml	空解析fixture，单列但不计108有效manifest。
+packages/weapp-tw/package.json	weapp-tw	True	0	0	0	0	0	0	0	weapp-tw	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/weapptw/package.json	weapptw	True	0	0	0	0	0	0	0	weapptw	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+packages/wetw/package.json	wetw	True	4	3	1	0	1	1	2	wetw	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/gulp/package.json	@weapp-tailwindcss-starter/gulp	True	15	14	1	1	11	1	2	@weapp-tailwindcss-starter/gulp	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/mpx/package.json	@weapp-tailwindcss-starter/mpx	True	20	19	1	1	7	6	6	Mpx ^2.11.1	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/taro-vite-react/package.json	@weapp-tailwindcss-starter/taro-vite-react	True	27	26	1	1	4	13	9	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/taro-webpack-react/package.json	@weapp-tailwindcss-starter/taro-webpack-react	True	28	27	1	1	5	14	8	Taro catalog:taro4	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/uni-app-vite/package.json	@weapp-tailwindcss-starter/uni-app-vite	True	15	14	1	1	1	1	12	uni-app 3.0.0-5030320261023001	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+starter/weapp-vite/package.json	@weapp-tailwindcss-starter/weapp-vite	True	4	3	1	1	1	1	1	@weapp-tailwindcss-starter/weapp-vite	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/mpx-tailwindcss-v4/package.json	mpx-tailwindcss-v4	True	46	46	0	2	18	9	17	Mpx ^2.11.1	templates/mpx-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/taro-vite-tailwindcss-v4/package.json	taro-vite-tailwindcss-v4	True	46	46	0	2	11	21	12	Taro 4.3.1	templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/taro-webpack-tailwindcss-v4/package.json	taro-webpack-tailwindcss-v4	True	50	50	0	2	13	23	12	Taro 4.3.1	templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/uni-app-hbuilderx-tailwindcss-v4/package.json	uni-app-hbuilderx-tailwindcss-v4	True	7	7	0	2	5	0	0	uni-app-hbuilderx-tailwindcss-v4	templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/uni-app-tailwindcss-v4/package.json	uni-preset-vue	True	36	36	0	2	6	0	28	uni-app 3.0.0-5030320261023001	templates/uni-app-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/uni-app-webpack-tailwindcss-v4/package.json	my-project	True	60	60	0	2	16	1	41	uni-app 2.0.2-5020620260917001	templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+templates/weapp-vite-tailwindcss-v4/package.json	weapp-vite-tailwindcss-v4	True	4	4	0	3	1	0	0	weapp-vite-tailwindcss-v4	templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+tools/ci-scope/package.json	@weapp-tailwindcss/ci-scope	True	2	2	0	1	1	0	0	@weapp-tailwindcss/ci-scope	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+tools/tailwindcss-test-catalog/package.json	@weapp-tailwindcss/test-catalog	True	0	0	0	0	0	0	0	@weapp-tailwindcss/test-catalog	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+tools/weapp-tailwindcss-scripts/package.json	@weapp-tailwindcss/scripts	True	19	18	1	3	13	1	2	@weapp-tailwindcss/scripts	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。
+website/package.json	@weapp-tailwindcss/website	True	64	59	5	8	46	6	4	@weapp-tailwindcss/website	pnpm-lock.yaml	仅清单与锁身份审计；本次未安装/读取物理依赖，未运行构建/全端验收。

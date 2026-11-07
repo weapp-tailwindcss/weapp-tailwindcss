@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "selfCheckedAt": "2026-11-07T06:49:30.580245+00:00",
+  "refs": {
+    "before": "a73127455ed42f766a5d0bb3399e3f2bfec11984",
+    "after": "113fc820e7b3d57d7d7d20352d65ac80fdedad33"
+  },
+  "summary": {
+    "trackedManifests": 109,
+    "nonemptyManifests": 108,
+    "baselineDeclarations": 2012,
+    "currentDeclarations": 2010,
+    "unionRows": 2012,
+    "removedRows": 2,
+    "rawDeclarationChanges": 63,
+    "effectiveChanges": 156,
+    "upgradeApplied": 168,
+    "statuses": {
+      "已是最新": 725,
+      "已升级": 137,
+      "阻塞": 551,
+      "保留": 599
+    },
+    "currentStatuses": {
+      "已是最新": 725,
+      "已升级": 135,
+      "阻塞": 551,
+      "保留": 599
+    },
+    "reasonCodes": {
+      "REGISTRY_LATEST_MATCH": 725,
+      "DECLARATION_OR_LOCK_CHANGED": 135,
+      "UPGRADE_EVIDENCE_MISSING": 243,
+      "MATRIX_VALIDATION_MISSING": 167,
+      "WORKSPACE_LINK": 170,
+      "RELEASE_CHANNEL_UNPROVEN": 9,
+      "SASS_WINDOWS": 11,
+      "UVM_NOT_APPLIED": 118,
+      "UVM_NOT_COVERED": 7,
+      "TARO_PATCH_MATRIX": 242,
+      "TARO_LINT": 14,
+      "MPX_PATCH_MATRIX": 32,
+      "VUE2_COMPATIBILITY": 3,
+      "BUNDLER_PATCH": 9,
+      "HISTORICAL_FIXTURE": 85,
+      "REMOVED_UNUSED": 2,
+      "LOCAL_PKG_ESM_CJS": 2,
+      "VITE_MULTI_GENERATION": 4,
+      "PEER_CONTRACT": 27,
+      "UPDATED_WITH_UNRESOLVED_TARGET": 7
+    },
+    "npmRegistryPackages": 484,
+    "cratesRegistryPackages": 105,
+    "pnpmLocks": 9,
+    "cargoLocks": 2,
+    "workspaceConfigs": 9,
+    "configurationRows": 259,
+    "uvmNpmTargetsWithLogs": 11,
+    "cargoDirectStatuses": {
+      "阻塞": 10,
+      "已是最新": 2
+    },
+    "cargoLockDeltas": {
+      "patch": 12,
+      "minor": 9,
+      "新增": 1
+    },
+    "identityCheckIssues": 0
+  },
+  "checks": {
+    "manifestCoverage": true,
+    "declarationCoverageBeforeAfter": true,
+    "identityUniqueness": true,
+    "tsvJsonAgreement": true,
+    "perProjectTotals": true,
+    "workspaceRegistrySeparation": true,
+    "catalogAliasLockIdentityIssues": 0,
+    "allLockFilesCovered": true,
+    "sourceHashesVerified": true,
+    "markdownLocalLinksExist": true,
+    "pnpmRun": false,
+    "installRun": false,
+    "buildRun": false,
+    "agentsCheckRun": false,
+    "patchPathsResolvedFromConfigurationDirectory": true,
+    "all67PatchPhaseFilesHashVerified": true,
+    "patchConsumerScopeVerified": true,
+    "auditPathIndexRoundTrip": true,
+    "canonicalJsonRoundTrip": true,
+    "latestPreflightArchived": true,
+    "explicitAlphaNotCertifiedStable": true
+  },
+  "files": [
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.configuration.json",
+      "bytes": 299315,
+      "sha256": "a16833708f8c05789edff58472edfebb4b7b56175d06992483e8ab6bcf3efef5"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.inventory.json",
+      "bytes": 3592685,
+      "sha256": "fe514f8a439718e337079099024071e04626f6aec3e9924096f251b4ddc31398"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.inventory.md",
+      "bytes": 10847,
+      "sha256": "b48ee699498b3c2e280923e434a0d518f63efd2f8ebaf160552e7b96fc5588fe"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.inventory.tsv",
+      "bytes": 985021,
+      "sha256": "32c0458c0d40adfb952be19cceb77ebb8eb3994a4114b347465e40f5f34d89ef"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.lock-evidence.json",
+      "bytes": 119263,
+      "sha256": "512475362626621b6f3337b11bc19edbea6e993646e7044d581a39f9cec2c413"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.md",
+      "bytes": 11883,
+      "sha256": "64e2f5d087222a7837f8da66f554ee1e247028e5b15561ba1af7b18279ab1c41"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.projects.tsv",
+      "bytes": 26545,
+      "sha256": "a0e3b0234d12975f3db37df9d2a73162db9dd70829338ac4340c3dcaf05ddee8"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.registry.json",
+      "bytes": 277311,
+      "sha256": "1a0a096407873e480bbdd156a1f9e13db0e7e51ea87bffb97d9716085a189379"
+    },
+    {
+      "path": "docs/engineering/dependency-upgrade-20261107.risk-evidence.json",
+      "bytes": 1917618,
+      "sha256": "aeba15e24cb946e5c53d89bc06c174da98c7e4818fa9eeebf8cc42399b4e461e"
+    }
+  ]
+}

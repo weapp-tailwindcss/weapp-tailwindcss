@@ -1,0 +1,821 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-11-07T06:31:54.821433+00:00",
+  "refs": {
+    "before": "a73127455ed42f766a5d0bb3399e3f2bfec11984",
+    "after": "113fc820e7b3d57d7d7d20352d65ac80fdedad33"
+  },
+  "locks": [
+    {
+      "path": "e2e/fixtures/taro-webpack-default-utilities/pnpm-lock.yaml",
+      "role": "Taro4.2.1历史fixture",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "15512a3e04b7deead3c2ec69f6ea09931e0b1fb7",
+          "sha256": "eb63a8d7b398d0e639bef580843d83da303b78c1004ecd21c5f8e1cc3e7f92b3",
+          "bytes": 594121,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1663,
+              "snapshots": 1667,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.3.2": "feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81"
+              },
+              "overrides": {}
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "e8c2400d3d379f4edf1d6d26556cfd35d1d2e388",
+          "sha256": "1a3501fcb03e6efb1b568a456056868b4a7a5fe973cdc83ad29d68f4f017db80",
+          "bytes": 596997,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1672,
+              "snapshots": 1676,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.3.2": "feb1cdbd4f06ac44f2fbc4e8421bc4d151d9b180834d414ed1a073af9188ba81"
+              },
+              "overrides": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "根workspace",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "b8f29d71488a81fcc67e5f67f85c4e778d249b28",
+          "sha256": "8f79f77e41c28fc5d8ed25b69604d9c03e77e4656abb98f2188956d9f94bf15e",
+          "bytes": 3076362,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 97,
+              "packages": 5863,
+              "snapshots": 6054,
+              "patchIdentities": {
+                "@lynx-js/tasm@0.0.49": "e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545",
+                "@mpxjs/vue-cli-plugin-mpx@2.2.32": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+                "@mpxjs/webpack-plugin@2.11.1": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-framework-vue3@4.3.1": "f4ed61230de76c998792d052310fea250ac4d22673681ae83aa87a362d4b5e96",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "@tarojs/vite-runner@4.3.1": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+                "nitropack@2.13.6": "8c9b17900b85d8273758251dff670c1a9094879e7702cd42419e1ac1494a4dcf",
+                "postcss-preset-env@11.6.2": "3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3",
+                "rollup@3.30.0": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9",
+                "rollup@4.65.1": "3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf",
+                "watchpack@2.6.3": "fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.112.2": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+                "webpack@5.91.0": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "jiti": "2.7.0",
+                "@docusaurus/bundler>postcss": "8.5.32",
+                "@docusaurus/cssnano-preset>postcss": "8.5.32",
+                "@docusaurus/theme-classic>postcss": "8.5.32",
+                "weapp-vite>weapp-tailwindcss": "workspace:*",
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1",
+                "@tarojs/rn-style-transformer@4.3.1>stylelint": "16.10.0",
+                "@eslint/config-inspector@3.5.0>devframe": "1.2.6",
+                "@eslint/config-inspector@3.5.0>@devframes/agentic": "1.2.6"
+              }
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "9b945c3b40bb870a684582c2b06db3a16c2d0149",
+          "sha256": "3836ac9a27144ee84456cba20984f61d849e07740b4c056df2a99fc995d13ea0",
+          "bytes": 3045011,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 97,
+              "packages": 5739,
+              "snapshots": 5940,
+              "patchIdentities": {
+                "@lynx-js/tasm@0.0.49": "e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545",
+                "@mpxjs/vue-cli-plugin-mpx@2.2.32": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+                "@mpxjs/webpack-plugin@2.11.1": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-framework-vue3@4.3.1": "f4ed61230de76c998792d052310fea250ac4d22673681ae83aa87a362d4b5e96",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "@tarojs/vite-runner@4.3.1": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+                "nitropack@2.13.6": "8c9b17900b85d8273758251dff670c1a9094879e7702cd42419e1ac1494a4dcf",
+                "postcss-preset-env@11.6.2": "3efb75a5127fc72703f3e6630e3a0deda57294e8c3aa7e18fa46be07e6e628a3",
+                "rollup@3.30.0": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9",
+                "rollup@4.65.1": "3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf",
+                "watchpack@2.6.3": "fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.112.2": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b",
+                "webpack@5.91.0": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "jiti": "2.7.0",
+                "@docusaurus/bundler>postcss": "8.5.32",
+                "@docusaurus/cssnano-preset>postcss": "8.5.32",
+                "@docusaurus/theme-classic>postcss": "8.5.32",
+                "weapp-vite>weapp-tailwindcss": "workspace:*",
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1",
+                "@tarojs/rn-style-transformer@4.3.1>stylelint": "16.10.0",
+                "@eslint/config-inspector@3.5.0>devframe": "1.2.6",
+                "@eslint/config-inspector@3.5.0>@devframes/agentic": "1.2.6"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/mpx-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "921c1036c5927131aec6971751ee0e9a55bb6583",
+          "sha256": "d633886c603735e42e3c89900c1153db7b87a4df62cef01c700d170a2cbf101e",
+          "bytes": 516912,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1361,
+              "snapshots": 1362,
+              "patchIdentities": {
+                "@mpxjs/vue-cli-plugin-mpx@2.2.32": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+                "@mpxjs/webpack-plugin@2.11.1": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475",
+                "watchpack@2.6.3": "fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.112.2": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/parser": "8.72.1",
+                "@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "2a093597e644a2cccea54ded65108586641ef9a3",
+          "sha256": "fcf2621f656ef33ca7bdb8e5da5b264d52251ae32e978048e859586c087fd4c2",
+          "bytes": 531530,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1401,
+              "snapshots": 1402,
+              "patchIdentities": {
+                "@mpxjs/vue-cli-plugin-mpx@2.2.32": "1651b79afa3025c88edc5faa968c53d095b9aa9312e8fcb748c848ccbd809bd8",
+                "@mpxjs/webpack-plugin@2.11.1": "dfb5c9daceb3dc3d4b02d4c47809ab2b2a0571deb15c3d242dc8961c359296d4",
+                "watchpack@2.6.3": "fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.112.2": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/parser": "8.72.1",
+                "@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/taro-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "ba9678cb5aafd5b64f81f6fdc0f2f43187f113af",
+          "sha256": "a22f66d38b0648c2f85c4df75a843a792d0754051d21264c6a80828066041faa",
+          "bytes": 503048,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1382,
+              "snapshots": 1383,
+              "patchIdentities": {
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "@tarojs/vite-runner@4.3.1": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475",
+                "rollup@3.30.0": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9"
+              },
+              "overrides": {
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "cbe843a1a6d38a80185ec544a12ebcd75191da36",
+          "sha256": "8aee4044a3becb9f70a51d4d60c12face3d4f5d825b529d171045beefc2197a7",
+          "bytes": 517051,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1423,
+              "snapshots": 1424,
+              "patchIdentities": {
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "@tarojs/vite-runner@4.3.1": "12cbd9565a34748ad5aacf11c7c4851fad0574f3f7995b45fbc91c1c034846f2",
+                "rollup@3.30.0": "02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9"
+              },
+              "overrides": {
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/taro-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "49ce34aa7a2c4bd37a7b39e3c44ece0c30fff5f3",
+          "sha256": "560ba2e422898cac348651061ae9ed2878907ea5118626d9297e0b2d87b6bfde",
+          "bytes": 608331,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1708,
+              "snapshots": 1710,
+              "patchIdentities": {
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.91.0": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "faee1196bcaf54d513e695994f68a3ee69b55ff3",
+          "sha256": "62e460fce4b61b84d9d35bd01fbceab51ca145138387f8cd90f2225d8f4e1414",
+          "bytes": 623854,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1750,
+              "snapshots": 1752,
+              "patchIdentities": {
+                "@tarojs/plugin-framework-react@4.3.1": "fefc3718973d103d70f8e26f33b600bc71c4d95fd26c704f353ac813249c9b9a",
+                "@tarojs/plugin-platform-harmony-hybrid@4.3.1": "ff684a9ffdcd80ed9207e6330b17a9c87c4c303629fe366dd188bcb15a02988b",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681",
+                "webpack@5.91.0": "d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b"
+              },
+              "overrides": {
+                "eslint-config-taro@4.3.1>@typescript-eslint/parser": "8.72.1",
+                "eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin": "8.72.1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/uni-app-hbuilderx-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "1a8609712ca77a36960b9dc371618f53e242edbd",
+          "sha256": "d7095ef67e872d364099ab8a7466e4b569ceb826eb859fc11bee59b76bd327f1",
+          "bytes": 110576,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 271,
+              "snapshots": 271,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475"
+              },
+              "overrides": {}
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "3dd529655543fa4ff8367a33c13482cdd6401ed0",
+          "sha256": "735fd17d7049f174992dd260777194fdd26aaa751daa4d918e88efcfbf20bcb0",
+          "bytes": 120346,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 303,
+              "snapshots": 303,
+              "patchIdentities": {},
+              "overrides": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/uni-app-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "84ac65ee4347f5df2d0c41e4b38763604b83002c",
+          "sha256": "6eb97f132e23854b46eaba001c8c8397d58e7254060f90d86ccf4e0f2d8841ce",
+          "bytes": 442096,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1149,
+              "snapshots": 1153,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475",
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681"
+              },
+              "overrides": {}
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "31887a286f08d8a09f1de7be8a6e160420641844",
+          "sha256": "289498af729e6db9ef7f4cf1bf47d70ba7e5a56e275909645c792bdb189b5bb1",
+          "bytes": 452650,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1183,
+              "snapshots": 1187,
+              "patchIdentities": {
+                "webpack-virtual-modules@0.6.2": "083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681"
+              },
+              "overrides": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/uni-app-webpack-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "385a047d1d90dfac60e54d31c20b723852ed2a59",
+          "sha256": "8d8b039f3aafbbb5af2f8020b0ae42f67584e1c826e03569fd62679cedf131f4",
+          "bytes": 642894,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1904,
+              "snapshots": 1909,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475"
+              },
+              "overrides": {}
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "9ad09e1dee11a0b06c17ff61834d69313ac96554",
+          "sha256": "02107f9792080289146e16e1a9b4eab1928bd2fd79138c20644bc229d8866fc7",
+          "bytes": 653678,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 1939,
+              "snapshots": 1944,
+              "patchIdentities": {},
+              "overrides": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "templates/weapp-vite-tailwindcss-v4/pnpm-lock.yaml",
+      "role": "独立本地模板",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "711330d3bff49f4796df4a69ad94e6d888962acc",
+          "sha256": "b6b1d522d6c980bf73832a2c7c1eed6d5cb49e1727981ee66c35c210df7f8efa",
+          "bytes": 293670,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 775,
+              "snapshots": 776,
+              "patchIdentities": {
+                "@weapp-tailwindcss/postcss@3.4.3": "64cbd4c584f8ebea72e13182d01d344bee03ea7cc75044719bf8efd2d6fdb475"
+              },
+              "overrides": {}
+            }
+          ]
+        },
+        "after": {
+          "gitBlob": "c90c00404ead104026cee64f378eac4952c08219",
+          "sha256": "2c980db4bfc4c42aef6bd9fc4976a2ccd541c61c4ce6d5f87da128a356bb32c0",
+          "bytes": 291137,
+          "documents": [
+            {
+              "index": 0,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 15,
+              "snapshots": 15,
+              "patchIdentities": {},
+              "overrides": {}
+            },
+            {
+              "index": 1,
+              "lockfileVersion": "9.0",
+              "importers": 1,
+              "packages": 762,
+              "snapshots": 763,
+              "patchIdentities": {},
+              "overrides": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "packages/postcss/native/Cargo.lock",
+      "role": "Rust native锁",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "27f2f21d8af529ed7df8ee9ca9435d083020dccb",
+          "sha256": "ac0c241398684edaf87320232f938ee4f28b9d20187788b530a3516e39c94d92",
+          "bytes": 7521,
+          "packages": 33
+        },
+        "after": {
+          "gitBlob": "3f62ebe61cd45581f1b61388cda096d33c45aa19",
+          "sha256": "e6a1bcd2d7bfac1609aabe38f1b1831491551966cd07f8ffd367002971e82097",
+          "bytes": 7521,
+          "packages": 33
+        }
+      }
+    },
+    {
+      "path": "packages/weapp-tailwindcss/native/Cargo.lock",
+      "role": "Rust native锁",
+      "status": "已升级",
+      "phases": {
+        "before": {
+          "gitBlob": "3235a7aaab26e6b314d5638ba495e19c90726e6c",
+          "sha256": "47635c5978b865bada12570cd41a120090519d152ea67580ce35307a5b941c4f",
+          "bytes": 25884,
+          "packages": 106
+        },
+        "after": {
+          "gitBlob": "9fb567603314a1209651e2df309397bfd1f138ef",
+          "sha256": "459a595b79e5b9714b6e5765ebe4833c806c5a782d70e9f1fb39cac2781464ba",
+          "bytes": 26145,
+          "packages": 107
+        }
+      }
+    }
+  ],
+  "cargoDirectDeclarations": [
+    { "after": "=3.15.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=3.15.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "3.16.1", "manifest": "packages/postcss/native/Cargo.toml", "package": "napi", "resolved": ["3.15.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=3.6.13", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=3.6.13", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "3.7.0", "manifest": "packages/postcss/native/Cargo.toml", "package": "napi-derive", "resolved": ["3.6.13"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=2.6.0", "basis": "准确声明/锁与官方目标核对。", "before": "=2.6.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "2.6.0", "manifest": "packages/postcss/native/Cargo.toml", "package": "napi-build", "resolved": ["2.6.0"], "section": "build-dependencies", "status": "已是最新" },
+    { "after": "=3.15.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=3.15.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "3.16.1", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "napi", "resolved": ["3.15.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=3.6.13", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=3.6.13", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "3.7.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "napi-derive", "resolved": ["3.6.13"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_allocator", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_ast", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_ast_visit", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_parser", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_semantic", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=0.152.0", "basis": "保持直接crate精确pin和NAPI/OXC同族身份；非最新且缺本轮迁移证据时明确阻塞。", "before": "=0.152.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "0.157.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "oxc_span", "resolved": ["0.152.0"], "section": "dependencies", "status": "阻塞" },
+    { "after": "=2.6.0", "basis": "准确声明/锁与官方目标核对。", "before": "=2.6.0", "exitCondition": "成组迁移并验证MSRV、cargo test/clippy --locked、native binding/ABI和产物。", "latestStable": "2.6.0", "manifest": "packages/weapp-tailwindcss/native/Cargo.toml", "package": "napi-build", "resolved": ["2.6.0"], "section": "build-dependencies", "status": "已是最新" }
+  ],
+  "cargoPackages": [
+    { "after": ["2.13.2"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.13.2"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06", "name": "bitflags", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.13.2" }], "latestStable": "2.13.2", "lock": "packages/postcss/native/Cargo.lock", "package": "bitflags", "status": "已是最新" },
+    { "after": ["1.0.5"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.5"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600", "name": "cfg-if", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.5" }], "latestStable": "1.0.5", "lock": "packages/postcss/native/Cargo.lock", "package": "cfg-if", "status": "已是最新" },
+    { "after": ["0.12.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.12.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1af709f1f33454bf52eadfc8c78b3b9ef9cb26fb54d16dc9cd9a7299f899fd1b", "dependencies": ["unicode-segmentation"], "name": "convert_case", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.12.0" }], "latestStable": "0.12.0", "lock": "packages/postcss/native/Cargo.lock", "package": "convert_case", "status": "已是最新" },
+    { "after": ["1.0.13"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.13"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d", "name": "ctor", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.13" }], "latestStable": "1.0.13", "lock": "packages/postcss/native/Cargo.lock", "package": "ctor", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "9a31d2a3fbaaeb2af2368bbdd904aa8e812d3c04a1ee10d3171f52d556e5d0a3", "dependencies": ["futures-channel", "futures-core", "futures-executor", "futures-io", "futures-sink", "futures-task", "futures-util"], "name": "futures", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4", "dependencies": ["futures-core", "futures-sink"], "name": "futures-channel", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-channel", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e", "name": "futures-core", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-core", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "031b47cf1a3c6cc8bc2fc76cd437f521619387907d469316e7c0bc278f1f5432", "dependencies": ["futures-core", "futures-task", "futures-util"], "name": "futures-executor", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-executor", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "53c0fa8157de1303bfffdaa1cc2a673bfffb60102f76b0ef4441659124373fed", "name": "futures-io", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-io", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44", "dependencies": ["proc-macro2", "quote", "syn"], "name": "futures-macro", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-macro", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1944426bf7d03f1d14f708785e4b33efd750b36d48a157b836b3efc15ede8e1d", "name": "futures-sink", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-sink", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cd417de3d1d015fc3bfd2b1ea46dfc7bab72ef86f1cc7cc9c78e728b34a6d1fd", "name": "futures-task", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-task", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc", "dependencies": ["futures-channel", "futures-core", "futures-io", "futures-macro", "futures-sink", "futures-task", "memchr", "pin-project-lite", "slab"], "name": "futures-util", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/postcss/native/Cargo.lock", "package": "futures-util", "status": "已是最新" },
+    { "after": ["0.2.191"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.2.190"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a", "name": "libc", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.191" }], "latestStable": "0.2.191", "lock": "packages/postcss/native/Cargo.lock", "package": "libc", "status": "已升级" },
+    { "after": ["0.9.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.9.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60", "dependencies": ["cfg-if", "windows-link"], "name": "libloading", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.9.0" }], "latestStable": "0.9.0", "lock": "packages/postcss/native/Cargo.lock", "package": "libloading", "status": "已是最新" },
+    { "after": ["2.8.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.8.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98", "name": "memchr", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.8.3" }], "latestStable": "2.8.3", "lock": "packages/postcss/native/Cargo.lock", "package": "memchr", "status": "已是最新" },
+    { "after": ["3.15.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["3.15.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6a746ad50efbfb632ade1de4025519a477decbbd798cea1a6ac41d7c44f80083", "dependencies": ["bitflags", "ctor", "futures", "libc", "napi-build", "napi-sys", "nohash-hasher", "rustc-hash"], "name": "napi", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.15.0" }], "latestStable": "3.16.1", "lock": "packages/postcss/native/Cargo.lock", "package": "napi", "status": "阻塞" },
+    { "after": ["2.6.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.6.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "b899b545d3aa6dca985939059f258c5488d34e4ecf39c274e20009748f4b846d", "name": "napi-build", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.6.0" }], "latestStable": "2.6.0", "lock": "packages/postcss/native/Cargo.lock", "package": "napi-build", "status": "已是最新" },
+    { "after": ["3.6.13"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["3.6.13"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3ff48271a0f61abb83f3e2d1989fa71169143db95f6f948c3a8903961f2855dc", "dependencies": ["convert_case", "ctor", "napi-derive-backend", "proc-macro2", "quote", "syn"], "name": "napi-derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.6.13" }], "latestStable": "3.7.0", "lock": "packages/postcss/native/Cargo.lock", "package": "napi-derive", "status": "阻塞" },
+    { "after": ["6.1.6"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["6.1.6"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f2639052c5aff9956a21d7b6202fc61d5e89c5f19c72d289b7a0641ea94e8159", "dependencies": ["convert_case", "proc-macro2", "quote", "semver", "syn"], "name": "napi-derive-backend", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "6.1.6" }], "latestStable": "7.0.0", "lock": "packages/postcss/native/Cargo.lock", "package": "napi-derive-backend", "status": "阻塞" },
+    { "after": ["3.4.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["3.4.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d153beb7d5c973f4b9395be8a83054a28968b61188f1dd1a2cc2321af22daea2", "dependencies": ["libloading"], "name": "napi-sys", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.4.1" }], "latestStable": "3.4.1", "lock": "packages/postcss/native/Cargo.lock", "package": "napi-sys", "status": "已是最新" },
+    { "after": ["0.2.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451", "name": "nohash-hasher", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.0" }], "latestStable": "0.2.0", "lock": "packages/postcss/native/Cargo.lock", "package": "nohash-hasher", "status": "已是最新" },
+    { "after": ["0.2.17"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.17"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd", "name": "pin-project-lite", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.17" }], "latestStable": "0.2.17", "lock": "packages/postcss/native/Cargo.lock", "package": "pin-project-lite", "status": "已是最新" },
+    { "after": ["1.0.107"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.107"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9", "dependencies": ["unicode-ident"], "name": "proc-macro2", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.107" }], "latestStable": "1.0.107", "lock": "packages/postcss/native/Cargo.lock", "package": "proc-macro2", "status": "已是最新" },
+    { "after": ["1.0.47"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.47"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001", "dependencies": ["proc-macro2"], "name": "quote", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.47" }], "latestStable": "1.0.47", "lock": "packages/postcss/native/Cargo.lock", "package": "quote", "status": "已是最新" },
+    { "after": ["2.1.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.1.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d", "name": "rustc-hash", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.1.3" }], "latestStable": "2.1.3", "lock": "packages/postcss/native/Cargo.lock", "package": "rustc-hash", "status": "已是最新" },
+    { "after": ["1.0.28"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.28"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd", "name": "semver", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.28" }], "latestStable": "1.0.28", "lock": "packages/postcss/native/Cargo.lock", "package": "semver", "status": "已是最新" },
+    { "after": ["0.4.12"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.4.12"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5", "name": "slab", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.4.12" }], "latestStable": "0.4.12", "lock": "packages/postcss/native/Cargo.lock", "package": "slab", "status": "已是最新" },
+    { "after": ["3.0.9"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["3.0.6"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d78c8dee4c7bf0e14673097256fed6142ce9d3b85a408189d07482442145823b", "dependencies": ["proc-macro2", "quote", "unicode-ident"], "name": "syn", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.0.9" }], "latestStable": "3.0.9", "lock": "packages/postcss/native/Cargo.lock", "package": "syn", "status": "已升级" },
+    { "after": ["1.0.27"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["1.0.26"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563", "name": "unicode-ident", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.27" }], "latestStable": "1.0.27", "lock": "packages/postcss/native/Cargo.lock", "package": "unicode-ident", "status": "已升级" },
+    { "after": ["1.13.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.13.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8", "name": "unicode-segmentation", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.13.3" }], "latestStable": "1.13.3", "lock": "packages/postcss/native/Cargo.lock", "package": "unicode-segmentation", "status": "已是最新" },
+    { "after": ["0.1.0"], "basis": "本地crate不与registry比较。", "before": ["0.1.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "dependencies": ["napi", "napi-build", "napi-derive"], "name": "weapp_tailwindcss_postcss_native", "version": "0.1.0" }], "latestStable": null, "lock": "packages/postcss/native/Cargo.lock", "package": "weapp_tailwindcss_postcss_native", "status": "保留" },
+    { "after": ["0.2.1"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.2.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5", "name": "windows-link", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.1" }], "latestStable": "0.100.0", "lock": "packages/postcss/native/Cargo.lock", "package": "windows-link", "status": "阻塞" },
+    { "after": ["0.2.21"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.2.21"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923", "name": "allocator-api2", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.21" }], "latestStable": "0.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "allocator-api2", "status": "阻塞" },
+    { "after": ["1.5.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.5.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53", "name": "autocfg", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.5.1" }], "latestStable": "1.5.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "autocfg", "status": "已是最新" },
+    { "after": ["2.13.2"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.13.2"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06", "name": "bitflags", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.13.2" }], "latestStable": "2.13.2", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "bitflags", "status": "已是最新" },
+    { "after": ["0.6.9"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.6.9"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "175812e0be2bccb6abe50bb8d566126198344f707e304f45c648fd8f2cc0365e", "name": "bytecount", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.6.9" }], "latestStable": "0.6.9", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "bytecount", "status": "已是最新" },
+    { "after": ["0.2.4"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.4"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "dec551ab6e7578819132c713a93c022a05d60159dc86e7a7050223577484c55a", "dependencies": ["rustversion"], "name": "castaway", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.4" }], "latestStable": "0.2.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "castaway", "status": "已是最新" },
+    { "after": ["1.0.5"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.5"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600", "name": "cfg-if", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.5" }], "latestStable": "1.0.5", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "cfg-if", "status": "已是最新" },
+    { "after": ["0.10.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.10.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "79fcda08c33bb58b97008b2cdada6622500e949e060f5913361763121abd2416", "dependencies": ["castaway", "cfg-if", "itoa", "static_assertions", "zmij"], "name": "compact_str", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.10.0" }], "latestStable": "0.10.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "compact_str", "status": "已是最新" },
+    { "after": ["0.12.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.12.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1af709f1f33454bf52eadfc8c78b3b9ef9cb26fb54d16dc9cd9a7299f899fd1b", "dependencies": ["unicode-segmentation"], "name": "convert_case", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.12.0" }], "latestStable": "0.12.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "convert_case", "status": "已是最新" },
+    { "after": ["0.1.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "417bef24afe1460300965a25ff4a24b8b45ad011948302ec221e8a0a81eb2c79", "name": "cow-utils", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.3" }], "latestStable": "0.1.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "cow-utils", "status": "已是最新" },
+    { "after": ["1.0.13"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.13"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d", "name": "ctor", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.13" }], "latestStable": "1.0.13", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "ctor", "status": "已是最新" },
+    { "after": ["0.2.7"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.7"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "c6232dd377dcc64799954cbd3a9bb882e9cdc1308ccd87b1c098f1fb2eaf82a8", "dependencies": ["proc-macro2", "quote", "syn 3.0.9"], "name": "displaydoc", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.7" }], "latestStable": "0.2.7", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "displaydoc", "status": "已是最新" },
+    { "after": ["0.1.12"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.12"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "fd8e701084c37e7ef62d3f9e453b618130cbc0ef3573847785952a3ac3f746bf", "name": "dragonbox_ecma", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.12" }], "latestStable": "0.1.12", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "dragonbox_ecma", "status": "已是最新" },
+    { "after": ["1.19.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["1.18.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be", "name": "either", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.19.0" }], "latestStable": "1.19.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "either", "status": "已升级" },
+    { "after": ["2.5.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.5.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223", "name": "fastrand", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.5.0" }], "latestStable": "2.5.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "fastrand", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "9a31d2a3fbaaeb2af2368bbdd904aa8e812d3c04a1ee10d3171f52d556e5d0a3", "dependencies": ["futures-channel", "futures-core", "futures-executor", "futures-io", "futures-sink", "futures-task", "futures-util"], "name": "futures", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4", "dependencies": ["futures-core", "futures-sink"], "name": "futures-channel", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-channel", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e", "name": "futures-core", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-core", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "031b47cf1a3c6cc8bc2fc76cd437f521619387907d469316e7c0bc278f1f5432", "dependencies": ["futures-core", "futures-task", "futures-util"], "name": "futures-executor", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-executor", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "53c0fa8157de1303bfffdaa1cc2a673bfffb60102f76b0ef4441659124373fed", "name": "futures-io", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-io", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44", "dependencies": ["proc-macro2", "quote", "syn 3.0.9"], "name": "futures-macro", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-macro", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1944426bf7d03f1d14f708785e4b33efd750b36d48a157b836b3efc15ede8e1d", "name": "futures-sink", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-sink", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cd417de3d1d015fc3bfd2b1ea46dfc7bab72ef86f1cc7cc9c78e728b34a6d1fd", "name": "futures-task", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-task", "status": "已是最新" },
+    { "after": ["0.3.34"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.34"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc", "dependencies": ["futures-channel", "futures-core", "futures-io", "futures-macro", "futures-sink", "futures-task", "memchr", "pin-project-lite", "slab"], "name": "futures-util", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.34" }], "latestStable": "0.3.34", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "futures-util", "status": "已是最新" },
+    { "after": ["0.17.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.17.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a", "dependencies": ["allocator-api2"], "name": "hashbrown", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.17.1" }], "latestStable": "0.17.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "hashbrown", "status": "已是最新" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "fe090a42a0d3140fed8c63263ed1fecc02422cb2f4bfe55cd8de2de1b8e105dd", "dependencies": ["displaydoc", "potential_utf", "utf8_iter", "yoke", "zerofrom", "zerovec"], "name": "icu_collections", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_collections", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "25d29b57c17c6528d0dc4c2141cfa2d08200465acb537a3909c8b9b8a4a984c0", "dependencies": ["displaydoc", "litemap", "serde", "tinystr", "writeable", "zerovec"], "name": "icu_locale_core", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_locale_core", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "406e9ae5b95d8aa37db6293405931b766a6172d1848daee22d70eb44aa78a43c", "dependencies": ["icu_locale_core", "icu_locale_fallback_data", "icu_provider", "potential_utf", "tinystr", "zerovec"], "name": "icu_locale_fallback", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_locale_fallback", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3632ebbd0c5c3637ba1a40bdf8288f2cb9d2268e73441a69d5fc73d7cfbaa87c", "name": "icu_locale_fallback_data", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_locale_fallback_data", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.1"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "413099315636c588ee8f011190b329b971a09a8fae9d157e01dcae8379468514", "dependencies": ["displaydoc", "icu_locale_core", "serde", "stable_deref_trait", "writeable", "yoke", "zerofrom", "zerotrie", "zerovec"], "name": "icu_provider", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_provider", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "61b195dc605f81aa181bec9b3bd14e26cc71b903e4644f6af578ca9772c7a710", "dependencies": ["icu_collections", "icu_locale_fallback", "icu_provider", "icu_segmenter_data", "potential_utf", "smallvec", "utf8_iter", "zerotrie", "zerovec"], "name": "icu_segmenter", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_segmenter", "status": "已升级" },
+    { "after": ["2.4.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.3.0"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "913a7d294ad056474749152107309fdee3ec17d2482d1ab70fdc61a81c64b9a3", "name": "icu_segmenter_data", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.4.0" }], "latestStable": "2.4.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "icu_segmenter_data", "status": "已升级" },
+    { "after": ["0.15.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.15.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc", "dependencies": ["either"], "name": "itertools", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.15.0" }], "latestStable": "0.15.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "itertools", "status": "已是最新" },
+    { "after": ["1.0.18"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.18"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682", "name": "itoa", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.18" }], "latestStable": "1.0.18", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "itoa", "status": "已是最新" },
+    { "after": ["0.2.191"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.2.190"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a", "name": "libc", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.191" }], "latestStable": "0.2.191", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "libc", "status": "已升级" },
+    { "after": ["0.9.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.9.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60", "dependencies": ["cfg-if", "windows-link"], "name": "libloading", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.9.0" }], "latestStable": "0.9.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "libloading", "status": "已是最新" },
+    { "after": ["0.8.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.8.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae", "name": "litemap", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.8.3" }], "latestStable": "0.8.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "litemap", "status": "已是最新" },
+    { "after": ["2.8.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.8.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98", "name": "memchr", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.8.3" }], "latestStable": "2.8.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "memchr", "status": "已是最新" },
+    { "after": ["3.15.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["3.15.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6a746ad50efbfb632ade1de4025519a477decbbd798cea1a6ac41d7c44f80083", "dependencies": ["bitflags", "ctor", "futures", "libc", "napi-build", "napi-sys", "nohash-hasher", "rustc-hash"], "name": "napi", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.15.0" }], "latestStable": "3.16.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "napi", "status": "阻塞" },
+    { "after": ["2.6.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.6.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "b899b545d3aa6dca985939059f258c5488d34e4ecf39c274e20009748f4b846d", "name": "napi-build", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.6.0" }], "latestStable": "2.6.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "napi-build", "status": "已是最新" },
+    { "after": ["3.6.13"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["3.6.13"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3ff48271a0f61abb83f3e2d1989fa71169143db95f6f948c3a8903961f2855dc", "dependencies": ["convert_case", "ctor", "napi-derive-backend", "proc-macro2", "quote", "syn 3.0.9"], "name": "napi-derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.6.13" }], "latestStable": "3.7.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "napi-derive", "status": "阻塞" },
+    { "after": ["6.1.6"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["6.1.6"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f2639052c5aff9956a21d7b6202fc61d5e89c5f19c72d289b7a0641ea94e8159", "dependencies": ["convert_case", "proc-macro2", "quote", "semver", "syn 3.0.9"], "name": "napi-derive-backend", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "6.1.6" }], "latestStable": "7.0.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "napi-derive-backend", "status": "阻塞" },
+    { "after": ["3.4.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["3.4.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d153beb7d5c973f4b9395be8a83054a28968b61188f1dd1a2cc2321af22daea2", "dependencies": ["libloading"], "name": "napi-sys", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.4.1" }], "latestStable": "3.4.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "napi-sys", "status": "已是最新" },
+    { "after": ["0.2.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451", "name": "nohash-hasher", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.0" }], "latestStable": "0.2.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "nohash-hasher", "status": "已是最新" },
+    { "after": ["0.5.5"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.5.5"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "610a5acd306ec67f907abe5567859a3c693fb9886eb1f012ab8f2a47bef3db51", "name": "nonmax", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.5.5" }], "latestStable": "0.5.5", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "nonmax", "status": "已是最新" },
+    { "after": ["0.5.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.5.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0", "dependencies": ["num-integer", "num-traits"], "name": "num-bigint", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.5.1" }], "latestStable": "0.5.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "num-bigint", "status": "已是最新" },
+    { "after": ["0.1.47"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.47"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b", "dependencies": ["num-traits"], "name": "num-integer", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.47" }], "latestStable": "0.1.47", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "num-integer", "status": "已是最新" },
+    { "after": ["0.2.19"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.19"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841", "dependencies": ["autocfg"], "name": "num-traits", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.19" }], "latestStable": "0.2.19", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "num-traits", "status": "已是最新" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f24a6005a6ff29f17c8782d1088772db6329b50cf8ad264f66df542215df7c2f", "dependencies": ["allocator-api2", "hashbrown", "oxc_data_structures", "rustc-hash"], "name": "oxc_allocator", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_allocator", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6d07280aa0e456352d72a1a98d2a91a127358177d8b246feee615b99b778ea1f", "dependencies": ["bitflags", "oxc_allocator", "oxc_ast_macros", "oxc_data_structures", "oxc_diagnostics", "oxc_estree", "oxc_regular_expression", "oxc_span", "oxc_str", "oxc_syntax"], "name": "oxc_ast", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_ast", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1ce1a0ca39332490e992eca47e20501f3774740718713b7ff53644ec590e2016", "dependencies": ["phf", "proc-macro2", "quote", "syn 3.0.9"], "name": "oxc_ast_macros", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_ast_macros", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d5dab648a994ca3b3675ccbea348b11006aca6c22d28a2bcc4fd22c891be47ed", "dependencies": ["oxc_allocator", "oxc_ast", "oxc_span", "oxc_syntax"], "name": "oxc_ast_visit", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_ast_visit", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "ac3f0180ce8b10906ae03adcd76cbc3f67cc162459372197edbc978baf5ae7f9", "name": "oxc_data_structures", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_data_structures", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "14144d3bdedc81c60fd465ae46ea16018f4a2ca11df8f4cfe85d6bcb320af9b9", "dependencies": ["bytecount", "cow-utils", "itoa", "memchr", "oxc_span", "percent-encoding", "smallvec", "textwrap", "unicode-segmentation", "unicode-width"], "name": "oxc_diagnostics", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_diagnostics", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "143f70d2c47792bcdd3e8c3e3fbdc24506043499c50d092c752afba1c6103620", "dependencies": ["dragonbox_ecma", "itoa", "num-bigint", "num-traits", "oxc_ast", "oxc_data_structures", "oxc_span", "oxc_syntax"], "name": "oxc_ecmascript", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_ecmascript", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cc212d653c5ee92487e637b9b44a51b8430cd48040d5f4abdce933a2f9a5edd3", "name": "oxc_estree", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_estree", "status": "阻塞" },
+    { "after": ["5.0.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["5.0.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "191884bee6c3744909a51acc7d78d4ae370d817b25875b10642f632327b6296e", "dependencies": ["nonmax", "serde"], "name": "oxc_index", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "5.0.0" }], "latestStable": "5.0.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_index", "status": "已是最新" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "2193499addde2689649d31816af73dc10c32f1855dba40d61cee17d341b05d9e", "dependencies": ["bitflags", "cow-utils", "memchr", "num-bigint", "num-traits", "oxc_allocator", "oxc_ast", "oxc_data_structures", "oxc_diagnostics", "oxc_ecmascript", "oxc_regular_expression", "oxc_span", "oxc_str", "oxc_syntax", "rustc-hash", "seq-macro"], "name": "oxc_parser", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_parser", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "b8330be1634468fdb3c9b850d831e1d82ded5c413d1154a46c0fc62eba2389bc", "dependencies": ["bitflags", "oxc_allocator", "oxc_ast_macros", "oxc_diagnostics", "oxc_span", "oxc_str", "phf", "rustc-hash", "unicode-id-start"], "name": "oxc_regular_expression", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_regular_expression", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "475e0f21fee076e57d9551415aeac08b843c29f7b65ced0ce09975845cea1bd6", "dependencies": ["itertools", "memchr", "oxc_allocator", "oxc_ast", "oxc_ast_visit", "oxc_data_structures", "oxc_diagnostics", "oxc_ecmascript", "oxc_index", "oxc_span", "oxc_str", "oxc_syntax", "rustc-hash", "self_cell", "smallvec"], "name": "oxc_semantic", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_semantic", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f32dae5b09cc262867e383533cdc822c40bccb09d84bbdc889716c99265197a1", "dependencies": ["compact_str", "oxc_allocator", "oxc_ast_macros", "oxc_estree", "oxc_str"], "name": "oxc_span", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_span", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "49552c2eeb7cbfa118d55485fb38c6689be5ce1b313af7e0116e5d8da0dc22e0", "dependencies": ["compact_str", "hashbrown", "oxc_allocator", "oxc_estree"], "name": "oxc_str", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_str", "status": "阻塞" },
+    { "after": ["0.152.0"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.152.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "87b3087c9e6f2039a4a46af8b0a9f9a5108ee3390a1fc8d98b24a5461e47888d", "dependencies": ["bitflags", "cow-utils", "dragonbox_ecma", "nonmax", "oxc_allocator", "oxc_ast_macros", "oxc_estree", "oxc_index", "oxc_span", "oxc_str", "phf", "unicode-id-start"], "name": "oxc_syntax", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.152.0" }], "latestStable": "0.157.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "oxc_syntax", "status": "阻塞" },
+    { "after": ["2.3.2"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.3.2"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220", "name": "percent-encoding", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.3.2" }], "latestStable": "2.3.2", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "percent-encoding", "status": "已是最新" },
+    { "after": ["0.14.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.14.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "010378780309880b08997fae13be7834dba947d36393bd372f2b1556deb2a2f6", "dependencies": ["phf_macros", "phf_shared", "serde"], "name": "phf", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.14.0" }], "latestStable": "0.14.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "phf", "status": "已是最新" },
+    { "after": ["0.14.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.14.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100", "dependencies": ["fastrand", "phf_shared"], "name": "phf_generator", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.14.0" }], "latestStable": "0.14.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "phf_generator", "status": "已是最新" },
+    { "after": ["0.14.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.14.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "5fa8d0ca26d424d27630da600c6624696e7dec8bf7b3b492b383c5dc49e5e085", "dependencies": ["phf_generator", "phf_shared", "proc-macro2", "quote", "syn 2.0.119"], "name": "phf_macros", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.14.0" }], "latestStable": "0.14.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "phf_macros", "status": "已是最新" },
+    { "after": ["0.14.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.14.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "c6fd9027e2d9319be6349febd1db4e8d02aa544921200c9b777720ac34a3aa89", "dependencies": ["siphasher"], "name": "phf_shared", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.14.0" }], "latestStable": "0.14.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "phf_shared", "status": "已是最新" },
+    { "after": ["0.2.17"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.17"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd", "name": "pin-project-lite", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.17" }], "latestStable": "0.2.17", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "pin-project-lite", "status": "已是最新" },
+    { "after": ["0.1.6"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.6"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d83eb9bc6d8e5cf568e7a1101d60ee05e81ed50ea106026f3d18deeb046d7661", "dependencies": ["serde_core", "writeable", "zerovec"], "name": "potential_utf", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.6" }], "latestStable": "0.1.6", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "potential_utf", "status": "已是最新" },
+    { "after": ["1.0.107"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.107"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9", "dependencies": ["unicode-ident"], "name": "proc-macro2", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.107" }], "latestStable": "1.0.107", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "proc-macro2", "status": "已是最新" },
+    { "after": ["1.0.47"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.47"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001", "dependencies": ["proc-macro2"], "name": "quote", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.47" }], "latestStable": "1.0.47", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "quote", "status": "已是最新" },
+    { "after": ["2.1.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["2.1.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d", "name": "rustc-hash", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.1.3" }], "latestStable": "2.1.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "rustc-hash", "status": "已是最新" },
+    { "after": ["1.0.23"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.23"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f", "name": "rustversion", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.23" }], "latestStable": "1.0.23", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "rustversion", "status": "已是最新" },
+    { "after": ["1.3.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.3.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "2ab42ca02749e120097e328d91d415325bdf43b1c72c4c8badf37375fe40a813", "name": "self_cell", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.3.0" }], "latestStable": "1.3.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "self_cell", "status": "已是最新" },
+    { "after": ["1.0.28"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.28"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd", "name": "semver", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.28" }], "latestStable": "1.0.28", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "semver", "status": "已是最新" },
+    { "after": ["0.3.6"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.6"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc", "name": "seq-macro", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.6" }], "latestStable": "0.3.6", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "seq-macro", "status": "已是最新" },
+    { "after": ["1.0.229"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.229"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba", "dependencies": ["serde_core", "serde_derive"], "name": "serde", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.229" }], "latestStable": "1.0.229", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "serde", "status": "已是最新" },
+    { "after": ["1.0.229"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.229"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48", "dependencies": ["serde_derive"], "name": "serde_core", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.229" }], "latestStable": "1.0.229", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "serde_core", "status": "已是最新" },
+    { "after": ["1.0.229"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.229"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348", "dependencies": ["proc-macro2", "quote", "syn 3.0.9"], "name": "serde_derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.229" }], "latestStable": "1.0.229", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "serde_derive", "status": "已是最新" },
+    { "after": ["1.0.4"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.4"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "33f4fe9184a62d842c9ef383018f3306d8ba224fd9d836f56d7288308847c256", "name": "siphasher", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.4" }], "latestStable": "1.0.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "siphasher", "status": "已是最新" },
+    { "after": ["0.4.12"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.4.12"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5", "name": "slab", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.4.12" }], "latestStable": "0.4.12", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "slab", "status": "已是最新" },
+    { "after": ["1.16.4"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["1.16.2"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "d0d5d4b1981b8bbbb7aed204cae5726d683d5d6ac7e74ec54122ea28f315e7c8", "dependencies": ["serde"], "name": "smallvec", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.16.4" }], "latestStable": "1.16.5", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "smallvec", "status": "已升级" },
+    { "after": ["0.3.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.3.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100", "name": "smawk", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.3.3" }], "latestStable": "0.3.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "smawk", "status": "已是最新" },
+    { "after": ["1.2.1"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.2.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596", "name": "stable_deref_trait", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.2.1" }], "latestStable": "1.2.1", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "stable_deref_trait", "status": "已是最新" },
+    { "after": ["1.1.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.1.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f", "name": "static_assertions", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.1.0" }], "latestStable": "1.1.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "static_assertions", "status": "已是最新" },
+    { "after": ["2.0.119", "3.0.9"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["2.0.119", "3.0.6"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297", "dependencies": ["proc-macro2", "quote", "unicode-ident"], "name": "syn", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "2.0.119" }, { "checksum": "d78c8dee4c7bf0e14673097256fed6142ce9d3b85a408189d07482442145823b", "dependencies": ["proc-macro2", "quote", "unicode-ident"], "name": "syn", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "3.0.9" }], "latestStable": "3.0.9", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "syn", "status": "已升级" },
+    { "after": ["0.14.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.14.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "901704edd0dfe137f1987838ee4f259e4e063c31371bdb423f7ae38ec6f77f02", "dependencies": ["proc-macro2", "quote", "syn 3.0.9"], "name": "synstructure", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.14.0" }], "latestStable": "0.14.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "synstructure", "status": "已是最新" },
+    { "after": ["0.16.4"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.16.4"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "6ecfad6c3abc80a577f2b91c1e412ee57e7a060d430b553c1b0c940974ebcd49", "dependencies": ["icu_segmenter", "smawk", "unicode-width"], "name": "textwrap", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.16.4" }], "latestStable": "0.16.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "textwrap", "status": "已是最新" },
+    { "after": ["0.8.5"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.8.4"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "abc840c238154d58f9e86b2792261edfde565a17696e1cda1a449de27979801a", "dependencies": ["displaydoc", "serde_core", "zerovec"], "name": "tinystr", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.8.5" }], "latestStable": "0.8.5", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "tinystr", "status": "已升级" },
+    { "after": ["1.5.0"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.5.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0825d2e09dcae814a4273c1e1435979d414ede25b2ee235b1545da6682483765", "name": "unicode-id-start", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.5.0" }], "latestStable": "1.5.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "unicode-id-start", "status": "已是最新" },
+    { "after": ["1.0.27"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["1.0.26"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563", "name": "unicode-ident", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.27" }], "latestStable": "1.0.27", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "unicode-ident", "status": "已升级" },
+    { "after": ["1.13.3"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.13.3"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8", "name": "unicode-segmentation", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.13.3" }], "latestStable": "1.13.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "unicode-segmentation", "status": "已是最新" },
+    { "after": ["0.2.3"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.2.2"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "ca718471876992059f251e33aafc334346ada08042b7661dd1fe313a9bced557", "name": "unicode-width", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.3" }], "latestStable": "0.2.3", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "unicode-width", "status": "已升级" },
+    { "after": ["1.1.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["1.0.4"], "delta": "minor", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "af3bd9d3e571c26fcce9d033b87ea5ab061b8d2ffe9b7a5675d810d68f03edf0", "dependencies": ["utf_types"], "name": "utf8_iter", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.1.0" }], "latestStable": "1.1.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "utf8_iter", "status": "已升级" },
+    { "after": ["1.0.0"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": [], "delta": "新增", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6", "name": "utf_types", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.0" }], "latestStable": "1.0.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "utf_types", "status": "已升级" },
+    { "after": ["0.1.0"], "basis": "本地crate不与registry比较。", "before": ["0.1.0"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "dependencies": ["napi", "napi-build", "napi-derive", "oxc_allocator", "oxc_ast", "oxc_ast_visit", "oxc_parser", "oxc_semantic", "oxc_span"], "name": "weapp_tailwindcss_native", "version": "0.1.0" }], "latestStable": null, "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "weapp_tailwindcss_native", "status": "保留" },
+    { "after": ["0.2.1"], "basis": "传递crate只记录锁身份；未独立升级验证，不能称已是最新。", "before": ["0.2.1"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5", "name": "windows-link", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.1" }], "latestStable": "0.100.0", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "windows-link", "status": "阻塞" },
+    { "after": ["0.6.4"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.6.4"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc", "name": "writeable", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.6.4" }], "latestStable": "0.6.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "writeable", "status": "已是最新" },
+    { "after": ["0.8.4"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.8.3"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "417ef3fcf6c300b7dbd25c85531a746931c02ad536f3cf4786ed1e88223340b3", "dependencies": ["stable_deref_trait", "yoke-derive", "zerofrom"], "name": "yoke", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.8.4" }], "latestStable": "0.8.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "yoke", "status": "已升级" },
+    { "after": ["0.8.4"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.8.4"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "ec8ebde2db3681e8c9980cc27822030e68752690ddfa9473e739aeb4dbde6d71", "dependencies": ["proc-macro2", "quote", "syn 3.0.9", "synstructure"], "name": "yoke-derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.8.4" }], "latestStable": "0.8.4", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "yoke-derive", "status": "已是最新" },
+    { "after": ["0.1.8"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.8"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "0ec05a11813ea801ff6d75110ad09cd0824ddba17dfe17128ea0d5f68e6c5272", "dependencies": ["zerofrom-derive"], "name": "zerofrom", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.8" }], "latestStable": "0.1.8", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zerofrom", "status": "已是最新" },
+    { "after": ["0.1.8"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.1.8"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f75b4683f6c7f45248d4d64056a24298c6281e0993356d7d1b4a1a962ef10d4a", "dependencies": ["proc-macro2", "quote", "syn 3.0.9", "synstructure"], "name": "zerofrom-derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.1.8" }], "latestStable": "0.1.8", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zerofrom-derive", "status": "已是最新" },
+    { "after": ["0.2.5"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["0.2.5"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "4ea269c3bd32f0a32c321907a2ae912ba6f4649bb0fc764a15627e99a7095a3f", "dependencies": ["displaydoc", "yoke", "zerofrom", "zerovec"], "name": "zerotrie", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.2.5" }], "latestStable": "0.2.5", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zerotrie", "status": "已是最新" },
+    { "after": ["0.11.9"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.11.8"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "f58a2799cfe9a1670c7ea8edbd52ef8edb93cb37a7f83bf31ba9e35d9dae6a40", "dependencies": ["serde", "yoke", "zerofrom", "zerovec-derive"], "name": "zerovec", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.11.9" }], "latestStable": "0.11.9", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zerovec", "status": "已升级" },
+    { "after": ["0.11.7"], "basis": "锁版本集合较基线变化，包含兼容patch/minor及新增包；不假称只有patch。", "before": ["0.11.6"], "delta": "patch", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "c3743ddbf47738d929cd1ae2e199d40d0162979dfe31aef8ae646d2bf00bf97a", "dependencies": ["proc-macro2", "quote", "syn 3.0.9"], "name": "zerovec-derive", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "0.11.7" }], "latestStable": "0.11.7", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zerovec-derive", "status": "已升级" },
+    { "after": ["1.0.23"], "basis": "锁版本等于本轮crates.io正式目标。", "before": ["1.0.23"], "delta": "未变", "exitCondition": "结合依赖图进行cargo test/clippy --locked、native ABI和发布产物验证。", "identities": [{ "checksum": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b", "name": "zmij", "source": "registry+https://github.com/rust-lang/crates.io-index", "version": "1.0.23" }], "latestStable": "1.0.23", "lock": "packages/weapp-tailwindcss/native/Cargo.lock", "package": "zmij", "status": "已是最新" }
+  ],
+  "physicalInstallation": "本次未安装或读取node_modules；锁解析不冒充实际安装。"
+}
