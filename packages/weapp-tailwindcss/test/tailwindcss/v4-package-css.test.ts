@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { createTailwindV4Engine, resolveTailwindV4Source } from '@/tailwindcss/v4-engine'
+import { normalizeTailwindBannerVersion } from '../helpers/normalizeTailwindBannerVersion'
 
 const require = createRequire(import.meta.url)
 const tailwindcssPackageRoot = path.dirname(require.resolve('tailwindcss/package.json'))
@@ -92,7 +93,7 @@ describe('Tailwind v4 package CSS entry outputs', () => {
         entry,
         mode: mode.name,
         classSet: [...result.classSet],
-        css: result.css,
+        css: normalizeTailwindBannerVersion(result.css),
       }).toMatchSnapshot(`${entry} ${mode.name}`)
     }
   })

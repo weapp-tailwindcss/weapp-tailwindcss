@@ -53,6 +53,12 @@ Tailwind 4.3.5 造成的 PostCSS snapshot 已按真实生成结果更新；Lynx 
 
 ## Release 与后续交付
 
-`pnpm release status` exit 0，仓库已有 `.changeset/dynamic-alpha-rgba.md` 和 `.changeset/tame-monkeys-travel.md` 两份待处理 intent。本轮只有依赖、锁、模板和公开事实文档变化，没有新增公共包运行时行为，因此不新增 changeset，也不新增 `create-weapp-vite` 联动。
+复核发现，上轮“不新增 changeset”的判断遗漏了 catalog 对发布 manifest 的影响：`@weapp-tailwindcss/engine` 的生产依赖 `@tailwindcss/node`、`@tailwindcss/oxide`，以及 `tailwindcss-injector` 的生产依赖 `tailwindcss`，实际发布范围均从 `^4.3.4` 变为 `^4.3.5`。逐包解析升级前后的 catalog，并用真实 `pnpm pack` 核对后，确认只有这两个公开包需要直接 patch intent；已补中文记录 `.changeset/sharp-boxes-raise.md`。其他消费者由 repoctl 的依赖传播和 fixed group 生成版本计划，脚手架输出未改变，不新增 `create-weapp-vite` 联动。
+
+Tailwind banner 的版本号不属于样式语义。后续 CSS 快照和能力 static 基线统一通过 PostCSS AST 仅移除 Tailwind banner 注释，保留其他注释、声明字符串、选择器和声明值；原始构建产物及运行时版本证据继续保留。小程序的 banner 产物约束直接检查原始 CSS，避免快照规范化掩盖产物回归。
+
+原始 API 输出快照承担 banner 保留合同，因此单独在断言边界将真实注释中的版本号替换为 `<version>`，保留 banner 的存在、位置、许可证、URL 和全部样式。这覆盖 `style.test.ts` 与 `v4-package-css.test.ts` 中另外 5 处随安装版本变化的注释；不改生产 API、历史 fixture 或原始输出。通过对应 Vitest 入口更新后，以 `CI=1 --update=none` 复验辅助工具、API 输出与 banner finalization，共 90 项测试；新增回归确认其他注释、声明字符串和真实样式差异仍然可见。
+
+本次修正通过 `pnpm e2e:tailwind:static:update` 重生成能力基线，并通过 apps-generator 原入口限定 5 个项目的 12 个 Web、web-compact、Android/iOS App 样式构建更新快照；同范围以 `CI=1 --update=none` 复验通过。快照工具与能力 static 回归共 56 项通过，apps-generator 的 12 项测试通过，包构建 36 个任务通过。逐文件核对 73 份 CSS 的差异均仅移除 banner，12 条聚合报告仅改变注释字节数和 banner 标记，49 个 static 文件哈希全部正确。ESLint、`pnpm agents:check`、`git diff --check` 与 `pnpm release status` 通过；这些定向验证不代替本地全端环境预检与设备运行证据。
 
 提交前会再次执行 `pnpm release status`、`pnpm agents:check` 和 `git diff --check`，然后创建 PR。PR 的 CI 失败将逐项在同一 worktree 修复并推送，全部通过后合并；合并后使用准确 merge SHA 跟进仓库规定的 Version PR/Version Package CI。该阶段不执行 npm publish。

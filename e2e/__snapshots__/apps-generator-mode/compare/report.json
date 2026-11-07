@@ -8835,7 +8835,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 452044,
+      "bytes": 451978,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -11121,7 +11121,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": false,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -11155,7 +11155,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 443760,
+      "bytes": 443694,
       "selectors": [
         "*",
         ".-bg-conic-180",
@@ -13441,7 +13441,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": false,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -13476,7 +13476,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 461588,
+      "bytes": 461324,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -15780,7 +15780,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -15815,7 +15815,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 459480,
+      "bytes": 459216,
       "selectors": [
         "*",
         ".-translate-y-1",
@@ -18119,7 +18119,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -18152,7 +18152,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 640555,
+      "bytes": 640291,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -19937,7 +19937,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -19970,7 +19970,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 637476,
+      "bytes": 637212,
       "selectors": [
         "*",
         ".\\!bg-\\[gray\\]",
@@ -21755,7 +21755,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -21788,7 +21788,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 337105,
+      "bytes": 336973,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -23549,7 +23549,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -23582,7 +23582,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 333934,
+      "bytes": 333802,
       "selectors": [
         "*",
         ".before\\:content-\\[\\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\\'\\]:before",
@@ -25343,7 +25343,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -25385,7 +25385,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 89620,
+      "bytes": 89224,
       "selectors": [
         "#app",
         "*",
@@ -25716,7 +25716,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": true,
@@ -25758,7 +25758,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 85433,
+      "bytes": 85037,
       "selectors": [
         "#app",
         "*",
@@ -26089,7 +26089,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": true,
@@ -26129,7 +26129,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 101509,
+      "bytes": 101179,
       "selectors": [
         "#app",
         "*",
@@ -26770,7 +26770,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,
@@ -26810,7 +26810,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 101509,
+      "bytes": 101179,
       "selectors": [
         "#app",
         "*",
@@ -27451,7 +27451,7 @@
       ],
       "hasSupports": true,
       "hasHoverPseudo": true,
-      "hasTailwindBanner": true,
+      "hasTailwindBanner": false,
       "hasSystemDarkModeMedia": true,
       "hasManualDarkModeSelector": true,
       "hasUnsupportedThemeAttributeSelector": false,

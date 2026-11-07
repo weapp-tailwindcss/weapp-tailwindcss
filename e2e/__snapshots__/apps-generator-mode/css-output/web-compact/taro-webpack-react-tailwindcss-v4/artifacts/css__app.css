@@ -501,7 +501,7 @@
   to {
     top: 0;
   }
-} /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+}
 @supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   *,
   ::-webkit-backdrop,

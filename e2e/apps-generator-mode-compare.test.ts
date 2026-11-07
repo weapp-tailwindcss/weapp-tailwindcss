@@ -247,6 +247,16 @@ function summarizeCss(css: string): CssSummary {
   }
 }
 
+function rawTailwindBannerFiles(files: GeneratorBuildResult['rawCssFiles']) {
+  return files.filter((file) => {
+    let hasBanner = false
+    postcss.parse(Buffer.from(file.content).toString()).walkComments((comment) => {
+      hasBanner ||= /^!\s*tailwindcss v/i.test(comment.text)
+    })
+    return hasBanner
+  }).map(file => file.fileName)
+}
+
 function createCompareProject(entry: ProjectEntry, fixturesDir: '../demo'): CompareProject {
   const coverageEntry = findCoverageEntry(entry.name)
   const outputCssPath = path.join(entry.projectPath, entry.cssFile)
@@ -1162,6 +1172,16 @@ async function expectCssOutputSnapshot(
 }
 
 describe('demo generator mode output', () => {
+  it('检查原始 CSS 的 Tailwind banner，不能由快照清理掩盖产物回归', () => {
+    const files = [
+      { fileName: 'banner.css', content: Buffer.from('@charset "UTF-8"; /*! tailwindcss v4.3.5 | MIT */ .card { color: red }') },
+      { fileName: 'literal.css', content: Buffer.from('.card { content: "/*! tailwindcss v4.3.5 | MIT */" }') },
+      { fileName: 'vendor.css', content: Buffer.from('/*! vendor license */ .card { color: red }') },
+    ]
+    expect(rawTailwindBannerFiles(files)).toEqual(['banner.css'])
+    expect(normalizeCssTextSnapshot(Buffer.from(files[0]!.content).toString())).not.toContain('tailwindcss v')
+  })
+
   it.each(['', '-end'])('normalizes generated css source markers %s across checkout locations', (suffix) => {
     const source = 'demo/taro-vite-react-tailwindcss-v4/src/app.css'
     const expected = `/*! weapp-tailwindcss vite-generated-css${suffix}:${encodeURIComponent(source)} */`
@@ -1430,7 +1450,7 @@ describe('demo generator mode output', () => {
 
       expect(item.generator.bytes, `${project.name} ${project.platform} generator css should not be empty`).toBeGreaterThan(0)
       if (isMiniProgramProject(project)) {
-        expect(item.generator.hasTailwindBanner, `${project.name} generator css should not keep raw Tailwind banner`).toBe(false)
+        expect(rawTailwindBannerFiles(generatorResult!.rawCssFiles), `${project.name} generator css should not keep raw Tailwind banner`).toEqual([])
         expect(item.generator.hasSupports, `${project.name} generator css should remove unsupported @supports`).toBe(false)
         expect(item.generator.hasHoverPseudo, `${project.name} generator css should remove unsupported :hover`).toBe(false)
         expect(item.generator.hasSystemDarkModeMedia, `${project.name} generator css should include system dark mode`).toBe(true)

@@ -6,6 +6,7 @@ import {
 } from "@weapp-tailwindcss/postcss";
 import { getCompilerContext } from "@/context";
 import { normalizeEol } from "../helpers/normalizeEol";
+import { normalizeTailwindBannerVersion } from "../helpers/normalizeTailwindBannerVersion";
 import { createGetCase, cssCasePath } from "../util";
 
 const getCase = createGetCase(cssCasePath);
@@ -884,7 +885,7 @@ describe("styleHandler", () => {
     const rawCode = `@import "tailwindcss" source(none);
   `;
     const { css } = await styleHandler(rawCode, { isMainChunk: true });
-    expect(css).toMatchSnapshot();
+    expect(normalizeTailwindBannerVersion(css)).toMatchSnapshot();
   });
 
   it(":hover remove case 0", async () => {
