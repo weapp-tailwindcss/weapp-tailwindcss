@@ -137,6 +137,10 @@
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
     - dependency-upgrade-20261028
     - tall-trees-dream
+"@weapp-tailwindcss/engine@0.1.8":
+  dir: packages/engine
+  intents:
+    - sharp-boxes-raise
 "@weapp-tailwindcss/env@0.1.0":
   dir: packages/env
   intents:
@@ -763,6 +767,10 @@ tailwindcss-injector@1.0.29:
   dir: packages/tailwindcss-injector
   intents:
     - tame-monkeys-travel
+tailwindcss-injector@1.0.30:
+  dir: packages/tailwindcss-injector
+  intents:
+    - sharp-boxes-raise
 theme-transition@2.1.0:
   dir: packages-runtime/theme-transition
   intents:
