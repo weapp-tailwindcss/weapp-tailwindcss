@@ -24,8 +24,10 @@ describe('watch 回滚的生产者生命周期', () => {
     ...['watch', 'dev-server'].flatMap(driver => [0, 1, 'SIGTERM'].flatMap(exit => [false, true].map(outputRestored => ({ driver, exit, outputRestored })))),
     ...['watch', 'dev-server'].map(driver => ({ driver, exit: 1, outputRestored: true, exitAtProbe: true })),
     { driver: 'watch', exit: 1, outputRestored: true, exitAtStop: true },
+    { driver: 'watch', exit: 1, outputRestored: true, exitAtStop: true, rollbackWriteMs: 200 },
+    { driver: 'watch', exit: 1, outputRestored: true, exitAtProbe: true, rollbackWriteMs: 200 },
   ]
-  it.each(cases)('$driver 回滚时退出 $exit，产物已恢复=$outputRestored，仍保留退出与日志', async ({ driver, exit, outputRestored, exitAtProbe, exitAtStop }) => {
+  it.each(cases)('$driver 回滚时退出 $exit，产物已恢复=$outputRestored，写入耗时=$rollbackWriteMs，仍保留退出与日志', async ({ driver, exit, outputRestored, exitAtProbe, exitAtStop, rollbackWriteMs = 0 }) => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-watch-exit-'))
     roots.push(root)
     const source = path.join(root, 'input.vue')
@@ -37,6 +39,9 @@ describe('watch 回滚的生产者生命周期', () => {
     let served = original
     let mutated = false
     let rollback = false
+    let elapsedWriteMs = 0
+    const monotonicNow = performance.now.bind(performance)
+    vi.spyOn(performance, 'now').mockImplementation(() => monotonicNow() + elapsedWriteMs)
     const child = Object.assign(new EventEmitter(), { exitCode: null, signalCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() })
     const exitProducer = () => {
       child.stderr.emit('data', Buffer.from('fixture mapped evidence cap exceeded\n'))
@@ -92,6 +97,8 @@ describe('watch 回滚的生产者生命周期', () => {
           served = original
           await writeFile(output, original)
         }
+        // 确定性复现写入占满轮询预算，避免依赖 CI 的磁盘调度速度。
+        elapsedWriteMs += rollbackWriteMs
         if (!exitAtProbe && !exitAtStop) {
           exitProducer()
         }
