@@ -12,6 +12,7 @@ import { createProcessMemorySampler } from './process-memory.mjs'
 import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
+import { waitFor } from './wait-for.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
 import { assertWatchRunning, stopChild } from './watch-process.mjs'
 import { isWatchBuildComplete, isWatchReady } from './watch-readiness.mjs'
@@ -169,17 +170,6 @@ async function statMtimeMs(file) {
   catch {
     return 0
   }
-}
-
-async function waitFor(check, timeoutMs, intervalMs = 120) {
-  const start = Date.now()
-  while (Date.now() - start < timeoutMs) {
-    if (await check()) {
-      return true
-    }
-    await new Promise(resolve => setTimeout(resolve, intervalMs))
-  }
-  return false
 }
 
 async function waitForPluginTimingSample(logs, startIndex, timeoutMs, intervalMs) {
