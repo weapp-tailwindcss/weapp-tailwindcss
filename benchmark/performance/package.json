@@ -19,7 +19,7 @@
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/postcss": "workspace:*",
     "@weapp-tailwindcss/runtime": "workspace:*",
-    "cn": "^0.4.0",
+    "cn": "^0.5.2",
     "esbuild": "^0.28.2",
     "postcss": "catalog:postcss85",
     "weapp-tailwindcss": "workspace:*"

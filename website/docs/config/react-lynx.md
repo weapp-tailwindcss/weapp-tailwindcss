@@ -28,7 +28,7 @@ keywords:
 - [核心发布版本](https://www.npmjs.com/package/weapp-tailwindcss)；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- 仓库示例固定 Rspeedy `0.18.3`、ReactLynx 插件 `0.22.0`、ReactLynx runtime `0.129.0`、Tailwind CSS `4.3.4`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
+- 仓库示例固定 Rspeedy `0.18.5`、ReactLynx 插件 `0.22.2`、ReactLynx runtime `0.129.2`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
 - 仅支持 ReactLynx + Rspeedy 原生构建，不覆盖 Rspeedy Web、非 React Lynx 或 React Native
 
 ## 最小配置
@@ -213,9 +213,11 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 
 ## 设备与验证证据
 
-当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.4`，完整原始工件已通过严格校验、归档及重放。
+当前示例与已提交的双端基线均使用 Tailwind CSS `4.3.5`，完整原始工件已通过严格校验、归档及重放。
 
-CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-11-05T09:53:21.315Z`，`catalogHash` 为 `9126d53d68318cbd319f642be14d43402fd1029de649a9915c8c554e2c54e8e4`。当前基线来自源码 `d057d4b4f2798af2d56ee36414e05736915c8c00` 的 CI run `42003249002` attempt 1：iOS run `a4d7d083-11ea-461a-96f2-5f210a1c96a5`、Android run `07139edc-0502-4799-b537-d35fdd0d0d3a`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
+历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
+
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-11-06T20:53:50.858Z`，`catalogHash` 为 `92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`。当前基线来自源码 `d371a3daac674e9c3fd7b25b017b473e939359ed` 的 CI run `42288533510` attempt 1：iOS run `47910825-ab71-4115-8f76-1e4586c3e90c`、Android run `cb18e693-86ce-4498-90b2-3faa28bce685`，原始 ZIP、附件和报告严格校验、归档及重放通过；此 CI 证据不替代本地完整双端验收。
 
 `--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 

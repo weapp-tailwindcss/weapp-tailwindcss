@@ -159,7 +159,7 @@ catalogs:
     lodash.isplainobject: ^4.0.6
     lodash.merge: ^4.6.2
   tooling:
-    del: ^8.0.1
+    del: ^9.0.1
     execa: ^9.6.1
     traverse: ^0.6.14
   babelCore7285:
@@ -177,7 +177,7 @@ catalogs:
   babelRuntime7284tilde:
     '@babel/runtime': ^7.29.10
   baselineBrowserMapping:
-    baseline-browser-mapping: ^2.11.34
+    baseline-browser-mapping: ^2.11.35
   classVarianceAuthority:
     class-variance-authority: ^0.7.1
   clsx:
@@ -212,7 +212,7 @@ catalogs:
   iconifyJson:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
-    '@iconify-json/logos': ^1.2.18
+    '@iconify-json/logos': ^1.2.19
     '@iconify-json/lucide': ^1.2.151
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
@@ -224,7 +224,7 @@ catalogs:
   lucideVueNext0555:
     lucide-vue-next: ^1.0.0
   miniApiTypings:
-    miniprogram-api-typings: ^5.2.3
+    miniprogram-api-typings: ^5.3.1
   postcss85:
     postcss: ^8.5.32
   postcss85tilde:
@@ -236,7 +236,7 @@ catalogs:
   postcssRpx:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:
-    es-toolkit: ^1.53.0
+    es-toolkit: ^1.53.2
     postcss-preset-env: ^11.6.2
   prettier371:
     prettier: ^3.9.10
@@ -257,27 +257,27 @@ catalogs:
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
-    sass: ^1.107.1
-    sass-embedded: ^1.107.1
+    sass: 1.107.1
+    sass-embedded: 1.107.1
   storybook:
-    '@storybook/addon-a11y': ^10.6.5
-    '@storybook/react': ^10.6.5
-    '@storybook/react-vite': ^10.6.5
-    storybook: ^10.6.5
+    '@storybook/addon-a11y': ^10.6.6
+    '@storybook/react': ^10.6.6
+    '@storybook/react-vite': ^10.6.6
+    storybook: ^10.6.6
   stylelint1625:
     stylelint: ^17.16.0
   swc:
-    '@swc/core': ^1.16.21
+    '@swc/core': ^1.16.22
   tailwindMerge:
     tailwind-merge: ^3.7.0
   tailwindMerge2:
     tailwind-merge: ^2.6.1
   tailwindcss4:
-    '@tailwindcss/node': ^4.3.4
-    '@tailwindcss/oxide': ^4.3.4
-    '@tailwindcss/postcss': ^4.3.4
-    '@tailwindcss/vite': ^4.3.4
-    tailwindcss: ^4.3.4
+    '@tailwindcss/node': ^4.3.5
+    '@tailwindcss/oxide': ^4.3.5
+    '@tailwindcss/postcss': ^4.3.5
+    '@tailwindcss/vite': ^4.3.5
+    tailwindcss: ^4.3.5
   tailwindcssPatch:
     tailwindcss-patch: 10.0.2
   tailwindcssRem:
@@ -354,7 +354,7 @@ catalogs:
     '@typescript-eslint/parser': ^8.72.1
     typescript-eslint: ^8.72.1
   uviewPlus:
-    uview-plus: ^3.8.136
+    uview-plus: ^3.8.138
   vite4:
     vite: ^4.5.14
   vite52:
@@ -401,7 +401,7 @@ catalogs:
     webpack-cli: ^7.3.1
     webpack-dev-server: ^5.2.7
   wrangler:
-    wrangler: ^4.154.0
+    wrangler: ^4.158.0
   uniVite:
     vite: 5.2.8
   taroRnReact18:

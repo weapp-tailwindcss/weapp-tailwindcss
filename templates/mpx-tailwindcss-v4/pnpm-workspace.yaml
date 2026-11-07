@@ -15,8 +15,8 @@ minimumReleaseAgeExclude:
   - '@weapp-core/*'
   - '@wevu/*'
   - repoctl
-  - '@weapp-tailwindcss/postcss@3.3.3'
-  - weapp-tailwindcss@5.5.5
+  - '@weapp-tailwindcss/postcss@4.0.0'
+  - weapp-tailwindcss@5.7.0
 overrides:
   '@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/parser': 8.72.1
   '@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/eslint-plugin': 8.72.1
@@ -27,4 +27,3 @@ patchedDependencies:
   "@mpxjs/vue-cli-plugin-mpx@2.2.32": patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch
   webpack@5.112.2: patches/webpack@5.112.2.patch
   '@mpxjs/webpack-plugin@2.11.1': patches/@mpxjs__webpack-plugin@2.11.1.patch
-  "@weapp-tailwindcss/postcss@3.4.3": patches/@weapp-tailwindcss__postcss@3.4.3.patch

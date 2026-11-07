@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest'
 import { verifyBrowserHome, verifyBrowserRendering, verifyImageVersion } from '../scripts/ci/verify-playwright-image.mjs'
 
-const info = { driverVersion: '1.64.1', dockerImageName: 'mcr.microsoft.com/playwright:v1.64.1-noble' }
+const info = { driverVersion: '1.65.0', dockerImageName: 'mcr.microsoft.com/playwright:v1.65.0-noble' }
 
 it('浏览器 HOME 同时匹配实际账户目录与 UID，拒绝 GitHub 异主挂载', () => {
   const account = { homedir: '/root', uid: 0 }
@@ -11,12 +11,12 @@ it('浏览器 HOME 同时匹配实际账户目录与 UID，拒绝 GitHub 异主�
 })
 
 it('镜像和三个实际解析版本必须精确一致，缺项或漂移不能降级', () => {
-  expect(() => verifyImageVersion(info, ['1.64.1', '1.64.1', '1.64.1'])).not.toThrow()
-  for (const versions of [['1.64.2', '1.64.2', '1.64.2'], ['1.64.1', '1.64.1', '1.64.2'], ['1.64.1', undefined, '1.64.1']]) {
+  expect(() => verifyImageVersion(info, ['1.65.0', '1.65.0', '1.65.0'])).not.toThrow()
+  for (const versions of [['1.65.1', '1.65.1', '1.65.1'], ['1.65.0', '1.65.0', '1.65.1'], ['1.65.0', undefined, '1.65.0']]) {
     expect(() => verifyImageVersion(info, versions)).toThrow()
   }
-  for (const marker of [null, {}, { ...info, driverVersion: '1.64.1-extra' }, { ...info, dockerImageName: 'untrusted' }]) {
-    expect(() => verifyImageVersion(marker, ['1.64.1', '1.64.1', '1.64.1'])).toThrow()
+  for (const marker of [null, {}, { ...info, driverVersion: '1.65.0-extra' }, { ...info, dockerImageName: 'untrusted' }]) {
+    expect(() => verifyImageVersion(marker, ['1.65.0', '1.65.0', '1.65.0'])).toThrow()
   }
 })
 

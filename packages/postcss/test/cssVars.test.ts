@@ -7,7 +7,7 @@ import cssVarsV4, { tailwindPropertyRegistrations } from '@/cssVarsV4'
 const require = createRequire(import.meta.url)
 
 it('默认兼容签名与当前实际 Tailwind 编译器的全部注册双向一致', async () => {
-  const inventory = JSON.parse(await readFile(new URL('../../../e2e/tailwind-capabilities/inventory/tailwind-4.3.4.json', import.meta.url), 'utf8'))
+  const inventory = JSON.parse(await readFile(new URL('../../../e2e/tailwind-capabilities/inventory/tailwind-4.3.5.json', import.meta.url), 'utf8'))
   const metadata = JSON.parse(await readFile(require.resolve('tailwindcss/package.json'), 'utf8'))
   expect(metadata.version).toBe(inventory.tailwindcss)
   const theme = await readFile(require.resolve('tailwindcss/theme.css'), 'utf8')
