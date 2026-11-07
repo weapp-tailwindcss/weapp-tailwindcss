@@ -7,7 +7,7 @@ Entry: taro-vite-react-tailwindcss-v4/dist
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 459480 | 2299 | true | true | true | true | true | true | false |
+| 459216 | 2299 | true | true | false | true | true | true | false |
 
 ## Generator CSS Files
 
@@ -24,9 +24,9 @@ Entry: taro-vite-react-tailwindcss-v4/dist
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `css/index.1.css` | [artifacts/css__index.1.css](artifacts/css__index.1.css) | 21390 | 49 | true | false | true | false | false | true | false |
-| `css/index.2.css` | [artifacts/css__index.2.css](artifacts/css__index.2.css) | 388086 | 2232 | true | true | true | true | true | true | false |
-| `css/index.3.css` | [artifacts/css__index.3.css](artifacts/css__index.3.css) | 27348 | 88 | true | false | true | false | true | true | false |
-| `css/index.4.css` | [artifacts/css__index.4.css](artifacts/css__index.4.css) | 8300 | 27 | true | false | true | false | false | true | false |
+| `css/index.1.css` | [artifacts/css__index.1.css](artifacts/css__index.1.css) | 21324 | 49 | true | false | false | false | false | true | false |
+| `css/index.2.css` | [artifacts/css__index.2.css](artifacts/css__index.2.css) | 388020 | 2232 | true | true | false | true | true | true | false |
+| `css/index.3.css` | [artifacts/css__index.3.css](artifacts/css__index.3.css) | 27282 | 88 | true | false | false | false | true | true | false |
+| `css/index.4.css` | [artifacts/css__index.4.css](artifacts/css__index.4.css) | 8234 | 27 | true | false | false | false | false | true | false |
 | `css/index.5.css` | [artifacts/css__index.5.css](artifacts/css__index.5.css) | 50 | 1 | false | false | false | false | false | false | false |
 | `css/vendors.css` | [artifacts/css__vendors.css](artifacts/css__vendors.css) | 14306 | 59 | false | false | false | false | false | false | false |

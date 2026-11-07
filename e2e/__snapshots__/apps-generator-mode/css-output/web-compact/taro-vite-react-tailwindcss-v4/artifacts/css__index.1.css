@@ -716,7 +716,6 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   syntax: '*';
   inherits: false;
 }
-/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @property --tw-translate-x {
   syntax: '*';
   inherits: false;

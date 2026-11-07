@@ -1,5 +1,4 @@
 @layer theme, base, components, utilities;
-/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer theme {
   :host,
   :root {

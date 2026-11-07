@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
-import { isCssSourceTraceComment } from '@weapp-tailwindcss/postcss/transform'
+import { isCssSourceTraceComment, stripTailwindBannerComments } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
 import postcss from 'postcss'
 import prettier from 'prettier'
@@ -146,7 +146,14 @@ export function extractCssImports(source: string): string[] {
 export const TAILWIND_BANNER = /^\s*\/\*! tailwindcss v[\d.]+ \| MIT License \| https:\/\/tailwindcss\.com \*\/\s*/i
 
 export function stripTailwindBanner(source: string) {
-  return source.replace(TAILWIND_BANNER, '')
+  try {
+    const root = postcss.parse(source)
+    stripTailwindBannerComments(root)
+    return root.toString()
+  }
+  catch {
+    return source.replace(TAILWIND_BANNER, '')
+  }
 }
 
 const CSS_IMPORT_NORMALIZE_RE = /@import\s+(url\(\s*)?(?:"([^"]+)"|'([^']+)'|([^"'()\s]+))(\s*\))?/gi
@@ -238,7 +245,8 @@ export function normalizeRawCssSnapshotText(source: string, options: CssSnapshot
   if (Object.keys(options).length > 0) {
     return `${normalizeCssTextSnapshot(source, options)}\n`
   }
-  return `${normalizeCssImports(source.replace(/\r\n/g, '\n')).trimEnd().split('\n').map(line => line.trimEnd()).join('\n')}\n`
+  const withoutBanner = stripTailwindBanner(source.replace(/\r\n/g, '\n'))
+  return `${normalizeCssImports(withoutBanner).trimEnd().split('\n').map(line => line.trimEnd()).join('\n')}\n`
 }
 
 export async function formatRawCssSnapshotText(source: string, options: CssSnapshotOptions = {}) {

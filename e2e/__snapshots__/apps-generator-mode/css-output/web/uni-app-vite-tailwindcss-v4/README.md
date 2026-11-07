@@ -7,7 +7,7 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/h5
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 89620 | 326 | true | true | true | true | true | true | true |
+| 89224 | 326 | true | true | false | true | true | true | true |
 
 ## Generator CSS Files
 
@@ -24,9 +24,9 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/h5
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `assets/index.1.css` | [artifacts/assets__index.1.css](artifacts/assets__index.1.css) | 47286 | 215 | true | true | true | true | true | true | false |
+| `assets/index.1.css` | [artifacts/assets__index.1.css](artifacts/assets__index.1.css) | 47220 | 215 | true | true | false | true | true | true | false |
 | `assets/index.2.css` | [artifacts/assets__index.2.css](artifacts/assets__index.2.css) | 16368 | 66 | true | false | false | false | false | true | false |
-| `assets/index.3.css` | [artifacts/assets__index.3.css](artifacts/assets__index.3.css) | 6835 | 21 | true | false | true | false | false | true | false |
-| `assets/index.4.css` | [artifacts/assets__index.4.css](artifacts/assets__index.4.css) | 6800 | 21 | true | false | true | false | false | true | false |
+| `assets/index.3.css` | [artifacts/assets__index.3.css](artifacts/assets__index.3.css) | 6769 | 21 | true | false | false | false | false | true | false |
+| `assets/index.4.css` | [artifacts/assets__index.4.css](artifacts/assets__index.4.css) | 6734 | 21 | true | false | false | false | false | true | false |
 | `assets/index.5.css` | [artifacts/assets__index.5.css](artifacts/assets__index.5.css) | 2124 | 6 | false | false | false | false | false | false | true |
 | `assets/uni.css` | [artifacts/assets__uni.css](artifacts/assets__uni.css) | 10009 | 88 | false | false | false | false | false | false | false |

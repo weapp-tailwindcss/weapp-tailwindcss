@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { replaceWxml } from '../packages/weapp-tailwindcss/src/wxml'
-import { collectCssSnapshots, formatRawCssSnapshotText, normalizeCssSnapshot, normalizeCssTextSnapshot, normalizeFontDataUrlsForSnapshot, normalizeFormattedCssSnapshot, normalizeGeneratedCssSourceMarkers, normalizeRawCssSnapshotText, normalizeSnapshotName } from './snapshotUtils'
+import { collectCssSnapshots, formatRawCssSnapshotText, normalizeCssSnapshot, normalizeCssTextSnapshot, normalizeFontDataUrlsForSnapshot, normalizeFormattedCssSnapshot, normalizeGeneratedCssSourceMarkers, normalizeRawCssSnapshotText, normalizeSnapshotName, stripTailwindBanner } from './snapshotUtils'
 
 describe('normalizeCssSnapshot', () => {
   it('normalizes generated css file hashes in path segments', () => {
@@ -21,6 +21,52 @@ describe('normalizeCssSnapshot', () => {
       '@import \'./styles/third-party-ui.wxss\';',
       '',
     ].join('\n'))
+  })
+
+  it('removes Tailwind version banners from raw snapshots without touching literals', async () => {
+    const source = [
+      '@charset "UTF-8"; /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */',
+      '.card { content: "/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */"; color: red }',
+      '@media print { /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */ .card { display: block } }',
+    ].join('\n')
+
+    expect(normalizeRawCssSnapshotText(source)).toBe([
+      '@charset "UTF-8";',
+      '.card { content: "/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */"; color: red }',
+      '@media print { .card { display: block } }',
+      '',
+    ].join('\n'))
+    const formatted = await formatRawCssSnapshotText(source)
+    expect(formatted).toContain('/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */')
+    expect(formatted).not.toMatch(/(?:^|[;}])\s*\/\*! tailwindcss v4\.3\.5/)
+  })
+
+  it.each(['3.4.19', '4.3.4', '4.3.5', '4.4.0-beta.1'])('Tailwind %s 的 banner 版本不影响样式快照', (version) => {
+    const css = '/*! vendor license */\n.card { color: red }'
+    const banner = `/*! tailwindcss v${version} | MIT License | https://tailwindcss.com */`
+    const source = `${banner}\n${css}`
+    expect(stripTailwindBanner(source)).toBe(css)
+    expect(normalizeCssTextSnapshot(source)).toBe(normalizeCssTextSnapshot(css))
+    expect(normalizeRawCssSnapshotText(source)).toBe(normalizeRawCssSnapshotText(css))
+    expect(normalizeRawCssSnapshotText(source.replace('color: red', 'color: blue'))).not.toBe(normalizeRawCssSnapshotText(css))
+  })
+
+  it('收集快照时移除 Tailwind banner，保留磁盘原始 CSS 与其他注释', async () => {
+    const root = await fs.mkdtemp(path.join(tmpdir(), 'weapp-tw-banner-snapshot-'))
+    const file = path.join(root, 'app.css')
+    const source = '@charset "UTF-8"; /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */\n/*! vendor license */\n.card { color: red }'
+    try {
+      await fs.writeFile(file, source)
+      const snapshots = await collectCssSnapshots(root, 'app.css')
+      expect(snapshots).toHaveLength(1)
+      expect(snapshots[0]?.content).not.toContain('tailwindcss v')
+      expect(snapshots[0]?.content).toContain('/*! vendor license */')
+      expect(snapshots[0]?.content).toContain('color: red')
+      expect(await fs.readFile(file, 'utf8')).toBe(source)
+    }
+    finally {
+      await fs.rm(root, { recursive: true, force: true })
+    }
   })
 
   it('normalizes font data urls before formatting raw snapshots', async () => {

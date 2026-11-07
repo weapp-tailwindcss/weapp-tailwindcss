@@ -355,7 +355,6 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   initial-value: '';
   inherits: false;
 }
-/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @property --tw-content {
   syntax: '*';
   initial-value: '';

@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { authoringFixtures, sourceSyntaxCases } from '@weapp-tailwindcss/test-catalog'
+import { stripTailwindBanner } from '../snapshotUtils'
 import { withGeneratorFixture } from './fixture'
 import { frameworkSource, frameworkSourceCss, sourceFrameworks, sourceRevisions } from './framework-source/fixtures'
 import { frameworkSourceResources } from './framework-source/resources'
@@ -50,8 +51,9 @@ export async function fixtureOutputs(root: string) {
 export async function fixtureBaseline(root: string, update = false) {
   const output = await fixtureOutputs(root)
   const directory = path.join(root, 'e2e', 'tailwind-capabilities', 'baselines')
-  const index = `${JSON.stringify({ schemaVersion: 2, fixtureHash: output.fixtureHash, files: Object.fromEntries(Object.entries(output.files).map(([name, css]) => [name, digest(css)])) }, null, 2)}\n`
-  const files = { ...output.files, 'index.json': index }
+  const semanticFiles = Object.fromEntries(Object.entries(output.files).map(([name, css]) => [name, stripTailwindBanner(css)]))
+  const index = `${JSON.stringify({ schemaVersion: 2, fixtureHash: output.fixtureHash, files: Object.fromEntries(Object.entries(semanticFiles).map(([name, css]) => [name, digest(css)])) }, null, 2)}\n`
+  const files = { ...semanticFiles, 'index.json': index }
   if (update) {
     await mkdir(directory, { recursive: true })
   }
