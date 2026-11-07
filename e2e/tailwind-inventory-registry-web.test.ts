@@ -78,10 +78,10 @@ describe('Web 全量 utility 独立运行时参考合同', () => {
     const profile = registryWebProfile(inventory.utilities.find(item => item.root === root)!, 0)
     const limit = registryWebLimit(profile, 'firefox', 'linux')!
     const observation: RegistryObservation = { id: profile.id, styles: { '-moz-osx-font-smoothing': '', '-webkit-font-smoothing': '' }, childStyles: [], pseudoStyles: {}, geometry: [0, 0, 96, 64, 96, 64], unavailableProperties: ['-moz-osx-font-smoothing', '-webkit-font-smoothing'], declarationEvidence: [{ property: limit.property, value: limit.value, supported: false, cssom: '' }] }
-    const assertions = registryLimitAssertions(limit, true, '157.0', observation, observation, observation, true)
+    const assertions = registryLimitAssertions(limit, true, '159.0', observation, observation, observation, true)
     expect(assertions.filter(item => !assertionPassed(item))).toEqual([])
     const accepted = { ...observation, declarationEvidence: [{ property: limit.property, value: limit.value, supported: true, cssom: limit.value }] }
-    expect(registryLimitAssertions(limit, true, '157.0', accepted, observation, accepted, true).every(assertionPassed)).toBe(false)
+    expect(registryLimitAssertions(limit, true, '159.0', accepted, observation, accepted, true).every(assertionPassed)).toBe(false)
     expect(registryWebLimit(profile, 'firefox', 'darwin')).toBeUndefined()
   })
 
