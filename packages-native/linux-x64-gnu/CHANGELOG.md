@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-linux-x64-gnu
 
+## 5.7.3
+
 ## 5.7.2
 
 ## 5.7.1
