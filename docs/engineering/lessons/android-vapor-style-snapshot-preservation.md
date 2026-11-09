@@ -27,6 +27,18 @@ verification:
     sha: e8ec9f7f6de25e503e234d6e188744629044bcdf
     environment: HBuilderX 5.34.2026102909，Android L204203G00581 / Android 7.1.2；预检 run f1d5ccdd-05e1-4121-9fad-1dbc5295dc64
     command: pnpm e2e:preflight prepare
+  - claim: iOS Vapor 目标生成订单相关原生样式并可启动真实页面
+    kind: native
+    status: passed
+    sha: ca0d1e1652aec72f26c29007a3569b0fbc4e2feb
+    environment: HBuilderX 5.34.2026102909，iPhone 17 Pro 模拟器
+    command: HBuilderX CLI launch app-ios --compile false --iosTarget simulator --deviceId <本轮预检绑定的 iOS 模拟器>
+  - claim: Harmony Vapor 目标生成订单相关原生样式，但 HAP 签名阻塞安装
+    kind: native
+    status: blocked
+    sha: ca0d1e1652aec72f26c29007a3569b0fbc4e2feb
+    environment: HBuilderX 5.34.2026102909，Harmony 设备在线
+    command: HBuilderX CLI launch app-harmony --compile false --deviceId <本轮预检绑定的 Harmony 设备>
 ---
 
 # Android Vapor 原生 CSS 快照保留
@@ -45,7 +57,11 @@ uni-app x Android Vapor 的多个独立 `<style>` 请求并发生成时，部分
 
 本地单元、uni-app x/Vapor 定向回归、架构契约、类型检查和核心包构建均通过。回归覆盖首次生成、短暂 `undefined`、源码删除、源码变化和编译 revision 变化。
 
-本轮预检报告位于 `e2e/.artifacts/preflight/f1d5ccdd-05e1-4121-9fad-1dbc5295dc64/report.md`。HBuilderX 与 Android 探针通过；微信 IDE 连接失败、iOS 未指定唯一目标、Harmony 无目标、computer-use 未运行，故未宣称完成 Android Vapor 冷编译/增量编译和真机验收。
+Android 冷编译产物已确认保留有效快照：订单列表模块 722 B、订单卡片 3574 B、待付款商品 3132 B、收货区 1860 B；详情金额和支付栏也保持完整。iOS 与 Harmony 的对应文件分别为 726/3562/3137/1868 B，Harmony 中间产物与 iOS 完整结果一致。样式字节码通过 `strings` 可见 `wtu-*` 工具类标识和 `--tw-*` 展开变量；未发现裸 `@apply`。
+
+iOS 编译后使用调试基座真实启动，截图保存在用户案例隔离副本的 `evidence/ios-running.png`，显示首页已渲染，首次运行停在定位权限弹窗，因此未把订单页截图冒充为业务页面验收。Harmony 编译已生成 52 个 `.style.bytes` 文件并进入 Hvigor 打包，但在 `SignHap` 阶段因配置引用的签名证书文件不存在而失败；没有修改签名配置，也没有把在线设备误报为运行通过。
+
+本轮预检报告 `e2e/.artifacts/preflight/678c317c-7895-4d05-87d7-e80f929cfd42/report.md` 仍未放行全面多端门禁：微信 IDE 连接和 Android UI 探针失败。该阻塞与插件层回归、Android/iOS 构建产物证据、Harmony 签名阻塞分别记录，不能用旧报告替代。
 
 ## 适用边界
 
