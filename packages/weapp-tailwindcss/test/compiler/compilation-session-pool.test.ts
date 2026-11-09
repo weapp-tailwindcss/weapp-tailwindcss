@@ -27,10 +27,14 @@ describe('CompilationSessionPool', () => {
     })
 
     await vi.waitFor(() => {
+      expect(started).toBe(128)
+    })
+    expect(pool.size).toBe(128)
+    gates.slice(0, 128).forEach(gate => gate.release())
+    await vi.waitFor(() => {
       expect(started).toBe(129)
     })
-    expect(pool.size).toBe(129)
-    gates.forEach(gate => gate.release())
+    gates[128].release()
     const results = await Promise.all(executions)
 
     expect(results.every(result => result.committed)).toBe(true)

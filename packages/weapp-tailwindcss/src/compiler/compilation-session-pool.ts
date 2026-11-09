@@ -70,27 +70,32 @@ export class CompilationSessionPool {
   private registration = 0
   private readonly dependencyState = new CompilationDependencyState()
   private readonly entries = new Map<string, CompilationScopeEntry>()
+  private readonly pendingEntries = new Map<string, Promise<CompilationScopeEntry>>()
+  private readonly entryAvailabilityWaiters: Array<() => void> = []
   private disposed = false
 
   run<T extends CompilationScopeGenerationResult | undefined>(
     request: CompilationScopeRequest,
     compile: (compilation: CompilationScopeState) => Promise<T>,
   ): Promise<CompilationScopeExecution<T>> {
-    const entry = this.getEntry(request.scope)
-    const execution = this.runEntry(entry, request, compile)
-    entry.executions.add(execution)
-    this.trimEntries()
-    void execution.then(
-      () => {
-        entry.executions.delete(execution)
-        this.trimEntries()
-      },
-      () => {
-        entry.executions.delete(execution)
-        this.trimEntries()
-      },
-    )
-    return execution
+    if (this.disposed) {
+      throw new Error('CompilationSessionPool 已释放。')
+    }
+    return this.getEntryForRun(request.scope).then((entry) => {
+      const execution = this.runEntry(entry, request, compile)
+      entry.executions.add(execution)
+      void execution.then(
+        () => {
+          entry.executions.delete(execution)
+          this.notifyEntryAvailability()
+        },
+        () => {
+          entry.executions.delete(execution)
+          this.notifyEntryAvailability()
+        },
+      )
+      return execution
+    })
   }
 
   invalidateScope(scopeId: string) {
@@ -102,6 +107,7 @@ export class CompilationSessionPool {
     void this.disposeEntry(entry)
     this.entries.delete(scopeId)
     this.dependencyState.delete(scopeId)
+    this.notifyEntryAvailability()
   }
 
   dispose() {
@@ -114,7 +120,11 @@ export class CompilationSessionPool {
       entry.active = false
     }
     this.entries.clear()
+    this.pendingEntries.clear()
     this.dependencyState.clear()
+    for (const notify of this.entryAvailabilityWaiters.splice(0)) {
+      notify()
+    }
     return Promise.all(entries.map(entry => this.disposeEntry(entry))).then(() => undefined)
   }
 
@@ -180,20 +190,38 @@ export class CompilationSessionPool {
     return entry
   }
 
-  private trimEntries() {
-    while (this.entries.size > COMPILATION_SCOPE_CACHE_MAX) {
-      let evictableScopeId: string | undefined
-      for (const [scopeId, entry] of this.entries) {
-        if (entry.executions.size === 0) {
-          evictableScopeId = scopeId
-          break
-        }
-      }
-      if (evictableScopeId === undefined) {
-        return
-      }
-      this.invalidateScope(evictableScopeId)
+  private getEntryForRun(scope: SourceScope): Promise<CompilationScopeEntry> {
+    const cached = this.entries.get(scope.id)
+    if (cached) {
+      return Promise.resolve(this.getEntry(scope))
     }
+    const pending = this.pendingEntries.get(scope.id)
+    if (pending) {
+      return pending.then(() => this.getEntry(scope))
+    }
+    if (this.entries.size + this.pendingEntries.size < COMPILATION_SCOPE_CACHE_MAX) {
+      const reservation = Promise.resolve().then(() => {
+        this.pendingEntries.delete(scope.id)
+        if (this.disposed) {
+          throw new Error('CompilationSessionPool 已释放。')
+        }
+        return this.getEntry(scope)
+      })
+      this.pendingEntries.set(scope.id, reservation)
+      return reservation
+    }
+    const evictable = [...this.entries].find(([, entry]) => entry.executions.size === 0)
+    if (evictable) {
+      this.invalidateScope(evictable[0])
+      return this.getEntryForRun(scope)
+    }
+    return new Promise<void>((resolve) => {
+      this.entryAvailabilityWaiters.push(resolve)
+    }).then(() => this.getEntryForRun(scope))
+  }
+
+  private notifyEntryAvailability() {
+    this.entryAvailabilityWaiters.shift()?.()
   }
 
   private async disposeEntry(entry: CompilationScopeEntry) {
