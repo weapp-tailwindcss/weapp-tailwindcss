@@ -1039,6 +1039,10 @@ weapp-tailwindcss@5.7.1:
   intents:
     - dynamic-alpha-rgba
     - tame-monkeys-travel
+weapp-tailwindcss@5.7.3:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - big-rocks-sin
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:

@@ -1,5 +1,15 @@
 # @weapp-tailwindcss/build-all
 
+## 0.0.81
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/experimental@0.0.56
+  - @weapp-tailwindcss/postcss@4.0.3
+  - tailwindcss-injector@1.0.31
+  - weapp-tailwindcss@5.7.3
+
 ## 0.0.80
 
 ### Patch Changes
