@@ -36,6 +36,8 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource, norm
   const processedCssAssetSourceByFile = new Map<string, string>()
   const cleanGeneratedCssByFile = new Map<string, string>()
   const tracedGeneratedCssByFile = new Map<string, string>()
+  const generatedCssSourceByFile = new Map<string, string>()
+  const generatedCssSnapshotFingerprintByFile = new Map<string, string>()
   const generatedClassSetByFile = new Map<string, Set<string>>()
   const processedCssRegistry = createFrameworkProcessedCssRegistry()
   const cssMemory = createViteCssMemory({ debug, getSourceCandidateSource, normalizeSfcSource })
@@ -95,6 +97,16 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource, norm
         generatedClassSetByFile.delete(key)
       }
     }
+    for (const key of generatedCssSourceByFile.keys()) {
+      if (!activeFiles.has(key)) {
+        generatedCssSourceByFile.delete(key)
+      }
+    }
+    for (const key of generatedCssSnapshotFingerprintByFile.keys()) {
+      if (!activeFiles.has(key)) {
+        generatedCssSnapshotFingerprintByFile.delete(key)
+      }
+    }
     processedCssRegistry.prune(activeFiles)
     cssMemory.prune(options2)
   }
@@ -107,7 +119,7 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource, norm
     ].map(normalizeVitePersistentCacheKey))
     processedCssAssets = new WeakSet()
     // 删除来源使旧复合输出失效，其他来源的独立缓存与记忆仍保留。
-    for (const cache of [originalCssLayerSourceByFile, processedCssAssetSourceByFile, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedClassSetByFile]) {
+    for (const cache of [originalCssLayerSourceByFile, processedCssAssetSourceByFile, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedCssSourceByFile, generatedCssSnapshotFingerprintByFile, generatedClassSetByFile]) {
       for (const key of cache.keys()) {
         if (normalizeViteCssSourceOwner(key) === sourceKey || outputKeys.has(key)) {
           cache.delete(key)
@@ -121,6 +133,8 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource, norm
     rememberOriginalCssLayerSource,
     cleanGeneratedCssByFile,
     tracedGeneratedCssByFile,
+    generatedCssSourceByFile,
+    generatedCssSnapshotFingerprintByFile,
     generatedClassSetByFile,
     processedCssRegistry,
     cssMemory,
@@ -140,6 +154,8 @@ export function createFrameworkCssAssets({ debug, getSourceCandidateSource, norm
       processedCssAssetSourceByFile.clear()
       cleanGeneratedCssByFile.clear()
       tracedGeneratedCssByFile.clear()
+      generatedCssSourceByFile.clear()
+      generatedCssSnapshotFingerprintByFile.clear()
       generatedClassSetByFile.clear()
       frameworkRootImportShellTargetByFile.clear()
       processedCssRegistry.dispose()

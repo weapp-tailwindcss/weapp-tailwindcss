@@ -77,7 +77,10 @@ describe('shadow 组合请求的配置 revision', () => {
       expect(generateCssByGenerator).toHaveBeenCalledTimes(2)
       expect(onCompilerShadowReport).not.toHaveBeenCalled()
       expect(getCompilerShadowRunSnapshot(options.runtimeState).reports).toEqual([])
-      expect(options.debug).not.toHaveBeenCalled()
+      expect(options.debug.mock.calls.map(([, reason]) => reason)).toEqual([
+        'configuration-stale-after-generator',
+        'configuration-stale-after-shadow',
+      ])
     }
     finally {
       releaseGraph.resolve()

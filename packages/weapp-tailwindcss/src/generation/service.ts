@@ -100,6 +100,9 @@ async function generateTailwindV4CssWithImplementation(
   options: TailwindV4GenerationCoreInput,
   implementation: GenerationImplementationOptions,
 ): Promise<TailwindV4GenerationCoreResult | undefined> {
+  const debugSkip = (reason: string, details?: Record<string, unknown>) => {
+    options.debug('tailwind generation skipped: %s file=%s mode=%s %O', reason, options.file, implementation.frameworkAdapter, details ?? {})
+  }
   const majorVersion = options.runtimeState.tailwindRuntime.majorVersion
   if (majorVersion !== 4) {
     throw new Error('weapp-tailwindcss 生成管线仅支持 Tailwind CSS v4。')
@@ -155,6 +158,12 @@ async function generateTailwindV4CssWithImplementation(
         },
   )
   if (!generated || !options.isConfigurationCurrent()) {
+    debugSkip(!generated ? 'generator-result-empty' : 'configuration-stale-after-generator', {
+      rawSourceBytes: options.rawSource.length,
+      runtimeCandidates: options.runtime.size,
+      outputFile: options.outputFile,
+      cssStage: options.cssStage,
+    })
     return undefined
   }
   const adaptedCss = shouldReplayFrameworkPostcss
@@ -194,6 +203,10 @@ async function generateTailwindV4CssWithImplementation(
     recordRpxThemeRisk(options.runtimeState, options.file, generated.rpxThemeVariables ?? [])
   }
   if (!options.isConfigurationCurrent()) {
+    debugSkip('configuration-stale-after-adaptation', {
+      generatedCssBytes: css.length,
+      outputFile: options.outputFile,
+    })
     return undefined
   }
   const artifact = implementation.emitArtifact
@@ -246,6 +259,9 @@ async function generateTailwindV4CssWithOwner(
     frameworkAdapter: 'graph',
   })
   if (!generationOptions.isConfigurationCurrent()) {
+    generationOptions.debug('tailwind generation skipped: %s file=%s mode=shadow %O', 'configuration-stale-after-shadow', generationOptions.file, {
+      outputFile: generationOptions.outputFile,
+    })
     return undefined
   }
   const report = createCompilerShadowReport(

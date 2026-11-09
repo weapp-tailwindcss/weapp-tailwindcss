@@ -148,7 +148,13 @@ export async function prepareGeneratorInputs(context: GeneratorPipelineExecution
       && currentCssCandidates.length === 0
       && !cssHandlerOptions.isMainChunk
     ) {
-      debug('defer empty scoped css source generation: %s', file)
+      debug('tailwind generation skipped: %s file=%s %O', 'empty-scoped-source-deferred', file, {
+        sourceId: resolveCompilationSourceId(record, index),
+        currentCssCandidates: currentCssCandidates.length,
+        scopedRuntimeCandidates: scopedRuntime?.size ?? 0,
+        isolateCssSource,
+        isMainChunk: cssHandlerOptions.isMainChunk,
+      })
       return undefined
     }
     const sourceRuntime = (scopedRuntime && (scopedRuntime.size > 0 || isolateCssSource)) || isolateCssSource

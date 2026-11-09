@@ -2,13 +2,17 @@ import type { createFrameworkCssAssets } from '@/bundlers/vite/shared/framework-
 import { vi } from 'vitest'
 import { createFrameworkCssGenerator } from '@/bundlers/vite/shared/framework-css-generator'
 
-export function createWatchCssGenerator(assets: ReturnType<typeof createFrameworkCssAssets>) {
-  const generatorOptions = { target: 'web', importFallback: false }
-  const branch = { isWeb: true }
+export function createWatchCssGenerator(
+  assets: ReturnType<typeof createFrameworkCssAssets>,
+  overrides: { target?: string, isWeb?: boolean, runtimeRevision?: number } = {},
+) {
+  const generatorOptions = { target: overrides.target ?? 'web', importFallback: false }
+  const branch = { isWeb: overrides.isWeb ?? true }
+  const debug = vi.fn()
   return createFrameworkCssGenerator({
     ...assets,
-    opts: { htmlMatcher: () => false, cssSourceTrace: false },
-    runtimeState: { readyPromise: Promise.resolve() },
+    opts: { htmlMatcher: () => false, cssMatcher: (file: string) => file.endsWith('.css'), cssSourceTrace: false },
+    runtimeState: { readyPromise: Promise.resolve(), revision: overrides.runtimeRevision ?? 0 },
     shouldOwnTailwindGeneration: true,
     sourceScanSession: { waitForPendingSyncs: async () => {} },
     getResolvedConfig: () => ({ root: '/repo', command: 'build' }),
@@ -31,15 +35,16 @@ export function createWatchCssGenerator(assets: ReturnType<typeof createFramewor
     markViteProcessedCssSource: assets.processedCssRegistry.markSource,
     rememberTailwindRootCssModule: vi.fn(),
     recordGeneratorCandidates: vi.fn(),
-    debug: vi.fn(),
+    debug,
     normalizeViteProcessedCssFile: (file: string) => file,
     transformCssHandlerOptions: { getCssHandlerOptions: () => ({}), getCssUserHandlerOptions: () => ({}) },
     transientAutoCssSources: new Map(),
     hmrTimingRecorder: { measure: (_name: string, task: () => unknown) => task() },
-    resolveGeneratorPlatform: () => 'h5',
+    resolveGeneratorPlatform: () => branch.isWeb ? 'h5' : 'app-android',
     styleHandler: async (css: string) => ({ css }),
     shouldAdaptFrameworkWatchCss: () => false,
     finalizeViteMiniProgramCss: (css: string) => css,
     mainCssChunkMatcher: () => false,
   } as any)
+  return Object.assign(generate, { debug })
 }

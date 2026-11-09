@@ -4,6 +4,46 @@ import { CompilationSessionPool, createCompilationDependencyChanges } from '@/co
 const componentScope = { id: 'pages/index.css', kind: 'component' as const }
 
 describe('CompilationSessionPool', () => {
+  it('does not evict scopes while their generation is still running', async () => {
+    const pool = new CompilationSessionPool()
+    let started = 0
+    const gates = Array.from({ length: 129 }, () => {
+      let release!: () => void
+      const pending = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return { pending, release }
+    })
+    const executions = Array.from({ length: 129 }, (_, index) => {
+      return pool.run({
+        scope: { id: `component-${index}.css`, kind: 'component' },
+        outputId: `component-${index}.css`,
+        sources: [{ id: `/src/component-${index}.css`, kind: 'css', candidates: [`p-${index}`] }],
+      }, async compilation => {
+        started += 1
+        await gates[index].pending
+        return { classSet: compilation.candidates }
+      })
+    })
+
+    await vi.waitFor(() => {
+      expect(started).toBe(128)
+    })
+    expect(pool.size).toBe(128)
+    gates.slice(0, 128).forEach(gate => gate.release())
+    await vi.waitFor(() => {
+      expect(started).toBe(129)
+    })
+    gates[128].release()
+    const results = await Promise.all(executions)
+
+    expect(results.every(result => result.committed)).toBe(true)
+    expect(pool.size).toBeLessThanOrEqual(128)
+    expect(pool.getRegisteredScopeVersion('component-0.css')).toBeUndefined()
+    expect(pool.getRegisteredScopeVersion('component-128.css')).toBeDefined()
+    await pool.dispose()
+  })
+
   it('owns candidates and validation for one scope revision', async () => {
     const pool = new CompilationSessionPool()
     expect(pool.getRegisteredScopeDependencyRevision(componentScope.id)).toBeUndefined()
