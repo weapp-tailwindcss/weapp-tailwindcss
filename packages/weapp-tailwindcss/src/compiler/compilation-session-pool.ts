@@ -79,9 +79,16 @@ export class CompilationSessionPool {
     const entry = this.getEntry(request.scope)
     const execution = this.runEntry(entry, request, compile)
     entry.executions.add(execution)
+    this.trimEntries()
     void execution.then(
-      () => entry.executions.delete(execution),
-      () => entry.executions.delete(execution),
+      () => {
+        entry.executions.delete(execution)
+        this.trimEntries()
+      },
+      () => {
+        entry.executions.delete(execution)
+        this.trimEntries()
+      },
     )
     return execution
   }
@@ -170,14 +177,23 @@ export class CompilationSessionPool {
       sources: new Map(),
     }
     this.entries.set(scope.id, entry)
-    while (this.entries.size > COMPILATION_SCOPE_CACHE_MAX) {
-      const oldestScopeId = this.entries.keys().next().value
-      if (oldestScopeId === undefined || oldestScopeId === scope.id) {
-        break
-      }
-      this.invalidateScope(oldestScopeId)
-    }
     return entry
+  }
+
+  private trimEntries() {
+    while (this.entries.size > COMPILATION_SCOPE_CACHE_MAX) {
+      let evictableScopeId: string | undefined
+      for (const [scopeId, entry] of this.entries) {
+        if (entry.executions.size === 0) {
+          evictableScopeId = scopeId
+          break
+        }
+      }
+      if (evictableScopeId === undefined) {
+        return
+      }
+      this.invalidateScope(evictableScopeId)
+    }
   }
 
   private async disposeEntry(entry: CompilationScopeEntry) {
