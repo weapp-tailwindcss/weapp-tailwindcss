@@ -23,50 +23,53 @@ verification:
     command: pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-web-css-stage.test.ts test/bundlers/vite-uni-app-x-css-watch.integration.test.ts test/uni-app-x/vite-native-style-requests.test.ts test/uni-app-x/vapor-style-demo.test.ts test/context/generation-snapshot-reuse.test.ts test/ci/architecture-contract.test.ts --update=none
   - claim: HBuilderX 与 Android 设备预检可用，但完整多端门禁未放行
     kind: native
-    status: blocked
+    status: pending
     sha: e8ec9f7f6de25e503e234d6e188744629044bcdf
+    reason: 本轮预检 Android UI 结构探针失败，computer-use 尚未验证。
     environment: HBuilderX 5.34.2026102909，Android L204203G00581 / Android 7.1.2；预检 run f1d5ccdd-05e1-4121-9fad-1dbc5295dc64
     command: pnpm e2e:preflight prepare
   - claim: iOS Vapor 目标生成订单相关原生样式并可启动真实页面
     kind: native
-    status: passed
+    status: pending
     sha: ca0d1e1652aec72f26c29007a3569b0fbc4e2feb
+    reason: 已启动模拟器首页，但尚未在订单页或 129 scope 压力场景完成验证。
     environment: HBuilderX 5.34.2026102909，iPhone 17 Pro 模拟器
     command: HBuilderX CLI launch app-ios --compile false --iosTarget simulator --deviceId <本轮预检绑定的 iOS 模拟器>
   - claim: Harmony Vapor 目标生成订单相关原生样式，但 HAP 签名阻塞安装
     kind: native
-    status: blocked
+    status: pending
     sha: ca0d1e1652aec72f26c29007a3569b0fbc4e2feb
+    reason: HAP 在 SignHap 阶段因缺失签名证书未能安装到设备。
     environment: HBuilderX 5.34.2026102909，Harmony 设备在线
     command: HBuilderX CLI launch app-harmony --compile false --deviceId <本轮预检绑定的 Harmony 设备>
   - claim: 129 个并发 scope 不会因缓存容量淘汰而丢弃生成结果
     kind: unit
     status: passed
-    sha: 待提交
+    sha: 4874563c9b0d163a61938cb9cc1501335c1b00db
     environment: macOS，Node 24，pnpm 12
     command: pnpm --filter weapp-tailwindcss exec vitest run test/compiler/compilation-session-pool.test.ts --update=none
   - claim: 用户提供的 151 页 Android Vapor 复现从 54 个缺失降至 0
     kind: native
     status: passed
-    sha: 待提交
+    sha: 4874563c9b0d163a61938cb9cc1501335c1b00db
     environment: HBuilderX 5.34.2026102909，Android L204203G00581 / Android 7.1.2，weapp-tailwindcss 5.7.2，Tailwind CSS 4.3.3
     command: HBuilderX CLI launch app-android --compile true --deviceId <本轮预检绑定的 Android 设备> --vaporRenderTarget bytecode；pnpm check
   - claim: 修复后的编译会话池保护全部在途 scope
     kind: unit
     status: passed
-    sha: 待提交
+    sha: 4874563c9b0d163a61938cb9cc1501335c1b00db
     environment: macOS，Node 24，pnpm 12
     command: pnpm --filter weapp-tailwindcss exec vitest run test/compiler/compilation-session-pool.test.ts --update=none
   - claim: 生成失效和 Android Vapor 构建适配回归通过
     kind: integration
     status: passed
-    sha: 待提交
+    sha: 4874563c9b0d163a61938cb9cc1501335c1b00db
     environment: macOS，Node 24，pnpm 12，Tailwind CSS 4.3.5
     command: pnpm --filter weapp-tailwindcss exec vitest run test/compiler/tailwind-generation-invalidation.integration.test.ts test/compiler/tailwind-generation-invalidation.test.ts test/bundlers/vite-web-css-stage.test.ts test/bundlers/vite-uni-app-x-css-watch.integration.test.ts test/uni-app-x/vite-native-style-requests.test.ts test/uni-app-x/vapor-style-demo.test.ts test/context/generation-snapshot-reuse.test.ts test/ci/architecture-contract.test.ts --update=none
   - claim: weapp-tailwindcss 类型检查与包构建通过
-    kind: build
+    kind: ci
     status: passed
-    sha: 待提交
+    sha: 4874563c9b0d163a61938cb9cc1501335c1b00db
     environment: macOS，Node 24，pnpm 12
     command: pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.build.json --noEmit；pnpm --filter weapp-tailwindcss build
 ---
@@ -77,7 +80,7 @@ verification:
 
 uni-app x Android Vapor 的多个独立 `<style>` 请求并发生成时，部分 Tailwind 工具类偶发消失。列表页可能丢失 `flex-1`，详情页可能丢失图片尺寸和 `flex-row`；H5 浏览器链路正常。
 
-## 根因与修复
+## 根因与纠正
 
 `CompilationSessionPool` 将 scope 缓存上限设为 128。第 129 个不同 scope 注册时，旧逻辑直接淘汰最早条目并设为 inactive，即使该 scope 的 CSS 生成仍在执行。生成任务结束后，`runEntry()` 因 `entry.active === false` 拒绝提交；调用链得到未提交结果，SFC 的 `@apply` 后续被 PostCSS 消去，Android Vapor 最终字节码只剩空选择器。页面和组件较少时通常不触发，scope 数量高且生成重叠时才会间歇出现。
 
@@ -95,11 +98,11 @@ Android 冷编译产物已确认包含订单列表模块、订单卡片、待付
 
 iOS 编译后使用调试基座真实启动，截图保存在用户案例隔离副本的 `evidence/ios-running.png`，显示首页已渲染，首次运行停在定位权限弹窗，因此未把订单页截图冒充为业务页面验收。Harmony 编译已生成 52 个 `.style.bytes` 文件并进入 Hvigor 打包，但在 `SignHap` 阶段因配置引用的签名证书文件不存在而失败；没有修改签名配置，也没有把在线设备误报为运行通过。
 
-本轮预检报告 `e2e/.artifacts/preflight/678c317c-7895-4d05-87d7-e80f929cfd42/report.md` 仍未放行全面多端门禁：微信 IDE 连接和 Android UI 探针失败。该阻塞与插件层回归、Android/iOS 构建产物证据、Harmony 签名阻塞分别记录，不能用旧报告替代。
+本轮预检报告 `e2e/.artifacts/preflight/7d481c6e-26b6-4e10-87a7-fde489011e11/report.md` 仍未放行全面多端门禁：Android UI 结构探针失败，computer-use 尚未验证。该阻塞与插件层回归、Android/iOS 构建产物证据、Harmony 签名阻塞分别记录，不能用旧报告替代。
 
 ## 适用边界
 
-最小压力复现工程和 Chaser 的 5.7.2 原版/修复版 Android 产物提供了插件池淘汰与样式丢失之间的直接对照；Chaser 修复后两轮冷编译及一次增量编译的订单相关样式包一致。此前 iOS Vapor 已编译并在模拟器调试基座启动首页。Harmony 生成了样式字节码，但 HAP 缺失签名证书，未安装运行。全面多端预检仍被微信 IDE 连接和 Android UI 探针阻断，不能描述为全端门禁通过。
+最小压力复现工程和 Chaser 的 5.7.2 原版/修复版 Android 产物提供了插件池淘汰与样式丢失之间的直接对照；Chaser 修复后两轮冷编译及一次增量编译的订单相关样式包一致。此前 iOS Vapor 已编译并在模拟器调试基座启动首页。Harmony 生成了样式字节码，但 HAP 缺失签名证书，未安装运行。本轮全面多端预检中 Android UI 结构探针失败，computer-use 尚未验证，不能描述为全端门禁通过。
 
 ## 规则评估
 
