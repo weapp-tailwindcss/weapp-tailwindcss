@@ -12,19 +12,19 @@ verification:
   - claim: 原生 CSS 生成短暂返回 undefined 时保留同一编译快照中的已展开规则
     kind: unit
     status: passed
-    sha: 0e99c0f1d96bb7848ff8c76e749fe80c02597f35
+    sha: e8ec9f7f6de25e503e234d6e188744629044bcdf
     environment: macOS，Node 24，pnpm 12，当前工作树
     command: pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-web-css-stage.test.ts --update=none
   - claim: 生成管线、uni-app x/Vapor 定向回归和架构契约通过
     kind: integration
     status: passed
-    sha: 0e99c0f1d96bb7848ff8c76e749fe80c02597f35
+    sha: e8ec9f7f6de25e503e234d6e188744629044bcdf
     environment: macOS，当前工作树
     command: pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-web-css-stage.test.ts test/bundlers/vite-uni-app-x-css-watch.integration.test.ts test/uni-app-x/vite-native-style-requests.test.ts test/uni-app-x/vapor-style-demo.test.ts test/context/generation-snapshot-reuse.test.ts test/ci/architecture-contract.test.ts --update=none
   - claim: HBuilderX 与 Android 设备预检可用，但完整多端门禁未放行
     kind: native
     status: blocked
-    sha: 0e99c0f1d96bb7848ff8c76e749fe80c02597f35
+    sha: e8ec9f7f6de25e503e234d6e188744629044bcdf
     environment: HBuilderX 5.34.2026102909，Android L204203G00581 / Android 7.1.2；预检 run f1d5ccdd-05e1-4121-9fad-1dbc5295dc64
     command: pnpm e2e:preflight prepare
 ---
