@@ -124,6 +124,10 @@ async function generateCssByGeneratorWithOwner(
         },
       }
     }
+    debug('tailwind generation skipped: %s file=%s %O', 'generator-disabled', file, {
+      target: generatorOptions.target,
+      hasPostcssUserPlugins: hasPostcssUserPlugins(cssHandlerOptions),
+    })
     return undefined
   }
   const effectiveRawSource = stripUnmatchedTailwindSourceMediaCloseFragments(
@@ -156,6 +160,9 @@ async function generateCssByGeneratorWithOwner(
   }
 
   if (isPureLocalCssImportWrapperFromParsedRoot(effectiveRawSource, effectiveRawSourceRoot)) {
+    debug('tailwind generation skipped: %s file=%s %O', 'pure-local-import-wrapper', file, {
+      sourceBytes: effectiveRawSource.length,
+    })
     return undefined
   }
 
@@ -256,6 +263,16 @@ async function generateCssByGeneratorWithOwner(
   if (
     !shouldGenerateCurrentCss
   ) {
+    debug('tailwind generation skipped: %s file=%s %O', 'current-css-not-owned', file, {
+      hasGeneratedCss,
+      hasGeneratedMarkers,
+      hasSourceDirectives,
+      hasApplyDirectives: hasTailwindApplyDirective(generatorRawSource),
+      runtimeCandidateCount: runtime.size,
+      configuredCssSourceCount: options.cssSources?.length ?? 0,
+      isMainChunk: cssHandlerOptions.isMainChunk,
+      target: generatorOptions.target,
+    })
     return undefined
   }
 
@@ -294,7 +311,19 @@ async function generateCssByGeneratorWithOwner(
       userRawSourceProcessed,
       useMiniProgramCssBranch,
     })
-    return options.isConfigurationCurrent() ? result : undefined
+    if (!options.isConfigurationCurrent()) {
+      debug('tailwind generation skipped: %s file=%s %O', 'configuration-stale-after-pipeline', file, {
+        target: generatorOptions.target,
+      })
+      return undefined
+    }
+    if (!result) {
+      debug('tailwind generation skipped: %s file=%s %O', 'pipeline-produced-no-result', file, {
+        target: generatorOptions.target,
+        runtimeCandidateCount: runtime.size,
+      })
+    }
+    return result
   }
   catch (error) {
     debug('tailwind direct css generation failed: %s %O', file, error)

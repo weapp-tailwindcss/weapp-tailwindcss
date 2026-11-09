@@ -39,7 +39,7 @@ import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../
 import { extendFrameworkCssContext } from './framework-css-context'
 import { createFrameworkCssGenerationQueue } from './framework-css-generation-queue'
 
-interface FrameworkCssGeneratorOptions extends Pick<ReturnType<typeof createFrameworkCssAssets>, 'cssMemory' | 'cleanGeneratedCssByFile' | 'tracedGeneratedCssByFile' | 'generatedClassSetByFile' | 'recordViteProcessedCssAssetResult'> {
+interface FrameworkCssGeneratorOptions extends Pick<ReturnType<typeof createFrameworkCssAssets>, 'cssMemory' | 'cleanGeneratedCssByFile' | 'tracedGeneratedCssByFile' | 'generatedCssSourceByFile' | 'generatedCssSnapshotFingerprintByFile' | 'generatedClassSetByFile' | 'recordViteProcessedCssAssetResult'> {
   opts: InternalUserDefinedOptions
   runtimeState: ReturnType<typeof createViteRuntimeClassSet>['runtimeState']
   shouldOwnTailwindGeneration: boolean
@@ -72,7 +72,7 @@ interface FrameworkCssGeneratorOptions extends Pick<ReturnType<typeof createFram
 }
 /** 生成队列消费显式状态，资产写入仍经调用方的 bundler API 完成。 */
 export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOptions) {
-  const { opts, runtimeState, shouldOwnTailwindGeneration, sourceScanSession, getResolvedConfig, resolveCurrentGeneratorOptions, resolveCurrentGeneratorBranch, createCssPipelineContext, frameworkCssPipelineStrategy, normalizeGeneratedCssCacheFile, getSourceCandidates, getRecordedGeneratorCandidates, ensureRuntimeClassSet, hmrCandidateState, getSourceCandidatesForEntries, getSourceCandidateSourcesForEntries, markViteProcessedCssSource, rememberTailwindRootCssModule, recordGeneratorCandidates, debug, normalizeViteProcessedCssFile, transformCssHandlerOptions, transientAutoCssSources, hmrTimingRecorder, resolveGeneratorPlatform, styleHandler, shouldAdaptFrameworkWatchCss, finalizeViteMiniProgramCss, mainCssChunkMatcher, cssMemory, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedClassSetByFile, recordViteProcessedCssAssetResult } = options
+  const { opts, runtimeState, shouldOwnTailwindGeneration, sourceScanSession, getResolvedConfig, resolveCurrentGeneratorOptions, resolveCurrentGeneratorBranch, createCssPipelineContext, frameworkCssPipelineStrategy, normalizeGeneratedCssCacheFile, getSourceCandidates, getRecordedGeneratorCandidates, ensureRuntimeClassSet, hmrCandidateState, getSourceCandidatesForEntries, getSourceCandidateSourcesForEntries, markViteProcessedCssSource, rememberTailwindRootCssModule, recordGeneratorCandidates, debug, normalizeViteProcessedCssFile, transformCssHandlerOptions, transientAutoCssSources, hmrTimingRecorder, resolveGeneratorPlatform, styleHandler, shouldAdaptFrameworkWatchCss, finalizeViteMiniProgramCss, mainCssChunkMatcher, cssMemory, cleanGeneratedCssByFile, tracedGeneratedCssByFile, generatedCssSourceByFile, generatedCssSnapshotFingerprintByFile, generatedClassSetByFile, recordViteProcessedCssAssetResult } = options
   const generateTailwindCssForVitePipelineNow = async (id: string, code: string, hookContext: {
     addWatchFile?: ((id: string) => void) | undefined
     emitFile?: (asset: {
@@ -132,6 +132,14 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     const runtime = hookContext?.sourceCandidates === undefined
       ? new Set(fullRuntime)
       : new Set(hookContext.sourceCandidates)
+    const snapshotFingerprint = [
+      currentGeneratorOptions.target,
+      currentGeneratorBranch.isWeb ? 'web' : 'native',
+      outputFile,
+      runtimeState.revision ?? 'unknown',
+      sourceRevision ?? 'unknown',
+      [...runtime].sort().join('\u0000'),
+    ].join('|')
     if (pendingHmrChange) {
       for (const candidate of pendingHmrChange.addedCandidates) {
         runtime.add(candidate)
@@ -150,6 +158,8 @@ export function createFrameworkCssGenerator(options: FrameworkCssGeneratorOption
     if (importShellCss !== void 0) {
       cleanGeneratedCssByFile.set(fileKey, importShellCss)
       tracedGeneratedCssByFile.set(fileKey, importShellCss)
+      generatedCssSourceByFile.set(fileKey, code)
+      generatedCssSnapshotFingerprintByFile.set(fileKey, snapshotFingerprint)
       generatedClassSetByFile.set(fileKey, new Set())
       recordViteProcessedCssAssetResult(file, importShellCss, { injectIntoMain: false, outputFile })
       markViteProcessedCssSource(file)
@@ -186,6 +196,24 @@ ${previousTracedCss}`
       return undefined
     }
     if (!generated) {
+      const previousTracedCss = tracedGeneratedCssByFile.get(fileKey)
+      const canPreservePreviousCss = !currentGeneratorBranch.isWeb
+        && !transient
+        && !forceFullHmrCssRegeneration
+        && previousTracedCss !== undefined
+        && generatedCssSourceByFile.get(fileKey) === code
+        && generatedCssSnapshotFingerprintByFile.get(fileKey) === snapshotFingerprint
+      if (canPreservePreviousCss) {
+        debug('css generation returned no result; preserving current native snapshot: %s bytes=%d', requestFile, previousTracedCss.length)
+        if (pendingHmrChange || forceFullHmrCssRegeneration) {
+          hmrCandidateState.finishTarget(file)
+        }
+        else if (!hmrCandidateState.hasPendingChange()) {
+          hmrCandidateState.clear()
+        }
+        return `${createGeneratedMarker()}
+${previousTracedCss}`
+      }
       if (pendingHmrChange) {
         hmrCandidateState.finishTarget(file)
       }
@@ -216,6 +244,8 @@ ${previousTracedCss}`
     }
     cleanGeneratedCssByFile.set(fileKey, outputCss)
     tracedGeneratedCssByFile.set(fileKey, tracedCss)
+    generatedCssSourceByFile.set(fileKey, code)
+    generatedCssSnapshotFingerprintByFile.set(fileKey, snapshotFingerprint)
     generatedClassSetByFile.set(fileKey, new Set(generated.classSet))
     // Web 模块仍需经过真实框架 PostCSS；生成缓存不能提前作为已处理产物重放。
     if (!currentGeneratorBranch.isWeb) {

@@ -178,5 +178,12 @@ export async function finalizeOrderedGeneratorCss(
       },
     }
   }
+  context.debug('tailwind generation skipped: %s file=%s %O', 'ordered-output-source-order-unmatched', file, {
+    generatedCssBytes: generatedCss.length,
+    rawCssBytes: generated.rawCss.length,
+    hasMatchedCssSourceFile,
+    hasGeneratedCss,
+    hasGeneratedMarkers,
+  })
   return undefined
 }

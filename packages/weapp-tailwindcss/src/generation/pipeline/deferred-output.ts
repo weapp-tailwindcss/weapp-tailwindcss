@@ -117,5 +117,8 @@ export async function finalizeDeferredGeneratorCss(
       },
     }
   }
+  context.debug('tailwind generation skipped: %s file=%s %O', 'deferred-css-adaptation-not-enabled', file, {
+    target: generated.target,
+  })
   return undefined
 }

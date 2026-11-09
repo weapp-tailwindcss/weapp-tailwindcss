@@ -146,4 +146,103 @@ describe('Web CSS 的生成缓存与框架产物边界', () => {
       assets.dispose()
     }
   })
+
+  it('原生 CSS 生成短暂返回 undefined 时保留同一来源的有效快照', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false })
+    const sourceFile = path.resolve('/repo', 'component.css')
+    const source = '@import "tailwindcss";\n.card { @apply flex-1; }'
+    const generated = '.card{flex:1}\n.card{width:100%}'
+    generateTailwindV4Css.mockResolvedValueOnce({
+      css: generated,
+      classSet: new Set(['flex-1', 'w-full']),
+      dependencies: [],
+    })
+
+    try {
+      const first = await generate(sourceFile, source)
+      expect(first).toContain('.card{flex:1}')
+
+      generateTailwindV4Css.mockResolvedValueOnce(undefined)
+      const second = await generate(sourceFile, source)
+      expect(second).toContain('.card{flex:1}')
+      expect(second).toContain('.card{width:100%}')
+      expect(second).not.toContain('@apply')
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('来源删除后不回放原生 CSS 快照', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false })
+    const sourceFile = path.resolve('/repo', 'removed.css')
+    const source = '@import "tailwindcss";\n.card { @apply flex-1; }'
+    generateTailwindV4Css.mockResolvedValueOnce({
+      css: '.card{flex:1}',
+      classSet: new Set(['flex-1']),
+      dependencies: [],
+    })
+
+    try {
+      await generate(sourceFile, source)
+      assets.removeViteProcessedCssSource(sourceFile)
+      generateTailwindV4Css.mockResolvedValueOnce(undefined)
+      expect(await generate(sourceFile, source)).toBeUndefined()
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('来源内容变化后不回放原生 CSS 快照', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false })
+    const sourceFile = path.resolve('/repo', 'changed.css')
+    const source = '@import "tailwindcss";\n.card { @apply flex-1; }'
+    generateTailwindV4Css.mockResolvedValueOnce({
+      css: '.card{flex:1}',
+      classSet: new Set(['flex-1']),
+      dependencies: [],
+    })
+
+    try {
+      await generate(sourceFile, source)
+      generateTailwindV4Css.mockResolvedValueOnce(undefined)
+      expect(await generate(sourceFile, `${source}\n.card { @apply w-full; }`)).toBeUndefined()
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('编译 revision 变化后不回放过期原生 CSS 快照', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    let runtimeRevision = 1
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false, runtimeRevision })
+    const sourceFile = path.resolve('/repo', 'revision.css')
+    const source = '@import "tailwindcss";\n.card { @apply flex-1; }'
+    generateTailwindV4Css.mockResolvedValueOnce({
+      css: '.card{flex:1}',
+      classSet: new Set(['flex-1']),
+      dependencies: [],
+    })
+
+    try {
+      await generate(sourceFile, source)
+      runtimeRevision++
+      const changedGenerate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false, runtimeRevision })
+      generateTailwindV4Css.mockResolvedValueOnce(undefined)
+      expect(await changedGenerate(sourceFile, source)).toBeUndefined()
+      await changedGenerate.dispose()
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
 })
