@@ -8,9 +8,11 @@ exports[`vite > v4-vite-plugin > css 1`] = `
     padding: 0;
     --tw-gradient-position: initial;
     --tw-gradient-from: #0000;
+    --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;
     --tw-gradient-stops: initial;
     --tw-gradient-from-position: 0%;
+    --tw-gradient-via-position: 50%;
     --tw-gradient-to-position: 100%;
     --tw-content: "";
   }
@@ -49,13 +51,7 @@ exports[`vite > v4-vite-plugin > css 1`] = `
   .text-transparent {
     color: transparent;
   }
-  .first-letter_cmarker_ctext-clip::first-letter ::marker {
-    text-overflow: clip;
-  }
   .first-letter_cmarker_ctext-clip::first-letter::marker {
-    text-overflow: clip;
-  }
-  .first-letter_cmarker_ctext-clip::first-letter ::-webkit-details-marker {
     text-overflow: clip;
   }
   .first-letter_cmarker_ctext-clip::first-letter::-webkit-details-marker {

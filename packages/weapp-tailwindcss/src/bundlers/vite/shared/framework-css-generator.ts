@@ -214,6 +214,16 @@ ${previousTracedCss}`
         return `${createGeneratedMarker()}
 ${previousTracedCss}`
       }
+      if (
+        !currentGeneratorBranch.isWeb
+        && cssHandlerOptions.uniAppX === true
+        && currentGeneratorOptions.enabled !== false
+        && hasTailwindApplyDirective(generatorTransformCode)
+      ) {
+        const reason = 'uni-app x 原生 @apply 生成没有返回 CSS，且当前请求没有可复用的有效快照。'
+        debug('tailwind generation failed: %s file=%s output=%s', reason, requestFile, outputFile)
+        throw new Error(`${reason} file=${requestFile}`)
+      }
       if (pendingHmrChange) {
         hmrCandidateState.finishTarget(file)
       }

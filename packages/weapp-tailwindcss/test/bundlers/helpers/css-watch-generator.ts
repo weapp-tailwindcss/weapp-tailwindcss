@@ -4,9 +4,9 @@ import { createFrameworkCssGenerator } from '@/bundlers/vite/shared/framework-cs
 
 export function createWatchCssGenerator(
   assets: ReturnType<typeof createFrameworkCssAssets>,
-  overrides: { target?: string, isWeb?: boolean, runtimeRevision?: number } = {},
+  overrides: { target?: string, isWeb?: boolean, runtimeRevision?: number, uniAppX?: boolean, generatorEnabled?: boolean } = {},
 ) {
-  const generatorOptions = { target: overrides.target ?? 'web', importFallback: false }
+  const generatorOptions = { enabled: overrides.generatorEnabled ?? true, target: overrides.target ?? 'web', importFallback: false }
   const branch = { isWeb: overrides.isWeb ?? true }
   const debug = vi.fn()
   return createFrameworkCssGenerator({
@@ -37,7 +37,7 @@ export function createWatchCssGenerator(
     recordGeneratorCandidates: vi.fn(),
     debug,
     normalizeViteProcessedCssFile: (file: string) => file,
-    transformCssHandlerOptions: { getCssHandlerOptions: () => ({}), getCssUserHandlerOptions: () => ({}) },
+    transformCssHandlerOptions: { getCssHandlerOptions: () => ({ uniAppX: overrides.uniAppX ?? false }), getCssUserHandlerOptions: () => ({}) },
     transientAutoCssSources: new Map(),
     hmrTimingRecorder: { measure: (_name: string, task: () => unknown) => task() },
     resolveGeneratorPlatform: () => branch.isWeb ? 'h5' : 'app-android',
