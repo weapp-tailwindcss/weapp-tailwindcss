@@ -1,4 +1,5 @@
 /* eslint-disable no-template-curly-in-string -- 测试按字面量核验工作流表达式。 */
+import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -35,7 +36,7 @@ describe('Release 分阶段执行与 native 缓存', () => {
     const { jobs } = readWorkflow('release.yml')
     const route = jobs.plan
     expect(route).toBeDefined()
-    expect(route.permissions).toEqual({ contents: 'read', 'pull-requests': 'read' })
+    expect(route.permissions).toEqual({ 'contents': 'read', 'pull-requests': 'read' })
     expect(route.outputs.run).toBe('${{ steps.plan.outputs.run }}')
     expect(route.steps.find((step: any) => step.id === 'plan').run).toContain('node scripts/ci/auto-prepare-plan.mjs')
     expect(jobs['native-artifacts'].needs).toBe('plan')
@@ -128,5 +129,82 @@ describe('Release 分阶段执行与 native 缓存', () => {
       expect(step.run).toContain('-e NATIVE_REUSE_DEPENDENCIES=1')
     }
     expect(containers[0].run).toContain('-e CARGO_HOME=/native-ci/cargo')
+  })
+
+  it('最低版本 Node 下载失败时有限重试并阻断失败验收', () => {
+    const steps = readWorkflow('native.yml').jobs.native.steps
+    const setupNodeRef = 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020'
+    const cases = [
+      {
+        version: '22.18.0',
+        prefix: 'node22_attempt_',
+        gateName: 'Require Node.js 22.18.0 setup',
+        verifyName: 'Verify minimum supported Node ABI',
+      },
+      {
+        version: '20.19.0',
+        prefix: 'node20_attempt_',
+        gateName: 'Require Node.js 20.19.0 setup',
+        verifyName: 'Verify independent PostCSS minimum Node ABI',
+      },
+    ]
+
+    for (const { version, prefix, gateName, verifyName } of cases) {
+      const ids = [1, 2, 3].map(attempt => `${prefix}${attempt}`)
+      const attempts = ids.map(id => steps.find((step: any) => step.id === id))
+      const waits = [2, 3].map(attempt => steps.find((step: any) => step.name === `Wait before retrying Node.js ${version} (attempt ${attempt}/3)`))
+      const gate = steps.find((step: any) => step.name === gateName)
+      const verify = steps.find((step: any) => step.name === verifyName)
+      const successExpression = `\${{ ${ids.map(id => `steps.${id}.outcome == 'success'`).join(' || ')} }}`
+
+      expect(attempts.map((step: any) => step.uses)).toEqual(ids.map(() => setupNodeRef))
+      expect(steps.filter((step: any) => step.with?.['node-version'] === version)).toEqual(attempts)
+      expect(attempts.map((step: any) => step.with['node-version'])).toEqual(ids.map(() => version))
+      for (const attempt of attempts) {
+        expect(attempt.with.mirror).toBeUndefined()
+        expect(attempt.with['registry-url']).toBeUndefined()
+        expect(attempt.with['check-latest']).toBeUndefined()
+      }
+      expect(attempts.map((step: any) => step['continue-on-error'])).toEqual([true, true, true])
+      expect(attempts.map((step: any) => step.if)).toEqual([
+        'matrix.image == \'\'',
+        `matrix.image == '' && steps.${ids[0]}.outcome == 'failure'`,
+        `matrix.image == '' && steps.${ids[1]}.outcome == 'failure'`,
+      ])
+      expect(waits.map((step: any) => step.run)).toEqual(['sleep 10', 'sleep 20'])
+      expect(waits.map((step: any) => step.shell)).toEqual(['bash', 'bash'])
+      expect(waits.map((step: any) => step.if)).toEqual([
+        `matrix.image == '' && steps.${ids[0]}.outcome == 'failure'`,
+        `matrix.image == '' && steps.${ids[1]}.outcome == 'failure'`,
+      ])
+      expect(gate.if).toBe('always() && matrix.image == \'\'')
+      expect(gate.shell).toBe('node {0}')
+      expect(gate['continue-on-error']).not.toBe(true)
+      expect(gate.env.NODE_SETUP_SUCCEEDED).toBe(successExpression)
+      expect(gate.run).toContain(`Unable to install Node.js ${version} after three attempts.`)
+      expect(verify.if).toBe(`matrix.image == '' && (${ids.map(id => `steps.${id}.outcome == 'success'`).join(' || ')})`)
+      expect(verify['continue-on-error']).not.toBe(true)
+      expect(steps.indexOf(attempts[0])).toBeLessThan(steps.indexOf(waits[0]))
+      expect(steps.indexOf(waits[0])).toBeLessThan(steps.indexOf(attempts[1]))
+      expect(steps.indexOf(attempts[1])).toBeLessThan(steps.indexOf(waits[1]))
+      expect(steps.indexOf(waits[1])).toBeLessThan(steps.indexOf(attempts[2]))
+      expect(steps.indexOf(attempts[2])).toBeLessThan(steps.indexOf(gate))
+      expect(steps.indexOf(gate)).toBeLessThan(steps.indexOf(verify))
+    }
+  })
+
+  it.each(['22.18.0', '20.19.0'])('Node %s 安装门禁仅在明确成功时放行', (version) => {
+    const steps = readWorkflow('native.yml').jobs.native.steps
+    const gate = steps.find((step: any) => step.name === `Require Node.js ${version} setup`)
+    for (const succeeded of ['true', 'false', '', 'unexpected']) {
+      const result = spawnSync(process.execPath, ['--eval', gate.run], {
+        encoding: 'utf8',
+        env: { ...process.env, NODE_SETUP_SUCCEEDED: succeeded },
+        timeout: 10_000,
+      })
+      expect(result.error).toBeUndefined()
+      expect(result.status).toBe(succeeded === 'true' ? 0 : 1)
+      expect(result.stderr).toBe(succeeded === 'true' ? '' : `Unable to install Node.js ${version} after three attempts.\n`)
+    }
   })
 })
