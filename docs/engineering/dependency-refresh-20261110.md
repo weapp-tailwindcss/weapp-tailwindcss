@@ -51,6 +51,8 @@ CI=1 pnpm exec vitest run --project=@weapp-tailwindcss/css-compat --project=@wea
 
 PR #1345 首轮 head `7520c6da1983192d47b6d17581686c429fa77ee5` 的 [Benchmark](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42785108934) 在 MPX 与 uni-app Vite 确认 HMR RSS 回归，uni-app Vite 反向顺序复测仍增加约 6%–7%。MPX 另有构建和插件耗时回归。没有放宽阈值或更新性能基线。
 
-`258cb0af0a525ce62f4c069b2f3bb5ad04f234ea` 只恢复了 `^7.1.7` 范围，pnpm 实际仍锁定 7.2.0；该轮 MPX 再次失败不能证明回退解析器无效。后续改为精确固定 `7.1.7`，通过 pnpm 重新生成锁，并逐个核对四个 workspace importer 及 css-compat 的 specificity peer 均解析到 7.1.7。其他传递依赖的独立 7.2.0 解析不机械覆盖。精确 pin 的退出条件是新版本通过同样的 CSS 热路径与 HMR RSS 独立复测。
+`258cb0af0a525ce62f4c069b2f3bb5ad04f234ea` 只恢复了 `^7.1.7` 范围，pnpm 实际仍锁定 7.2.0；该轮 MPX 再次失败不能证明回退解析器无效。`88d52ae419817f72bec40958393daeee3b93f7c6` 精确固定四个 workspace importer 及 css-compat 的 specificity peer 为 7.1.7，但 MPX 的传递依赖闭包仍使用 7.2.0，该轮 MPX HMR 常驻 RSS 为 2057 MB，基线为 1689 MB，Taro Vite 另有插件阶段回归。
+
+后续把 v7 传递链一并固定为 7.1.7，保留 v6 历史兼容链；pnpm 生成的根锁不再包含 7.2.0。这样才完整恢复被测 demo 的旧解析器闭包，不把直接依赖 pin 当作消费者实际解析已恢复。精确 pin 和 override 的退出条件是新版本通过同样的 CSS 热路径与 HMR RSS 独立复测。完整回退后的结果仍待新 head 验证，暂不宣称已锁定全部性能根因。
 
 本地冻结安装、`pnpm agents:check`、`git diff --check` 和 `pnpm release status` 通过。iOS 首轮分别在 RN 截图与 Lynx 模拟器安装阶段超时，仍需新 head 完整运行结果，不能计为原生验收通过。
