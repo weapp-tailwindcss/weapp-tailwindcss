@@ -91,7 +91,7 @@
     "typescript": "^6.0.3",
     "vite": "^4.5.14",
     "weapp-ide-cli": "^5.4.12",
-    "weapp-tailwindcss": "^5.7.0"
+    "weapp-tailwindcss": "^5.7.3"
   },
   "packageManager": "pnpm@12.18.0"
 }

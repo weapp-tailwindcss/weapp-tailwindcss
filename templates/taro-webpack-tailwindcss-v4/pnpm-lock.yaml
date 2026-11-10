@@ -324,8 +324,8 @@ importers:
         specifier: ^5.4.12
         version: 5.4.12(@types/node@18.19.130)(supports-color@10.2.2)
       weapp-tailwindcss:
-        specifier: ^5.7.0
-        version: 5.7.1(@oxc-project/types@0.157.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@10.2.2)(tailwindcss@4.3.5)(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3))
+        specifier: ^5.7.3
+        version: 5.7.3(@oxc-project/types@0.157.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@10.2.2)(tailwindcss@4.3.5)(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3))
       webpack:
         specifier: 5.91.0
         version: 5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3)
@@ -2581,69 +2581,69 @@ packages:
     resolution: {integrity: sha512-XIB2XbzHTN6ieIjfIMV9hlVcfPU26s2vafYWQcZHWXHOxiaRZYEDKEwdl129Zyg50+foYV2jCgtrqSA6qNuNSA==}
     engines: {node: '>=6'}
 
-  '@tailwindcss/node@4.3.4':
-    resolution: {integrity: sha512-b7QK/QG04v3j04NbpG82XLCedRyulnkuwUDwRa9oK/ypnJIzMapz2Wg+0TltVczjUzDaJJHIa1+jj9aMUOFMTQ==}
+  '@tailwindcss/node@4.3.5':
+    resolution: {integrity: sha512-yT53FzV4ke0cr/BguDxhWMpm5MJu1O2muzk+tKw6lKHjODAsYArBbWwFbJiaksfzFv1tpkO9QHGzmfs1hJT66g==}
 
-  '@tailwindcss/oxide-android-arm64@4.3.4':
-    resolution: {integrity: sha512-qkjxt+EFocOi3mtsUS3ndlj6yj4SHubwBdvBynLnS8T4mvSzX0Enn0CpypJKmBEtczUAXOHVZKA2zTGzSNU2Sg==}
+  '@tailwindcss/oxide-android-arm64@4.3.5':
+    resolution: {integrity: sha512-Se0z5xMqcSQanJD1IYmO0cGpK3iv0fp3ZsIT7xRJZ1Da5PghvNoc46zz4jIQn+aan3dV9T8AermFNN9QPmsh0Q==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [android]
 
-  '@tailwindcss/oxide-darwin-arm64@4.3.4':
-    resolution: {integrity: sha512-i/awUA/7mJQAbA3AzCW8aQtUh5goMieUdF1zOoclLaJUCxDvsXQ8VJqpQZY3dfcHS6PJjd3tw25nNneD/mEviQ==}
+  '@tailwindcss/oxide-darwin-arm64@4.3.5':
+    resolution: {integrity: sha512-UPrgTDuUbvmqGMZuCnmI3FKee/tYKzKdp00/kuB4oSGB213VYg8QTdF7lVhnPoBXq/mIfJ+ILoBFqNOboWcMwQ==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [darwin]
 
-  '@tailwindcss/oxide-darwin-x64@4.3.4':
-    resolution: {integrity: sha512-q56V9U6AnoYz/yj/alkDLhSQ9AZoXQSEl93f7WETa0+32CudbqM57BXdYXfMYPKudueXKaA+MG6L/0KRseF7Jg==}
+  '@tailwindcss/oxide-darwin-x64@4.3.5':
+    resolution: {integrity: sha512-E+p7HEtjI0b8D7kbbWxH067cGui6d4c79COGko9fAPVE3rwc1E7ld2HFCbaG86AOGWS5VKQYqZOaf38ya4uxTQ==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [darwin]
 
-  '@tailwindcss/oxide-freebsd-x64@4.3.4':
-    resolution: {integrity: sha512-r0W7A+Z9HTHh7bwihJl45E/zZKLjxD50/jToVF/E/RZHSl8+EWO+4yKKJpPMcUooT9hdoip3Zx1uWnbMg4N79g==}
+  '@tailwindcss/oxide-freebsd-x64@4.3.5':
+    resolution: {integrity: sha512-yWEWcWyAG7rWOcTpJTjdhQ3pcaFY2h+0bqTRfgU3G2fz87ZU3AKdvdZKhslD+kyHnjBUWKvNdRYwIYC5dI1tIg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [freebsd]
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.4':
-    resolution: {integrity: sha512-3aih/sRxzeYfi2Bkh+bGYNf2YU9Llamb2mpA7BNF1obYzdgEeWDAMQzK6BSwzLhs/eTdOaSur92qrGfchagUtQ==}
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.5':
+    resolution: {integrity: sha512-WmeVjtJhZlr+smpqcdR2kQkkn6arHIJnUIBxTO2EJcTLGY1ecVXNo2hbSn8xc0IH2aEtys936iMWKGyj0GaKnA==}
     engines: {node: '>= 20'}
     cpu: [arm]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.3.4':
-    resolution: {integrity: sha512-ktJSrPGQou4OqL88rDEx5CkeM9BjzrwZvYo8u7B7VL1zkBa2XBm351o4MQrek95qikb2M++26Y7w7vbH6Mgl8g==}
+  '@tailwindcss/oxide-linux-arm64-gnu@4.3.5':
+    resolution: {integrity: sha512-DTCSyucc6ShMp1QMqV5R94Z7xlgNgUzkGmFF1rL5HH2Qjy4eSmEqy+YLGkqqYvWa4sILtgrBt1JjRKbneQtiFQ==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.3.4':
-    resolution: {integrity: sha512-rt3hjUxT7utAtcB+df6wHyaXDyxhE7Zd1x7L/nvB5Jb2qBb8dZwFUoWqeRja1BaF5OlSqkKSjBmVXj9OsevmCQ==}
+  '@tailwindcss/oxide-linux-arm64-musl@4.3.5':
+    resolution: {integrity: sha512-H9lsvO4x9E4nE4Hi8h7NHHw0O/kcVSu+iOyFHNGdYzazGgDjFHZbE6S3hQ8kMcbNXSBlMdNi67LV5EVqtpaJtw==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.4':
-    resolution: {integrity: sha512-XE3jO2yOOWjttpeGvpwf3/b274NMi3QapQSAI/EzsgrmYNan1Tw8dXT9JQkN7K0OgvuqiC8mcCyNvGzEkpVJPQ==}
+  '@tailwindcss/oxide-linux-x64-gnu@4.3.5':
+    resolution: {integrity: sha512-4uxQvtBvPuIdl13WfUBj9xMZHH14PtHZ8OZdtLmdyDtG66sCa1t599NZT+jagkUzRtWhuul1qRZQ1nAJscXN5g==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@tailwindcss/oxide-linux-x64-musl@4.3.4':
-    resolution: {integrity: sha512-PaAZ2FjJaZk9SQLYtKIfQWiFm/xtl7pX2MKPgCzn0mS/VU54yu+vP457AJdB2XFLxU3gO2abLCt8N7Lg4EbKNg==}
+  '@tailwindcss/oxide-linux-x64-musl@4.3.5':
+    resolution: {integrity: sha512-0JQAzs7jwbA7O6+z/adU+Jk3AXwsu3npAhtr5escXS7TqEqWcaDV7qHuI+0Vy/KQRuVGnLQREcSJWYauyV3oqg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@tailwindcss/oxide-wasm32-wasi@4.3.4':
-    resolution: {integrity: sha512-bjO9WmoM687p8AoCIyw1DUqzpAs4JICLvNmIPxIWDmhw8IOsdubtWQLShyJmISnDKtRy1BBApHVOUl6sNFQQJA==}
+  '@tailwindcss/oxide-wasm32-wasi@4.3.5':
+    resolution: {integrity: sha512-OJhFmlEfdzMr+avACdi40RPtnkW0B6hXyxL/8r+tnEHBWZji36CYRjEXrrvgBmaYsD3oEOBqwYFRKsYvzFe7Bw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
     bundledDependencies:
       - '@napi-rs/wasm-runtime'
@@ -2653,20 +2653,20 @@ packages:
       - '@emnapi/wasi-threads'
       - tslib
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.3.4':
-    resolution: {integrity: sha512-jCrwCvWVtt7ruMXp6dFPd5KBNU8o1tWtEdZbTL/w/hvD3lUYZA0E2mmfvTzW4QLHIx5wGQU9HeY7997R1QTrEg==}
+  '@tailwindcss/oxide-win32-arm64-msvc@4.3.5':
+    resolution: {integrity: sha512-9o8jgthi+QE5eandnboiJT64VQfnIArfZzSTdgbhEK5aafdiu2jTW9Honi/mwYHxBZuH1vAC57IFyrh+0iK5Gg==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [win32]
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.3.4':
-    resolution: {integrity: sha512-cge1wcedn1FrRSXL22lF5sNDYr8c9+VImk7zFYLPs12jkDmchSrZNfzWqOKub+5Hb/aYRdDEqERGGDKONBlOzQ==}
+  '@tailwindcss/oxide-win32-x64-msvc@4.3.5':
+    resolution: {integrity: sha512-XiKFfIy1RWe7qK4WqByxNW7Oz1/nkOy8o/BWhHminyV1PmpUd8Eedj5v2A8h2kpqeVlz6xRnwk9Fr/ZXNLcZfg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [win32]
 
-  '@tailwindcss/oxide@4.3.4':
-    resolution: {integrity: sha512-riqsRw2sLF7B1sNCCkTl3KYXEqvhTiABzZ/4oxxHfZ3c3Td60bCBfOrUuUGOiHagd3E7V+zG46c+XBDWZGFBcg==}
+  '@tailwindcss/oxide@4.3.5':
+    resolution: {integrity: sha512-PynqGLZsZvwM9tqD/CUxkOIfyd6K5elZ2MooauzJryP/UqXYgi3yYbtt3N0Xe+MHV/eFKPFQCEfIKAqlAS1CBg==}
     engines: {node: '>= 20'}
 
   '@tarojs/api@4.3.1':
@@ -3253,8 +3253,8 @@ packages:
     peerDependencies:
       postcss: ^8.5.29
 
-  '@weapp-tailwindcss/engine@0.1.7':
-    resolution: {integrity: sha512-LZgvhG8cXaKhm1vFquXtMWsAZ/UlTFgqKbIk5qUP09VfEUgyu3ln/hAGihkzvdnuUEq2DZNF150ZK1WApQzPoQ==}
+  '@weapp-tailwindcss/engine@0.1.8':
+    resolution: {integrity: sha512-XsnbLFHnP9PJTpbTt0d203cef2Z9NPXdNAAy7r8L9AWz8nhfmD3NZs3RdYLc6ROvGmxUcUd8sdDY4G89cePJuw==}
     engines: {node: ^22.18.0 || >=24.11.0}
     peerDependencies:
       tailwindcss: ^4.0.0
@@ -3277,54 +3277,54 @@ packages:
     resolution: {integrity: sha512-SHyZk4kFcQrmBvsZk5/5IEqLaYXFuBU2yQi4lRbb/r5rQmLtsAAxNPKpKqE2tFqPcfx69w6MTkEgOdzJVnMgSg==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
-  '@weapp-tailwindcss/native-darwin-arm64@5.7.1':
-    resolution: {integrity: sha512-i9XW9v0MILDJhwP9tS/enEqrbwtt7Sy5xbD4tDSfDnn9wdZQiWYo2IKc76ciUBNKY8MVJTDgvF2S7VBYyA672g==}
+  '@weapp-tailwindcss/native-darwin-arm64@5.7.3':
+    resolution: {integrity: sha512-zM7YFXftDHn/GP8Q2nmZJzpJ355IvmtxUkQReUnAPy7sxiDEuE61WTws1Ehikr1u6rxMydr+ipdLykRfCHzJaQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [darwin]
 
-  '@weapp-tailwindcss/native-darwin-x64@5.7.1':
-    resolution: {integrity: sha512-LlfFwaY7qCQ0obNixq3Mz3blsQIn+NaKtR2fp5HIAlkd0LPAexxZhOGrYzGHludrI7Z7+xqQBLV09r4VI0Fu4w==}
+  '@weapp-tailwindcss/native-darwin-x64@5.7.3':
+    resolution: {integrity: sha512-inHz1B99ptsFC5oLBiyQnLIflE3AhApjjlFOk85h1KZ2EwX7P82kp8pRdZpuNcDch0sysEBumlZjYZJ/MKatXw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [darwin]
 
-  '@weapp-tailwindcss/native-linux-arm64-gnu@5.7.1':
-    resolution: {integrity: sha512-kkuSFUWy3uIq4YJiG8ianBw61/I8yUBhBeAAPRB+IYLUaqexjVdbCAEU45iV/X8FVhLjf+uPE94/Vkc/uY8QVQ==}
+  '@weapp-tailwindcss/native-linux-arm64-gnu@5.7.3':
+    resolution: {integrity: sha512-ACkZkerC1Ot6s7aY6fiJ5F4ihPUye3RweE5eSQjJC4iGc/0S8K0AfWB6d2UK/4ut3KRALR0Zb+x+ASlKTcCfYQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@weapp-tailwindcss/native-linux-arm64-musl@5.7.1':
-    resolution: {integrity: sha512-oSetBGLpeAKuecVF4yfMFnK40RrVCr+KQSvXQx6GJtCc5EMT+rQbAI24bMZiZNQAUwPK5fbYeU0bvJ0+AEtmnA==}
+  '@weapp-tailwindcss/native-linux-arm64-musl@5.7.3':
+    resolution: {integrity: sha512-DFQGnJyOw3y31AgmZuZICbVSUDxwcdYcSYVbW2m8co5e9ih+huI/2jVV/9TZUV9+3ACqk/S+W0jAJrRlITJqQA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@weapp-tailwindcss/native-linux-x64-gnu@5.7.1':
-    resolution: {integrity: sha512-7QynBAFuurhLQGtSjFpuLqOd/1YmwGjanYsAU/2MQzLvbuS9JGnGDnC84CNTN+Y+P5K66pNov0tIHTlwkm1i0g==}
+  '@weapp-tailwindcss/native-linux-x64-gnu@5.7.3':
+    resolution: {integrity: sha512-b39Kk5HOkPz19/p5GKLnjZVtJpCWIqeKAO+CeelFPMQuxhGSi4c276UHj5SEg1Y54LhDBsnz/6revAaj+DkBBA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@weapp-tailwindcss/native-linux-x64-musl@5.7.1':
-    resolution: {integrity: sha512-4fKYVDsxnHYoYwhi6qotiyotCswuZcEsXntYHbGb/CB2B2PrpqjC58tzIG4mVkUdu9tB1IILdvtuN4U7NBP9cg==}
+  '@weapp-tailwindcss/native-linux-x64-musl@5.7.3':
+    resolution: {integrity: sha512-0DLfPya1sw/JkshZaoX8PiH/CEX/rAHX3F+nEiGH9QU+AbLOWwTr7yGCN1FF/RgS1xv8IbRlWLGhudd79IvNIA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@weapp-tailwindcss/native-win32-arm64-msvc@5.7.1':
-    resolution: {integrity: sha512-jD0b9n7cU/ZawGb10eXZz/MMSs0tHeECUER5SzB5aMqhtV1c3ueY5QXET6mSHYfeOvwpzCHYs2aQTLVpmWKBWw==}
+  '@weapp-tailwindcss/native-win32-arm64-msvc@5.7.3':
+    resolution: {integrity: sha512-W7lfoNKsMMZ1GYUieEHtSQr2jUE6QgWL+uqmtgUIPciNwCChYklFvPSqdVYeE8Z3nBQRHBFIb8VZnL9R01rK5w==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [win32]
 
-  '@weapp-tailwindcss/native-win32-x64-msvc@5.7.1':
-    resolution: {integrity: sha512-XvpB5WaSinU1/Oo5zDRgehaCO1cfLUTUfRvLioMwcZl3shtklgdtNflS32jLB4t0QxAYzc3kcPG9ONqfmuXXgg==}
+  '@weapp-tailwindcss/native-win32-x64-msvc@5.7.3':
+    resolution: {integrity: sha512-liU1lnzwQJByZSQML+rzLq6n6qEjcC0wz/6yeHAMOLeVSvgQ83FhVpKGzQ5c14n7/tDVjQi+7whyYy3gwaDbeQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
@@ -3335,8 +3335,8 @@ packages:
     peerDependencies:
       postcss: ^8.4.38
 
-  '@weapp-tailwindcss/postcss@4.0.1':
-    resolution: {integrity: sha512-P74KetjYOiqM8WbvDgouCiTpoK5b29QugnJxXARTzHegihrM9hnPUuMia1U2vDvkg/idRXklE8tg6+jOqdL/+w==}
+  '@weapp-tailwindcss/postcss@4.0.3':
+    resolution: {integrity: sha512-EJAK/DAOpHROw3LrGIjPt1ZnDi934SSHfwQUr2MXTrYnxr27gruq3H+4uVf6kmXHu6YMUbYkOsoCw8bnBAqUgw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       lightningcss: ^1.33.0
@@ -7763,9 +7763,6 @@ packages:
     peerDependencies:
       tailwindcss: ^3.0.0 || ^4.0.0
 
-  tailwindcss@4.3.4:
-    resolution: {integrity: sha512-PCJZTFFdG+sL3gvnP1Do9o6GbkvH2q0p04xSs3f7cSvmAeK+sttG+/7ncK1fdRwKFfC7n+wDDJaOMBSefkI9ow==}
-
   tailwindcss@4.3.5:
     resolution: {integrity: sha512-FcQk9BuffmEHJP2G0XmB2SplU1aLTI7j07Kunk+U74Ny+XiWOtzXz9aujFZ/avntw1e2cOv/3PkgzflQ7gX2vQ==}
 
@@ -8137,8 +8134,8 @@ packages:
       webpack:
         optional: true
 
-  weapp-tailwindcss@5.7.1:
-    resolution: {integrity: sha512-wY1L6fcs03sSFJBlp+luHHMKIe/kn6ecxlMPovXvn9MKKjJ27w7VW3G8DPLxIIkqAZjxTxqo8QDsM48ENUqdaw==}
+  weapp-tailwindcss@5.7.3:
+    resolution: {integrity: sha512-/HRK07FU+BXUHly3WoSZ7g3ktvXn9hc0Ddv3DPksUTl7CPOrxZw1OkqnRhRxa9qizBYhhfppGfIS3N7TZ5ADYA==}
     engines: {node: ^22.18.0 || >=24.11.0}
     peerDependencies:
       '@mpxjs/webpack-plugin': '>=2.0.0 <3.0.0'
@@ -10435,7 +10432,7 @@ snapshots:
     dependencies:
       defer-to-connect: 1.1.3
 
-  '@tailwindcss/node@4.3.4':
+  '@tailwindcss/node@4.3.5':
     dependencies:
       '@jridgewell/remapping': 2.3.5
       enhanced-resolve: 5.24.5
@@ -10443,58 +10440,58 @@ snapshots:
       lightningcss: 1.33.0
       magic-string: 1.4.5
       source-map-js: 1.2.2
-      tailwindcss: 4.3.4
+      tailwindcss: 4.3.5
 
-  '@tailwindcss/oxide-android-arm64@4.3.4':
+  '@tailwindcss/oxide-android-arm64@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-darwin-arm64@4.3.4':
+  '@tailwindcss/oxide-darwin-arm64@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-darwin-x64@4.3.4':
+  '@tailwindcss/oxide-darwin-x64@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-freebsd-x64@4.3.4':
+  '@tailwindcss/oxide-freebsd-x64@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.4':
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.3.4':
+  '@tailwindcss/oxide-linux-arm64-gnu@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.3.4':
+  '@tailwindcss/oxide-linux-arm64-musl@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.4':
+  '@tailwindcss/oxide-linux-x64-gnu@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-musl@4.3.4':
+  '@tailwindcss/oxide-linux-x64-musl@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-wasm32-wasi@4.3.4':
+  '@tailwindcss/oxide-wasm32-wasi@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.3.4':
+  '@tailwindcss/oxide-win32-arm64-msvc@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.3.4':
+  '@tailwindcss/oxide-win32-x64-msvc@4.3.5':
     optional: true
 
-  '@tailwindcss/oxide@4.3.4':
+  '@tailwindcss/oxide@4.3.5':
     optionalDependencies:
-      '@tailwindcss/oxide-android-arm64': 4.3.4
-      '@tailwindcss/oxide-darwin-arm64': 4.3.4
-      '@tailwindcss/oxide-darwin-x64': 4.3.4
-      '@tailwindcss/oxide-freebsd-x64': 4.3.4
-      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.3.4
-      '@tailwindcss/oxide-linux-arm64-gnu': 4.3.4
-      '@tailwindcss/oxide-linux-arm64-musl': 4.3.4
-      '@tailwindcss/oxide-linux-x64-gnu': 4.3.4
-      '@tailwindcss/oxide-linux-x64-musl': 4.3.4
-      '@tailwindcss/oxide-wasm32-wasi': 4.3.4
-      '@tailwindcss/oxide-win32-arm64-msvc': 4.3.4
-      '@tailwindcss/oxide-win32-x64-msvc': 4.3.4
+      '@tailwindcss/oxide-android-arm64': 4.3.5
+      '@tailwindcss/oxide-darwin-arm64': 4.3.5
+      '@tailwindcss/oxide-darwin-x64': 4.3.5
+      '@tailwindcss/oxide-freebsd-x64': 4.3.5
+      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.3.5
+      '@tailwindcss/oxide-linux-arm64-gnu': 4.3.5
+      '@tailwindcss/oxide-linux-arm64-musl': 4.3.5
+      '@tailwindcss/oxide-linux-x64-gnu': 4.3.5
+      '@tailwindcss/oxide-linux-x64-musl': 4.3.5
+      '@tailwindcss/oxide-wasm32-wasi': 4.3.5
+      '@tailwindcss/oxide-win32-arm64-msvc': 4.3.5
+      '@tailwindcss/oxide-win32-x64-msvc': 4.3.5
 
   '@tarojs/api@4.3.1(@tarojs/runtime@4.3.1)(@tarojs/shared@4.3.1)':
     dependencies:
@@ -11257,7 +11254,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.22':
     dependencies:
-      '@babel/parser': 7.29.8
+      '@babel/parser': 7.29.13
       '@vue/shared': 3.5.22
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -11285,7 +11282,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.22':
     dependencies:
-      '@babel/parser': 7.29.8
+      '@babel/parser': 7.29.13
       '@vue/compiler-core': 3.5.22
       '@vue/compiler-dom': 3.5.22
       '@vue/compiler-ssr': 3.5.22
@@ -11347,10 +11344,10 @@ snapshots:
       postcss: 8.5.32
       postcss-selector-parser: 7.1.7
 
-  '@weapp-tailwindcss/engine@0.1.7(tailwindcss@4.3.5)':
+  '@weapp-tailwindcss/engine@0.1.8(tailwindcss@4.3.5)':
     dependencies:
-      '@tailwindcss/node': 4.3.4
-      '@tailwindcss/oxide': 4.3.4
+      '@tailwindcss/node': 4.3.5
+      '@tailwindcss/oxide': 4.3.5
       '@weapp-tailwindcss/source-scan': 0.1.2
       postcss: 8.5.32
     optionalDependencies:
@@ -11371,28 +11368,28 @@ snapshots:
       '@weapp-tailwindcss/runtime': 0.1.11
       tailwind-merge: 3.7.0
 
-  '@weapp-tailwindcss/native-darwin-arm64@5.7.1':
+  '@weapp-tailwindcss/native-darwin-arm64@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-darwin-x64@5.7.1':
+  '@weapp-tailwindcss/native-darwin-x64@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-linux-arm64-gnu@5.7.1':
+  '@weapp-tailwindcss/native-linux-arm64-gnu@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-linux-arm64-musl@5.7.1':
+  '@weapp-tailwindcss/native-linux-arm64-musl@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-linux-x64-gnu@5.7.1':
+  '@weapp-tailwindcss/native-linux-x64-gnu@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-linux-x64-musl@5.7.1':
+  '@weapp-tailwindcss/native-linux-x64-musl@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-win32-arm64-msvc@5.7.1':
+  '@weapp-tailwindcss/native-win32-arm64-msvc@5.7.3':
     optional: true
 
-  '@weapp-tailwindcss/native-win32-x64-msvc@5.7.1':
+  '@weapp-tailwindcss/native-win32-x64-msvc@5.7.3':
     optional: true
 
   '@weapp-tailwindcss/postcss-calc@1.0.13(postcss@8.5.32)':
@@ -11401,13 +11398,13 @@ snapshots:
       postcss-selector-parser: 7.1.7
       postcss-value-parser: 4.2.0
 
-  '@weapp-tailwindcss/postcss@4.0.1(jiti@2.7.0)(lightningcss@1.33.0)(tailwindcss@4.3.5)(yaml@2.9.1)':
+  '@weapp-tailwindcss/postcss@4.0.3(jiti@2.7.0)(lightningcss@1.33.0)(tailwindcss@4.3.5)(yaml@2.9.1)':
     dependencies:
       '@csstools/css-color-parser': 4.2.7(@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
       '@csstools/css-parser-algorithms': 4.0.2(@csstools/css-tokenizer@4.0.2)
       '@csstools/css-tokenizer': 4.0.2
       '@weapp-tailwindcss/css-compat': 0.1.3(postcss@8.5.32)
-      '@weapp-tailwindcss/engine': 0.1.7(tailwindcss@4.3.5)
+      '@weapp-tailwindcss/engine': 0.1.8(tailwindcss@4.3.5)
       '@weapp-tailwindcss/escape': 0.0.2
       '@weapp-tailwindcss/postcss-calc': 1.0.13(postcss@8.5.32)
       '@weapp-tailwindcss/shared': 2.0.5
@@ -11425,14 +11422,14 @@ snapshots:
       postcss-value-parser: 4.2.0
       tailwindcss-config: 2.0.8(tailwindcss@4.3.5)
     optionalDependencies:
-      '@weapp-tailwindcss/native-darwin-arm64': 5.7.1
-      '@weapp-tailwindcss/native-darwin-x64': 5.7.1
-      '@weapp-tailwindcss/native-linux-arm64-gnu': 5.7.1
-      '@weapp-tailwindcss/native-linux-arm64-musl': 5.7.1
-      '@weapp-tailwindcss/native-linux-x64-gnu': 5.7.1
-      '@weapp-tailwindcss/native-linux-x64-musl': 5.7.1
-      '@weapp-tailwindcss/native-win32-arm64-msvc': 5.7.1
-      '@weapp-tailwindcss/native-win32-x64-msvc': 5.7.1
+      '@weapp-tailwindcss/native-darwin-arm64': 5.7.3
+      '@weapp-tailwindcss/native-darwin-x64': 5.7.3
+      '@weapp-tailwindcss/native-linux-arm64-gnu': 5.7.3
+      '@weapp-tailwindcss/native-linux-arm64-musl': 5.7.3
+      '@weapp-tailwindcss/native-linux-x64-gnu': 5.7.3
+      '@weapp-tailwindcss/native-linux-x64-musl': 5.7.3
+      '@weapp-tailwindcss/native-win32-arm64-msvc': 5.7.3
+      '@weapp-tailwindcss/native-win32-x64-msvc': 5.7.3
       lightningcss: 1.33.0
     transitivePeerDependencies:
       - jiti
@@ -15348,7 +15345,7 @@ snapshots:
 
   postcss-load-config@6.0.1(jiti@2.7.0)(postcss@8.5.32)(yaml@2.9.1):
     dependencies:
-      lilconfig: 3.1.3
+      lilconfig: 3.1.4
     optionalDependencies:
       jiti: 2.7.0
       postcss: 8.5.32
@@ -16690,8 +16687,6 @@ snapshots:
       lilconfig: 3.1.4
       tailwindcss: 4.3.5
 
-  tailwindcss@4.3.4: {}
-
   tailwindcss@4.3.5: {}
 
   tapable@2.2.1: {}
@@ -17054,17 +17049,17 @@ snapshots:
     optionalDependencies:
       webpack: 5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3)
 
-  weapp-tailwindcss@5.7.1(@oxc-project/types@0.157.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@10.2.2)(tailwindcss@4.3.5)(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3)):
+  weapp-tailwindcss@5.7.3(@oxc-project/types@0.157.0)(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@10.2.2)(tailwindcss@4.3.5)(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3)):
     dependencies:
       '@babel/parser': 8.1.0
       '@babel/traverse': 8.0.7
       '@babel/types': 8.1.0
       '@vue/compiler-dom': 3.5.45
-      '@weapp-tailwindcss/engine': 0.1.7(tailwindcss@4.3.5)
+      '@weapp-tailwindcss/engine': 0.1.8(tailwindcss@4.3.5)
       '@weapp-tailwindcss/env': 0.2.1
       '@weapp-tailwindcss/escape': 0.0.2
       '@weapp-tailwindcss/logger': 2.0.5
-      '@weapp-tailwindcss/postcss': 4.0.1(jiti@2.7.0)(lightningcss@1.33.0)(tailwindcss@4.3.5)(yaml@2.9.1)
+      '@weapp-tailwindcss/postcss': 4.0.3(jiti@2.7.0)(lightningcss@1.33.0)(tailwindcss@4.3.5)(yaml@2.9.1)
       '@weapp-tailwindcss/reset': 0.1.7(tailwindcss@4.3.5)
       '@weapp-tailwindcss/shared': 2.0.5
       '@weapp-tailwindcss/source-scan': 0.1.2
@@ -17084,14 +17079,14 @@ snapshots:
       weapp-style-injector: 1.0.9(webpack@5.91.0(patch_hash=d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b)(@swc/core@1.3.96)(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.32)(uglify-js@3.19.3))
       yaml: 2.9.1
     optionalDependencies:
-      '@weapp-tailwindcss/native-darwin-arm64': 5.7.1
-      '@weapp-tailwindcss/native-darwin-x64': 5.7.1
-      '@weapp-tailwindcss/native-linux-arm64-gnu': 5.7.1
-      '@weapp-tailwindcss/native-linux-arm64-musl': 5.7.1
-      '@weapp-tailwindcss/native-linux-x64-gnu': 5.7.1
-      '@weapp-tailwindcss/native-linux-x64-musl': 5.7.1
-      '@weapp-tailwindcss/native-win32-arm64-msvc': 5.7.1
-      '@weapp-tailwindcss/native-win32-x64-msvc': 5.7.1
+      '@weapp-tailwindcss/native-darwin-arm64': 5.7.3
+      '@weapp-tailwindcss/native-darwin-x64': 5.7.3
+      '@weapp-tailwindcss/native-linux-arm64-gnu': 5.7.3
+      '@weapp-tailwindcss/native-linux-arm64-musl': 5.7.3
+      '@weapp-tailwindcss/native-linux-x64-gnu': 5.7.3
+      '@weapp-tailwindcss/native-linux-x64-musl': 5.7.3
+      '@weapp-tailwindcss/native-win32-arm64-msvc': 5.7.3
+      '@weapp-tailwindcss/native-win32-x64-msvc': 5.7.3
       tailwindcss: 4.3.5
     transitivePeerDependencies:
       - '@oxc-project/types'

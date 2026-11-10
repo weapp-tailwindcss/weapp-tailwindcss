@@ -259,6 +259,11 @@ export async function collectWatchReports(root) {
   }
   const rows = [...byKey.values()].sort((a, b) => `${a.project}/${a.platform}/${a.mutation}`.localeCompare(`${b.project}/${b.platform}/${b.mutation}`))
   const timingRows = rows.filter(row => row.mutation === 'all' && finite(row.avgMs) !== undefined)
+  const peakRssValues = rows.map(row => row.peakRssMb).filter(finite)
+  const rssDeltaValues = rows.map(row => row.rssDeltaMb).filter(finite)
+  const peakHeapValues = rows.map(row => row.peakHeapUsedMb).filter(finite)
+  const minValues = timingRows.map(row => row.minMs).filter(finite)
+  const maxValues = timingRows.map(row => row.maxMs).filter(finite)
   return {
     available: rows.length > 0,
     sourceFiles: files,
@@ -267,13 +272,13 @@ export async function collectWatchReports(root) {
     reportCount: parsed.filter(item => item.value).length,
     summary: {
       avgMs: average(timingRows.map(row => row.avgMs)),
-      minMs: Math.min(...timingRows.map(row => row.minMs).filter(finite), Infinity),
-      maxMs: Math.max(...timingRows.map(row => row.maxMs).filter(finite), 0),
+      minMs: minValues.length ? Math.min(...minValues) : undefined,
+      maxMs: maxValues.length ? Math.max(...maxValues) : undefined,
       p50Ms: median(timingRows.map(row => row.p50Ms)),
       p95Ms: median(timingRows.map(row => row.p95Ms)),
-      peakRssMb: Math.max(...rows.map(row => row.peakRssMb).filter(finite), 0),
-      maxRssDeltaMb: Math.max(...rows.map(row => row.rssDeltaMb).filter(finite), 0),
-      peakHeapUsedMb: Math.max(...rows.map(row => row.peakHeapUsedMb).filter(finite), 0),
+      peakRssMb: peakRssValues.length ? Math.max(...peakRssValues) : undefined,
+      maxRssDeltaMb: rssDeltaValues.length ? Math.max(...rssDeltaValues) : undefined,
+      peakHeapUsedMb: peakHeapValues.length ? Math.max(...peakHeapValues) : undefined,
     },
   }
 }

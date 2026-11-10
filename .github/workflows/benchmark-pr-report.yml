@@ -66,12 +66,14 @@ jobs:
                 per_page: 100,
               })
               return data.workflow_runs
-                .filter(run => run.status === 'completed')
                 .sort((a, b) => b.run_number - a.run_number)[0]
             }
 
             const benchmark = await latestRun('benchmark.yml')
             const watch = await latestRun('e2e-watch.yml')
+            const ready = benchmark?.status === 'completed' && watch?.status === 'completed'
+            core.setOutput('ready', String(ready))
+            if (!ready) core.info('Waiting for the matching Benchmark and E2E Watch workflow runs to complete.')
             for (const [prefix, run] of [['benchmark', benchmark], ['watch', watch]]) {
               core.setOutput(`${prefix}_run_id`, run ? String(run.id) : '')
               core.setOutput(`${prefix}_conclusion`, run?.conclusion || '')
@@ -79,11 +81,11 @@ jobs:
             }
 
       - name: Prepare artifact directories
-        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != ''
         run: mkdir -p .tmp/benchmark-pr-report/benchmark .tmp/benchmark-pr-report/watch
 
       - name: Download Benchmark artifacts
-        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.benchmark_run_id != ''
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.benchmark_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -93,7 +95,7 @@ jobs:
           path: .tmp/benchmark-pr-report/benchmark
 
       - name: Download E2E Watch artifacts
-        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.watch_run_id != ''
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.watch_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
@@ -104,7 +106,7 @@ jobs:
 
       - name: Generate aggregate report
         id: report
-        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != ''
         env:
           PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
           HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
@@ -131,7 +133,7 @@ jobs:
 
       - name: Upload aggregate report artifact
         id: upload
-        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != ''
         uses: actions/upload-artifact@v7
         with:
           name: pr-benchmark-report-${{ steps.metadata.outputs.pr_number }}-${{ steps.metadata.outputs.head_sha }}
@@ -140,7 +142,7 @@ jobs:
           retention-days: 14
 
       - name: Update PR comment
-        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.report.outcome == 'success'
+        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.ready == 'true' && steps.metadata.outputs.pr_number != '' && steps.report.outcome == 'success'
         uses: actions/github-script@v7
         env:
           COMMENT_FILE: .tmp/benchmark-pr-report/output/comment.md

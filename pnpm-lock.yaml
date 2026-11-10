@@ -243,7 +243,7 @@ catalogs:
       specifier: ^6.0.1
       version: 6.0.1
     postcss-selector-parser:
-      specifier: ^7.1.7
+      specifier: 7.1.7
       version: 7.1.7
     yaml:
       specifier: ^2.9.1
@@ -503,8 +503,8 @@ catalogs:
       version: 4.6.2
   runtimeVariants:
     tailwind-variants:
-      specifier: ^4.0.1
-      version: 4.0.1
+      specifier: ^4.0.2
+      version: 4.0.2
   sass195:
     sass:
       specifier: 1.107.1
@@ -801,6 +801,8 @@ catalogs:
 
 overrides:
   jiti: 2.7.0
+  postcss-selector-parser@^7.0.0: 7.1.7
+  lilconfig@^3.1.0: 3.1.4
   request@2.88.2>form-data: 2.5.6
   oxfmt@0.35.0>tinypool: 2.1.2
   '@docusaurus/core@3.10.2>tinypool': 2.1.2
@@ -1601,8 +1603,8 @@ importers:
         specifier: catalog:tailwindMerge
         version: 3.7.0
       tailwind-variants:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^4.0.2
+        version: 4.0.2
       tailwindcss:
         specifier: catalog:tailwindcss4
         version: 4.3.5
@@ -4817,7 +4819,7 @@ importers:
         version: link:../variants
       tailwind-variants:
         specifier: catalog:runtimeVariants
-        version: 4.0.1
+        version: 4.0.2
     devDependencies:
       '@storybook/addon-a11y':
         specifier: catalog:storybook
@@ -4866,7 +4868,7 @@ importers:
         version: link:../runtime
       tailwind-variants:
         specifier: catalog:runtimeVariants
-        version: 4.0.1
+        version: 4.0.2
     devDependencies:
       '@weapp-tailwindcss/escape':
         specifier: workspace:*
@@ -5343,7 +5345,7 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
       lilconfig:
-        specifier: ^3.1.4
+        specifier: 3.1.4
         version: 3.1.4
       tailwindcss:
         specifier: ^3.0.0 || ^4.0.0
@@ -6025,8 +6027,8 @@ importers:
         specifier: catalog:tailwindMerge
         version: 3.7.0
       tailwind-variants:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^4.0.2
+        version: 4.0.2
       weapp-tailwindcss:
         specifier: workspace:*
         version: link:../packages/weapp-tailwindcss
@@ -8649,13 +8651,13 @@ packages:
     resolution: {integrity: sha512-mf1LEW0tJLKfWyvn5KdDrhpxHyuxpbNwTIwOYLIvsTffeyOf85j5oIzfG0yosxDgx/sswlqBnESYUcQH0vgZ0g==}
     engines: {node: '>=18'}
     peerDependencies:
-      postcss-selector-parser: ^7.0.0
+      postcss-selector-parser: 7.1.7
 
   '@csstools/selector-resolve-nested@4.0.2':
     resolution: {integrity: sha512-JpjNBJFA+4OnAHKRK4AMp8xrYyLhI9XapOeBlP2PhRU/IylSw+1ep3BFNTksBJnrTS3KT6kqKNVfpzLLwZUW5Q==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
-      postcss-selector-parser: ^7.1.1
+      postcss-selector-parser: 7.1.7
 
   '@csstools/selector-specificity@4.0.0':
     resolution: {integrity: sha512-189nelqtPd8++phaHNwYovKZI0FOzH1vQEE3QhHHkNIGrg5fSs9CbYP3RvfEH5geztnIA9Jwq91wyOIwAW5JIQ==}
@@ -8667,13 +8669,13 @@ packages:
     resolution: {integrity: sha512-PCqQV3c4CoVm3kdPhyeZ07VmBRdH2EpMFA/pd9OASpOEC3aXNGoqPDAZ80D0cLpMBxnmk0+yNhGsEx31hq7Gtw==}
     engines: {node: '>=18'}
     peerDependencies:
-      postcss-selector-parser: ^7.0.0
+      postcss-selector-parser: 7.1.7
 
   '@csstools/selector-specificity@6.0.1':
     resolution: {integrity: sha512-MBuqFIIvqk4S593MGAskTkPpEUUzZNvGzh8mMxEwl3oHwjQlXmqHEDxNbN3Y0Tsh+xjmem4GZjeg7I0qkwBivg==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
-      postcss-selector-parser: ^7.1.1
+      postcss-selector-parser: 7.1.7
 
   '@csstools/utilities@2.0.0':
     resolution: {integrity: sha512-5VdOr0Z71u+Yp3ozOx8T11N703wIFGVRgOWbOZMKgglPJsWA54MRIoMNVMa7shUToIhx5J8vX4sOZgD2XiihiQ==}
@@ -30873,8 +30875,8 @@ packages:
   tailwind-merge@3.7.0:
     resolution: {integrity: sha512-XPPUyAc+cvspz3lHTcR/QgPfW2A0lv/xQNIjX3HGhLR+Nq2lHaLq5MtTesHn8GUr3W3DguT2KT5x3NVgRtYwmA==}
 
-  tailwind-variants@4.0.1:
-    resolution: {integrity: sha512-VumzgPklIwpneDWtskGuhEqPlfZZ2DeN1nIb2um9DRhk9XBX580s4N84A533j+oHN+dLz274HkKvSjr+64fggA==}
+  tailwind-variants@4.0.2:
+    resolution: {integrity: sha512-sZvOFkfe5LlYG/crRX5IvP3oUHmJPu+7WmrLQFvF0kCRq51C+lurlzFMm/jURG/5keT7VOJ/it0N3jkzYux85w==}
     engines: {node: '>=16.9.x', pnpm: '>=7.x'}
 
   tailwindcss-config@2.0.8:
@@ -67606,7 +67608,7 @@ snapshots:
 
   tailwind-merge@3.7.0: {}
 
-  tailwind-variants@4.0.1: {}
+  tailwind-variants@4.0.2: {}
 
   tailwindcss-config@2.0.8(tailwindcss@4.3.5):
     dependencies:

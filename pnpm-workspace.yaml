@@ -109,6 +109,10 @@ versioning:
 
 overrides:
   jiti: 2.7.0
+  # v7 传递链同样固定到性能基线，避免直接 pin 后仍在 demo 中使用 7.2.0。
+  postcss-selector-parser@^7.0.0: 7.1.7
+  # 配置加载热路径需要把 lilconfig v3 的传递解析也固定到验收版本。
+  lilconfig@^3.1.0: 3.1.4
   # 仅修补已审计消费者的传递依赖，保留其它工具链的较新版本。
   request@2.88.2>form-data: 2.5.6
   oxfmt@0.35.0>tinypool: 2.1.2
@@ -143,7 +147,7 @@ catalogs:
     pathe: ^2.0.3
     picocolors: ^1.1.1
     postcss-load-config: ^6.0.1
-    postcss-selector-parser: ^7.1.7
+    postcss-selector-parser: 7.1.7
     vite-plugin-dts: ^4.5.4
     yaml: ^2.9.1
   compilerUtilities:
@@ -157,7 +161,7 @@ catalogs:
     postcss-scss: ^4.0.9
     postcss-value-parser: ^4.2.0
   runtimeVariants:
-    tailwind-variants: ^4.0.1
+    tailwind-variants: ^4.0.2
   runtimeLodash:
     lodash.castarray: ^4.4.0
     lodash.isplainobject: ^4.0.6
