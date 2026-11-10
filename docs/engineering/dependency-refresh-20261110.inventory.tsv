@@ -1297,7 +1297,7 @@ packages-runtime/typography/package.json	dependencies	lodash.castarray	catalog:r
 packages-runtime/typography/package.json	dependencies	lodash.isplainobject	catalog:runtimeLodash	^4.0.6	4.0.6	4.0.6	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages-runtime/typography/package.json	dependencies	lodash.merge	catalog:runtimeLodash	^4.6.2	4.6.2	4.6.2	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages-runtime/typography/package.json	dependencies	magic-string	catalog:buildUtilities	^1.4.5	1.4.5	1.4.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
-packages-runtime/typography/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.2.0	7.2.0	7.2.0	已升级	DECLARATION_OR_LOCK_CHANGED	准确基线 Git 对象与当前声明/catalog/锁的差异；行为及安全验收另列，不以此状态表示已通过。	上游发布或消费者约束变化时复查。
+packages-runtime/typography/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.1.7	7.1.7	7.2.0	保留	PERFORMANCE_REGRESSION	PR benchmark 在 MPX 与 uni-app Vite 独立 shard 均确认重复性能回归；该依赖位于共用 CSS 插件阶段，恢复已验证基线并等待新 head 复测确认因果。	上游发布或消费者约束变化时复查。
 packages-runtime/typography/package.json	devDependencies	@weapp-tailwindcss/test-helper	workspace:*	workspace:*	link:../../packages/test-helper		保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。
 packages-runtime/typography/package.json	peerDependencies	tailwindcss	^3.0.0 || ^4.0.0	^3.0.0 || ^4.0.0		4.3.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages-runtime/ui/package.json	dependencies	@weapp-tailwindcss/merge	workspace:*	workspace:*	link:../merge	2.2.7	保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。
@@ -1354,7 +1354,7 @@ packages/cli/package.json	dependencies	weapp-tailwindcss	workspace:*	workspace:*
 packages/cli/package.json	peerDependencies	tailwindcss	^4.0.0	^4.0.0		4.3.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/css-compat/package.json	dependencies	@csstools/css-tokenizer	catalog:csstools	^4.0.2	4.0.2	4.0.2	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/css-compat/package.json	dependencies	@csstools/selector-specificity	6.0.1	6.0.1	6.0.1	6.0.1	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
-packages/css-compat/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.2.0	7.2.0	7.2.0	已升级	DECLARATION_OR_LOCK_CHANGED	准确基线 Git 对象与当前声明/catalog/锁的差异；行为及安全验收另列，不以此状态表示已通过。	上游发布或消费者约束变化时复查。
+packages/css-compat/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.1.7	7.1.7	7.2.0	保留	PERFORMANCE_REGRESSION	PR benchmark 在 MPX 与 uni-app Vite 独立 shard 均确认重复性能回归；该依赖位于共用 CSS 插件阶段，恢复已验证基线并等待新 head 复测确认因果。	上游发布或消费者约束变化时复查。
 packages/css-compat/package.json	devDependencies	mdn-data	2.37.2	2.37.2	2.37.2	2.37.2	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/css-compat/package.json	peerDependencies	postcss	^8.5.29	^8.5.29		8.5.32	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/debug-uni-app-x/package.json	dependencies	defu	catalog:buildUtilities	^6.1.7	6.1.7	6.1.7	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
@@ -1393,7 +1393,7 @@ packages/lynx/package.json	peerDependencies	@lynx-js/react-rsbuild-plugin	>=0.12
 packages/lynx/package.json	peerDependencies	@lynx-js/rspeedy	>=0.16.0	>=0.16.0		0.18.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/lynx/package.json	peerDependencies	tailwindcss	>=4.0.0	>=4.0.0		4.3.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/minify-preserve/package.json	devDependencies	@swc/core	catalog:swc	^1.16.22	1.16.22	1.16.22	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
-packages/postcss-calc/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.2.0	7.2.0	7.2.0	已升级	DECLARATION_OR_LOCK_CHANGED	准确基线 Git 对象与当前声明/catalog/锁的差异；行为及安全验收另列，不以此状态表示已通过。	上游发布或消费者约束变化时复查。
+packages/postcss-calc/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.1.7	7.1.7	7.2.0	保留	PERFORMANCE_REGRESSION	PR benchmark 在 MPX 与 uni-app Vite 独立 shard 均确认重复性能回归；该依赖位于共用 CSS 插件阶段，恢复已验证基线并等待新 head 复测确认因果。	上游发布或消费者约束变化时复查。
 packages/postcss-calc/package.json	dependencies	postcss-value-parser	^4.2.0	^4.2.0	4.2.0	4.2.0	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/postcss-calc/package.json	devDependencies	@eslint/js	^10.0.1	^10.0.1	10.0.1	10.0.1	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/postcss-calc/package.json	devDependencies	@types/node	catalog:typesNode2410	^26.6.6	26.6.6	26.6.6	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
@@ -1423,7 +1423,7 @@ packages/postcss/package.json	dependencies	postcss-pxtrans	catalog:postcssCompat
 packages/postcss/package.json	dependencies	postcss-rem-to-responsive-pixel	catalog:postcssRem	^7.0.9	7.0.9	7.0.9	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/postcss/package.json	dependencies	postcss-rule-unit-converter	catalog:postcssCompat	^0.3.0	0.3.0	0.3.0	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/postcss/package.json	dependencies	postcss-scss	catalog:postcssCompat	^4.0.9	4.0.9	4.0.9	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
-packages/postcss/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.2.0	7.2.0	7.2.0	已升级	DECLARATION_OR_LOCK_CHANGED	准确基线 Git 对象与当前声明/catalog/锁的差异；行为及安全验收另列，不以此状态表示已通过。	上游发布或消费者约束变化时复查。
+packages/postcss/package.json	dependencies	postcss-selector-parser	catalog:buildUtilities	^7.1.7	7.1.7	7.2.0	保留	PERFORMANCE_REGRESSION	PR benchmark 在 MPX 与 uni-app Vite 独立 shard 均确认重复性能回归；该依赖位于共用 CSS 插件阶段，恢复已验证基线并等待新 head 复测确认因果。	上游发布或消费者约束变化时复查。
 packages/postcss/package.json	dependencies	postcss-value-parser	catalog:postcssCompat	^4.2.0	4.2.0	4.2.0	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/postcss/package.json	dependencies	tailwindcss-config	workspace:*	workspace:*	link:../tailwindcss-config		保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。
 packages/postcss/package.json	devDependencies	@csstools/postcss-is-pseudo-class	^6.0.3	^6.0.3	6.0.3	6.0.3	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
