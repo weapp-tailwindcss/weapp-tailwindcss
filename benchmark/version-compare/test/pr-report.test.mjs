@@ -124,6 +124,27 @@ describe('PR benchmark report aggregation', () => {
     expect(result.summary.peakHeapUsedMb).toBe(350)
   })
 
+  it('leaves watch metrics unavailable when no report artifacts exist', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-pr-report-empty-'))
+    temporaryRoots.push(root)
+
+    const result = await collectWatchReports(root)
+
+    expect(result.available).toBe(false)
+    expect(result.summary).toMatchObject({
+      avgMs: undefined,
+      minMs: undefined,
+      maxMs: undefined,
+      peakRssMb: undefined,
+      maxRssDeltaMb: undefined,
+      peakHeapUsedMb: undefined,
+    })
+    const report = buildReport({ benchmark: mergeBenchmarkSummaries([]), watch: result })
+    const markdown = renderMarkdown(report)
+    expect(markdown).toContain('| Watch RSS 峰值 / 最大增量 | N/A / N/A MB |')
+    expect(markdown).toContain('| Watch Heap 峰值 | N/A MB |')
+  })
+
   it('renders escaped diagnostics and keeps the comment under the configured limit', () => {
     const report = buildReport({
       benchmark: mergeBenchmarkSummaries([benchmarkSummary('demo-weapp-vite-tailwindcss-v4__mp-weixin')], ['demo-weapp-vite-tailwindcss-v4__mp-weixin']),
