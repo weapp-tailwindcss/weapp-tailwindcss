@@ -7,7 +7,7 @@
   "keywords": [],
   "devDependencies": {
     "tailwindcss": "^4.3.5",
-    "weapp-tailwindcss": "^5.7.0"
+    "weapp-tailwindcss": "^5.7.3"
   },
   "dependencies": {
     "@weapp-tailwindcss/escape": "^0.0.2",

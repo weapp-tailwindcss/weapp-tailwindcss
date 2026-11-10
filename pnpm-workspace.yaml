@@ -143,7 +143,7 @@ catalogs:
     pathe: ^2.0.3
     picocolors: ^1.1.1
     postcss-load-config: ^6.0.1
-    postcss-selector-parser: ^7.1.7
+    postcss-selector-parser: ^7.2.0
     vite-plugin-dts: ^4.5.4
     yaml: ^2.9.1
   compilerUtilities:
@@ -157,7 +157,7 @@ catalogs:
     postcss-scss: ^4.0.9
     postcss-value-parser: ^4.2.0
   runtimeVariants:
-    tailwind-variants: ^4.0.1
+    tailwind-variants: ^4.0.2
   runtimeLodash:
     lodash.castarray: ^4.4.0
     lodash.isplainobject: ^4.0.6
