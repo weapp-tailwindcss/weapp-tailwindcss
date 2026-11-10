@@ -802,6 +802,7 @@ catalogs:
 overrides:
   jiti: 2.7.0
   postcss-selector-parser@^7.0.0: 7.1.7
+  lilconfig@^3.1.0: 3.1.4
   request@2.88.2>form-data: 2.5.6
   oxfmt@0.35.0>tinypool: 2.1.2
   '@docusaurus/core@3.10.2>tinypool': 2.1.2
@@ -24786,10 +24787,6 @@ packages:
 
   lilconfig@3.1.4:
     resolution: {integrity: sha512-zJZyBmQhArDRefuWTypZxwDpFDIYmrj8ypSBvwGD5P13Y95s6DjzKgu4DVdGbeQa5PDEsAOCAPNk4X+QOR006w==}
-    engines: {node: '>=14'}
-
-  lilconfig@3.1.5:
-    resolution: {integrity: sha512-aRAOI9Ia43ygL4o1EOmC/sc/0OFxrm7qcQngiIyWaqVnSnz932ybJ07zyCcgMNGSDP8Yxaf88Xj1zHEXmvQ4SA==}
     engines: {node: '>=14'}
 
   lines-and-columns@1.2.4:
@@ -53154,13 +53151,13 @@ snapshots:
   cssnano@6.1.2(postcss@8.5.32):
     dependencies:
       cssnano-preset-default: 6.1.2(postcss@8.5.32)
-      lilconfig: 3.1.5
+      lilconfig: 3.1.4
       postcss: 8.5.32
 
   cssnano@7.1.9(postcss@8.5.32):
     dependencies:
       cssnano-preset-default: 7.0.17(postcss@8.5.32)
-      lilconfig: 3.1.5
+      lilconfig: 3.1.4
       postcss: 8.5.32
 
   cssnano@9.9.0(postcss@8.5.32):
@@ -59367,8 +59364,6 @@ snapshots:
 
   lilconfig@3.1.4: {}
 
-  lilconfig@3.1.5: {}
-
   lines-and-columns@1.2.4: {}
 
   lines-and-columns@2.0.4: {}
@@ -63359,7 +63354,7 @@ snapshots:
 
   postcss-load-config@5.1.0(jiti@2.7.0)(postcss@8.5.32)(tsx@4.23.15):
     dependencies:
-      lilconfig: 3.1.5
+      lilconfig: 3.1.4
       yaml: 2.9.1
     optionalDependencies:
       jiti: 2.7.0
@@ -63368,7 +63363,7 @@ snapshots:
 
   postcss-load-config@6.0.1(jiti@2.7.0)(postcss@8.5.32)(tsx@4.23.15)(yaml@2.9.1):
     dependencies:
-      lilconfig: 3.1.5
+      lilconfig: 3.1.4
     optionalDependencies:
       jiti: 2.7.0
       postcss: 8.5.32
@@ -67619,7 +67614,7 @@ snapshots:
     dependencies:
       '@weapp-tailwindcss/shared': 2.0.5
       jiti: 2.7.0
-      lilconfig: 3.1.5
+      lilconfig: 3.1.4
       tailwindcss: 4.3.5
 
   tailwindcss-patch@10.0.2(magicast@0.5.5)(tailwindcss@4.3.5):

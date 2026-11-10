@@ -111,6 +111,8 @@ overrides:
   jiti: 2.7.0
   # v7 传递链同样固定到性能基线，避免直接 pin 后仍在 demo 中使用 7.2.0。
   postcss-selector-parser@^7.0.0: 7.1.7
+  # 配置加载热路径需要把 lilconfig v3 的传递解析也固定到验收版本。
+  lilconfig@^3.1.0: 3.1.4
   # 仅修补已审计消费者的传递依赖，保留其它工具链的较新版本。
   request@2.88.2>form-data: 2.5.6
   oxfmt@0.35.0>tinypool: 2.1.2
