@@ -25,21 +25,19 @@ verification:
     sha: d42ba198d475e70ee26634bc234abc19ea864b5c
     environment: macOS，Node 与 pnpm 使用本机仓库工具链；引擎生成 CSS 后按模拟的 Vapor 模板/样式包边界核验
     command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1340-static.test.ts --update=none
-  - claim: 用户提供的复现工程在 5.7.3 下连续三次 Android Vapor 冷编译且产物检查均通过
+  - claim: 用户提供的复现工程在 5.7.3 下连续三次 Android Vapor 冷编译且产物检查均通过；每轮 302 个模板缺失样式包和空样式包均为 0，三轮聚合产物哈希一致
     kind: native
-    status: pending
+    status: passed
     sha: d42ba198d475e70ee26634bc234abc19ea864b5c
-    environment: macOS，HBuilderX 5.34.2026102909 stable、Android 设备 L204203G00581；设备预检通过，但完整预检被微信 IDE 探针阻断
-    reason: 本轮预检未通过，不能启动全端/设备验收。
-    command: pnpm e2e:preflight prepare
-  - claim: 当前轮全端环境预检
-    kind: preflight
-    status: blocked
+    environment: macOS、Node 24.22.1、pnpm 12.18.0；隔离副本 /tmp/issue-1340-android-vapor.DSo8GE；HBuilderX 5.34.2026102909 stable、Android 设备 L204203G00581，151 个页面和 151 个组件
+    command: HBuilderX cli launch app-android --deviceId L204203G00581 --compile true --cleanCache true --vaporRenderTarget bytecode（连续三轮）；每轮 pnpm check；日志和产物见 /tmp/issue-1340-android-vapor.DSo8GE/evidence/acceptance.json
+  - claim: 全端环境预检报告顶层保持 blocked，未作为全面测试放行
+    kind: ci
+    status: failed
     sha: d42ba198d475e70ee26634bc234abc19ea864b5c
-    environment: macOS，Node v24.22.1、pnpm 12.18.0；HBuilderX、Android、iOS、Harmony、Web 探针通过，微信 IDE 探针连接 127.0.0.1:19355 返回 ECONNREFUSED
-    reason: prepare 报告为 blocked；verify 连接已退出的本轮 daemon 端口 127.0.0.1:57690 返回 ECONNREFUSED，未放行全面测试。
-    command: pnpm e2e:preflight prepare；pnpm e2e:preflight verify --report e2e/.artifacts/preflight/df8a17fb-0690-40a8-ac55-1f28feccbb3a/report.json
-    evidence: e2e/.artifacts/preflight/df8a17fb-0690-40a8-ac55-1f28feccbb3a/report.md
+    environment: macOS、Node 24.22.1、pnpm 12.18.0；该轮报告中的 base、微信 IDE、HBuilderX、iOS、Android、Harmony、Web 与当前会话 computer-use 单项检查均为 passed，但报告顶层 status 为 blocked 且 verifiedAt 为空
+    reason: 该报告没有形成全面测试放行；用户明确要求的 Android 冷编译作为单独的定向设备验收执行。
+    command: pnpm e2e:preflight prepare；按本轮报告执行 verify；报告见 e2e/.artifacts/preflight/af124024-3837-4959-a0a7-7aba42210031/report.md
 ---
 
 # Issue #1340 Android Vapor 样式作用域淘汰
@@ -62,11 +60,11 @@ verification:
 
 新增 `e2e/issue-1340-static.test.ts` 使用真实 Tailwind v4 引擎生成 302 个局部 `@apply flex` 规则，并与 151 个页面、151 个组件 scope 的模拟字节码模板引用逐一核对。限定更新后的 static 基线显示 302 个模板均有工具类规则，空包、缺失规则、裸 `@apply` 和未提交 scope 都为 0，任务结束后池大小为 128。该测试证明引擎生成与会话提交的静态边界，不等同于 HBuilderX Vapor 真实产物。
 
-发行包压力对照已确认 5.7.2 为 128/129 个 scope 提交、5.7.3 为 129/129，排空后池为 128；Issue #1340 仍 OPEN。历史 PR #1341 的 HBuilderX 对照不能代替本轮三次冷编译验收。本轮 Android、iOS、Harmony、Web 环境探针通过，但微信 IDE 的 `isLogin` 服务连接在 `127.0.0.1:19355` 返回 `ECONNREFUSED`，预检报告 `e2e/.artifacts/preflight/df8a17fb-0690-40a8-ac55-1f28feccbb3a/report.md` 保持阻断，故全端运行和三次 Android 冷编译均未启动。在取得通过的当前轮预检、编译日志、`.style.bytes` 统计与用户复现工程产物检查结果前，不宣称用户链路已彻底验收。
+发行包压力对照已确认 5.7.2 为 128/129 个 scope 提交、5.7.3 为 129/129，排空后池为 128；Issue #1340 在本复盘记录时仍 OPEN。当前轮全端预检报告的单项检查均通过，但其顶层状态仍为 `blocked`，因此没有启动全仓/全端全面测试。用户单独要求的 Android Vapor 冷编译在复现工程隔离副本中执行三轮，每轮 151 个页面、151 个组件均编译成功；302 个模板引用的样式包缺失数为 0、空包数为 0，聚合产物 SHA-256 均为 `66136c477aab5bb068cdd2b48d0d9a7c4fefc265421385485e9051b476bc8fd2`。证据见 `/tmp/issue-1340-android-vapor.DSo8GE/evidence/acceptance.json` 与每轮日志。该验收证明冷编译产物，不包含应用安装后的运行时检查。
 
 ## 适用边界
 
-该修复针对 scope 并发数超过空闲缓存上限、且旧 scope 尚在执行时的提交丢失。真实生成返回空但没有可复用快照的原生 `@apply` 现在会失败关闭，便于定位其他生成故障；它不会把这些故障伪装成空 CSS 成功。
+该修复针对 scope 并发数超过空闲缓存上限、且旧 scope 尚在执行时的提交丢失。真实生成返回空但没有可复用快照的原生 `@apply` 现在会失败关闭，便于定位其他生成故障；它不会把这些故障伪装成空 CSS 成功。三轮冷编译均使用已发布版 5.7.3，因此属于发行版验证，不代表尚未发布的 PR 源码已在 HBuilderX 上完成相同设备验收。
 
 ## 规则评估
 
