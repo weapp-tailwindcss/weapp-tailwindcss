@@ -1464,7 +1464,7 @@ packages/shared/package.json	dependencies	set-value	^4.1.0	^4.1.0	4.1.0	4.1.0	�
 packages/source-scan/package.json	dependencies	micromatch	catalog:buildUtilities	^4.0.8	4.0.8	4.0.8	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/tailwindcss-config/package.json	dependencies	@weapp-tailwindcss/shared	workspace:*	workspace:*	link:../shared		保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。
 packages/tailwindcss-config/package.json	dependencies	jiti	2.7.0	2.7.0	2.7.0	2.7.0	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
-packages/tailwindcss-config/package.json	dependencies	lilconfig	^3.1.5	^3.1.5	3.1.5	3.1.5	已升级	DECLARATION_OR_LOCK_CHANGED	准确基线 Git 对象与当前声明/catalog/锁的差异；行为及安全验收另列，不以此状态表示已通过。	上游发布或消费者约束变化时复查。
+packages/tailwindcss-config/package.json	dependencies	lilconfig	3.1.4	3.1.4	3.1.4	3.1.5	保留	PERFORMANCE_REGRESSION	Taro Vite HMR 插件阶段 +11.43%、端到端 HMR 中位数 +11.49%，恢复已验证版本。	独立 benchmark 确认配置加载路径不再退化后升级。
 packages/tailwindcss-config/package.json	peerDependencies	tailwindcss	^3.0.0 || ^4.0.0	^3.0.0 || ^4.0.0		4.3.5	已是最新	REGISTRY_LATEST_MATCH	实际锁版本等于本轮 registry 正式目标；peer 项仅表示声明覆盖正式目标。	上游发布或消费者约束变化时复查。
 packages/tailwindcss-injector/package.json	dependencies	@weapp-tailwindcss/postcss	workspace:*	workspace:*	link:../postcss		保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。
 packages/tailwindcss-injector/package.json	dependencies	@weapp-tailwindcss/shared	workspace:*	workspace:*	link:../shared		保留	WORKSPACE_LINK	本仓库源码链接，由 repoctl 版本传播管理。	发布计划或 workspace 拆分时重新核对。

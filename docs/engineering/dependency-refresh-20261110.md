@@ -6,7 +6,7 @@
 
 - 盘点 109 份 tracked npm manifest（108 份含依赖）、2010 条声明、470 个 npm 包身份、9 份 pnpm 锁和 2 份 Cargo 锁；覆盖根、workspace、demo、Web/issue/style-injector、starter、7 个独立模板、历史 fixture 与 Rust。排除生成目录和 `submodules/tailwindcss-mangle`。
 - 12 条声明或解析结果升级，829 条已是最新，313 条保留，856 条阻塞。分类是依赖声明维度，不是测试通过数；peer 的“最新”仅表示范围覆盖上游正式目标。
-- `postcss-selector-parser` 曾从 7.1.7 升至 7.2.0；PR benchmark 在 MPX 与 uni-app Vite 两个独立 shard 均测得重复性能回归后，已恢复到 7.1.7。该解析器位于两个场景共用的 CSS 插件热路径，是目前优先验证的关联因素，仍需新 head benchmark 确认因果。`tailwind-variants` 4.0.1 → 4.0.2、`lilconfig` 3.1.4 → 3.1.5 保留升级。普通依赖使用仓库 `scripts/update-packages.ts up -rL`，保留 catalog 关系。
+- `postcss-selector-parser` 曾从 7.1.7 升至 7.2.0；PR benchmark 在 MPX 与 uni-app Vite 两个独立 shard 均测得重复性能回归后，已恢复到 7.1.7。完整固定 v7 直接及传递链后，新 head 的 MPX benchmark 通过。Taro Vite HMR 插件阶段仍为 +11.43%，端到端 HMR 中位数 +11.49%；将 `lilconfig` 3.1.5 恢复为已验证的 3.1.4，待新 head benchmark 复核。`tailwind-variants` 4.0.1 → 4.0.2 保留。普通依赖使用仓库 `scripts/update-packages.ts up -rL`，保留 catalog 关系。
 - 7 个模板的 `weapp-tailwindcss` 声明统一为 `^5.7.3`，锁从 5.7.1 升至 5.7.3；在独立临时副本由 pnpm 生成锁，再逐个冻结安装。没有手写锁或共享可写 node_modules。
 - 中文 change intent 覆盖受影响的 7 个公开包。没有修改模板生成协议或新增 API，不涉及 `create-weapp-vite` 联动。
 

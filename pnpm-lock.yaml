@@ -5344,8 +5344,8 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
       lilconfig:
-        specifier: ^3.1.5
-        version: 3.1.5
+        specifier: 3.1.4
+        version: 3.1.4
       tailwindcss:
         specifier: ^3.0.0 || ^4.0.0
         version: 4.3.5
@@ -24783,6 +24783,10 @@ packages:
   lilconfig@2.1.0:
     resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}
     engines: {node: '>=10'}
+
+  lilconfig@3.1.4:
+    resolution: {integrity: sha512-zJZyBmQhArDRefuWTypZxwDpFDIYmrj8ypSBvwGD5P13Y95s6DjzKgu4DVdGbeQa5PDEsAOCAPNk4X+QOR006w==}
+    engines: {node: '>=14'}
 
   lilconfig@3.1.5:
     resolution: {integrity: sha512-aRAOI9Ia43ygL4o1EOmC/sc/0OFxrm7qcQngiIyWaqVnSnz932ybJ07zyCcgMNGSDP8Yxaf88Xj1zHEXmvQ4SA==}
@@ -59360,6 +59364,8 @@ snapshots:
       lightningcss-win32-x64-msvc: 1.33.0
 
   lilconfig@2.1.0: {}
+
+  lilconfig@3.1.4: {}
 
   lilconfig@3.1.5: {}
 
