@@ -143,7 +143,7 @@ catalogs:
     pathe: ^2.0.3
     picocolors: ^1.1.1
     postcss-load-config: ^6.0.1
-    postcss-selector-parser: ^7.1.7
+    postcss-selector-parser: 7.1.7
     vite-plugin-dts: ^4.5.4
     yaml: ^2.9.1
   compilerUtilities:

@@ -46,3 +46,11 @@ CI=1 pnpm exec vitest run --project=@weapp-tailwindcss/css-compat --project=@wea
 ```
 
 生成 static 基线和正式复验尚未执行，没有自动接受快照。后续结果追加到本报告并在 PR 中区分通过、失败、跳过和环境阻塞。
+
+## PR 性能回归跟进
+
+PR #1345 首轮 head `7520c6da1983192d47b6d17581686c429fa77ee5` 的 [Benchmark](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/42785108934) 在 MPX 与 uni-app Vite 确认 HMR RSS 回归，uni-app Vite 反向顺序复测仍增加约 6%–7%。MPX 另有构建和插件耗时回归。没有放宽阈值或更新性能基线。
+
+`258cb0af0a525ce62f4c069b2f3bb5ad04f234ea` 只恢复了 `^7.1.7` 范围，pnpm 实际仍锁定 7.2.0；该轮 MPX 再次失败不能证明回退解析器无效。后续改为精确固定 `7.1.7`，通过 pnpm 重新生成锁，并逐个核对四个 workspace importer 及 css-compat 的 specificity peer 均解析到 7.1.7。其他传递依赖的独立 7.2.0 解析不机械覆盖。精确 pin 的退出条件是新版本通过同样的 CSS 热路径与 HMR RSS 独立复测。
+
+本地冻结安装、`pnpm agents:check`、`git diff --check` 和 `pnpm release status` 通过。iOS 首轮分别在 RN 截图与 Lynx 模拟器安装阶段超时，仍需新 head 完整运行结果，不能计为原生验收通过。
