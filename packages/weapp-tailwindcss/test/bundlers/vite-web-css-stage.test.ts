@@ -149,7 +149,7 @@ describe('Web CSS 的生成缓存与框架产物边界', () => {
 
   it('原生 CSS 生成短暂返回 undefined 时保留同一来源的有效快照', async () => {
     const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
-    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false, uniAppX: true })
     const sourceFile = path.resolve('/repo', 'component.css')
     const source = '@import "tailwindcss";\n.card { @apply flex-1; }'
     const generated = '.card{flex:1}\n.card{width:100%}'
@@ -168,6 +168,53 @@ describe('Web CSS 的生成缓存与框架产物边界', () => {
       expect(second).toContain('.card{flex:1}')
       expect(second).toContain('.card{width:100%}')
       expect(second).not.toContain('@apply')
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('uni-app x 原生 @apply 冷启动生成为空时失败，不把源规则交给 PostCSS 清空', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false, uniAppX: true })
+    const sourceFile = path.resolve('/repo', 'cold-apply.css')
+    const source = '.card { @apply flex-1; }'
+    generateTailwindV4Css.mockResolvedValueOnce(undefined)
+
+    try {
+      await expect(generate(sourceFile, source)).rejects.toThrow('uni-app x 原生 @apply 生成没有返回 CSS')
+      expect(assets.tracedGeneratedCssByFile.has(sourceFile)).toBe(false)
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('非 uni-app x 原生来源在不拥有当前 CSS 时仍可合法跳过生成', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false })
+    const sourceFile = path.resolve('/repo', 'foreign-apply.css')
+    generateTailwindV4Css.mockResolvedValueOnce(undefined)
+
+    try {
+      await expect(generate(sourceFile, '.card { @apply flex-1; }')).resolves.toBeUndefined()
+    }
+    finally {
+      await generate.dispose()
+      assets.dispose()
+    }
+  })
+
+  it('uni-app x 原生来源显式关闭生成器时仍可合法跳过', async () => {
+    const assets = createFrameworkCssAssets({ debug: vi.fn(), getSourceCandidateSource: () => undefined })
+    const generate = createWatchCssGenerator(assets, { target: 'weapp', isWeb: false, uniAppX: true, generatorEnabled: false })
+    const sourceFile = path.resolve('/repo', 'disabled-apply.css')
+    generateTailwindV4Css.mockResolvedValueOnce(undefined)
+
+    try {
+      await expect(generate(sourceFile, '.card { @apply flex-1; }')).resolves.toBeUndefined()
     }
     finally {
       await generate.dispose()

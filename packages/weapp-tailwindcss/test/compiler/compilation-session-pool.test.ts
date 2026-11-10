@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { CompilationScopeGenerationResult, CompilationScopeState } from '@/compiler'
 import { CompilationSessionPool, createCompilationDependencyChanges } from '@/compiler'
 
 const componentScope = { id: 'pages/index.css', kind: 'component' as const }
@@ -27,20 +28,77 @@ describe('CompilationSessionPool', () => {
     })
 
     await vi.waitFor(() => {
-      expect(started).toBe(128)
-    })
-    expect(pool.size).toBe(128)
-    gates.slice(0, 128).forEach(gate => gate.release())
-    await vi.waitFor(() => {
       expect(started).toBe(129)
     })
-    gates[128].release()
+    expect(pool.size).toBe(129)
+    gates.forEach(gate => gate.release())
     const results = await Promise.all(executions)
 
     expect(results.every(result => result.committed)).toBe(true)
-    expect(pool.size).toBeLessThanOrEqual(128)
+    await vi.waitFor(() => {
+      expect(pool.size).toBeLessThanOrEqual(128)
+    })
     expect(pool.getRegisteredScopeVersion('component-0.css')).toBeUndefined()
     expect(pool.getRegisteredScopeVersion('component-128.css')).toBeDefined()
+    await pool.dispose()
+  })
+
+  it('evicts the oldest idle scope when a new scope is registered', async () => {
+    const pool = new CompilationSessionPool()
+    const run = (index: number) => pool.run({
+      scope: { id: `idle-${index}.css`, kind: 'component' },
+      outputId: `idle-${index}.css`,
+      sources: [{ id: `/src/idle-${index}.css`, kind: 'css', candidates: [`p-${index}`] }],
+    }, async compilation => ({ classSet: compilation.candidates }))
+
+    await Promise.all(Array.from({ length: 128 }, (_, index) => run(index)))
+    expect(pool.size).toBe(128)
+    await run(128)
+
+    expect(pool.size).toBe(128)
+    expect(pool.getRegisteredScopeVersion('idle-0.css')).toBeUndefined()
+    expect(pool.getRegisteredScopeVersion('idle-128.css')).toBeDefined()
+    await pool.dispose()
+  })
+
+  it('allows a generation to register another scope while the pool is full', async () => {
+    const pool = new CompilationSessionPool()
+    const gates = Array.from({ length: 128 }, () => {
+      let release!: () => void
+      const pending = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return { pending, release }
+    })
+    let started = 0
+    const run = (index: number, compile?: (compilation: CompilationScopeState) => Promise<CompilationScopeGenerationResult>) => pool.run({
+      scope: { id: `reentrant-${index}.css`, kind: 'component' },
+      outputId: `reentrant-${index}.css`,
+      sources: [{ id: `/src/reentrant-${index}.css`, kind: 'css', candidates: [`p-${index}`] }],
+    }, compile ?? (async compilation => {
+      started += 1
+      await gates[index].pending
+      return { classSet: compilation.candidates }
+    }))
+
+    const initial = Array.from({ length: 128 }, (_, index) => run(index))
+    await vi.waitFor(() => expect(started).toBe(128))
+    const outer = run(128, async compilation => {
+      started += 1
+      const nested = await pool.run({
+        scope: { id: 'reentrant-nested.css', kind: 'component' },
+        outputId: 'reentrant-nested.css',
+        sources: [{ id: '/src/reentrant-nested.css', kind: 'css', candidates: ['nested'] }],
+      }, async nestedCompilation => ({ classSet: nestedCompilation.candidates }))
+      expect(nested.committed).toBe(true)
+      return { classSet: compilation.candidates }
+    })
+
+    await vi.waitFor(() => expect(started).toBe(129))
+    gates.forEach(gate => gate.release())
+    await expect(outer).resolves.toMatchObject({ committed: true })
+    await Promise.all(initial)
+    expect(pool.size).toBeLessThanOrEqual(128)
     await pool.dispose()
   })
 
