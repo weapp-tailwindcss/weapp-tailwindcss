@@ -7,6 +7,21 @@ import { formatWorkflowError } from './cleanup'
 import { runOwnedWorker } from './process'
 import { remedies } from './types'
 
+export function workerTimeoutMs(id: ProbeId, phase: ProbeContext['phase']) {
+  if (phase === 'live' && id === 'harmony') {
+    return 90_000
+  }
+  if (phase !== 'live' && id === 'harmony') {
+    // 覆盖设备命令、结构导出、截图回退和远端清理的完整分阶段预算。
+    return 300_000
+  }
+  if (phase !== 'live' && id === 'wechat') {
+    // 覆盖 IDE 自动编译、页面元数据注册、交互和本轮项目清理。
+    return 180_000
+  }
+  return phase === 'live' ? 45_000 : 120_000
+}
+
 export async function runProbe(id: ProbeId, context: ProbeContext, signal?: AbortSignal): Promise<Check> {
   const prefix = path.join(context.dir, `${id}-${context.phase}-${Date.now()}`)
   const contextFile = `${prefix}-input.json`
@@ -18,7 +33,7 @@ export async function runProbe(id: ProbeId, context: ProbeContext, signal?: Abor
       command: process.execPath,
       args: ['--import', 'tsx', fileURLToPath(new URL('./worker.ts', import.meta.url)), id, contextFile, resultFile],
       cwd: context.root,
-      timeoutMs: context.phase === 'live' ? 45_000 : 120_000,
+      timeoutMs: workerTimeoutMs(id, context.phase),
     }, signal)
     await writeFile(logFile, outputLog)
     const output: ProbeOutput = JSON.parse(await readFile(resultFile, 'utf8'))

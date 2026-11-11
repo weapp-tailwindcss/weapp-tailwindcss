@@ -20,6 +20,7 @@ import { availablePort } from './port'
 import { rustToolchain } from './rust'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
+import { isWechatProtocolUnavailable, waitForWechatPage } from './wechat-page'
 import { assertWechatProbeProject, createWechatProbeProject, inspectWechatProbeProject } from './wechat-project'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
@@ -103,42 +104,31 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput & { binding
       await assertWechatLogin(binding.httpPort)
       const connection = await connectWechat(port)
       mini = connection
-      // 稳定版 IDE 会在自动化端口可连接后继续编译并注册 pageframe 元数据；
-      // currentPage 在这段窗口内会收到 getPageMetaByWebviewId(null)。先等待 App 域
-      // 就绪，再读取本轮 marker，避免把正常的异步编译误判为运行页冲突。
-      await connection.waitForAppReady?.(30_000)
-      let page: Awaited<ReturnType<MiniProgram['currentPage']>>
-      await waitForProbe(async () => {
-        let actual: string | undefined
-        try {
-          // HTTP auto 返回时页面可能仍在创建，页面元数据与本轮标识一起等待，不提前读取一次。
-          page = await connection.currentPage()
-          actual = page ? await (await page.$('#marker'))?.text() : undefined
-        }
-        catch (error) {
-          return { expected: ctx.runId, actual, error: String(error) }
-        }
-        if (actual && actual !== ctx.runId) {
-          throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
-        }
-        return { expected: ctx.runId, actual }
-      }, value => value.actual === ctx.runId, 15_000)
-      const button = await page!.$('#probe')
+      // 稳定版 IDE 会在自动化端口可连接后继续编译并注册 pageframe 元数据。
+      await connection.waitForAppReady?.(60_000)
+      const page = await waitForWechatPage(connection, ctx.runId, 15_000)
+      const button = await page.$('#probe', { timeout: 5_000, fallback: false })
       if (!button) {
         throw new Error('微信本轮探针缺少交互按钮。')
       }
       await button.tap()
-      await waitForProbe(async () => ({ data: await page!.data(), text: await (await page!.$('#result'))?.text() }), value => value.data?.clicked === true && value.text === 'true')
-      await mini.screenshot({ path: screenshot })
+      await waitForProbe(async () => {
+        const data = await page.data(undefined, { timeout: 5_000, fallback: false })
+        return { clicked: data && typeof data === 'object' ? data.clicked : data }
+      }, value => value.clicked === true)
+      await mini.screenshot({ path: screenshot, timeout: 5_000 })
       await assertImage(screenshot)
       return { detail: '微信登录、真实 DevTools 自动化连接、页面交互和截图通过。', binding, evidence: [screenshot] }
     }
     catch (error) {
+      const screenshotStatus = mini
+        ? isWechatProtocolUnavailable(error) ? '自动化协议已超时，未继续请求失败截图' : `微信现场截图目标：${screenshot}`
+        : '连接不可用，未取得微信现场截图'
       return runWithCleanup(async () => {
-        throw new Error(`${error instanceof Error ? error.message : String(error)}；微信现场截图目标：${mini ? screenshot : '连接不可用，未取得'}`, { cause: error })
+        throw new Error(`${error instanceof Error ? error.message : String(error)}；${screenshotStatus}`, { cause: error })
       }, async () => {
-        if (mini) {
-          await mini.screenshot({ path: screenshot })
+        if (mini && !isWechatProtocolUnavailable(error)) {
+          await mini.screenshot({ path: screenshot, timeout: 5_000 })
         }
       })
     }

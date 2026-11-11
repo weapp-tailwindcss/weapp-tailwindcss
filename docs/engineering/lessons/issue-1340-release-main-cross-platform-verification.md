@@ -8,6 +8,19 @@ regressions:
   - e2e/issue-1340-static.test.ts
   - e2e/project-build-hbuilderx-cleanup.test.ts
 verification:
+  - claim: npm 5.7.4 的真实独立消费者通过六项池生命周期压力场景
+    kind: integration
+    status: passed
+    sha: ae029c2d9a732750fd3eb129c2f57da2f09b7f1f
+    environment: macOS arm64、Node 24.22.2、pnpm 12.18.0、Tailwind CSS 4.3.3；官方 npm tarball，发布 SHA 来自 provenance payload
+    command: node e2e/.artifacts/issue-1340/pool-stress.mjs release574
+  - claim: npm 5.7.4 的 Android Vapor 页面与完整跨端补验
+    kind: native
+    status: pending
+    sha: ae029c2d9a732750fd3eb129c2f57da2f09b7f1f
+    environment: 验收工具 checkout 11087c205dc114bfee21b5ef562f6b5b0be915c7；Node 24.22.1、pnpm 12.18.0、HBuilderX 5.34、Android API 35、iOS 26.5、Harmony 6.1.1.125
+    command: pnpm e2e:preflight prepare
+    reason: 两轮 prepare 均因 Harmony 结构导出超时阻断，第二轮另有微信协议超时；未进入 computer use、verify 或产品全面测试
   - claim: 正式版 5.7.3 在 302 个独立并发 scope 下仍有 46 项意外未提交
     kind: integration
     status: failed
@@ -36,6 +49,44 @@ verification:
 ---
 
 # Issue #1340 正式版与 main 跨端验收
+
+## 5.7.4 正式包与本轮补验（2026-11-11）
+
+**5.7.4 已通过已定位根因的压力回归，但原生页面和完整跨端缺口尚未补齐。** 以下新增结果不覆盖后文 5.7.3/main 的历史记录，也不把历史构建或设备观测升级成 5.7.4 的验收结果。
+
+官方 tarball 的 SHA-256 为 `f7a7b77f052f0be942a467e22f95a3266cb7899ac7df04932afb66c5c57d10f3`，registry integrity 核对通过。provenance payload 指向发布提交 `ae029c2d9a732750fd3eb129c2f57da2f09b7f1f`。实际安装的 `compiler-B8I0DeyP.js` 摘要为 `2b9a6d54e678d66d443a23a2e2b087a68b29cd725f4ac1812468e469da19f3cc`，与已验证固定 main 的 compiler 逐字节一致；这一比较不代表其他文件或传递依赖全部相同。
+
+独立消费者使用正式包 5.7.4 / Tailwind CSS 4.3.3，不使用 workspace alias。129 和 302 个并发 scope 均全部提交、零意外丢失；满池重入、空闲 LRU、显式失效和 dispose 均符合预期，任务排空后池大小为 128。证据为 `e2e/.artifacts/issue-1340/release574-pool-stress.json` 和 `release-5.7.4/{identity.json,pool-stress-after-install.log}`。首次独立安装成功；补充 frozen install 在 registry supply-chain metadata 请求阶段超过 120 秒，已保留失败日志，停止安装后六项压力回归再次通过。不能将该安装复核写成成功。
+
+本轮补验从全新环境预检开始，统一启动器重放 Node 24.22.1 / pnpm 12.18.0 和同一组设备绑定。两轮原始报告均保持 `blocked`，没有修改失败证书、延长探针阈值或降级跳过：
+
+| 探针 | 第一轮 `20cc99ee` | 第二轮 `acc2af4b` |
+| --- | --- | --- |
+| Node/pnpm、HBuilderX、Android、iOS、Web | 通过 | 通过 |
+| 微信 | 真实 DevTools 交互与截图通过 | `App.getCurrentPage` 响应超时；错误截图与连接收尾亦报告异常 |
+| Harmony | `uitest dumpLayout` 超过 15000ms | 同一结构探针再次超过 15000ms |
+| 当前会话 computer use / verify / 门禁领取 | 未执行 | 未执行 |
+
+第一轮失败后的有界 Harmony 诊断曾在 5.574 秒内取得有效结构 JSON，但全新 prepare 仍失败，故不能据此放行。第二轮失败后的诊断中，系统版本查询与结构导出各自再次超过 15 秒；同期宿主机为 16 个逻辑核心，load averages 为 `397.21 285.19 189.39`。这些现象支持环境响应不稳定，尚不能证明 CPU 负载是唯一根因，更不能据此归因于 #1340。未终止用户或其他任务的高负载进程，未重启借用的 Harmony 设备，也没有继续第三轮盲目重试。
+
+| 版本 | 框架 | 平台 | 模式 / 场景 | 本轮结论 |
+| --- | --- | --- | --- | --- |
+| npm 5.7.4 | compiler pool | Node | 129/302 scope、重入、LRU、失效、dispose | 六项通过；属于生命周期定向回归 |
+| npm 5.7.4 | uni-app x | Android | Vapor 三次冷编译、增量、151 页面加 151 组件 | 环境阻断，未执行 |
+| npm 5.7.4 | uni-app x | Web、微信、Android、iOS、Harmony | 工具链支持的 VDOM/Vapor、两种隔离配置 | 环境阻断，未执行完整交叉矩阵 |
+| npm 5.7.4 | 普通 uni-app | Web、微信、Android、iOS、Harmony | 支持的渲染模式 | 环境阻断，未执行 |
+| npm 5.7.4 | Taro Vite/Webpack、Mpx、Weapp Vite、Gulp | Web、微信及非微信小程序 | 构建、样式冒烟与选定页面 | 环境阻断，未重跑正式包矩阵 |
+| npm 5.7.4 | 所有选定运行场景 | 对应设备 / 浏览器 | 截图、结构、类新增/替换/删除/恢复 HMR | 缺少本轮产品证据；环境截图不计产品截图 |
+
+没有新增确认的 5.7.4 产品失败，也没有新增已确认“不支持”的平台组合；未验证组合继续标为缺证，不能据此宣称支持或通过。现有 Chaser 副本只有 67 个页面，不能当作 151 页面加 151 组件的真实原生夹具；本轮未将旧 5.7.3 消费者原地升级、未改桌面来源工程。
+
+本轮命令为 `python3 <本轮目录>/run-env.py pnpm e2e:preflight prepare`，两次输出分别保留在 `preflight-prepare.log`、`preflight-prepare-rerun.log`。完整报告在 `e2e/.artifacts/preflight/{20cc99ee-2d34-44a4-8408-10f39c29b543,acc2af4b-9796-4548-8140-bcf6b76e9440}/`；环境、原始诊断与资源账本在 `e2e/.artifacts/issue-1340/release-5.7.4-gap-20261111-143515/`。Android 5558 和本轮启动的 iOS Simulator 已停止并核验；Android AVD 配置与 iOS 数据保留。Harmony 是借用设备，没有停止或重置；最后一次远端诊断临时文件删除命令超过 15 秒，清理状态未确认，已在资源账本注明，不能声称该远端临时文件已删除。微信服务租约与自动化端口已释放，IDE 登录状态未改变；未创建本轮浏览器标签。没有更新快照或公开 API。本轮不新增 AGENTS 规则，现有阻断与自主恢复边界已覆盖该情形。
+
+### 探针根因修复（2026-11-11）
+
+对前两轮实际日志定位到两项探针实现缺陷：Harmony 通用 `command()` 默认 15 秒，导致 `uitest dumpLayout` 在设备仍有响应时被宿主提前杀掉；微信 `waitForAppReady` 固定 30 秒，后续 `currentPage()` 又使用 SDK 默认 12 秒请求、SDK 内部重试和 page-stack/App fallback，错误截图还会在协议超时后继续发请求。Harmony 分阶段命令现按操作配置 30/60 秒、远端清理 15 秒，worker 总预算为 prepare 300 秒、live 90 秒；截图回退与远端清理都在有界清理流程内。微信页面元数据等待延至 60 秒后，在 15 秒内使用单次最多 5 秒的协议读取，并关闭 currentPage/page selector 的隐式 fallback；marker 与点击状态走有界直接查询，不调用 SDK 默认 30 秒且不能传入超时的 `Element.text()`；协议已失效时不再请求失败截图，worker prepare 预算为 180 秒。
+
+代码回归 51 项通过，定向 ESLint、`pnpm typecheck`、`pnpm agents:check` 和 `git diff --check` 通过。随后真实 `pnpm e2e:preflight prepare` 的 Harmony 结构导出、截图和清理通过，证实 15 秒宿主超时缺陷已消除。该轮在更早阶段因微信已有 IDE 的 HTTP 服务请求返回 `ECONNREFUSED`、iOS 未指定唯一模拟器目标而整体阻断，故未进入微信 DevTools 页面协议路径、computer use、verify 或全面测试；结果保存在 `e2e/.artifacts/preflight/4dc1401f-7571-4db7-a8a8-f2cdfd677f00/`。同时可观察到微信 IDE 已有其他任务实例及其服务监听，未重启或干预它；iOS 目标仍需由后续任务显式绑定。修复消除了已确认的探针预算和协议 fallback 缺陷，但不把其余环境阻断描述为产品或工具链回归。
 
 ## 症状
 

@@ -74,11 +74,8 @@ it.each([undefined, 'E2E_PREFLIGHT_WECHAT_APPID', 'E2E_TEMPLATE_IDE_APP_ID'])('�
   const context: ProbeContext = { root: dir, dir, runId: 'test-appid', url: 'http://127.0.0.1:1', phase: 'prepare' }
   let clicked = false
   const page = {
-    $: async (selector: string) => ({
-      text: async () => selector === '#marker' ? context.runId : String(clicked),
-      tap: async () => { clicked = true },
-    }),
-    data: async () => ({ clicked }),
+    $: async () => ({ tap: async () => { clicked = true } }),
+    data: async (key?: string) => key === 'marker' ? context.runId : { clicked },
   }
   const mini = {
     currentPage: vi.fn().mockResolvedValue(page),
@@ -120,4 +117,18 @@ it('App 就绪、失败截图、断连及关闭同时失败时保留完整错误
   }
   expect(mini.disconnect).toHaveBeenCalledOnce()
   expect(vi.mocked(wechatRequest).mock.lastCall?.[1]).toMatchObject({ kind: 'close' })
+})
+
+it('页面协议已超时后不继续请求失败截图', async () => {
+  const protocol = Object.assign(new Error('DevTools did not respond'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.getCurrentPage' })
+  const mini = {
+    waitForAppReady: vi.fn().mockRejectedValue(protocol),
+    screenshot: vi.fn(),
+    disconnect: vi.fn(),
+  }
+  vi.spyOn(Launcher.prototype, 'connect').mockResolvedValue(mini as unknown as MiniProgram)
+  const error = await wechat(await context()).catch(error => error)
+  expect(formatWorkflowError(error)).toContain('自动化协议已超时，未继续请求失败截图')
+  expect(mini.screenshot).not.toHaveBeenCalled()
+  expect(mini.disconnect).toHaveBeenCalledOnce()
 })

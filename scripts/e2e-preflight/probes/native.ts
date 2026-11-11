@@ -4,8 +4,19 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { parseHdcTargets, parseIosSimulatorDevices } from '../../../packages/hbuilderx-runner/src/toolchains'
+import { runWithCleanup } from '../cleanup'
 import { assertImage, command, imageCommand } from '../io'
 import { parseAdbDevices, requestedIosTarget, requestedTarget, selectTarget } from '../targets'
+
+const HARMONY_COMMAND_TIMEOUT_MS = 30_000
+const HARMONY_LAYOUT_TIMEOUT_MS = 60_000
+const HARMONY_TRANSFER_TIMEOUT_MS = 30_000
+const HARMONY_CLEANUP_TIMEOUT_MS = 15_000
+
+function harmonyCommand(file: string, args: string[], timeoutMs?: number) {
+  // 保留通用命令的默认 15 秒行为，仅在设备慢操作上显式扩大预算。
+  return timeoutMs && timeoutMs !== 15_000 ? command(file, args, timeoutMs) : command(file, args)
+}
 
 export { parseAdbDevices, requestedTarget, selectTarget } from '../targets'
 
@@ -112,10 +123,10 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
             ? path.join(path.parse(os.homedir()).root, 'Applications', 'DevEco-Studio.app', 'Contents', 'sdk', 'default', 'openharmony', 'toolchains', 'hdc')
             : undefined,
         ], ['version'])
-  const device = selectTarget(parseHdcTargets(await command(tool.file, ['list', 'targets'])), ctx.binding?.device ?? requestedTarget(['E2E_HBUILDERX_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_SCREENSHOT_DEVICE_ID']))
+  const device = selectTarget(parseHdcTargets(await harmonyCommand(tool.file, ['list', 'targets'])), ctx.binding?.device ?? requestedTarget(['E2E_HBUILDERX_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_SCREENSHOT_DEVICE_ID']))
   const args = ['-t', device]
-  const shell = (...tail: string[]) => command(tool.file, [...args, 'shell', ...tail])
-  const system = await shell('param', 'get', 'const.ohos.fullname')
+  const shell = (tail: string[], timeoutMs?: number) => harmonyCommand(tool.file, [...args, 'shell', ...tail], timeoutMs)
+  const system = await shell(['param', 'get', 'const.ohos.fullname'], HARMONY_COMMAND_TIMEOUT_MS)
   if (!system || /not found|fail|error/i.test(system)) {
     throw new Error(`Harmony 系统查询失败：${system}`)
   }
@@ -127,16 +138,16 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
   const layout = path.join(ctx.dir, 'harmony-ui.json')
   const screenshot = path.join(ctx.dir, 'harmony.png')
   let screenshotEvidence = screenshot
-  try {
-    await shell('uitest', 'dumpLayout', '-p', `${remote}.json`)
-    await command(tool.file, [...args, 'file', 'recv', `${remote}.json`, layout])
+  const evidence = await runWithCleanup(async () => {
+    await shell(['uitest', 'dumpLayout', '-p', `${remote}.json`], HARMONY_LAYOUT_TIMEOUT_MS)
+    await command(tool.file, [...args, 'file', 'recv', `${remote}.json`, layout], HARMONY_TRANSFER_TIMEOUT_MS)
     const tree = JSON.parse(await readFile(layout, 'utf8'))
     if (!tree || typeof tree !== 'object' || Object.keys(tree).length === 0) {
       throw new Error('Harmony UI 结构为空。')
     }
     try {
-      await shell('uitest', 'screenCap', '-p', `${remote}.png`)
-      await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot])
+      await shell(['uitest', 'screenCap', '-p', `${remote}.png`], HARMONY_COMMAND_TIMEOUT_MS)
+      await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot], HARMONY_TRANSFER_TIMEOUT_MS)
       await access(screenshot)
       await assertImage(screenshot)
     }
@@ -145,8 +156,8 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
       const fallbackRemote = `${remote}.jpeg`
       const fallbackScreenshot = path.join(ctx.dir, 'harmony.jpeg')
       try {
-        await shell('snapshot_display', '-f', fallbackRemote)
-        await command(tool.file, [...args, 'file', 'recv', fallbackRemote, fallbackScreenshot])
+        await shell(['snapshot_display', '-f', fallbackRemote], HARMONY_COMMAND_TIMEOUT_MS)
+        await command(tool.file, [...args, 'file', 'recv', fallbackRemote, fallbackScreenshot], HARMONY_TRANSFER_TIMEOUT_MS)
         await access(fallbackScreenshot)
         await assertImage(fallbackScreenshot)
         screenshotEvidence = fallbackScreenshot
@@ -155,9 +166,7 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
         throw new Error(`Harmony 截图失败：screenCap=${String(screenCapError)}；snapshot_display=${String(fallbackError)}`)
       }
     }
-  }
-  finally {
-    await shell('rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`)
-  }
-  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, screenshotEvidence] }
+    return screenshotEvidence
+  }, async () => shell(['rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`], HARMONY_CLEANUP_TIMEOUT_MS))
+  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, evidence] }
 }

@@ -6,6 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { assertImage, command } from '../scripts/e2e-preflight/io'
+import { workerTimeoutMs } from '../scripts/e2e-preflight/probe'
 import { harmony } from '../scripts/e2e-preflight/probes/native'
 
 vi.mock('../scripts/e2e-preflight/io', async original => ({ ...await original<object>(), command: vi.fn() }))
@@ -33,6 +34,12 @@ afterEach(async () => {
 })
 
 describe('Harmony 合成探针的工具与设备边界', () => {
+  it('Harmony prepare worker 预算覆盖分阶段结构与截图操作', () => {
+    expect(workerTimeoutMs('harmony', 'prepare')).toBe(300_000)
+    expect(workerTimeoutMs('wechat', 'prepare')).toBe(180_000)
+    expect(workerTimeoutMs('harmony', 'live')).toBe(90_000)
+  })
+
   it.each([false, true])('Harmony screenCap 回退保留 JPEG，完整宿主预选=%s', async (prebound) => {
     // 宿主输入独立于夹具覆盖，遗漏任何别名时普通 CI 也会复现冲突。
     for (const [key, value] of Object.entries({
@@ -105,8 +112,13 @@ describe('Harmony 合成探针的工具与设备边界', () => {
     expect(result.binding).toEqual({ ...fixture, version: 'synthetic hdc 1', system: 'OpenHarmony synthetic 6.0' })
     expect(result.evidence).toEqual([layout, screenshot])
     expect(run.mock.calls.some(([, args]) => args.includes('snapshot_display'))).toBe(true)
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'param', 'get', 'const.ohos.fullname'], 30_000)
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'uitest', 'dumpLayout', '-p', `${remote}.json`], 60_000)
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'file', 'recv', `${remote}.json`, layout], 30_000)
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'file', 'recv', `${remote}.jpeg`, screenshot], 30_000)
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'snapshot_display', '-f', `${remote}.jpeg`], 30_000)
     // 回退会捕获 screenCap 内部错误，完整参数须在回退结束后独立核对。
-    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'uitest', 'screenCap', '-p', `${remote}.png`])
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'uitest', 'screenCap', '-p', `${remote}.png`], 30_000)
     expect(run).toHaveBeenLastCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`])
     await expect(assertImage(screenshot)).resolves.toBeUndefined()
   })
