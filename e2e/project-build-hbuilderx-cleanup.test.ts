@@ -195,6 +195,26 @@ describe('HBuilderX static 构建的项目释放边界', () => {
     await expect(fs.lstat(alias.projectPath)).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
+  it('连续 CR 进度后紧接成功终态，正常停止仍验证产物', async () => {
+    const output = `08:58:05.168 当前工程6个页面，正在编译App...\r08:58:05.169 当前工程6个页面，正在编译components/BindClass...\r08:58:05.170 项目 ${alias.projectName} 编译成功。 前端运行日志，请另行查看。\n08:58:05.172 ready in 5436ms.\n08:58:05.173 已停止运行...\n`
+    mocks.run.mockImplementation(async ({ args }: { args: string[] }) => result(args, args[0] === 'launch' ? output : ''))
+    await ensureProjectBuilt(directory, { force: true })
+    expect(mocks.exists).toHaveBeenCalled()
+    await expect(fs.lstat(alias.projectPath)).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it('连续 CR 进度后的编译失败不能被此前成功终态掩盖', async () => {
+    const output = `08:58:05.168 项目 test 编译成功。\n08:58:05.169 当前工程6个页面，正在编译App...\r08:58:05.170 项目 test 编译失败。\n08:58:05.173 已停止运行...\n`
+    const launch = result(['launch', 'mp-weixin', '--compile', 'true'], output)
+    mocks.run.mockImplementation(async ({ args }: { args: string[] }) => args[0] === 'launch' ? launch : result(args))
+    const error = await ensureProjectBuilt(directory, { force: true }).catch(error => error)
+    expect(error).toBeInstanceOf(HBuilderXCommandError)
+    expect(error.result).toBe(launch)
+    expect(error.message).toContain('compilation failed: 项目 test 编译失败。')
+    expect(mocks.exists).not.toHaveBeenCalled()
+    await expect(fs.lstat(alias.projectPath)).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
   it('调试输出仍收集管道结果，不因 inherit 丢失首错证据', async () => {
     vi.stubEnv('E2E_DEBUG_BUILD', '1')
     const output = '08:51:29.690 项目 test 编译成功。\n'

@@ -18,7 +18,11 @@ pnpm e2e:preflight prepare
 
 目标必须唯一：优先使用已有设备变量；多个目标时指定 `E2E_HBUILDERX_ANDROID_DEVICE_ID`、`E2E_HBUILDERX_IOS_DEVICE_ID`、`E2E_HBUILDERX_HARMONY_DEVICE_ID`。微信探针默认使用仓库微信项目的授权 AppID；使用其他有权限的项目时通过 `E2E_PREFLIGHT_WECHAT_APPID` 或 `E2E_TEMPLATE_IDE_APP_ID` 覆盖，两个别名同时设置时必须相同。预检保存实际验证的 AppID，门禁将同一绑定传给模板 IDE 阶段；缺少绑定、绑定不符或配置改变时必须重新 prepare，不以默认值补齐旧报告。微信非默认安装位置通过 `E2E_PREFLIGHT_WECHAT_CLI` 配置；Windows 指向官方 `cli.bat`。HBuilderX 使用 `HBUILDERX_CLI_PATH`、`HBUILDERX_CHANNEL` 和 `HBUILDERX_HOST`。
 
-预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 优先复用现有实例，核对所选安装、服务端口与实际登录状态；单次连接拒绝或超时不证明 IDE 未打开。必要时允许通过当前会话的原生应用控制受控启动或重启明确的 IDE 实例，先确认任务归属和其他项目状态，不关闭无关窗口，不重置登录或账号配置。恢复或实例变化后重新 prepare，不能把旧失败报告改成通过。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
+环境准备与常规恢复由 AI 自主完成，不逐项要求用户启动 HBuilderX、创建 Android 在线目标或选择 iOS 设备。预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 优先复用现有实例，核对所选安装、服务端口与实际登录状态；单次连接拒绝或超时不证明 IDE 未打开。必要时允许通过当前会话的原生应用控制受控启动或重启明确的 IDE 实例，先确认任务归属和其他项目状态，不关闭无关窗口，不重置登录或账号配置。恢复或实例变化后重新 prepare，不能把旧失败报告改成通过。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
+
+Android/iOS/Harmony 的目标先沿用本任务已绑定的兼容设备，再选择已安装且可用的专用测试模拟器。无可复用目标时，AI 可通过官方 SDK 工具或已安装的 Android Studio、Xcode、DevEco，使用本机已有且兼容主机架构的镜像创建专用模拟器并启动。Android 优先选择满足项目最低 API 与工具链要求的稳定镜像；iOS 优先选择满足部署目标的正式 runtime，历史缺陷对照优先保持已验证的机型/runtime 一致，不无故切到预览版。多个候选时依据兼容性、历史可比性和资源占用作出选择并记录依据，不能依赖列表首项或名称猜测身份。设备 ID、工具路径和选择理由保存在任务本地环境与资源账本，不写入提交的机器无关规则；prepare、verify、门禁领取及测试使用同一组显式 ID。
+
+创建前检查已有设备、镜像、磁盘与进程，避免重复创建或抢占用户真机；以在线状态、完整启动、shell/系统服务、结构和截图确认就绪。创建/借用的设备、进程、项目和配置记录归属。测试结束仅停止本任务启动且未被用户接管的临时运行进程；专用设备配置可保留复用并说明原因，已有设备数据不擦除、不重置。组件缺失可先诊断并记录，涉及新许可、认证、安全授权、破坏性重置或无法排除的用户会话冲突时停止相关操作并说明原因，不通过降低预检要求继续验收。
 
 微信项目入口统一使用 `scripts/wechat/`：只读官方安装元数据和 `.ide` / `.ide-status` 服务标记，通过 HTTP 服务的 `/v2/isLogin`、`/v2/auto`、`/v2/close` 操作本轮项目。`E2E_PREFLIGHT_WECHAT_CLI` 仅用于识别安装，不通过 `islogin` 等 CLI 命令隐式启动或恢复；Linux、旧版或非标准安装可显式设置 `E2E_PREFLIGHT_WECHAT_HTTP_PORT`。IDE 配置 CLI token 时通过 `WECHAT_DEVTOOLS_CLI_TOKEN` 传入，不写入报告。服务失败时报告请求阶段、目标端口及标准错误代码，停止本轮项目请求；先核对现有实例，再按上述受控恢复流程处理，无 CLI 回退。
 
@@ -262,6 +266,10 @@ pnpm e2e:ios:hmr
 切换 Android/iOS/Harmony 前先停止上一个 HBuilderX 运行任务，再重新 launch。确认日志出现真实运行时信号（例如 `App Launch`），并确认页面不是 HBuilderX 启动页。App 产物路径必须从 runner 输出和实际文件确认，不能把 Android 的 `app-plus` 路径套给 Harmony。
 
 原生入口在共享 Git common dir 中按安装、机器和 host 原子登记，整个测试作用域清理成功后才释放。未解除、损坏或 owner 已退出的登记会同时阻断预检和新的原生入口，不能换项目、平台、版本或报告目录重跑绕过。停止未知时保留现场；不存在强制跳过或自动过期解除。该保护仅覆盖共享此 Git common dir 的仓库脚本，不控制其他仓库或人工 IDE 任务，详见[持久门禁复盘](../docs/engineering/lessons/native-session-persistent-guard.md)。
+
+历史阻塞由 AI 负责有证据地恢复，不要求用户寻找原代理：读取完整登记与恢复账本，核实安装、host、session、项目/alias 和 owner；保留源码、备份字节、hash 与未提交改动。先定向停止所属任务并验证完成；若安装已经重启，须同时核对新 host/plugin 生命周期、旧项目进程与 alias 状态，排除旧任务仍在执行或派生任务。仅 CLI 退出、PID 消失、项目关闭或时间经过均不足以解除。需要重启仍在运行的共享 IDE 时，先确认不存在无关活动任务或未保存编辑，不能按进程名批量终止。停止仍未知或归属冲突则继续阻断。
+
+恢复证据充分后，将准确匹配 session 的持久登记原子移动到活动注册目录之外的恢复归档，并记录时间、依据、前后身份和文件摘要；保留原始失败及恢复材料，不伪写正常清理结果。源码与备份不一致时先保留两份并比对，不盲目回写其他工作树；无关 hvigor/IDE 进程不得顺带清理。此流程是独立的环境恢复，不是预检中的自动删除或厂商 idle API 的替代品；恢复后重新 prepare、完成 computer use 和 verify，旧 blocked 报告保持失败。
 
 Harmony 的项目身份由 `scripts/hbuilderx-app-project.ts` 按本轮绑定 host 的版本选择。Alpha 5.31 起使用 `fs.realpath` 后的真实根作为 `--project` 与 cwd，不注册或关闭这个真实项目；其他版本和 Android/iOS 保留独占别名兼容入口。核对 `[hbuilderx-app-project]` 中的 `kind`、`projectRoot`、`launchProject` 与实际编译输出路径一致，不能将同名项目、符号链接目录或旧预检版本当作身份依据。该模式消除仓库引入的 Harmony 根路径别名，但不证明 IDE 内部 native 任务已停止；停止或 fallback 状态未知时仍按[取消边界记录](../docs/engineering/lessons/harmony-cancel-alias-boundary.md)保留现场并阻断后续调度。真实对照的证据要求见[路径身份复盘](../docs/engineering/lessons/harmony-canonical-project-root.md)。
 

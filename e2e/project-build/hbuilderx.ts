@@ -25,7 +25,8 @@ function commandFailure(message: string, result: HBuilderXCommandResult) {
 function compilationFailure(result: HBuilderXCommandResult) {
   // output 还保留被末尾日志缓冲裁掉的重要错误；两份证据均参与终态判定。
   const output = stripAnsi(`${result.logs.join('')}\n${result.output}`)
-  const lines = output.split(/\r?\n/).map(line => line.trim().replace(/^\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+/, ''))
+  // 编译进度使用单独的 CR 刷新；终态可能直接接在最后一条进度后。
+  const lines = output.split(/\r\n?|\n/).map(line => line.trim().replace(/^\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+/, ''))
   const failure = lines.find(line => /^(?:Build failed with errors\.|项目 .+ 编译失败。|Project .+ compilation failed\.)$/i.test(line))
   if (failure) {
     return failure
