@@ -74,7 +74,7 @@ it.each([undefined, 'E2E_PREFLIGHT_WECHAT_APPID', 'E2E_TEMPLATE_IDE_APP_ID'])('é
   const context: ProbeContext = { root: dir, dir, runId: 'test-appid', url: 'http://127.0.0.1:1', phase: 'prepare' }
   let clicked = false
   const page = {
-    $: async () => ({ tap: async () => { clicked = true } }),
+    $$: async () => [{ tap: async () => { clicked = true } }],
     data: async (key?: string) => key === 'marker' ? context.runId : { clicked },
   }
   const mini = {

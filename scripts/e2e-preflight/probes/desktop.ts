@@ -20,7 +20,7 @@ import { availablePort } from './port'
 import { rustToolchain } from './rust'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
-import { isWechatProtocolUnavailable, waitForWechatPage } from './wechat-page'
+import { isWechatProtocolUnavailable, waitForWechatPage, waitForWechatProbeButton } from './wechat-page'
 import { assertWechatProbeProject, createWechatProbeProject, inspectWechatProbeProject } from './wechat-project'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
@@ -107,10 +107,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput & { binding
       // 稳定版 IDE 会在自动化端口可连接后继续编译并注册 pageframe 元数据。
       await connection.waitForAppReady?.(60_000)
       const page = await waitForWechatPage(connection, ctx.runId, 15_000)
-      const button = await page.$('#probe', { timeout: 5_000, fallback: false })
-      if (!button) {
-        throw new Error('微信本轮探针缺少交互按钮。')
-      }
+      const button = await waitForWechatProbeButton(page, ctx.runId)
       await button.tap()
       await waitForProbe(async () => {
         const data = await page.data(undefined, { timeout: 5_000, fallback: false })

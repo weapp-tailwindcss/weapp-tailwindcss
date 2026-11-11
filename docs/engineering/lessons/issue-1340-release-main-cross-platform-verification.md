@@ -7,7 +7,23 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-web-css-stage.test.ts
   - e2e/issue-1340-static.test.ts
   - e2e/project-build-hbuilderx-cleanup.test.ts
+  - e2e/preflight-wechat-page.test.ts
+  - e2e/preflight-wechat-probe.test.ts
+  - e2e/preflight-wechat-fixture.test.ts
+  - e2e/wechat-automator.test.ts
 verification:
+  - claim: 微信探针保留按钮查询协议错误、严格限制总预算并等待本轮唯一按钮
+    kind: unit
+    status: passed
+    sha: 64a777413fcf3790b9b90f6c5fa2d352b7f87f35
+    environment: macOS arm64、Node 24.22.2、pnpm 12.18.0；本基线上包含本轮未提交的探针与回归修改
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/preflight-*.test.ts e2e/wechat-automator.test.ts e2e/wechat-session-boundary.test.ts --update=none
+  - claim: 本轮七项环境脚本探针、Chrome 原生交互证据与 verify 全部通过
+    kind: native
+    status: passed
+    sha: 64a777413fcf3790b9b90f6c5fa2d352b7f87f35
+    environment: macOS arm64、Node 24.22.2、pnpm 12.18.0、微信 IDE 2.02.2609250、HBuilderX 5.34、iOS 26.5、Android 11、Harmony 6.1.1.125、Chrome 157；包含本轮未提交修改，仅验证环境
+    command: pnpm e2e:preflight verify --report e2e/.artifacts/preflight/9656d4f1-a14b-4b39-8ae4-41aad2ca676d/report.json
   - claim: npm 5.7.4 的真实独立消费者通过六项池生命周期压力场景
     kind: integration
     status: passed
@@ -87,6 +103,26 @@ verification:
 对前两轮实际日志定位到两项探针实现缺陷：Harmony 通用 `command()` 默认 15 秒，导致 `uitest dumpLayout` 在设备仍有响应时被宿主提前杀掉；微信 `waitForAppReady` 固定 30 秒，后续 `currentPage()` 又使用 SDK 默认 12 秒请求、SDK 内部重试和 page-stack/App fallback，错误截图还会在协议超时后继续发请求。Harmony 分阶段命令现按操作配置 30/60 秒、远端清理 15 秒，worker 总预算为 prepare 300 秒、live 90 秒；截图回退与远端清理都在有界清理流程内。微信页面元数据等待延至 60 秒后，在 15 秒内使用单次最多 5 秒的协议读取，并关闭 currentPage/page selector 的隐式 fallback；marker 与点击状态走有界直接查询，不调用 SDK 默认 30 秒且不能传入超时的 `Element.text()`；协议已失效时不再请求失败截图，worker prepare 预算为 180 秒。
 
 代码回归 51 项通过，定向 ESLint、`pnpm typecheck`、`pnpm agents:check` 和 `git diff --check` 通过。随后真实 `pnpm e2e:preflight prepare` 的 Harmony 结构导出、截图和清理通过，证实 15 秒宿主超时缺陷已消除。该轮在更早阶段因微信已有 IDE 的 HTTP 服务请求返回 `ECONNREFUSED`、iOS 未指定唯一模拟器目标而整体阻断，故未进入微信 DevTools 页面协议路径、computer use、verify 或全面测试；结果保存在 `e2e/.artifacts/preflight/4dc1401f-7571-4db7-a8a8-f2cdfd677f00/`。同时可观察到微信 IDE 已有其他任务实例及其服务监听，未重启或干预它；iOS 目标仍需由后续任务显式绑定。修复消除了已确认的探针预算和协议 fallback 缺陷，但不把其余环境阻断描述为产品或工具链回归。
+
+### 探针后续完善与 PR 验证（2026-11-11）
+
+在 `64a777413fcf3790b9b90f6c5fa2d352b7f87f35` 上继续检查实际 SDK 1.5.1：`Page.$()` 即使设置 `fallback: false` 仍会捕获 `Page.getElements` 协议错误并返回 `null`，导致探针把协议超时误报成缺少按钮，也丢失了停止失败截图请求的依据。现使用保留原始异常的 `Page.$$()`，在同一预算内等待本轮唯一按钮；空结果允许重试，页面身份不符或重复按钮立即失败。页面、marker 和按钮查询返回后均检查总截止时间，预算耗尽时不继续发送下一个请求，也不接受迟到的成功结果。使用真实 SDK Page 的协议替身回归确认方法名、原始 cause 和无隐式 fallback；现有 fixture 同步到直接 marker 读取路径。
+
+修复前新增场景出现 6 项预期失败，修复后全部预检与微信会话回归共 **27 个文件、269 项测试通过**。定向 ESLint、`pnpm typecheck`、`pnpm agents:check` 与 `git diff --check` 通过；没有更新快照或修改产品公开 API。失败与通过日志分别为 `e2e/.artifacts/issue-1340/preflight-button-before.log`、`preflight-pr-regressions.log`。
+
+随后重新执行真实 prepare，绑定已有稳定 iPhone 17 Pro / iOS 26.5 目标，安全启动原先关闭的模拟器；微信 IDE 仅通过原生入口启动并复用登录，保留其恢复的其他任务项目。七项脚本探针均通过，包括微信真实点击与截图、Harmony 布局导出与截图。当前 AI 会话使用 `cua.getApp('com.google.Chrome')` 新建一个专用标签，读取 run ID、截图、原生输入并点击，页面显示本轮完成状态；实际工具调用 ID 和原始输出从当前会话记录提取，未以脚本提交代替交互。使用与 prepare 相同的 iOS 设备及 simulator 环境变量，verify 于 `2026-11-11T10:40:35.823Z` 返回全部通过。
+
+本轮命令如下；prepare 和 verify 的设备变量、工具版本与资源归属保存在本轮报告和 `resources.json`，不依赖下一次自动选择目标：
+
+```sh
+CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/preflight-*.test.ts e2e/wechat-automator.test.ts e2e/wechat-session-boundary.test.ts --update=none
+pnpm e2e:preflight prepare
+pnpm e2e:preflight verify --report e2e/.artifacts/preflight/9656d4f1-a14b-4b39-8ae4-41aad2ca676d/report.json
+```
+
+真实证据目录为 `e2e/.artifacts/preflight/9656d4f1-a14b-4b39-8ae4-41aad2ca676d/`，包含设备结构、截图、`computer-use.json` 及关联的原始工具输出；命令日志为 `e2e/.artifacts/issue-1340/preflight-pr-{prepare,verify}.log`。收尾前保存 verify 时的原始报告为 `report-verified.json`；本轮未领取全面测试门禁，主动结束自有 daemon 后 `report.json` 按设计恢复 blocked，不能继续作为有效证书复用。仅关闭本轮临时 Chrome 标签、预检服务和本轮启动的 iOS 模拟器，保留设备数据、借用的 Android/Harmony、用户浏览器页面及 IDE 会话。
+
+这轮通过证明环境预检链路已恢复；**没有启动 Android Vapor 产品页面、完整跨端矩阵或产品 HMR 补验**，前述产品缺证结论仍然成立。此处不新增 AGENTS 规则，根因通过探针实现与持久回归约束。
 
 ## 症状
 
