@@ -1,5 +1,24 @@
 # weapp-tailwindcss
 
+## 5.7.4
+
+### Patch Changes
+
+- 保护仍在生成的 uni-app x 样式作用域，避免并发样式任务超过缓存容量时丢失生成结果；原生 `@apply` 缺少有效生成结果时显式报错。
+
+  Refs #1340
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.4
+  - @weapp-tailwindcss/native-darwin-x64@5.7.4
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.4
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.4
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.4
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.4
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.4
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.4
+  - @weapp-tailwindcss/postcss@4.0.4
+
 ## 5.7.3
 
 ### Patch Changes

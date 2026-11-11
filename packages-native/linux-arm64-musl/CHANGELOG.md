@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-linux-arm64-musl
 
+## 5.7.4
+
 ## 5.7.3
 
 ## 5.7.2

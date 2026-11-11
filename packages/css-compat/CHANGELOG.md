@@ -1,5 +1,11 @@
 # @weapp-tailwindcss/css-compat
 
+## 0.1.4
+
+### Patch Changes
+
+- 刷新正式版依赖范围：UI 与 variants 使用 tailwind-variants ^4.0.2。配置加载将 lilconfig 保持在已验证的 3.1.4，并固定 v3 传递解析；Taro Vite benchmark 显示 3.1.5 对应配置路径存在 HMR 退化，待独立复测通过后再升级。CSS 选择器处理暂时将 postcss-selector-parser v7 的直接与传递解析统一固定到 7.1.7，避免未通过性能验收的 7.2.0 被兼容范围重新解析进来；旧版 Tailwind v3 兼容 fixture 继续使用 v6。保持现有导出、选择器转换与运行时封装接口。
+
 ## 0.1.3
 
 ### Patch Changes
