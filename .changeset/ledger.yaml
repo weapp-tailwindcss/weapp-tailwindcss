@@ -59,6 +59,10 @@
   intents:
     - dependency-upgrade-20261028
     - lynx-evidence-and-theme-boundary
+"@weapp-tailwindcss/css-compat@0.1.4":
+  dir: packages/css-compat
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/cva@0.1.12":
   dir: packages-runtime/cva
   intents:
@@ -376,6 +380,10 @@
   dir: packages/postcss-calc
   intents:
     - tame-monkeys-travel
+"@weapp-tailwindcss/postcss-calc@1.0.14":
+  dir: packages/postcss-calc
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -531,6 +539,10 @@
   intents:
     - dynamic-alpha-rgba
     - tame-monkeys-travel
+"@weapp-tailwindcss/postcss@4.0.4":
+  dir: packages/postcss
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -629,6 +641,10 @@
   dir: packages/source-scan
   intents:
     - organization-repository-metadata
+"@weapp-tailwindcss/typography@1.0.10":
+  dir: packages-runtime/typography
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/typography@1.0.4":
   dir: packages-runtime/typography
   intents:
@@ -688,6 +704,10 @@
   dir: packages-runtime/ui
   intents:
     - tame-monkeys-travel
+"@weapp-tailwindcss/ui@0.0.22":
+  dir: packages-runtime/ui
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/variants@0.2.10":
   dir: packages-runtime/variants
   intents:
@@ -704,6 +724,10 @@
   dir: packages-runtime/variants
   intents:
     - dependency-update-76f0ad04-3242-4540-8f82-053e1bb99fd9
+"@weapp-tailwindcss/variants@0.3.1":
+  dir: packages-runtime/variants
+  intents:
+    - dependency-update-24101870-b517-455f-9234-409f27e25a2b
 "@weapp-tailwindcss/website@1.0.65":
   dir: website
   intents:
@@ -1043,6 +1067,10 @@ weapp-tailwindcss@5.7.3:
   dir: packages/weapp-tailwindcss
   intents:
     - big-rocks-sin
+weapp-tailwindcss@5.7.4:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - quiet-scopes-wait
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
