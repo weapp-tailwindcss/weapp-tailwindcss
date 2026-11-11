@@ -32,11 +32,8 @@ beforeEach(async () => {
     return { success: true }
   })
   const page = {
-    $: async (selector: string) => ({
-      text: async () => selector === '#marker' ? context.runId : String(clicked),
-      tap: async () => { clicked = true },
-    }),
-    data: async () => ({ clicked }),
+    $$: async () => [{ tap: async () => { clicked = true } }],
+    data: async (key?: string) => key === 'marker' ? context.runId : { clicked },
   }
   connected = vi.spyOn(Launcher.prototype, 'connect').mockResolvedValue({
     currentPage: vi.fn().mockResolvedValue(page),

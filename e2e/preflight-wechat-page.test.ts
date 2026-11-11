@@ -1,6 +1,8 @@
 import type { MiniProgram } from '@weapp-vite/miniprogram-automator'
-import { describe, expect, it, vi } from 'vitest'
-import { isWechatProtocolUnavailable, waitForWechatPage } from '../scripts/e2e-preflight/probes/wechat-page'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { isWechatProtocolUnavailable, waitForWechatPage, waitForWechatProbeButton } from '../scripts/e2e-preflight/probes/wechat-page'
+
+afterEach(() => vi.restoreAllMocks())
 
 describe('微信探针页面生命周期', () => {
   it('连接建立后等待页面元数据就绪，再确认本轮 marker', async () => {
@@ -44,6 +46,66 @@ describe('微信探针页面生命周期', () => {
     expect(data).toHaveBeenCalledOnce()
     expect(data).toHaveBeenCalledWith('marker', { timeout: expect.any(Number), fallback: false })
     expect(page.$).not.toHaveBeenCalled()
+  })
+
+  it('按钮尚未渲染时重新检查页面，之后在同一超时预算内取得按钮', async () => {
+    const button = { tap: vi.fn() }
+    const data = vi.fn(async () => 'current-run')
+    const query = vi.fn().mockResolvedValueOnce([]).mockResolvedValue([button])
+    const page = { data, $$: query }
+    await expect(waitForWechatProbeButton(page as unknown as Awaited<ReturnType<MiniProgram['currentPage']>>, 'current-run', 1000)).resolves.toBe(button)
+    expect(query).toHaveBeenCalledTimes(2)
+    expect(query).toHaveBeenCalledWith('#probe', { timeout: expect.any(Number), fallback: false })
+    expect(data).toHaveBeenCalledTimes(2)
+    expect(data).toHaveBeenCalledWith('marker', { timeout: expect.any(Number), fallback: false })
+  })
+
+  it('按钮查询超时后保留原始协议错误，不把它误判成缺少按钮', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const protocol = Object.assign(new Error('button protocol timeout'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'Page.getElements' })
+    const data = vi.fn().mockResolvedValue('current-run')
+    const query = vi.fn().mockImplementation(async () => {
+      clock.mockReturnValue(10)
+      throw protocol
+    })
+    const page = { data, $$: query }
+    const error = await waitForWechatProbeButton(page as unknown as Awaited<ReturnType<MiniProgram['currentPage']>>, 'current-run', 10).catch(error => error)
+    expect(error).toMatchObject({ cause: protocol })
+    expect(isWechatProtocolUnavailable(error)).toBe(true)
+    expect(query).toHaveBeenCalledOnce()
+  })
+
+  it('页面身份等待耗尽预算后不再读取数据', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const page = { data: vi.fn() }
+    const currentPage = vi.fn().mockImplementation(async () => {
+      clock.mockReturnValue(1000)
+      return page
+    })
+    await expect(waitForWechatPage({ currentPage }, 'current-run', 1000)).rejects.toThrow('未在 1000ms 内就绪')
+    expect(page.data).not.toHaveBeenCalled()
+  })
+
+  it('按钮等待耗尽预算后不再查询元素', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const query = vi.fn()
+    const data = vi.fn(async () => {
+      clock.mockReturnValue(1000)
+      return 'current-run'
+    })
+    const page = { data, $$: query }
+    await expect(waitForWechatProbeButton(page as unknown as Awaited<ReturnType<MiniProgram['currentPage']>>, 'current-run', 1000)).rejects.toThrow('未在 1000ms 内就绪')
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('按钮属于其他运行页面或出现重复匹配时拒绝交互', async () => {
+    const button = { tap: vi.fn() }
+    const query = vi.fn().mockResolvedValue([button, button])
+    const page = { data: vi.fn().mockResolvedValueOnce('old-run').mockResolvedValue('current-run'), $$: query }
+    await expect(waitForWechatProbeButton(page as unknown as Awaited<ReturnType<MiniProgram['currentPage']>>, 'current-run')).rejects.toThrow('actual=old-run')
+    expect(query).not.toHaveBeenCalled()
+    await expect(waitForWechatProbeButton(page as unknown as Awaited<ReturnType<MiniProgram['currentPage']>>, 'current-run')).rejects.toThrow('匹配到多个交互按钮')
+    expect(button.tap).not.toHaveBeenCalled()
   })
 
   it('读取到其他页面立即失败，不以重试等待代替项目身份校验', async () => {

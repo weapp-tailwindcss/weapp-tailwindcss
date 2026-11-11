@@ -5,6 +5,7 @@ import path from 'node:path'
 import { MiniProgram } from '@weapp-vite/miniprogram-automator'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { closeMiniProgramAndCleanup, launchMiniProgramInCleanDevTools } from '../scripts/demo-visual-e2e-report/ide'
+import { isWechatProtocolUnavailable, waitForWechatPage, waitForWechatProbeButton } from '../scripts/e2e-preflight/probes/wechat-page'
 import { Launcher } from '../scripts/wechat/automator'
 import { assertWechatLogin, existingWechatService, ownedWechatPort, wechatRequest } from '../scripts/wechat/service'
 import { withFrameworkIdeProject } from './framework-ide/project-lifecycle'
@@ -38,6 +39,33 @@ afterEach(() => {
 })
 
 describe('微信会话保护', () => {
+  it('真实 SDK 的按钮协议错误穿透探针，保留方法名与原始 cause', async () => {
+    const { mini, send } = miniProgram()
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const primary = Object.assign(new Error('selector request timed out'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'Page.getElements' })
+    send.mockImplementation(async (method) => {
+      if (method === 'App.getCurrentPage') {
+        return { pageId: 1, path: 'pages/probe/index' }
+      }
+      if (method === 'Page.getData') {
+        return { data: 'current-run' }
+      }
+      clock.mockReturnValue(1000)
+      throw primary
+    })
+    try {
+      const page = await waitForWechatPage(mini, 'current-run', 1000)
+      const error = await waitForWechatProbeButton(page, 'current-run', 1000).catch(error => error)
+      expect(error.cause).toBe(primary)
+      expect(isWechatProtocolUnavailable(error)).toBe(true)
+      expect(send.mock.calls.map(call => call[0])).toEqual(['App.getCurrentPage', 'Page.getData', 'Page.getData', 'Page.getElements'])
+      expect(send).toHaveBeenLastCalledWith('Page.getElements', { pageId: 1, selector: '#probe' }, { timeout: 1000 })
+    }
+    finally {
+      await mini.disconnect()
+    }
+  })
+
   it.each([
     new Error('Timed out waiting App domain readiness after 1000ms'),
     new Error('Connection closed, check if wechat web devTools is still running'),
