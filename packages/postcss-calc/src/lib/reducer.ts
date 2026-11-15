@@ -152,7 +152,11 @@ function reduceAddSubExpression(node: CalcNode, precision: number): CalcNode {
   collectAddSubItems('+', node, collected, precision);
 
   const withoutZeroItem = collected.filter(
-    (item) => !(isValueType(item.node) && item.node.value === 0)
+    (item) => !(
+      isValueType(item.node)
+      && item.node.type !== 'PercentageValue'
+      && item.node.value === 0
+    )
   );
   const firstNonZeroItem = withoutZeroItem[0]; // could be undefined
 

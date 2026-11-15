@@ -98,6 +98,26 @@ test(
 );
 
 test(
+  'should preserve zero percentages alongside lengths',
+  testValue('calc(1px + 0%)', 'calc(1px + 0%)')
+);
+
+test(
+  'should preserve subtracted zero percentages alongside lengths',
+  testValue('calc(10px - 0%)', 'calc(10px - 0%)')
+);
+
+test(
+  'should preserve zero percentages after percentage cancellation',
+  testValue('calc(10px + 50% - 50%)', 'calc(10px + 0%)')
+);
+
+test(
+  'should preserve zero percentages alongside custom properties',
+  testValue('calc(var(--a) + 0%)', 'calc(var(--a) + 0%)')
+);
+
+test(
   'should reduce additions and subtractions (1)',
   testValue('calc(100% - 10px + 20px)', 'calc(100% + 10px)')
 );

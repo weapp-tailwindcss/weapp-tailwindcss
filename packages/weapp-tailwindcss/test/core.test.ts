@@ -89,6 +89,21 @@ view,text,::after,::before {
 })
 
 describe('core transform functions', () => {
+  it('preserves zero percentages in the default WeChat v4 calc mode', async () => {
+    const ctx = createContext({
+      platform: 'mp-weixin',
+      tailwindcssBasedir: fixtureRoot,
+      tailwindcss: {
+        v4: {
+          base: fixtureRoot,
+          cssEntries: [path.join(fixtureRoot, 'input.css')],
+        },
+      },
+    })
+    const { css } = await ctx.transformWxss('.box { height: calc(10rpx + 0%); }', { majorVersion: 4 })
+    expect(css).toContain('height: calc(10rpx + 0%)')
+  })
+
   it('should transform WXML with runtimeSet', async () => {
     const ctx = createFixtureContext()
     const rawWxml = '<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">'

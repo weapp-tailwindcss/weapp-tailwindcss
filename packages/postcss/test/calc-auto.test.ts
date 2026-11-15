@@ -1,6 +1,6 @@
 import type { IStyleHandlerOptions } from '@/types'
-import { applyConfiguredCssCalc } from '@/plugins/applyConfiguredCssCalc'
 import { createStyleHandler } from '@/handler'
+import { applyConfiguredCssCalc } from '@/plugins/applyConfiguredCssCalc'
 
 const options = {
   cssCalc: 'auto',
@@ -27,6 +27,11 @@ describe('微信 rpx 自动计算', () => {
     expect(css).toContain('translate(calc(2px*4),12rpx)')
   })
 
+  it('保留 rpx 与零百分比的混合 calc', async () => {
+    const css = await applyConfiguredCssCalc('.box{height:calc(10rpx + 0%)}', options)
+    expect(css).toContain('height:calc(10rpx + 0%)')
+  })
+
   it.each([
     '.scope{--spacing:2rpx}',
     '@media(min-width:1px){:root{--spacing:2rpx}}',
@@ -39,7 +44,8 @@ describe('微信 rpx 自动计算', () => {
 
   it('没有完整上下文的适配器只处理字面量', async () => {
     const css = await applyConfiguredCssCalc(':root{--spacing:1rpx}.w{width:calc(var(--spacing)*32);height:calc(1rpx*32)}', {
-      ...options, cssCalcContextComplete: false,
+      ...options,
+      cssCalcContextComplete: false,
     } as Partial<IStyleHandlerOptions>)
     expect(css).toContain('width:calc(var(--spacing)*32)')
     expect(css).toContain('height:32rpx')
