@@ -118,6 +118,11 @@ test(
 );
 
 test(
+  'should still remove zero values with a matching length type',
+  testValue('calc(10px + 0px)', '10px')
+);
+
+test(
   'should reduce additions and subtractions (1)',
   testValue('calc(100% - 10px + 20px)', 'calc(100% + 10px)')
 );
