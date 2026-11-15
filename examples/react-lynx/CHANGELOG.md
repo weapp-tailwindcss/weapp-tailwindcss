@@ -1,5 +1,12 @@
 # @weapp-tailwindcss/example-react-lynx
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/lynx@0.5.5
+
 ## 0.1.12
 
 ### Patch Changes

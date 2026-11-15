@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.15
+
+### Patch Changes
+
+- 保留 calc 混合表达式中的零百分比项
+
 ## 1.0.14
 
 ### Patch Changes
