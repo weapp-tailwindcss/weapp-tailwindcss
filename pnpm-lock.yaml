@@ -899,6 +899,7 @@ overrides:
   '@docusaurus/bundler>postcss': 8.5.32
   '@docusaurus/cssnano-preset>postcss': 8.5.32
   '@docusaurus/theme-classic>postcss': 8.5.32
+  watchpack: 2.6.3
   weapp-vite>weapp-tailwindcss: workspace:*
   weapp-vite@7.10.0>rolldown: 1.2.19
   vite@8.3.5>rolldown: 1.2.19
@@ -925,7 +926,6 @@ patchedDependencies:
   rollup@3.30.0: 02739b96fc9d2bc86d27e2f1221b13267436334fd32367eaba81562465b506d9
   rollup@4.65.1: 3cc78a4e1129fb7d9924d6efa20b57cec5fd9f1547b12e0ff9866d06b0380adf
   watchpack@2.6.3: fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77
-  watchpack@2.6.4: fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77
   webpack-virtual-modules@0.6.2: 083e97fa04d8d6cd6151825305e72d3756746a42995c4ad9d7428b89c528f681
   webpack@5.112.2: d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b
   webpack@5.91.0: d88b84ac3b6ac0a4bd43ec9b9cc901ea089fb7c182e6e3f22255578d50f2a79b
@@ -33263,10 +33263,6 @@ packages:
 
   watchpack@2.6.3:
     resolution: {integrity: sha512-s3NZy0QpTY9qGqzc0wtz4qI28z3+5qKbbAec4MV4G9N3CfgZ9wgvQRr0cl2jh/tqkWG1NWHkmVMHZpCamev5Wg==}
-    engines: {node: '>=10.13.0'}
-
-  watchpack@2.6.4:
-    resolution: {integrity: sha512-5H3Tce2GfzWbcr9VnSqyak2whFaONw4BdmI5BDnMXold4qSlCFd64XaMQESRh2vkDKmdUkv6rUo17UvZ9f9nXw==}
     engines: {node: '>=10.13.0'}
 
   wbuf@1.7.3:
@@ -73771,10 +73767,6 @@ snapshots:
     dependencies:
       graceful-fs: 4.2.12
 
-  watchpack@2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77):
-    dependencies:
-      graceful-fs: 4.2.12
-
   wbuf@1.7.3:
     dependencies:
       minimalistic-assert: 1.0.1
@@ -74703,7 +74695,7 @@ snapshots:
       schema-utils: 4.8.3(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.105.0)
       tapable: 2.3.4
       terser-webpack-plugin: 5.6.1(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.105.0)
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(js-yaml@5.5.0)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.105.0)
@@ -74747,7 +74739,7 @@ snapshots:
       schema-utils: 4.8.3(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(postcss@8.5.33)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.105.0)
       tapable: 2.3.4
       terser-webpack-plugin: 5.6.1(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.105.0)
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.33)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.112.2)
@@ -74784,7 +74776,7 @@ snapshots:
       minimizer-webpack-plugin: 5.14.0(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       schema-utils: 4.8.3(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(postcss@8.5.33)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       tapable: 2.3.4
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.33)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.112.2)
@@ -74824,7 +74816,7 @@ snapshots:
       minimizer-webpack-plugin: 5.14.0(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.32))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.32)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       schema-utils: 4.8.3(cssnano@6.1.2(postcss@8.5.32))(esbuild@0.28.2)(postcss@8.5.32)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       tapable: 2.3.4
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@6.1.2(postcss@8.5.32))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.32)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.112.2)
@@ -74864,7 +74856,7 @@ snapshots:
       minimizer-webpack-plugin: 5.14.0(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       schema-utils: 4.8.3(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.21.5)(postcss@8.5.33)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       tapable: 2.3.4
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.33)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.112.2)
@@ -74905,7 +74897,7 @@ snapshots:
       minimizer-webpack-plugin: 5.14.0(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
       schema-utils: 4.8.3(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(postcss@8.5.33)(webpack-cli@7.3.1)(webpack-dev-server@4.15.2)(webpack@5.112.2)
       tapable: 2.3.4
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.33)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@4.15.2)(webpack@5.112.2)
@@ -74945,7 +74937,7 @@ snapshots:
       minimizer-webpack-plugin: 5.14.0(@swc/core@1.16.22(@swc/helpers@0.5.24))(clean-css@5.3.3)(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.33)(sharp@0.35.5(@types/node@26.6.6))(svgo@4.1.0)(uglify-js@3.19.3)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       schema-utils: 4.8.3(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(postcss@8.5.33)(webpack-cli@7.3.1)(webpack-dev-server@5.2.7)(webpack@5.112.2)
       tapable: 2.3.4
-      watchpack: 2.6.4(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
+      watchpack: 2.6.3(patch_hash=fbd457745649ac9ae59b0b392a05da9cc04026fc7674e2f2dff1065c5bf7ea77)
       webpack-sources: 3.7.0
     optionalDependencies:
       webpack-cli: 7.3.1(cssnano@9.9.0(postcss@8.5.33))(esbuild@0.28.2)(js-yaml@5.5.0)(json5@2.2.3)(postcss@8.5.33)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.7)(webpack@5.112.2)

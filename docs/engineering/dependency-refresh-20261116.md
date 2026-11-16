@@ -24,7 +24,7 @@
 | 共享 workspace catalog | 浏览器映射、Iconify、Inquirer、Prettier、Rsbuild、Wrangler 等 | `baseline-browser-mapping@2.11.37`、Iconify logos `1.2.20` / lucide `1.2.155`、Inquirer `8.8.0`、Prettier 声明 `3.10.1`、Rsbuild `2.3.2` 等正式版更新；清单以 `pnpm-workspace.yaml` 与锁文件为准 |
 | weapp-vite 消费者 | weapp-vite、weapp-ide-cli | `weapp-vite` 最终从 `7.8.0` 升到 `7.10.0`；根消费者和独立模板统一使用精确版本。曾评估 `7.11.0`，但 Linux CI 首次 HMR RSS 对照出现显著增长，故暂不采用；`weapp-ide-cli` catalog `6.4.1` → `6.4.4`，并同步 `@devframes/agentic` 扩展解析 |
 | 7 个独立 Tailwind v4 模板 | `weapp-tailwindcss` | `^5.7.3` → `^5.7.4`；同步模板锁、workspace minimum-release-age 例外及 PostCSS patch 版本 |
-| Mpx / Gulp demo 及模板 | Babel、ESLint、PostCSS 插件 | Babel runtime/preset 更新到 `7.29.14`；Mpx demo 将 ESLint 从共享 ESLint 10 catalog 调整为 `9.39.5`；`postcss-pxtransform` `4.3.2` → `4.3.3` |
+| Mpx / Gulp demo 及模板 | Babel、ESLint、PostCSS 插件 | Babel runtime/preset 更新到 `7.29.14`；Mpx demo 将 ESLint 从共享 ESLint 10 catalog 调整为 `9.39.5`；`postcss-pxtransform` `4.3.2` → `4.3.3`；Watchpack 因 Mpx HMR RSS 回归保留 `2.6.3` |
 | `tailwindcss-config` | lilconfig | `3.1.4` → `3.1.5` |
 | 工具与配置依赖 | commitlint、eslint config、tsconfig、CI metadata | 分别更新到 `@icebreakers/commitlint-config@4.1.6`、`@icebreakers/eslint-config@8.0.19`、`@tsconfig/recommended@1.0.14`、`ci-info@4.5.0` |
 
@@ -45,6 +45,7 @@
 | Sass / sass-embedded | 保留已验证的 `1.107.1`，不采用未经 Windows 分包复验的更新版本。 | 在 Windows Node 22/24 上完成 weapp-vite 分包编译并确认不进入失败的 pure-JS fallback。 |
 | Taro 框架及相关 ESLint / React Refresh | Taro 4.3.1 patch、旧 peer 范围与 Webpack/Harmony 调整绑定当前版本；React Refresh `0.18` 与旧 Taro peer 有边界。 | 迁移 patch 后在 Taro Vite/Webpack、Harmony、HMR 和模板生产构建中验证，再调整配套版本。 |
 | Mpx 工具链 | ESLint 采用消费者兼容的 `9.39.5`；Webpack 插件的精确兼容 patch 限制框架升级。 | 将 patch 移植到上游兼容版本，复验 WXS、HMR 与生产构建。 |
+| Mpx Webpack watcher | 保留 `watchpack@2.6.3`；升级到 `2.6.4` 后，Linux benchmark 的 HMR RSS guard 在首次运行和反向顺序复测中均失败。 | 上游或仓库 patch 修复目录监听生命周期后，重新执行 Mpx HMR 性能 guard。 |
 | 多代 Vite 声明 | uni-app、Taro、历史 demo 和当前 weapp-vite 使用不同主版本；按各自 plugin/peer 合约保留多个 catalog，不统一机械升到最新主版。 | 每条工具链分别完成构建与运行回归后再合并版本线。 |
 | 历史兼容 fixture | Vue2/360、Tailwind v3、旧 Taro 与 React Refresh 样例保留其回归目的；`weapp-tailwindcss-children` 仍声明 Tailwind v3 peer。 | 仅在删除或替换对应旧版本回归目标，并保留等价覆盖后升级。 |
 | Rust Cargo 锁 | 两份 `Cargo.lock` 本轮未变更。 | 需要单独评估 Rust crate 更新，并在对应原生目标运行 locked test、clippy 与 ABI 验证；本轮不宣称 Rust 依赖已是最新。 |
@@ -54,6 +55,7 @@
 - Peer 检查仍报告既有兼容边界：Taro/Vite 4 与当前包 peer 范围、Mpx ESLint 代际、React Refresh `0.18` 与旧 Taro peer、uni-app-x 的 `@nuxt/kit` / Vue server renderer 组合、`weapp-tailwindcss-children` 的 Tailwind v3 peer，以及 `packages-runtime/ui` 的 `@tarojs/helper` 缺项。它们需要按真实消费者确定由哪个项目声明/升级，不能用全局 override 隐藏。
 - uni-app npm 编译器的当轮 UVM 逐项目清单、HBuilderX 内置编译器、IDE 与运行基座未在本轮升级验证；这些不能由 npm 锁文件推定已通过。退出条件是按仓库流程逐项目运行官方 UVM manual 查询，核对 IDE/内置编译器版本，并完成对应构建入口验证。
 - 本轮没有执行微信 IDE、HBuilderX、iOS/Android/Harmony 模拟器和当前会话 computer-use 的全端环境预检与完整多端验收。用户授权范围仅要求包级与可用 demo 验收，因此以下本地结果不代表全端通过。weapp-vite 性能结论也仅限上述 Linux CI 与低于要求 Node 版本的本地对照，不代表已复现单一根因。
+- Mpx HMR 的 Linux CI guard 在 Watchpack `2.6.4` 下两次独立顺序复测均确认 RSS 回归，当前通过 `watchpack: 2.6.3` override 保留稳定版本；该阻塞与 [weapp-vite#1343](https://github.com/weapp-vite/weapp-vite/issues/1343) 的 HMR 资源回归调查一并跟踪，但不能据此断言由单一上游包造成。
 - 安全 advisory 数、Rust 安全状态和发布产物没有在本报告中声称已清零或已发布；依赖版本更新不自动消除传递风险。
 
 ## 验证
