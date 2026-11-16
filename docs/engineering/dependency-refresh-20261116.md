@@ -22,7 +22,7 @@
 | Lynx package、examples、apps 与公开文档 | Rspeedy、ReactLynx、ReactLynx 插件 | `0.18.5` → `0.18.6`、`0.129.2` → `0.129.3`、`0.22.2` → `0.22.3`；同步中英文版本说明 |
 | Remotion 两个 promo app | Remotion 全套 | `4.0.541` → `4.0.543`，保持同一套件版本 |
 | 共享 workspace catalog | 浏览器映射、Iconify、Inquirer、Prettier、Rsbuild、Wrangler 等 | `baseline-browser-mapping@2.11.37`、Iconify logos `1.2.20` / lucide `1.2.155`、Inquirer `8.8.0`、Prettier 声明 `3.10.1`、Rsbuild `2.3.2` 等正式版更新；清单以 `pnpm-workspace.yaml` 与锁文件为准 |
-| weapp-vite 消费者 | weapp-vite、weapp-ide-cli | `weapp-vite` catalog `7.8.0` → `7.11.0`，模板固定 `7.8.0` → `7.11.0`；`weapp-ide-cli` catalog `6.4.1` → `6.4.4`，并同步 `@devframes/agentic` 扩展解析 |
+| weapp-vite 消费者 | weapp-vite、weapp-ide-cli | `weapp-vite` 最终从 `7.8.0` 升到 `7.10.0`；根消费者和独立模板统一使用精确版本。曾评估 `7.11.0`，但 Linux CI 首次 HMR RSS 对照出现显著增长，故暂不采用；`weapp-ide-cli` catalog `6.4.1` → `6.4.4`，并同步 `@devframes/agentic` 扩展解析 |
 | 7 个独立 Tailwind v4 模板 | `weapp-tailwindcss` | `^5.7.3` → `^5.7.4`；同步模板锁、workspace minimum-release-age 例外及 PostCSS patch 版本 |
 | Mpx / Gulp demo 及模板 | Babel、ESLint、PostCSS 插件 | Babel runtime/preset 更新到 `7.29.14`；Mpx demo 将 ESLint 从共享 ESLint 10 catalog 调整为 `9.39.5`；`postcss-pxtransform` `4.3.2` → `4.3.3` |
 | `tailwindcss-config` | lilconfig | `3.1.4` → `3.1.5` |
@@ -53,7 +53,7 @@
 
 - Peer 检查仍报告既有兼容边界：Taro/Vite 4 与当前包 peer 范围、Mpx ESLint 代际、React Refresh `0.18` 与旧 Taro peer、uni-app-x 的 `@nuxt/kit` / Vue server renderer 组合、`weapp-tailwindcss-children` 的 Tailwind v3 peer，以及 `packages-runtime/ui` 的 `@tarojs/helper` 缺项。它们需要按真实消费者确定由哪个项目声明/升级，不能用全局 override 隐藏。
 - uni-app npm 编译器的当轮 UVM 逐项目清单、HBuilderX 内置编译器、IDE 与运行基座未在本轮升级验证；这些不能由 npm 锁文件推定已通过。退出条件是按仓库流程逐项目运行官方 UVM manual 查询，核对 IDE/内置编译器版本，并完成对应构建入口验证。
-- 本轮没有执行微信 IDE、HBuilderX、iOS/Android/Harmony 模拟器和当前会话 computer-use 的全端环境预检与完整多端验收。用户授权范围仅要求包级与可用 demo 验收，因此以下本地结果不代表全端通过。
+- 本轮没有执行微信 IDE、HBuilderX、iOS/Android/Harmony 模拟器和当前会话 computer-use 的全端环境预检与完整多端验收。用户授权范围仅要求包级与可用 demo 验收，因此以下本地结果不代表全端通过。weapp-vite 性能结论也仅限上述 Linux CI 与低于要求 Node 版本的本地对照，不代表已复现单一根因。
 - 安全 advisory 数、Rust 安全状态和发布产物没有在本报告中声称已清零或已发布；依赖版本更新不自动消除传递风险。
 
 ## 验证
@@ -72,7 +72,13 @@
 | `git diff --check` | 通过 |
 | 完整 IDE / 设备矩阵、UVM 全消费者核对、Rust test/clippy/ABI | 未执行 |
 
-本轮没有改动 demo 源码或样式输出用例，因此没有重新生成 demo static 产物基线。没有运行 Prettier、创建 PR 或发布；依赖变更已按请求提交并推送到 `codex/dependency-upgrade-20261116`。
+本轮没有改动 demo 源码或样式输出用例，因此没有重新生成 demo static 产物基线。没有运行 Prettier 或发布。依赖变更已推送至 `codex/dependency-upgrade-20261116`，PR 为 [#1352](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1352)；Lynx 原生报告/兼容基线与 weapp-vite `7.10.0` pin 的后续修复仍待提交并由最新 PR head 验收。
+
+### weapp-vite 7.11.0 HMR RSS 回归观察
+
+Linux CI benchmark 在 `7.10.0` 与 `7.11.0` 间切换时，首次 HMR 的 RSS 出现明显差异：首轮约从 `895/871 MB`（peak/steady）升至 `1720/1665 MB`，反向顺序复测约从 `997/915 MB` 升至 `1502/1497 MB`。数据见 [benchmark run](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/43835532557) 与[失败 shard](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/43835532557/job/133212499176)。
+
+已向上游提交 [weapp-vite/weapp-vite#1343](https://github.com/weapp-vite/weapp-vite/issues/1343)。这证明版本切换下观察到相关性，但尚未隔离单一根因。诊断 run [43841642777](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/43841642777) 的 input-only 调用输入与失败 run 不完全一致，不能用来排除回归。macOS 本地对照使用 Node `24.18.0`，低于项目要求的 `24.22.1`，只观察到 HMR peak `979.72 → 1016.19 MB`（+3.72%）、steady `849.31 → 811.69 MB`（-4.43%），仅作方向性参考。故当前两个消费者精确固定在 `7.10.0`，待上游调查及在受支持环境复验后再评估 `7.11.0`。
 
 ## Release 与规则检查
 

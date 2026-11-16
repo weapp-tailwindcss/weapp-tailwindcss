@@ -6,9 +6,9 @@ catalogs:
   weappTailwindcss:
     weapp-tailwindcss: ^5.7.4
   weappVite:
-    weapp-vite: 7.11.0
+    weapp-vite: 7.10.0
 packageExtensions:
-  'weapp-vite@7.11.0':
+  'weapp-vite@7.10.0':
     dependencies:
       '@devframes/agentic': 1.3.3
 patchedDependencies:
