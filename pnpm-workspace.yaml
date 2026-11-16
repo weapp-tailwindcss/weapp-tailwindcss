@@ -121,6 +121,8 @@ overrides:
   '@docusaurus/cssnano-preset>postcss': 8.5.32
   '@docusaurus/theme-classic>postcss': 8.5.32
   weapp-vite>weapp-tailwindcss: workspace:*
+  weapp-vite@7.10.0>rolldown: 1.2.19
+  vite@8.3.5>rolldown: 1.2.19
   eslint-config-taro@4.3.1>@typescript-eslint/parser: 8.72.1
   eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin: 8.72.1
   # Taro RN 规则使用在新版本中已删除的 Stylelint 私有接口，保持上游实测配套。
