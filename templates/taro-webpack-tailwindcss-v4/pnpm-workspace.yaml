@@ -6,7 +6,7 @@ catalogs:
   tailwindcss4:
     tailwindcss: ^4.3.5
   weappTailwindcss:
-    weapp-tailwindcss: ^5.7.4
+    weapp-tailwindcss: ^5.7.5
 allowBuilds:
   '@parcel/watcher': false
   '@swc/core': false
@@ -26,7 +26,7 @@ minimumReleaseAgeExclude:
   - '@wevu/*'
   - repoctl
   - '@weapp-tailwindcss/postcss@4.0.4'
-  - weapp-tailwindcss@5.7.4
+  - weapp-tailwindcss@5.7.5
 patchedDependencies:
   webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch
   webpack@5.91.0: patches/webpack@5.91.0.patch

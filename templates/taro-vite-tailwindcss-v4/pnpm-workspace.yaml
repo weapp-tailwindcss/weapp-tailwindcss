@@ -6,7 +6,7 @@ catalogs:
   tailwindcss4:
     tailwindcss: ^4.3.5
   weappTailwindcss:
-    weapp-tailwindcss: ^5.7.4
+    weapp-tailwindcss: ^5.7.5
 allowBuilds:
   '@parcel/watcher': false
   '@swc/core': false
@@ -26,7 +26,7 @@ minimumReleaseAgeExclude:
   - '@wevu/*'
   - repoctl
   - '@weapp-tailwindcss/postcss@4.0.4'
-  - weapp-tailwindcss@5.7.4
+  - weapp-tailwindcss@5.7.5
 patchedDependencies:
   "@tarojs/plugin-framework-react@4.3.1": patches/@tarojs__plugin-framework-react@4.3.1.patch
   "@tarojs/plugin-platform-harmony-hybrid@4.3.1": patches/@tarojs__plugin-platform-harmony-hybrid@4.3.1.patch

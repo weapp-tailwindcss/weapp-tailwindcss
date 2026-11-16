@@ -121,6 +121,7 @@ overrides:
   '@docusaurus/cssnano-preset>postcss': 8.5.32
   '@docusaurus/theme-classic>postcss': 8.5.32
   weapp-vite>weapp-tailwindcss: workspace:*
+  weapp-vite@7.11.0>rolldown: 1.2.19
   eslint-config-taro@4.3.1>@typescript-eslint/parser: 8.72.1
   eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin: 8.72.1
   # Taro RN 规则使用在新版本中已删除的 Stylelint 私有接口，保持上游实测配套。
@@ -187,7 +188,7 @@ catalogs:
     '@babel/generator': ^8.0.6
     '@babel/parser': ^8.0.8
     '@babel/traverse': ^8.0.7
-    '@babel/types': ^8.0.8
+    '@babel/types': ^8.1.2
   babelPresetReact7285:
     '@babel/preset-react': ^7.29.7
   babelRuntime7284:
@@ -475,6 +476,7 @@ packageExtensions:
 
 patchedDependencies:
   watchpack@2.6.3: patches/watchpack@2.6.3.patch
+  watchpack@2.6.4: patches/watchpack@2.6.3.patch
   '@lynx-js/tasm@0.0.49': patches/@lynx-js__tasm@0.0.49.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
   '@mpxjs/vue-cli-plugin-mpx@2.2.32': patches/@mpxjs__vue-cli-plugin-mpx@2.2.32.patch

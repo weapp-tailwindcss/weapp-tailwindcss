@@ -81,7 +81,7 @@ for (const webpack of ['taro', 'modern']) {
       })
       const result = JSON.parse(stdout)
       expect(result.webpack).toBe(webpack === 'taro' ? '5.91.0' : '5.112.2')
-      expect(result.watchpack).toBe('2.6.3')
+      expect(result.watchpack).toBe(webpack === 'taro' ? '2.6.3' : '2.6.4')
       expect(result.initialBuilds).toBeGreaterThan(0)
       expect(result.updatedBuilds).toBeGreaterThan(result.initialBuilds)
       expect(result.value).toBe(84)
