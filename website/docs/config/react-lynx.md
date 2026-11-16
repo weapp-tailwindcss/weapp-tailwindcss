@@ -28,7 +28,7 @@ keywords:
 - [核心发布版本](https://www.npmjs.com/package/weapp-tailwindcss)；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- 仓库示例固定 Rspeedy `0.18.5`、ReactLynx 插件 `0.22.2`、ReactLynx runtime `0.129.2`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
+- 仓库示例固定 Rspeedy `0.18.6`、ReactLynx 插件 `0.22.3`、ReactLynx runtime `0.129.3`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
 - 仅支持 ReactLynx + Rspeedy 原生构建，不覆盖 Rspeedy Web、非 React Lynx 或 React Native
 
 ## 最小配置

@@ -3,6 +3,7 @@ import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { parse as parseYaml } from 'yaml'
 import { templateLintFamilies, verifyFrameworkEslint } from '../scripts/ci/framework-eslint/contracts.mjs'
 import { verifyTemplateTailwindModernGuard } from '../scripts/ci/tailwind-modern-guard.mjs'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
@@ -74,6 +75,21 @@ async function clearBuildState(root: string) {
   await fs.rm(path.resolve(root, 'node_modules/.vite'), { recursive: true, force: true })
 }
 
+async function resolveTemplateDependency(root: string, dependency: string, declared: string | undefined) {
+  if (!declared?.startsWith('catalog:')) {
+    return declared
+  }
+  const workspaceFile = path.resolve(root, 'pnpm-workspace.yaml')
+  if (!await pathExists(workspaceFile)) {
+    return declared
+  }
+  const workspace = parseYaml(await fs.readFile(workspaceFile, 'utf8')) as {
+    catalogs?: Record<string, Record<string, string>>
+  }
+  const catalogName = declared.slice('catalog:'.length)
+  return workspace.catalogs?.[catalogName]?.[dependency] ?? declared
+}
+
 describe('canonical template build smoke', () => {
   it('keeps every canonical template directory represented in the matrix', async () => {
     const packageFiles = await fg('*/package.json', { cwd: templatesRoot, onlyFiles: true })
@@ -92,7 +108,8 @@ describe('canonical template build smoke', () => {
     }
     const deps = { ...pkg.dependencies, ...pkg.devDependencies }
     expect(pkg.packageManager, `${item.name} should pin pnpm`).toBe(TEMPLATE_PACKAGE_MANAGER)
-    expect(deps.tailwindcss, `${item.name} should use Tailwind CSS v4`).toMatch(/^\^4\./)
+    const tailwindcssVersion = await resolveTemplateDependency(root, 'tailwindcss', deps.tailwindcss)
+    expect(tailwindcssVersion, `${item.name} should use Tailwind CSS v4`).toMatch(/^\^4\./)
     const dependencyContract = await readTemplateDependencyContract(root)
     expect(deps['@tailwindcss/postcss'], `${item.name} must not register the official PostCSS generator`).toBeUndefined()
     expect(deps['@tailwindcss/vite'], `${item.name} must not register the official Vite generator`).toBeUndefined()

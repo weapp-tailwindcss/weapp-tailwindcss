@@ -18,11 +18,30 @@ function lockfile(options: { specifier?: string, version?: string, integrity?: s
   })
 }
 
+function catalogLockfile(range = '^5.6.3') {
+  const document = parse(lockfile())
+  document.importers['.'].devDependencies['weapp-tailwindcss'].specifier = 'catalog:weappTailwindcss'
+  document.catalogs = {
+    weappTailwindcss: {
+      'weapp-tailwindcss': { specifier: range, version: '5.6.3' },
+    },
+  }
+  return stringify(document)
+}
+
 describe('独立模板的已发布依赖身份', () => {
   it('按模板自己的声明和锁验证稳定版，不读取工作区候选包版本', () => {
     const toolchain = stringify({ importers: { '.': { packageManagerDependencies: { pnpm: { version: '12.15.0' } } } } })
     expect(parseTemplateDependencyContract(manifest, `${toolchain}\n---\n${lockfile()}`)).toEqual({ range: '^5.6.3', version: '5.6.3' })
     expect(parseTemplateDependencyContract({ devDependencies: { 'weapp-tailwindcss': '^6.0.0' } }, lockfile())).toBeUndefined()
+  })
+
+  it('解析模板 catalog 并校验 workspace 与独立锁文件一致', () => {
+    const catalogManifest = { devDependencies: { 'weapp-tailwindcss': 'catalog:weappTailwindcss' } }
+    const workspace = { catalogs: { weappTailwindcss: { 'weapp-tailwindcss': '^5.6.3' } } }
+    expect(parseTemplateDependencyContract(catalogManifest, catalogLockfile(), workspace)).toEqual({ range: '^5.6.3', version: '5.6.3' })
+    expect(parseTemplateDependencyContract(catalogManifest, catalogLockfile('^5.7.0'), workspace)).toBeUndefined()
+    expect(parseTemplateDependencyContract(catalogManifest, catalogLockfile(), { catalogs: { weappTailwindcss: { 'weapp-tailwindcss': '^5.7.0' } } })).toBeUndefined()
   })
 
   it.each([

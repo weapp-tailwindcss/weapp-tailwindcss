@@ -46,12 +46,24 @@ describe('Lynx 文档与已提交基线的事实合同', () => {
       }
       if (file === path.join(repoRoot, 'examples/react-lynx/package.json') && mutation === 'tailwind-version') {
         const manifest = JSON.parse(source)
-        manifest.devDependencies.tailwindcss = semver.inc(manifest.devDependencies.tailwindcss, 'patch')
+        manifest.devDependencies.tailwindcss = '4.3.6'
         return JSON.stringify(manifest)
       }
       return source
     } })
     expect(findings.length).toBeGreaterThan(0)
+  })
+
+  it('按 workspace catalog 解析 Lynx 样例版本并检查 peer 范围', () => {
+    const workspacePath = path.join(repoRoot, 'pnpm-workspace.yaml')
+    const findings = collectLynxContractFindings({ readFile: (file) => {
+      const source = fs.readFileSync(file, 'utf8')
+      if (file !== workspacePath) {
+        return source
+      }
+      return source.replace('\'@lynx-js/rspeedy\': 0.18.6', '\'@lynx-js/rspeedy\': 0.1.0')
+    } })
+    expect(findings.some(item => item.includes('@lynx-js/rspeedy 0.1.0 不满足 adapter peer'))).toBe(true)
   })
 
   it('adapter 的 Node 范围不允许必装核心已拒绝的版本', () => {

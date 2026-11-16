@@ -74,7 +74,7 @@
     "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/rspeedy": "^0.18.5",
+    "@lynx-js/rspeedy": "catalog:lynxRspeedyRange",
     "tailwindcss": "catalog:tailwindcss4",
     "vitest": "catalog:vitest"
   }

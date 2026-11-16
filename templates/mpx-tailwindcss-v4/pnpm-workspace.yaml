@@ -1,6 +1,16 @@
 packages:
   - .
 
+catalogs:
+  babelPresetEnv:
+    '@babel/preset-env': ^7.29.14
+  babelRuntimeCorejs3:
+    '@babel/runtime-corejs3': ^7.29.14
+  tailwindcss4:
+    tailwindcss: ^4.3.5
+  weappTailwindcss:
+    weapp-tailwindcss: ^5.7.4
+
 allowBuilds:
   "core-js-pure": false
   sharp: true
@@ -15,8 +25,8 @@ minimumReleaseAgeExclude:
   - '@weapp-core/*'
   - '@wevu/*'
   - repoctl
-  - '@weapp-tailwindcss/postcss@4.0.0'
-  - weapp-tailwindcss@5.7.0
+  - '@weapp-tailwindcss/postcss@4.0.4'
+  - weapp-tailwindcss@5.7.4
 overrides:
   '@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/parser': 8.72.1
   '@mpxjs/eslint-config-ts@1.0.10>@typescript-eslint/eslint-plugin': 8.72.1

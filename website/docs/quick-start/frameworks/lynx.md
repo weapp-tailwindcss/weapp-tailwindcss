@@ -32,7 +32,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 发布版本以 [@weapp-tailwindcss/lynx](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) 和 [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss) 的包元数据为准。适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，核心依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
 
-仓库示例与回归矩阵固定 Rspeedy `0.18.5`、ReactLynx 插件 `0.22.2`、ReactLynx runtime `0.129.2`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
+仓库示例与回归矩阵固定 Rspeedy `0.18.6`、ReactLynx 插件 `0.22.3`、ReactLynx runtime `0.129.3`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
 
 ## 注册 Rspeedy 插件
 
