@@ -1,5 +1,20 @@
 # weapp-tailwindcss
 
+## 5.7.5
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.5
+  - @weapp-tailwindcss/native-darwin-x64@5.7.5
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.5
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.5
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.5
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.5
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.5
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.5
+  - @weapp-tailwindcss/postcss@4.0.5
+
 ## 5.7.4
 
 ### Patch Changes
