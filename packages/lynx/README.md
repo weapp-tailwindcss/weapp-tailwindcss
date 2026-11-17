@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 See the package metadata for published versions of [the adapter](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) and [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss). The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
-The repository fixture pins `@lynx-js/rspeedy` `0.18.5`, `@lynx-js/react-rsbuild-plugin` `0.22.2`, `@lynx-js/react` `0.129.2`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
+The repository fixture pins `@lynx-js/rspeedy` `0.18.6`, `@lynx-js/react-rsbuild-plugin` `0.22.3`, `@lynx-js/react` `0.129.3`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
 ## Configure
 
@@ -117,6 +117,6 @@ The example and committed dual-platform baseline use Tailwind CSS `4.3.5`;
 
 The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only. the complete original artifacts passed strict validation, archiving, and replay.
 
-The committed native baseline records `verifiedAt: 2026-11-06T20:53:50.858Z` and `catalogHash: 92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-11-16T09:37:34.566Z` and `catalogHash: 45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). The reports were produced by PR CI run `43835532056` at source `084786e8751d932dd5251bc3cb0a3a929dad4f0e`, with Android run `90bab98c-85aa-4214-963f-b5247fe467f2` and iOS run `6cb32634-426b-4693-b525-6f0bc82537ac`. That CI run detected that the complete runtime reports differed from the previously committed baseline, which prompted this reviewed baseline refresh. A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.

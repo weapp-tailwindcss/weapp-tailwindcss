@@ -22,7 +22,7 @@ const helper = 'const __exportAll = () => {}'
 it('uses the upstream lifecycle and host dynamic import fixes', () => {
   const workspace = parse(readFileSync(path.join(repo, 'pnpm-workspace.yaml'), 'utf8'))
   const frameworkPackage = frameworkRequire('weapp-vite/package.json')
-  expect(frameworkPackage.version).toBe('7.8.0')
+  expect(frameworkPackage.version).toBe('7.10.0')
   expect(frameworkPackage.dependencies?.['@babel/plugin-transform-dynamic-import']).toBe('^8.0.1')
   for (const version of ['7.3.0', '7.4.0']) {
     expect(workspace.patchedDependencies?.[`weapp-vite@${version}`]).toBeUndefined()
@@ -31,6 +31,10 @@ it('uses the upstream lifecycle and host dynamic import fixes', () => {
   expect(workspace.patchedDependencies?.['weapp-vite@7.7.0']).toBeUndefined()
   expect(workspace.packageExtensions?.['weapp-vite@7.8.0']?.dependencies?.['@devframes/agentic']).toBe('1.3.0')
   expect(workspace.patchedDependencies?.['weapp-vite@7.8.0']).toBeUndefined()
+  expect(workspace.packageExtensions?.['weapp-vite@7.10.0']?.dependencies?.['@devframes/agentic']).toBe('1.3.3')
+  expect(workspace.overrides?.['weapp-vite@7.10.0>rolldown']).toBe('1.2.19')
+  expect(workspace.overrides?.['vite@8.3.5>rolldown']).toBe('1.2.19')
+  expect(workspace.patchedDependencies?.['weapp-vite@7.10.0']).toBeUndefined()
   const devframe = frameworkRequire('devframe/package.json')
   const devframeRequire = createRequire(frameworkRequire.resolve('devframe/package.json'))
   const agentic = devframeRequire('@devframes/agentic/package.json')

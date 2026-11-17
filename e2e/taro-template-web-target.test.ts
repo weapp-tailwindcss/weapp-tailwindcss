@@ -5,28 +5,29 @@ import path from 'node:path'
 import process from 'node:process'
 import { runInNewContext } from 'node:vm'
 import { applyConfiguredCssUnits, postcss, transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
-import { satisfies } from 'semver'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { createWebpackHtmlScript } from './taro-template-web-target/html-script'
 import { loadTemplate } from './taro-template-web-target/template-config'
 import { runWebpackCssStages } from './taro-template-web-target/webpack-css-stages'
+import { readTemplateDependencyContract, verifyInstalledTemplateDependency } from './templateContract'
 
 const repoRoot = path.resolve(__dirname, '..')
 const require = createRequire(import.meta.url)
 const templates = ['taro-vite-tailwindcss-v4', 'taro-webpack-tailwindcss-v4'] as const
 type Template = typeof templates[number]
 
-function cssRuntime(template: Template) {
+async function cssRuntime(template: Template) {
   if (process.env.E2E_TARO_TEMPLATE_PUBLISHED !== '1') {
     return { createWeappTailwindcssGenerator, resolveTailwindV4Source, applyConfiguredCssUnits, postcss, transformWebCssCompat, webpack: require('webpack') as typeof import('webpack'), base: repoRoot }
   }
   const base = path.join(repoRoot, 'templates', template)
   const templateRequire = createRequire(path.join(base, 'package.json'))
+  const contract = await readTemplateDependencyContract(base)
+  await verifyInstalledTemplateDependency(base, contract)
   const version = templateRequire('weapp-tailwindcss/package.json').version as string
-  const declaration = templateRequire('./package.json').devDependencies['weapp-tailwindcss'] as string
   expect(version, '独立验证必须加载 npm 正式版').toMatch(/^\d+\.\d+\.\d+$/)
-  expect(satisfies(version, declaration), '独立验证必须满足模板依赖声明').toBe(true)
+  expect(version, '独立验证必须满足模板依赖声明与锁文件').toBe(contract.version)
   const packageRequire = createRequire(templateRequire.resolve('weapp-tailwindcss/package.json'))
   const runnerRequire = createRequire(templateRequire.resolve(template === 'taro-vite-tailwindcss-v4' ? '@tarojs/vite-runner' : '@tarojs/webpack5-runner'))
   return {
@@ -41,7 +42,7 @@ function cssRuntime(template: Template) {
   }
 }
 
-async function transformTemplateWebUnits(runtime: ReturnType<typeof cssRuntime>, template: Template, loaded: Awaited<ReturnType<typeof loadTemplate>>, css: string) {
+async function transformTemplateWebUnits(runtime: Awaited<ReturnType<typeof cssRuntime>>, template: Template, loaded: Awaited<ReturnType<typeof loadTemplate>>, css: string) {
   const option = loaded.options[0]!
   if (template === 'taro-vite-tailwindcss-v4') {
     return runtime.applyConfiguredCssUnits(css, option)
@@ -56,7 +57,7 @@ describe('独立 Taro 模板的输出目标边界', () => {
   afterEach(() => vi.unstubAllEnvs())
 
   it.each(templates)('%s 的 H5/Hybrid 主题、间距与渐变使用 Web 语义', async (template) => {
-    const runtime = cssRuntime(template)
+    const runtime = await cssRuntime(template)
     const source = await runtime.resolveTailwindV4Source({
       base: runtime.base,
       css: '@import "tailwindcss" source(none);@source inline("p-4 p-[40rpx] h-[72rpx] text-slate-800 bg-linear-to-r from-blue-400 to-purple-600");',

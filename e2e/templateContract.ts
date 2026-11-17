@@ -3,7 +3,7 @@ import { readFile, realpath } from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import semver from 'semver'
-import { parseAllDocuments } from 'yaml'
+import { parseAllDocuments, parse as parseYaml } from 'yaml'
 import { repositoryManifest } from '../scripts/ci/version-contract.mjs'
 
 export const TEMPLATE_PACKAGE_MANAGER = repositoryManifest.packageManager
@@ -30,6 +30,10 @@ export interface TemplateDependencyContract {
 
 const dependencyFields = ['dependencies', 'devDependencies', 'optionalDependencies'] as const
 const packageName = 'weapp-tailwindcss'
+interface WorkspaceCatalogs {
+  catalog?: Record<string, string>
+  catalogs?: Record<string, Record<string, string>>
+}
 
 function isRecord(value: unknown): value is Record<string, any> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -42,7 +46,7 @@ function dependencyEntries(manifest: Record<string, any>) {
 }
 
 /** 独立模板消费已发布包；工作区候选版本不能替代模板自身的冻结依赖身份。 */
-export function parseTemplateDependencyContract(manifest: unknown, lockfile: string): TemplateDependencyContract | undefined {
+export function parseTemplateDependencyContract(manifest: unknown, lockfile: string, workspace?: unknown): TemplateDependencyContract | undefined {
   try {
     if (!isRecord(manifest)) {
       return undefined
@@ -64,8 +68,31 @@ export function parseTemplateDependencyContract(manifest: unknown, lockfile: str
     if (locked.length !== 1 || locked[0]!.field !== declaration.field || entry?.specifier !== declaration.value || typeof entry.version !== 'string') {
       return undefined
     }
+    let range = declaration.value
+    if (range.startsWith('catalog:')) {
+      if (!isRecord(workspace)) {
+        return undefined
+      }
+      const catalogs = workspace as WorkspaceCatalogs
+      const catalogName = range.slice('catalog:'.length) || 'default'
+      const catalog = catalogName === 'default'
+        ? catalogs.catalog ?? catalogs.catalogs?.['default']
+        : catalogs.catalogs?.[catalogName]
+      const catalogRange = catalog?.[packageName]
+      if (!catalogRange) {
+        return undefined
+      }
+      const lockedCatalog = business[0].catalogs?.[catalogName]?.[packageName]
+      if (lockedCatalog?.specifier !== catalogRange) {
+        return undefined
+      }
+      range = catalogRange
+    }
     const version = /^(\d+\.\d+\.\d+)(?:\(.+\))?$/.exec(entry.version)?.[1]
-    if (!version || !isTemplateVersionCompatible(declaration.value, version)) {
+    if (!version || !isTemplateVersionCompatible(range, version)) {
+      return undefined
+    }
+    if (declaration.value.startsWith('catalog:') && business[0].catalogs?.[declaration.value.slice('catalog:'.length) || 'default']?.[packageName]?.version !== version) {
       return undefined
     }
     const resolution = business[0].packages?.[`${packageName}@${version}`]?.resolution
@@ -75,7 +102,7 @@ export function parseTemplateDependencyContract(manifest: unknown, lockfile: str
       || typeof resolution.integrity !== 'string' || !/^sha512-[A-Za-z0-9+/]{86}==$/.test(resolution.integrity)) {
       return undefined
     }
-    return { range: declaration.value, version }
+    return { range, version }
   }
   catch {
     return undefined
@@ -83,11 +110,17 @@ export function parseTemplateDependencyContract(manifest: unknown, lockfile: str
 }
 
 export async function readTemplateDependencyContract(root: string) {
-  const [manifest, lockfile] = await Promise.all([
+  const [manifest, lockfile, workspace] = await Promise.all([
     readFile(path.join(root, 'package.json'), 'utf8'),
     readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'),
+    readFile(path.join(root, 'pnpm-workspace.yaml'), 'utf8').catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') {
+        return undefined
+      }
+      throw error
+    }),
   ])
-  const contract = parseTemplateDependencyContract(JSON.parse(manifest), lockfile)
+  const contract = parseTemplateDependencyContract(JSON.parse(manifest), lockfile, workspace ? parseYaml(workspace) : undefined)
   if (!contract) {
     throw new Error(`模板声明与独立锁文件的稳定版依赖不一致：${root}`)
   }

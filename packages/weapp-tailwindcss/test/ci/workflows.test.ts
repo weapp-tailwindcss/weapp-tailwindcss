@@ -935,8 +935,13 @@ describe('ci workflows', () => {
     expect(packageJson.scripts['pr:rc']).toBe('repo release pre enter rc')
     expect(packageJson.scripts['pr:next']).toBe('repo release pre enter next')
     expect(packageJson.scripts['pr:exit']).toBe('repo release pre exit')
-    expect(semver.validRange(packageJson.devDependencies.repoctl)).not.toBeNull()
-    expect(packageJson.devDependencies.repoctl).not.toBe('*')
+    const repoctlDeclaration = packageJson.devDependencies.repoctl
+    const repoctlRange = repoctlDeclaration.startsWith('catalog:')
+      ? (YAML.parse(readText('pnpm-workspace.yaml')) as { catalogs: Record<string, Record<string, string>> })
+          .catalogs[repoctlDeclaration.slice('catalog:'.length)]?.repoctl
+      : repoctlDeclaration
+    expect(semver.validRange(repoctlRange)).not.toBeNull()
+    expect(repoctlRange).not.toBe('*')
     expect(packageJson.devDependencies['@changesets/cli']).toBeUndefined()
     expect(packageJson.devDependencies['@changesets/changelog-github']).toBeUndefined()
     expect(packageJson.devDependencies['@icebreakers/changelog-github']).toBeUndefined()

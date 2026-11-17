@@ -5,6 +5,7 @@ import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { getWorkspacePackages } from 'repoctl'
 import semver from 'semver'
+import { parse as parseYaml } from 'yaml'
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(scriptDirectory, '..')
@@ -33,13 +34,25 @@ function addFinding(findings, file, message) {
   findings.push(`${path.relative(repoRoot, file)}: ${message}`)
 }
 
+function resolveCatalogDependency(manifest, name, workspace) {
+  const declaration = manifest.dependencies?.[name] ?? manifest.devDependencies?.[name]
+  if (typeof declaration !== 'string' || !declaration.startsWith('catalog:')) {
+    return declaration
+  }
+  const catalogName = declaration.slice('catalog:'.length) || 'default'
+  const catalog = catalogName === 'default'
+    ? workspace.catalog ?? workspace.catalogs?.['default']
+    : workspace.catalogs?.[catalogName]
+  return catalog?.[name] ?? declaration
+}
+
 function requireText(findings, file, source, expected) {
   if (!source.includes(expected)) {
     addFinding(findings, file, `缺少事实 “${expected}”`)
   }
 }
 
-function checkPackageFacts(findings, adapter, core, example, readJson, resolveManifest) {
+function checkPackageFacts(findings, adapter, core, example, workspace, readJson, resolveManifest) {
   const node = adapter.engines?.node
   if (!semver.validRange(node)) {
     addFinding(findings, paths.adapter, 'Node engines 必须为有效范围')
@@ -83,7 +96,7 @@ function checkPackageFacts(findings, adapter, core, example, readJson, resolveMa
     if (!range || !semver.validRange(range) || !semver.subset(range, minimum)) {
       addFinding(findings, paths.adapter, `${name} peer 必须满足最低契约 ${minimum}`)
     }
-    const actual = example.dependencies?.[name] ?? example.devDependencies?.[name]
+    const actual = resolveCatalogDependency(example, name, workspace)
     if (!actual || !semver.satisfies(actual, range ?? '<0')) {
       addFinding(findings, paths.example, `${name} ${actual} 不满足 adapter peer ${range}`)
     }
@@ -160,7 +173,8 @@ export function collectLynxContractFindings({
   const example = readJson(paths.example)
   const baseline = readJson(paths.baseline)
   const workflow = readFile(paths.workflow)
-  checkPackageFacts(findings, adapter, core, example, readJson, resolveManifest)
+  const workspace = parseYaml(readFile(path.join(repoRoot, 'pnpm-workspace.yaml')))
+  checkPackageFacts(findings, adapter, core, example, workspace, readJson, resolveManifest)
   const baselineFacts = collectBaselineFacts(findings, baseline)
   checkWorkflowFacts(findings, workflow)
 
@@ -170,10 +184,10 @@ export function collectLynxContractFindings({
     core.engines.node,
     'https://www.npmjs.com/package/@weapp-tailwindcss/lynx',
     'https://www.npmjs.com/package/weapp-tailwindcss',
-    example.devDependencies['@lynx-js/rspeedy'],
-    example.dependencies?.['@lynx-js/react-rsbuild-plugin'] ?? example.devDependencies?.['@lynx-js/react-rsbuild-plugin'],
-    example.dependencies?.['@lynx-js/react'] ?? example.devDependencies?.['@lynx-js/react'],
-    example.dependencies?.tailwindcss ?? example.devDependencies?.tailwindcss,
+    resolveCatalogDependency(example, '@lynx-js/rspeedy', workspace),
+    resolveCatalogDependency(example, '@lynx-js/react-rsbuild-plugin', workspace),
+    resolveCatalogDependency(example, '@lynx-js/react', workspace),
+    resolveCatalogDependency(example, 'tailwindcss', workspace),
     '@lynx-js/react-rsbuild-plugin',
     adapter.peerDependencies['@lynx-js/react-rsbuild-plugin'],
     '>=3.6',

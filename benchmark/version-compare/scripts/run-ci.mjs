@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { resolveInstallMode } from './install-mode.mjs'
 import { classifyPerformanceChanges, performanceRelevantPaths, summarizeFiles } from './change-relevance.mjs'
 import {
   asInformationalPerformanceGuard,
@@ -306,7 +307,8 @@ async function prepareRoot({ root, role, baseline, baselineRef, currentRef, reso
     const { prepareAllocationRoot } = await import('./diagnostics/prepare.mjs')
     await prepareAllocationRoot(root, repoRoot, path.join(allocationDirectory, role), diagnosticProject, diagnosticMode)
   }
-  await run(root, 'pnpm', ['install', role === 'published' ? '--no-frozen-lockfile' : '--frozen-lockfile'])
+  // Corepack 按目录 packageManager 选择 pnpm；临时基线允许修正旧 catalog specifier 与锁文件的差异。
+  await run(root, 'corepack', ['pnpm', 'install', resolveInstallMode(role)])
   if (allocationDirectory && diagnosticProject === weappViteInputProject && diagnosticMode === 'inputs') {
     const { prepareWeappViteInputDependencies } = await import('./diagnostics/prepare.mjs')
     await prepareWeappViteInputDependencies(root, path.join(allocationDirectory, role), diagnosticProject)

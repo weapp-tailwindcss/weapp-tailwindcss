@@ -1,17 +1,27 @@
 packages:
   - .
+catalogs:
+  tailwindcss4:
+    tailwindcss: ^4.3.5
+  weappTailwindcss:
+    weapp-tailwindcss: ^5.7.4
+  weappVite:
+    weapp-vite: 7.10.0
 packageExtensions:
-  'weapp-vite@7.7.0':
+  'weapp-vite@7.10.0':
     dependencies:
-      '@devframes/agentic': 1.2.6
+      '@devframes/agentic': 1.3.3
+overrides:
+  'weapp-vite@7.10.0>rolldown': 1.2.19
+  'vite@8.3.5>rolldown': 1.2.19
 patchedDependencies:
 allowBuilds:
   '@swc/core': true
   esbuild: true
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:
-  - weapp-tailwindcss@5.7.0
-  - "@weapp-tailwindcss/postcss@4.0.0"
+  - weapp-tailwindcss@5.7.4
+  - "@weapp-tailwindcss/postcss@4.0.4"
   - weapp-vite
   - wevu
   - "@weapp-vite/*"

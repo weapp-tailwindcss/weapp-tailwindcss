@@ -26,12 +26,12 @@
     "qrcode": "1.5.4",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "remotion": "4.0.541"
+    "remotion": "catalog:remotionPromo"
   },
   "devDependencies": {
-    "@remotion/bundler": "4.0.541",
-    "@remotion/cli": "4.0.541",
-    "@remotion/renderer": "4.0.541",
+    "@remotion/bundler": "catalog:remotionPromo",
+    "@remotion/cli": "catalog:remotionPromo",
+    "@remotion/renderer": "catalog:remotionPromo",
     "@types/node": "catalog:typesNode2410",
     "@types/qrcode": "^1.5.6",
     "@types/react": "catalog:react19",

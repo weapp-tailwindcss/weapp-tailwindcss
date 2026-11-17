@@ -38,7 +38,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 See the package metadata for published versions of [@weapp-tailwindcss/lynx](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) and [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss). The adapter requires Node.js `^22.18.0 || >=24.11.0`; the core dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
 
-The repository fixture and regression matrix pin Rspeedy `0.18.5`, ReactLynx plugin `0.22.2`, ReactLynx runtime `0.129.2`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
+The repository fixture and regression matrix pin Rspeedy `0.18.6`, ReactLynx plugin `0.22.3`, ReactLynx runtime `0.129.3`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
 
 ## Register the Rspeedy plugin
 
@@ -124,7 +124,7 @@ The example and committed dual-platform baseline use Tailwind CSS `4.3.5`; the c
 
 The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only.
 
-The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-11-06T20:53:50.858Z` and `catalogHash` `92be715377b608e8587f2871e923fde5cfd4bc2d3f8806c9bb189731d84f69f5`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
+The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-11-16T09:37:34.566Z` and `catalogHash` `45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`; its reports come from PR CI run `43835532056`, Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not update a native support report or committed baseline.
 

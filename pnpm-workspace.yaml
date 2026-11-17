@@ -120,7 +120,11 @@ overrides:
   '@docusaurus/bundler>postcss': 8.5.32
   '@docusaurus/cssnano-preset>postcss': 8.5.32
   '@docusaurus/theme-classic>postcss': 8.5.32
+  # Mpx HMR 的 Watchpack 2.6.4 在 Linux CI 中触发稳定 RSS 回归，等待上游修复后再评估升级。
+  watchpack: 2.6.3
   weapp-vite>weapp-tailwindcss: workspace:*
+  weapp-vite@7.10.0>rolldown: 1.2.19
+  vite@8.3.5>rolldown: 1.2.19
   eslint-config-taro@4.3.1>@typescript-eslint/parser: 8.72.1
   eslint-config-taro@4.3.1>@typescript-eslint/eslint-plugin: 8.72.1
   # Taro RN 规则使用在新版本中已删除的 Stylelint 私有接口，保持上游实测配套。
@@ -152,9 +156,12 @@ catalogs:
     yaml: ^2.9.1
   compilerUtilities:
     comment-json: ^5.0.0
-    oxc-parser: ^0.157.0
+    '@oxc-project/types': ^0.158.0
+    oxc-parser: ^0.158.0
     oxc-walker: ^1.1.1
     semver: ~7.8.6
+  lilconfig315:
+    lilconfig: 3.1.5
   postcssCompat:
     postcss-pxtrans: ^1.1.0
     postcss-rule-unit-converter: ^0.3.0
@@ -167,9 +174,16 @@ catalogs:
     lodash.isplainobject: ^4.0.6
     lodash.merge: ^4.6.2
   tooling:
+    '@icebreakers/commitlint-config': ^4.1.6
+    '@icebreakers/eslint-config': ^8.0.19
+    '@icebreakers/stylelint-config': ^6.0.4
+    ci-info: ^4.5.0
     del: ^9.0.1
     execa: ^9.6.1
+    repoctl: ^6.6.2
+    tar: ^7.5.23
     traverse: ^0.6.14
+    turbo: ^2.11.11
   babelCore7285:
     '@babel/core': ^7.29.7
   babel8:
@@ -177,7 +191,7 @@ catalogs:
     '@babel/generator': ^8.0.6
     '@babel/parser': ^8.0.8
     '@babel/traverse': ^8.0.7
-    '@babel/types': ^8.0.8
+    '@babel/types': ^8.1.2
   babelPresetReact7285:
     '@babel/preset-react': ^7.29.7
   babelRuntime7284:
@@ -185,7 +199,7 @@ catalogs:
   babelRuntime7284tilde:
     '@babel/runtime': ^7.29.10
   baselineBrowserMapping:
-    baseline-browser-mapping: ^2.11.35
+    baseline-browser-mapping: ^2.11.37
   classVarianceAuthority:
     class-variance-authority: ^0.7.1
   clsx:
@@ -212,7 +226,9 @@ catalogs:
   egoistTailwindcssIcons:
     '@egoist/tailwindcss-icons': ^1.9.2
   eslint10:
-    eslint: ^10.14.0
+    eslint: ^10.15.0
+  eslint9Mpx:
+    eslint: 9.39.5
   eslintPluginReact:
     eslint-plugin-react: ^7.37.5
   eslintPluginReactHooks:
@@ -220,13 +236,13 @@ catalogs:
   iconifyJson:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
-    '@iconify-json/logos': ^1.2.19
-    '@iconify-json/lucide': ^1.2.151
+    '@iconify-json/logos': ^1.2.20
+    '@iconify-json/lucide': ^1.2.155
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
   inquirerPrompts:
-    '@inquirer/prompts': ^8.7.5
+    '@inquirer/prompts': ^8.8.0
   lucideReact0555:
     lucide-react: ^1.62.0
   lucideVueNext0555:
@@ -234,9 +250,9 @@ catalogs:
   miniApiTypings:
     miniprogram-api-typings: ^5.3.1
   postcss85:
-    postcss: ^8.5.32
+    postcss: ^8.5.33
   postcss85tilde:
-    postcss: ^8.5.32
+    postcss: ^8.5.33
   postcssComment2:
     postcss-comment: ^2.0.0
   postcssRem:
@@ -246,8 +262,9 @@ catalogs:
   postcssUtilities:
     es-toolkit: ^1.53.2
     postcss-preset-env: ^11.6.2
+    postcss-pxtransform: ^4.3.3
   prettier371:
-    prettier: ^3.9.10
+    prettier: ^3.10.1
   react18:
     '@types/react': ^18.3.31
     '@types/react-dom': ^18.3.7
@@ -261,19 +278,19 @@ catalogs:
   reactRefresh018:
     react-refresh: ^0.18.0
   rsbuild2:
-    '@rsbuild/core': ^2.3.1
+    '@rsbuild/core': ^2.3.2
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
     sass: 1.107.1
     sass-embedded: 1.107.1
   storybook:
-    '@storybook/addon-a11y': ^10.6.6
-    '@storybook/react': ^10.6.6
-    '@storybook/react-vite': ^10.6.6
-    storybook: ^10.6.6
+    '@storybook/addon-a11y': ^10.6.7
+    '@storybook/react': ^10.6.7
+    '@storybook/react-vite': ^10.6.7
+    storybook: ^10.6.7
   stylelint1625:
-    stylelint: ^17.16.0
+    stylelint: ^18.0.0
   swc:
     '@swc/core': ^1.16.22
   tailwindMerge:
@@ -371,6 +388,29 @@ catalogs:
     vite: ^4.5.14
   vite724:
     vite: ^7.3.7
+  browserTesting:
+    '@playwright/test': ^1.65.1
+    playwright: ^1.65.1
+  websiteTooling:
+    dotenv: ^18.0.10
+  docusaurusPostcss:
+    postcss: 8.5.32
+  lynxFixture:
+    '@lynx-js/react': 0.129.3
+    '@lynx-js/react-rsbuild-plugin': 0.22.3
+    '@lynx-js/rspeedy': 0.18.6
+  lynxRspeedyRange:
+    '@lynx-js/rspeedy': ^0.18.6
+  remotionPromo:
+    '@remotion/bundler': 4.0.543
+    '@remotion/cli': 4.0.543
+    '@remotion/media': 4.0.543
+    '@remotion/renderer': 4.0.543
+    remotion: 4.0.543
+  typescriptRecommended:
+    '@tsconfig/recommended': ^1.0.14
+  weappAutomation:
+    '@weapp-vite/miniprogram-automator': ^1.5.4
   vite8:
     vite: ^8.3.5
   vitePluginInspect:
@@ -398,9 +438,9 @@ catalogs:
   weappChildren:
     weapp-tailwindcss-children: ^0.1.0
   weappIdeCli:
-    weapp-ide-cli: ^6.4.1
+    weapp-ide-cli: ^6.4.4
   weappVite:
-    weapp-vite: ^7.8.0
+    weapp-vite: 7.10.0
   webpackTools:
     '@pmmmwh/react-refresh-webpack-plugin': ^0.6.3
     '@types/webpack-env': ^1.18.8
@@ -409,7 +449,7 @@ catalogs:
     webpack-cli: ^7.3.1
     webpack-dev-server: ^5.2.7
   wrangler:
-    wrangler: ^4.158.0
+    wrangler: ^4.162.0
   uniVite:
     vite: 5.2.8
   taroRnReact18:
@@ -430,6 +470,9 @@ packageExtensions:
   weapp-vite@7.8.0:
     dependencies:
       '@devframes/agentic': 1.3.0
+  weapp-vite@7.10.0:
+    dependencies:
+      '@devframes/agentic': 1.3.3
   '@tarojs/plugin-platform-harmony-hybrid@4.3.1':
     dependencies:
       '@babel/core': ^7.26.10
