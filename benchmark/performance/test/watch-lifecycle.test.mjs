@@ -18,11 +18,26 @@ describe('真实 watcher 基准契约', () => {
     const events = report.watchReceipt.events
     expect(events.filter(event => event.event === 'sample-restored').at(-1)).toMatchObject({ index: 2 })
     expect(events.filter(event => event.event === 'sample-created').at(-1)).toMatchObject({ index: 2 })
+    expect(report.samples[0].changes.map(change => change.id)).toEqual([
+      'add-candidate',
+      'remove-author-css',
+      'change-theme',
+      'restore-theme',
+      'remove-candidate',
+      'restore-author-css',
+    ])
+    expect(Object.keys(report.changeTimings)).toEqual(report.samples[0].changes.map(change => change.id))
+    expect(Object.values(report.changeTimings).every(timing => timing.count === 3)).toBe(true)
+    expect(report.samples.every(sample => sample.changes.every(change => Array.isArray(change.timings)))).toBe(true)
+    expect(Object.keys(report.hmrPhaseTimings)).toEqual(report.samples[0].changes.map(change => change.id))
     expect(events.map(event => event.event)).toEqual(expect.arrayContaining(['report-start', 'report-created', 'action-complete', 'result-created', 'remove-start', 'remove-complete']))
     expect(events.at(-1).event).toBe('operation-complete')
     const closedResources = events.filter(event => event.event === 'close-complete').map(event => event.resource)
     expect(closedResources).toEqual(kind === 'vite' ? ['vite-watcher'] : ['webpack-watcher', 'webpack-compiler', 'webpack-resources'])
     expect(new Set(report.samples.map(sample => sample.outputHash)).size).toBe(1)
+    for (const id of report.samples[0].changes.map(change => change.id)) {
+      expect(new Set(report.samples.map(sample => sample.changes.find(change => change.id === id).outputHash)).size).toBe(1)
+    }
     expect(report.time.count).toBe(3)
     expect(report.outputCss).toBe(await readFile(new URL(`./fixtures/watch/${kind}.css`, import.meta.url), 'utf8'))
   })

@@ -117,4 +117,24 @@ describe.each(['web', 'weapp'] as const)('完整增量编译产物：%s', (targe
     expect(generated.css).toMatch(/width:\s*32rpx/)
     expect(generated.incrementalCss).toBeUndefined()
   })
+
+  it('扫描模式下候选集合未变化时复用完整产物', async () => {
+    const { engine } = await engineFor('@import "tailwindcss" source(none); @source inline("flex");')
+    const generate = vi.spyOn(TailwindV4NativeSessionPool.prototype, 'generate')
+    const initial = await engine.generate({ target: 'web', scanSources: true, incrementalCache: true, candidates: ['block', 'flex'] })
+    generate.mockClear()
+
+    const cached = await engine.generate({ target: 'web', scanSources: true, incrementalCache: true, candidates: ['block', 'flex'] })
+
+    expect(cached.css).toBe(initial.css)
+    expect(cached.rawCss).toBe(initial.rawCss)
+    expect(cached.incrementalCss).toBe('')
+    expect(generate).not.toHaveBeenCalled()
+
+    await engine.generate({ target: 'web', scanSources: true, incrementalCache: true, candidates: ['block', 'flex', 'p-4'] })
+    expect(generate).toHaveBeenCalledTimes(1)
+
+    await engine.generate({ target: 'web', scanSources: true, incrementalCache: true, candidates: ['flex', 'p-4'] })
+    expect(generate).toHaveBeenCalledTimes(2)
+  })
 })

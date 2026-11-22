@@ -8,7 +8,7 @@ runtime 场景分别创建 cn 与 tailwind-merge 的真实实例：cold 包含�
 
 ## 真实 watcher
 
-运行 `pnpm --filter benchmark-performance watch:report`，默认 Vite/Webpack 各覆盖 10、50、100 个来源片段，预热 2 次、采样 7 次。每个规模只建立一个 watcher；显式设置 `generator.hmr.preserveDeletedCss: false`；每轮依次新增候选、删除一个入口的作者样式、修改配置，再逐项恢复初始状态。临时根目录先通过 realpath 固定身份，两个 CSS 入口始终保留；只从本轮 bundler 资产图采样，恢复后的输出哈希必须一致。
+运行 `pnpm --filter benchmark-performance watch:report`，默认 Vite/Webpack 各覆盖 10、50、100 个来源片段，预热 2 次、采样 7 次。每个规模只建立一个 watcher；显式设置 `generator.hmr.preserveDeletedCss: false`；每轮分别记录新增候选、删除作者样式、修改/恢复配置、删除候选和恢复作者样式的耗时、CSS 哈希及已有 HMR 阶段计时，并保留完整恢复周期统计。临时根目录先通过 realpath 固定身份，两个 CSS 入口始终保留；只从本轮 bundler 资产图采样，每个状态与恢复后的输出哈希必须稳定。
 
 支持 `--source-root` 指向已安装并构建的独立基线工作树，以及 `--output` 指定报告路径。比较时使用同一份基准脚本，两个工作树各自解析自己的插件与依赖，串行测量，报告记录 SHA、工作树状态、Node、CPU、median、p95、RSS 和 GC 后堆占用。报告写入忽略目录，不自动更新预算。
 
