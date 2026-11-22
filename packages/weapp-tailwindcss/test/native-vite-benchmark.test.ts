@@ -19,6 +19,7 @@ describe('Vite comparison modes', () => {
 
   it('keeps transfer as the default and explicitly disables native for both old modes', () => {
     expect(parseOptions([]).compare).toBe('transfer')
+    expect(parseOptions([]).profile).toBe(false)
     expect(comparisonModes('transfer')).toEqual(['normal', 'raw'])
     expect(nativeMode({ compare: 'transfer', mode: 'normal' })).toBe('off')
     expect(nativeMode({ compare: 'transfer', mode: 'raw' })).toBe('off')
@@ -27,6 +28,7 @@ describe('Vite comparison modes', () => {
 
   it('alternates native off/required independently from the raw-transfer comparison', () => {
     expect(parseOptions(['--compare', 'native', '--target', 'weapp']).compare).toBe('native')
+    expect(parseOptions(['--profile']).profile).toBe(true)
     expect(pairOrder(0, 'native')).toEqual(['off', 'required'])
     expect(pairOrder(1, 'native')).toEqual(['required', 'off'])
     expect(pairOrder(1)).toEqual(['raw', 'normal'])

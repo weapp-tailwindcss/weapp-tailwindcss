@@ -35,6 +35,7 @@ async function run() {
       independentNodeProcesses: true,
       target: options.target,
       comparison: options.compare,
+      profile: options.profile,
       modes: comparisonModes(options.compare),
       native: options.compare === 'native'
         ? 'off/required 对比；两组保持生产默认 Oxc 传递选项；正式 worker 只预先 resolve/hash binding，通过 .node 加载 hook 计数，不在计时前 require 原生模块。'

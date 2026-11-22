@@ -1,7 +1,8 @@
 import type { Browser, Page } from 'playwright'
 import type { ViteDevServer } from 'vite'
-import type { WorkerOptions, WorkerReport } from './types'
+import type { HmrTimingEvent, MemorySample, Phase, WorkerOptions, WorkerReport } from './types'
 import assert from 'node:assert/strict'
+import { Buffer } from 'node:buffer'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import os from 'node:os'
@@ -43,6 +44,83 @@ let original: string | undefined
 let variants: ReturnType<typeof makeVariants> | undefined
 let temporary: string | undefined
 let interrupted = false
+let timingCapture: TimingCapture | undefined
+
+interface TimingCapture {
+  readonly events: HmrTimingEvent[]
+  phase: (value: Exclude<Phase, 'self-check'>) => void
+  restore: () => void
+}
+
+function createTimingCapture(enabled: boolean): TimingCapture {
+  let phase: Exclude<Phase, 'self-check'> = 'build'
+  const events: HmrTimingEvent[] = []
+  const stdout = process.stdout
+  const originalWrite = stdout.write
+  let pending = ''
+
+  function consume(chunk: string) {
+    pending += chunk
+    let newline = pending.indexOf('\n')
+    while (newline !== -1) {
+      const line = pending.slice(0, newline).trimEnd()
+      pending = pending.slice(newline + 1)
+      if (line.startsWith('[weapp-tailwindcss:hmr] ')) {
+        try {
+          const event = JSON.parse(line.slice('[weapp-tailwindcss:hmr] '.length)) as Omit<HmrTimingEvent, 'benchmarkPhase'>
+          if (typeof event.bundler === 'string' && typeof event.phase === 'string' && typeof event.durationMs === 'number') {
+            events.push({ ...event, benchmarkPhase: phase })
+          }
+        }
+        catch {
+          // 不让诊断输出解析失败影响 benchmark 主流程。
+        }
+      }
+      newline = pending.indexOf('\n')
+    }
+  }
+
+  if (enabled) {
+    const write = ((...args: Parameters<typeof process.stdout.write>) => {
+      const [chunk, encoding] = args
+      const text = typeof chunk === 'string'
+        ? chunk
+        : Buffer.from(chunk).toString(typeof encoding === 'string' ? encoding : undefined)
+      consume(text)
+      return originalWrite.apply(stdout, args)
+    }) as typeof process.stdout.write
+    stdout.write = write
+  }
+
+  return {
+    events,
+    phase(value) { phase = value },
+    restore() {
+      if (enabled) {
+        stdout.write = originalWrite
+        consume('')
+      }
+    },
+  }
+}
+
+function sampleMemory(phase: Exclude<Phase, 'self-check'>, point: MemorySample['point']) {
+  if (!options.profile) {
+    return
+  }
+  const memory = process.memoryUsage()
+  const toKiB = (bytes: number) => Math.round(bytes / 1024)
+  report.memorySamples ??= []
+  report.memorySamples.push({
+    phase,
+    point,
+    rssKiB: toKiB(memory.rss),
+    heapUsedKiB: toKiB(memory.heapUsed),
+    heapTotalKiB: toKiB(memory.heapTotal),
+    externalKiB: toKiB(memory.external),
+    arrayBuffersKiB: toKiB(memory.arrayBuffers),
+  })
+}
 
 async function cleanup() {
   // 浏览器和 server 分别释放，单个失败不能阻止源码恢复。
@@ -82,6 +160,7 @@ async function cleanup() {
       report.cleanupErrors.push(`temporary: ${String(error)}`)
     }
   }
+  sampleMemory('restore', 'after-cleanup')
 }
 
 function stop() {
@@ -96,6 +175,11 @@ process.once('SIGTERM', stop)
 async function main() {
   process.env.WEAPP_TW_TARGET = options.target
   process.env.WEAPP_TW_NATIVE = nativeMode(options)
+  if (options.profile) {
+    process.env.WEAPP_TW_HMR_TIMING = '1'
+    process.env.WEAPP_TW_HMR_TIMING_LOG = '0'
+  }
+  timingCapture = createTimingCapture(options.profile)
   original = await readFile(sourceFile, 'utf8')
   variants = makeVariants(original)
   parser = instrumentParser(options.root, options.mode === 'normal' || options.mode === 'raw' ? options.mode : 'default')
@@ -117,6 +201,7 @@ async function main() {
   process.env.NODE_ENV = 'production'
   parser.phase('build')
   native?.phase('build')
+  timingCapture?.phase('build')
   const buildStarted = performance.now()
   const vite = await import(pathToFileURL(demoRequire.resolve('vite')).href) as typeof import('vite')
   const logger = vite.createLogger('info', { allowClearScreen: false })
@@ -131,12 +216,14 @@ async function main() {
   const built = await vite.build({ root: project, configFile, customLogger, clearScreen: false, cacheDir: path.join(temporary, 'build-cache'), build: { write: false, emptyOutDir: false } })
   const buildMs = performance.now() - buildStarted
   report.build = { milliseconds: buildMs, ...fingerprintBuild(built) }
+  sampleMemory('build', 'after-build')
   assert(!interrupted, 'worker 收到中断。')
   assert.equal(report.serverErrors.length, 0, '生产构建记录了 server error。')
   // Vite build 会保留 NODE_ENV；显式切换到真实 dev 命令的环境，避免禁用 Vue HMR。
   process.env.NODE_ENV = 'development'
   parser.phase('dev-startup')
   native?.phase('dev-startup')
+  timingCapture?.phase('dev-startup')
   const startupStarted = performance.now()
   server = await vite.createServer({ root: project, configFile, customLogger, clearScreen: false, cacheDir: path.join(temporary, 'dev-cache'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
   assert.equal(server.config.isProduction, false, 'HMR 验证必须使用开发配置。')
@@ -180,6 +267,7 @@ async function main() {
   const initial = await waitForState(page, 'dev-startup', options.timeoutMs)
   diagnostics.expectedSession = initial.session
   report.startupMs = performance.now() - startupStarted
+  sampleMemory('dev-startup', 'after-startup')
   assert(connected, '未观察到 Vite HMR WebSocket 握手。')
   let previous = original
   let textMarkup: string | undefined
@@ -189,6 +277,7 @@ async function main() {
     await page.waitForTimeout(150)
     parser.phase(phase)
     native?.phase(phase)
+    timingCapture?.phase(phase)
     diagnostics.phase = phase
     assert(!interrupted, 'worker 收到中断，停止保存。')
     const started = performance.now()
@@ -206,6 +295,7 @@ async function main() {
     }
     assert.equal(report.browserErrors.length + report.serverErrors.length, 0, 'HMR 存在浏览器或 server error。')
     report.hmr.push({ phase, milliseconds: performance.now() - started, state: canonicalState(state) })
+    sampleMemory(phase, 'after-hmr')
   }
   report.status = 'passed'
 }
@@ -231,6 +321,12 @@ async function run() {
   }
   finally {
     await cleanup()
+    if (timingCapture) {
+      timingCapture.restore()
+      if (options.profile) {
+        report.timingEvents = timingCapture.events
+      }
+    }
     if (report.cleanupErrors.length > 0 || interrupted) {
       report.status = 'failed'
     }

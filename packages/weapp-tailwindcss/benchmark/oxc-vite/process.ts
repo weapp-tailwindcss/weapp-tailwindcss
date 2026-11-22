@@ -14,7 +14,14 @@ export async function runWorker(options: WorkerOptions) {
   const log = createWriteStream(`${options.output}.log`)
   const child = spawn(process.execPath, ['--import', pathToFileURL(require.resolve('tsx')).href, worker, JSON.stringify(options)], {
     cwd: path.join(options.root, 'demo', 'web', 'vue-vite-tailwindcss-v4'),
-    env: { ...process.env, WEAPP_TW_TARGET: options.target, WEAPP_TW_NATIVE: nativeMode(options), NO_COLOR: '1' },
+    env: {
+      ...process.env,
+      WEAPP_TW_TARGET: options.target,
+      WEAPP_TW_NATIVE: nativeMode(options),
+      WEAPP_TW_HMR_TIMING: options.profile ? '1' : '0',
+      WEAPP_TW_HMR_TIMING_LOG: '0',
+      NO_COLOR: '1',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   child.stdout.on('data', chunk => log.write(chunk))

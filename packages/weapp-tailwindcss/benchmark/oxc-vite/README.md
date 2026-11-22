@@ -6,7 +6,7 @@
 
 normal 只关闭产品主动请求的 raw transfer；raw 保持产品传递选项。runtime snapshot 显式选用普通 AST，两组均保持普通 AST，不能为构造 raw 样本而强制开启。报告同时记录 `calls` 与 `rawTransferCalls`，普通签名解析的调用数不能作为 raw 已执行的证据。
 
-前置条件：目标仓库依赖、core 和其依赖包的 dist 已构建，仓库的 Playwright Chromium 可启动。demo 必须真实解析到 `--root` 的 core 包；不能用指向其它 checkout 的依赖链接。浏览器固定 headless，整个 runner 串行执行，每个 worker 只有一个 dev server 和一个页面。
+前置条件：目标仓库依赖、core 和其依赖包的 dist 已构建，仓库的 Playwright Chromium 可启动。若本机没有对应版本的 Playwright Chromium，可通过 `WEAPP_TW_BENCHMARK_BROWSER_EXECUTABLE` 指定已安装的 Chromium/Chrome 可执行文件。demo 必须真实解析到 `--root` 的 core 包；不能用指向其它 checkout 的依赖链接。浏览器固定 headless，整个 runner 串行执行，每个 worker 只有一个 dev server 和一个页面。
 
 从仓库根目录执行（`--root` 和 `--output` 支持绝对路径）：
 
@@ -18,6 +18,8 @@ pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . -
 pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --compare native --target weapp --output .tmp/oxc-vite/native-self-check.json --self-check
 pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --compare native --target weapp --output .tmp/oxc-vite/native-report.json --pairs 3
 ```
+
+命令增加 `--profile` 会把现有 Vite 插件阶段 timing 事件和 worker Node 内存样本写入每个 session JSON。事件按 `build`、`dev-startup`、`text`、`add`、`remove`、`restore` 标记，内存样本包含 RSS、heap、external 和 ArrayBuffer。该开关只用于诊断，默认 benchmark 不采集这些数据。
 
 先固定一次自检和一次基础设施验证，再采集三组交替样本。自检只验证目标包身份、raw transfer 支持及 parser 包装调用，不启动 Vite 或浏览器。正式 worker 不运行 parser 预热。失败时保留 JSON、日志及有限页面证据；修正已定位的问题后使用新的输出路径，不能丢弃失败样本反复测到通过。
 

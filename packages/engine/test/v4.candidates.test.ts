@@ -31,10 +31,11 @@ describe('Tailwind v4 candidate helpers', () => {
 
     expect(resolveValidTailwindV4Candidates(
       designSystem,
-      ['', 'p-10%', 'p-10%', 'text-red-500', 'missing', 'empty-css'],
+      ['', 'p-10%', 'p-10%', 'text-red-500', 'missing', 'missing', 'empty-css'],
       { bareArbitraryValues: true },
     )).toEqual(new Set(['p-10%', 'text-red-500']))
     expect(designSystem.candidatesToCss).toHaveBeenCalledWith(['p-[10%]', 'text-red-500', 'empty-css'])
+    expect(designSystem.parseCandidate).toHaveBeenCalledTimes(4)
   })
 
   it('returns an empty set when no candidates parse', () => {

@@ -9,12 +9,17 @@ export function parseOptions(args: string[]) {
   let pairs = 3
   let timeoutMs = 30_000
   let selfCheck = false
+  let profile = false
   let target: 'web' | 'weapp' = 'web'
   let compare: Comparison = 'transfer'
   for (let index = 0; index < args.length; index++) {
     const flag = args[index]!
     if (flag === '--self-check') {
       selfCheck = true
+      continue
+    }
+    if (flag === '--profile') {
+      profile = true
       continue
     }
     assert(['--root', '--output', '--pairs', '--timeout-ms', '--target', '--compare'].includes(flag), `未知参数：${flag}`)
@@ -43,7 +48,7 @@ export function parseOptions(args: string[]) {
   }
   assert(Number.isInteger(pairs) && pairs >= 1 && pairs <= 20, '--pairs 必须是 1–20。')
   assert(Number.isInteger(timeoutMs) && timeoutMs >= 1000 && timeoutMs <= 120_000, '--timeout-ms 必须是 1000–120000。')
-  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck, target, compare }
+  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck, profile, target, compare }
 }
 
 export function comparisonModes(compare: Comparison): readonly BenchmarkMode[] {
