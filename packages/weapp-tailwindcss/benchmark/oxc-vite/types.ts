@@ -11,6 +11,7 @@ export interface WorkerOptions {
   mode: BenchmarkMode
   pair: number
   selfCheck: boolean
+  profile: boolean
   timeoutMs: number
 }
 
@@ -34,6 +35,29 @@ export interface NativeCount {
 export interface NativeReport {
   bindings: Array<{ kernel: 'core' | 'postcss', resolved: string, sha256: string, loaded: boolean }>
   counts: Partial<Record<Phase, Partial<Record<NativeMethod, NativeCount>>>>
+}
+
+export interface HmrTimingEvent {
+  benchmarkPhase: Exclude<Phase, 'self-check'>
+  bundler: string
+  phase: string
+  durationMs: number
+  metric?: 'hook' | 'total'
+  file?: string
+  hooks?: Record<string, { count: number, durationMs: number, maxMs: number }>
+  timingDetails?: Record<string, number>
+  wallMs?: number
+  memoryDebug?: Record<string, unknown>
+}
+
+export interface MemorySample {
+  phase: Exclude<Phase, 'self-check'>
+  point: 'after-build' | 'after-startup' | 'after-hmr' | 'after-cleanup'
+  rssKiB: number
+  heapUsedKiB: number
+  heapTotalKiB: number
+  externalKiB: number
+  arrayBuffersKiB: number
 }
 
 export interface PageState {
@@ -65,6 +89,8 @@ export interface WorkerReport {
   }
   parser: { resolved: string, rawTransferSupported: boolean, counts: Partial<Record<Phase, ParseCount>> }
   native?: NativeReport
+  timingEvents?: HmrTimingEvent[]
+  memorySamples?: MemorySample[]
   build?: { milliseconds: number, sha256: string, artifacts: Array<{ name: string, bytes: number, sha256: string }> }
   startupMs?: number
   hmr: Array<{ phase: string, milliseconds: number, state: Omit<PageState, 'session'> }>

@@ -12,6 +12,7 @@ export function resolveValidTailwindV4Candidates(
 ): Set<string> {
   const validCandidates = new Set<string>()
   const parsedCandidates: string[] = []
+  const checkedCandidateSet = new Set<string>()
   const originalCandidatesByCanonical = new Map<string, Set<string>>()
 
   for (const candidate of candidates) {
@@ -28,10 +29,10 @@ export function resolveValidTailwindV4Candidates(
       originalCandidatesByCanonical.set(candidateToCheck, originalCandidates)
     }
 
-    const alreadyParsed = parsedCandidates.includes(candidateToCheck)
-    if (alreadyParsed) {
+    if (checkedCandidateSet.has(candidateToCheck)) {
       continue
     }
+    checkedCandidateSet.add(candidateToCheck)
 
     if (designSystem.parseCandidate(candidateToCheck).length > 0) {
       parsedCandidates.push(candidateToCheck)

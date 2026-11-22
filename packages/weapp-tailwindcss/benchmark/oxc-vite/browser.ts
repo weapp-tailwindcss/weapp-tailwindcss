@@ -1,14 +1,20 @@
 import type { Browser, Page } from 'playwright'
 import type { PageState, Phase } from './types'
 import assert from 'node:assert/strict'
+import process from 'node:process'
 import { ORIGINAL_TEXT, PROBE_MARKER, PROBE_SELECTOR, TEXT_MARKER } from './source'
 
 export async function openBrowser(require: NodeJS.Require, errors: string[]) {
   const { chromium } = require('playwright') as typeof import('playwright')
-  const browser: Browser = await chromium.launch({ headless: true })
+  const executablePath = process.env['WEAPP_TW_BENCHMARK_BROWSER_EXECUTABLE']
+  const browser: Browser = await chromium.launch({
+    headless: true,
+    ...(executablePath ? { executablePath } : {}),
+  })
   try {
     const context = await browser.newContext({ colorScheme: 'light', viewport: { width: 1280, height: 900 } })
     const page = await context.newPage()
+    await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
     page.on('pageerror', error => errors.push(error.message))
     page.on('console', (message) => {
       if (message.type() === 'error') {
