@@ -125,7 +125,15 @@ export function instrumentOperationSource(source, kind, relative) {
     insert(constructor.body.end - 1, `;\n${operations}.emit('engine.create', { sessionId: ${operations}.identity(this), source });\n`)
     surround(named('dispose'), 'engine.dispose', `{ sessionId: ${operations}.identity(this) }`)
     surround(named('invalidate'), 'engine.invalidate', `{ sessionId: ${operations}.identity(this), change }`)
-    wrapCall(call(named('generateInternal'), 'runtime.compiled.build'), 'engine.build', `{ sessionId: ${operations}.identity(this), source, candidates: buildCandidates }`)
+    const generateInternal = named('generateInternal')
+    wrapCall(call(generateInternal, 'runtime.compiled.build'), 'engine.build', `{ sessionId: ${operations}.identity(this), source, candidates: buildCandidates }`)
+    const cacheBranch = unique(generateInternal, node => ts.isIfStatement(node)
+      && node.expression.getText(ast).includes('runtime.builtCss === undefined')
+      && node.expression.getText(ast).includes('runtime.builtCandidates.size'), 'engine build cache branch')
+    if (!ts.isBlock(cacheBranch.thenStatement) || cacheBranch.elseStatement) {
+      throw new Error(`引擎构建缓存分支结构改变：${relative}`)
+    }
+    insert(cacheBranch.end, ` else {\n${operations}.sync('engine.build', { sessionId: ${operations}.identity(this), source, candidates: buildCandidates }, () => runtime.builtCss);\n}`)
   }
   else if (kind === 'compile') {
     wrapCall(call(named('compileTailwindV4Source'), 'node.compile'), 'engine.compile', '{ source, css: prepared.css, base }', true)
