@@ -105,8 +105,10 @@ const replaceBareArbitraryValueSelectors = value => value;
   expect(observer.events.map(event => event.name)).toEqual(['engine.build.start', 'engine.build.success', 'engine.invalidate.start', 'engine.invalidate.success'])
   delete globalThis[observerKey]
   expect((await engine.generateInternal({})).css).toBe('.a{}')
-  expect(runtime.compiled.build).toHaveBeenCalledTimes(3)
+  expect(runtime.compiled.build).toHaveBeenCalledOnce()
   const failure = new Error('original build error')
+  runtime.builtCss = undefined
+  runtime.builtCandidates.clear()
   runtime.compiled.build.mockImplementationOnce(() => {
     throw failure
   })

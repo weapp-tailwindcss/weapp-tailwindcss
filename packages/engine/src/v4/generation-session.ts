@@ -33,6 +33,7 @@ interface TailwindGenerationRuntime {
   dependencies: Set<string>
   designSystem: TailwindV4DesignSystem
   builtCandidates: Set<string>
+  builtCss?: string
 }
 
 interface InternalGenerationResult {
@@ -161,7 +162,7 @@ class TailwindGenerationSessionImpl implements TailwindV4EngineGenerationSession
     return promise
   }
 
-  private getRuntime(compileSourceEntries: boolean, previous?: TailwindGenerationRuntime) {
+  private getRuntime(compileSourceEntries: boolean, previous?: TailwindGenerationRuntime): Promise<TailwindGenerationRuntime> {
     this.assertActive()
     const cached = this.runtimes.get(compileSourceEntries)
     if (cached) {
@@ -242,16 +243,18 @@ class TailwindGenerationSessionImpl implements TailwindV4EngineGenerationSession
     }
 
     const buildCandidates = new Set(canonicalizeBareArbitraryValueCandidates(classSet, options.bareArbitraryValues))
-    if ([...runtime.builtCandidates].some(candidate => !buildCandidates.has(candidate))) {
+    if (runtime.builtCandidates.size > buildCandidates.size
+      || [...runtime.builtCandidates].some(candidate => !buildCandidates.has(candidate))) {
       runtime = await this.resetRuntime(compileSourceEntries, runtime)
       this.assertRevision(revision)
     }
-    const css = replaceBareArbitraryValueSelectors(
-      runtime.compiled.build([...buildCandidates]),
-      classSet,
-      options.bareArbitraryValues,
-    )
-    runtime.builtCandidates = new Set(buildCandidates)
+    if (runtime.builtCss === undefined
+      || runtime.builtCandidates.size !== buildCandidates.size
+      || [...runtime.builtCandidates].some(candidate => !buildCandidates.has(candidate))) {
+      runtime.builtCss = runtime.compiled.build([...buildCandidates])
+      runtime.builtCandidates = new Set(buildCandidates)
+    }
+    const css = replaceBareArbitraryValueSelectors(runtime.builtCss, classSet, options.bareArbitraryValues)
     for (const dependency of runtime.dependencies) {
       this.moduleDependencies.add(dependency)
     }

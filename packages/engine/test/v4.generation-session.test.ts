@@ -74,6 +74,31 @@ describe('Tailwind generation session', () => {
     expect(second.rawCandidates).toEqual(new Set(['text-red-500']))
   })
 
+  it('复用相同候选集合的编译 CSS，并在候选变化后重新构建', async () => {
+    const compile = vi.spyOn(nodeAdapter, 'compileTailwindV4Source')
+    const session = createTailwindGenerationSession(await createDefaultSource())
+    try {
+      await session.generate({ candidates: ['text-red-500'] })
+      const compiled = await compile.mock.results[0]!.value
+      const build = vi.spyOn(compiled.compiled, 'build')
+
+      await session.generate({ candidates: ['text-red-500'] })
+      expect(build).not.toHaveBeenCalled()
+
+      await session.generate({ candidates: ['text-red-500', 'bg-blue-500'] })
+      expect(build).toHaveBeenCalledTimes(1)
+
+      await session.generate({ candidates: ['text-red-500', 'bg-blue-500'] })
+      expect(build).toHaveBeenCalledTimes(1)
+
+      await session.generate({ candidates: ['text-red-500'] })
+      expect(compile).toHaveBeenCalledTimes(2)
+    }
+    finally {
+      session.dispose()
+    }
+  })
+
   it('rebuilds the compiler when candidates are removed', async () => {
     const session = createTailwindGenerationSession(await createDefaultSource())
     const first = await session.generate({ candidates: ['text-red-500', 'bg-blue-500'] })

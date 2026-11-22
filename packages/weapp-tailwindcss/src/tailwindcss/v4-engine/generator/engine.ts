@@ -65,7 +65,30 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
     )}`
     incrementalCacheKeys.add(cacheKey)
 
+    const cached = incrementalGenerateCache.get(cacheKey)
+    const createCachedResult = () => ({
+      css: cached!.css,
+      rawCss: cached!.rawCss,
+      incrementalCss: '',
+      incrementalRawCss: '',
+      classSet: new Set(cached!.classSet),
+      rawCandidates: new Set(cached!.seenCandidates),
+      customPropertyValues: new Map(cached!.customPropertyValues),
+      customPropertyContextCss: resolveGenerationStyleContext(compatibleSource.css, cached!.rawCss, styleOptions)?.customPropertyContextCss,
+      dependencies: cached!.dependencies,
+      sources: cached!.sources,
+      root: cached!.root,
+      target: cached!.target,
+    })
+
     if (options.scanSources === true) {
+      // 扫描模式只有在调用方候选集合与上轮扫描结果完全一致时才能复用。
+      // 集合大小或成员发生变化都可能代表文件新增、删除或替换了候选，必须重新扫描。
+      if (cached
+        && cached.seenCandidates.size === requestedCandidates.size
+        && [...cached.seenCandidates].every(candidate => requestedCandidates.has(candidate))) {
+        return createCachedResult()
+      }
       return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
         const generated = await generateOnce(cssMacroSource, options, preparedSource)
         const admitted = seedCache({ cacheKey, compatibleSource, generated, requestedCandidates, styleOptions, target })
@@ -76,7 +99,6 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       })
     }
 
-    const cached = incrementalGenerateCache.get(cacheKey)
     if (cached) {
       if (hasRemovedCandidates(cached.seenCandidates, requestedCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
@@ -91,20 +113,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
       const missingCandidates = [...requestedCandidates].filter(candidate => !cached.seenCandidates.has(candidate))
       if (missingCandidates.length === 0) {
-        return {
-          css: cached.css,
-          rawCss: cached.rawCss,
-          incrementalCss: '',
-          incrementalRawCss: '',
-          classSet: new Set(cached.classSet),
-          rawCandidates: new Set(cached.seenCandidates),
-          customPropertyValues: new Map(cached.customPropertyValues),
-          customPropertyContextCss: resolveGenerationStyleContext(compatibleSource.css, cached.rawCss, styleOptions)?.customPropertyContextCss,
-          dependencies: cached.dependencies,
-          sources: cached.sources,
-          root: cached.root,
-          target: cached.target,
-        }
+        return createCachedResult()
       }
 
       if (shouldRebuildIncrementalEntry(cached, requestedCandidates, missingCandidates)) {
