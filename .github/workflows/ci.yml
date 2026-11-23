@@ -625,7 +625,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON((inputs.full_verification || github.event_name == 'workflow_dispatch') && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
+        include: ${{ fromJSON((inputs.full_verification || github.event_name == 'workflow_dispatch') && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"12.21.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"12.21.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"12.21.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"12.21.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"12.21.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"12.21.0","scenario":"windows-node22-core"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

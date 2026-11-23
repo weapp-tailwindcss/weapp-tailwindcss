@@ -23,11 +23,11 @@ describe('CI 安装资源策略', () => {
     }
   })
 
-  it('保留 pnpm 11 / Node 22 兼容矩阵和包管理器身份', () => {
+  it('保留 pnpm 12 / Node 22 兼容矩阵和包管理器身份', () => {
     const job = workflow.jobs.compatibility
     const matrix = job.strategy.matrix.include
     expect(matrix).toContain('macos-node22-core')
-    expect(matrix).toContain('11.9.0')
+    expect(matrix).toContain('12.21.0')
     expect(matrix).toContain('"node-version":22')
     expect(job.steps.find((step: any) => step.uses?.startsWith('pnpm/action-setup@')).with)
       .toMatchObject({ version: '${{ matrix.pnpm-version }}', package_json_file: '.github/pnpm-action-package.json' })
@@ -36,7 +36,7 @@ describe('CI 安装资源策略', () => {
     expect(regression).toContain('test/ci/install-workspace.test.ts')
   })
 
-  it('安装 Node 满足开发引擎，切换后的运行时满足公开包与 pnpm 11 范围', () => {
+  it('安装 Node 满足开发引擎，切换后的运行时满足公开包与 pnpm 12 范围', () => {
     const rootManifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
     const publicManifest = JSON.parse(readFileSync(path.join(root, 'packages', 'weapp-tailwindcss', 'package.json'), 'utf8'))
     const job = workflow.jobs.compatibility
