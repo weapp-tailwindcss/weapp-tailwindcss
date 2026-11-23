@@ -44,7 +44,7 @@ it.each([
 })
 
 it.each([
-  ['apps', 'lynx-promo-video', 'src', 'styles.css'],
+  ['examples', 'react-lynx-promo', 'src', 'global.css'],
   ['packages-runtime', 'theme-transition', 'scss', 'index.scss'],
   ['packages', 'reset', 'taro', 'sanitize', 'sanitize.css'],
   ['tools', 'weapp-tailwindcss-scripts', 'src', 'var.css'],
