@@ -8,8 +8,12 @@ import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
 import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import { withAndroidHostSession } from './android-host-session'
+import { recordAndroidVideo } from './android-recording'
 import { saveAndroidSdkBuild, saveInstalledAndroidSdk } from './android-sdk-runner'
 import { buildCompatibilityBundle } from './build'
+import { stageCaptureAssets } from './capture-assets'
+import { stageCaptureHostContext } from './capture-host-context'
+import { validateAndroidCaptureImages } from './capture-image-evidence'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { withNativeFailureEvidence } from './failure-evidence'
@@ -19,7 +23,7 @@ import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
 import { enrichEnvironment } from './native-environment'
-import { parseNativeRunArgs } from './native-options'
+import { parseNativeRunArgs, stageNativeRunContext } from './native-options'
 import { waitForReportOrFailure } from './native-report'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
 import { assertNativeConclusionsMatch } from './report-comparison'
@@ -60,19 +64,6 @@ async function installedAndroidCompileSdk() {
   return versions.length > 0 ? Math.max(...versions) : undefined
 }
 
-async function recordAndroidVideo(hostDir: string, artifactDir: string, device: AndroidDevice) {
-  const devicePath = '/sdcard/lynx-promo-capture.mp4'
-  await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
-  const recording = execa('adb', adbArgs(device, ['shell', 'screenrecord', '--time-limit', String(options.captureDurationSeconds), '--bit-rate', '6000000', devicePath]), { reject: false })
-  await wait(2600)
-  await execa('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', '1480', '540', '720', '700']), { reject: false })
-  await wait(2200)
-  await execa('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', '760', '540', '1320', '650']), { reject: false })
-  await recording
-  await command('adb', adbArgs(device, ['pull', devicePath, path.join(artifactDir, 'raw.mp4')]), hostDir, 120_000)
-  await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
-}
-
 async function runAndroid(hostDir: string, artifactDir: string, device: AndroidDevice, context: NativeEvidenceContext) {
   await command('adb', adbArgs(device, ['get-state']), hostDir, 30_000)
   const compileSdk = await installedAndroidCompileSdk()
@@ -100,7 +91,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
           throw new Error('Unable to capture the Android promo screenshot.')
         }
         await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
-        await recordAndroidVideo(hostDir, artifactDir, device)
+        await recordAndroidVideo(hostDir, artifactDir, device, options.captureDurationSeconds, context)
         return undefined
       }
       const report = await waitForReportOrFailure(async () => {
@@ -164,7 +155,12 @@ async function main() {
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
     const context = createEvidenceContext(bundle, process.env['TAILWIND_E2E_RUN_ID'])
-    const contextSource = `${JSON.stringify(context, null, 2)}\n`
+    const assets = options.assetsPath ? await stageCaptureAssets(options.assetsPath, path.dirname(stagedBundle), artifactDir) : undefined
+    const stagedContext = {
+      ...stageCaptureHostContext(stageNativeRunContext(context, options), options),
+      ...(assets ? { captureAssets: true } : {}),
+    }
+    const contextSource = `${JSON.stringify(stagedContext, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),
       fs.writeFile(path.join(artifactDir, 'main.lynx.bundle'), bundle),
@@ -186,6 +182,10 @@ async function main() {
       : await runIos(hostDir, artifactDir, target, context, options, setStage, prepared?.hostLogs)
     const { device, result: reportSource } = execution
     if (options.captureOnly) {
+      if (platform === 'android' && assets) {
+        const images = validateAndroidCaptureImages(await fs.readFile(path.join(artifactDir, 'logcat.txt'), 'utf8'), assets)
+        await fs.writeFile(path.join(artifactDir, 'capture-images.json'), `${JSON.stringify({ ...images, runId: context.runId, bundleSha256: context.bundleSha256 }, null, 2)}\n`, { flag: 'wx' })
+      }
       process.stdout.write(`${JSON.stringify({ platform, artifactDir, captureDurationSeconds: options.captureDurationSeconds }, null, 2)}\n`)
       return
     }
