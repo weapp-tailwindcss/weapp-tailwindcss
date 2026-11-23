@@ -85,6 +85,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
       // 扫描模式只有在调用方候选集合与上轮扫描结果完全一致时才能复用。
       // 集合大小或成员发生变化都可能代表文件新增、删除或替换了候选，必须重新扫描。
       if (cached
+        && cached.sources.length === 0
         && cached.seenCandidates.size === requestedCandidates.size
         && [...cached.seenCandidates].every(candidate => requestedCandidates.has(candidate))) {
         return createCachedResult()
