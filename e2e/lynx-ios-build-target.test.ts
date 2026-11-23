@@ -201,7 +201,7 @@ it.each(['build', 'readiness'])('原生 runner 的 %s 失败保留阶段，且�
     return ''
   })
   const setStage = vi.fn()
-  const options = { platform: 'ios' as const, bundlePath: undefined, captureOnly: false, outputDir: undefined, captureDurationSeconds: 15 }
+  const options = { platform: 'ios' as const, bundlePath: undefined, captureOnly: false, captureScroll: false, outputDir: undefined, captureDurationSeconds: 15 }
   await expect(runIos(path.resolve('host'), path.resolve('artifact'), selectIosDevice(inventory('Booted'), env), {} as never, options, setStage)).rejects.toThrow()
   expect(events).toEqual(failureStage === 'build' ? ['xcodegen', 'pod', 'xcodebuild'] : ['xcodegen', 'pod', 'xcodebuild', 'bootstatus', 'list'])
   expect(setStage).toHaveBeenLastCalledWith(failureStage === 'build' ? 'native-build' : 'device-readiness')
