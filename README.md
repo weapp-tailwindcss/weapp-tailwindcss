@@ -162,6 +162,7 @@ CLI 默认目标是 `web`，支持 stdin/stdout、watch、原生 watcher、`--po
 - [官方 CLI](https://tw.weapp.dev/zh-cn/docs/tools/weapp-tw-cli)
 - [框架示例](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/demo)
 - [React Native 与 Lynx 示例](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples)
+- [Remotion 宣传片工程](https://github.com/weapp-tailwindcss/weapp-tailwindcss-remotion)
 - [备用文档地址](https://ice-tw.netlify.app/)
 
 ## AI Skill

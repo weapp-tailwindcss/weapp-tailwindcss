@@ -401,12 +401,6 @@ catalogs:
     '@lynx-js/rspeedy': 0.18.6
   lynxRspeedyRange:
     '@lynx-js/rspeedy': ^0.18.6
-  remotionPromo:
-    '@remotion/bundler': 4.0.543
-    '@remotion/cli': 4.0.543
-    '@remotion/media': 4.0.543
-    '@remotion/renderer': 4.0.543
-    remotion: 4.0.543
   typescriptRecommended:
     '@tsconfig/recommended': ^1.0.14
   weappAutomation:

@@ -162,6 +162,7 @@ See the complete [weapp-tw CLI guide](https://tw.weapp.dev/docs/tools/weapp-tw-c
 - [CLI guide](https://tw.weapp.dev/docs/tools/weapp-tw-cli)
 - [Framework examples](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/demo)
 - [React Native and Lynx examples](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples)
+- [Remotion promotional video projects](https://github.com/weapp-tailwindcss/weapp-tailwindcss-remotion)
 - [Mirror documentation](https://ice-tw.netlify.app/)
 
 ## AI Skills
