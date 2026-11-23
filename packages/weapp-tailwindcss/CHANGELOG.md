@@ -1,5 +1,27 @@
 # weapp-tailwindcss
 
+## 5.7.6
+
+### Patch Changes
+
+- 统一升级仓库、示例和模板的依赖版本，刷新锁文件并同步 pnpm 工具链；同时保留 Sass、Tailwind 生态及历史框架样例所需的兼容版本，并更新 Lynx、Storybook、Vite、PostCSS、Oxc、Playwright 等正式版依赖。website 为避免 Docusaurus peer 图产生重复上下文，继续固定 `postcss@8.5.32`，其余 workspace 使用 `postcss@8.5.33`。
+
+- 缓存重复的 Tailwind CSS 生成结果，降低 watch 与 HMR 中的重复构建开销。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.9
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.6
+  - @weapp-tailwindcss/native-darwin-x64@5.7.6
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.6
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.6
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.6
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.6
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.6
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.6
+  - @weapp-tailwindcss/postcss@4.0.6
+  - tailwindcss-config@2.0.9
+  - weapp-style-injector@1.0.10
+
 ## 5.7.5
 
 ### Patch Changes
