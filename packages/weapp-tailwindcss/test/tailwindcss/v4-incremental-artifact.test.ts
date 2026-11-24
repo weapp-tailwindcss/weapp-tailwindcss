@@ -1,4 +1,7 @@
 import type { TailwindV4Engine } from '@/tailwindcss/v4-engine'
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { clearTailwindV4IncrementalGenerateCacheForTest, createTailwindV4Engine, resolveTailwindV4Source } from '@/tailwindcss/v4-engine'
 import { TailwindV4NativeSessionPool } from '@/tailwindcss/v4-engine/generator/native-session'
@@ -136,5 +139,42 @@ describe.each(['web', 'weapp'] as const)('完整增量编译产物：%s', (targe
 
     await engine.generate({ target: 'web', scanSources: true, incrementalCache: true, candidates: ['flex', 'p-4'] })
     expect(generate).toHaveBeenCalledTimes(2)
+  })
+
+  it('扫描来源删除后恢复时重新读取文件系统', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-v4-scan-cache-'))
+    const sourceDirectory = path.join(root, 'actual-pages')
+    const linkedDirectory = path.join(root, 'linked-pages')
+    const sourceFile = path.join(sourceDirectory, 'index.wxml')
+    await mkdir(sourceDirectory)
+    await symlink(sourceDirectory, linkedDirectory, process.platform === 'win32' ? 'junction' : 'dir')
+    await writeFile(sourceFile, '<view class="w-[37px]" />')
+
+    const source = await resolveTailwindV4Source({
+      css: '@import "tailwindcss" source("./linked-pages");',
+      base: root,
+      projectRoot: root,
+    })
+    const engine = createTailwindV4Engine(source)
+    engines.push(engine)
+
+    try {
+      const options = { target, scanSources: true, incrementalCache: true }
+      const initial = await engine.generate(options)
+      expect(initial.classSet).toEqual(new Set(['w-[37px]']))
+
+      await rm(sourceFile)
+      const removed = await engine.generate(options)
+      expect(removed.classSet).toEqual(new Set())
+
+      await writeFile(sourceFile, '<view class="w-[53px]" />')
+      const restored = await engine.generate(options)
+      expect(restored.classSet).toEqual(new Set(['w-[53px]']))
+      expect(restored.rawCss).toContain('.w-\\[53px\\]')
+      expect(restored.rawCss).not.toContain('.w-\\[37px\\]')
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 })
