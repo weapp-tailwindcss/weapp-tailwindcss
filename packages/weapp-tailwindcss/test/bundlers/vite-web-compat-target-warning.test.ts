@@ -27,6 +27,10 @@ describe('Vite legacy Web compatibility target warning', () => {
     expect(getLegacyWebCompatTargetWarning({ target: 'chrome84', cssTarget: 'chrome120' }, true)).toBeUndefined()
   })
 
+  it('does not infer the CSS target from build.target when CSS targeting is disabled', () => {
+    expect(getLegacyWebCompatTargetWarning({ target: 'chrome84', cssTarget: false }, true)).toBeUndefined()
+  })
+
   it('does not warn when legacy Web compatibility is disabled', () => {
     expect(getLegacyWebCompatTargetWarning({ target: 'chrome84' }, false)).toBeUndefined()
     expect(getLegacyWebCompatTargetWarning({ target: 'chrome84' }, { preset: 'off' })).toBeUndefined()

@@ -15,7 +15,11 @@ function usesLegacyWebCompat(webCompat: WebCssCompatUserOptions | undefined) {
 }
 
 function getConfiguredCssTargets(build: Pick<BuildOptions, 'target' | 'cssTarget'>) {
-  const target = build.cssTarget === false ? build.target : build.cssTarget ?? build.target
+  if (build.cssTarget === false) {
+    return []
+  }
+
+  const target = build.cssTarget ?? build.target
   return Array.isArray(target) ? target : [target]
 }
 
