@@ -197,7 +197,7 @@ uni-app x 原生 App 目标继续通过 `uniAppX` 配置处理 uvue/App 约束�
 
 `generator.webCompat` 用于 Web/H5 与经典 uni-app App WebView 目标下的 Tailwind CSS v4 兼容降级。自动推断 `generator.target: "web"` 时默认开启，uni-app 的 `app` / `app-plus` 构建也会自动启用；如果显式配置了 `generator.target`，则以用户传入的 `webCompat` 为准。
 
-传入 `true` 等价于 `{ preset: "legacy-web" }`，该预设面向 Web Compact 输出，兼容基线为 `Chrome/91.0.4472.114` 与 `AppleWebKit/537.36`。它会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留 Tailwind CSS v4 的运行时间距变量语义。需要保持 Tailwind CSS 官方 Web 输出时，可传入 `false` 或 `{ preset: "off" }`。
+传入 `true` 等价于 `{ preset: "legacy-web" }`，该预设的 Web Compact 基线为 `Chrome 91` 与 `AppleWebKit/537.36`。它会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留 Tailwind CSS v4 的运行时间距变量语义。Tailwind CSS v4 的纯数字 typed division（例如 `calc(1 / .75)`）会静态计算，含变量的动态计算保留原样。Vite 显式配置的 Chrome/Edge CSS 目标低于 Chrome 91 时会在配置解析阶段收到警告。传入 `false` 或 `{ preset: "off" }` 会关闭降级并保留 Tailwind CSS 官方 Web 输出。
 
 其中 `property` 仅对明确登记且完整签名匹配的注册补齐默认值兼容；`--tw-*` 前缀不证明来源。全部 `@property`、描述符与变量依赖保持原文，条件或冲突注册否决默认合成，保留层时使用最低优先级层，避免改变语法、初值与继承语义。作者注册属性仍要求目标端具备相应支持，不能由兼容预设推定旧 WebView 或原生支持。
 

@@ -94,6 +94,28 @@ describe('web css compatibility transform', () => {
     expect(result.match(/-webkit-background-clip: text/gi)).toHaveLength(2)
   })
 
+  it('reduces Tailwind typed division and fallback selector specificity for legacy Web', () => {
+    const css = [
+      'button:not(#\\#), input:not(#\\#), select:not(#\\#), textarea:not(#\\#) { font: inherit; }',
+      'button.base-button { font: 700 16px sans-serif; }',
+      '.text-xs { --text-xs--line-height: calc(1 / .75); line-height: var(--text-xs--line-height); }',
+      '.text-sm { --text-sm--line-height: calc(1.25 / .875); }',
+      '.dynamic { line-height: calc(var(--line-height) / .75); }',
+      '.author:not(#application-id) { color: red; }',
+    ].join('\n')
+
+    const result = transformWebCssCompat(css, true)
+
+    expect(result).toContain('button:where(:not(#\\#)), input:where(:not(#\\#)), select:where(:not(#\\#)), textarea:where(:not(#\\#)) { font: inherit; }')
+    expect(result).toContain('button.base-button { font: 700 16px sans-serif; }')
+    expect(result).toContain('--text-xs--line-height: 1.33333333333333;')
+    expect(result).toContain('--text-sm--line-height: 1.42857142857143;')
+    expect(result).toContain('line-height: calc(var(--line-height) / .75);')
+    expect(result).toContain('.author:not(#application-id) { color: red; }')
+    expect(transformWebCssCompat(result, true)).toBe(result)
+    expect(transformWebCssCompat(css, { preset: 'off' })).toBe(css)
+  })
+
   it('uses declared layer order in legacy web output without specificity placeholders', () => {
     const css = [
       '@layer base, components, utilities;',

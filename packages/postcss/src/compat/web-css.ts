@@ -37,6 +37,9 @@ const legacyWebFeatures: Required<WebCssCompatFeatures> = {
   supports: true,
 }
 
+const LEGACY_WEB_TYPED_DIVISION_RE = /calc\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*\/\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*\)/gi
+const LEGACY_WEB_FALLBACK_SELECTOR_RE = /:not\(\s*#\\#\s*\)/gi
+
 function normalizeWebCssCompatOptionsObject(options: WebCssCompatOptions): NormalizedWebCssCompatOptions {
   const preset = options.preset ?? 'legacy-web'
   const presetFeatures = preset === 'legacy-web' ? legacyWebFeatures : disabledFeatures
@@ -161,15 +164,52 @@ function removeModernColorSupports(root: postcss.Root) {
   })
 }
 
-function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
+function normalizeLegacyWebTypedDivisionValue(value: string) {
+  if (!value.includes('calc(') || !value.includes('/')) {
+    return value
+  }
+
+  return value.replace(LEGACY_WEB_TYPED_DIVISION_RE, (match, numerator: string, denominator: string) => {
+    const divisor = Number(denominator)
+    if (divisor === 0) {
+      return match
+    }
+
+    const quotient = Number(numerator) / divisor
+    if (!Number.isFinite(quotient)) {
+      return match
+    }
+
+    return Number(quotient.toPrecision(15)).toString()
+  })
+}
+
+function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root, normalizeTypedDivision: boolean) {
   root.walkDecls((decl) => {
-    if (isCssPropertyRegistration(decl)) {
+    if (!isCssPropertyRegistration(decl)) {
+      const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
+      if (normalized !== decl.value) {
+        decl.value = normalized
+      }
+    }
+    if (normalizeTypedDivision) {
+      decl.value = normalizeLegacyWebTypedDivisionValue(decl.value)
+    }
+  })
+}
+
+function lowerLegacyWebFallbackSpecificity(root: postcss.Root) {
+  root.walkRules((rule) => {
+    if (!rule.selector.includes(':not(') || !rule.selector.includes('#\\#')) {
       return
     }
-    const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
-    if (normalized !== decl.value) {
-      decl.value = normalized
-    }
+
+    rule.selector = rule.selector.replace(LEGACY_WEB_FALLBACK_SELECTOR_RE, (match, offset: number, selector: string) => {
+      if (/:where\(\s*$/i.test(selector.slice(0, offset))) {
+        return match
+      }
+      return `:where(${match})`
+    })
   })
 }
 
@@ -244,7 +284,10 @@ export function transformWebCssCompat(
       withPreservedRegistrationScopes(root, () => transformCssNesting(root))
     }
     normalizeWebGradientPositions(root, registeredProperties)
-    normalizeTailwindcssV4InfinityCalcDeclarations(root)
+    normalizeTailwindcssV4InfinityCalcDeclarations(root, normalized.preset === 'legacy-web')
+    if (normalized.preset === 'legacy-web') {
+      lowerLegacyWebFallbackSpecificity(root)
+    }
     normalizeModernColorDeclarations(root, normalized.features)
     if (normalized.preset === 'legacy-web') {
       insertWebkitBackgroundClipText(root)
