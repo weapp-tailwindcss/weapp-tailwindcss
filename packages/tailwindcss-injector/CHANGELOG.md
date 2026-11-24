@@ -1,5 +1,12 @@
 # tailwindcss-injector
 
+## 1.0.35
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss@4.0.7
+
 ## 1.0.34
 
 ### Patch Changes

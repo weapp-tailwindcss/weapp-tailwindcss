@@ -1130,6 +1130,10 @@ weapp-tailwindcss@5.7.6:
   intents:
     - dependency-update-1cc37594-b21a-468a-b2c1-74ccee8f3d2e
     - little-mangos-greet
+weapp-tailwindcss@5.7.7:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - quiet-sources-refresh
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
