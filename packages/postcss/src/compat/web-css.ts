@@ -2,7 +2,6 @@ import type { WebCssCompatFeatures, WebCssCompatOptions, WebCssCompatUserOptions
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
-import valueParser from 'postcss-value-parser'
 import { internalCssSelectorReplacer } from '../shared'
 import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
@@ -37,6 +36,9 @@ const legacyWebFeatures: Required<WebCssCompatFeatures> = {
   colorFunctions: true,
   supports: true,
 }
+
+const LEGACY_WEB_TYPED_DIVISION_RE = /calc\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*\/\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*\)/gi
+const LEGACY_WEB_FALLBACK_SELECTOR_RE = /:not\(\s*#\\#\s*\)/gi
 
 function normalizeWebCssCompatOptionsObject(options: WebCssCompatOptions): NormalizedWebCssCompatOptions {
   const preset = options.preset ?? 'legacy-web'
@@ -162,85 +164,52 @@ function removeModernColorSupports(root: postcss.Root) {
   })
 }
 
-function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
-  root.walkDecls((decl) => {
-    if (isCssPropertyRegistration(decl)) {
-      return
+function normalizeLegacyWebTypedDivisionValue(value: string) {
+  if (!value.includes('calc(') || !value.includes('/')) {
+    return value
+  }
+
+  return value.replace(LEGACY_WEB_TYPED_DIVISION_RE, (match, numerator: string, denominator: string) => {
+    const divisor = Number(denominator)
+    if (divisor === 0) {
+      return match
     }
-    const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
-    if (normalized !== decl.value) {
-      decl.value = normalized
+
+    const quotient = Number(numerator) / divisor
+    if (!Number.isFinite(quotient)) {
+      return match
     }
+
+    return Number(quotient.toPrecision(15)).toString()
   })
 }
 
-function normalizeLegacyWebTypedDivisionDeclarations(root: postcss.Root) {
-  const numberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
-
+function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root, normalizeTypedDivision: boolean) {
   root.walkDecls((decl) => {
-    const parsed = valueParser(decl.value)
-    parsed.walk((node, index, nodes) => {
-      if (node.type !== 'function' || node.value.toLowerCase() !== 'calc') {
-        return
+    if (!isCssPropertyRegistration(decl)) {
+      const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
+      if (normalized !== decl.value) {
+        decl.value = normalized
       }
-
-      const operands = node.nodes.filter(child => child.type !== 'space' && child.type !== 'comment')
-      if (operands.length !== 3 || operands[0]?.type !== 'word' || operands[1]?.type !== 'word' || operands[1].value !== '/' || operands[2]?.type !== 'word') {
-        return
-      }
-
-      const numerator = operands[0].value
-      const denominator = operands[2].value
-      if (!numberPattern.test(numerator) || !numberPattern.test(denominator)) {
-        return
-      }
-
-      const divisor = Number(denominator)
-      if (divisor === 0) {
-        return
-      }
-
-      const quotient = Number(numerator) / divisor
-      if (!Number.isFinite(quotient)) {
-        return
-      }
-
-      nodes[index] = { type: 'word', value: Number(quotient.toPrecision(15)).toString() }
-      return false
-    })
-    decl.value = parsed.toString()
+    }
+    if (normalizeTypedDivision) {
+      decl.value = normalizeLegacyWebTypedDivisionValue(decl.value)
+    }
   })
 }
 
 function lowerLegacyWebFallbackSpecificity(root: postcss.Root) {
   root.walkRules((rule) => {
-    if (!rule.selector.includes(':not(')) {
+    if (!rule.selector.includes(':not(') || !rule.selector.includes('#\\#')) {
       return
     }
 
-    rule.selector = selectorParser((selectors) => {
-      selectors.walkPseudos((pseudo) => {
-        const parentPseudo = pseudo.parent?.parent
-        if (
-          pseudo.value.toLowerCase() !== ':not'
-          || (parentPseudo?.type === 'pseudo' && parentPseudo.value.toLowerCase() === ':where')
-        ) {
-          return
-        }
-
-        const selector = pseudo.nodes?.[0]
-        const id = selector?.type === 'selector' && selector.nodes.length === 1 ? selector.nodes[0] : undefined
-        if (id?.type !== 'id' || (id.value !== '#' && id.value !== '\\#')) {
-          return
-        }
-
-        const where = selectorParser.pseudo({ value: ':where' })
-        const argument = selectorParser.selector()
-        argument.append(pseudo.clone())
-        where.append(argument)
-        pseudo.replaceWith(where)
-      })
-    }).processSync(rule.selector)
+    rule.selector = rule.selector.replace(LEGACY_WEB_FALLBACK_SELECTOR_RE, (match, offset: number, selector: string) => {
+      if (/:where\(\s*$/i.test(selector.slice(0, offset))) {
+        return match
+      }
+      return `:where(${match})`
+    })
   })
 }
 
@@ -315,9 +284,8 @@ export function transformWebCssCompat(
       withPreservedRegistrationScopes(root, () => transformCssNesting(root))
     }
     normalizeWebGradientPositions(root, registeredProperties)
-    normalizeTailwindcssV4InfinityCalcDeclarations(root)
+    normalizeTailwindcssV4InfinityCalcDeclarations(root, normalized.preset === 'legacy-web')
     if (normalized.preset === 'legacy-web') {
-      normalizeLegacyWebTypedDivisionDeclarations(root)
       lowerLegacyWebFallbackSpecificity(root)
     }
     normalizeModernColorDeclarations(root, normalized.features)
