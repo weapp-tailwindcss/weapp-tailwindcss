@@ -3,7 +3,7 @@ name: Release
 
 on:
   schedule:
-    - cron: '0 20 * * *'
+    - cron: '5 16 * * *'
   push:
     branches: [main]
   pull_request_target:
@@ -325,9 +325,36 @@ jobs:
       - name: Audit npm OIDC
         run: pnpm exec repo release ci --mode oidc-audit
 
+  nightly-window:
+    name: Check nightly publication window
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '5 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.window.outputs.run }}
+    steps:
+      - id: window
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          hour="$(TZ=Asia/Shanghai date +%H)"
+          if [ "$hour" -ge 0 ] && [ "$hour" -lt 4 ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo "Scheduled nightly arrived outside the Asia/Shanghai 00:00-03:59 window (hour ${hour}); skipping publication."
+          fi
+
   nightly-plan:
     name: Plan nightly publication
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 20 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit) }}
+    needs: nightly-window
+    if: ${{ needs.nightly-window.outputs.run == 'true' && ((github.event_name == 'schedule' && github.event.schedule == '5 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -335,7 +362,7 @@ jobs:
     env:
       CI: 'true'
       REPOCTL_NIGHTLY_PROVIDER: npm
-      REPOCTL_NIGHTLY_SCHEDULE: '0 20 * * *'
+      REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *'
     outputs:
       run: ${{ steps.plan.outputs.run }}
     steps:
@@ -370,10 +397,37 @@ jobs:
       ref: ${{ github.sha }}
       nightly-inputs: true
 
+  nightly-publish-window:
+    name: Check nightly publication window before publish
+    needs: [nightly-window, nightly-plan, nightly-native-artifacts]
+    if: ${{ needs.nightly-window.outputs.run == 'true' && needs.nightly-plan.outputs.run == 'true' && needs.nightly-native-artifacts.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.window.outputs.run }}
+    steps:
+      - id: window
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          hour="$(TZ=Asia/Shanghai date +%H)"
+          if [ "$hour" -ge 0 ] && [ "$hour" -lt 4 ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo "Scheduled nightly reached the publish step outside the Asia/Shanghai 00:00-03:59 window (hour ${hour}); skipping publication."
+          fi
+
   nightly:
     name: Publish nightly
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 20 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly') }}
-    needs: [nightly-plan, nightly-native-artifacts]
+    if: needs.nightly-publish-window.outputs.run == 'true'
+    needs: nightly-publish-window
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -382,7 +436,7 @@ jobs:
     env:
       CI: 'true'
       REPOCTL_NIGHTLY_PROVIDER: npm
-      REPOCTL_NIGHTLY_SCHEDULE: '0 20 * * *'
+      REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *'
       REPOCTL_SNAPSHOT_PUBLISH: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -431,6 +485,7 @@ jobs:
 
   nightly-consumers:
     needs: nightly
+    if: needs.nightly.outputs.published == 'true'
     uses: ./.github/workflows/nightly-consumers.yml
     with:
       ref: ${{ github.sha }}

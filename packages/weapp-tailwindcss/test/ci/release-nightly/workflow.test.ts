@@ -7,16 +7,29 @@ import { parse } from 'yaml'
 const workflow = parse(readFileSync(fileURLToPath(new URL('../../../../../.github/workflows/release.yml', import.meta.url)), 'utf8'))
 
 it('nightly 独立路由并保留 OIDC 原身份与签名源码 SHA', () => {
-  expect(workflow.on.schedule).toEqual([{ cron: '0 20 * * *' }])
+  expect(workflow.on.schedule).toEqual([{ cron: '5 16 * * *' }])
+  expect(workflow.jobs['nightly-window'].outputs.run).toBe('${{ steps.window.outputs.run }}')
+  for (const jobName of ['nightly-window', 'nightly-publish-window']) {
+    const gate = workflow.jobs[jobName].steps[0].run
+    expect(gate).toContain('TZ=Asia/Shanghai')
+    expect(gate).toContain('if [ "$EVENT_NAME" = "workflow_dispatch" ]')
+    expect(gate).toContain('[ "$hour" -lt 4 ]')
+  }
+  expect(workflow.jobs['nightly-plan'].needs).toBe('nightly-window')
   expect(workflow.jobs.plan.if).toContain('inputs.mode != \'nightly\'')
   expect(workflow.jobs['nightly-plan'].permissions).toEqual({ contents: 'read' })
   expect(workflow.jobs['nightly-native-artifacts'].needs).toBe('nightly-plan')
   expect(workflow.jobs['nightly-native-artifacts'].with.ref).toBe('${{ github.sha }}')
   expect(workflow.jobs['nightly-native-artifacts'].with['nightly-inputs']).toBe(true)
   const nightly = workflow.jobs.nightly
-  expect(nightly.needs).toEqual(['nightly-plan', 'nightly-native-artifacts'])
+  expect(workflow.jobs['nightly-publish-window'].needs).toEqual(['nightly-window', 'nightly-plan', 'nightly-native-artifacts'])
+  expect(workflow.jobs['nightly-publish-window'].outputs.run).toBe('${{ steps.window.outputs.run }}')
+  expect(workflow.jobs['nightly-publish-window'].if).toContain("needs.nightly-native-artifacts.result == 'success'")
+  expect(workflow.jobs['nightly-publish-window'].steps[0].run).toContain('TZ=Asia/Shanghai')
+  expect(nightly.needs).toBe('nightly-publish-window')
+  expect(nightly.if).toBe("needs.nightly-publish-window.outputs.run == 'true'")
   expect(nightly.permissions).toEqual({ 'contents': 'read', 'id-token': 'write' })
-  expect(nightly.env).toMatchObject({ CI: 'true', REPOCTL_SNAPSHOT_PUBLISH: '1', REPOCTL_NIGHTLY_PROVIDER: 'npm', REPOCTL_NIGHTLY_SCHEDULE: '0 20 * * *' })
+  expect(nightly.env).toMatchObject({ CI: 'true', REPOCTL_SNAPSHOT_PUBLISH: '1', REPOCTL_NIGHTLY_PROVIDER: 'npm', REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *' })
   expect(nightly.steps[0].with).toMatchObject({ 'ref': '${{ github.sha }}', 'persist-credentials': false })
   expect(nightly.steps.find((step: any) => step.name === 'Prepare, publish and verify nightly').run).toBe('node scripts/release-nightly/index.mjs')
   expect(nightly.environment).toBeUndefined()
@@ -77,8 +90,10 @@ it('nightly 在上传前执行完整 native 验证，失败证据始终保存', 
   expect(steps[stage].run).toBe('pnpm native:artifacts:stage')
   const download = steps.find((step: any) => step.name === 'Download native artifacts from this run')
   expect(download.with['run-id']).toBeUndefined()
-  for (const step of steps.slice(publish + 1)) {
-    expect(step.if).toBe('always()')
-    expect(step.uses).toMatch(/^actions\/upload-artifact@/)
-  }
+  const publication = steps.find((step: any) => step.name === 'Retain nightly publication identity')
+  expect(publication.if).toBe('always()')
+  expect(publication.uses).toMatch(/^actions\/upload-artifact@/)
+  const evidence = steps.find((step: any) => step.name === 'Retain nightly receipts and tarballs')
+  expect(evidence.if).toBe('always()')
+  expect(evidence.uses).toMatch(/^actions\/upload-artifact@/)
 })
