@@ -7,7 +7,7 @@ import { parse } from 'yaml'
 const workflow = parse(readFileSync(fileURLToPath(new URL('../../../../../.github/workflows/release.yml', import.meta.url)), 'utf8'))
 
 it('nightly 独立路由并保留 OIDC 原身份与签名源码 SHA', () => {
-  expect(workflow.on.schedule).toEqual([{ cron: '0 16 * * *' }])
+  expect(workflow.on.schedule).toEqual([{ cron: '5 16 * * *' }])
   expect(workflow.jobs['nightly-window'].outputs.run).toBe('${{ steps.window.outputs.run }}')
   for (const jobName of ['nightly-window', 'nightly-publish-window']) {
     const gate = workflow.jobs[jobName].steps[0].run
@@ -29,7 +29,7 @@ it('nightly 独立路由并保留 OIDC 原身份与签名源码 SHA', () => {
   expect(nightly.needs).toBe('nightly-publish-window')
   expect(nightly.if).toBe("needs.nightly-publish-window.outputs.run == 'true'")
   expect(nightly.permissions).toEqual({ 'contents': 'read', 'id-token': 'write' })
-  expect(nightly.env).toMatchObject({ CI: 'true', REPOCTL_SNAPSHOT_PUBLISH: '1', REPOCTL_NIGHTLY_PROVIDER: 'npm', REPOCTL_NIGHTLY_SCHEDULE: '0 16 * * *' })
+  expect(nightly.env).toMatchObject({ CI: 'true', REPOCTL_SNAPSHOT_PUBLISH: '1', REPOCTL_NIGHTLY_PROVIDER: 'npm', REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *' })
   expect(nightly.steps[0].with).toMatchObject({ 'ref': '${{ github.sha }}', 'persist-credentials': false })
   expect(nightly.steps.find((step: any) => step.name === 'Prepare, publish and verify nightly').run).toBe('node scripts/release-nightly/index.mjs')
   expect(nightly.environment).toBeUndefined()

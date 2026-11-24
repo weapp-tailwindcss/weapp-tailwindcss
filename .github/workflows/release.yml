@@ -3,7 +3,7 @@ name: Release
 
 on:
   schedule:
-    - cron: '0 16 * * *'
+    - cron: '5 16 * * *'
   push:
     branches: [main]
   pull_request_target:
@@ -327,7 +327,7 @@ jobs:
 
   nightly-window:
     name: Check nightly publication window
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit) }}
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '5 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -354,7 +354,7 @@ jobs:
   nightly-plan:
     name: Plan nightly publication
     needs: nightly-window
-    if: ${{ needs.nightly-window.outputs.run == 'true' && ((github.event_name == 'schedule' && github.event.schedule == '0 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit)) }}
+    if: ${{ needs.nightly-window.outputs.run == 'true' && ((github.event_name == 'schedule' && github.event.schedule == '5 16 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'nightly' && !inputs.oidc_audit)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -362,7 +362,7 @@ jobs:
     env:
       CI: 'true'
       REPOCTL_NIGHTLY_PROVIDER: npm
-      REPOCTL_NIGHTLY_SCHEDULE: '0 16 * * *'
+      REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *'
     outputs:
       run: ${{ steps.plan.outputs.run }}
     steps:
@@ -436,7 +436,7 @@ jobs:
     env:
       CI: 'true'
       REPOCTL_NIGHTLY_PROVIDER: npm
-      REPOCTL_NIGHTLY_SCHEDULE: '0 16 * * *'
+      REPOCTL_NIGHTLY_SCHEDULE: '5 16 * * *'
       REPOCTL_SNAPSHOT_PUBLISH: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
