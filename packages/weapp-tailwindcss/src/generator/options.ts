@@ -36,7 +36,8 @@ export interface WeappTailwindcssGeneratorOptions {
    * `{ preset: 'legacy-web' }`，其兼容基线为 Chrome/91.0.4472.114 与 AppleWebKit/537.36。
    * 该预设会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、
    * 现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留
-   * Tailwind CSS v4 的运行时间距变量语义。
+   * Tailwind CSS v4 的运行时间距变量语义。纯数字 typed division 会静态计算。Vite 显式配置的 Chrome/Edge
+   * CSS 目标低于 Chrome 91 时会在配置解析阶段给出警告。
    * 如果需要保持 Tailwind CSS 官方 Web 输出，可传入 `false` 或 `{ preset: 'off' }`。
    */
   webCompat?: WebCssCompatUserOptions | undefined

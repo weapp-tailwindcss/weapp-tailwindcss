@@ -2,6 +2,7 @@ import type { WebCssCompatFeatures, WebCssCompatOptions, WebCssCompatUserOptions
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
+import valueParser from 'postcss-value-parser'
 import { internalCssSelectorReplacer } from '../shared'
 import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
@@ -173,6 +174,76 @@ function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
   })
 }
 
+function normalizeLegacyWebTypedDivisionDeclarations(root: postcss.Root) {
+  const numberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
+
+  root.walkDecls((decl) => {
+    const parsed = valueParser(decl.value)
+    parsed.walk((node, index, nodes) => {
+      if (node.type !== 'function' || node.value.toLowerCase() !== 'calc') {
+        return
+      }
+
+      const operands = node.nodes.filter(child => child.type !== 'space' && child.type !== 'comment')
+      if (operands.length !== 3 || operands[0]?.type !== 'word' || operands[1]?.type !== 'word' || operands[1].value !== '/' || operands[2]?.type !== 'word') {
+        return
+      }
+
+      const numerator = operands[0].value
+      const denominator = operands[2].value
+      if (!numberPattern.test(numerator) || !numberPattern.test(denominator)) {
+        return
+      }
+
+      const divisor = Number(denominator)
+      if (divisor === 0) {
+        return
+      }
+
+      const quotient = Number(numerator) / divisor
+      if (!Number.isFinite(quotient)) {
+        return
+      }
+
+      nodes[index] = { type: 'word', value: Number(quotient.toPrecision(15)).toString() }
+      return false
+    })
+    decl.value = parsed.toString()
+  })
+}
+
+function lowerLegacyWebFallbackSpecificity(root: postcss.Root) {
+  root.walkRules((rule) => {
+    if (!rule.selector.includes(':not(')) {
+      return
+    }
+
+    rule.selector = selectorParser((selectors) => {
+      selectors.walkPseudos((pseudo) => {
+        const parentPseudo = pseudo.parent?.parent
+        if (
+          pseudo.value.toLowerCase() !== ':not'
+          || (parentPseudo?.type === 'pseudo' && parentPseudo.value.toLowerCase() === ':where')
+        ) {
+          return
+        }
+
+        const selector = pseudo.nodes?.[0]
+        const id = selector?.type === 'selector' && selector.nodes.length === 1 ? selector.nodes[0] : undefined
+        if (id?.type !== 'id' || (id.value !== '#' && id.value !== '\\#')) {
+          return
+        }
+
+        const where = selectorParser.pseudo({ value: ':where' })
+        const argument = selectorParser.selector()
+        argument.append(pseudo.clone())
+        where.append(argument)
+        pseudo.replaceWith(where)
+      })
+    }).processSync(rule.selector)
+  })
+}
+
 function removeEmptyAtRules(root: postcss.Root) {
   root.walkAtRules((atRule) => {
     if (!isCssPropertyRegistration(atRule) && atRule.nodes && atRule.nodes.length === 0) {
@@ -245,6 +316,10 @@ export function transformWebCssCompat(
     }
     normalizeWebGradientPositions(root, registeredProperties)
     normalizeTailwindcssV4InfinityCalcDeclarations(root)
+    if (normalized.preset === 'legacy-web') {
+      normalizeLegacyWebTypedDivisionDeclarations(root)
+      lowerLegacyWebFallbackSpecificity(root)
+    }
     normalizeModernColorDeclarations(root, normalized.features)
     if (normalized.preset === 'legacy-web') {
       insertWebkitBackgroundClipText(root)

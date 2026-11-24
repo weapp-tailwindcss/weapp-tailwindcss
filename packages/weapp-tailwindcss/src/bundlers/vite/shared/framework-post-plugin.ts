@@ -13,6 +13,7 @@ import { resolveImplicitAppTypeFromViteRoot } from '../resolve-app-type'
 import { resolveImplicitTailwindcssBasedirFromViteRoot } from '../tailwind-basedir'
 import { installFrameworkCssEmission } from './framework-css-emission'
 import { createGenerationConfigHook } from './generation-config-hook'
+import { getLegacyWebCompatTargetWarning } from './web-compat-target-warning'
 
 export function createFrameworkPostPlugin(options: any): Plugin {
   const plugin: Plugin & { api?: unknown } = {
@@ -69,6 +70,13 @@ export function createFrameworkPostPlugin(options: any): Plugin {
         }
         if (shouldRefreshRuntime) {
           await options.refreshRuntimeState(true)
+        }
+        if (options.shouldOwnTailwindGeneration) {
+          const { profile } = resolveCompilationProfile(options.opts)
+          const warning = getLegacyWebCompatTargetWarning(config.build, profile.generator.webCompat)
+          if (warning) {
+            logger.warn(warning)
+          }
         }
         if (typeof config.css.postcss === 'object' && Array.isArray(config.css.postcss.plugins)) {
           const postcssPlugins = config.css.postcss.plugins
