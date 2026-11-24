@@ -1,5 +1,22 @@
 # weapp-tailwindcss
 
+## 5.7.7
+
+### Patch Changes
+
+- 修复 Tailwind CSS v4 文件扫描增量缓存无法识别已删除后恢复的源码文件，避免恢复后的新候选继续使用旧生成结果。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.7
+  - @weapp-tailwindcss/native-darwin-x64@5.7.7
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.7
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.7
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.7
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.7
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.7
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.7
+  - @weapp-tailwindcss/postcss@4.0.7
+
 ## 5.7.6
 
 ### Patch Changes
