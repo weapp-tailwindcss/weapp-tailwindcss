@@ -18,7 +18,7 @@ export default defineMonorepoConfig({
     release: {
       nightly: {
         provider: 'npm',
-        schedule: '0 20 * * *',
+        schedule: '0 16 * * *',
       },
       hooks: {
         beforeVersion: ['native:artifacts:before-version'],

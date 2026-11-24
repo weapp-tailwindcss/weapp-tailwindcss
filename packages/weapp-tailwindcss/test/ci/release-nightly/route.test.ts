@@ -4,7 +4,7 @@ import { nightlySchedule, resolveNightlyRoute } from '../../../../../scripts/rel
 const env = { GITHUB_REPOSITORY: 'weapp-tailwindcss/weapp-tailwindcss', GITHUB_REF: 'refs/heads/main', GITHUB_SHA: 'a'.repeat(40), GITHUB_EVENT_NAME: 'schedule' }
 const event = { repository: { full_name: env.GITHUB_REPOSITORY, default_branch: 'main' }, schedule: nightlySchedule }
 
-it('允许北京时间每日四点及明确的手动 nightly', () => {
+it('允许北京时间每日零点及明确的手动 nightly', () => {
   expect(resolveNightlyRoute(env, event)).toEqual({ ref: env.GITHUB_SHA })
   expect(resolveNightlyRoute({ ...env, GITHUB_EVENT_NAME: 'workflow_dispatch' }, { ...event, inputs: { mode: 'nightly' } })).toEqual({ ref: env.GITHUB_SHA })
 })

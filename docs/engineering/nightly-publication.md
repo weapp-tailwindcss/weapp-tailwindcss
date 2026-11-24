@@ -13,7 +13,7 @@ regressions:
 
 ## 发布入口
 
-Release 工作流每天北京时间 04:00（UTC `0 20 * * *`）检查 main，支持手动选择 `mode=nightly`。repoctl 只发布 `snapshot-nightly` 标签，包含全部公开包；同提交已经完整发布、各包具有相同有效构建身份时，计划任务跳过。手动执行会生成独立构建身份，不消费稳定 change intent，也不提升源码中的稳定版本。
+Release 工作流每天北京时间 00:00（UTC `0 16 * * *`）检查 main，自动任务只在北京时间 00:00-03:59 内继续构建和发布，以吸收 GitHub scheduled run 的排队延迟。构建开始前与发布开始前都会重新检查窗口，超时的自动任务会跳过；手动选择 `mode=nightly` 不受时间窗口限制。repoctl 只发布 `snapshot-nightly` 标签，包含全部公开包；同提交已经完整发布、各包具有相同有效构建身份时，计划任务跳过。手动执行会生成独立构建身份，不消费稳定 change intent，也不提升源码中的稳定版本。
 
 包装入口显式加载根 release 配置，保留质量与 verify 检查。正式发布继续使用原有版本 PR 审批、准确源码 SHA、OIDC/provenance 和六阶段 receipt，不与 nightly 共用稳定发布阶段。
 

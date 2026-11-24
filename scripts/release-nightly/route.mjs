@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 
-export const nightlySchedule = '0 20 * * *'
+export const nightlySchedule = '0 16 * * *'
 
 /** Nightly 与稳定恢复分别路由，不能用恢复参数改变 GitHub 签名的源码身份。 */
 export function resolveNightlyRoute(env, event) {
