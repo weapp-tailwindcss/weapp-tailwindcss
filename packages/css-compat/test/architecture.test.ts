@@ -9,7 +9,7 @@ function fixture(dependencies: Record<string, string>, source: string) {
   const root = fs.mkdtempSync(path.join(tmpdir(), 'css-compat boundary '))
   const pkg = path.join(root, 'packages', 'css-compat')
   fs.mkdirSync(path.join(pkg, 'src'), { recursive: true })
-  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ dependencies, devDependencies: { 'mdn-data': '2.37.2' } }))
+  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ dependencies, devDependencies: { 'mdn-data': '2.38.1' } }))
   fs.writeFileSync(path.join(pkg, 'src', 'index.ts'), source)
   try { return auditCssCompat(root) }
   finally { fs.rmSync(root, { recursive: true, force: true }) }

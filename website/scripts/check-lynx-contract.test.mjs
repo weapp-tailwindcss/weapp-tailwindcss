@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import semver from 'semver'
 import { describe, expect, it } from 'vitest'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { collectLynxContractFindings } from './check-lynx-contract.mjs'
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
@@ -61,7 +62,9 @@ describe('Lynx 文档与已提交基线的事实合同', () => {
       if (file !== workspacePath) {
         return source
       }
-      return source.replace('\'@lynx-js/rspeedy\': 0.18.6', '\'@lynx-js/rspeedy\': 0.1.0')
+      const workspace = parseYaml(source)
+      workspace.catalogs.lynxFixture['@lynx-js/rspeedy'] = '0.1.0'
+      return stringifyYaml(workspace)
     } })
     expect(findings.some(item => item.includes('@lynx-js/rspeedy 0.1.0 不满足 adapter peer'))).toBe(true)
   })

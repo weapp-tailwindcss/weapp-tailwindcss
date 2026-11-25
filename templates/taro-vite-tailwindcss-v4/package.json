@@ -93,5 +93,5 @@
     "weapp-ide-cli": "^5.4.12",
     "weapp-tailwindcss": "catalog:weappTailwindcss"
   },
-  "packageManager": "pnpm@12.21.0"
+  "packageManager": "pnpm@12.23.0"
 }

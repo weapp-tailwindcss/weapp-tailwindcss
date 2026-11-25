@@ -20,5 +20,5 @@
     "tailwindcss": "catalog:tailwindcss4",
     "weapp-tailwindcss": "catalog:weappTailwindcss"
   },
-  "packageManager": "pnpm@12.21.0"
+  "packageManager": "pnpm@12.23.0"
 }

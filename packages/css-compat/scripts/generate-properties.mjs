@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const manifest = require('mdn-data/package.json')
+const packageManifest = require('../package.json')
 
-assert.equal(manifest.version, '2.37.2')
+assert.equal(manifest.version, packageManifest.devDependencies['mdn-data'])
 const properties = require('mdn-data/css/properties.json')
 
 // computed 描述计算值，不能直接视为完整简写表；固定数据的遗漏在此显式补全。

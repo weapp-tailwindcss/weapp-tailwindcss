@@ -97,5 +97,5 @@
     "weapp-tailwindcss": "catalog:weappTailwindcss",
     "webpack": "5.91.0"
   },
-  "packageManager": "pnpm@12.21.0"
+  "packageManager": "pnpm@12.23.0"
 }

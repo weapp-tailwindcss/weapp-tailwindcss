@@ -1,6 +1,6 @@
 # ReactLynx Tailwind CSS 4 兼容性实验室
 
-该示例是 `@weapp-tailwindcss/lynx` 的多页面兼容性实验室。当前依赖为 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、`@lynx-js/css-defines` `0.0.18`。报告从实际解析的已安装包、两端 host 和配置中读取版本，不使用历史报告中的 `0.0.16`。当前 ReactLynx compiler 的 bundle 版本固定为 `engineVersion: '3.9'`，由 4.0.1 host 加载验证。
+该示例是 `@weapp-tailwindcss/lynx` 的多页面兼容性实验室。当前依赖为 Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、`@lynx-js/css-defines` `0.0.18`。报告从实际解析的已安装包、两端 host 和配置中读取版本，不使用历史报告中的 `0.0.16`。当前 ReactLynx compiler 的 bundle 版本固定为 `engineVersion: '3.9'`，由 4.0.1 host 加载验证。
 
 页面按总览、布局、排版与视觉、变换与交互、Variants、任意值与指令拆分。跨端 catalog 统一来自 `@weapp-tailwindcss/test-catalog`，覆盖 utility 功能族、variant 类型、指令与任意值语法分支；颜色、尺寸等无限值域使用代表值。所有 class 都以完整静态字符串保存在共享目录中，禁止运行时拼接。
 
@@ -44,6 +44,6 @@ pnpm e2e:lynx:native
 pnpm e2e:lynx:update
 ```
 
-Rspeedy `0.17.2` 默认只落盘最终 `dist/main.lynx.bundle`；静态证据与原生 artifact 采集会由 E2E 构建流程设置 `DEBUG=lynx`，因此中间 CSS/TASM 固定位于 `dist/.lynx/main/`。不要恢复已废弃的 `output.distPath.intermediate` 配置。
+Rspeedy `0.19.0` 默认只落盘最终 `dist/main.lynx.bundle`；静态证据与原生 artifact 采集会由 E2E 构建流程设置 `DEBUG=lynx`，因此中间 CSS/TASM 固定位于 `dist/.lynx/main/`。不要恢复已废弃的 `output.distPath.intermediate` 配置。
 
 `e2e:lynx` 是跨平台静态 gate。原生命令把 host 复制到 `os.tmpdir()` 下并注入 bundle，不改写仓库构建目录；诊断产物写入 `e2e/.artifacts/lynx-native/`。`e2e:lynx:update` 只有在同一 catalog、同一 Engine 4.0.1 的 iOS 与 Android 完整报告同时存在时才会更新基线。

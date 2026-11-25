@@ -119,7 +119,7 @@ impl<'a> Visit<'a> for AnalysisVisitor<'a, '_> {
             AstKind::TaggedTemplateExpression(_) => self.analysis.has_tagged_template = true,
             AstKind::StringLiteral(node) => {
                 // Oxc 对孤立代理的内部编码不能作为普通 UTF-8 字符串返回。
-                if node.lone_surrogates {
+                if node.value.has_lone_surrogate() {
                     self.unsupported = true;
                 } else if self.signature.is_none()
                     && matches!(self.ancestors.last(), Some(AstKind::JSXAttribute(_)))
@@ -127,8 +127,8 @@ impl<'a> Visit<'a> for AnalysisVisitor<'a, '_> {
                 {
                     // JSX 实体交还 Babel，避免维护第二套实体解码规则。
                     self.unsupported = true;
-                } else {
-                    self.literal("string", node.span, &node.value);
+                } else if let Some(value) = node.value.as_str() {
+                    self.literal("string", node.span, value);
                 }
             }
             AstKind::TemplateElement(node) => {

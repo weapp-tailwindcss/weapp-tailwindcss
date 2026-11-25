@@ -18,7 +18,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 已发布版本以[适配器包元数据](https://www.npmjs.com/package/@weapp-tailwindcss/lynx)和 [weapp-tailwindcss 包元数据](https://www.npmjs.com/package/weapp-tailwindcss)为准。适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`；核心依赖链要求 Node.js `^22.18.0 || >=24.11.0`。
 
-仓库示例固定 `@lynx-js/rspeedy` `0.18.6`、`@lynx-js/react-rsbuild-plugin` `0.22.3`、`@lynx-js/react` `0.129.3`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
+仓库示例固定 `@lynx-js/rspeedy` `0.19.0`、`@lynx-js/react-rsbuild-plugin` `0.22.4`、`@lynx-js/react` `0.129.4`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
 
 ## 配置
 
@@ -148,7 +148,7 @@ pnpm e2e:lynx
 
 历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
-当前已提交的原生报告基线记录 `verifiedAt: 2026-11-16T09:37:34.566Z`、`catalogHash: 45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。报告来自 PR CI run `43835532056` 的源码 `084786e8751d932dd5251bc3cb0a3a929dad4f0e`，Android runtime run 为 `90bab98c-85aa-4214-963f-b5247fe467f2`，iOS runtime run 为 `6cb32634-426b-4693-b525-6f0bc82537ac`。该 CI 发现完整运行时报告与原提交基线不一致，因此审查后刷新了双端报告。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+当前已提交的原生报告基线记录 `verifiedAt: 2026-11-25T07:02:07.027Z`、`catalogHash: 7d848cc03c0faf590a18e5c4e1f15c17738debebde27c81315d94766445e4c9e`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。报告来自 [PR CI run 45560653557](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/45560653557) 的源码 `bd9c599390e4e44968c214af32f3963cdf8fa075`，Android runtime run 为 `565619da-2eb3-4ef9-8df8-53e97435c9a2`，iOS runtime run 为 `cd5a57b4-fb9f-475b-95a7-e93332ad7466`。完整原始工件已通过验证、归档和重放，审查运行时结论后刷新了双端基线。只有与相同 catalog 和 Lynx Engine 版本匹配的完整双端报告才能更新基线。
 
 `--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 

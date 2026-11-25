@@ -28,7 +28,7 @@ All `@property` registrations, descriptors, and variable dependencies are preser
 - [Published core versions](https://www.npmjs.com/package/weapp-tailwindcss); dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- The repository fixture pins Rspeedy `0.18.6`, ReactLynx plugin `0.22.3`, ReactLynx runtime `0.129.3`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
+- The repository fixture pins Rspeedy `0.19.0`, ReactLynx plugin `0.22.4`, ReactLynx runtime `0.129.4`, Tailwind CSS `4.3.5`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
 - ReactLynx + Rspeedy native builds only; Rspeedy Web, non-React Lynx, and React Native are out of scope
 
 ## Minimal configuration
@@ -218,7 +218,7 @@ The example and committed dual-platform baseline use Tailwind CSS `4.3.5`; the c
 
 The previous static baseline used Tailwind CSS `4.3.4`; it remains historical evidence only.
 
-CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-11-16T09:37:34.566Z` and `catalogHash` `45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`. The reports were captured by PR CI run `43835532056` at source `084786e8751d932dd5251bc3cb0a3a929dad4f0e`: Android runtime run `90bab98c-85aa-4214-963f-b5247fe467f2` and iOS runtime run `6cb32634-426b-4693-b525-6f0bc82537ac`. Device capture completed, but the reports differed from the previously committed baseline, so the reviewed baseline was refreshed; this CI evidence does not replace complete local dual-platform acceptance.
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-11-25T07:02:07.027Z` and `catalogHash` `7d848cc03c0faf590a18e5c4e1f15c17738debebde27c81315d94766445e4c9e`. The reports were captured by [PR CI run 45560653557](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/45560653557) at source `bd9c599390e4e44968c214af32f3963cdf8fa075`: Android runtime run `565619da-2eb3-4ef9-8df8-53e97435c9a2` and iOS runtime run `cd5a57b4-fb9f-475b-95a7-e93332ad7466`. Complete original artifacts passed validation, archiving, and replay, and the runtime conclusions were reviewed before refreshing the baseline; this CI evidence does not replace complete local dual-platform acceptance.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 

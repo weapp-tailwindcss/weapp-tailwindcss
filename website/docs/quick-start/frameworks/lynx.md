@@ -32,7 +32,7 @@ npm install -D @weapp-tailwindcss/lynx tailwindcss
 
 发布版本以 [@weapp-tailwindcss/lynx](https://www.npmjs.com/package/@weapp-tailwindcss/lynx) 和 [weapp-tailwindcss](https://www.npmjs.com/package/weapp-tailwindcss) 的包元数据为准。适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，核心依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
 
-仓库示例与回归矩阵固定 Rspeedy `0.18.6`、ReactLynx 插件 `0.22.3`、ReactLynx runtime `0.129.3`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
+仓库示例与回归矩阵固定 Rspeedy `0.19.0`、ReactLynx 插件 `0.22.4`、ReactLynx runtime `0.129.4`、Tailwind CSS `4.3.5`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
 
 ## 注册 Rspeedy 插件
 
@@ -118,7 +118,7 @@ pluginLynxTailwindcss({
 
 历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
-静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-11-16T09:37:34.566Z`、`catalogHash` 为 `45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）；报告来自 PR CI run `43835532056`。`css-defines` 不能替代运行时结论。
+静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-11-25T07:02:07.027Z`、`catalogHash` 为 `7d848cc03c0faf590a18e5c4e1f15c17738debebde27c81315d94766445e4c9e`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。报告来自 [PR CI run 45560653557](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/45560653557)，源码为 `bd9c599390e4e44968c214af32f3963cdf8fa075`，Android runtime run 为 `565619da-2eb3-4ef9-8df8-53e97435c9a2`，iOS runtime run 为 `cd5a57b4-fb9f-475b-95a7-e93332ad7466`。完整原始工件已验证、归档并重放，审查结论后刷新了双端基线。`css-defines` 不能替代运行时结论。
 
 `--capture-only` 只在显式指定 bundle 和目标设备后采集截图/视频，不更新 native support report 或已提交基线。
 

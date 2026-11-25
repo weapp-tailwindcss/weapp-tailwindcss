@@ -90,7 +90,7 @@
     "postcss-selector-parser": "catalog:buildUtilities"
   },
   "devDependencies": {
-    "mdn-data": "2.37.2"
+    "mdn-data": "2.38.1"
   },
   "publishConfig": {
     "access": "public",

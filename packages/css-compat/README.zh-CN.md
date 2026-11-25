@@ -103,4 +103,4 @@ pnpm --filter @weapp-tailwindcss/css-compat test:browser
 pnpm --filter @weapp-tailwindcss/css-compat bench
 ```
 
-消费测试先构建本 worktree 的 PostCSS 及生成引擎依赖；浏览器测试需要当前 Playwright 对应的 Chromium、Firefox、WebKit 二进制，缺失时失败，不静默 skip。三个引擎依次后台运行，均定向释放 browser/context/page。包级证据不代表真实微信或全平台验收。属性映射由固定 `mdn-data@2.37.2`（CC0-1.0）生成，运行 `properties:generate` 更新。
+消费测试先构建本 worktree 的 PostCSS 及生成引擎依赖；浏览器测试需要当前 Playwright 对应的 Chromium、Firefox、WebKit 二进制，缺失时失败，不静默 skip。三个引擎依次后台运行，均定向释放 browser/context/page。包级证据不代表真实微信或全平台验收。属性映射由固定的 `mdn-data` 开发依赖（CC0-1.0）生成，运行 `properties:generate` 更新。

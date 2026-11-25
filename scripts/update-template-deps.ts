@@ -1,12 +1,18 @@
+import type { TemplateCatalogDependencyUpdate } from './template-workspace-config'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { minVersion } from 'semver'
+import { parse as parseYaml } from 'yaml'
 import { resolveWeappViteTemplateVersion } from './template-framework-versions'
 import { ROOT } from './template-utils'
-import { updateTemplateWorkspaceConfig } from './template-workspace-config'
+import {
+  resolveTemplateCatalogRange,
+
+  updateTemplateWorkspaceConfig,
+} from './template-workspace-config'
 
 type PackageJson = Record<string, unknown> & {
   dependencies?: Record<string, string>
@@ -36,8 +42,11 @@ const LOCK_UPDATE_TIMEOUT_MS = 30 * 60_000
 const COPY_IGNORE_DIRS = new Set(['node_modules', '.git', '.idea', '.turbo', 'dist'])
 const LEGACY_LOCKFILES = ['yarn.lock', 'package-lock.json', 'npm-shrinkwrap.json']
 const tailwindVersionCache = new Map<string, string>()
-const latestVersionCache = new Map<string, string>()
 const ROOT_PNPM_PACKAGE_MANAGER = readRootPnpmPackageManager()
+
+interface RootWorkspaceConfig {
+  catalogs?: Record<string, Record<string, string>>
+}
 
 function buildCommandEnv(overrides: CommandEnv = {}): NodeJS.ProcessEnv {
   const baseEnv: NodeJS.ProcessEnv = { ...process.env }
@@ -109,26 +118,6 @@ const WEAPP_VITE_RELEASE_AGE_EXCLUDES = [
 
 const MERGE_PACKAGE_NAMES = [MERGE_PACKAGE.name] as const
 
-async function fetchLatestVersion(pkgName: string): Promise<string> {
-  const cached = latestVersionCache.get(pkgName)
-  if (cached) {
-    return cached
-  }
-  const { stdout } = await execa('pnpm', ['view', pkgName, 'version', '--json'], {
-    cwd: ROOT,
-    timeout: 60_000,
-    killSignal: 'SIGTERM',
-    env: buildCommandEnv(),
-  })
-  const data = JSON.parse(stdout) as string | string[]
-  const latest = Array.isArray(data) ? data.at(-1) : data
-  if (!latest) {
-    throw new Error(`未获取到 ${pkgName} 的版本信息`)
-  }
-  latestVersionCache.set(pkgName, latest)
-  return latest
-}
-
 async function fetchVersionForMajor(pkgName: string, major: number): Promise<string> {
   const cacheKey = `${pkgName}@${major}`
   const cached = tailwindVersionCache.get(cacheKey)
@@ -150,20 +139,26 @@ async function fetchVersionForMajor(pkgName: string, major: number): Promise<str
   return version
 }
 
+function readRootCatalogTarget(catalogName: string, packageName: string): { range: string, version: string } {
+  const workspacePath = path.join(ROOT, 'pnpm-workspace.yaml')
+  const workspace = parseYaml(readFileSync(workspacePath, 'utf8')) as RootWorkspaceConfig
+  const range = workspace.catalogs?.[catalogName]?.[packageName]
+  const version = range ? minVersion(range)?.version : undefined
+  if (!range || !version) {
+    throw new Error(`根目录 catalog ${catalogName}.${packageName} 缺少有效版本范围`)
+  }
+  return { range, version }
+}
+
 async function resolveBaseTargets(): Promise<TargetPackage[]> {
-  const [
-    weappIdeCliVersion,
-    weappViteVersion,
-    sassVersion,
-    sassEmbeddedVersion,
-    typescriptVersion,
-  ] = await Promise.all([
+  const [weappIdeCliVersion, typescriptVersion] = await Promise.all([
     fetchVersionForMajor('weapp-ide-cli', 5),
-    resolveWeappViteTemplateVersion(fetchVersionForMajor),
-    fetchLatestVersion('sass'),
-    fetchLatestVersion('sass-embedded'),
     fetchVersionForMajor('typescript', 6),
   ])
+  const weappVite = readRootCatalogTarget('weappVite', 'weapp-vite')
+  const sass = readRootCatalogTarget('sass195', 'sass')
+  const sassEmbedded = readRootCatalogTarget('sass195', 'sass-embedded')
+  await resolveWeappViteTemplateVersion(async () => weappVite.version)
   return [
     {
       name: WEAPP_TAILWINDCSS_PACKAGE.name,
@@ -178,18 +173,18 @@ async function resolveBaseTargets(): Promise<TargetPackage[]> {
     },
     {
       name: 'weapp-vite',
-      version: weappViteVersion,
-      range: `^${weappViteVersion}`,
+      version: weappVite.version,
+      range: weappVite.range,
     },
     {
       name: 'sass',
-      version: sassVersion,
-      range: `^${sassVersion}`,
+      version: sass.version,
+      range: sass.range,
     },
     {
       name: 'sass-embedded',
-      version: sassEmbeddedVersion,
-      range: `^${sassEmbeddedVersion}`,
+      version: sassEmbedded.version,
+      range: sassEmbedded.range,
     },
     {
       name: 'typescript',
@@ -223,7 +218,7 @@ function buildVersionRange(current: string | undefined, target: TargetPackage): 
   }
   const trimmed = current.trim()
 
-  if (trimmed.startsWith('workspace:')) {
+  if (trimmed.startsWith('workspace:') || trimmed.startsWith('catalog:')) {
     return trimmed
   }
 
@@ -377,12 +372,42 @@ function getPackageRange(pkg: PackageJson, name: string): string | undefined {
   return undefined
 }
 
+function collectCatalogUpdates(pkg: PackageJson, targets: TargetPackage[]): TemplateCatalogDependencyUpdate[] {
+  const updates = new Map<string, TemplateCatalogDependencyUpdate>()
+  for (const target of targets) {
+    for (const field of ['dependencies', 'devDependencies'] as const) {
+      const range = pkg[field]?.[target.name]
+      if (!range?.startsWith('catalog:')) {
+        continue
+      }
+      const catalogName = range.slice('catalog:'.length) || 'default'
+      const key = `${catalogName}\u0000${target.name}`
+      updates.set(key, { catalogName, packageName: target.name, range: target.range })
+    }
+  }
+  return [...updates.values()]
+}
+
 function isExternalSpecifier(range: string): boolean {
   return range.startsWith('npm:') || range.startsWith('catalog:')
 }
 
-async function resolveTailwindTargets(pkg: PackageJson): Promise<TailwindResolution> {
-  const range = getPackageRange(pkg, 'tailwindcss')
+function resolveCatalogRange(templateWorkspace: string, range: string, packageName: string): string | undefined {
+  if (!range.startsWith('catalog:')) {
+    return range
+  }
+  return resolveTemplateCatalogRange(templateWorkspace, packageName, range)
+}
+
+async function resolveTailwindTargets(pkg: PackageJson, templateWorkspace: string): Promise<TailwindResolution> {
+  const declaredRange = getPackageRange(pkg, 'tailwindcss')
+  const range = declaredRange ? resolveCatalogRange(templateWorkspace, declaredRange, 'tailwindcss') : undefined
+  if (declaredRange?.startsWith('catalog:') && !range) {
+    return {
+      targets: [],
+      removePackages: [],
+    }
+  }
   if (!range || isExternalSpecifier(range)) {
     return {
       targets: [],
@@ -437,7 +462,7 @@ async function resolveTailwindTargets(pkg: PackageJson): Promise<TailwindResolut
   }
 }
 
-async function resolveBabelTargets(pkg: PackageJson): Promise<TargetPackage[]> {
+async function resolveBabelTargets(pkg: PackageJson, templateWorkspace: string): Promise<TargetPackage[]> {
   const names = new Set<string>()
   for (const field of ['dependencies', 'devDependencies'] as const) {
     for (const name of Object.keys(pkg[field] ?? {})) {
@@ -448,7 +473,8 @@ async function resolveBabelTargets(pkg: PackageJson): Promise<TargetPackage[]> {
   }
 
   return Promise.all([...names].map(async (name) => {
-    const range = getPackageRange(pkg, name)
+    const declaredRange = getPackageRange(pkg, name)
+    const range = declaredRange ? resolveCatalogRange(templateWorkspace, declaredRange, name) : undefined
     const minimum = range && !isExternalSpecifier(range) ? minVersion(range) : null
     if (!minimum) {
       return null
@@ -595,13 +621,18 @@ async function processTemplate(
   const raw = readFileSync(pkgPath, 'utf8')
   const indent = detectIndentation(raw)
   const pkg = JSON.parse(raw) as PackageJson
-  const tailwindResolution = await resolveTailwindTargets(pkg)
-  const babelTargets = await resolveBabelTargets(pkg)
+  const workspaceConfigPath = path.join(templateDir, 'pnpm-workspace.yaml')
+  const workspaceConfig = existsSync(workspaceConfigPath)
+    ? readFileSync(workspaceConfigPath, 'utf8')
+    : ''
+  const tailwindResolution = await resolveTailwindTargets(pkg, workspaceConfig)
+  const babelTargets = await resolveBabelTargets(pkg, workspaceConfig)
   const relevantTargets = dedupeTargets([
     ...filterTargetsForPackage(pkg, baseTargets),
     ...tailwindResolution.targets,
     ...babelTargets,
   ])
+  const catalogUpdates = collectCatalogUpdates(pkg, relevantTargets)
   let packageManagerChanged = false
   if (ROOT_PNPM_PACKAGE_MANAGER && pkg.packageManager !== ROOT_PNPM_PACKAGE_MANAGER) {
     pkg.packageManager = ROOT_PNPM_PACKAGE_MANAGER
@@ -618,9 +649,7 @@ async function processTemplate(
   }
 
   let workspaceConfigChanged = false
-  const workspaceConfigPath = path.join(templateDir, 'pnpm-workspace.yaml')
   if (existsSync(workspaceConfigPath)) {
-    const workspaceConfig = readFileSync(workspaceConfigPath, 'utf8')
     const requiredExcludes = hasPackageReference(pkg, 'weapp-vite')
       ? WEAPP_VITE_RELEASE_AGE_EXCLUDES
       : []
@@ -628,6 +657,7 @@ async function processTemplate(
       workspaceConfig,
       RELEASE_AGE_EXCLUDE_PACKAGES,
       requiredExcludes,
+      catalogUpdates,
     )
     if (result.changed) {
       writeFileSync(workspaceConfigPath, result.content)
@@ -638,7 +668,7 @@ async function processTemplate(
   let lockUpdated = false
   const legacyLockRemoved = removeLegacyLockfiles(templateDir)
 
-  if (shouldUpdateLockfile(templateDir, depsChanged || packageManagerChanged)) {
+  if (shouldUpdateLockfile(templateDir, depsChanged || packageManagerChanged || workspaceConfigChanged)) {
     console.log(`更新 ${templateName} 的锁文件（pnpm）...`)
     lockUpdated = await regenerateLockfile(templateDir)
   }
