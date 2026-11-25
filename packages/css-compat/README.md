@@ -106,4 +106,4 @@ pnpm --filter @weapp-tailwindcss/css-compat test:browser
 pnpm --filter @weapp-tailwindcss/css-compat bench
 ```
 
-Consumer tests require this checkout's PostCSS and generation-engine dependency builds. Browser tests require the installed Playwright version's Chromium, Firefox and WebKit binaries and fail if unavailable. Each engine runs headlessly and releases its browser/context/page. Package/browser evidence does not constitute WeChat or device acceptance. The compact property table is generated from pinned `mdn-data@2.37.2` (CC0-1.0) with explicit shorthand corrections; regenerate with `properties:generate`.
+Consumer tests require this checkout's PostCSS and generation-engine dependency builds. Browser tests require the installed Playwright version's Chromium, Firefox and WebKit binaries and fail if unavailable. Each engine runs headlessly and releases its browser/context/page. Package/browser evidence does not constitute WeChat or device acceptance. The compact property table is generated from the pinned `mdn-data` dev dependency (CC0-1.0) with explicit shorthand corrections; regenerate with `properties:generate`.
