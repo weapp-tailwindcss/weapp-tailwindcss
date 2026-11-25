@@ -29,9 +29,9 @@ beforeEach(() => {
       return { all: library }
     }
     if (args[0] === 'clippy') {
-      return { all: 'clippy 0.1.96' }
+      return { all: 'clippy 0.1.98' }
     }
-    return { all: path.basename(file).startsWith('cargo') ? 'cargo 1.96.0' : 'rustc 1.96.0 (test)' }
+    return { all: path.basename(file).startsWith('cargo') ? 'cargo 1.98.0' : 'rustc 1.98.0 (test)' }
   })
 })
 afterEach(() => vi.unstubAllEnvs())
@@ -52,7 +52,7 @@ describe('扩展 Rust 环境预检', () => {
 
   it('低于 Cargo manifest 最低版本时立即阻断', async () => {
     mocks.execute.mockResolvedValue({ all: 'rustc 1.95.0 (test)' })
-    await expect(rustToolchain(context)).rejects.toThrow('需要 Rust 1.96')
+    await expect(rustToolchain(context)).rejects.toThrow('需要 Rust 1.98')
     expect(mocks.execute).toHaveBeenCalledOnce()
   })
 
@@ -73,7 +73,7 @@ describe('扩展 Rust 环境预检', () => {
       if (args[0] === 'clippy') {
         throw new Error('Clippy component missing')
       }
-      return { all: args[0] === '--version' ? 'rustc 1.96.0' : '' }
+      return { all: args[0] === '--version' ? 'rustc 1.98.0' : '' }
     })
     await expect(rustToolchain(context)).rejects.toThrow('Clippy component missing')
     expect(mocks.execute.mock.calls.some(([, args]) => args.includes('install'))).toBe(false)

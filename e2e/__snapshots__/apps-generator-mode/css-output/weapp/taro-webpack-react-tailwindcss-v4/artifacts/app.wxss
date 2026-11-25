@@ -311,8 +311,8 @@ wx-root-portal-content {
   --color-zinc-50: rgb(250, 250, 250);
   --color-zinc-900: rgb(24, 24, 27);
   --color-zinc-900: rgb(24, 24, 27);
-  --color-yellow-300: rgb(255, 224, 46);
-  --color-yellow-300: #ffe02e;
+  --color-yellow-300: rgb(255, 224, 48);
+  --color-yellow-300: #ffe030;
   --color-emerald-400: rgb(0, 210, 148);
   --color-emerald-400: #00d294;
   --color-purple-500: rgb(171, 78, 255);
