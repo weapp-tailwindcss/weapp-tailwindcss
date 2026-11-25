@@ -40,7 +40,7 @@ elif [ "${NATIVE_VERIFY_ONLY:-0}" = 1 ]; then
 else
   task_rust_installer="$(mktemp)"
   curl --fail --location --retry 3 https://sh.rustup.rs -o "$task_rust_installer"
-  sh "$task_rust_installer" -y --profile minimal --default-toolchain 1.96.0 --component clippy
+  sh "$task_rust_installer" -y --profile minimal --default-toolchain 1.98.0 --component clippy
   export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
   node packages/weapp-tailwindcss/native/ci.mjs "--target=$NATIVE_TARGET"
 fi

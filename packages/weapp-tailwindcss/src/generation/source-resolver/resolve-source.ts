@@ -1,5 +1,6 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { SourceSideCssEntrySource } from '../source-files'
+import type { GeneratorResolvedSource } from './metadata'
 import type { GeneratorSourceRuntimeState, GeneratorSourceSelectionOptions, SourceStyleMatchOptions, TailwindV4CssSource, TailwindV4SourceOptions } from './types'
 import type { ResolvedGeneratorOptions as NormalizedWeappTailwindcssGeneratorOptions } from '@/compiler/compilation-profile'
 import path from 'node:path'
@@ -25,7 +26,7 @@ export async function resolveGeneratorSource(
   cssHandlerOptions: IStyleHandlerOptions,
   generatorOptions?: NormalizedWeappTailwindcssGeneratorOptions,
   selectionOptions?: GeneratorSourceSelectionOptions,
-) {
+): Promise<GeneratorResolvedSource> {
   const base = resolveCssSourceBase(file, cssHandlerOptions)
   const cssEntrySource = resolveCssEntrySource(rawSource, base, {
     importFallback: generatorOptions?.importFallback ?? false,

@@ -135,7 +135,7 @@ overrides:
 
 catalogs:
   autoprefixer10:
-    autoprefixer: ^10.6.2
+    autoprefixer: ^10.7.0
   buildUtilities:
     '@parcel/watcher': ^2.6.0
     debug: ~4.4.3
@@ -156,8 +156,8 @@ catalogs:
     yaml: ^2.9.1
   compilerUtilities:
     comment-json: ^5.0.0
-    '@oxc-project/types': ^0.158.0
-    oxc-parser: ^0.158.0
+    '@oxc-project/types': ^0.160.0
+    oxc-parser: ^0.160.0
     oxc-walker: ^1.1.1
     semver: ~7.8.6
   lilconfig315:
@@ -175,15 +175,15 @@ catalogs:
     lodash.merge: ^4.6.2
   tooling:
     '@icebreakers/commitlint-config': ^4.1.6
-    '@icebreakers/eslint-config': ^8.0.19
-    '@icebreakers/stylelint-config': ^6.0.4
+    '@icebreakers/eslint-config': ^8.0.21
+    '@icebreakers/stylelint-config': ^6.0.6
     ci-info: ^4.5.0
     del: ^9.0.1
     execa: ^9.6.1
-    repoctl: ^6.6.2
+    repoctl: ^6.6.4
     tar: ^7.5.23
     traverse: ^0.6.14
-    turbo: ^2.11.11
+    turbo: ^2.11.13
   babelCore7285:
     '@babel/core': ^7.29.7
   babel8:
@@ -199,7 +199,7 @@ catalogs:
   babelRuntime7284tilde:
     '@babel/runtime': ^7.29.10
   baselineBrowserMapping:
-    baseline-browser-mapping: ^2.11.37
+    baseline-browser-mapping: ^2.11.39
   classVarianceAuthority:
     class-variance-authority: ^0.7.1
   clsx:
@@ -220,9 +220,9 @@ catalogs:
     gulp-rename: ^2.1.0
     gulp-typescript: 6.0.0-alpha.1
   csstools:
-    '@csstools/css-color-parser': ^4.2.7
-    '@csstools/css-parser-algorithms': ^4.0.2
-    '@csstools/css-tokenizer': ^4.0.2
+    '@csstools/css-color-parser': ^4.2.8
+    '@csstools/css-parser-algorithms': ^4.0.3
+    '@csstools/css-tokenizer': ^4.0.3
   egoistTailwindcssIcons:
     '@egoist/tailwindcss-icons': ^1.9.2
   eslint10:
@@ -236,13 +236,13 @@ catalogs:
   iconifyJson:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
-    '@iconify-json/logos': ^1.2.20
-    '@iconify-json/lucide': ^1.2.155
+    '@iconify-json/logos': ^1.2.21
+    '@iconify-json/lucide': ^1.2.159
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
   inquirerPrompts:
-    '@inquirer/prompts': ^8.8.0
+    '@inquirer/prompts': ^8.8.1
   lucideReact0555:
     lucide-react: ^1.62.0
   lucideVueNext0555:
@@ -261,7 +261,7 @@ catalogs:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:
     es-toolkit: ^1.53.2
-    postcss-preset-env: ^11.6.2
+    postcss-preset-env: ^11.6.3
     postcss-pxtransform: ^4.3.3
   prettier371:
     prettier: ^3.10.1
@@ -278,23 +278,23 @@ catalogs:
   reactRefresh018:
     react-refresh: ^0.18.0
   rsbuild2:
-    '@rsbuild/core': ^2.3.2
+    '@rsbuild/core': ^2.3.4
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:
     sass: 1.107.1
     sass-embedded: 1.107.1
   storybook:
-    '@storybook/addon-a11y': ^10.6.7
-    '@storybook/react': ^10.6.7
-    '@storybook/react-vite': ^10.6.7
-    storybook: ^10.6.7
+    '@storybook/addon-a11y': ^10.6.8
+    '@storybook/react': ^10.6.8
+    '@storybook/react-vite': ^10.6.8
+    storybook: ^10.6.8
   stylelint1625:
-    stylelint: ^18.0.0
+    stylelint: ^18.1.0
   swc:
     '@swc/core': ^1.16.22
   tailwindMerge:
-    tailwind-merge: ^3.7.0
+    tailwind-merge: ^3.7.1
   tailwindMerge2:
     tailwind-merge: ^2.6.1
   tailwindcss4:
@@ -365,11 +365,11 @@ catalogs:
   metroReactNativeBabelPreset077:
     metro-react-native-babel-preset: 0.77.0
   terser:
-    terser: ^5.51.2
+    terser: ^5.51.4
   tsx:
     tsx: ^4.23.15
   typesNode2410:
-    '@types/node': ^26.6.6
+    '@types/node': ^26.6.7
   typescript59:
     typescript: ^6.0.3
   typescript59tilde:
@@ -396,15 +396,15 @@ catalogs:
   docusaurusPostcss:
     postcss: 8.5.32
   lynxFixture:
-    '@lynx-js/react': 0.129.3
-    '@lynx-js/react-rsbuild-plugin': 0.22.3
-    '@lynx-js/rspeedy': 0.18.6
+    '@lynx-js/react': 0.129.4
+    '@lynx-js/react-rsbuild-plugin': 0.22.4
+    '@lynx-js/rspeedy': 0.19.0
   lynxRspeedyRange:
-    '@lynx-js/rspeedy': ^0.18.6
+    '@lynx-js/rspeedy': ^0.19.0
   typescriptRecommended:
     '@tsconfig/recommended': ^1.0.14
   weappAutomation:
-    '@weapp-vite/miniprogram-automator': ^1.5.4
+    '@weapp-vite/miniprogram-automator': ^1.5.6
   vite8:
     vite: ^8.3.5
   vitePluginInspect:
@@ -416,9 +416,9 @@ catalogs:
   vitePluginVue6:
     '@vitejs/plugin-vue': ^6.0.10
   vitest:
-    '@vitest/coverage-v8': ~5.1.0
-    '@vitest/ui': ~5.1.0
-    vitest: ~5.1.0
+    '@vitest/coverage-v8': ~5.1.1
+    '@vitest/ui': ~5.1.1
+    vitest: ~5.1.1
   vue2:
     vue: ^2.7.16
   vue3:
@@ -432,7 +432,7 @@ catalogs:
   weappChildren:
     weapp-tailwindcss-children: ^0.1.0
   weappIdeCli:
-    weapp-ide-cli: ^6.4.4
+    weapp-ide-cli: ^6.4.6
   weappVite:
     weapp-vite: 7.10.0
   webpackTools:
@@ -443,7 +443,7 @@ catalogs:
     webpack-cli: ^7.3.1
     webpack-dev-server: ^5.2.7
   wrangler:
-    wrangler: ^4.162.0
+    wrangler: ^4.168.0
   uniVite:
     vite: 5.2.8
   taroRnReact18:
@@ -486,4 +486,4 @@ patchedDependencies:
   rollup@4.65.1: patches/rollup@4.65.1.patch
   '@mpxjs/webpack-plugin@2.11.1': patches/@mpxjs__webpack-plugin@2.11.1.patch
   webpack-virtual-modules@0.6.2: patches/webpack-virtual-modules@0.6.2.patch
-  postcss-preset-env@11.6.2: patches/postcss-preset-env@11.6.2.patch
+  postcss-preset-env@11.6.3: patches/postcss-preset-env@11.6.3.patch

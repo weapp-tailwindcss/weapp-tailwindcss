@@ -87,8 +87,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: native-cargo-${{ matrix.suffix }}-1.96.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
-          restore-keys: native-cargo-${{ matrix.suffix }}-1.96.0-
+          key: native-cargo-${{ matrix.suffix }}-1.98.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
+          restore-keys: native-cargo-${{ matrix.suffix }}-1.98.0-
 
       - name: Cache Linux container pnpm store
         if: matrix.image != ''
@@ -105,8 +105,8 @@ jobs:
           path: |
             ${{ runner.temp }}/native-ci/cargo/registry
             ${{ runner.temp }}/native-ci/cargo/git
-          key: native-cargo-${{ matrix.suffix }}-1.96.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
-          restore-keys: native-cargo-${{ matrix.suffix }}-1.96.0-
+          key: native-cargo-${{ matrix.suffix }}-1.98.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
+          restore-keys: native-cargo-${{ matrix.suffix }}-1.98.0-
 
       - name: Prepare Linux container cache directories
         if: matrix.image != ''
@@ -119,8 +119,8 @@ jobs:
       - name: Install pinned Rust toolchain
         if: matrix.image == ''
         run: |
-          rustup toolchain install 1.96.0 --profile minimal --component clippy
-          rustup default 1.96.0
+          rustup toolchain install 1.98.0 --profile minimal --component clippy
+          rustup default 1.98.0
           rustup target add ${{ matrix.target }}
 
       - name: Build, lint and verify native consumers

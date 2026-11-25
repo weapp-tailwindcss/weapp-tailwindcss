@@ -210,9 +210,9 @@
   },
   "devDependencies": {
     "@csstools/postcss-is-pseudo-class": "^6.0.3",
-    "fast-check": "^4.10.2",
+    "fast-check": "^4.11.0",
     "lightningcss": "^1.33.0",
-    "postcss-custom-properties": "^15.0.4",
+    "postcss-custom-properties": "^15.0.5",
     "tsx": "catalog:tsx"
   }
 }

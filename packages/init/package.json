@@ -52,7 +52,7 @@
     "@weapp-tailwindcss/logger": "workspace:*",
     "@weapp-tailwindcss/shared": "workspace:*",
     "fs-extra": "catalog:buildUtilities",
-    "npm-registry-fetch": "^20.0.1",
+    "npm-registry-fetch": "^20.0.2",
     "pathe": "catalog:buildUtilities",
     "semver": "catalog:compilerUtilities"
   }

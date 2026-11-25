@@ -2,7 +2,7 @@
 name = "weapp_tailwindcss_native"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.96"
+rust-version = "1.98"
 license = "MIT"
 publish = false
 
@@ -13,20 +13,20 @@ crate-type = [
 ]
 
 [dependencies]
-napi = { version = "=3.15.0", default-features = false, features = [
+napi = { version = "=3.16.3", default-features = false, features = [
   "napi4",
   "dyn-symbols",
 ] }
-napi-derive = "=3.6.13"
-oxc_allocator = "=0.152.0"
-oxc_ast = "=0.152.0"
-oxc_ast_visit = "=0.152.0"
-oxc_parser = "=0.152.0"
-oxc_semantic = "=0.152.0"
-oxc_span = "=0.152.0"
+napi-derive = "=3.7.2"
+oxc_allocator = "=0.160.0"
+oxc_ast = "=0.160.0"
+oxc_ast_visit = "=0.160.0"
+oxc_parser = "=0.160.0"
+oxc_semantic = "=0.160.0"
+oxc_span = "=0.160.0"
 
 [build-dependencies]
-napi-build = "=2.6.0"
+napi-build = "=2.7.0"
 
 [profile.release]
 lto = true

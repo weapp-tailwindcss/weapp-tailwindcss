@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parse, stringify } from 'yaml'
+import { resolveTemplateCatalogRange, updateTemplateWorkspaceConfig } from '../scripts/template-workspace-config'
 import { parseTemplateDependencyContract, verifyInstalledTemplateDependency } from './templateContract'
 
 const manifest = { devDependencies: { 'weapp-tailwindcss': '^5.6.3' } }
@@ -28,6 +29,31 @@ function catalogLockfile(range = '^5.6.3') {
   }
   return stringify(document)
 }
+
+describe('模板 workspace catalog 更新', () => {
+  it('解析依赖 catalog 并只更新被引用的 catalog 项', () => {
+    const workspace = stringify({
+      catalogs: {
+        tailwindcss4: { tailwindcss: '^4.3.5' },
+        weappTailwindcss: { 'weapp-tailwindcss': '^5.7.4' },
+      },
+      minimumReleaseAgeExclude: [],
+    })
+
+    expect(resolveTemplateCatalogRange(workspace, 'tailwindcss', 'catalog:tailwindcss4')).toBe('^4.3.5')
+    expect(resolveTemplateCatalogRange(workspace, 'missing', 'catalog:unknown')).toBeUndefined()
+
+    const result = updateTemplateWorkspaceConfig(workspace, [], [], [
+      { catalogName: 'weappTailwindcss', packageName: 'weapp-tailwindcss', range: '^5.7.7' },
+    ])
+
+    expect(result.changed).toBe(true)
+    expect(parse(result.content).catalogs).toEqual({
+      tailwindcss4: { tailwindcss: '^4.3.5' },
+      weappTailwindcss: { 'weapp-tailwindcss': '^5.7.7' },
+    })
+  })
+})
 
 describe('独立模板的已发布依赖身份', () => {
   it('按模板自己的声明和锁验证稳定版，不读取工作区候选包版本', () => {
