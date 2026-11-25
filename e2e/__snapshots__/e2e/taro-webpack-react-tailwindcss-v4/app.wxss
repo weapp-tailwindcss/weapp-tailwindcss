@@ -308,8 +308,8 @@ wx-root-portal-content {
   --font-mono: var(--font-plex-mono), monospace;
   --color-red-500: rgb(251, 44, 54);
   --color-red-500: #fb2c36;
-  --color-yellow-300: rgb(255, 224, 46);
-  --color-yellow-300: #ffe02e;
+  --color-yellow-300: rgb(255, 224, 48);
+  --color-yellow-300: #ffe030;
   --color-emerald-400: rgb(0, 210, 148);
   --color-emerald-400: #00d294;
   --color-cyan-500: rgb(0, 182, 212);
