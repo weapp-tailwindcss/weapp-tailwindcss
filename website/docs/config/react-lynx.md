@@ -217,7 +217,7 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 
 历史静态基线使用 Tailwind CSS `4.3.4`，仅作为依赖升级前的证据保留。
 
-CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-11-16T09:37:34.566Z`，`catalogHash` 为 `45826e3a1b0234f0d9aaf14eb867aba206a230f71f34ec87cba3117d002d587c`。当前报告由源码 `084786e8751d932dd5251bc3cb0a3a929dad4f0e` 的 PR CI run `43835532056` 采集：iOS runtime run `6cb32634-426b-4693-b525-6f0bc82537ac`、Android runtime run `90bab98c-85aa-4214-963f-b5247fe467f2`。该 CI 的设备采集完成，但报告与旧提交基线不一致，因此经审查后刷新双端基线；此 CI 证据不替代本地完整双端验收。
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-11-25T07:02:07.027Z`，`catalogHash` 为 `7d848cc03c0faf590a18e5c4e1f15c17738debebde27c81315d94766445e4c9e`。当前报告由源码 `bd9c599390e4e44968c214af32f3963cdf8fa075` 的 [PR CI run 45560653557](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/45560653557) 采集：iOS runtime run `cd5a57b4-fb9f-475b-95a7-e93332ad7466`、Android runtime run `565619da-2eb3-4ef9-8df8-53e97435c9a2`。设备采集及完整证据归档和重放均已完成，审查运行时结论后刷新了双端基线；此 CI 证据不替代本地完整双端验收。
 
 `--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 
