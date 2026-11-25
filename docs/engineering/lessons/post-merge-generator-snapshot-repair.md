@@ -13,10 +13,11 @@ verification:
     command: pnpm dlx --package=pnpm@12.21.0 pnpm run e2e:apps-generator
   - claim: 修复 PR 的 hosted CI/CD 全部必需门禁通过
     kind: ci
-    status: pending
-    sha: c99071b7d7bc7cd85e2550aa2a497c4460ad440e
-    environment: GitHub Actions；快照修复 PR 尚未创建
-    reason: 需在修复 PR 的准确提交上确认 CI 与 PR Gate
+    status: passed
+    sha: 61c3dcc91ae2870510cdaed4039c6dfddc8e2249
+    environment: GitHub Actions hosted runners；PR #1366 的准确 head，Node 22/24，Ubuntu、macOS、Windows
+    command: gh run view 45528399645 --json status,conclusion
+    url: https://github.com/sonofmagic/weapp-tailwindcss/actions/runs/45528399645
 ---
 
 # 合并后 Generator 快照失败
@@ -37,7 +38,7 @@ PR #1365 为 legacy Web 兼容静态计算纯数字 typed division。生成 CSS 
 - `pnpm dlx --package=pnpm@12.21.0 pnpm run build:ci`：通过。
 - `E2E_PROJECT_FILTER='^uni-app-vite-tailwindcss-v4$' pnpm dlx --package=pnpm@12.21.0 pnpm run e2e:apps-generator:u`：为该项目全部受测平台重新生成基线，12 项通过。
 - `pnpm dlx --package=pnpm@12.21.0 pnpm run e2e:apps-generator`：完整 generator 矩阵 12 项通过，禁止更新快照。
-- 修复 PR 的 hosted CI/CD 待验证。
+- PR #1366 的 hosted CI/CD run `45528399645`：准确 head `61c3dcc91ae2870510cdaed4039c6dfddc8e2249` 上 208 项门禁成功，27 项按变更范围跳过，无失败。
 
 ## 适用边界
 
