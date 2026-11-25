@@ -25758,7 +25758,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 85037,
+      "bytes": 85001,
       "selectors": [
         "#app",
         "*",
@@ -26129,7 +26129,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 101179,
+      "bytes": 101117,
       "selectors": [
         "#app",
         "*",
@@ -26810,7 +26810,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 101179,
+      "bytes": 101117,
       "selectors": [
         "#app",
         "*",
