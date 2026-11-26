@@ -6,7 +6,7 @@ import type { FrameworkEnvironment } from '@/framework-policies/environment-snap
 import type { RuntimeBranchContext } from '@/runtime-branch'
 import type { IArbitraryValues } from '@/types/shared'
 import { captureFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
-import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
+import { resolveFrameworkPolicy, shouldUseUniAppViteH5WebCompat } from '@/framework-policies/resolve'
 import { resolveRuntimeBranch } from '@/runtime-branch'
 
 export interface WeappTailwindcssGeneratorOptions {
@@ -31,14 +31,14 @@ export interface WeappTailwindcssGeneratorOptions {
    *
    * @remarks
    * Web 目标在自动推断 `generator.target: 'web'` 时默认开启，经典 uni-app 的 `app` / `app-plus`
-   * WebView 构建也会自动启用；显式配置 `target` 时保持用户配置。uni-app H5、Taro H5 等 preset
-   * 也会在 Web 环境中显式开启。传入 `true` 等价于
+   * WebView 构建也会自动启用；uni-app H5 即使显式配置 `target: 'web'` 也会继续使用兼容默认。
+   * 其它显式 Web target 保持用户配置。uni-app H5、Taro H5 等 preset 也会在 Web 环境中显式开启。传入 `true` 等价于
    * `{ preset: 'legacy-web' }`，其兼容基线为 Chrome/91.0.4472.114 与 AppleWebKit/537.36。
    * 该预设会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、
    * 现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留
    * Tailwind CSS v4 的运行时间距变量语义。纯数字 typed division 会静态计算。Vite 显式配置的 Chrome/Edge
    * CSS 目标低于 Chrome 91 时会在配置解析阶段给出警告。
-   * 如果需要保持 Tailwind CSS 官方 Web 输出，可传入 `false` 或 `{ preset: 'off' }`。
+   * uni-app H5 会继续保留上一版本的兼容默认，即使显式指定 `target: 'web'` 也不会输出 `@layer`；如需保持 Tailwind CSS 官方 Web 输出，可传入 `false` 或 `{ preset: 'off' }`。
    */
   webCompat?: WebCssCompatUserOptions | undefined
   /**
@@ -90,7 +90,12 @@ export function resolveGeneratorConfiguration(
     generatorTarget: target,
   }, frameworkPolicy)
   const hasExplicitTarget = objectOptions !== undefined && Object.hasOwn(objectOptions, 'target')
-  const webCompat = objectOptions?.webCompat ?? (!hasExplicitTarget && branch.isWeb ? true : undefined)
+  const shouldKeepUniAppH5Compatibility = shouldUseUniAppViteH5WebCompat(
+    context.appType,
+    context.platform ?? environment.uniPlatform ?? environment.uniUtsPlatform.normalized,
+  )
+  const webCompat = objectOptions?.webCompat
+    ?? ((!hasExplicitTarget || shouldKeepUniAppH5Compatibility) && branch.isWeb ? true : undefined)
 
   if (objectOptions == null) {
     return {

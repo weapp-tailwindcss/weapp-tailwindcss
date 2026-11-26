@@ -74,7 +74,7 @@ export default defineConfig({
 
 ### `generator` {#generator}
 
-**作用** 调整 Tailwind 生成器中未被 Lynx 适配器固定的字段，例如额外 style options。适配器始终覆盖 `target: 'web'`、`webCompat: true` 和内部 `cssOptions.platform: 'lynx'`。
+**作用** 调整 Tailwind 生成器中未被 Lynx 适配器固定的字段，例如额外 style options。适配器始终覆盖 `target: 'web'`、`webCompat: true` 和内部 `cssOptions.platform: 'lynx'`，以保持上一版本的 Lynx 兼容输出。
 
 **使用场景** 通常无需配置。只有需要传递生成器的非目标高级选项，且已经从最终 CSS 与 encoder 日志确认影响时才使用。
 
@@ -90,7 +90,7 @@ pluginLynxTailwindcss({
 })
 ```
 
-**注意事项** 即使传入 `target: 'weapp'` 或 `webCompat: false`，Lynx wrapper 仍会覆盖它们。这里的 `generator: false` 只清空用户自定义 generator 字段，不会关闭适配器创建的 Lynx 生成链路。
+**注意事项** 即使传入 `target: 'weapp'` 或 `webCompat: false`，Lynx wrapper 仍会覆盖为 `web` 和 `true`。这里的 `generator: false` 只清空用户自定义 generator 字段，不会关闭适配器创建的 Lynx 生成链路。
 
 ### `rspack` {#rspack}
 

@@ -84,6 +84,13 @@ export function shouldUseUniAppViteWebViewGeneratorTarget(appType: string | unde
   return appType === 'uni-app-vite' && isUniAppWebViewPlatform(platform)
 }
 
+export function shouldUseUniAppViteH5WebCompat(
+  appType: string | undefined,
+  platform: string | undefined = getEnvValue('UNI_PLATFORM') ?? getEnvValue('UNI_UTS_PLATFORM'),
+): boolean {
+  return appType === 'uni-app-vite' && isUniWebPlatform(platform)
+}
+
 export function inferGeneratorTargetFromEnv(): WeappTailwindcssGeneratorTarget {
   return inferGeneratorTargetFromExplicitEnv()
     ?? (shouldUseWebGeneratorTargetFromEnv() ? 'web' : 'weapp')

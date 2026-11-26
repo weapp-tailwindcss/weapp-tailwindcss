@@ -52,7 +52,7 @@ export default defineConfig({
 @source "./**/*.{ts,tsx}";
 ```
 
-The plugin fixes `platform: 'lynx'`, `generator.target: 'web'`, and Lynx-compatible Web CSS output. ReactLynx keeps the original `className`; it does not create mini-program safe classes or a React Native style manifest.
+The plugin fixes `platform: 'lynx'`, `generator.target: 'web'`, and `webCompat: true` to preserve the previous Lynx-compatible Web CSS output. ReactLynx keeps the original `className`; it does not create mini-program safe classes or a React Native style manifest.
 
 Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded. Stable Tailwind theme tokens may be resolved at build time; an override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee. Native behavior is currently tested on the pinned 4.0.1 matrix.
 
@@ -74,7 +74,7 @@ The plugin also inherits core [`UserDefinedOptions`](/docs/api/interfaces/UserDe
 
 ### `generator` {#generator}
 
-**Purpose** Adjust generator fields that the Lynx adapter does not fix, such as additional style options. The adapter always overwrites `target: 'web'`, `webCompat: true`, and its internal `cssOptions.platform: 'lynx'`.
+**Purpose** Adjust generator fields that the Lynx adapter does not fix, such as additional style options. The adapter always overwrites `target: 'web'`, `webCompat: true`, and its internal `cssOptions.platform: 'lynx'` to preserve the previous Lynx-compatible output.
 
 **When to use** Usually leave it unset. Use it only for non-target advanced generator options whose effects have been verified in final CSS and encoder logs.
 

@@ -118,13 +118,29 @@ describe('get options', () => {
     expect(normalizeWeappTailwindcssGeneratorOptions({ target: 'web', webCompat: false }).webCompat).toBe(false)
   })
 
+  it('keeps uni-app H5 compatible when Web target is explicit', () => {
+    withGeneratorTargetEnv({ UNI_PLATFORM: 'h5' }, () => {
+      expect(normalizeWeappTailwindcssGeneratorOptions({ target: 'web' }, { appType: 'uni-app-vite' }).webCompat).toBe(true)
+      expect(normalizeWeappTailwindcssGeneratorOptions({ target: 'web' }, { appType: 'uni-app-vite', platform: 'h5' }).webCompat).toBe(true)
+      expect(normalizeWeappTailwindcssGeneratorOptions({ target: 'web', webCompat: false }, { appType: 'uni-app-vite' }).webCompat).toBe(false)
+    })
+  })
+
   it('keeps weapp as generator target without framework web env', () => {
     withGeneratorTargetEnv({}, () => {
       expect(normalizeWeappTailwindcssGeneratorOptions(undefined).target).toBe('weapp')
     })
   })
 
-  it('infers web generator target from uni-app, uni-app x, Mpx and Taro H5 env', () => {
+  it('keeps mini-program output on the weapp compatibility path', () => {
+    withGeneratorTargetEnv({ UNI_PLATFORM: 'mp-weixin' }, () => {
+      const options = normalizeWeappTailwindcssGeneratorOptions(undefined, { appType: 'uni-app-vite' })
+      expect(options.target).toBe('weapp')
+      expect(options.webCompat).toBeUndefined()
+    })
+  })
+
+  it('infers web generator target from uni-app, uni-app x, Mpx and Taro H5 env with compatibility', () => {
     withGeneratorTargetEnv({ UNI_PLATFORM: 'h5' }, () => {
       expect(normalizeWeappTailwindcssGeneratorOptions(undefined).target).toBe('web')
       expect(normalizeWeappTailwindcssGeneratorOptions(undefined).webCompat).toBe(true)
@@ -152,7 +168,7 @@ describe('get options', () => {
     })
   })
 
-  it('infers web generator target from plain uni-app App WebView env', () => {
+  it('infers web generator target from plain uni-app App WebView env with compatibility', () => {
     withGeneratorTargetEnv({ UNI_PLATFORM: 'app' }, () => {
       expect(normalizeWeappTailwindcssGeneratorOptions(undefined).target).toBe('web')
       expect(normalizeWeappTailwindcssGeneratorOptions(undefined).webCompat).toBe(true)

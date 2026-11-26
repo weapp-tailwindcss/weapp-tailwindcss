@@ -257,11 +257,11 @@ describe('generator postcss plugin factory', () => {
     expect(result.css).not.toContain('in oklab')
   })
 
-  it('applies default web css compatibility transform for web target', async () => {
+  it('preserves official web CSS semantics by default', async () => {
     const { adapters } = createAdapters({
       normalizeGeneratorOptions: vi.fn(options => ({
         target: options?.target ?? 'weapp',
-        webCompat: options?.webCompat ?? (options?.target === 'web' ? true : undefined),
+        webCompat: options?.webCompat,
         importFallback: options?.importFallback ?? true,
       })),
       createGenerator: vi.fn(() => ({
@@ -289,12 +289,11 @@ describe('generator postcss plugin factory', () => {
       from: undefined,
     })
 
-    expect(result.css).not.toContain('@layer')
-    expect(result.css).toContain('@property')
-    expect(result.css).toContain('color: rgb(')
-    expect(result.css).not.toContain('color: oklch(')
-    expect(result.css).not.toContain('& > :not(:last-child)')
-    expect(result.css).toContain(':where(.space-y-2 > :not(:last-child))')
+    expect(result.css).toContain('@layer utilities')
+    expect(result.css).toContain('@property --tw-rotate-x')
+    expect(result.css).toContain('color: oklch(')
+    expect(result.css).toContain('& > :not(:last-child)')
+    expect(result.css).not.toContain(':where(.space-y-2 > :not(:last-child))')
     expect(result.css).toContain('.text-blue')
   })
 })

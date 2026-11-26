@@ -1,1 +1,1 @@
-export { generatorTargetEnvKeys, inferGeneratorTargetFromEnv, shouldUseUniAppViteWebViewGeneratorTarget, shouldUseUniAppWebRpxCompatibility, shouldUseWebGeneratorTargetFromEnv } from '@/framework-policies/resolve'
+export { generatorTargetEnvKeys, inferGeneratorTargetFromEnv, shouldUseUniAppViteH5WebCompat, shouldUseUniAppViteWebViewGeneratorTarget, shouldUseUniAppWebRpxCompatibility, shouldUseWebGeneratorTargetFromEnv } from '@/framework-policies/resolve'

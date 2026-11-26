@@ -45,6 +45,20 @@ describe('resolved compilation profiles', () => {
     expect(() => requireFrameworkEnvironment({})).toThrow('缺少环境快照')
   })
 
+  it('keeps uni-app H5 Web CSS compatibility for an explicit Web target', () => {
+    vi.stubEnv('UNI_PLATFORM', 'h5')
+    const context = getCompilerContext({
+      appType: 'uni-app-vite',
+      generator: { target: 'web' },
+      logLevel: 'silent',
+    })
+
+    expect(resolveCompilationProfile(context).profile.generator).toMatchObject({
+      target: 'web',
+      webCompat: true,
+    })
+  })
+
   it.each(['uni-app-vite', 'uni-app-x', 'taro', 'mpx', 'native', 'weapp-vite'] as const)(
     'isolates identical %s instances and reuses state only within the same owner', async (appType) => {
       const options = { appType, logLevel: 'silent' as const, tailwindcssBasedir: process.cwd() }

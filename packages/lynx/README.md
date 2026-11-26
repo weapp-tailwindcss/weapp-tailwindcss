@@ -43,7 +43,7 @@ Import Tailwind CSS 4 from the application CSS entry and point `@source` at the 
 @source "./**/*.{ts,tsx}";
 ```
 
-`pluginLynxTailwindcss` fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while an application variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
+`pluginLynxTailwindcss` fixes `platform` to `'lynx'`, `generator.target` to `'web'`, and `generator.webCompat: true` to preserve the previous Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while an application variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
 
 Author-defined `@property` registrations outside `--tw-*` retain their registration and `var()` dependency; global defaults cannot replace syntax, initial-value, or inheritance semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
 

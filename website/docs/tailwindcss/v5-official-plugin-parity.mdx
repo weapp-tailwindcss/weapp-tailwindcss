@@ -28,8 +28,13 @@ v5 generator 的目标不是替代 Tailwind CSS v4 的 CSS-first 语义，而是
 | 候选类生成 | Scanner candidates | runtime classSet 精确命中 candidates |
 | Web 产物 | 浏览器 CSS | `target: 'web'` |
 | 小程序产物 | 不支持 | `target: 'weapp'` |
+| Web CSS 兼容降级 | 由 Web 目标和浏览器工具链决定 | 环境/preset 推断的 Web 与 uni-app H5 保留旧兼容默认；纯 Web 显式 `target: 'web'` 保留官方语义，`generator.webCompat` 可显式选择 |
 | 失败处理 | 编译失败即失败 | 默认构建失败 |
 | 依赖追踪 / HMR | `addWatchFile` / `hotUpdate` | `cssEntries` / dependencies / HMR |
+
+在纯 Web 的显式 Web target 下，`weapp-tailwindcss` 与 `@tailwindcss/vite`、`@tailwindcss/postcss` 对齐 Tailwind CSS v4 的 CSS-first 语义。对齐范围包括 `@theme`、`@source`、层、嵌套规则、现代颜色函数、响应式和交互选择器。`weapp-tailwindcss` 额外负责多端入口发现、classSet 精确命中、构建图依赖和小程序 CSS 转换。框架或环境推断的 Web 构建以及 uni-app H5 为保持上一版本行为仍默认走 `legacy-web` 兼容降级。
+
+需要官方 Web 产物时，纯 Web 项目使用显式 `generator.target: 'web'` 或 `weapp-tailwindcss/vite/web` 专用入口并省略 `webCompat`；uni-app H5 需要显式传入 `generator.webCompat: false`。旧 WebView 需要降级时显式设置 `generator.webCompat: true`，或传入 `{ preset: 'legacy-web' }`。这一步会降低现代 CSS 语法，不属于官方 Web 产物。
 
 ## Vite 对照
 
@@ -67,7 +72,7 @@ export default defineConfig({
 })
 ```
 
-同一个小程序构建中不要再同时注册 `@tailwindcss/vite` 和 `WeappTailwindcss`。如果项目需要 H5 / Web 产物，可以在 Web 专用构建里继续使用官方 Tailwind 插件；如果要用 `weapp-tailwindcss` 做 Web 对照测试，则把 `generator.target` 切到 `web`。此时 generator 产物保留浏览器选择器、hover media 和原始 Tailwind 转义；小程序生产构建必须切回默认 `weapp`。
+同一个构建中不要再同时注册 `@tailwindcss/vite`、`@tailwindcss/postcss` 和 `WeappTailwindcss` 生成同一份 Tailwind CSS。如果项目需要 H5 / Web 产物，可以在独立的 Web 构建里继续使用官方 Tailwind 插件；如果要用 `weapp-tailwindcss` 做 Web 对照测试，则把 `generator.target` 显式切到 `web`，此时保留浏览器选择器、hover media、层、嵌套规则和原始 Tailwind 转义。小程序生产构建切回默认 `weapp`。
 
 ## 回归测试
 

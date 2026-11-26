@@ -52,7 +52,7 @@ export default defineConfig({
 })
 ```
 
-The plugin fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while a variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
+The plugin fixes `platform` to `'lynx'`, `generator.target` to `'web'`, and `generator.webCompat: true` to preserve the previous Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while a variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
 
 ## Configure the Tailwind CSS entry
 

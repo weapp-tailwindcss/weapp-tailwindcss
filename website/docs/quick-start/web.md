@@ -44,6 +44,8 @@ import './style.css'
 
 纯 Vite Web 项目推荐使用专用入口。它固定 Web target，不会继承 monorepo 上层的小程序框架标记；入口 CSS 仍需由应用实际导入。
 
+专用 Web 入口固定显式 `target: 'web'`，默认保留 Tailwind CSS 官方生成语义，包括现代颜色、cascade layers、嵌套规则和浏览器选择器。框架 preset 或平台环境自动推断 Web 时会保留上一版本的 `legacy-web` 兼容默认，uni-app H5 即使显式设置 `generator.target: 'web'` 也会保留该兼容默认；需要官方产物语义时请使用专用 Web 入口，uni-app H5 请显式设置 `generator.webCompat: false`。面向旧 WebView 的显式降级仍可设置 `generator.webCompat: true`。
+
 ```ts title="vite.config.ts"
 import { defineConfig } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
@@ -92,6 +94,6 @@ export default defineConfig({
 })
 ```
 
-选择这条链路后，不要再同时注册 `@tailwindcss/vite` 或 `@tailwindcss/postcss` 来生成同一份 Tailwind CSS。Taro H5、uni-app H5、Mpx Web、Weapp-vite Web 等多端框架会按环境变量自动切到 `web` 目标；自定义 Web 构建或纯 Vite 项目建议显式配置。更多目标判断规则见 [跨多端开发 CSS 兼容](/docs/multi-platform)。
+选择这条链路后，不要再同时注册 `@tailwindcss/vite` 或 `@tailwindcss/postcss` 来生成同一份 Tailwind CSS。Taro H5、uni-app H5、Mpx Web、Weapp-vite Web 等多端框架会按环境变量自动切到 `web` 目标；自定义 Web 构建或纯 Vite 项目建议显式配置。Web target 与官方插件对照及兼容范围见 [v5 与官方 Tailwind 插件对照](/docs/tailwindcss/v5-official-plugin-parity)，目标判断规则见 [跨多端开发 CSS 兼容](/docs/multi-platform)。
 
 可直接运行的 Generic Vite、uni-app、Taro 和 weapp-vite 样例见[仓库 canonical 模板](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/templates)，实际构建与 HMR 覆盖见[支持矩阵](/docs/reference/support-matrix)。
