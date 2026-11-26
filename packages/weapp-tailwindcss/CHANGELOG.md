@@ -1,5 +1,24 @@
 # weapp-tailwindcss
 
+## 5.7.8
+
+### Patch Changes
+
+- 修复 legacy-web 的 Tailwind CSS v4 数值除法与表单 reset specificity，并诊断低于 Chrome 91 的 Vite CSS 目标。Refs #1363，Refs #1364。
+
+- 将原生解析器升级到 Oxc 0.160.0，并同步 N-API 依赖至 `napi` 3.16.3、`napi-derive` 3.7.2 和 `napi-build` 2.7.0。原生构建最低 Rust 版本提升至 1.98。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.8
+  - @weapp-tailwindcss/native-darwin-x64@5.7.8
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.8
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.8
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.8
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.8
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.8
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.8
+  - @weapp-tailwindcss/postcss@4.0.8
+
 ## 5.7.7
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @weapp-tailwindcss/native-darwin-x64
 
+## 5.7.8
+
+### Patch Changes
+
+- 将原生解析器升级到 Oxc 0.160.0，并同步 N-API 依赖至 `napi` 3.16.3、`napi-derive` 3.7.2 和 `napi-build` 2.7.0。原生构建最低 Rust 版本提升至 1.98。
+
 ## 5.7.7
 
 ## 5.7.6

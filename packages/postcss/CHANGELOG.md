@@ -1,5 +1,21 @@
 # @weapp-tailwindcss/postcss
 
+## 4.0.8
+
+### Patch Changes
+
+- 修复 legacy-web 的 Tailwind CSS v4 数值除法与表单 reset specificity，并诊断低于 Chrome 91 的 Vite CSS 目标。Refs #1363，Refs #1364。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.7.8
+  - @weapp-tailwindcss/native-darwin-x64@5.7.8
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.7.8
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.7.8
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.7.8
+  - @weapp-tailwindcss/native-linux-x64-musl@5.7.8
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.7.8
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.7.8
+
 ## 4.0.7
 
 ### Patch Changes
