@@ -2,6 +2,7 @@ import path from 'node:path'
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { describe, expect, it, vi } from 'vitest'
+import * as legacyGeneratorCssCompat from '@/bundlers/shared/generator-css/legacy-compat'
 import {
   appendLegacyCompatCss,
   appendLegacyContainerCompatCss,
@@ -9,7 +10,13 @@ import {
   removeTailwindApplyRules,
 } from '@/generation/legacy-compat'
 
+import * as generationCompat from '@/generation/legacy-compat'
+
 describe('legacy compat css helpers', () => {
+  it('keeps the historical generator-css path as an export facade', () => {
+    expect(legacyGeneratorCssCompat).toStrictEqual(generationCompat)
+  })
+
   it('removes @apply rules and empty wrapper at-rules from compat sources', () => {
     expect(removeTailwindApplyRules('@media screen { .card { @apply flex; } } .keep{color:red}')).toBe('.keep{color:red}')
     expect(removeTailwindApplyRules('@apply flex; .keep{color:red}')).toBe('.keep{color:red}')
