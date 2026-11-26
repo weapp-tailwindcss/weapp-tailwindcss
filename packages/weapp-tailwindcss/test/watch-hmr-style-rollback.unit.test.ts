@@ -134,7 +134,9 @@ describe('Style 回滚的真实产物清理边界', () => {
       return elapsed
     })
     const metric = await run(2_000)
-    expect(Date.now() - rewrittenAt).toBeGreaterThanOrEqual(600)
+    const stableWindowMs = shared.resolveCompileStableWindowMs({ pollMs: 5 })
+    const clockResolutionAllowanceMs = 10
+    expect(Date.now() - rewrittenAt).toBeGreaterThanOrEqual(stableWindowMs - clockResolutionAllowanceMs)
     expect(metric.rollbackNeedleCleared).toBe(true)
   })
 
