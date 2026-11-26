@@ -42,6 +42,8 @@ import './style.css'
 
 ## Register Vite plugin
 
+The dedicated Web entry fixes an explicit `target: 'web'` and keeps the official Tailwind CSS generation semantics by default, including modern colors, cascade layers, nesting, and browser selectors. Framework presets and platform-inferred Web targets retain the previous `legacy-web` compatibility default. uni-app H5 keeps that compatibility default even with an explicit `generator.target: 'web'`, so pass `generator.webCompat: false` when official output semantics are required there. Set `generator.webCompat: true` when an older WebView needs the downgrade.
+
 ```ts title="vite.config.ts"
 import { defineConfig } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
@@ -59,6 +61,6 @@ SSR, library mode, `optimizeDeps`, `cssMinify` and sourcemaps remain Vite respon
 
 For small-program compatibility, framework extensions, or explicit multiple entries, continue using the main `weapp-tailwindcss/vite` entry with explicit options. Historical Generic mini-program projects should set `generator.target: 'weapp'` or `platform` explicitly.
 
-After selecting this link, do not register `@tailwindcss/vite` or `@tailwindcss/postcss` at the same time to generate the same Tailwind CSS. Multi-end frameworks such as Taro H5, uni-app H5, Mpx Web, Weapp-vite Web, etc. will automatically switch to the `web` target according to environment variables; explicit configuration is recommended for custom web builds or pure Vite projects. For more target judgment rules, see [Cross-multi-terminal development CSS compatibility] (/docs/multi-platform).
+After selecting this link, do not register `@tailwindcss/vite` or `@tailwindcss/postcss` at the same time to generate the same Tailwind CSS. Multi-end frameworks such as Taro H5, uni-app H5, Mpx Web, Weapp-vite Web, etc. will automatically switch to the `web` target according to environment variables; explicit configuration is recommended for custom web builds or pure Vite projects. See [v5 compared with official Tailwind plugins](/docs/tailwindcss/v5-official-plugin-parity) for the behavior comparison and compatibility boundaries, and [cross-platform CSS compatibility](/docs/multi-platform) for target inference rules.
 
 Runnable Generic Vite, uni-app, Taro, and weapp-vite examples are available in the [repository canonical templates](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/templates). See the [support matrix](/docs/reference/support-matrix) for build and HMR evidence.

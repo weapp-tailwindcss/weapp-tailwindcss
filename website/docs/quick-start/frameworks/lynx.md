@@ -46,7 +46,7 @@ export default defineConfig({
 })
 ```
 
-插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 兼容输出。稳定 Tailwind theme token 可能在构建期静态化；同一 CSS 中可见的变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 覆盖不在静态分析保证范围内。
+插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 `generator.webCompat: true`，保持上一版本的 Lynx 兼容输出。稳定 Tailwind theme token 可能在构建期静态化；同一 CSS 中可见的变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 覆盖不在静态分析保证范围内。
 
 ## 配置 Tailwind CSS 入口
 

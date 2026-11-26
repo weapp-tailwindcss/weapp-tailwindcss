@@ -17,5 +17,5 @@ export function resolveFrameworkPolicy(input: FrameworkPolicyInput = {}, environ
   return applyMpxPolicy(policy, input, environment)
 }
 
-export { generatorTargetEnvKeys, inferGeneratorTargetFromEnv, shouldUseUniAppViteWebViewGeneratorTarget, shouldUseUniAppWebRpxCompatibility, shouldUseWebGeneratorTargetFromEnv } from './environment'
+export { generatorTargetEnvKeys, inferGeneratorTargetFromEnv, shouldUseUniAppViteH5WebCompat, shouldUseUniAppViteWebViewGeneratorTarget, shouldUseUniAppWebRpxCompatibility, shouldUseWebGeneratorTargetFromEnv } from './environment'
 export { isNativeStyleEnabled as isRuntimeUniAppXEnabled } from './uni-app-x'

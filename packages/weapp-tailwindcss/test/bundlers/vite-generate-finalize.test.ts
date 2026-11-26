@@ -14,6 +14,34 @@ function asset(fileName: string, source: string): OutputAsset {
 }
 
 describe('vite generate bundle finalize helpers', () => {
+  it('keeps official Web CSS unchanged when compatibility is explicitly disabled', () => {
+    const css = [
+      '@layer utilities {',
+      '  .text-blue { color: oklch(62.3% .214 259.815); }',
+      '}',
+    ].join('\n')
+    const styleAsset = asset('assets/style.css', css)
+    const bundle: OutputBundle = {
+      'assets/style.css': styleAsset,
+    }
+    const onUpdate = vi.fn()
+    const record = vi.fn()
+
+    expect(finalizeWebviewCssCompat(bundle, {
+      debug: vi.fn(),
+      onUpdate,
+      opts: {
+        cssMatcher: (file: string) => file.endsWith('.css'),
+        generator: { target: 'web', webCompat: false },
+      } as any,
+      recordCssAssetResult: record,
+    })).toBe(0)
+
+    expect(styleAsset.source).toBe(css)
+    expect(onUpdate).not.toHaveBeenCalled()
+    expect(record).not.toHaveBeenCalled()
+  })
+
   it('writes webview css compat results through the original output asset', () => {
     const styleAsset = asset('assets/style.css', [
       ':root { --spacing: 0.25rem; }',

@@ -44,7 +44,7 @@ export default defineConfig({
 @source "./**/*.{ts,tsx}";
 ```
 
-`pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。稳定的 Tailwind theme token 可能在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；同一 CSS 中可见的应用变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 的覆盖关系不在该静态分析保证范围内。
+`pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 和 `generator.webCompat: true`，保持上一版本的 Lynx 兼容输出。稳定的 Tailwind theme token 可能在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；同一 CSS 中可见的应用变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 的覆盖关系不在该静态分析保证范围内。
 
 作者自定义 `@property`（非 `--tw-*`）保留注册与 `var()`，不会用全局默认值替代语法、初值或继承语义。目标端仍须支持注册属性；保留输入与浏览器对照不代表 Lynx 原生已支持该语义。
 
