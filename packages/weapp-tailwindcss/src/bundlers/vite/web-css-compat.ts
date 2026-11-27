@@ -64,7 +64,7 @@ function resolveBrowserslistTargets(
 ): readonly string[] | undefined {
   try {
     const query = values.map(normalizeViteBrowserTarget)
-    return browserslist(query.length === 1 ? query[0]! : [...query], { path: root })
+    return browserslist(query.length === 1 ? query[0]! : [...query], root === undefined ? undefined : { path: root })
   }
   catch {
     return undefined

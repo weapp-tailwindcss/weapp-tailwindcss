@@ -37,16 +37,19 @@ export function createFrameworkCssContext(input: CssContextInput): ViteFramework
     currentGeneratorOptions: snapshotConfiguration(input.currentGeneratorOptions),
     root: input.resolvedConfig?.root,
     outDir: input.resolvedConfig?.build?.outDir,
-    webCssTarget: input.resolvedConfig?.build?.cssTarget === false
-      ? undefined
-      : (() => {
-          const target = input.resolvedConfig?.build?.cssTarget ?? input.resolvedConfig?.build?.target
-          if (target === undefined) {
-            return undefined
-          }
-          const targets = Array.isArray(target) ? target : [target]
-          return { source: input.resolvedConfig?.build?.cssTarget === undefined ? 'vite-build-target' : 'vite-css-target', targets } as const
-        })(),
+    webCssTarget: (() => {
+      const cssTarget = input.resolvedConfig?.build?.cssTarget
+      const target = cssTarget ?? input.resolvedConfig?.build?.target
+      if (target === undefined || target === false) {
+        return undefined
+      }
+      const targets = (Array.isArray(target) ? target : [target])
+        .filter((value): value is string => typeof value === 'string')
+      if (targets.length === 0) {
+        return undefined
+      }
+      return { source: cssTarget === undefined ? 'vite-build-target' : 'vite-css-target', targets } as const
+    })(),
     webCssTargetDisabled: input.resolvedConfig?.build?.cssTarget === false,
     escapeMap: Object.freeze({ ...escapeMap }),
     matchesCss: (file: string) => cssMatcher(file),

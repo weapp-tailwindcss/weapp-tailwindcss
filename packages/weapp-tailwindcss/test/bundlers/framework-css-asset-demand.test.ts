@@ -1,4 +1,5 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
+import type { ResolvedConfig } from 'vite'
 import type { ViteFrameworkCssPipelineStrategy } from '@/bundlers/vite/shared/framework-strategy'
 import type { InternalUserDefinedOptions } from '@/types'
 import { describe, expect, it, vi } from 'vitest'
@@ -45,6 +46,26 @@ function createFixture(extension: string) {
 }
 
 describe('framework CSS asset demand', () => {
+  it('omits a disabled Vite build target from the compatibility snapshot', () => {
+    const opts = {
+      appType: 'taro',
+      cssEntries: ['source.css'],
+      cssMatcher: (file: string) => file.endsWith('.css'),
+      mainCssChunkMatcher: (file: string) => file === 'shell.css',
+      escapeMap: {},
+    } as InternalUserDefinedOptions
+    const currentGeneratorOptions = normalizeWeappTailwindcssGeneratorOptions({ target: 'weapp' })
+    const context = createFrameworkCssContext({
+      currentGeneratorBranch: currentGeneratorOptions.branch,
+      currentGeneratorOptions,
+      opts,
+      resolvedConfig: { build: { target: false } } as ResolvedConfig,
+      resolveStylePlatform: () => undefined,
+    })
+
+    expect(context.webCssTarget).toBeUndefined()
+  })
+
   it.each(['wxss', 'acss'])('keeps %s import shells and updates CSS without reading script metadata', (extension) => {
     const { bundle, opts, context, sourcesContent } = createFixture(extension)
     const strategy: ViteFrameworkCssPipelineStrategy = { styles: { rootImportShell: 'extract' } }
