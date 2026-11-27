@@ -56,6 +56,8 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       '-derivedDataPath',
       derivedData,
       'COMPILER_INDEX_STORE_ENABLE=NO',
+      '-jobs',
+      '2',
       'build',
     ], hostDir, 1_800_000)
   }, async (device) => {
