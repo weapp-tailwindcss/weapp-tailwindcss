@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-darwin-x64
 
+## 5.8.0
+
 ## 5.7.8
 
 ### Patch Changes

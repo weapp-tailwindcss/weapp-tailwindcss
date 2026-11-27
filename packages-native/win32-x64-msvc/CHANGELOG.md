@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-win32-x64-msvc
 
+## 5.8.0
+
 ## 5.7.8
 
 ### Patch Changes
