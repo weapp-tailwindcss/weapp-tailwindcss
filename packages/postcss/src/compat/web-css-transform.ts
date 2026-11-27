@@ -1,6 +1,6 @@
 import type { CascadeLayerError } from '@weapp-tailwindcss/css-compat/layers'
 import type { CssCompatAction, WebCssCompatDiagnostic, WebCssCompatUserOptions } from '../types'
-import type { NormalizedWebCssCompatOptions, TransformWebCssCompatProcessing, TransformWebCssCompatResult } from './web-css'
+import type { NormalizedWebCssCompatOptions, TransformWebCssCompatProcessing, TransformWebCssCompatResult } from './web-css-options'
 import type { unsupportedTargets } from './web-css-policy'
 import { compileCascadeLayers } from '@weapp-tailwindcss/css-compat/layers'
 import postcss from 'postcss'
@@ -9,7 +9,6 @@ import { internalCssSelectorReplacer } from '../shared'
 import { WebCssCompatError } from '../types'
 import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
-import { normalizeWebCssCompatOptions } from './web-css'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue } from './web-css-custom-properties'
 import { normalizeWebGradientPositions } from './web-css-gradients'
 import {
@@ -31,6 +30,7 @@ import {
   transformedFeatures,
   unwrapThemeAtRules,
 } from './web-css-helpers'
+import { normalizeWebCssCompatOptions } from './web-css-options'
 import { actionIsTransforming, createWebCssCompatDiagnostic, normalizeWebCssCompatPolicy, targetsForDiagnostic } from './web-css-policy'
 import { withPreservedRegistrationScopes } from './web-css-registration-scopes'
 import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule } from './web-css-registrations'
