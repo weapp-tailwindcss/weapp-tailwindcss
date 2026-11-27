@@ -36,6 +36,8 @@ v5 generator 的目标不是替代 Tailwind CSS v4 的 CSS-first 语义，而是
 
 需要官方 Web 产物时，纯 Web 项目使用显式 `generator.target: 'web'` 或 `weapp-tailwindcss/vite/web` 专用入口并省略 `webCompat`；uni-app H5 需要显式传入 `generator.webCompat: false`。旧 WebView 需要降级时显式设置 `generator.webCompat: true`，或传入 `{ preset: 'legacy-web' }`。这一步会降低现代 CSS 语法，不属于官方 Web 产物。
 
+需要更细粒度的兼容策略时，使用 `webCompat.policy` 为 `@theme`、`@layer`、nesting、selectors、typed division、calc、variables、units、现代颜色和 at-rule 分别选择 `preserve`、`lower`、`warn`、`error` 或 `remove`。目标可以显式传入，也可以由 Vite 的 `cssTarget` 或 `build.target` 提供。目标只参与能力判断和诊断，不会单独改变官方 Web 输出。
+
 ## Vite 对照
 
 官方写法：

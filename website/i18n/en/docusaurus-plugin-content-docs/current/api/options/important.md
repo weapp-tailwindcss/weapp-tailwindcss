@@ -254,6 +254,44 @@ WeappTailwindcss({
 })
 ```
 
+Use `policy` to configure individual capabilities over a preset. Actions are `preserve`, `lower`, `warn`, `error`, and `remove`. In the Vite integration, `targets` accepts browser version arrays, browser/version maps, or Browserslist queries. Explicit targets take precedence over Vite `cssTarget`, followed by `build.target` and the project Browserslist configuration. Setting `cssTarget: false` disables target fallback. Other bundlers and the low-level PostCSS API should receive expanded browser version targets. A Vite target only informs an enabled compatibility policy and does not activate Web downgrades by itself.
+
+```ts
+WeappTailwindcss({
+  generator: {
+    target: 'web',
+    webCompat: {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91', 'ios_saf 15.4'],
+        layers: { action: 'preserve' },
+        values: { oklch: 'lower', typedDivision: 'lower' },
+        nesting: 'warn',
+      },
+    },
+  },
+})
+```
+
+Embedded WebViews and custom hosts can override the built-in browser capability table with `policy.capabilities`. `units` and `atRules` accept per-name declarations. Unknown browser targets are not treated as supported, so `preserve` continues to diagnose unsupported or unverified capabilities.
+
+```ts
+webCompat: {
+  preset: 'off',
+  policy: {
+    targets: ['chrome 91'],
+    capabilities: {
+      layers: true,
+      units: { dvh: false, cqw: false },
+      atRules: { container: false },
+    },
+    layers: { action: 'preserve' },
+  },
+}
+```
+
+Compatibility diagnostics expose a stable code, feature, action, target, file, and source position through `onDiagnostic`. `error` actions fail against an isolated CSS AST so partially transformed output is never emitted. Targets inform capability checks and diagnostics without forcing pure Web CSS into legacy syntax by themselves.
+
 ### ignoreTaggedTemplateExpressionIdentifiers
 
 > Optional | Type: `(string | RegExp)[]` | Default: `['weappTwIgnore']` | Version: ^4.0.0

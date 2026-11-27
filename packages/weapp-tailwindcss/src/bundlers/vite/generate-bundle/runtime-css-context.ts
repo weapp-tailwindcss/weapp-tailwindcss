@@ -2,10 +2,9 @@ import type { OutputBundle } from 'rollup'
 import type { ViteFrameworkCssPipelineContext } from '../shared/framework-strategy'
 import type { GenerateBundleContext } from './types'
 import path from 'node:path'
-import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { createFrameworkCssContext, extendFrameworkCssContext } from '../shared/framework-css-context'
-import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
+import { shouldApplyViteWebCssCompat, transformViteWebCssCompat } from '../web-css-compat'
 
 function inferPlatformFromViteOutDir(outDir: string | undefined) {
   const segment = outDir ? path.basename(path.normalize(outDir)) : undefined
@@ -42,11 +41,11 @@ export function createGenerateBundleCssContext(context: GenerateBundleContext, b
 export function resolveGenerateBundleCssPolicies(context: GenerateBundleContext, cssPipelineContext: ViteFrameworkCssPipelineContext) {
   const strategy = context.cssPipelineStrategy
   const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, strategy)
-  const transformWebTargetCss = (css: string) => context.cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(cssPipelineContext, {
-    defaultWebCssCompat: (value: string) => transformWebCssCompat(value, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }),
+  const transformWebTargetCss = (css: string, file?: string) => context.cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(cssPipelineContext, {
+    defaultWebCssCompat: (value: string) => transformViteWebCssCompat(value, cssPipelineContext, { deferPropertyFallback: true, file }),
     removeScopedPreflight: (value: string) => value,
     shouldApplyWebCssCompat,
-  })) ?? (shouldApplyWebCssCompat ? transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: true }) : css)
+  })) ?? (shouldApplyWebCssCompat ? transformViteWebCssCompat(css, cssPipelineContext, { deferPropertyFallback: true, file }) : css)
   const isNativeAppStyleTarget = strategy?.generation?.isNativeAppStyleTarget?.(cssPipelineContext) === true
   const isHarmonyAppStyleTarget = strategy?.generation?.isHarmonyAppStyleTarget?.(cssPipelineContext) === true
   const shouldPreserveAppCssExtension = strategy?.styles?.shouldPreserveStyleOutputExtension?.(cssPipelineContext) ?? (isNativeAppStyleTarget || isHarmonyAppStyleTarget)

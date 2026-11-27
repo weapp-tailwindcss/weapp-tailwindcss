@@ -35,6 +35,8 @@ For pure Web with an explicit Web target, `weapp-tailwindcss` aligns with the CS
 
 For official Web output, pure Web projects can set `generator.target: 'web'` explicitly, or use the dedicated `weapp-tailwindcss/vite/web` entry without `webCompat`. For uni-app H5, pass `generator.webCompat: false` explicitly. When an older WebView needs a downgrade, set `generator.webCompat: true` or pass `{ preset: 'legacy-web' }`. This lowers modern CSS syntax and is not part of the official Web output.
 
+Use `webCompat.policy` for per-capability control over `@theme`, `@layer`, nesting, selectors, typed division, `calc`, variables, units, modern colors, and at-rules. Each capability supports `preserve`, `lower`, `warn`, `error`, or `remove`. Targets can be explicit or supplied by Vite `cssTarget` and `build.target`. Targets drive capability checks and diagnostics without changing official Web output on their own.
+
 ## Vite comparison
 
 Official writing:

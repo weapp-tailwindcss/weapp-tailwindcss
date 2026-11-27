@@ -114,6 +114,85 @@ export interface CssAtRules {
  */
 export type WebCssCompatPreset = 'off' | 'legacy-web'
 
+export type CssCompatAction = 'preserve' | 'lower' | 'warn' | 'error' | 'remove'
+
+export type WebCssCompatFeature
+  = | 'theme'
+    | 'layers'
+    | 'property'
+    | 'nesting'
+    | 'selectors'
+    | 'typedDivision'
+    | 'calc'
+    | 'variables'
+    | 'units'
+    | 'oklch'
+    | 'colorFunctions'
+    | 'supports'
+    | 'atRule'
+
+export interface WebCssCompatTargetSnapshot {
+  source: 'explicit' | 'vite-css-target' | 'vite-build-target' | 'browserslist'
+  targets: readonly string[]
+}
+
+/** 自定义宿主可覆盖内建浏览器支持表；单位和 at-rule 可逐项声明。 */
+export type WebCssCompatCapabilities = Partial<Record<Exclude<WebCssCompatFeature, 'atRule' | 'units'>, boolean>> & {
+  atRule?: boolean | undefined
+  atRules?: Readonly<Record<string, boolean>> | undefined
+  units?: boolean | Readonly<Record<string, boolean>> | undefined
+}
+
+export interface WebCssCompatDiagnostic {
+  code: string
+  severity: 'warning' | 'error'
+  feature: WebCssCompatFeature
+  action: CssCompatAction
+  target: string
+  file?: string | undefined
+  line?: number | undefined
+  column?: number | undefined
+  message: string
+  suggestion?: string | undefined
+}
+
+export class WebCssCompatError extends Error {
+  readonly diagnostics: readonly WebCssCompatDiagnostic[]
+
+  constructor(diagnostics: readonly WebCssCompatDiagnostic[]) {
+    super(diagnostics.map(item => `[${item.code}] ${item.message}`).join('\n'))
+    this.name = 'WebCssCompatError'
+    this.diagnostics = [...diagnostics]
+  }
+}
+
+export interface WebCompatPolicy {
+  targets?: string | readonly string[] | Readonly<Record<string, string>> | undefined
+  capabilities?: WebCssCompatCapabilities | undefined
+  theme?: CssCompatAction | undefined
+  layers?: {
+    action?: CssCompatAction | undefined
+    mode?: 'preserve' | 'ordered' | undefined
+    onConflict?: 'warning' | 'error' | undefined
+  } | undefined
+  selectors?: {
+    action?: CssCompatAction | undefined
+    specificityGuard?: 'where' | 'legacy' | 'none' | undefined
+  } | undefined
+  values?: {
+    typedDivision?: CssCompatAction | undefined
+    calc?: CssCompatAction | undefined
+    variables?: CssCompatAction | undefined
+    units?: CssCompatAction | undefined
+    oklch?: CssCompatAction | undefined
+    colorFunctions?: CssCompatAction | undefined
+  } | undefined
+  nesting?: CssCompatAction | undefined
+  property?: CssCompatAction | undefined
+  atRules?: Readonly<Record<string, CssCompatAction>> | undefined
+  diagnostics?: 'silent' | 'warning' | 'error' | undefined
+}
+
 /**
  * Web 兼容降级的功能开关。
  */
@@ -158,6 +237,8 @@ export interface WebCssCompatOptions {
    * 按功能覆盖预设中的降级开关。
    */
   features?: WebCssCompatFeatures | undefined
+  /** 按浏览器目标与 CSS 能力独立配置兼容动作。 */
+  policy?: WebCompatPolicy | undefined
 }
 
 export type WebCssCompatUserOptions = boolean | WebCssCompatOptions
@@ -211,6 +292,7 @@ export type IStyleHandlerOptions = {
     phase: 'postcss'
     durationMs: number
     cache?: { hit: boolean, key?: string }
+    compatibility?: WebCssCompatDiagnostic | undefined
     error?: { name?: string | undefined, message: string }
   }) => void | Promise<void>
   appType?: PostcssAppType | undefined

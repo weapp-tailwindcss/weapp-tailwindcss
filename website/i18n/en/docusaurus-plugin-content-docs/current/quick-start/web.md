@@ -44,6 +44,26 @@ import './style.css'
 
 The dedicated Web entry fixes an explicit `target: 'web'` and keeps the official Tailwind CSS generation semantics by default, including modern colors, cascade layers, nesting, and browser selectors. Framework presets and platform-inferred Web targets retain the previous `legacy-web` compatibility default. uni-app H5 keeps that compatibility default even with an explicit `generator.target: 'web'`, so pass `generator.webCompat: false` when official output semantics are required there. Set `generator.webCompat: true` when an older WebView needs the downgrade.
 
+Use `generator.webCompat.policy` when an older WebView only needs selected capabilities lowered. This example lowers modern colors, preserves cascade layers, and reports CSS nesting without rewriting it.
+
+```ts
+WeappTailwindcssWeb({
+  generator: {
+    webCompat: {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91'],
+        values: { oklch: 'lower', colorFunctions: 'lower' },
+        layers: { action: 'preserve' },
+        nesting: 'warn',
+      },
+    },
+  },
+})
+```
+
+When an embedded WebView differs from the browser version used as its target, add `capabilities` to the same policy. For example, `capabilities: { layers: true }` keeps cascade layers when the host supports them.
+
 ```ts title="vite.config.ts"
 import { defineConfig } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'

@@ -11,7 +11,7 @@ export interface WebCssPropertyFallbackEdit {
 /** 在最终资产边界规划插入；同批资产的冲突或条件注册共同否决合成资格。 */
 export function collectWebCssPropertyFallbackEdits(sources: readonly string[], options: WebCssCompatUserOptions | undefined): WebCssPropertyFallbackEdit[][] {
   const normalized = normalizeWebCssCompatOptions(options)
-  if (!normalized.features.property) {
+  if (normalized.policy.actions.property !== 'lower') {
     return sources.map(() => [])
   }
   try {
@@ -31,7 +31,7 @@ export function collectWebCssPropertyFallbackEdits(sources: readonly string[], o
       for (const property of local.keys()) {
         local.set(property, combined.get(property))
       }
-      insertRegisteredCustomPropertyFallbackRule(root, local, !normalized.features.layer)
+      insertRegisteredCustomPropertyFallbackRule(root, local, normalized.policy.actions.layers !== 'lower')
       const grouped = new Map<number, string>()
       for (const [nodeIndex, node] of root.nodes.entries()) {
         if (node.source) {

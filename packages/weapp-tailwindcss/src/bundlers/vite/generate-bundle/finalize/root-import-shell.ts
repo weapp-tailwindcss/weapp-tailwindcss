@@ -10,6 +10,7 @@ import { AssetEmissionPlan } from '@/compiler'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { isPureLocalCssImportWrapper } from '../../../../generation/local-imports'
 import { normalizeOutputPathKey } from '../../../shared/module-graph'
+import { transformViteWebCssCompat } from '../../web-css-compat'
 import { applyViteAssetEmissionPlan } from '../asset-emission-plan'
 import { resolveSingleCssImportOutputFile } from '../root-style-output'
 
@@ -85,7 +86,7 @@ function getAssetFile(bundleFile: string, asset: OutputAsset) {
 
 export function finalizeWebviewCssCompat(
   bundle: Record<string, OutputAsset | OutputChunk>,
-  options: Pick<FinalizeGenerateBundleOptions, 'debug' | 'onUpdate' | 'opts' | 'recordCssAssetResult'>,
+  options: Pick<FinalizeGenerateBundleOptions, 'debug' | 'onUpdate' | 'opts' | 'recordCssAssetResult' | 'createCssPipelineContext'>,
 ) {
   const generatorOptions = resolveContextGeneratorConfiguration(options.opts).options
   if (generatorOptions.webCompat === false) {
@@ -103,8 +104,17 @@ export function finalizeWebviewCssCompat(
       continue
     }
     const rawSource = readAssetSource(output)
+    const cssPipelineContext = options.createCssPipelineContext?.(file)
     const nextCss = transformWebCssSafeSelectors(
-      transformWebCssCompat(rawSource, generatorOptions.webCompat ?? true, { deferPropertyFallback: generatorOptions.target === 'web' }),
+      cssPipelineContext
+        ? transformViteWebCssCompat(rawSource, cssPipelineContext, { deferPropertyFallback: generatorOptions.target === 'web', file })
+        : transformWebCssCompat(rawSource, generatorOptions.webCompat ?? true, {
+            deferPropertyFallback: generatorOptions.target === 'web',
+            file,
+            onDiagnostic: (diagnostic) => {
+              void generatorOptions.styleOptions?.onDiagnostic?.({ phase: 'postcss', durationMs: 0, compatibility: diagnostic })
+            },
+          }),
       { escapeMap: options.opts.escapeMap },
     )
     if (nextCss === rawSource) {

@@ -210,6 +210,45 @@ WeappTailwindcss({
 })
 ```
 
+需要按能力逐项控制时，可以在 `policy` 中覆盖 preset。动作支持 `preserve`、`lower`、`warn`、`error` 和 `remove`。Vite 集成的 `targets` 接受浏览器版本数组、浏览器版本映射或 Browserslist 查询。显式目标优先于 Vite 的 `cssTarget`，再回退到 `build.target` 和项目 Browserslist 配置；`cssTarget: false` 不提供目标回退。其他 bundler 和底层 PostCSS API 应传入展开后的浏览器版本目标。Vite target 只参与已启用的兼容策略判断，不会单独启用 Web 降级。
+
+```ts
+WeappTailwindcss({
+  generator: {
+    target: 'web',
+    webCompat: {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91', 'ios_saf 15.4'],
+        layers: { action: 'preserve' },
+        values: { oklch: 'lower', typedDivision: 'lower' },
+        nesting: 'warn',
+        diagnostics: 'warning',
+      },
+    },
+  },
+})
+```
+
+内嵌 WebView 或自定义宿主可以用 `policy.capabilities` 覆盖内建浏览器能力表。`units` 和 `atRules` 支持按名称声明，未知浏览器目标不会被当作已支持；`preserve` 会继续对不支持或未验证的能力给出诊断。
+
+```ts
+webCompat: {
+  preset: 'off',
+  policy: {
+    targets: ['chrome 91'],
+    capabilities: {
+      layers: true,
+      units: { dvh: false, cqw: false },
+      atRules: { container: false },
+    },
+    layers: { action: 'preserve' },
+  },
+}
+```
+
+兼容转换会通过 `onDiagnostic` 提供稳定 code、feature、action、target、文件和行列位置。选择 `error` 时会在临时 CSS AST 上失败，不会写出部分转换结果。目标只用于能力判断和诊断，不会单独强制改写纯 Web CSS。
+
 ### customAttributes
 
 > 可选 | 类型: `ICustomAttributes`

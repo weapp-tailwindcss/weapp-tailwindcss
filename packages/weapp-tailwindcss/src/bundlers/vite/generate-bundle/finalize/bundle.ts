@@ -185,6 +185,7 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
       onUpdate,
       opts,
       recordCssAssetResult,
+      createCssPipelineContext: file => createCssPipelineContext?.(file) ?? finalizeCssPipelineContext!,
     })
   }
   recordTimingDetail('finalize.webCompat', webCompatStartedAt)
