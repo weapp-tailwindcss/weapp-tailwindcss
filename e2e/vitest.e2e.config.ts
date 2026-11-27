@@ -47,6 +47,10 @@ const workspaceAliases = [
     replacement: path.resolve(__dirname, '../packages/escape/src/index.ts'),
   },
   {
+    find: /^@weapp-tailwindcss\/css-compat\/layers$/,
+    replacement: path.resolve(__dirname, '../packages/css-compat/src/layers.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/css-compat\/legacy$/,
     replacement: path.resolve(__dirname, '../packages/css-compat/src/legacy.ts'),
   },

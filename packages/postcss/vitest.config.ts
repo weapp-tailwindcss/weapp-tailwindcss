@@ -19,6 +19,10 @@ const alias = [
     find: /^@weapp-tailwindcss\/postcss-calc$/,
     replacement: path.resolve(__dirname, '../postcss-calc/src/index.ts'),
   },
+  {
+    find: /^@weapp-tailwindcss\/css-compat\/layers$/,
+    replacement: path.resolve(__dirname, '../css-compat/src/layers.ts'),
+  },
 ]
 
 export default defineProject({
