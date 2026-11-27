@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-linux-arm64-musl
 
+## 5.8.0
+
 ## 5.7.8
 
 ### Patch Changes

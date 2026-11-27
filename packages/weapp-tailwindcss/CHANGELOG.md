@@ -1,5 +1,26 @@
 # weapp-tailwindcss
 
+## 5.8.0
+
+### Minor Changes
+
+- 新增按浏览器目标和 CSS 能力配置 Web 兼容降级策略，支持独立选择 preserve、lower、warn、error、remove，并为 Vite target、Browserslist 和自定义 WebView 能力提供稳定诊断。
+
+### Patch Changes
+
+- 纯 Web 的显式 Web target 保留 Tailwind CSS 官方 Web 产物语义，与 `@tailwindcss/vite` 和 `@tailwindcss/postcss` 对齐。环境或 preset 推断的 Web 构建以及 uni-app H5 继续保留上一版本的 CSS 兼容默认，避免 H5 产物携带 `@layer`；uni-app H5 仍可通过显式 `generator.webCompat: false` 选择官方产物，旧 WebView 的兼容降级仍可通过 `generator.webCompat` 配置。uni-app、Taro、HBuilderX、uni-app x preset 与 Lynx 适配器的默认行为保持不变。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.8.0
+  - @weapp-tailwindcss/native-darwin-x64@5.8.0
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.8.0
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.8.0
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.8.0
+  - @weapp-tailwindcss/native-linux-x64-musl@5.8.0
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.8.0
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.8.0
+  - @weapp-tailwindcss/postcss@4.1.0
+
 ## 5.7.8
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @weapp-tailwindcss/example-react-lynx-promo
 
+## 0.0.15
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/lynx@0.5.9
+
 ## 0.0.14
 
 ### Patch Changes

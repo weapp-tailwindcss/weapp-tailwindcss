@@ -325,6 +325,10 @@
   dir: packages/lynx
   intents:
     - dependency-update-1cc37594-b21a-468a-b2c1-74ccee8f3d2e
+"@weapp-tailwindcss/lynx@0.5.9":
+  dir: packages/lynx
+  intents:
+    - web-official-css-parity
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -617,6 +621,10 @@
   dir: packages/postcss
   intents:
     - brave-melons-punch
+"@weapp-tailwindcss/postcss@4.1.0":
+  dir: packages/postcss
+  intents:
+    - web-css-compat-policy
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -1179,6 +1187,11 @@ weapp-tailwindcss@5.7.8:
   intents:
     - brave-melons-punch
     - native-toolchain-upgrade-20261125
+weapp-tailwindcss@5.8.0:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - web-css-compat-policy
+    - web-official-css-parity
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
