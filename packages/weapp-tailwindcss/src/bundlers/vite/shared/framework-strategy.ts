@@ -1,3 +1,4 @@
+import type { WebCssCompatTargetSnapshot } from '@weapp-tailwindcss/postcss/types'
 import type { FrameworkAssets } from './framework-assets'
 import type { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import type { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
@@ -10,6 +11,8 @@ export interface ViteFrameworkCssPipelineContext {
   readonly currentGeneratorOptions: Readonly<ReturnType<typeof normalizeWeappTailwindcssGeneratorOptions>>
   readonly root: string | undefined
   readonly outDir: string | undefined
+  readonly webCssTarget: WebCssCompatTargetSnapshot | undefined
+  readonly webCssTargetDisabled?: boolean | undefined
   readonly escapeMap: Readonly<Record<string, string>>
   readonly matchesCss: (file: string) => boolean
   readonly matchesMainCss: (file: string) => boolean

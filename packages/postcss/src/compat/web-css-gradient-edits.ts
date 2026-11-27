@@ -14,7 +14,9 @@ export interface WebCssGradientEdit {
 /** 在完整资产上分析渐变消费，仅返回精确文本编辑以保留构建器已有的来源映射。 */
 export function collectWebCssGradientEdits(css: string, options?: WebCssCompatUserOptions): WebCssGradientEdit[] {
   const normalized = normalizeWebCssCompatOptions(options)
-  if (normalized.preset !== 'legacy-web' && !Object.values(normalized.features).some(Boolean)) {
+  const lowersModernColors = normalized.policy.actions.oklch === 'lower'
+    || normalized.policy.actions.colorFunctions === 'lower'
+  if (!lowersModernColors) {
     return []
   }
   try {

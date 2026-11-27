@@ -17,7 +17,6 @@ import type { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
 import type { InternalUserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { getCompilationScopeDependencyRevision, getRegisteredCompilationScopeDependencyRevision, getRegisteredCompilationScopeVersion } from '@/compiler'
 import { generateTailwindV4Css } from '@/context/generation'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '@/generation/directives'
@@ -35,7 +34,7 @@ import { parseVueRequest } from '../query'
 import { resolveViteServeRootMiniProgramImportShell } from '../serve-root-import-shell'
 import { cleanUrl, isCSSRequest, isHTMLRequest, resolveViteCssPipelineRequestFile } from '../utils'
 import { resolveWeappViteSourceRoot } from '../weapp-vite-config'
-import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
+import { shouldApplyViteWebCssCompat, transformViteWebCssCompat } from '../web-css-compat'
 import { extendFrameworkCssContext } from './framework-css-context'
 import { createFrameworkCssGenerationQueue } from './framework-css-generation-queue'
 
@@ -241,7 +240,7 @@ ${previousTracedCss}`
     debug('vite compiled source proof: %s scope=%s artifact=%s current=%s authorMatches=%s', requestFile, scopeVersion, generated.artifact != null, compiledSourceHash != null, authorSource.trim() === code.trim())
     const finalizedCss = finalizeViteMiniProgramCss(generated.css)
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, frameworkCssPipelineStrategy)
-    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: (css: string) => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
+    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: (css: string) => transformViteWebCssCompat(css, cssPipelineContext, { deferPropertyFallback: resolvedConfig?.command === 'build', file: requestFile }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformViteWebCssCompat(finalizedCss, cssPipelineContext, { deferPropertyFallback: resolvedConfig?.command === 'build', file: requestFile }) : finalizedCss)
     if (transient) {
       for (const dependency of generated.dependencies) {
         hookContext?.addWatchFile?.(dependency)

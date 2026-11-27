@@ -5420,6 +5420,9 @@ importers:
       '@weapp-tailwindcss/source-scan':
         specifier: workspace:*
         version: link:../source-scan
+      browserslist:
+        specifier: ^4.29.6
+        version: 4.29.6
       comment-json:
         specifier: catalog:compilerUtilities
         version: 5.0.0

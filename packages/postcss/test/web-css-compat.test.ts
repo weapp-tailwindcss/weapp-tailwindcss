@@ -1,6 +1,212 @@
-import { normalizeWebCssCompatOptions, transformWebCssCompat, transformWebCssSafeSelectors } from '@/index'
+import { collectWebCssGradientEdits, normalizeWebCssCompatOptions, transformWebCssCompat, transformWebCssCompatResult, transformWebCssSafeSelectors } from '@/index'
+import { WebCssCompatError } from '@/types'
 
 describe('web css compatibility transform', () => {
+  it('applies per-feature policy actions without changing the legacy preset contract', () => {
+    const css = [
+      '@layer utilities { .probe { color: oklch(62.3% .214 259.815); } }',
+      '.nested { color: red; & .child { color: blue; } }',
+    ].join('\n')
+    const result = transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        layers: { action: 'preserve' },
+        values: { oklch: 'lower' },
+        nesting: 'warn',
+        targets: ['chrome 91'],
+      },
+    }, { file: 'entry.css' })
+
+    expect(result.css).toContain('@layer utilities')
+    expect(result.css).toContain('rgb(')
+    expect(result.css).toContain('& .child')
+    expect(result.diagnostics[0]).toMatchObject({ feature: 'nesting', action: 'warn', file: 'entry.css' })
+  })
+
+  it('uses targets to diagnose preserved capabilities without rewriting them', () => {
+    const css = '@layer utilities { .probe { color: oklch(62.3% .214 259.815); } }'
+    const modern = transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 120'],
+        layers: { action: 'preserve' },
+        values: { oklch: 'preserve' },
+      },
+    })
+    expect(modern.css).toBe(css)
+    expect(modern.diagnostics).toEqual([])
+
+    const legacy = transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91'],
+        layers: { action: 'preserve' },
+        values: { oklch: 'preserve' },
+      },
+    })
+    expect(legacy.css).toBe(css)
+    expect(legacy.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ feature: 'layers', target: 'chrome 91', action: 'preserve' }),
+      expect.objectContaining({ feature: 'oklch', target: 'chrome 91', action: 'preserve' }),
+    ]))
+  })
+
+  it('supports explicit host capabilities when browser versions are insufficient', () => {
+    const result = transformWebCssCompatResult('@layer utilities { .probe { color: red; } }', {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91'],
+        capabilities: { layers: true },
+        layers: { action: 'preserve' },
+      },
+    })
+    expect(result.css).toContain('@layer utilities')
+    expect(result.diagnostics).toEqual([])
+  })
+
+  it('keeps custom unit and at-rule capabilities after policy normalization', () => {
+    const capabilities = {
+      layers: true,
+      units: { dvh: false, cqw: true },
+      atRules: { container: false },
+    }
+    expect(normalizeWebCssCompatOptions({
+      preset: 'off',
+      policy: { capabilities },
+    }).policy.capabilities).toEqual(capabilities)
+
+    const result = transformWebCssCompatResult([
+      '.panel { height: 100dvh; }',
+      '@container sidebar (min-width: 20rem) { .probe { color: red; } }',
+    ].join('\n'), {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 120'],
+        capabilities,
+        values: { units: 'preserve' },
+        atRules: { container: 'preserve' },
+      },
+    })
+    expect(result.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ feature: 'units', target: 'chrome 120' }),
+      expect.objectContaining({ feature: 'atRule', target: 'chrome 120' }),
+    ]))
+  })
+
+  it('keeps layer diagnostics aligned with every target and global error policy', () => {
+    const css = '@layer a,b; @layer a { #probe { color: red; } } @layer b { .probe { color: blue; } }'
+    expect(() => transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91', 'safari 14'],
+        layers: { action: 'lower', mode: 'ordered' },
+        diagnostics: 'error',
+      },
+    })).toThrow(WebCssCompatError)
+
+    try {
+      transformWebCssCompatResult(css, {
+        preset: 'off',
+        policy: {
+          targets: ['chrome 91', 'safari 14'],
+          layers: { action: 'lower', mode: 'ordered' },
+          diagnostics: 'error',
+        },
+      })
+    }
+    catch (error) {
+      expect((error as WebCssCompatError).diagnostics).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: 'LAYER_SPECIFICITY', target: 'chrome 91', severity: 'error' }),
+        expect.objectContaining({ code: 'LAYER_SPECIFICITY', target: 'safari 14', severity: 'error' }),
+      ]))
+    }
+  })
+
+  it('honors layer conflict policy when ordered lowering is requested implicitly', () => {
+    const css = '@layer a,b; @layer a { #probe { color: red; } } @layer b { .probe { color: blue; } }'
+    expect(() => transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        layers: { action: 'lower', onConflict: 'error' },
+      },
+    })).toThrow(WebCssCompatError)
+  })
+
+  it('does not rewrite gradient positions when only units are lowered', () => {
+    const css = '.gradient { --tw-gradient-position: to bottom right in oklab; }'
+    expect(collectWebCssGradientEdits(css, {
+      preset: 'off',
+      policy: { values: { units: 'lower' } },
+    })).toEqual([])
+  })
+
+  it('reports unsafe static unit fallbacks and keeps the original declaration', () => {
+    const result = transformWebCssCompatResult('.panel { height: 100dvh; width: 50cqw; }', {
+      preset: 'off',
+      policy: {
+        values: { units: 'lower' },
+      },
+    })
+    expect(result.css).toContain('height: 100vh')
+    expect(result.css).toContain('height: 100dvh')
+    expect(result.css).toContain('width: 50cqw')
+    expect(result.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'WCC_LOWER_UNSAFE', feature: 'units' }),
+    ]))
+  })
+
+  it('handles nested static calc and leaves variable-dependent calc intact', () => {
+    const result = transformWebCssCompatResult([
+      '.static { width: calc(100px - calc(20px / 2)); }',
+      '.dynamic { width: calc(var(--size) - 2px); }',
+    ].join('\n'), {
+      preset: 'off',
+      policy: { values: { calc: 'lower' } },
+    })
+    expect(result.css).toContain('.static { width: 90px; }')
+    expect(result.css).toContain('width: calc(var(--size) - 2px)')
+    expect(result.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'WCC_LOWER_UNSAFE', feature: 'calc' }),
+    ]))
+  })
+
+  it('applies configured at-rule actions and reports preserved rules by target', () => {
+    const css = '@container sidebar (min-width: 20rem) { .probe { color: red; } }'
+    const preserved = transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 104'],
+        atRules: { container: 'preserve' },
+      },
+    })
+    expect(preserved.css).toBe(css)
+    expect(preserved.diagnostics[0]).toMatchObject({ feature: 'atRule', target: 'chrome 104', action: 'preserve' })
+
+    const removed = transformWebCssCompat(css, {
+      preset: 'off',
+      policy: { atRules: { container: 'remove' } },
+    })
+    expect(removed).toBe('')
+  })
+
+  it('throws atomically for error actions and reports source locations', () => {
+    const css = '.probe { color: oklch(62.3% .214 259.815); }'
+    expect(() => transformWebCssCompatResult(css, {
+      preset: 'off',
+      policy: { values: { oklch: 'error' } },
+    }, { file: 'entry.css' })).toThrow(WebCssCompatError)
+    try {
+      transformWebCssCompatResult(css, {
+        preset: 'off',
+        policy: { values: { oklch: 'error' } },
+      }, { file: 'entry.css' })
+    }
+    catch (error) {
+      expect(error).toBeInstanceOf(WebCssCompatError)
+      expect((error as WebCssCompatError).diagnostics[0]).toMatchObject({ feature: 'oklch', line: 1, column: 10, file: 'entry.css' })
+    }
+  })
+
   it('keeps css unchanged by default', () => {
     const css = '@layer utilities { .text-blue { color: oklch(62.3% .214 259.815); } }'
 

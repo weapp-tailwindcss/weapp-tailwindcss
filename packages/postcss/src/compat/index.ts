@@ -53,8 +53,16 @@ export { collectCssApplyUtilities, type CssClassStyleValue, cssToClassStyleValue
 export { collectCssReferenceDirectives, createUniAppXHarmonyApplyGeneratorSource } from './uni-app-x/apply-source'
 export { createUniAppXHarmonyApplyCssExpander } from './uni-app-x/harmony-apply'
 export { rewriteUniAppXStyleReferences } from './uni-app-x/reference-paths'
-export { type NormalizedWebCssCompatOptions, normalizeWebCssCompatOptions, transformWebCssCompat, transformWebCssSafeSelectors } from './web-css'
+export { type NormalizedWebCssCompatOptions, normalizeWebCssCompatOptions, transformWebCssCompat, type TransformWebCssCompatProcessing, type TransformWebCssCompatResult, transformWebCssCompatResult, transformWebCssSafeSelectors } from './web-css'
 export { collectWebCssGradientEdits, type WebCssGradientEdit } from './web-css-gradient-edits'
+export {
+  actionIsTransforming,
+  createWebCssCompatDiagnostic,
+  featureList,
+  type NormalizedWebCssCompatPolicy,
+  normalizeWebCssCompatPolicy,
+  unsupportedTargets,
+} from './web-css-policy'
 export { collectWebCssPropertyFallbackEdits, finalizeWebCssPropertyFallbacks, type WebCssPropertyFallbackEdit } from './web-css-property-fallbacks'
 export { collectWebpackBareSelectorUserCss } from './webpack-css/bare-selectors'
 export { isOnlyWebpackTailwindGeneratedPreflightCss, parseWebpackCssLayerNames, removeWebpackTailwindGeneratedAssetCss, stripTrailingLineWhitespace } from './webpack-css/generated-cleanup'

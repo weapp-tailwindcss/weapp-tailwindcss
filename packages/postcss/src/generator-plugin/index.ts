@@ -39,7 +39,12 @@ function finalizeGeneratedCss(
   webCompat: ReturnType<WeappTailwindcssPostcssPluginAdapters['normalizeGeneratorOptions']>['webCompat'],
 ) {
   if (target === 'web') {
-    const webCss = transformWebCssCompat(css, webCompat)
+    const webCss = transformWebCssCompat(css, webCompat, {
+      file: typeof styleOptions?.postcssOptions?.options?.from === 'string' ? styleOptions.postcssOptions.options.from : undefined,
+      onDiagnostic: (diagnostic) => {
+        void styleOptions?.onDiagnostic?.({ phase: 'postcss', durationMs: 0, compatibility: diagnostic })
+      },
+    })
     const platform = styleOptions?.cssOptions?.platform ?? styleOptions?.platform
     return platform === 'lynx' ? transformLynxCssCompat(webCss) : webCss
   }

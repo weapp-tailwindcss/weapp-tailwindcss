@@ -10,13 +10,12 @@ import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types'
 import path from 'node:path'
 import { logger } from '@weapp-tailwindcss/logger'
-import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { hasLocalCssImport, hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../generation/directives'
 import { hasTailwindGeneratedCssMarkers } from '../../../generation/index'
 import { extendFrameworkCssContext } from '../shared/framework-css-context'
-import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
+import { shouldApplyViteWebCssCompat, transformViteWebCssCompat } from '../web-css-compat'
 
 interface RememberedMainCssSource {
   rawSource: string
@@ -179,11 +178,7 @@ export function finalizeWebCss(
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined,
 ) {
   const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(context, cssPipelineStrategy)
-  const defaultWebCssCompat = (value: string) => transformWebCssCompat(
-    value,
-    resolveViteWebCssCompatOptions(context),
-    { deferPropertyFallback: true },
-  )
+  const defaultWebCssCompat = (value: string) => transformViteWebCssCompat(value, context, { deferPropertyFallback: true, file: context.file })
   return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(context, {
     defaultWebCssCompat,
     removeScopedPreflight: (value: string) => value,

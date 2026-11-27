@@ -338,6 +338,7 @@
     "@weapp-tailwindcss/reset": "workspace:*",
     "@weapp-tailwindcss/shared": "workspace:*",
     "@weapp-tailwindcss/source-scan": "workspace:*",
+    "browserslist": "^4.29.6",
     "comment-json": "catalog:compilerUtilities",
     "debug": "catalog:buildUtilities",
     "fast-glob": "catalog:buildUtilities",

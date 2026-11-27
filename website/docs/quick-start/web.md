@@ -46,6 +46,26 @@ import './style.css'
 
 专用 Web 入口固定显式 `target: 'web'`，默认保留 Tailwind CSS 官方生成语义，包括现代颜色、cascade layers、嵌套规则和浏览器选择器。框架 preset 或平台环境自动推断 Web 时会保留上一版本的 `legacy-web` 兼容默认，uni-app H5 即使显式设置 `generator.target: 'web'` 也会保留该兼容默认；需要官方产物语义时请使用专用 Web 入口，uni-app H5 请显式设置 `generator.webCompat: false`。面向旧 WebView 的显式降级仍可设置 `generator.webCompat: true`。
 
+如果不同 WebView 只需要降级部分能力，可以使用 `generator.webCompat.policy`。例如只转换现代颜色，同时保留 cascade layers，并让 nesting 以诊断形式提示。
+
+```ts
+WeappTailwindcssWeb({
+  generator: {
+    webCompat: {
+      preset: 'off',
+      policy: {
+        targets: ['chrome 91'],
+        values: { oklch: 'lower', colorFunctions: 'lower' },
+        layers: { action: 'preserve' },
+        nesting: 'warn',
+      },
+    },
+  },
+})
+```
+
+内嵌 WebView 的能力与浏览器版本不一致时，可以在同一个 policy 中声明 `capabilities` 覆盖目标判断，例如 `capabilities: { layers: true }` 会保留宿主已经支持的 cascade layers。
+
 ```ts title="vite.config.ts"
 import { defineConfig } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
